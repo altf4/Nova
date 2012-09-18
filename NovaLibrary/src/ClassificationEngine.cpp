@@ -51,45 +51,11 @@ ClassificationEngine::ClassificationEngine(SuspectTable& suspects)
 
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
-
-	// TODO: Put the doppelganger somewhere else...
-	// Doesn't really belong in the CE
-	m_dopp = new Doppelganger(suspects);
-	m_dopp->InitDoppelganger();
 }
 
 ClassificationEngine::~ClassificationEngine()
 {
 
-}
-
-void ClassificationEngine::FormKdTree()
-{
-	delete m_kdTree;
-	m_kdTree = NULL;
-	//Normalize the data points
-	//Foreach data point
-	for(uint j = 0;j < Config::Inst()->GetEnabledFeatureCount();j++)
-	{
-		//Foreach feature within the data point
-		for(int i=0;i < m_nPts;i++)
-		{
-			if(m_maxFeatureValues[j] != 0)
-			{
-				m_normalizedDataPts[i][j] = Normalize(m_normalization[j], m_dataPts[i][j], m_minFeatureValues[j], m_maxFeatureValues[j]);
-			}
-			else
-			{
-				LOG(ERROR,"Problem normalizing training data.",
-					"The max value of a feature was 0, the training data file may be corrupt or missing.");
-				break;
-			}
-		}
-	}
-	m_kdTree = new ANNkd_tree(					// build search structure
-			m_normalizedDataPts,					// the data points
-					m_nPts,						// number of points
-					Config::Inst()->GetEnabledFeatureCount());						// dimension of space
 }
 
 
@@ -117,6 +83,7 @@ double ClassificationEngine::Classify(Suspect *suspect)
 		return -2;
 	}
 
+	vector<double> weights = Config::Inst()->GetFeatureWeights();
 	//Iterate over the features, asserting the range is [min,max] and normalizing over that range
 	for(int i = 0;i < DIM;i++)
 	{
@@ -133,7 +100,7 @@ double ClassificationEngine::Classify(Suspect *suspect)
 			if(m_maxFeatureValues[ai] != 0)
 			{
 				aNN[ai] = Normalize(m_normalization[i], fs.m_features[i],
-					m_minFeatureValues[ai], m_maxFeatureValues[ai]);
+					m_minFeatureValues[ai], m_maxFeatureValues[ai], weights[i]);
 			}
 			else
 			{
@@ -157,6 +124,29 @@ double ClassificationEngine::Classify(Suspect *suspect)
 			nnIdx,								// nearest neighbors (returned)
 			dists,								// distance (returned)
 			Config::Inst()->GetEps());								// error bound
+
+	stringstream classificationNotes;
+
+	for (int i = 0; i < k; i++)
+	{
+		classificationNotes << "k=" << i << ":d=" << dists[i];
+		classificationNotes << ":c " << m_dataPtsWithClass[nnIdx[i]]->m_classification;
+		classificationNotes << "\n:o ";
+		for (uint j = 0; j < Config::Inst()->GetEnabledFeatureCount(); j++)
+		{
+			classificationNotes << m_dataPtsWithClass[nnIdx[i]]->m_annPoint[j] << " ";
+		}
+
+		classificationNotes << "\n:n ";
+
+		for (uint j = 0; j < Config::Inst()->GetEnabledFeatureCount(); j++)
+		{
+			classificationNotes << m_kdTree->thePoints()[nnIdx[i]][j] << " ";
+		}
+
+		classificationNotes << endl << endl;;
+	}
+	suspect->m_classificationNotes = classificationNotes.str();
 
 	for(int i = 0; i < DIM; i++)
 	{
@@ -274,34 +264,35 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	Lock lock(&m_lock, WRITE_LOCK);
 	ifstream myfile (inFilePath.data());
 	string line;
+	vector<double> weights = Config::Inst()->GetFeatureWeights();
 
-		// Clear max and min values
-		for(int i = 0; i < DIM; i++)
-		{
-			m_maxFeatureValues[i] = 0;
-		}
+	// Clear max and min values
+	for(int i = 0; i < DIM; i++)
+	{
+		m_maxFeatureValues[i] = 0;
+	}
 
-		for(int i = 0; i < DIM; i++)
-		{
-			m_minFeatureValues[i] = 0;
-		}
+	for(int i = 0; i < DIM; i++)
+	{
+		m_minFeatureValues[i] = 0;
+	}
 
-		for(int i = 0; i < DIM; i++)
-		{
-			m_meanFeatureValues[i] = 0;
-		}
+	for(int i = 0; i < DIM; i++)
+	{
+		m_meanFeatureValues[i] = 0;
+	}
 
-		// Reload the data file
-		if(m_dataPts != NULL)
-		{
-			annDeallocPts(m_dataPts);
-		}
-		if(m_normalizedDataPts != NULL)
-		{
-			annDeallocPts(m_normalizedDataPts);
-		}
+	// Reload the data file
+	if(m_dataPts != NULL)
+	{
+		annDeallocPts(m_dataPts);
+	}
+	if(m_normalizedDataPts != NULL)
+	{
+		annDeallocPts(m_normalizedDataPts);
+	}
 
-		m_dataPtsWithClass.clear();
+	m_dataPtsWithClass.clear();
 
 	//string array to check whether a line in data.txt file has the right number of fields
 	string fieldsCheck[DIM];
@@ -444,14 +435,18 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 	myfile.close();
 
 	//Normalize the data points
-
-	//Foreach feature within the data point
-	for(uint j = 0;j < Config::Inst()->GetEnabledFeatureCount();j++)
+	uint ai = 0;
+	for (uint i = 0; i < DIM; i++)
 	{
-		//Foreach data point
-		for(int i=0;i < m_nPts;i++)
+		if (Config::Inst()->IsFeatureEnabled(i))
 		{
-			m_normalizedDataPts[i][j] = Normalize(m_normalization[j], m_dataPts[i][j], m_minFeatureValues[j], m_maxFeatureValues[j]);
+			//Foreach data point
+			for(int point=0; point < m_nPts; point++)
+			{
+				m_normalizedDataPts[point][ai] = Normalize(m_normalization[ai], m_dataPts[point][ai], m_minFeatureValues[ai], m_maxFeatureValues[ai], weights[i]);
+			}
+
+			ai++;
 		}
 	}
 
@@ -464,6 +459,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 void ClassificationEngine::LoadDataPointsFromVector(vector<double*> points)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
+	vector<double> weights = Config::Inst()->GetFeatureWeights();
 	// Clear max and min values
 	for(int i = 0; i < DIM; i++)
 	{
@@ -538,14 +534,19 @@ void ClassificationEngine::LoadDataPointsFromVector(vector<double*> points)
 
 
 	//Normalize the data points
-
-	//Foreach feature within the data point
-	for(uint j = 0;j < Config::Inst()->GetEnabledFeatureCount();j++)
+	//Normalize the data points
+	uint ai = 0;
+	for (uint i = 0; i < DIM; i++)
 	{
-		//Foreach data point
-		for(int i=0;i < m_nPts;i++)
+		if (Config::Inst()->IsFeatureEnabled(i))
 		{
-			m_normalizedDataPts[i][j] = Normalize(m_normalization[j], m_dataPts[i][j], m_minFeatureValues[j], m_maxFeatureValues[j]);
+			//Foreach data point
+			for(int point=0; point < m_nPts; point++)
+			{
+				m_normalizedDataPts[point][ai] = Normalize(m_normalization[ai], m_dataPts[point][ai], m_minFeatureValues[ai], m_maxFeatureValues[ai], weights[i]);
+			}
+
+			ai++;
 		}
 	}
 
@@ -556,7 +557,7 @@ void ClassificationEngine::LoadDataPointsFromVector(vector<double*> points)
 
 }
 
-double ClassificationEngine::Normalize(normalizationType type, double value, double min, double max)
+double ClassificationEngine::Normalize(normalizationType type, double value, double min, double max, double weight)
 {
 	double ret = -1;
 	switch(type)
@@ -596,6 +597,7 @@ double ClassificationEngine::Normalize(normalizationType type, double value, dou
 		// while looking at the data visualizations to see what works best for a feature
 	}
 
+	ret = ret*weight;
 	if (ret < 0) {
 		LOG(WARNING, "Normalize returned a negative number. This is probably an error", "");
 	}

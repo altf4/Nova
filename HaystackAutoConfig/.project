@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>HoneydHostConfig</name>
+	<name>HaystackAutoconfig</name>
 	<comment></comment>
 	<projects>
 		<project>NovaLibrary</project>

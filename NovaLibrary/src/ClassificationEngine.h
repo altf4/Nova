@@ -52,10 +52,6 @@ public:
 	// Note: this updates the classification of the suspect in dataPtsWithClass as well as it's isHostile variable
 	double Classify(Suspect *suspect);
 
-	// Forms the normalized kd tree, called once on start up
-	// Will be called again if the a suspect's max value for a feature exceeds the current maximum for normalization
-	void FormKdTree();
-
 	// Reads into the list of suspects from a file specified by inFilePath
 	//		inFilePath - path to input file, should contain Feature dimensions
 	//					 followed by hostile classification (0 or 1), all space separated
@@ -67,14 +63,12 @@ public:
 	void WriteDataPointsToFile(std::string outFilePath, ANNkd_tree *tree);
 
 	// Normalized a single value
-	static double Normalize(normalizationType type, double value, double min, double max);
+	static double Normalize(normalizationType type, double value, double min, double max, double weight);
 
 	// Prints a single ANN point, p, to stream, out
 	//		out - steam to print to
 	//		p 	- ANN point to print
 	void PrintPt(std::ostream &out, ANNpoint p);
-
-	Doppelganger *m_dopp;
 
 private:
 	// Disable the empty constructor, we need the logger/config/suspect table to do anything
@@ -97,6 +91,8 @@ private:
 	double m_maxFeatureValues[DIM];
 	double m_minFeatureValues[DIM];
 	double m_meanFeatureValues[DIM];
+
+	double m_weights;
 
 };
 

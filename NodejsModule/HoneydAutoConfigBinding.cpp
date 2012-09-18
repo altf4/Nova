@@ -69,7 +69,7 @@ Handle<Value> HoneydAutoConfigBinding::RunAutoScan(const Arguments& args)
   std::string interfaces = cvv8::CastFromJS<std::string>(args[1]);
   std::string additionalSubnets = cvv8::CastFromJS<std::string>(args[2]);
   
-  std::string systemCall = "honeydhostconfig -n " + numNodes;
+  std::string systemCall = "haystackautoconfig -n " + numNodes;
   
   if(!cvv8::CastFromJS<std::string>(args[1]).empty())
   {

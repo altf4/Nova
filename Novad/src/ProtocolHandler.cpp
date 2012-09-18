@@ -57,8 +57,8 @@ namespace Nova
 bool Spawn_UI_Handler()
 {
 	int len;
-	string inKeyPath = Config::Inst()->GetPathHome() + "/keys" + NOVAD_LISTEN_FILENAME;
-	string outKeyPath = Config::Inst()->GetPathHome() + "/keys" + UI_LISTEN_FILENAME;
+	string inKeyPath = Config::Inst()->GetPathHome() + "/config/keys" + NOVAD_LISTEN_FILENAME;
+	string outKeyPath = Config::Inst()->GetPathHome() + "/config/keys" + UI_LISTEN_FILENAME;
 
     if((IPCParentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
@@ -227,7 +227,7 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 		{
 			suspects.EraseAllSuspects();
 			suspectsSinceLastSave.EraseAllSuspects();
-			string delString = "rm -f " + Config::Inst()->GetPathCESaveFile();
+			string delString = "rm -f \"" + Config::Inst()->GetPathCESaveFile() + "\"";
 			bool successResult = true;
 			if(system(delString.c_str()) == -1)
 			{

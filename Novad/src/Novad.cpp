@@ -68,6 +68,8 @@ pthread_mutex_t packetCapturesLock;
 vector<PacketCapture*> packetCaptures;
 vector<int> dropCounts;
 
+Doppelganger *doppel;
+
 // Timestamps for the CE state file exiration of data
 time_t lastLoadTime;
 time_t lastSaveTime;
@@ -149,10 +151,10 @@ int RunNovaD()
 	//Need to load the configuration before making the Classification Engine for setting up the DM
 	//Reload requires a CE object so we do a partial config load here.
 
-	//Loads the configuration file
-	Config::Inst()->LoadConfig();
-
 	LOG(ALERT, "Starting NOVA version " + Config::Inst()->GetVersionString(), "");
+
+	doppel = new Doppelganger(suspects);
+	doppel->InitDoppelganger();
 
 	engine = new ClassificationEngine(suspects);
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
@@ -213,7 +215,7 @@ int RunNovaD()
 
 bool LockNovad()
 {
-	int lockFile = open((Config::Inst()->GetPathHome() + "/novad.lock").data(), O_CREAT | O_RDWR, 0666);
+	int lockFile = open((Config::Inst()->GetPathHome() + "/data/novad.lock").data(), O_CREAT | O_RDWR, 0666);
 	int rc = flock(lockFile, LOCK_EX | LOCK_NB);
 	if(rc != 0)
 	{
@@ -340,14 +342,15 @@ void LoadStateFile()
 
 			// Copy the file
 			stringstream copyCommand;
-			copyCommand << "mv " << Config::Inst()->GetPathCESaveFile() << " " << fileName;
+			copyCommand << "mv \"" << Config::Inst()->GetPathCESaveFile() << "\" \"" << fileName << "\"";
+
 			if(system(copyCommand.str().c_str()) == -1) {
 				LOG(ERROR, "There was a problem when attempting to move the corrupt state file. System call failed: " + copyCommand.str(), "");
 			}
 
 			// Recreate an empty file
 			stringstream touchCommand;
-			touchCommand << "touch " << Config::Inst()->GetPathCESaveFile();
+			touchCommand << "touch \"" << Config::Inst()->GetPathCESaveFile() << "\"";
 			if(system(touchCommand.str().c_str()) == -1) {
 				LOG(ERROR, "There was a problem when attempting to recreate the state file. System call to 'touch' failed:" + touchCommand.str(), "");
 			}
@@ -379,7 +382,7 @@ void RefreshStateFile()
 	{
 		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
 	}
-	if(system(string("cp -f -p "+ceFile+" "+tmpFile).c_str()) != 0)
+	if(system(string("cp -f -p \""+ceFile+"\" \""+tmpFile + "\"").c_str()) != 0)
 	{
 		LOG(ERROR, "Unable to refresh CE State File.",
 				string("Unable to refresh CE State File: cp -f -p "+ceFile+" "+tmpFile+ " failed."));

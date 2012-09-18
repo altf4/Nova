@@ -46,7 +46,7 @@ TEST_F(ClassificationEngineTest, test_someMethod)
 {
 	bool isDmEn = Config::Inst()->GetIsDmEnabled();
 	Config::Inst()->SetIsDmEnabled(false);
-	EXPECT_EQ(0.42, ClassificationEngine::Normalize(LINEAR, 42, 0, 100));
+	EXPECT_EQ(0.42, ClassificationEngine::Normalize(LINEAR, 42, 0, 100, 1));
 	Config::Inst()->SetIsDmEnabled(isDmEn);
 }
 

@@ -41,6 +41,8 @@ Suspect::Suspect()
 	m_isHostile = false;
 	m_isLive = false;
 	m_lastPacketTime = 0;
+	m_classificationNotes = "";
+
 	for(int i = 0; i < DIM; i++)
 	{
 		m_featureAccuracy[i] = 0;
@@ -87,6 +89,8 @@ string Suspect::ToString()
 	}
 
 	ss <<  " Hostile neighbors: " << m_hostileNeighbors << "\n";
+
+	ss << "Classification notes: " << endl << m_classificationNotes << endl;
 
 
 	for(int i = 0; i < DIM; i++)
@@ -171,6 +175,12 @@ uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMo
 	SerializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
+
+	const char *notes = m_classificationNotes.c_str();
+	int sizeOfNotes = m_classificationNotes.size();
+	SerializeChunk(buf, &offset, (char*)&sizeOfNotes, sizeof sizeOfNotes, bufferSize);
+	SerializeChunk(buf, &offset, notes, sizeOfNotes, bufferSize);
+
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
@@ -265,6 +275,9 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 			break;
 		}
 	}
+
+	int sizeOfNotes = m_classificationNotes.size();
+	messageSize += sizeof(sizeOfNotes) + sizeOfNotes*sizeof(char);
 	return messageSize;
 }
 
@@ -282,6 +295,14 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 	DeserializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
+
+	int sizeOfNotes;
+	DeserializeChunk(buf, &offset,(char*)&sizeOfNotes, sizeof sizeOfNotes, bufferSize);
+
+	char *notes = new char[sizeOfNotes];
+	DeserializeChunk(buf, &offset, notes, sizeOfNotes, bufferSize);
+	m_classificationNotes = string(notes);
+	delete[] notes;
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
@@ -549,6 +570,7 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 	m_isHostile = rhs.m_isHostile;
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
+	m_classificationNotes = rhs.m_classificationNotes;
 	return *this;
 }
 
@@ -626,6 +648,7 @@ Suspect::Suspect(const Suspect &rhs)
 	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
 	m_isLive = rhs.m_isLive;
 	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
+	m_classificationNotes = rhs.m_classificationNotes;
 }
 
 }

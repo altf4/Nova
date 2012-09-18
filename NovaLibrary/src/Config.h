@@ -60,7 +60,7 @@ public:
 	// Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
 	//	Returns: True if(after the function) the user has all necessary ~/.nova config files
 	//		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
-    static bool InitUserConfigs(std::string homeNovaPath);
+    bool InitUserConfigs();
 
     // These are generic static getters/setters for the web interface
     // Use of these should be minimized. Instead, use the specific typesafe getter/setter
@@ -184,6 +184,11 @@ public:
     // Getters for the paths stored in /etc
     std::string GetPathReadFolder();
     std::string GetPathHome();
+
+    inline std::string GetPathShared() {
+    	return m_pathPrefix + "/usr/share/nova/sharedFiles";
+    }
+
     std::string GetPathIcon();
 
     char GetHaystackStorage();
@@ -218,6 +223,8 @@ public:
 
 	int GetCaptureBufferSize();
 	void SetCaptureBufferSize(int bufferSize);
+
+	std::vector<double> GetFeatureWeights();
 
 protected:
 	Config();
@@ -321,7 +328,10 @@ private:
 	std::string m_masterUIIP;
 	std::string m_masterUIClientID;
 
+	std::vector<double> m_featureWeights;
+
 	static std::string m_pathPrefix;
+
 
 	pthread_rwlock_t m_lock;
 

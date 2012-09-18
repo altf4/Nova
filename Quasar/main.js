@@ -35,10 +35,11 @@ var Validator = require('validator').Validator;
 
 var Tail = require('tail').Tail;
 var NovaHomePath = config.GetPathHome();
-var novadLogPath = NovaHomePath + "/../Logs/Nova.log";
+var NovaSharedPath = config.GetPathShared();
+var novadLogPath = "/var/log/nova/Nova.log";
 var novadLog = new Tail(novadLogPath);
 
-var honeydLogPath = NovaHomePath + "/../Logs/Honeyd.log";
+var honeydLogPath = "/var/log/nova/Honeyd.log";
 var honeydLog = new Tail(honeydLogPath);
 
 var RenderError = function (res, err, link) {
@@ -78,7 +79,7 @@ var databaseOpenResult = function (err) {
 	}
 }
 
-var db = new sql.Database(NovaHomePath + "/../database.db", sql.OPEN_READWRITE, databaseOpenResult);
+var db = new sql.Database(NovaHomePath + "/data/database.db", sql.OPEN_READWRITE, databaseOpenResult);
 
 
 // Prepare query statements
@@ -150,8 +151,8 @@ function (username, password, done) {
 
 // Setup TLS
 var express_options = {
-	key: fs.readFileSync(NovaHomePath + '/../Quasar/serverkey.pem'),
-	cert: fs.readFileSync(NovaHomePath + '/../Quasar/servercert.pem')
+	key: fs.readFileSync(NovaSharedPath + '/Quasar/serverkey.pem'),
+	cert: fs.readFileSync(NovaSharedPath + '/Quasar/servercert.pem')
 };
 
 var app = express.createServer(express_options);
@@ -162,7 +163,7 @@ app.configure(function () {
 	app.use(express.cookieParser());
 	app.use(express.methodOverride());
 	app.use(app.router);
-	app.use(express.static(NovaHomePath + '/../Quasar/www'));
+	app.use(express.static(NovaSharedPath + '/Quasar/www'));
 });
 
 app.set('views', __dirname + '/views');
@@ -787,7 +788,7 @@ app.get('/importCapture', passport.authenticate('basic', {session: false}), func
 	}
 
 	var trainingSession = req.query["trainingSession"];
-	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/nova.dump";
+	trainingSession = NovaHomePath + "/data/" + trainingSession + "/nova.dump";
 	var ips = trainingDb.GetCaptureIPs(trainingSession);
 
 	if (ips === undefined) {
@@ -813,7 +814,7 @@ app.post('/importCaptureSave', passport.authenticate('basic', {session: false}),
 	var descriptions = new Object();
 
 	var trainingSession = req.query["trainingSession"];
-	trainingSession = NovaHomePath + "/Data/" + trainingSession + "/nova.dump";
+	trainingSession = NovaHomePath + "/data/" + trainingSession + "/nova.dump";
 
 	var trainingDump = new novaconfig.TrainingDumpBinding();
 	if (!trainingDump.LoadCaptureFile(trainingSession)) {
@@ -843,7 +844,7 @@ app.post('/importCaptureSave', passport.authenticate('basic', {session: false}),
 	}
 
 	// TODO: Don't hard code this path
-	if (!trainingDump.SaveToDb(NovaHomePath + "/Config/training.db")) {
+	if (!trainingDump.SaveToDb(NovaHomePath + "/config/training/training.db")) {
 		RenderError(res, "Unable to save to training db");
 		return;
 	}
@@ -1099,13 +1100,13 @@ app.post('/scanning', passport.authenticate('basic', {session: false}), function
 	}
 
 
-	if (!path.existsSync("/usr/bin/honeydhostconfig")) {
-		console.log("HoneydHostConfig binary not found in /usr/bin/. Redirect to /autoConfig.");
+	if (!path.existsSync("/usr/bin/haystackautoconfig")) {
+		console.log("HaystackAutoConfig binary not found in /usr/bin/. Redirect to /autoConfig.");
 		res.render('hhautoconfig.jade', {
 			locals: {
 				user: req.user,
 				INTERFACES: config.ListInterfaces().sort(),
-				SCANERROR: "HoneydHostConfig binary not found, scan cancelled"
+				SCANERROR: "HaystackAutoConfig binary not found, scan cancelled"
 			}
 		});
 	} else if ((subnets === "" && interfaces === "") && (subnets === undefined && interfaces === undefined)) {
@@ -1547,7 +1548,6 @@ everyone.now.GetProfile = function (profileName, callback) {
 	profile.uptimeMax = profile.GetUptimeMax();
 	profile.dropRate = profile.GetDropRate();
 	profile.parentProfile = profile.GetParentProfile();
-	profile.childrenProfiles = profile.GetChildrenProfiles();
 
 	profile.isTcpActionInherited = profile.isTcpActionInherited();
 	profile.isUdpActionInherited = profile.isUdpActionInherited();
@@ -1741,7 +1741,7 @@ everyone.now.GetCaptureSession = function (callback) {
 }
 
 everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback, route) {
-	var executionString = 'honeydhostconfig';
+	var executionString = 'haystackautoconfig';
 	var nFlag = '-n';
 	var iFlag = '-i';
 	var aFlag = '-a';
@@ -1772,7 +1772,7 @@ everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback,
 
 	autoconfig.stderr.on('data', function (data) {
 		if (/^execvp\(\)/.test(data)) {
-			console.log("honeydhostconfig failed to start.");
+			console.log("haystackautoconfig failed to start.");
 			route("/nodeReview");
 		}
 	});
@@ -1793,7 +1793,7 @@ everyone.now.StartTrainingCapture = function (trainingSession, callback) {
 
 	// Check if training folder already exists
 	//console.log(Object.keys(fs));
-	path.exists(NovaHomePath + "/Data/" + trainingSession, function (exists) {
+	path.exists(NovaHomePath + "/data/" + trainingSession, function (exists) {
 		if (exists) {
 			callback("Training session folder already exists for session name of '" + trainingSession + "'");
 			return;
@@ -1822,7 +1822,7 @@ everyone.now.StopTrainingCapture = function (trainingSession, callback) {
 	//config.WriteSetting("TRAINING_SESSION", "null");
 	nova.StopNovad();
 
-	exec('novatrainer ' + NovaHomePath + '/Data/' + trainingSession + ' ' + NovaHomePath + '/Data/' + trainingSession + '/nova.dump',
+	exec('novatrainer ' + NovaHomePath + '/data/' + trainingSession + ' ' + NovaHomePath + '/data/' + trainingSession + '/nova.dump',
 
 	function (error, stdout, stderr) {
 		callback(stderr);
@@ -1830,7 +1830,7 @@ everyone.now.StopTrainingCapture = function (trainingSession, callback) {
 }
 
 everyone.now.GetCaptureIPs = function (trainingSession, callback) {
-	return trainingDb.GetCaptureIPs(NovaHomePath + "/Data/" + trainingSession + "/nova.dump");
+	return trainingDb.GetCaptureIPs(NovaHomePath + "/data/" + trainingSession + "/nova.dump");
 }
 
 everyone.now.WizardHasRun = function (callback) {

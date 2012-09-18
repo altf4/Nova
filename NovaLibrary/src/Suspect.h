@@ -162,7 +162,6 @@ public:
 
 	Suspect& operator=(const Suspect &rhs);
 	Suspect(const Suspect &rhs);
-	Suspect& operator*(Suspect *rhs);
 
 	// Equality operator, mainly used for test cases
 	bool operator==(const Suspect &rhs) const;
@@ -174,6 +173,8 @@ public:
 	FeatureSet m_features;
 	// FeatureSet containing data not yet sent through a SA
 	FeatureSet m_unsentFeatures;
+
+	std::string m_classificationNotes;
 
 private:
 

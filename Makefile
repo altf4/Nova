@@ -78,14 +78,14 @@ nodejsmodule:
 mothership:
 	cd Mothership; npm --unsafe-perm install
 
-#Honeyd HostConfig
+#Honeyd AutoConfig
 hhconfig-release:
-	$(MAKE) -C HoneydHostConfig/Release
-	cp HoneydHostConfig/Release/honeydhostconfig HoneydHostConfig/
+	$(MAKE) -C HaystackAutoConfig/Release
+	cp HaystackAutoConfig/Release/haystackautoconfig HaystackAutoConfig/
 
 hhconfig-debug:
-	$(MAKE) -C HoneydHostConfig/Debug
-	cp HoneydHostConfig/Debug/honeydhostconfig HoneydHostConfig/
+	$(MAKE) -C HaystackAutoConfig/Debug
+	cp HaystackAutoConfig/Debug/haystackautoconfig HaystackAutoConfig/
 
 coverageTests: test-prepare
 	$(MAKE) -C NovaLibrary/Coverage
@@ -120,7 +120,7 @@ clean-staging:
 
 #Removes created man pages
 clean-man:
-	rm -f Installer/Read/manpages/*.gz
+	rm -f Installer/miscFiles/manpages/*.gz
 
 clean-novad: clean-novad-debug clean-novad-release
 
@@ -165,6 +165,13 @@ clean-cli-release:
 
 clean-test:
 	rm -fr NovaTest/NovadSource/*
+	rm -f NovaTest/Coverage/NovadSource/*.d
+	rm -f NovaTest/Coverage/NovadSource/*.o
+	rm -f NovaTest/Coverage/src/NovadSource/*.d
+	rm -f NovaTest/Coverage/src/NovadSource/*.o
+	$(MAKE) -C NovaTest/Coverage clean
+
+	rm -fr NovaTest/NovadSource/*
 	rm -f NovaTest/Debug/NovadSource/*.d
 	rm -f NovaTest/Debug/NovadSource/*.o
 	rm -f NovaTest/Debug/src/NovadSource/*.d
@@ -179,16 +186,13 @@ clean-quasar: clean-nodejsmodule
 clean-quasar-modules:
 	-rm -rf Quasar/node_modules
 
-clean-mothership-modules:
-	-rm -rf Mothership/node_modules
-
 clean-hhconfig: clean-hhconfig-debug clean-hhconfig-release
 	
 clean-hhconfig-debug:
-	$(MAKE) -C HoneydHostConfig/Debug clean
+	$(MAKE) -C HaystackAutoConfig/Debug clean
 
 clean-hhconfig-release:
-	$(MAKE) -C HoneydHostConfig/Release clean
+	$(MAKE) -C HaystackAutoConfig/Release clean
 
 
 clean-novatrainer: clean-novatrainer-debug clean-novatrainer-release
@@ -203,106 +207,99 @@ clean-novatrainer-release:
 install: install-data
 	$(MAKE) install-helper
 	# Give read/write permissions to the nova group
-	-chmod -R g+rw /usr/share/nova
-	-chmod -R g+rw /var/log/honeyd
+	-chmod -R g+rw "$(DESTDIR)/usr/share/nova"
+	-chmod -R g+rw "$(DESTDIR)/var/log/honeyd"
+	-chmod g+rwx "$(DESTDIR)/var/log/nova"
 
 install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novatrainer install-quasar install-nodejsmodule
-	sh debian/postinst
+	-sh debian/postinst
 	-bash Installer/createDatabase.sh
 
 install-data:
 	#make folder in etc with path locations to nova files
-	mkdir -p $(DESTDIR)/usr/bin
-	mkdir -p $(DESTDIR)/usr/lib
-	mkdir -p $(DESTDIR)/usr/share/applications
-	mkdir -p $(DESTDIR)/usr/share/nova
-	mkdir -p $(DESTDIR)/usr/share/nova/NodejsModule
-	mkdir -p $(DESTDIR)/usr/share/man/man1
-	mkdir -p $(DESTDIR)/var/log/honeyd
-	mkdir -p $(DESTDIR)/etc/nova
-	mkdir -p $(DESTDIR)/etc/rsyslog.d/
-	mkdir -p $(DESTDIR)/etc/sysctl.d/
-	mkdir -p $(DESTDIR)/etc/bash_completion.d/
-	mkdir -p $(DESTDIR)/etc/sudoers.d/
+	mkdir -p "$(DESTDIR)/usr/bin"
+	mkdir -p "$(DESTDIR)/usr/lib"
+	mkdir -p "$(DESTDIR)/usr/share/applications"
+	mkdir -p "$(DESTDIR)/usr/share/nova"
+	mkdir -p "$(DESTDIR)/usr/share/man/man1"
+	mkdir -p "$(DESTDIR)/var/log/honeyd"
+	mkdir -p "$(DESTDIR)/etc/rsyslog.d/"
+	mkdir -p "$(DESTDIR)/etc/sysctl.d/"
+	mkdir -p "$(DESTDIR)/etc/bash_completion.d/"
+	mkdir -p "$(DESTDIR)/etc/sudoers.d/"
+	mkdir -p "$(DESTDIR)/var/log/nova"
 	
-	install Installer/Read/paths $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
-	#Copy the hidden directories and files
-	cp -frup Installer/Write/nova/nova $(DESTDIR)/etc/nova
+	
+	cp -frup Installer/sharedFiles "$(DESTDIR)/usr/share/nova/sharedFiles"
+	cp -frup Installer/userFiles "$(DESTDIR)/usr/share/nova/userFiles"
+	cp -frup Installer/nova_init "$(DESTDIR)/usr/share/nova"
+	cp -frup Installer/createDatabase.sh "$(DESTDIR)/usr/share/nova"
+
 	#Copy the scripts and logs
-	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
-	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
-	install Installer/nova_init $(DESTDIR)/usr/bin
+	install Installer/nova_init "$(DESTDIR)/usr/bin"
 	#Install permissions
-	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
-	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
-	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
+	install Installer/miscFiles/sudoers_nova "$(DESTDIR)/etc/sudoers.d/" --mode=0440
+	install Installer/miscFiles/40-nova.conf "$(DESTDIR)/etc/rsyslog.d/" --mode=664
+	install Installer/miscFiles/30-novactl.conf "$(DESTDIR)/etc/sysctl.d/" --mode=0440
 	# Copy the bash completion files
-	install Installer/Read/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
+	install Installer/miscFiles/novacli "$(DESTDIR)/etc/bash_completion.d/" --mode=755
 
 install-pcap-debug:
 	#debug sudoers file that allows sudo gdb to pcap without password prompt
-	install Installer/Read/sudoers_nova_debug $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	install Installer/miscFiles/sudoers_nova_debug "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 
 install-docs:
 	# TODO: Combine man pages
-	gzip -c Installer/Read/manpages/novad.1 > Installer/Read/manpages/novad.1.gz
-	gzip -c Installer/Read/manpages/novacli.1 > Installer/Read/manpages/novacli.1.gz
-	gzip -c Installer/Read/manpages/quasar.1 > Installer/Read/manpages/quasar.1.gz
-	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
+	gzip -c Installer/miscFiles/manpages/novad.1 > Installer/miscFiles/manpages/novad.1.gz
+	gzip -c Installer/miscFiles/manpages/novacli.1 > Installer/miscFiles/manpages/novacli.1.gz
+	gzip -c Installer/miscFiles/manpages/quasar.1 > Installer/miscFiles/manpages/quasar.1.gz
+	install Installer/miscFiles/manpages/*.1.gz "$(DESTDIR)/usr/share/man/man1"
 
 install-quasar:
-	cp -frup Quasar $(DESTDIR)/usr/share/nova
-	tar -C $(DESTDIR)/usr/share/nova/Quasar/www -xf Quasar/dojo-release-1.7.0.tar.gz
-	#mv $(DESTDIR)/usr/share/nova/Quasar/www/dojo-release-1.7.3 $(DESTDIR)/usr/share/nova/Quasar/www/dojo
-	-install Quasar/quasar $(DESTDIR)/usr/bin/quasar
-
-install-mothership:
-	cp -frup Mothership $(DESTDIR)/usr/share/nova
-	tar -C $(DESTDIR)/usr/share/nova/Mothership/www -xf Mothership/dojo-release-1.7.0.tar.gz
-	-install Mothership/mothership $(DESTDIR)/usr/bin/mothership
+	cp -frup Quasar "$(DESTDIR)/usr/share/nova/sharedFiles"
+	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Quasar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
+	-install Quasar/quasar "$(DESTDIR)/usr/bin/quasar"
 
 install-hhconfig:
-	-install HoneydHostConfig/honeydhostconfig $(DESTDIR)/usr/bin/honeydhostconfig
-	-install Installer/Read/sudoers_HHConfig $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	-install HaystackAutoConfig/haystackautoconfig "$(DESTDIR)/usr/bin/haystackautoconfig"
+	-install Installer/miscFiles/sudoers_HHConfig "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 
 install-novad:
-	install Novad/novad $(DESTDIR)/usr/bin
+	-install Novad/novad "$(DESTDIR)/usr/bin"
 
 install-ui-core:
-	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
+	-install Nova_UI_Core/libNova_UI_Core.so "$(DESTDIR)/usr/lib"
 
 install-cli:
-	install NovaCLI/novacli $(DESTDIR)/usr/bin
+	-install NovaCLI/novacli "$(DESTDIR)/usr/bin"
 
 install-novatrainer:
-	install NovaTrainer/novatrainer $(DESTDIR)/usr/bin
+	-install NovaTrainer/novatrainer "$(DESTDIR)/usr/bin"
 
 install-nodejsmodule:
-	install NodejsModule/build/Release/novaconfig.node $(DESTDIR)/usr/share/nova/NodejsModule/
+	mkdir -p "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule"
+	-install NodejsModule/build/Release/novaconfig.node "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule/"
 
 
 #Uninstall
 uninstall: uninstall-files uninstall-permissions
 
 uninstall-files:
-	rm -rf $(DESTDIR)/etc/nova
-	rm -rf $(DESTDIR)/usr/share/nova
-	rm -f $(DESTDIR)/usr/bin/novacli
-	rm -f $(DESTDIR)/usr/bin/novad
-	rm -f $(DESTDIR)/usr/bin/honeydhostconfig
-	rm -f $(DESTDIR)/usr/bin/nova_mailer
-	rm -f $(DESTDIR)/usr/bin/nova_init
-	rm -f $(DESTDIR)/usr/bin/quasar
-	rm -f $(DESTDIR)/usr/bin/mothership
-	rm -f $(DESTDIR)/usr/bin/novatrainer
-	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
-	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
-	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova_debug
-	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_HHConfig
-	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
-	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
+	rm -rf ~/.config/nova
+	rm -rf "$(DESTDIR)/usr/share/nova"
+	rm -f "$(DESTDIR)/usr/bin/novacli"
+	rm -f "$(DESTDIR)/usr/bin/novad"
+	rm -f "$(DESTDIR)/usr/bin/haystackautoconfig"
+	rm -f "$(DESTDIR)/usr/bin/nova_mailer"
+	rm -f "$(DESTDIR)/usr/bin/nova_init"
+	rm -f "$(DESTDIR)/usr/bin/quasar"
+	rm -f "$(DESTDIR)/usr/bin/novatrainer"
+	rm -f "$(DESTDIR)/usr/lib/libNova_UI_Core.so"
+	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_nova"
+	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_nova_debug"
+	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_HHConfig"
+	rm -f "$(DESTDIR)/etc/rsyslog.d/40-nova.conf"
+	rm -f "$(DESTDIR)/etc/sysctl.d/30-novactl.conf"
 
 uninstall-permissions:
 	sh debian/postrm

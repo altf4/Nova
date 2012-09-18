@@ -48,7 +48,7 @@ v8::Handle<Value> CustomizeTrainingBinding::New(const Arguments& args)
 
 	CustomizeTrainingBinding *obj = new CustomizeTrainingBinding();
 
-	obj->m_map = TrainingData::ParseTrainingDb(Config::Inst()->GetPathHome() + "/Config/training.db");
+	obj->m_map = TrainingData::ParseTrainingDb(Config::Inst()->GetPathHome() + "/config/training/training.db");
 
 	if(obj->m_map == NULL)
 	{
