@@ -43,7 +43,7 @@ using namespace Nova;
 // Maintains a list of suspects and information on network activity
 SuspectTable suspects;
 
-KnnClassification *engine;
+ClassificationEngine *engine;
 EvidenceTable suspectEvidence;
 
 pcap_dumper_t *pcapDumpStream;
@@ -204,8 +204,8 @@ void ConvertCaptureToDump(std::string captureFolder)
 	}
 
 
-	engine = new KnnClassification(suspects);
-	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
+	engine = ClassificationEngine::MakeEngine();
+	engine->LoadConfiguration();
 
 
 	string dumpFile = captureFolder + "/nova.dump";

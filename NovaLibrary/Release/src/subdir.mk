@@ -4,6 +4,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/ClassificationEngine.cpp \
 ../src/Config.cpp \
 ../src/Database.cpp \
 ../src/Doppelganger.cpp \
@@ -23,6 +24,7 @@ CPP_SRCS += \
 ../src/WhitelistConfiguration.cpp 
 
 OBJS += \
+./src/ClassificationEngine.o \
 ./src/Config.o \
 ./src/Database.o \
 ./src/Doppelganger.o \
@@ -42,6 +44,7 @@ OBJS += \
 ./src/WhitelistConfiguration.o 
 
 CPP_DEPS += \
+./src/ClassificationEngine.d \
 ./src/Config.d \
 ./src/Database.d \
 ./src/Doppelganger.d \

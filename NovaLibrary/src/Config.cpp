@@ -81,7 +81,8 @@ string Config::m_prefixes[] =
 	"WEB_UI_PORT",
 	"CLEAR_AFTER_HOSTILE_EVENT",
 	"CAPTURE_BUFFER_SIZE",
-	"FEATURE_WEIGHTS"
+	"FEATURE_WEIGHTS",
+	"CLASSIFICATION_ENGINE"
 };
 
 Config *Config::m_instance = NULL;
@@ -776,6 +777,20 @@ void Config::LoadConfig_Internal()
 						isValid[prefixIndex] = true;
 					}
 
+				}
+				continue;
+			}
+
+			// CLASSIFICATION_ENGINE
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_classificationType = line;
+					isValid[prefixIndex] = true;
 				}
 				continue;
 			}
@@ -2531,9 +2546,16 @@ bool Config::GetSMTPUseAuth()
 	return m_SMTPUseAuth;
 }
 
-vector<double> Config::GetFeatureWeights() {
+vector<double> Config::GetFeatureWeights()
+{
 	Lock lock(&m_lock, READ_LOCK);
 	return m_featureWeights;
+}
+
+string Config::GetClassificationEngineType()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_classificationType;
 }
 
 }

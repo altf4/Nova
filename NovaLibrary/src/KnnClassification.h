@@ -16,8 +16,8 @@
 // Description : Suspect classification engine
 //============================================================================
 
-#ifndef CLASSIFICATIONENGINE_H_
-#define CLASSIFICATIONENGINE_H_
+#ifndef KNNCLASSIFICATIONENGINE_H_
+#define KNNCLASSIFICATIONENGINE_H_
 
 #include <string>
 #include <fstream>
@@ -27,6 +27,7 @@
 #include "Logger.h"
 #include "Suspect.h"
 #include "Doppelganger.h"
+#include "ClassificationEngine.h"
 
 namespace Nova
 {
@@ -39,10 +40,10 @@ enum normalizationType {
 };
 
 
-class KnnClassification
+class KnnClassification : public Nova::ClassificationEngine
 {
 public:
-	KnnClassification(SuspectTable &table);
+	KnnClassification();
 
 	~KnnClassification();
 
@@ -58,22 +59,12 @@ public:
 	void LoadDataPointsFromFile(std::string inFilePath);
 	void LoadDataPointsFromVector(std::vector<double*> points);
 
-	// Writes the list of suspects out to a file specified by outFilePath
-	//		outFilePath - path to output file
-	void WriteDataPointsToFile(std::string outFilePath, ANNkd_tree *tree);
-
 	// Normalized a single value
 	static double Normalize(normalizationType type, double value, double min, double max, double weight);
 
-	// Prints a single ANN point, p, to stream, out
-	//		out - steam to print to
-	//		p 	- ANN point to print
-	void PrintPt(std::ostream &out, ANNpoint p);
+	void LoadConfiguration();
 
 private:
-	// Disable the empty constructor, we need the logger/config/suspect table to do anything
-	KnnClassification();
-
 	// Types of normalization to apply to our features
 	static normalizationType m_normalization[];
 

@@ -225,6 +225,7 @@ public:
 	void SetCaptureBufferSize(int bufferSize);
 
 	std::vector<double> GetFeatureWeights();
+	std::string GetClassificationEngineType();
 
 protected:
 	Config();
@@ -321,10 +322,12 @@ private:
 
 	char m_haystackStorage;
 	std::string m_userPath;
+	std::string m_classificationType;
 
 	std::vector<double> m_featureWeights;
 
 	static std::string m_pathPrefix;
+
 
 
 	pthread_rwlock_t m_lock;

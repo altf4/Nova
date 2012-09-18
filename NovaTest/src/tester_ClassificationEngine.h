@@ -31,13 +31,12 @@ class KnnClassificationTest : public ::testing::Test
 
 protected:
 
-	SuspectTable suspects;
 	KnnClassification *testObject;
 
 	// Unused methods here may be deleted
 	KnnClassificationTest()
 	{
-		testObject = new KnnClassification(suspects);
+		testObject = new KnnClassification();
 	}
 };
 

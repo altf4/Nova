@@ -17,7 +17,6 @@
 //============================================================================
 
 #include "KnnClassification.h"
-#include "SuspectTable.h"
 #include "Config.h"
 #include "Lock.h"
 
@@ -45,7 +44,7 @@ normalizationType KnnClassification::m_normalization[] = {
 		LINEAR_SHIFT
 };
 
-KnnClassification::KnnClassification(SuspectTable& suspects)
+KnnClassification::KnnClassification()
 {
 	pthread_rwlock_init(&m_lock, NULL);
 
@@ -249,14 +248,8 @@ double KnnClassification::Classify(Suspect *suspect)
 	return suspect->GetClassification();
 }
 
-void KnnClassification::PrintPt(ostream &out, ANNpoint p)
-{
-	out << "(" << p[0];
-	for(uint i = 1;i < Config::Inst()->GetEnabledFeatureCount();i++)
-	{
-		out << ", " << p[i];
-	}
-	out << ")\n";
+void KnnClassification::LoadConfiguration() {
+	this->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 }
 
 void KnnClassification::LoadDataPointsFromFile(string inFilePath)
@@ -602,27 +595,4 @@ double KnnClassification::Normalize(normalizationType type, double value, double
 		LOG(WARNING, "Normalize returned a negative number. This is probably an error", "");
 	}
 	return ret;
-}
-
-
-void KnnClassification::WriteDataPointsToFile(string outFilePath, ANNkd_tree *tree)
-{
-	ofstream myfile (outFilePath.data());
-	if(myfile.is_open())
-	{
-		for(int i = 0; i < tree->nPoints(); i++ )
-		{
-			for(int j=0; j < tree->theDim(); j++)
-			{
-				myfile << tree->thePoints()[i][j] << " ";
-			}
-			myfile << m_dataPtsWithClass[i]->m_classification;
-			myfile << "\n";
-		}
-	}
-	else
-	{
-		LOG(ERROR, "Unable to open the training data file at "+outFilePath+".", "");
-	}
-	myfile.close();
 }
