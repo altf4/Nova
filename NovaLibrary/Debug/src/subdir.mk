@@ -21,6 +21,7 @@ CPP_SRCS += \
 ../src/Point.cpp \
 ../src/Suspect.cpp \
 ../src/SuspectTable.cpp \
+../src/ThresholdTriggerClassification.cpp \
 ../src/WhitelistConfiguration.cpp 
 
 OBJS += \
@@ -41,6 +42,7 @@ OBJS += \
 ./src/Point.o \
 ./src/Suspect.o \
 ./src/SuspectTable.o \
+./src/ThresholdTriggerClassification.o \
 ./src/WhitelistConfiguration.o 
 
 CPP_DEPS += \
@@ -61,6 +63,7 @@ CPP_DEPS += \
 ./src/Point.d \
 ./src/Suspect.d \
 ./src/SuspectTable.d \
+./src/ThresholdTriggerClassification.d \
 ./src/WhitelistConfiguration.d 
 
 

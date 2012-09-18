@@ -21,6 +21,7 @@
 
 #include "HashMapStructs.h"
 #include "Defines.h"
+#include "ThresholdTriggerClassification.h"
 
 namespace Nova {
 
@@ -226,6 +227,7 @@ public:
 
 	std::vector<double> GetFeatureWeights();
 	std::string GetClassificationEngineType();
+	std::vector<HostileThreshold> GetHostileThresholds();
 
 protected:
 	Config();
@@ -325,6 +327,8 @@ private:
 	std::string m_classificationType;
 
 	std::vector<double> m_featureWeights;
+
+	std::vector<HostileThreshold> m_hostileThresholds;
 
 	static std::string m_pathPrefix;
 

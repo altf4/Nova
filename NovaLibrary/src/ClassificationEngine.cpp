@@ -16,8 +16,9 @@
 // Description : 
 //============================================================================/*
 
-#include "KnnClassification.h"
+#include "ThresholdTriggerClassification.h"
 #include "ClassificationEngine.h"
+#include "KnnClassification.h"
 #include "Config.h"
 
 #include <string>
@@ -26,13 +27,19 @@ using namespace Nova;
 
 ClassificationEngine::ClassificationEngine() {}
 ClassificationEngine::~ClassificationEngine() {}
+void ClassificationEngine::LoadConfiguration() {}
 
+// Factory method for classification engine creation
 ClassificationEngine * ClassificationEngine::MakeEngine()
 {
 	string engine = Config::Inst()->GetClassificationEngineType();
 	if (engine == "KNN")
 	{
 		return new KnnClassification();
+	}
+	else if (engine == "THRESHOLD_TRIGGER")
+	{
+		return new ThresholdTriggerClassification();
 	}
 
 	return NULL;
