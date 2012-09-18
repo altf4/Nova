@@ -837,7 +837,6 @@ void Config::LoadConfig_Internal()
 				line = line.substr(prefix.size() + 1, line.size());
 				if(line.size() > 0)
 				{
-\
 					istringstream is(line);
 					m_featureWeights.clear();
 					double n;
