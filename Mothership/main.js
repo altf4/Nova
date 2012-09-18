@@ -11,6 +11,7 @@ var nova = new novaconfig.Instance();
 var config = new novaconfig.NovaConfigBinding();
 
 var NovaHomePath = config.GetPathHome();
+var NovaSharedPath = config.GetPathShared();
 
 // Configure the express server to use the 
 // bodyParser so that we can view and use the 
@@ -110,8 +111,8 @@ var https = require('https');
 // TODO: These paths will need to be relative to the NovaPath
 // or something mothership specific
 var options = {
-	key: fs.readFileSync('/usr/share/nova/Quasar/serverkey.pem'),
-	cert: fs.readFileSync('/usr/share/nova/Quasar/servercert.pem')
+	key: fs.readFileSync(NovaSharedPath + '/Quasar/serverkey.pem'),
+	cert: fs.readFileSync(NovaSharedPath + '/Quasar/servercert.pem')
 	/*ca: fs.readFileSync(''),
 	requestCert:		true,
 	rejectUnauthorized:	false*/

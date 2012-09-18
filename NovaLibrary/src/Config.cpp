@@ -28,6 +28,7 @@
 #include <fstream>
 #include <sstream>
 #include <math.h>
+#include <pwd.h>
 #include <iostream>
 
 #include "Config.h"

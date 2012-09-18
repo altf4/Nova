@@ -260,6 +260,11 @@ install-quasar:
 	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Quasar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
 	-install Quasar/quasar "$(DESTDIR)/usr/bin/quasar"
 
+install-mothership:
+	cp -frup Mothership "$(DESTDIR)/usr/share/nova/sharedFiles"
+	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Mothership/www" -xf Mothership/dojo-release-1.7.0.tar.gz
+	-install Mothership/mothership "$(DESTDIR)/usr/bin/mothership"	
+
 install-hhconfig:
 	-install HaystackAutoConfig/haystackautoconfig "$(DESTDIR)/usr/bin/haystackautoconfig"
 	-install Installer/miscFiles/sudoers_HHConfig "$(DESTDIR)/etc/sudoers.d/" --mode=0440
