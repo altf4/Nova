@@ -1,5 +1,5 @@
 extends layout
-        
+               
 block content
   table
     thead
@@ -132,6 +132,16 @@ block headerAdditions
               // If unselected, remove target from message.id
               console.log(source + ' is not checked, can not do anything until target client is set');
           }
+      }
+       
+      now.UpdateConfiguration = function()
+      {
+        //construct json here
+        //message type: updateConfiguration
+        var message = {};
+        message.type = 'updateConfiguration';
+        message.id = '';
+        
       }
         
       now.ready(function(){

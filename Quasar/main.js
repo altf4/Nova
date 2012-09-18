@@ -356,6 +356,10 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                nova.getSuspectList(distributeSuspect);
                break;
              case 'updateConfiguration':
+               for(var i in json_args.settings)
+               {
+                 config.WriteSetting(json_args.settings[i].name.toString(), json_args.settings[i].value.toString());
+               }
                break;
              default:
                console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
