@@ -274,9 +274,10 @@ Handle<Value> NovaNode::ClearAllSuspects(const Arguments &)
 	HandleScope scope;
 	
 	HandleAllSuspectsCleared();
-	Nova::ClearAllSuspects();
+	
+	bool cleared = Nova::ClearAllSuspects();
 
-	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
+	Local<Boolean> result = Local<Boolean>::New( Boolean::New(cleared) );
 	return scope.Close(result);
 }
 
