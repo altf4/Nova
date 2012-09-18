@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : ClassificationEngine.h
+// Name        : KnnClassification.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 // Description : Suspect classification engine
 //============================================================================
 
-#include "ClassificationEngine.h"
+#include "KnnClassification.h"
 #include "SuspectTable.h"
 #include "Config.h"
 #include "Lock.h"
@@ -28,7 +28,7 @@ using namespace Nova;
 
 // Normalization method to use on each feature
 // TODO: Make this a configuration var somewhere in Novaconfig.txt?
-normalizationType ClassificationEngine::m_normalization[] = {
+normalizationType KnnClassification::m_normalization[] = {
 		LINEAR_SHIFT, // Don't normalize IP traffic distribution, already between 0 and 1
 		LINEAR_SHIFT,
 		LOGARITHMIC,
@@ -45,7 +45,7 @@ normalizationType ClassificationEngine::m_normalization[] = {
 		LINEAR_SHIFT
 };
 
-ClassificationEngine::ClassificationEngine(SuspectTable& suspects)
+KnnClassification::KnnClassification(SuspectTable& suspects)
 {
 	pthread_rwlock_init(&m_lock, NULL);
 
@@ -53,13 +53,13 @@ ClassificationEngine::ClassificationEngine(SuspectTable& suspects)
 	m_dataPts = NULL;
 }
 
-ClassificationEngine::~ClassificationEngine()
+KnnClassification::~KnnClassification()
 {
 
 }
 
 
-double ClassificationEngine::Classify(Suspect *suspect)
+double KnnClassification::Classify(Suspect *suspect)
 {
 	Lock lock(&m_lock, READ_LOCK);
 	double sqrtDIM = Config::Inst()->GetSqurtEnabledFeatures();
@@ -249,7 +249,7 @@ double ClassificationEngine::Classify(Suspect *suspect)
 	return suspect->GetClassification();
 }
 
-void ClassificationEngine::PrintPt(ostream &out, ANNpoint p)
+void KnnClassification::PrintPt(ostream &out, ANNpoint p)
 {
 	out << "(" << p[0];
 	for(uint i = 1;i < Config::Inst()->GetEnabledFeatureCount();i++)
@@ -259,7 +259,7 @@ void ClassificationEngine::PrintPt(ostream &out, ANNpoint p)
 	out << ")\n";
 }
 
-void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
+void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	ifstream myfile (inFilePath.data());
@@ -456,7 +456,7 @@ void ClassificationEngine::LoadDataPointsFromFile(string inFilePath)
 					Config::Inst()->GetEnabledFeatureCount());						// dimension of space
 }
 
-void ClassificationEngine::LoadDataPointsFromVector(vector<double*> points)
+void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	vector<double> weights = Config::Inst()->GetFeatureWeights();
@@ -557,7 +557,7 @@ void ClassificationEngine::LoadDataPointsFromVector(vector<double*> points)
 
 }
 
-double ClassificationEngine::Normalize(normalizationType type, double value, double min, double max, double weight)
+double KnnClassification::Normalize(normalizationType type, double value, double min, double max, double weight)
 {
 	double ret = -1;
 	switch(type)
@@ -605,7 +605,7 @@ double ClassificationEngine::Normalize(normalizationType type, double value, dou
 }
 
 
-void ClassificationEngine::WriteDataPointsToFile(string outFilePath, ANNkd_tree *tree)
+void KnnClassification::WriteDataPointsToFile(string outFilePath, ANNkd_tree *tree)
 {
 	ofstream myfile (outFilePath.data());
 	if(myfile.is_open())

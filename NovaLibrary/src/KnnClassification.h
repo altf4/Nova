@@ -39,12 +39,12 @@ enum normalizationType {
 };
 
 
-class ClassificationEngine
+class KnnClassification
 {
 public:
-	ClassificationEngine(SuspectTable &table);
+	KnnClassification(SuspectTable &table);
 
-	~ClassificationEngine();
+	~KnnClassification();
 
 	// Performs classification on given suspect
 	//		suspect - suspect to classify based on current evidence
@@ -72,7 +72,7 @@ public:
 
 private:
 	// Disable the empty constructor, we need the logger/config/suspect table to do anything
-	ClassificationEngine();
+	KnnClassification();
 
 	// Types of normalization to apply to our features
 	static normalizationType m_normalization[];

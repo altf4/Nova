@@ -4,7 +4,6 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/ClassificationEngine.cpp \
 ../src/Config.cpp \
 ../src/Database.cpp \
 ../src/Doppelganger.cpp \
@@ -14,6 +13,7 @@ CPP_SRCS += \
 ../src/FilePacketCapture.cpp \
 ../src/HaystackControl.cpp \
 ../src/InterfacePacketCapture.cpp \
+../src/KnnClassification.cpp \
 ../src/Logger.cpp \
 ../src/NovaUtil.cpp \
 ../src/PacketCapture.cpp \
@@ -23,7 +23,6 @@ CPP_SRCS += \
 ../src/WhitelistConfiguration.cpp 
 
 OBJS += \
-./src/ClassificationEngine.o \
 ./src/Config.o \
 ./src/Database.o \
 ./src/Doppelganger.o \
@@ -33,6 +32,7 @@ OBJS += \
 ./src/FilePacketCapture.o \
 ./src/HaystackControl.o \
 ./src/InterfacePacketCapture.o \
+./src/KnnClassification.o \
 ./src/Logger.o \
 ./src/NovaUtil.o \
 ./src/PacketCapture.o \
@@ -42,7 +42,6 @@ OBJS += \
 ./src/WhitelistConfiguration.o 
 
 CPP_DEPS += \
-./src/ClassificationEngine.d \
 ./src/Config.d \
 ./src/Database.d \
 ./src/Doppelganger.d \
@@ -52,6 +51,7 @@ CPP_DEPS += \
 ./src/FilePacketCapture.d \
 ./src/HaystackControl.d \
 ./src/InterfacePacketCapture.d \
+./src/KnnClassification.d \
 ./src/Logger.d \
 ./src/NovaUtil.d \
 ./src/PacketCapture.d \

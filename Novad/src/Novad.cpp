@@ -19,7 +19,7 @@
 #include "messaging/MessageManager.h"
 #include "WhitelistConfiguration.h"
 #include "InterfacePacketCapture.h"
-#include "ClassificationEngine.h"
+#include "KnnClassification.h"
 #include "HaystackControl.h"
 #include "FilePacketCapture.h"
 #include "ProtocolHandler.h"
@@ -94,7 +94,7 @@ int honeydDHCPWatch;
 int whitelistNotifyFd;
 int whitelistWatch;
 
-ClassificationEngine *engine;
+KnnClassification *engine;
 
 pthread_t classificationLoopThread;
 pthread_t ipUpdateThread;
@@ -156,7 +156,7 @@ int RunNovaD()
 	doppel = new Doppelganger(suspects);
 	doppel->InitDoppelganger();
 
-	engine = new ClassificationEngine(suspects);
+	engine = new KnnClassification(suspects);
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 
 	Spawn_UI_Handler();

@@ -17,7 +17,7 @@
 //============================================================================
 
 #include "WhitelistConfiguration.h"
-#include "ClassificationEngine.h"
+#include "KnnClassification.h"
 #include "ProtocolHandler.h"
 #include "EvidenceTable.h"
 #include "PacketCapture.h"
@@ -75,7 +75,7 @@ extern int whitelistWatch;
 
 extern pthread_mutex_t packetCapturesLock;
 
-extern ClassificationEngine *engine;
+extern KnnClassification *engine;
 extern EvidenceTable suspectEvidence;
 
 extern Doppelganger *doppel;
