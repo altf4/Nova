@@ -14,12 +14,105 @@ block content
           div(id='groupsList')
 
   h1 Configuration Options
+  h2 TCP Timeout
   label TCP Timeout
   input(type='number', name='TCP_TIMEOUT', step='1', min='0', value=TCP_TIMEOUT)    
   br
   label TCP Timeout Check Frequency
   input(type='number', name='TCP_CHECK_FREQ', step='1', min='0', value=TCP_CHECK_FREQ)
-
+  br
+  
+  h2 Classification Settings
+  label Classification Timeout
+  input(type="number", step="1", min="0", name="CLASSIFICATION_TIMEOUT",  value=CLASSIFICATION_TIMEOUT)
+  br
+  label Neighbors
+  input(type="number", step="1", min="1", name="K",  value=K)
+  br
+  label EPS
+  input(name="EPS",  value=EPS)
+  br
+  label Classification Threshold
+  input(name="CLASSIFICATION_THRESHOLD",  value=CLASSIFICATION_THRESHOLD)
+  br
+  label Packets Needed Before Classification
+  input(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
+  br
+  label Clear data after suspect logged as hostile?
+  br
+  if CLEAR_AFTER_HOSTILE_EVENT != "0"
+    |Yes
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
+    br
+    |No
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0")
+    br
+  else
+    |Yes
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1")
+    br
+    |No
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0", checked)
+    br
+  br
+  label Custom PCAP Filter String
+  input(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
+  br
+  label Custom PCAP Filter String Mode
+  br
+  if CUSTOM_PCAP_MODE != "0"
+    |Override
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="1", checked)
+    br
+    |Append
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0")
+    br
+  else
+    |Override
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="1")
+    br
+    |Append
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0", checked)
+    br
+  br
+  
+  h2 Special Run Settings
+  label Packet Capture Buffer Size (in bytes)
+  input(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE",  value=CAPTURE_BUFFER_SIZE)
+  br
+  
+  h2 State File Settings
+  label State Save Frequency
+  input(type="number", min="0", name="SAVE_FREQUENCY",  value=SAVE_FREQUENCY)
+  br
+  label Data TTL
+  input(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
+  br
+  
+  h2 Doppelganger
+  label Doppelganger Enabled?
+  br
+  if DM_ENABLED != "0"
+    |Yes
+    input(type="radio", name="DM_ENABLED", value="1", checked)
+    br
+    |No
+    input(type="radio", name="DM_ENABLED", value="0")
+    br
+  else
+    |Yes
+    input(type="radio", name="DM_ENABLED", value="1")
+    br
+    |No
+    input(type="radio", name="DM_ENABLED", value="0", checked)
+    br
+  br
+  
+  h2 Logger Settings
+  label Service Preferences
+  input(name="SERVICE_PREFERENCES", value=SERVICE_PREFERENCES)
+  br
+  
 block headerAdditions
   script(type="text/javascript", src="scripts/ConnectionManagement.js")
   script

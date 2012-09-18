@@ -35,7 +35,7 @@ app.set('view options', { layout: false });
 app.set('views', __dirname + '/views');
 // TODO: Make port configurable
 app.listen(8080);
-app.use(express.static(NovaHomePath + '/../Mothership/www'));
+app.use(express.static(NovaSharedPath + '/Mothership/www'));
 
 // Initialize nowjs to listen to our express server
 var everyone = nowjs.initialize(app);
@@ -60,12 +60,12 @@ everyone.now.MessageSend = function(message)
 everyone.now.RemoveGroup = function(group)
 {
   console.log('Removing group ' + group + ' from the client groups file');
-  var groupFile = fs.readFileSync(NovaHomePath + '/../Mothership/client_groups.txt', 'utf8');
+  var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
   var regex = group + ".+?;";
   var replaceWithNull = new RegExp(regex, "g");
   groupFile = groupFile.replace(replaceWithNull, '');
   groupFile = trimNewlines(groupFile);
-  fs.writeFileSync(NovaHomePath + '/../Mothership/client_groups.txt', groupFile);
+  fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 };
 
 everyone.now.UpdateGroup = function(group, newMembers)
@@ -74,19 +74,19 @@ everyone.now.UpdateGroup = function(group, newMembers)
   {
     console.log('Updating group ' + group + ' to have members ' + newMembers);
   }
-  var groupFile = fs.readFileSync(NovaHomePath + '/../Mothership/client_groups.txt', 'utf8');
+  var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
   var regex = group + ".+?;";
   var replaceWithNull = new RegExp(regex, "g");
   groupFile = groupFile.replace(replaceWithNull, group + ":" + newMembers + ";");
-  fs.writeFileSync(NovaHomePath + '/../Mothership/client_groups.txt', groupFile);
+  fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
 
 everyone.now.AddGroup = function(group, members)
 {
   console.log('Adding group ' + group + ' with members ' + members);
-  var groupFile = fs.readFileSync(NovaHomePath + '/../Mothership/client_groups.txt', 'utf8');
+  var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
   groupFile += '\n' + group + ":" + members + ";";
-  fs.writeFileSync(NovaHomePath + '/../Mothership/client_groups.txt', groupFile);
+  fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
 
 function trimNewlines(string)
@@ -218,7 +218,7 @@ wsServer.on('request', function(request)
 						//       part of the push object literal
 						var push = {};
 						push.client = json_args.id;
-						push.file = (NovaHomePath + '/../Mothership/ClientConfigs/' + json_args.filename);
+						push.file = (NovaSharedPath + '/Mothership/ClientConfigs/' + json_args.filename);
 						fileAssociations.push(push);
 						fs.writeFileSync(push.file, json_args.file);
 						console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);
@@ -283,7 +283,7 @@ function getClients()
 // that have an associated list of last-known clientIds. 
 function getGroups()
 {
-  var group = fs.readFileSync(NovaHomePath + '/../Mothership/client_groups.txt', 'ascii');
+  var group = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'ascii');
   if(group == '')
   {
     console.log('client groups file is empty');
@@ -330,16 +330,15 @@ app.get('/config', function(req, res)
 		, GROUPS: getGroups()
 		, TCP_TIMEOUT: config.ReadSetting('TCP_TIMEOUT')
 		, TCP_CHECK_FREQ: config.ReadSetting('TCP_CHECK_FREQ')
-		, READ_PCAP: config.ReadSetting('READ_PCAP')
-		, GO_TO_LIVE: config.ReadSetting('GO_TO_LIVE')
+		//, READ_PCAP: config.ReadSetting('READ_PCAP')
+		//, GO_TO_LIVE: config.ReadSetting('GO_TO_LIVE')
 		, CLASSIFICATION_TIMEOUT: config.ReadSetting('CLASSIFICATION_TIMEOUT')
-		, K: config.ReadSetting('TK')
+		, K: config.ReadSetting('K')
 		, EPS: config.ReadSetting('EPS')
 		, CLASSIFICATION_THRESHOLD: config.ReadSetting('CLASSIFICATION_THRESHOLD')
 		, DM_ENABLED: config.ReadSetting('DM_ENABLED')
 		, ENABLED_FEATURES: config.ReadSetting('ENABLED_FEATURES')
 		, FEATURE_NAMES: nova.GetFeatureNames()
-		, THINNING_DISTANCE: config.ReadSetting('THINNING_DISTANCE')
 		, SAVE_FREQUENCY: config.ReadSetting('SAVE_FREQUENCY')
 		, DATA_TTL: config.ReadSetting('DATA_TTL')
 		, SERVICE_PREFERENCES: config.ReadSetting('SERVICE_PREFERENCES')
