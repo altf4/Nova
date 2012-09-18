@@ -1039,14 +1039,6 @@ bool Config::LoadPaths()
 		{
 			getline(*paths,line);
 
-			prefix = "NOVA_HOME";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				m_pathHome = m_pathPrefix + ResolvePathVars(line);
-				continue;
-			}
-
 			prefix = "NOVA_RD";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
