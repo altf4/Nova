@@ -125,6 +125,29 @@ double ClassificationEngine::Classify(Suspect *suspect)
 			dists,								// distance (returned)
 			Config::Inst()->GetEps());								// error bound
 
+	stringstream classificationNotes;
+
+	for (int i = 0; i < k; i++)
+	{
+		classificationNotes << "k=" << i << ":d=" << dists[i];
+		classificationNotes << ":c " << m_dataPtsWithClass[nnIdx[i]]->m_classification;
+		classificationNotes << "\n:o ";
+		for (uint j = 0; j < Config::Inst()->GetEnabledFeatureCount(); j++)
+		{
+			classificationNotes << m_dataPtsWithClass[nnIdx[i]]->m_annPoint[j] << " ";
+		}
+
+		classificationNotes << "\n:n ";
+
+		for (uint j = 0; j < Config::Inst()->GetEnabledFeatureCount(); j++)
+		{
+			classificationNotes << m_kdTree->thePoints()[nnIdx[i]][j] << " ";
+		}
+
+		classificationNotes << endl << endl;;
+	}
+	suspect->m_classificationNotes = classificationNotes.str();
+
 	for(int i = 0; i < DIM; i++)
 	{
 		fi = (featureIndex)i;

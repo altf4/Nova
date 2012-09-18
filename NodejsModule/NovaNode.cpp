@@ -242,7 +242,9 @@ Handle<Value> NovaNode::GetSuspectDetailsString(const Arguments &args) {
 	string details;
 	Suspect *suspect = GetSuspectWithData(ntohl(address));
 	if (suspect != NULL) {
-		details = suspect->GetFeatureSet().toString();
+		details = suspect->ToString();
+		details += "\n";
+		details += suspect->GetFeatureSet().toString();
 		delete suspect;
 	} else {
 		details = "Unable to complete request";
