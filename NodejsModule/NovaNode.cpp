@@ -17,6 +17,7 @@
 //============================================================================
 
 #include "NovaNode.h"
+#include "ClassificationEngine.h"
 
 using namespace node;
 using namespace v8;
@@ -189,6 +190,7 @@ void NovaNode::Init(Handle<Object> target)
 	// Javascript member methods
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetFeatureNames", GetFeatureNames);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetDIM", GetDIM);
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetSupportedEngines", GetSupportedEngines);
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "getSuspectList", getSuspectList);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", ClearAllSuspects);
@@ -258,8 +260,6 @@ Handle<Value> NovaNode::GetFeatureNames(const Arguments &)
 {
 	HandleScope scope;
 
-	
-
 	vector<string> featureNames;
 	for (int i = 0; i < DIM; i++)
 	{
@@ -279,6 +279,13 @@ Handle<Value> NovaNode::ClearAllSuspects(const Arguments &)
 
 	Local<Boolean> result = Local<Boolean>::New( Boolean::New(cleared) );
 	return scope.Close(result);
+}
+
+Handle<Value> NovaNode::GetSupportedEngines(const Arguments &)
+{
+	HandleScope scope;
+
+	return scope.Close(cvv8::CastToJS(ClassificationEngine::GetSupportedEngines()));
 }
 
 Handle<Value> NovaNode::GetDIM(const Arguments &)

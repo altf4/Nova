@@ -37,6 +37,43 @@ script
     document.getElementById("ENABLED_FEATURES").setAttribute("value", changeTo);
     document.getElementById("enabledFeaturesLabel").innerHTML = "Features Mask: " + changeTo;
   }
+
+  function featureWeightChanged() {
+    var enabledMask = document.getElementById("ENABLED_FEATURES").getAttribute("value");
+    var weights = "";
+    for(var i in enabledMask) {
+        weights += String(document.getElementById("featureWeight" + i).value) + " ";
+    }
+    weights = weights.slice(0, -1);
+    document.getElementById("FEATURE_WEIGHTS").value = weights; 
+  }
+
+  function featureThresholdChanged() {
+      var enabledMask = document.getElementById("ENABLED_FEATURES").getAttribute("value");
+      var hostileThresholds = "";
+      for (var i in enabledMask) {
+          hostileThresholds += String(document.getElementById("featureThreshold" + i).value + " ");
+      }
+      hostileThresholds = hostileThresholds.slice(0, -1);
+      document.getElementById("THRESHOLD_HOSTILE_TRIGGERS").value = hostileThresholds;
+  }
+
+  function updateFeatureSettingStates() {
+    var enabledMask = document.getElementById("ENABLED_FEATURES").getAttribute("value");
+    for (var i in enabledMask) {
+        if (document.getElementById("CLASSIFICATION_ENGINE").value == "THRESHOLD_TRIGGER") {
+            document.getElementById("featureWeight" + i).disabled = true;
+            document.getElementById("featureThreshold" + i).disabled = false;
+        } else {
+            document.getElementById("featureWeight" + i).disabled = false;
+            document.getElementById("featureThreshold" + i).disabled = true;
+        }
+    }
+  }
+
+  require(["dojo/domReady!"], function(){
+    updateFeatureSettingStates();
+  });
   
 form(method="post", action="/configureNovaSave")
   h2 General Configuration
@@ -121,6 +158,16 @@ form(method="post", action="/configureNovaSave")
   
 
   h2 Classification Settings
+  label Classification Engine
+  select#CLASSIFICATION_ENGINE(name="CLASSIFICATION_ENGINE", onchange="updateFeatureSettingStates()")
+    - for(var i = 0; i < supportedEngines.length; i++)
+      - if (CLASSIFICATION_ENGINE == supportedEngines[i])
+        option(value="#{supportedEngines[i]}", selected='selected') #{supportedEngines[i]}
+      - else
+        option(value="#{supportedEngines[i]}") #{supportedEngines[i]}
+
+  br
+
   label(style="text-align:center;vertical-align:middle", id="enabledFeaturesLabel", name="ENABLED_FEATURES") Features Mask: #{ENABLED_FEATURES}
   br
   br
@@ -128,28 +175,40 @@ form(method="post", action="/configureNovaSave")
     thead
       tr 
         td
-          label(style="text-align:center;vertical-align:middle;font:bold;") Feature Name
+          label(style="text-align:center; width: 300px") Feature Name
         td
-          label(style="text-align:center;vertical-align:middle;font:bold;") Enabled? 
+          label(style="text-align:center; width: 50px") Enabled
+        td
+          label(style="text-align: center; width:100px") Weight
+        td
+          label(style="text-align: center; width: 100px") Hostile Threshold
     tbody
       - for(var i = 0; i < FEATURE_NAMES.length; i++)
-        - if(ENABLED_FEATURES[i] == 1)
-          tr
-            td(style="text-align:center;vertical-align:middle;") 
-              #{FEATURE_NAMES[i]}
+        tr
+          td(style="text-align:center;vertical-align:middle;") 
+            #{FEATURE_NAMES[i]}
+          - if(ENABLED_FEATURES[i] == 1)
             td
-              input(type="checkbox", value="#{i}", id="feature#{i}", checked, onclick="updateEnabledFeaturesString(#{i})")
-        - else
-          tr
-            td(style="text-align:center;vertical-align:middle;")
-              #{FEATURE_NAMES[i]}
+              input(type="checkbox", value="#{i}", id="feature#{i}", checked, onclick="updateEnabledFeaturesString(#{i})", style="width:50px")
+          - else
             td
-              input(type="checkbox", value="#{i}", id="feature#{i}", onclick="updateEnabledFeaturesString(#{i})")
+              input(type="checkbox", value="#{i}", id="feature#{i}", onclick="updateEnabledFeaturesString(#{i})", style="width:50px")
+           
+          td
+            input(type="number", min="0", max="1", value="#{FEATURE_WEIGHTS.split(" ")[i]}", id="featureWeight#{i}", onchange="featureWeightChanged()", style="width:100px")
+          td
+            input(value="#{THRESHOLD_HOSTILE_TRIGGERS.split(" ")[i]}", id="featureThreshold#{i}", onchange="featureThresholdChanged()", style="width: 100px")
   br
   
-  input(type="hidden", id="ENABLED_FEATURES", name="ENABLED_FEATURES", value="#{ENABLED_FEATURES}")
-  
+  input(type="hidden", id="ENABLED_FEATURES", name="ENABLED_FEATURES", value="#{ENABLED_FEATURES}") 
   hidden(id="length", value=FEATURE_NAMES.length)
+  
+  br
+  
+  input(type="hidden", id="FEATURE_WEIGHTS", name="FEATURE_WEIGHTS", value="#{FEATURE_WEIGHTS}") 
+  input(type="hidden", id="THRESHOLD_HOSTILE_TRIGGERS", name="THRESHOLD_HOSTILE_TRIGGERS", value="#{THRESHOLD_HOSTILE_TRIGGERS}") 
+
+
   
   label Neighbors
   input(type="number", step="1", min="1", name="K",  value=K)

@@ -45,4 +45,13 @@ ClassificationEngine * ClassificationEngine::MakeEngine()
 	return NULL;
 }
 
+vector<string> ClassificationEngine::GetSupportedEngines()
+{
+	vector<string> supportedEngines;
+	supportedEngines.push_back("KNN");
+	supportedEngines.push_back("THRESHOLD_TRIGGER");
+
+	return supportedEngines;
+}
+
 
