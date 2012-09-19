@@ -123,15 +123,25 @@ block headerAdditions
       
       function setTarget(source, target)
       {
-          if(document.getElementById(source).checked)
-          {
-              message.id += target + ':';
-          }
-          else
-          {
-              // If unselected, remove target from message.id
-              console.log(source + ' is not checked, can not do anything until target client is set');
-          }
+        var firstIndex = message.id.indexOf(target);
+        var lastIndex = message.id.lastIndexOf(target);
+        
+        if((document.getElementById(source).checked) && (firstIndex === -1))
+        {
+          message.id += target + ':';
+          console.log('message.id ' + message.id);
+        }
+        else if(firstIndex === lastIndex)
+        {
+          // If unselected, remove target from message.id
+          var regex = new RegExp(target + ':', 'i');
+          message.id = message.id.replace(regex, '');
+          console.log('message.id ' + message.id);
+        }
+        else
+        {
+          console.log(source + ' is not checked, can not do anything until target client is set');
+        }
       }
        
       now.UpdateConfiguration = function()
