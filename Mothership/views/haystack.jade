@@ -1,0 +1,103 @@
+extends layout
+
+block content
+  table
+    thead
+      tr
+        th Connected Clients
+        th Groups
+    tbody
+      tr
+        td
+          div(id='clientsList')
+        td
+          div(id='groupsList')
+
+h1 Haystack Autoconfiguration Options
+  div(id="autoconfElements")
+
+
+block headerAdditions
+  script(type="text/javascript", src="scripts/ConnectionManagement.js")
+  script
+    var clients = "#{CLIENTS}".split(':');
+    var groups = !{GROUPS};
+    var message = {};
+    message.id = '';
+    var elementCount = 0;
+    
+    function setTarget(source, target)
+    {
+      var firstIndex = message.id.indexOf(target + ":");
+      
+      var groupToAdd = (message.id.split(':')[1] != '' ? document.getElementById(source).parentNode.id : '');
+      
+      console.log('groupToAdd ' + groupToAdd);
+      
+      console.log('firstIndex == ' + firstIndex);
+      
+      if((document.getElementById(source).checked) && (firstIndex === -1))
+      {
+        message.id += target + ':';
+        console.log('message.id ' + message.id);
+      }
+      else if(firstIndex >= 0)
+      {
+        // If unselected, remove target from message.id
+        var regex = new RegExp(target + ':', 'i');
+        message.id = message.id.replace(regex, '');
+        console.log('message.id ' + message.id);
+      }
+      else
+      {
+        console.log(source + ' is not checked, can not do anything until target client is set');
+        console.log('message.id ' + message.id);
+      }
+    }
+    
+    function createAutoconfigElement(clientName, group)
+    {
+      var div = document.createElement('div');
+      div.id = 'autohook' + elementCount;
+      var label = document.createElement('label');
+      label.value = clientName;
+      var input = document.createElement('input');
+      input.type = 'number';
+      input.min = '0';
+      //This needs to be found dynamically
+      input.max = '1024';
+      input.value = '0';
+      //dropDown needs to be a dojo select containing a list of the interfaces on the 
+      //host with clientId clientName
+      var dropDown = document.createElement('select');
+      var option = document.createElement('option');
+      option.value = 'eth0';
+      dropDown.appendChild(option);
+      div.appendChild(label);
+      div.appendChild(input);
+      div.appendChild(dropDown);
+      if(group != '')
+      {
+        
+      }
+      else
+      {
+        document.getElementById('autoconfElements').appendChild(div);
+      }
+      elementCount++;
+    }
+    
+    function removeAutoconfigElement(element)
+    {
+      elementCount--;
+    }
+
+    function processAutoconfigElements()
+    {
+      
+    }
+    
+    now.ready(function(){
+      setUpSelect('clientsList');
+      setUpGrouplist('groupsList');
+    });

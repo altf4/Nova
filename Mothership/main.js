@@ -362,6 +362,13 @@ app.get('/config', function(req, res)
 	}});
 });
 
+app.get('/haystack', function(req, res){
+  res.render('haystack.jade', {locals:{
+    CLIENTS: getClients()
+    , GROUPS: getGroups()
+  }});
+});
+
 app.get('/groups', function(req, res){
   res.render('groups.jade', {locals:{
     CLIENTS: getClients()

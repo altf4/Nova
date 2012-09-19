@@ -106,13 +106,20 @@ block headerAdditions
 
     function setTarget(source, target)
     {
-        if(document.getElementById(source).checked)
+        var firstIndex = message.id.indexOf(target + ':');
+      
+        if(document.getElementById(source).checked && firstIndex === -1)
         {
             message.id += target + ':';
             for(var i = 0; i < 4; i++)
             {
                 document.getElementById('button' + i).removeAttribute('disabled');
             }
+        }
+        else if(firstIndex >= 0)
+        {
+          var regex = new RegExp(target + ':', 'i');
+          message.id = message.id.replace(regex, '');
         }
         else
         {
