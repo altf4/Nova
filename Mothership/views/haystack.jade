@@ -13,7 +13,7 @@ block content
         td
           div(id='groupsList')
 
-h1 Haystack Autoconfiguration Options
+  h1 Haystack Autoconfiguration Options
   div(id="autoconfElements")
 
 
@@ -30,7 +30,7 @@ block headerAdditions
     {
       var firstIndex = message.id.indexOf(target + ":");
       
-      var groupToAdd = (message.id.split(':')[1] != '' ? document.getElementById(source).parentNode.id : '');
+      var groupToAdd = ((target.split(':')[1] != '' && target.split(':')[1] != undefined) ? document.getElementById(source).parentNode.id : '');
       
       console.log('groupToAdd ' + groupToAdd);
       
@@ -40,12 +40,28 @@ block headerAdditions
       {
         message.id += target + ':';
         console.log('message.id ' + message.id);
+        var targets = target.split(':');
+        for(var i in targets)
+        {
+          if(targets[i] != undefined && targets[i] != '')
+          {
+            createAutoconfigElement(targets[i], groupToAdd);
+          }
+        }
       }
       else if(firstIndex >= 0)
       {
         // If unselected, remove target from message.id
         var regex = new RegExp(target + ':', 'i');
         message.id = message.id.replace(regex, '');
+        var targets = target.split(':');
+        for(var i in targets)
+        {
+          if(targets[i] != undefined && targets[i] != '')
+          {
+            removeAutoconfigElement(targets[i]);
+          }
+        }
         console.log('message.id ' + message.id);
       }
       else
@@ -61,6 +77,7 @@ block headerAdditions
       div.id = 'autohook' + elementCount;
       var label = document.createElement('label');
       label.value = clientName;
+      label.innerHTML = clientName;
       var input = document.createElement('input');
       input.type = 'number';
       input.min = '0';
@@ -72,6 +89,7 @@ block headerAdditions
       var dropDown = document.createElement('select');
       var option = document.createElement('option');
       option.value = 'eth0';
+      option.innerHTML = 'eth0';
       dropDown.appendChild(option);
       div.appendChild(label);
       div.appendChild(input);
@@ -87,8 +105,15 @@ block headerAdditions
       elementCount++;
     }
     
-    function removeAutoconfigElement(element)
+    function removeAutoconfigElement(target)
     {
+      for(var i = 0; i < elementCount; i++)
+      {
+        if(document.getElementById('autohook' + i).childNodes[0].value == target)
+        {
+          document.getElementById('autoconfElements').removeChild(document.getElementById('autohook' + i));
+        }
+      }
       elementCount--;
     }
 
