@@ -199,7 +199,10 @@ wsServer.on('request', function(request)
             getHostile.type = 'getHostileSuspects';
             getHostile.id = json_args.id + ':';
             everyone.now.MessageSend(getHostile);
-            everyone.now.UpdateConnectionsList(json_args.id, 'add');
+            if(typeof everyone.now.UpdateConnectionsList == 'function')
+            {
+              everyone.now.UpdateConnectionsList(json_args.id, 'add');
+            }
 						break;
                     // This case is reserved for response from the clients;
                     // we should figure out a standard format for the responses 
