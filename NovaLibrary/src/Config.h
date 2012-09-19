@@ -326,6 +326,11 @@ private:
 	std::string m_userPath;
 	std::string m_classificationType;
 
+	bool m_masterUIEnabled;
+	int m_masterUIReconnectTime;
+	std::string m_masterUIIP;
+	std::string m_masterUIClientID;
+
 	std::vector<double> m_featureWeights;
 
 	std::vector<HostileThreshold> m_hostileThresholds;

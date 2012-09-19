@@ -30,6 +30,7 @@
 #include <math.h>
 #include <pwd.h>
 #include <string>
+#include <iostream>
 
 #include "Config.h"
 #include "Logger.h"
@@ -82,6 +83,10 @@ string Config::m_prefixes[] =
 	"WEB_UI_PORT",
 	"CLEAR_AFTER_HOSTILE_EVENT",
 	"CAPTURE_BUFFER_SIZE",
+	"MASTER_UI_IP",
+	"MASTER_UI_RECONNECT_TIME",
+	"MASTER_UI_CLIENT_ID",
+	"MASTER_UI_ENABLED",
 	"FEATURE_WEIGHTS",
 	"CLASSIFICATION_ENGINE",
 	"THRESHOLD_HOSTILE_TRIGGERS"
@@ -757,6 +762,61 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
+			// MASTER_UI_IP
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIIP = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// MASTER_UI_RECONNECT_TIME
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIReconnectTime = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// MASTER_UI_CLIENT_ID
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIClientID = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// MASTER_UI_ENABLED
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIEnabled = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
 			// FEATURE_WEIGHTS
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -2657,8 +2717,7 @@ bool Config::GetSMTPUseAuth()
 	return m_SMTPUseAuth;
 }
 
-vector<double> Config::GetFeatureWeights()
-{
+vector<double> Config::GetFeatureWeights() {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_featureWeights;
 }

@@ -298,4 +298,35 @@ form(method="post", action="/configureNovaSave")
   input(name="HAYSTACK_STORAGE",  value=HAYSTACK_STORAGE)
   br
 
+  h2 Master Multi-Instance User Interface
+  if MASTER_UI_ENABLED != "0"
+    |Yes
+    input(type="radio", name="MASTER_UI_ENABLED", value="1", checked)
+    br
+    |No
+    input(type="radio", name="MASTER_UI_ENABLED", value="0")
+    br
+  else
+    |Yes
+    input(type="radio", name="MASTER_UI_ENABLED", value="1")
+    br
+    |No
+    input(type="radio", name="MASTER_UI_ENABLED", value="0", checked)
+    br
+
+
+  label Master UI IP
+  input(name="MASTER_UI_IP",  value=MASTER_UI_IP)
+  br
+  
+  label Master UI Client ID
+  input(name="MASTER_UI_CLIENT_ID",  value=MASTER_UI_CLIENT_ID)
+  br
+  
+  label Master UI Reconnect Time
+  input(name="MASTER_UI_RECONNECT_TIME",  value=MASTER_UI_RECONNECT_TIME)
+  br
+
+
+
 
