@@ -96,14 +96,6 @@ public:
 	//               range modifier that's present in the NOVAConfig.txt file as the argument.
 	void SetUserLogPreferences(Nova::Services services, Nova::Levels messageLevel, char upDown = '0');
 
-	// updates the date string to reflect the current month, day, year
-	void UpdateDateString();
-
-	void SetDateString(std::string toDate);
-
-	// Getter for date string variable
-	std::string GetDateString();
-
 protected:
 	// Constructor for the Logger class.
 	Logger();
@@ -170,9 +162,7 @@ private:
 	optionsInfo m_messageInfo;
 	pthread_rwlock_t m_logLock;
 	static Logger *m_loggerInstance;
-	std::string m_dateString;
 	std::string m_mailMessage;
-	std::vector<std::string> m_mailFormat;
 };
 
 }
