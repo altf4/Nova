@@ -123,15 +123,16 @@ block headerAdditions
       
       function setTarget(source, target)
       {
-        var firstIndex = message.id.indexOf(target);
-        var lastIndex = message.id.lastIndexOf(target);
+        var firstIndex = message.id.indexOf(target + ":");
+        
+        console.log('firstIndex == ' + firstIndex);
         
         if((document.getElementById(source).checked) && (firstIndex === -1))
         {
           message.id += target + ':';
           console.log('message.id ' + message.id);
         }
-        else if(firstIndex === lastIndex)
+        else if(firstIndex >= 0)
         {
           // If unselected, remove target from message.id
           var regex = new RegExp(target + ':', 'i');
@@ -141,6 +142,7 @@ block headerAdditions
         else
         {
           console.log(source + ' is not checked, can not do anything until target client is set');
+          console.log('message.id ' + message.id);
         }
       }
        

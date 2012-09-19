@@ -93,10 +93,10 @@ block headerAdditions
         {
           if(document.getElementById('check' + i) != null && document.getElementById('check' + i).checked)
           {
-            members += document.getElementById('check' + i).value + ','
+            members += document.getElementById('check' + i).value + ',';
           }
         }
-        if(members[members.length - 1] == ',')
+        if(members[members.length - 1] === ',')
         {
           members = members.substr(0, members.length - 1);
         }
@@ -128,10 +128,16 @@ block headerAdditions
         }
       }
       document.getElementById('members' + idx).value = newMembers;
+      var checkGroupCount = newMembers.split(',');
+      if(document.getElementById('groupcheck' + idx) !== null && (checkGroupCount[1] == '' || checkGroupCount[1] == undefined))
+      {
+        document.getElementById('groupcheck' + idx).setAttribute('disabled', true);
+      }
     }
 
     function addGroup(group, members)
     {
+      
       if(members != undefined && group != undefined)
       {
         for(var i in maintainGroups)
@@ -141,6 +147,13 @@ block headerAdditions
             alert('Cannot have identical group names');
             return;
           }
+        }
+        
+        var checkMemberCount = members.split(',');
+        if(checkMemberCount[1] == '' || checkMemberCount[1] == undefined)
+        {
+          alert('Groups must consist of two or more clients');
+          return;
         }
         
         maintainGroups.push({group:group,idx:parseInt(clientCount) + 1});

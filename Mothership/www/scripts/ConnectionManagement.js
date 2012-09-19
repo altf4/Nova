@@ -93,6 +93,10 @@
             label.innerHTML = groupList[i];
             label.title = memberList[i];
             label.setAttribute('style', 'text-align: center');
+            if(memberList[i].split(',')[1] == '' || memberList[i].split(',')[1] == undefined)
+            {
+              check.setAttribute('disabled', true);
+            }
             div.appendChild(check);
             div.appendChild(label);
             document.getElementById(divName).appendChild(div);
