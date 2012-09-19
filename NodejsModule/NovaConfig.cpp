@@ -10,6 +10,7 @@
 #include "WhitelistConfigurationBinding.h"
 #include "HoneydAutoConfigBinding.h"
 #include "TrainingDumpBinding.h"
+#include "LoggerBinding.h"
 
 using namespace v8;
 
@@ -25,6 +26,7 @@ void InitAll(Handle<Object> target)
 	WhitelistConfigurationBinding::Init(target);
 	HoneydAutoConfigBinding::Init(target);
 	TrainingDumpBinding::Init(target);
+	LoggerBinding::Init(target);
 }
 
 NODE_MODULE(novaconfig, InitAll)

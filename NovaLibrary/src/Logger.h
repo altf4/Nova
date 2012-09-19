@@ -37,7 +37,7 @@ namespace Nova
 enum Services {SYSLOG = 0, LIBNOTIFY, EMAIL};
 // enum for NovaMessaging to use. May have to switch around the order to
 // make newer scheme make sense
-enum Levels {DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY};
+enum Levels {DEBUG = 0, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY};
 
 typedef std::vector<std::pair<uint16_t, std::string> > levelsMap;
 typedef std::vector<std::pair< std::pair<Nova::Services, Nova::Levels>, char > > userMap;
