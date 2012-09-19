@@ -359,8 +359,10 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
              case 'updateConfiguration':
                for(var i in json_args)
                {
-                 console.log('json_args.settings: ' + i + ' ' + json_args[i]);
-                 //config.WriteSetting(json_args.settings[i].name.toString(), json_args.settings[i].value.toString());
+                 if(i !== 'type' && i !== 'id')
+                 {
+                   config.WriteSetting(i, json_args[i]);
+                 }
                }
                break;
              default:
