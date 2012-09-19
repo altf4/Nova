@@ -236,7 +236,6 @@ private:
 	static Config *m_instance;
 
 	__attribute__ ((visibility ("hidden"))) static std::string m_prefixes[];
-	__attribute__ ((visibility ("hidden"))) static std::string m_requiredFiles[];
 
 	std::string m_doppelIp;
 	std::string m_loopbackIF;
@@ -360,9 +359,6 @@ private:
 	// Loads the version file
 	bool LoadVersionFile();
 
-
-	// Loads default values for all variables
-	void SetDefaults();
 
 	bool LoadUserConfig();
 
