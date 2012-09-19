@@ -204,8 +204,8 @@ void ConvertCaptureToDump(std::string captureFolder)
 	}
 
 
-	engine = new ClassificationEngine(suspects);
-	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
+	engine = ClassificationEngine::MakeEngine();
+	engine->LoadConfiguration();
 
 
 	string dumpFile = captureFolder + "/nova.dump";

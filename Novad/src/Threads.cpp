@@ -21,6 +21,7 @@
 #include "ProtocolHandler.h"
 #include "EvidenceTable.h"
 #include "PacketCapture.h"
+#include "Doppelganger.h"
 #include "SuspectTable.h"
 #include "FeatureSet.h"
 #include "NovaUtil.h"

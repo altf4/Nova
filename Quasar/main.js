@@ -182,6 +182,7 @@ console.info("Listening on port " + WEB_UI_PORT);
 app.listen(WEB_UI_PORT);
 var everyone = nowjs.initialize(app);
 
+
 var initLogWatch = function () {
 	var novadLog = new Tail(novadLogPath);
 	novadLog.on("line", function (data) {
@@ -418,6 +419,22 @@ app.get('/downloadHoneydLog.log', passport.authenticate('basic', {session: false
 	});
 });
 
+app.get('/novaState.csv', passport.authenticate('basic', {session: false}), function (req, res) {
+	exec('novacli get all csv > ' + NovaHomePath + "/state.csv",
+	function(error, stdout, stderr) {
+		if (error != null) {
+			// Don't really care. Probably failed because novad was down.
+			//console.log("exec error: " + error);
+		}
+		
+		fs.readFile(NovaHomePath + "/state.csv", 'utf8', function(err, data) {
+			res.header('Content-Type', 'text/csv');
+			var reply = data.toString();
+			res.send(reply);
+		});
+	});
+});
+
 app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), function (req, res) {
 	fs.readFile(novadLogPath, 'utf8', function (err, data) {
 		if (err) {
@@ -551,7 +568,10 @@ app.get('/advancedOptions', passport.authenticate('basic', {session: false}), fu
 			, MASTER_UI_IP: config.ReadSetting("MASTER_UI_IP")
 			, MASTER_UI_RECONNECT_TIME: config.ReadSetting("MASTER_UI_RECONNECT_TIME")
 			, MASTER_UI_CLIENT_ID: config.ReadSetting("MASTER_UI_CLIENT_ID")
-			, MASTER_UI_ENABLED: config.ReadSetting("MASTER_UI_ENABLED")
+			, MASTER_UI_ENABLED: config.ReadSetting("MASTER_UI_ENABLED")			, FEATURE_WEIGHTS: config.ReadSetting("FEATURE_WEIGHTS")
+			, CLASSIFICATION_ENGINE: config.ReadSetting("CLASSIFICATION_ENGINE")
+			, THRESHOLD_HOSTILE_TRIGGERS: config.ReadSetting("THRESHOLD_HOSTILE_TRIGGERS")
+			, supportedEngines: nova.GetSupportedEngines()
 		}
 	});
 });
@@ -1188,7 +1208,7 @@ everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macTyp
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED"];
+	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", "THRESHOLD_HOSTILE_TRIGGERS"];
 
 	Validator.prototype.error = function (msg) {
 		this._errors.push(msg);
@@ -1378,7 +1398,15 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 
 everyone.now.ClearAllSuspects = function (callback) {
 	nova.CheckConnection();
-	nova.ClearAllSuspects();
+	if (!nova.ClearAllSuspects()) {
+		console.log("Manually deleting CE state file:" + NovaHomePath + "/" + config.ReadSetting("CE_SAVE_FILE"));
+		// If we weren't able to tell novad to clear the suspects, at least delete the CEStateFile
+		try {
+			fs.unlinkSync(NovaHomePath + "/" + config.ReadSetting("CE_SAVE_FILE"));
+		} catch (err) {
+			// this is probably because the file doesn't exist. Just ignore.
+		}
+	}
 }
 
 everyone.now.ClearSuspect = function (suspect, callback) {
@@ -1429,6 +1457,7 @@ everyone.now.StopNovad = function () {
 	nova.StopNovad();
 	nova.CloseNovadConnection();
 }
+
 
 everyone.now.sendAllSuspects = function (callback) {
 	nova.getSuspectList(callback);

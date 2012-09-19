@@ -396,6 +396,8 @@ CUSTOM_PCAP_MODE 0
 # Folder name for a training capture session
 TRAINING_SESSION null
 
+
+
 ############################################
 # WEB_UI_PORT #
 ############################################
@@ -451,3 +453,19 @@ MASTER_UI_CLIENT_ID nova1
 # FEATURE_WEIGHTS #
 ############################################
 FEATURE_WEIGHTS 1 1 1 1 1 1 1 1 1 1 1 1 1
+
+############################################
+# CLASSIFICATION_ENGINE
+############################################
+# KNN: Machine learning classification based on training data
+#     See also DATAFILE, FEATURE_WEIGHTS, DATAFILE\
+#
+# THRESHOLD_TRIGGER: Simple hostility based on features being < or > a value
+# 	See also THRESHOLD_HOSTILE_TRIGGERS
+CLASSIFICATION_ENGINE KNN
+
+############################################
+# THRESHOLD_HOSTILE_TRIGGERS #
+############################################
+THRESHOLD_HOSTILE_TRIGGERS - - - - >6 >20 - - - - - - >0.5
+

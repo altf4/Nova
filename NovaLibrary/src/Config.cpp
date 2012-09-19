@@ -29,6 +29,7 @@
 #include <sstream>
 #include <math.h>
 #include <pwd.h>
+#include <string>
 #include <iostream>
 
 #include "Config.h"
@@ -86,22 +87,9 @@ string Config::m_prefixes[] =
 	"MASTER_UI_RECONNECT_TIME",
 	"MASTER_UI_CLIENT_ID",
 	"MASTER_UI_ENABLED",
-	"FEATURE_WEIGHTS"
-};
-
-// Files we need to run (that will be loaded with defaults if deleted)
-string Config::m_requiredFiles[] =
-{
-	"/settings",
-	"/Config",
-	"/keys",
-	"/templates",
-	"/Config/NOVAConfig.txt",
-	"/scripts.xml",
-	"/templates/ports.xml",
-	"/templates/profiles.xml",
-	"/templates/routes.xml",
-	"/templates/nodes.xml"
+	"FEATURE_WEIGHTS",
+	"CLASSIFICATION_ENGINE",
+	"THRESHOLD_HOSTILE_TRIGGERS"
 };
 
 Config *Config::m_instance = NULL;
@@ -837,6 +825,7 @@ void Config::LoadConfig_Internal()
 				line = line.substr(prefix.size() + 1, line.size());
 				if(line.size() > 0)
 				{
+
 					istringstream is(line);
 					m_featureWeights.clear();
 					double n;
@@ -844,13 +833,139 @@ void Config::LoadConfig_Internal()
 					{
 						m_featureWeights.push_back(n);
 					}
+
 					if (m_featureWeights.size() == DIM)
 					{
 						isValid[prefixIndex] = true;
 					}
+
 				}
 				continue;
 			}
+
+			// CLASSIFICATION_ENGINE
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_classificationType = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// THRESHOLD_HOSTILE_TRIGGERS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_hostileThresholds.clear();
+
+					vector<string> thresholds;
+					boost::split(thresholds, line, boost::is_any_of("\t "));
+
+					if (thresholds.size() != DIM)
+					{
+						LOG(ERROR, "THRESHOLD_HOSTILE_TRIGGERS does not contain the correct number of entries", "");
+						continue;
+					}
+
+					for (uint i = 0; i < thresholds.size(); i++)
+					{
+						HostileThreshold setting;
+						setting.hasMaxValueTrigger = false;
+						setting.hasMinValueTrigger = false;
+
+						if (thresholds.at(i).at(0) == '-')
+						{
+
+						}
+						else if (thresholds.at(i).at(0) == '>')
+						{
+							// Check if this has both a > and a < symbol
+							vector<string> parts;
+							boost::split(parts, thresholds.at(i), boost::is_any_of("<"));
+							if (parts.size() == 2)
+							{
+								string maxValueString = parts.at(0).substr(1, string::npos);
+								istringstream s1(maxValueString);
+								if (!(s1 >> setting.maxValueTrigger))
+								{
+									LOG(ERROR, "Unable to parse max value for THRESHOLD_HOSTILE_TRIGGERS", "");
+								}
+								else
+								{
+									setting.hasMaxValueTrigger = true;
+								}
+
+
+								string minValueString = parts.at(1);
+								istringstream s2(minValueString);
+								if (!(s2 >> setting.minValueTrigger))
+								{
+									LOG(ERROR, "Unable to parse min value for THRESHOLD_HOSTILE_TRIGGERS", "");
+								}
+								else
+								{
+									setting.hasMinValueTrigger = true;
+								}
+							}
+							else
+							{
+								istringstream s(thresholds.at(i).substr(1, string::npos));
+								if (!(s >> setting.maxValueTrigger))
+								{
+									LOG(ERROR, "Unable to parse max value for THRESHOLD_HOSTILE_TRIGGERS", "");
+								}
+								else
+								{
+									setting.hasMaxValueTrigger = true;
+								}
+							}
+
+						}
+						else if (thresholds.at(i).at(0) == '<')
+						{
+							istringstream s(thresholds.at(i).substr(1, thresholds.at(i).npos));
+							if (!(s >> setting.minValueTrigger))
+							{
+								LOG(ERROR, "Unable to parse min value for THRESHOLD_HOSTILE_TRIGGERS", "");
+							}
+							else
+							{
+								setting.hasMinValueTrigger = true;
+							}
+						}
+
+						m_hostileThresholds.push_back(setting);
+					}
+
+					isValid[prefixIndex] = true;
+
+					/*
+					for (uint i = 0; i < m_hostileThresholds.size(); i++)
+					{
+						if (m_hostileThresholds.at(i).hasMaxValueTrigger)
+						{
+							cout << "Max value for feature " << i << " is " << m_hostileThresholds.at(i).maxValueTrigger << endl;
+						}
+
+						if (m_hostileThresholds.at(i).hasMinValueTrigger)
+						{
+							cout << "Min value for feature " << i << " is " << m_hostileThresholds.at(i).minValueTrigger << endl;
+						}
+					}
+					*/
+				}
+				continue;
+			}
+
 		}
 	}
 	else
@@ -1459,36 +1574,6 @@ bool Config::SaveConfig()
 	}
 
 	return true;
-}
-
-
-
-void Config::SetDefaults()
-{
-	m_interfaces.push_back("default");
-	m_pathConfigHoneydHs 	= "Config/haystack.config";
-	m_pathPcapFile 		= "../pcapfile";
-	m_pathTrainingFile 	= "Config/data.txt";
-	m_pathWhitelistFile = "Config/whitelist.txt";
-	m_pathConfigHoneydUser	= "Config/doppelganger.config";
-	m_pathCESaveFile = "ceStateSave";
-
-	m_tcpTimout = 7;
-	m_tcpCheckFreq = 3;
-	m_readPcap = false;
-	m_gotoLive = true;
-	m_isDmEnabled = true;
-
-	m_classificationTimeout = 3;
-	m_k = 3;
-	m_eps = 0.01;
-	m_classificationThreshold = .5;
-	m_doppelIp = "10.0.0.1";
-	m_loopbackIF = "lo";
-	m_enabledFeatureMask = "111111111";
-	m_thinningDistance = 0;
-	m_saveFreq = 1440;
-	m_dataTTL = 0;
 }
 
 //	Returns: True if(after the function) the user has all necessary nova config files

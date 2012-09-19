@@ -21,6 +21,7 @@
 
 #include "HashMapStructs.h"
 #include "Defines.h"
+#include "ThresholdTriggerClassification.h"
 
 namespace Nova {
 
@@ -225,6 +226,8 @@ public:
 	void SetCaptureBufferSize(int bufferSize);
 
 	std::vector<double> GetFeatureWeights();
+	std::string GetClassificationEngineType();
+	std::vector<HostileThreshold> GetHostileThresholds();
 
 protected:
 	Config();
@@ -322,6 +325,7 @@ private:
 
 	char m_haystackStorage;
 	std::string m_userPath;
+	std::string m_classificationType;
 
 	bool m_masterUIEnabled;
 	int m_masterUIReconnectTime;
@@ -330,7 +334,10 @@ private:
 
 	std::vector<double> m_featureWeights;
 
+	std::vector<HostileThreshold> m_hostileThresholds;
+
 	static std::string m_pathPrefix;
+
 
 
 	pthread_rwlock_t m_lock;
