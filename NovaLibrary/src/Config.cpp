@@ -2722,4 +2722,16 @@ vector<double> Config::GetFeatureWeights() {
 	return m_featureWeights;
 }
 
+string Config::GetClassificationEngineType()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_classificationType;
+}
+
+vector<HostileThreshold> Config::GetHostileThresholds()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_hostileThresholds;
+}
+
 }
