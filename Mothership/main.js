@@ -45,16 +45,27 @@ var everyone = nowjs.initialize(app);
 // is handled on the Quasar side.
 everyone.now.MessageSend = function(message) 
 {
-  //TODO: Check for duped targets s.t. we don't send multiple messages to the 
-  //      same client
     var targets = message.id.split(':');
+    var seen = new Array();
+    var sendMessage = true;
     for(var i in targets)
     {
-        if(targets[i] != '')
+      sendMessage = true;
+      for(var j in seen)
+      {
+        if(targets[i] == seen[j])
         {
-	        novaClients[targets[i]].sendUTF(JSON.stringify(message));
-        }
+          sendMessage = false;
+        }  
+      }
+      if(targets[i] != '' && sendMessage)
+      {
+	      novaClients[targets[i]].sendUTF(JSON.stringify(message));
+	      seen.push(targets[i]);
+      }
     }
+    seen.length = 0;
+    targets.length = 0;
 };
 
 everyone.now.RemoveGroup = function(group)
