@@ -364,6 +364,12 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                    config.WriteSetting(i, json_args[i]);
                  }
                }
+               var response = {};
+               response.type = 'response';
+               response.response_message = 'Configuration for ' + clientID + ' has been updated. Registering new config...';
+               mothership.sendUTF(JSON.stringify(response));
+               configSend.file = fs.readFileSync(NovaHomePath + '/config/NOVAConfig.txt', 'utf8');
+               mothership.sendUTF(JSON.stringify(configSend));
                break;
              default:
                console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');

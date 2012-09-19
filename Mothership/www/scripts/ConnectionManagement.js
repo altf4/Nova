@@ -88,11 +88,12 @@
             check.name = 'groupcheck' + i;
             check.value = memberList[i];
             check.setAttribute('onchange', 'setTarget(("groupcheck' + i + '"), document.getElementById("groupcheck' + i + '").value.replace("," , ":"))');
+            check.setAttribute('style', 'padding-left: 50px');
             var label = document.createElement('label');
             label.value = groupList[i];
             label.innerHTML = groupList[i];
             label.title = memberList[i];
-            label.setAttribute('style', 'text-align: center');
+            label.setAttribute('style', 'text-align: center; font-weight: bold; padding-left: 25px');
             if(memberList[i].split(',')[1] == '' || memberList[i].split(',')[1] == undefined)
             {
               check.setAttribute('disabled', true);
@@ -136,7 +137,7 @@
           var label = document.createElement('label');
           label.value = clientId;
           label.innerHTML = clientId;
-          label.setAttribute('style', 'font-weight: bold; padding-left: 50px');
+          label.setAttribute('style', 'font-weight: bold; padding-left: 25px');
           div.appendChild(check);
           div.appendChild(label);
           divClientList.appendChild(div);
