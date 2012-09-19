@@ -40,7 +40,7 @@ block content
   br
   label Clear data after suspect logged as hostile?
   br
-  if CLEAR_AFTER_HOSTILE_EVENT != "0"
+  if(CLEAR_AFTER_HOSTILE_EVENT != "0")
     |Yes
     input(type="radio", id='clearHostileYes', name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
     br
@@ -60,7 +60,7 @@ block content
   br
   label Custom PCAP Filter String Mode
   br
-  if CUSTOM_PCAP_MODE != "0"
+  if(CUSTOM_PCAP_MODE != "0")
     |Override
     input(type="radio", id='customPcapYes', name="CUSTOM_PCAP_MODE", value="1", checked)
     br
@@ -92,16 +92,16 @@ block content
   h2 Doppelganger
   label Doppelganger Enabled?
   br
-  if DM_ENABLED != "0"
+  if(DM_ENABLED != "0")
     |Yes
-    input(type="radio", name="DM_ENABLED", value="1", checked)
+    input(type="radio", id="dmEnabledYes", name="DM_ENABLED", value="1", checked)
     br
     |No
     input(type="radio", name="DM_ENABLED", value="0")
     br
   else
     |Yes
-    input(type="radio", name="DM_ENABLED", value="1")
+    input(type="radio", id="dmEnabledYes", name="DM_ENABLED", value="1")
     br
     |No
     input(type="radio", name="DM_ENABLED", value="0", checked)
@@ -117,7 +117,7 @@ block content
   //to show that the clients are updating. Once the mothership has received the 
   //appropriate response from all of the clients that were targeted, notify
   //the user and redirect to main page
-  input(id="updateButton", onclick="everyone.now.UpdateConfiguration();");
+  button(id="updateButton", onclick="updateConfiguration();") Submit Configuration
   
 block headerAdditions
   script(type="text/javascript", src="scripts/ConnectionManagement.js")
@@ -126,6 +126,17 @@ block headerAdditions
       var groups = !{GROUPS};
       var message = {};
       message.id = '';
+      
+      function updateConfiguration()
+      {
+        if(message.id == '')
+        {
+          alert('Attemping to submit to null target string, doing nothing');
+          return;
+        }
+        console.log('Sending configuration update requests to targets: ' + message.id);
+        now.UpdateConfiguration();
+      }
       
       function setTarget(source, target)
       {
@@ -156,16 +167,15 @@ block headerAdditions
       {
         //construct json here
         //message type: updateConfiguration
-        var message = {};
         message.type = 'updateConfiguration';
-        message.id = '';
-        message.TCP_TIMEOUT = document.getElementByName('TCP_TIMEOUT')[0].value;
-        message.TCP_CHECK_FREQ = document.getElementByName('TCP_CHECK_FREQ')[0].value;
-        message.CLASSIFICATION_TIMEOUT = document.getElementByName('CLASSIFICATION_TIMEOUT')[0].value;
-        message.K = document.getElementByName('K')[0].value;
-        message.EPS = document.getElementByName('EPS')[0].value;
-        message.CLASSIFICATION_THRESHOLD = document.getElementByName('CLASSIFICATION_THRESHOLD')[0].value;
-        message.MIN_PACKET_THRESHOLD = document.getElementByName('MIN_PACKET_THRESHOLD')[0].value;
+        
+        message.TCP_TIMEOUT = document.getElementsByName('TCP_TIMEOUT')[0].value;
+        message.TCP_CHECK_FREQ = document.getElementsByName('TCP_CHECK_FREQ')[0].value;
+        message.CLASSIFICATION_TIMEOUT = document.getElementsByName('CLASSIFICATION_TIMEOUT')[0].value;
+        message.K = document.getElementsByName('K')[0].value;
+        message.EPS = document.getElementsByName('EPS')[0].value;
+        message.CLASSIFICATION_THRESHOLD = document.getElementsByName('CLASSIFICATION_THRESHOLD')[0].value;
+        message.MIN_PACKET_THRESHOLD = document.getElementsByName('MIN_PACKET_THRESHOLD')[0].value;
         if(document.getElementById('clearHostileYes').checked)
         {
           message.CLEAR_AFTER_HOSTILE_EVENT = '1';  
@@ -174,18 +184,18 @@ block headerAdditions
         {
           message.CLEAR_AFTER_HOSTILE_EVENT = '0';
         }
-        message.CUSTOM_PCAP_FILTER = document.getElementByName('CUSTOM_PCAP_FILTER')[0].value;
+        message.CUSTOM_PCAP_FILTER = document.getElementsByName('CUSTOM_PCAP_FILTER')[0].value;
         if(document.getElementById('customPcapYes').checked)
         {
           message.CUSTOM_PCAP_MODE = '1';
         }
         else
         {
-          message.CUSTOM_PCAP_MODE = '0'';
+          message.CUSTOM_PCAP_MODE = '0';
         }
-        message.CAPTURE_BUFFER_SIZE = document.getElementByName('CAPTURE_BUFFER_SIZE')[0].value;
-        message.SAVE_FREQUENCY = document.getElementByName('SAVE_FREQUENCY')[0].value;
-        message.DATA_TTL = document.getElementByName('DATA_TTL')[0].value;
+        message.CAPTURE_BUFFER_SIZE = document.getElementsByName('CAPTURE_BUFFER_SIZE')[0].value;
+        message.SAVE_FREQUENCY = document.getElementsByName('SAVE_FREQUENCY')[0].value;
+        message.DATA_TTL = document.getElementsByName('DATA_TTL')[0].value;
         if(document.getElementById('dmEnabledYes').checked)
         {
           message.DM_ENABLED = '1';
@@ -194,9 +204,9 @@ block headerAdditions
         {
           message.DM_ENABLED = '0';
         }
-        message.SERVICE_PREFERENCES = document.getElementByName('SERVICE_PREFERENCES')[0].value;
+        message.SERVICE_PREFERENCES = document.getElementsByName('SERVICE_PREFERENCES')[0].value;
         
-        console.log('message: ' + message);
+        now.MessageSend(message);
       }
         
       now.ready(function(){
