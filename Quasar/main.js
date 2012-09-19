@@ -253,6 +253,22 @@ app.get('/downloadHoneydLog.log', passport.authenticate('basic', {session: false
 	});
 });
 
+app.get('/novaState.csv', passport.authenticate('basic', {session: false}), function (req, res) {
+	exec('novacli get all csv > ' + NovaHomePath + "/state.csv",
+	function(error, stdout, stderr) {
+		if (error != null) {
+			// Don't really care. Probably failed because novad was down.
+			//console.log("exec error: " + error);
+		}
+		
+		fs.readFile(NovaHomePath + "/state.csv", 'utf8', function(err, data) {
+			res.header('Content-Type', 'text/csv');
+			var reply = data.toString();
+			res.send(reply);
+		});
+	});
+});
+
 app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), function (req, res) {
 	fs.readFile(novadLogPath, 'utf8', function (err, data) {
 		if (err) {

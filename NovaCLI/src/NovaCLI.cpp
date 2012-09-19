@@ -537,6 +537,17 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 		exit(EXIT_FAILURE);
 	}
 
+	// Print the CSV header
+	if (csv)
+	{
+		cout << "SUSPECT,";
+		for(int i = 0; i < DIM; i++)
+		{
+			cout << FeatureSet::m_featureNames[i] << ",";
+		}
+		cout << "CLASSIFICATION" << endl;
+	}
+
 	for(uint i = 0; i < suspects->size(); i++)
 	{
 		Suspect *suspect = GetSuspect(suspects->at(i));
