@@ -87,9 +87,14 @@ block headerAdditions
       //dropDown needs to be a dojo select containing a list of the interfaces on the 
       //host with clientId clientName
       var dropDown = document.createElement('select');
-      var option = document.createElement('option');
-      option.value = 'eth0';
-      option.innerHTML = 'eth0';
+      now.GetInterfacesOfClient(clientName, function(interfaces){
+        for(var i in interfaces)
+        {
+          var option = document.createElement('option');
+          option.value = interfaces[i];
+          option.innerHTML = interfaces[i];
+        }
+      });
       dropDown.appendChild(option);
       div.appendChild(label);
       div.appendChild(input);

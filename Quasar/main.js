@@ -295,6 +295,14 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
     mothership.sendUTF(JSON.stringify(configSend));
     console.log('Registering NOVAConfig with mothership');
   
+    var interfaceSend = {};
+    interfaceSend.type = 'registerClientInterfaces';
+    interfaceSend.id = clientId;
+    interfaceSend.filename = 'iflist@' + clientId + '.txt';
+    interfaceSend.file = config.ListInterfaces().sort().join();
+    mothership.sendUTF(JSON.stringify(interfaceSend));
+    console.log('Registering interfaces with mothership');
+  
     console.log('successfully connected to mothership');
   
     connection.on('message', function(message)
@@ -308,79 +316,87 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
           // the various actions to take when a message is received
           switch(json_args.type)
           {
-             case 'startNovad':
-               nova.StartNovad(false);
-               nova.CheckConnection();
-               var response = {};
-               response.type = 'response';
-               response.response_message = 'Novad is being started';
-               mothership.sendUTF(JSON.stringify(response));
-               break;
-             case 'stopNovad':
-               nova.StopNovad();
-               nova.CloseNovadConnection();
-               var response = {};
-               response.type = 'response';
-               response.response_message = 'Novad is being stopped';
-               mothership.sendUTF(JSON.stringify(response));
-               break;
-             case 'startHaystack':
-               if(!nova.IsHaystackUp())
-               {
-                 nova.StartHaystack(false);
-                 var response = {};
-                 response.type = 'response';
-                 response.response_message = 'Haystack is being started';
-                 mothership.sendUTF(JSON.stringify(response));
-               }
-               else
-               {
-                 var response = {};
-                 response.type = 'response';
-                 response.response_message = 'Haystack is already up, doing nothing';
-                 mothership.sendUTF(JSON.stringify(response));
-               }
-               break;
-             case 'stopHaystack':
-               nova.StopHaystack();
-               var response = {};
-               response.type = 'response';
-               response.response_message = 'Haystack is being stopped';
-               mothership.sendUTF(JSON.stringify(response));
-               break;
-             case 'writeSetting':
-               // The nice thing about using JSON for the message passing is we
-               // can name the object literal members whatever we want, allowing for
-               // implicit specificity when creating and parsing the object
-               var setting = json_args.setting;
-               var value = json_args.value;
-               config.WriteSetting(setting, value);
-               var response = {};
-               response.type = 'response';
-               response.response_message = setting + ' is now ' + value;
-               mothership.sendUTF(JSON.stringify(response));
-               break;
-             case 'getHostileSuspects':
-               nova.getSuspectList(distributeSuspect);
-               break;
-             case 'updateConfiguration':
-               for(var i in json_args)
-               {
-                 if(i !== 'type' && i !== 'id')
-                 {
-                   config.WriteSetting(i, json_args[i]);
-                 }
-               }
-               var response = {};
-               response.type = 'response';
-               response.response_message = 'Configuration for ' + clientId + ' has been updated. Registering new config...';
-               mothership.sendUTF(JSON.stringify(response));
-               configSend.file = fs.readFileSync(NovaHomePath + '/config/NOVAConfig.txt', 'utf8');
-               mothership.sendUTF(JSON.stringify(configSend));
-               break;
-             default:
-               console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
-               break;
+            case 'startNovad':
+              nova.StartNovad(false);
+              nova.CheckConnection();
+              var response = {};
+              response.type = 'response';
+              response.response_message = 'Novad is being started';
+              mothership.sendUTF(JSON.stringify(response));
+              break;
+            case 'stopNovad':
+              nova.StopNovad();
+              nova.CloseNovadConnection();
+              var response = {};
+              response.type = 'response';
+              response.response_message = 'Novad is being stopped';
+              mothership.sendUTF(JSON.stringify(response));
+              break;
+            case 'startHaystack':
+              if(!nova.IsHaystackUp())
+              {
+                nova.StartHaystack(false);
+                var response = {};
+                response.type = 'response';
+                response.response_message = 'Haystack is being started';
+                mothership.sendUTF(JSON.stringify(response));
+              }
+              else
+              {
+                var response = {};
+                response.type = 'response';
+                response.response_message = 'Haystack is already up, doing nothing';
+                mothership.sendUTF(JSON.stringify(response));
+              }
+              break;
+            case 'stopHaystack':
+              nova.StopHaystack();
+              var response = {};
+              response.type = 'response';
+              response.response_message = 'Haystack is being stopped';
+              mothership.sendUTF(JSON.stringify(response));
+              break;
+            case 'writeSetting':
+              // The nice thing about using JSON for the message passing is we
+              // can name the object literal members whatever we want, allowing for
+              // implicit specificity when creating and parsing the object
+              var setting = json_args.setting;
+              var value = json_args.value;
+              config.WriteSetting(setting, value);
+              var response = {};
+              response.type = 'response';
+              response.response_message = setting + ' is now ' + value;
+              mothership.sendUTF(JSON.stringify(response));
+              break;
+            case 'getHostileSuspects':
+              nova.getSuspectList(distributeSuspect);
+              break;
+            case 'updateConfiguration':
+              for(var i in json_args)
+              {
+                if(i !== 'type' && i !== 'id')
+                {
+                  config.WriteSetting(i, json_args[i]);
+                }
+              }
+              var response = {};
+              response.type = 'response';
+              response.response_message = 'Configuration for ' + clientId + ' has been updated. Registering new config...';
+              mothership.sendUTF(JSON.stringify(response));
+              configSend.file = fs.readFileSync(NovaHomePath + '/config/NOVAConfig.txt', 'utf8');
+              mothership.sendUTF(JSON.stringify(configSend));
+              break;
+            case 'haystackConfig':
+              everyone.now.ShowAutoConfig(json_args.numNodes, json_args.interface, function(message){
+                var response = {};
+                response.type = 'response';
+                response.response_message = message.toString();
+                mothership.sendUTF(JSON.stringify(response));
+              });
+              break;
+            default:
+              console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
+              break;
           }
         }
       }
@@ -1790,7 +1806,7 @@ everyone.now.GetCaptureSession = function (callback) {
 	callback(ret);
 }
 
-everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback, route) {
+everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback, route, cb) {
 	var executionString = 'haystackautoconfig';
 	var nFlag = '-n';
 	var iFlag = '-i';
@@ -1829,6 +1845,10 @@ everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback,
 
 	autoconfig.on('exit', function (code) {
 		console.log("autoconfig exited with code " + code);
+		if(typeof cb == 'function')
+		{
+		  cb('Autoconfiguration complete for ' + clientId);
+		}
 		route("/nodeReview");
 	});
 }

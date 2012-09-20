@@ -100,6 +100,19 @@ everyone.now.AddGroup = function(group, members)
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
 
+
+everyone.now.GetInterfacesOfClient = function(clientId, cb)
+{
+  var interfaceFile = fs.readFileSync(NovaSharedPath + '/Mothership/ClientConfigs/iflist@' + clientId + '.txt', 'utf8');
+  console.log('Interfaces on ' + clientId + ': ' + interfaceFile);
+  var pass = interfaceFile.split(',');
+  console.log('type of pass is ' + (typeof pass));
+  if(typeof cb == 'function')
+  {
+    cb(pass);
+  }
+}
+
 function trimNewlines(string)
 {
   var ret = string;
@@ -166,26 +179,26 @@ wsServer.on('request', function(request)
 {
 	console.log('connection accepted');
 	var connection = request.accept(null, request.origin);
-    // The most important directive, if we have a message, we need to parse it out
-    // and determine what to do from there
+  // The most important directive, if we have a message, we need to parse it out
+  // and determine what to do from there
 	connection.on('message', function(message){
-        // Probably not needed, but here for kicks
+    // Probably not needed, but here for kicks
 		if(message.type === 'utf8')
 		{
-            // Parse the message data into a JSON object
+      // Parse the message data into a JSON object
 			var json_args = JSON.parse(message.utf8Data);
-            // If the parsing went well...
+      // If the parsing went well...
 			if(json_args != undefined)
 			{
-                // ...then look at the message type and switch from there
-                // A note on the message types. The string that is put into the 
-                // json_args.type JSON member on the client side MUST MATCH CASE 
-                // EXACTLY with the case strings
+        // ...then look at the message type and switch from there
+        // A note on the message types. The string that is put into the 
+        // json_args.type JSON member on the client side MUST MATCH CASE 
+        // EXACTLY with the case strings
 				switch(json_args.type)
 				{
-                    // addId is the first message a client sends to the mothership,
-                    // essentially binds their client id to the connection that has
-                    // has been created for future reference and connection management
+          // addId is the first message a client sends to the mothership,
+          // essentially binds their client id to the connection that has
+          // has been created for future reference and connection management
 					case 'addId':
 						// TODO: Check that id doesn't exist before adding
 						novaClients[json_args.id.toString()] = connection;
@@ -204,17 +217,17 @@ wsServer.on('request', function(request)
               everyone.now.UpdateConnectionsList(json_args.id, 'add');
             }
 						break;
-                    // This case is reserved for response from the clients;
-                    // we should figure out a standard format for the responses 
-                    // that includes the client id and the message, at the very least
+          // This case is reserved for response from the clients;
+          // we should figure out a standard format for the responses 
+          // that includes the client id and the message, at the very least
 					case 'response':
 						console.log(json_args.response_message);
 						break;
-                    // This case is reserved for receiving and properly addressing
-                    // hostile suspect events from a client. Parses the message out into
-                    // an object literal which is then sent to the OnNewSuspect event. 
-                    // Might be able to get away with just sending the JSON object, my intent
-                    // was to validate the message here with conditionals, just isn't done yet.
+          // This case is reserved for receiving and properly addressing
+          // hostile suspect events from a client. Parses the message out into
+          // an object literal which is then sent to the OnNewSuspect event. 
+          // Might be able to get away with just sending the JSON object, my intent
+          // was to validate the message here with conditionals, just isn't done yet.
 					case 'hostileSuspect':
             console.log('suspect received');
 						var suspect = {};
@@ -237,8 +250,11 @@ wsServer.on('request', function(request)
 						fs.writeFileSync(push.file, json_args.file);
 						console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);
 						break;
-					  // If we've found a message type that we weren't expecting, or don't have a case
-                    // for, log this message to the console and do nothing.
+				  case 'registerClientInterfaces':
+				    fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/' + json_args.filename, json_args.file);
+				    console.log('Interfaces files for ' + json_args.id + ' can be found at ' + json_args.filename);
+					// If we've found a message type that we weren't expecting, or don't have a case
+          // for, log this message to the console and do nothing.
 					default:
 						console.log('Unexpected/Unknown message type ' + json_args.type + ' received, doing nothing');
 						break;
