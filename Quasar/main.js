@@ -376,7 +376,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
             case 'requestBenign':
               console.log('in requestBenign');
               benignRequest = true;
-              nova.getSuspectList(distributeSuspect);
+              benignRequest = !(nova.getSuspectList(distributeSuspect));
               break;
             case 'updateConfiguration':
               for(var i in json_args)
@@ -2034,7 +2034,6 @@ var distributeSuspect = function (suspect) {
     send.ishostile = String(suspect.GetIsHostile());
     
     everyone.now.SendBenignSuspectToMothership(send);
-    benignRequest = false;
   }
 };
 
