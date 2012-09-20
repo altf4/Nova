@@ -59,6 +59,10 @@ bool IsNovadUp(bool tryToConnect = false);
 //	NOTE: If a connection already exists, then the function does nothing and returns true
 bool ConnectToNovad();
 
+//Disconnects from Novad over IPC. (opposite of ConnectToNovad)
+//	NOTE: Safely does nothing if already disconnected
+void DisconnectFromNovad();
+
 //Tries to connect to Novad, waiting for at most timeout_ms milliseconds
 //	timeout_ms - The amount of time in milliseconds at maximum to wait for a connection
 //	NOTE: Blocks for at most timeout_ms milliseconds

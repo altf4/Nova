@@ -50,9 +50,6 @@ MessageEndpoint::MessageEndpoint(int socketFD)
 
 	m_isShutDown = false;
 	m_socketFD = socketFD;
-
-	//We will later do a pthread_join, so don't detach here
-	pthread_create(&m_producerThread, NULL, StaticThreadHelper, this);
 }
 
 //Destructor should only be called by the callback thread, and also only while
@@ -60,10 +57,6 @@ MessageEndpoint::MessageEndpoint(int socketFD)
 //	race conditions in deleting the object.
 MessageEndpoint::~MessageEndpoint()
 {
-	//Wait for the producer thread to finish,
-	// We can't have his object destroyed out from underneath him
-	pthread_join(m_producerThread, NULL);
-
 	pthread_mutex_destroy(&m_isShutdownMutex);
 	pthread_mutex_destroy(&m_theirUsedSerialsMutex);
 	pthread_mutex_destroy(&m_callbackRegisterMutex);
@@ -123,11 +116,6 @@ uint32_t MessageEndpoint::StartConversation()
 	m_queues.AddQueue(nextSerial);
 
 	return nextSerial;
-}
-
-void *MessageEndpoint::StaticThreadHelper(void *ptr)
-{
-	return reinterpret_cast<MessageEndpoint*>(ptr)->ProducerThread();
 }
 
 bool MessageEndpoint::PushMessage(Message *message)
@@ -255,102 +243,6 @@ uint32_t MessageEndpoint::GetNextOurSerialNum()
 	}
 
 	return m_nextSerial;
-}
-
-void *MessageEndpoint::ProducerThread()
-{
-	while(true)
-	{
-		uint32_t length = 0;
-		char buff[sizeof(length)];
-		uint totalBytesRead = 0;
-		int bytesRead = 0;
-
-		// Read in the message length
-		while( totalBytesRead < sizeof(length))
-		{
-			bytesRead = read(m_socketFD, buff + totalBytesRead, sizeof(length) - totalBytesRead);
-			if(bytesRead <= 0)
-			{
-				if (bytesRead == 0)
-				{
-					LOG(DEBUG, "Socket was closed by peer", "");
-				}
-				else
-				{
-					LOG(DEBUG, "Socket was closed due to error: " + std::string(strerror(errno)), "");
-				}
-
-				//The socket died on us!
-				Shutdown();
-				return NULL;
-			}
-			else
-			{
-				totalBytesRead += bytesRead;
-			}
-		}
-
-		// Make sure the length appears valid
-		// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
-		memcpy(&length, buff, sizeof(length));
-		if(length == 0)
-		{
-			continue;
-		}
-
-		length -= sizeof(length);
-		char *buffer = (char*)malloc(length);
-
-		if(buffer == NULL)
-		{
-			// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
-			free(buffer);
-			continue;
-		}
-
-		// Read in the actual message
-		totalBytesRead = 0;
-		bytesRead = 0;
-		while(totalBytesRead < length)
-		{
-			bytesRead = read(m_socketFD, buffer + totalBytesRead, length - totalBytesRead);
-			if(bytesRead <= 0)
-			{
-				if (bytesRead == 0)
-				{
-					LOG(DEBUG, "Socket was closed by peer", "");
-				}
-				else
-				{
-					LOG(DEBUG, "Socket was closed due to error: " + std::string(strerror(errno)), "");
-				}
-
-				//The socket died on us!
-				Shutdown();
-				free(buffer);
-				return NULL;
-			}
-			else
-			{
-				totalBytesRead += bytesRead;
-			}
-		}
-
-
-		if(length < MESSAGE_MIN_SIZE)
-		{
-			free(buffer);
-			continue;
-		}
-
-
-		PushMessage(Message::Deserialize(buffer, length));
-		free(buffer);
-		continue;
-	}
-
-	return NULL;
 }
 
 void MessageEndpoint::Shutdown()

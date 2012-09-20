@@ -62,6 +62,11 @@ public:
 	//	NOTE: Due to physical constraints, this function may block for longer than timeout. Don't rely on it being very precise.
 	Message *PopMessage(Ticket &ticket, int timeout);
 
+	//Pushes a new message onto the appropriate message queue
+	//	message - The Message to push
+	//	NOTE: The direction of the message is read directly from the message itself
+	bool PushMessage(Message *message);
+
 	//Blocks until a new callback conversation has been started
 	//	outTicket - Reference to an output Ticket object that will be set to the appropriate values to start a conversation
 	//	returns true if a callback message is ready and waiting for us
@@ -72,28 +77,15 @@ public:
 	//	returns - The "our" serial number of the new conversation. 0 on error
 	uint32_t StartConversation();
 
+	//Shuts down all MessageQueues for this Endpoint, also wakes up any reading threads
+	void Shutdown();
+
 private:
 
 	//Returns a new "our" serial number to use for a conversation. This is guaranteed to not currently be in use and not be 0
 	//	This increments m_forwardSerialNumber
 	//	NOTE: You must have the lock on the socket before using this. (Used inside UseSocket)
 	uint32_t GetNextOurSerialNum();
-
-	//Producer thread helper. Used so that the producer thread can be a member of the MessageQueue class
-	//	pthreads normally are static
-	static void *StaticThreadHelper(void *ptr);
-
-	//Pushes a new message onto the appropriate message queue
-	//	message - The Message to push
-	//	NOTE: The direction of the message is read directly from the message itself
-	bool PushMessage(Message *message);
-
-	//Thread which continually loops, doing read() calls on the underlying socket and pushing messages read onto the queues
-	//	Thread quits as soon as read fails (returns <= 0). This can be made to happen through a CloseSocket() call from MessageManager
-	void *ProducerThread();
-
-	//Shuts down all MessageQueues for this Endpoint, also wakes up any reading threads
-	void Shutdown();
 
 	MessageQueueBimap m_queues;
 
@@ -117,8 +109,6 @@ private:
 
 	int m_socketFD;
 	uint8_t m_consecutiveTimeouts;
-
-	pthread_t m_producerThread;
 
 	pthread_mutex_t m_callbackRegisterMutex;
 };

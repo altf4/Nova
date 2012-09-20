@@ -87,7 +87,10 @@ int main(int argc, const char *argv[])
 
 		if(!strcmp(argv[2], "nova"))
 		{
-			StatusNovaWrapper();
+			for(int i = 0; i < 100; i++)
+			{
+				StatusNovaWrapper();
+			}
 		}
 		else if(!strcmp(argv[2], "haystack"))
 		{
@@ -174,7 +177,10 @@ int main(int argc, const char *argv[])
 			}
 			else
 			{
-				PrintAllSuspects(SUSPECTLIST_ALL, false);
+				for(int i = 0; i < 1000; i++)
+				{
+					PrintAllSuspects(SUSPECTLIST_ALL, false);
+				}
 			}
 		}
 		else if(!strcmp(argv[2], "hostile"))

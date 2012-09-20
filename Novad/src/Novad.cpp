@@ -22,6 +22,7 @@
 #include "HaystackControl.h"
 #include "ProtocolHandler.h"
 #include "EvidenceTable.h"
+#include "NovadCallback.h"
 #include "SuspectTable.h"
 #include "FeatureSet.h"
 #include "NovaUtil.h"
@@ -32,7 +33,6 @@
 #include "Logger.h"
 #include "Point.h"
 #include "Novad.h"
-
 
 #include <pcap.h>
 #include <vector>
@@ -170,13 +170,13 @@ int RunNovaD()
 	//Loads the configuration file
 	Config::Inst()->LoadConfig();
 
+	NovadCallback *callback = new NovadCallback();
+	MessageManager::Instance().StartServer(callback);
+
 	LOG(ALERT, "Starting NOVA version " + Config::Inst()->GetVersionString(), "");
 
 	engine = new ClassificationEngine(suspects);
 	engine->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
-
-	Spawn_UI_Handler();
-
 
 
 	//Are we Training or Classifying?

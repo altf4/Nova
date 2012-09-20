@@ -23,15 +23,24 @@
 #include "MessageQueue.h"
 #include "MessageEndpoint.h"
 #include "MessageEndpointLock.h"
+#include "ServerCallback.h"
 #include "../Lock.h"
 #include "Ticket.h"
 
 #include <map>
 #include <vector>
 #include "pthread.h"
+#include "event.h"
 
 namespace Nova
 {
+
+struct CallbackArg
+{
+	struct event_base *m_base;
+	ServerCallback *m_callback;
+};
+
 
 class MessageManager
 {
@@ -79,14 +88,6 @@ public:
 	//	NOTE: Only called by callback thread
 	void DeleteEndpoint(int socketFD);
 
-	//Closes the socket at the given file descriptor
-	//	socketFD - The file descriptor of the socket to close
-	//	NOTE: This will not immediately destroy the underlying MessageQueue. It will close the socket
-	//		such that no new messages can be read on it. At which point the read loop will mark the
-	//		queue as closed with an ErrorMessage with the appropriate sub-type and then exit.
-	//		The queue will not be actually destroyed until this last message is popped off.
-	void CloseSocket(int socketFD);
-
 	//Waits for a new callback message to arrive on the given socketFD
 	//	socketFD - The socket file descriptor to wait on
 	//	outTicket - Output parameter which provides all the information necessary to talk on the new callback conversation
@@ -100,6 +101,19 @@ public:
 	//		be included in this list. You'll just have to deal with this fact.
 	std::vector <int>GetSocketList();
 
+	//Begins server accept() loop. Only run this function if you want to be a server (not a UI)
+	//	callback - Pointer to a user defined ServerCallback object that contains the callback function to be run
+	//	NOTE: Non-blocking, always returns immediately.
+	//	NOTE: Will only run once, multiple tries will safely do nothing
+	void StartServer(ServerCallback *callback);
+
+	//Function returns a read-locked MessageEndpoint
+	//	Empty on error
+	MessageEndpointLock GetEndpoint(int socketFD);
+
+	static void MessageDispatcher(struct bufferevent *bev, void *ctx);
+	static void ErrorDispatcher(struct bufferevent *bev, short error, void *ctx);
+
 private:
 
 	static MessageManager *m_instance;
@@ -107,14 +121,16 @@ private:
 	//Constructor for MessageManager
 	MessageManager();
 
-	//Function returns a read-locked MessageEndpoint
-	//	Empty on error
-	MessageEndpointLock GetEndpoint(int socketFD);
+	static void DoAccept(evutil_socket_t listener, short event, void *arg);
+
+	static void *AcceptDispatcher(void *);
 
 	std::map<int, std::pair<MessageEndpoint*, pthread_rwlock_t*>> m_endpoints;
 	pthread_mutex_t m_endpointsMutex;
 
 	pthread_mutex_t m_deleteEndpointMutex;;
+
+	pthread_t m_acceptThread;
 
 };
 

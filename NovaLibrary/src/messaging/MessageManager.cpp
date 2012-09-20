@@ -22,7 +22,11 @@
 #include "messages/ErrorMessage.h"
 
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
+#include <string.h>
+
+using namespace std;
 
 namespace Nova
 {
@@ -46,6 +50,7 @@ MessageManager &MessageManager::Instance()
 
 Message *MessageManager::ReadMessage(Ticket &ticket, int timeout)
 {
+	printf("xxxDEBUGxxx Reading from %d, for ourSerial= %d\n", ticket.m_socketFD, ticket.m_ourSerialNum);
 	//Read lock the Endpoint (so it can't get deleted from us while we're using it)
 	MessageEndpointLock endpointLock = GetEndpoint(ticket.m_socketFD);
 
@@ -60,10 +65,11 @@ Message *MessageManager::ReadMessage(Ticket &ticket, int timeout)
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
 		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
 		{
-			CloseSocket(ticket.m_socketFD);
+			//TODO: Close the socket with libevent?
 		}
 	}
 
+	printf("xxxDEBUGxxx Read from %d\n", ticket.m_socketFD);
 	return message;
 }
 
@@ -103,6 +109,7 @@ bool MessageManager::WriteMessage(const Ticket &ticket, Message *message)
 	}
 
 	free(buffer);
+	printf("xxxDEBUGxxx Wrote to %d, with ourSerial= %d, theirSerial= %d\n", ticket.m_socketFD, ticket.m_ourSerialNum, ticket.m_theirSerialNum);
 	return true;
 }
 
@@ -119,6 +126,7 @@ void MessageManager::StartSocket(int socketFD)
 	}
 	else
 	{
+		//XXX: Race condition here? Need to write lock the endpoint first?
 		if(m_endpoints[socketFD].first == NULL)
 		{
 			m_endpoints[socketFD].first = new MessageEndpoint(socketFD);
@@ -166,19 +174,6 @@ void MessageManager::DeleteEndpoint(int socketFD)
 
 		//This command, however does make a change to the m_endpoints map, so we need to have a lock on the mutex
 		m_endpoints[socketFD].first = NULL;
-	}
-}
-
-void MessageManager::CloseSocket(int socketFD)
-{
-	if(shutdown(socketFD, SHUT_RDWR) == -1)
-	{
-		LOG(DEBUG, "Failed to shut down socket", "");
-	}
-
-	if(close(socketFD) == -1)
-	{
-		LOG(DEBUG, "Failed to close socket", "");
 	}
 }
 
@@ -231,6 +226,219 @@ MessageEndpointLock MessageManager::GetEndpoint(int socketFD)
 
 	pthread_rwlock_rdlock(endpointLock);
 	return MessageEndpointLock( m_endpoints[socketFD].first, endpointLock);
+}
+
+void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
+{
+	struct evbuffer *input = bufferevent_get_input(bev);
+	evutil_socket_t socketFD = bufferevent_getfd(bev);
+
+	uint32_t length = 0, evbufferLength;
+
+	evbufferLength = evbuffer_get_length(input);
+	//If we don't even have enough data to read the length, just quit
+	if(evbufferLength < sizeof(length))
+	{
+		return;
+	}
+
+	//Copy the length field out of the message
+	//	We only want to copy this data at first, because if the whole message hasn't reached us,
+	//	we'll want the whole buffer still present here, undrained
+	if(evbuffer_copyout(input, &length, sizeof(length)) != sizeof(length))
+	{
+		return;
+	}
+
+	evbuffer_drain(input, sizeof(length));
+
+	// Make sure the length appears valid
+	// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
+	if(length < MESSAGE_MIN_SIZE)
+	{
+		evbuffer_drain(input, sizeof(length));
+		return;
+	}
+
+	//If we don't yet have enough data, then just quit and wait for more
+	if(evbufferLength < length)
+	{
+		return;
+	}
+
+	//Remove the length of the "length" variable itself
+	length -= sizeof(length);
+	char *buffer = (char*)malloc(length);
+
+	if(buffer == NULL)
+	{
+		// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
+		free(buffer);
+		return;
+	}
+
+	// Read in the actual message
+	int bytesRead = evbuffer_remove(input, buffer, length);
+	if(bytesRead == -1)
+	{
+		//XXX: Error removing from buffer
+	}
+	else if((uint32_t)bytesRead != length)
+	{
+		//XXX: Wrong amount of data
+	}
+
+	MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
+	if(endpoint.m_endpoint != NULL)
+	{
+		printf("xxxDEBUGxxx Pushed message to %d \n", socketFD);
+		endpoint.m_endpoint->PushMessage(Message::Deserialize(buffer, length));
+	}
+	else
+	{
+		printf("xxxDEBUGxxx Didn't push a message to %d \n", socketFD);
+	}
+
+	free(buffer);
+}
+
+void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void *ctx)
+{
+	printf("xxxDEBUGxxx GOT AN EVENT\n");
+	if(error & BEV_EVENT_CONNECTED)
+	{
+		printf("xxxDEBUGxxx Just connected, is all\n");
+		return;
+	}
+
+	if(error & BEV_EVENT_EOF)
+	{
+		printf("xxxDEBUGxxx Socket EOF\n");
+		evutil_socket_t socketFD = bufferevent_getfd(bev);
+		MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
+		if(endpoint.m_endpoint != NULL)
+		{
+			endpoint.m_endpoint->Shutdown();
+		}
+		bufferevent_free(bev);
+		return;
+	}
+
+	if(error & BEV_EVENT_ERROR)
+	{
+		printf("xxxDEBUGxxx Socket ERROR\n");
+		evutil_socket_t socketFD = bufferevent_getfd(bev);
+		MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
+		if(endpoint.m_endpoint != NULL)
+		{
+			endpoint.m_endpoint->Shutdown();
+		}
+		bufferevent_free(bev);
+		return;
+	}
+	printf("xxxDEBUGxxx Other event?!\n");
+}
+
+void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
+{
+	struct CallbackArg *cbArg = (struct CallbackArg *)arg;
+    struct sockaddr_storage ss;
+    socklen_t slen = sizeof(ss);
+    int fd = accept(listener, (struct sockaddr*)&ss, &slen);
+    if(fd < 0)
+    {
+    	LOG(ERROR, "Failed to connect to UI", "accept: " + string(strerror(errno)));
+    }
+    else
+    {
+		//Create the socket within the messaging subsystem
+		//MessageManager::Instance().StartSocket(fd);
+		//Start the callback thread for this new connection
+		cbArg->m_callback->StartServerCallbackThread(fd);
+
+		struct bufferevent *bev;
+		evutil_make_socket_nonblocking(fd);
+		bev = bufferevent_socket_new(cbArg->m_base, fd, BEV_OPT_CLOSE_ON_FREE);
+		if(bev == NULL)
+		{
+			LOG(ERROR, "Failed to connect to UI: socket_new", "");
+			return;
+		}
+		bufferevent_setcb(bev, MessageDispatcher, NULL, ErrorDispatcher, NULL);
+		bufferevent_setwatermark(bev, EV_READ, 0, 500000);//TODO unhardcode this
+		if(bufferevent_enable(bev, EV_READ|EV_WRITE) == -1)
+		{
+			LOG(ERROR, "Failed to connect to UI: bufferevent_enable", "");
+			return;
+		}
+
+		printf("xxxDEBUGxxx New Connection Accept()'ed\n");
+    }
+}
+
+void *MessageManager::AcceptDispatcher(void *arg)
+{
+	int len;
+	string inKeyPath = Config::Inst()->GetPathHome() + "/keys" + NOVAD_LISTEN_FILENAME;
+	evutil_socket_t IPCParentSocket;
+	struct event_base *base;
+	struct event *listener_event;
+	struct sockaddr_un msgLocal;
+
+	base = event_base_new();
+	if (!base)
+	{
+		return NULL;
+	}
+
+	if((IPCParentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	{
+		LOG(ERROR, "Failed to connect to UI", "socket: "+string(strerror(errno)));
+		return NULL;
+	}
+
+	evutil_make_socket_nonblocking(IPCParentSocket);
+
+	msgLocal.sun_family = AF_UNIX;
+	memset(msgLocal.sun_path, '\0', sizeof(msgLocal.sun_path));
+	strncpy(msgLocal.sun_path, inKeyPath.c_str(), inKeyPath.length());
+	unlink(msgLocal.sun_path);
+	len = strlen(msgLocal.sun_path) + sizeof(msgLocal.sun_family);
+
+	if(::bind(IPCParentSocket, (struct sockaddr *)&msgLocal, len) == -1)
+	{
+		LOG(ERROR, "Failed to connect to UI", "bind: "+string(strerror(errno)));
+		close(IPCParentSocket);
+		return NULL;
+	}
+
+	if(listen(IPCParentSocket, SOMAXCONN) == -1)
+	{
+		LOG(ERROR, "Failed to connect to UI", "listen: "+string(strerror(errno)));
+		close(IPCParentSocket);
+		return NULL;
+	}
+
+	struct CallbackArg *cbArg = new struct CallbackArg;
+	cbArg->m_base = base;
+	cbArg->m_callback = (ServerCallback*)arg;
+
+	listener_event = event_new(base, IPCParentSocket, EV_READ|EV_PERSIST, DoAccept, (void*)cbArg);
+	event_add(listener_event, NULL);
+	event_base_dispatch(base);
+
+	return NULL;
+}
+
+void MessageManager::StartServer(ServerCallback *callback)
+{
+	static bool hasServerStarted = false;
+
+	if(!hasServerStarted)
+	{
+		pthread_create(&m_acceptThread, NULL, AcceptDispatcher, callback);
+		hasServerStarted = true;
+	}
 }
 
 }

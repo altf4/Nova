@@ -8,6 +8,7 @@ CPP_SRCS += \
 ../src/messaging/MessageManager.cpp \
 ../src/messaging/MessageQueue.cpp \
 ../src/messaging/MessageQueueBimap.cpp \
+../src/messaging/ServerCallback.cpp \
 ../src/messaging/Ticket.cpp 
 
 OBJS += \
@@ -15,6 +16,7 @@ OBJS += \
 ./src/messaging/MessageManager.o \
 ./src/messaging/MessageQueue.o \
 ./src/messaging/MessageQueueBimap.o \
+./src/messaging/ServerCallback.o \
 ./src/messaging/Ticket.o 
 
 CPP_DEPS += \
@@ -22,6 +24,7 @@ CPP_DEPS += \
 ./src/messaging/MessageManager.d \
 ./src/messaging/MessageQueue.d \
 ./src/messaging/MessageQueueBimap.d \
+./src/messaging/ServerCallback.d \
 ./src/messaging/Ticket.d 
 
 
