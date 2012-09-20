@@ -1651,17 +1651,25 @@ everyone.now.GetCaptureSession = function (callback) {
 	callback(ret);
 }
 
-everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback, route) {
+everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subnets, callback, route) {
 	var executionString = 'haystackautoconfig';
 	var nFlag = '-n';
+	var rFlag = '-r';
 	var iFlag = '-i';
 	var aFlag = '-a';
 
 	var hhconfigArgs = new Array();
 
-	if (numNodes !== undefined && parseInt(numNodes) >= 0) {
-		hhconfigArgs.push(nFlag);
-		hhconfigArgs.push(numNodes);
+	if (numNodesType == "fixed") {
+		if (numNodes !== undefined) {
+			hhconfigArgs.push(nFlag);
+			hhconfigArgs.push(numNodes);
+		}
+	} else if (numNodesType == "ratio") {
+		if (numNodes !== undefined) {
+			hhconfigArgs.push(rFlag);
+			hhconfigArgs.push(numNodes);
+		}
 	}
 	if (interfaces !== undefined && interfaces.length > 0) {
 		hhconfigArgs.push(iFlag);
