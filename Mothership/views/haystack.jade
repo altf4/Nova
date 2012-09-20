@@ -15,7 +15,7 @@ block content
 
   h1 Haystack Autoconfiguration Options
   div(id="autoconfElements")
-
+  button(id="sendAutoconfig", onclick="processAutoconfigElements()", disabled=true) Configure Selected Haystacks
 
 block headerAdditions
   script(type="text/javascript", src="scripts/ConnectionManagement.js")
@@ -93,9 +93,9 @@ block headerAdditions
           var option = document.createElement('option');
           option.value = interfaces[i];
           option.innerHTML = interfaces[i];
+          dropDown.appendChild(option);
         }
       });
-      dropDown.appendChild(option);
       div.appendChild(label);
       div.appendChild(input);
       div.appendChild(dropDown);
@@ -107,6 +107,7 @@ block headerAdditions
       {
         document.getElementById('autoconfElements').appendChild(div);
       }
+      document.getElementById('sendAutoconfig').removeAttribute('disabled');
       elementCount++;
     }
     
@@ -120,11 +121,24 @@ block headerAdditions
         }
       }
       elementCount--;
+      if(elementCount == 0)
+      {
+        document.getElementById('sendAutoconfig').setAttribute('disabled', true);
+      }
     }
 
     function processAutoconfigElements()
     {
-      
+      console.log('Processing autoconfig selections...');
+      for(var i = 0; i < elementCount; i++)
+      {
+        var autoconfMessage = {};
+        autoconfMessage.type = 'haystackConfig';
+        autoconfMessage.id = document.getElementById('autohook' + i).childNodes[0].value;
+        autoconfMessage.numNodes = document.getElementById('autohook' + i).childNodes[1].value;
+        autoconfMessage.interface = document.getElementById('autohook' + i).childNodes[2].value;
+        now.MessageSend(autoconfMessage);
+      }
     }
     
     now.ready(function(){
