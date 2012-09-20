@@ -157,8 +157,8 @@ function (username, password, done) {
 
 // Setup TLS
 var express_options = {
-	key: fs.readFileSync(NovaSharedPath + '/Quasar/serverkey.pem'),
-	cert: fs.readFileSync(NovaSharedPath + '/Quasar/servercert.pem')
+	key: fs.readFileSync(NovaHomePath + '/config/keys/quasarKey.pem'),
+	cert: fs.readFileSync(NovaHomePath + '/config/keys/quasarCert.pem')
 };
 
 var app = express.createServer(express_options);
