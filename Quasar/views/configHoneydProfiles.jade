@@ -135,6 +135,19 @@ block headerAdditions
         return selected;
     }
 
+    function restoreDefaults() {
+        try {
+            now.restoreDefaultHaystackConfiguration(configurationRestored);
+        } catch (err) {
+            alert("Unable to contact server");
+            console.log("Error was: " + err);
+        }
+    }
+
+    function configurationRestored() {
+        now.IsHaystackUp(checkIfRestartNeeded); 
+    }
+
     function onProfileClicked(profile) {
         if (!event.ctrlKey) {
             for (entry in profilesArray) {
@@ -230,4 +243,8 @@ block content
   button(onClick="editSelectedItem()") Edit Selected Profile
   button(onClick="addChildSelectedItem()") Add Child Profile
   br
+  br
   button(onClick="window.location='/configHoneydNodes';") Configure Haystack Nodes
+  br
+  br
+  button(onClick="restoreDefaults()") Restore Default Configuration (will erase all changes!)

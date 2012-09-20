@@ -1,10 +1,13 @@
-var novaconfig = require('novaconfig.node');
-
 // Used for debugging. Download the node-segfault-handler to use
 //var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
 //segvhandler.registerHandler();
 
+// Modules that provide bindings to C++ code in NovaLibrary and Nova_UI_Core
+var novaconfig = require('novaconfig.node');
+
 var nova = new novaconfig.Instance();
+nova.CheckConnection();
+
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
 var vendorToMacDb = new novaconfig.VendorMacDbBinding();
@@ -13,8 +16,12 @@ var trainingDb = new novaconfig.CustomizeTrainingBinding();
 var whitelistConfig = new novaconfig.WhitelistConfigurationBinding();
 var hhconfig = new novaconfig.HoneydAutoConfigBinding();
 
+// Modules from NodejsModule/Javascript
+var LOG = require("../NodejsModule/Javascript/Logger").LOG;
+
+
 if (!honeydConfig.LoadAllTemplates()) {
-	console.log("ERROR: Call to initial LoadAllTemplates failed!");
+	LOG("ERROR", "Call to initial LoadAllTemplates failed!");
 }
 
 var fs = require('fs');
@@ -61,10 +68,9 @@ var HashPassword = function (password) {
 	return shasum.digest('hex');
 }
 
-console.log("Starting QUASAR version " + config.GetVersionString());
+LOG("ALERT", "Starting QUASAR version " + config.GetVersionString());
 
 
-// TODO: Get this path from the config class
 process.chdir(NovaHomePath);
 
 var DATABASE_HOST = config.ReadSetting("DATABASE_HOST");
@@ -75,7 +81,7 @@ var databaseOpenResult = function (err) {
 	if (err == null) {
 		console.log("Opened sqlite3 database file.");
 	} else {
-		console.log("Error opening sqlite3 database file: " + err);
+		LOG(ERROR, "Error opening sqlite3 database file: " + err);
 	}
 }
 
@@ -194,11 +200,11 @@ var initLogWatch = function () {
 	});
 
 	novadLog.on("error", function (data) {
-		console.log("ERROR: " + data);
+		LOG(ERROR, "Novad log watch error: " + data);
 		try {
 			everyone.now.newLogLine(data)
 		} catch (err) {
-
+			LOG(ERROR, "Novad log watch error: " + err);
 		}
 	});
 
@@ -213,10 +219,11 @@ var initLogWatch = function () {
 	});
 
 	honeydLog.on("error", function (data) {
-		console.log("ERROR: " + data);
+		LOG(ERROR, "Honeyd log watch error: " + data);
 		try {
 			everyone.now.newHoneydLogLine(data)
 		} catch (err) {
+			LOG(ERROR, "Honeyd log watch error: " + err);
 
 		}
 	});
@@ -1135,7 +1142,7 @@ app.post('/scanning', passport.authenticate('basic', {session: false}), function
 
 
 	if (!path.existsSync("/usr/bin/haystackautoconfig")) {
-		console.log("HaystackAutoConfig binary not found in /usr/bin/. Redirect to /autoConfig.");
+		LOG(ERROR, "HaystackAutoConfig binary not found in /usr/bin/. Redirect to /autoConfig.");
 		res.render('hhautoconfig.jade', {
 			locals: {
 				user: req.user,
@@ -1174,7 +1181,6 @@ everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, i
 		ipAddress = ip1 + "." + ip2 + "." + ip3 + "." + ip4;
 	}
 
-	console.log("Creating new nodes:" + profile + " " + ipAddress + " " + interface + " " + count);
 	var result = null;
 	if (!honeydConfig.AddNewNodes(profile, ipAddress, interface, subnet, Number(count))) {
 		result = "Unable to create new nodes";	
@@ -1189,7 +1195,6 @@ everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, i
 
 everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macType, ip, mac, callback) {
 //app.post('/editHoneydNodeSave', passport.authenticate('basic', {session: false}), function (req, res) {
-	console.log("Saving: " + profile + ":" + intface + ":" + ipType + ":" + ip + ":" + mac + ":");
 	var subnet = "";
 
 	var ipAddress = ip;
@@ -1444,10 +1449,16 @@ everyone.now.StartHaystack = function () {
 	if (!nova.IsHaystackUp()) {
 		nova.StartHaystack(false);
 	}
+	try {
+		everyone.now.updateHaystackStatus(nova.IsHaystackUp())
+	} catch (err) {};
 }
 
 everyone.now.StopHaystack = function () {
 	nova.StopHaystack();
+	try {
+		everyone.now.updateHaystackStatus(nova.IsHaystackUp());
+	} catch (err) {};
 }
 
 everyone.now.IsHaystackUp = function (callback) {
@@ -1455,17 +1466,23 @@ everyone.now.IsHaystackUp = function (callback) {
 }
 
 everyone.now.IsNovadUp = function (callback) {
-	callback(nova.IsNovadUp());
+	callback(nova.IsNovadUp(false));
 }
 
 everyone.now.StartNovad = function () {
 	nova.StartNovad(false);
 	nova.CheckConnection();
+	try {
+		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+	} catch (err) {};
 }
 
 everyone.now.StopNovad = function () {
 	nova.StopNovad();
 	nova.CloseNovadConnection();
+	try {
+		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+	} catch (err) {};
 }
 
 
@@ -1508,7 +1525,6 @@ everyone.now.deleteNodes = function (nodeNames, callback) {
 	for (var i = 0; i < nodeNames.length; i++) {
 		nodeName = nodeNames[i];
 
-		console.log("Deleting honeyd node " + nodeName);
 
 		if (!honeydConfig.DeleteNode(nodeName)) {
 			callback(false, "Failed to delete node " + nodeName);
@@ -1571,11 +1587,9 @@ everyone.now.deleteWhitelistEntry = function (whitelistEntryNames, callback) {
 }
 
 everyone.now.GetProfile = function (profileName, callback) {
-	console.log("Fetching profile " + profileName);
 	var profile = honeydConfig.GetProfile(profileName);
 
 	if (profile == null) {
-		console.log("Returning null since error fetching profile: " + profileName);
 		callback(null);
 		return;
 	}
@@ -1688,10 +1702,6 @@ everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, ad
 
 	var honeydProfile = new novaconfig.HoneydProfileBinding();
 
-	console.log("Got profile " + profile.name + "_" + profile.personality);
-	console.log("Got portlist " + ports.name);
-	console.log("Got ethVendorList " + ethVendorList);
-
 	// Move the Javascript object values to the C++ object
 	honeydProfile.SetName(profile.name);
 	honeydProfile.SetTcpAction(profile.tcpAction);
@@ -1741,9 +1751,6 @@ everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, ad
 	// Add new ports
 	var portName;
 	for (var i = 0; i < ports.size; i++) {
-		console.log("Adding port " + ports[i].portNum + " " + ports[i].type + " " + ports[i].behavior + " " + ports[i].script + " Inheritance: " + ports[i].isInherited);
-		console.log("Adding port with behavior: " + ports[i].behavior);
-
 		// Convert the string to the proper enum number in HoneydConfiguration.h
 		var behavior = ports[i].behavior;
 		var behaviorEnumValue = new Number();
@@ -1941,6 +1948,22 @@ everyone.now.GenerateMACForVendor = function(vendor, callback) {
 	callback(vendorToMacDb.GenerateRandomMAC(vendor));
 }
 
+everyone.now.restoreDefaultHaystackConfiguration = function(callback) {
+	var source = NovaSharedPath + "/../userFiles/config/templates/*";
+	var destination = NovaHomePath + "/config/templates/";
+	exec('cp -f ' + source + ' ' + destination, function(err) {
+		callback();
+	});	
+}
+
+everyone.now.restoreDefaultSettings = function(callback) {
+	var source = NovaSharedPath + "/../userFiles/config/NOVAConfig.txt";
+	var destination = NovaHomePath + "/config/NOVAConfig.txt";
+	exec('cp -f ' + source + ' ' + destination, function(err) {
+		callback();
+	});	
+}
+
 
 var distributeSuspect = function (suspect) {
 	var s = new Object();
@@ -1964,14 +1987,12 @@ var distributeSuspect = function (suspect) {
 };
 
 var distributeAllSuspectsCleared = function () {
-	console.log("Distribute all suspects cleared called in main.js");
 	everyone.now.AllSuspectsCleared();
 }
 
 var distributeSuspectCleared = function (suspect) {
 	var s = new Object;
 	s['GetIpString'] = suspect.GetIpString();
-	console.log("Distribute clear suspect called in main.js: " + suspect.GetIpString());
 	everyone.now.SuspectCleared(s);
 }
 

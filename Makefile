@@ -284,6 +284,7 @@ install-novatrainer:
 install-nodejsmodule:
 	mkdir -p "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule"
 	-install NodejsModule/build/Release/novaconfig.node "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule/"
+	-cp -frup NodejsModule/Javascript "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule/Javascript"
 
 
 #Uninstall

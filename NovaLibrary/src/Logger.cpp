@@ -49,7 +49,6 @@ namespace Nova
 // Loads the configuration file into the class's state data
 	uint16_t Logger::LoadConfiguration()
 	{
-		UpdateDateString();
 		// TODO: get Getter functions and a safe way to store
 		// the user and pass for the SMTP server
 		m_messageInfo.smtp_user = Config::Inst()->GetSMTPUser();
@@ -338,21 +337,6 @@ namespace Nova
 		ret = "Date: " + day + " " + month + " " + year + "\n";
 
 		return ret;
-	}
-
-	void Logger::UpdateDateString()
-	{
-		SetDateString(GenerateDateString());
-	}
-
-	void Logger::SetDateString(std::string toDate)
-	{
-		m_dateString = toDate;
-	}
-
-	std::string Logger::GetDateString()
-	{
-		return m_dateString;
 	}
 
 	std::string Logger::GetRecipient()

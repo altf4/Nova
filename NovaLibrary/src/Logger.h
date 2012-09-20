@@ -37,7 +37,7 @@ namespace Nova
 enum Services {SYSLOG = 0, LIBNOTIFY, EMAIL};
 // enum for NovaMessaging to use. May have to switch around the order to
 // make newer scheme make sense
-enum Levels {DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY};
+enum Levels {DEBUG = 0, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY};
 
 typedef std::vector<std::pair<uint16_t, std::string> > levelsMap;
 typedef std::vector<std::pair< std::pair<Nova::Services, Nova::Levels>, char > > userMap;
@@ -95,14 +95,6 @@ public:
 	//               just wanting to change the level, and not the range modifier, you have to put the
 	//               range modifier that's present in the NOVAConfig.txt file as the argument.
 	void SetUserLogPreferences(Nova::Services services, Nova::Levels messageLevel, char upDown = '0');
-
-	// updates the date string to reflect the current month, day, year
-	void UpdateDateString();
-
-	void SetDateString(std::string toDate);
-
-	// Getter for date string variable
-	std::string GetDateString();
 
 protected:
 	// Constructor for the Logger class.
@@ -170,9 +162,7 @@ private:
 	optionsInfo m_messageInfo;
 	pthread_rwlock_t m_logLock;
 	static Logger *m_loggerInstance;
-	std::string m_dateString;
 	std::string m_mailMessage;
-	std::vector<std::string> m_mailFormat;
 };
 
 }

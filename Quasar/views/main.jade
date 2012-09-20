@@ -130,7 +130,7 @@ block headerAdditions
         } 
     }
 
-    now.updateNovadStatus = function (isNovadUp){
+    var updateNovadStatus = function (isNovadUp){
       if (lastNovadStatus == "unknown" || lastNovadStatus != isNovadUp) {
           lastNovadStatus = isNovadUp;
           dojo.byId("nova_status").innerHTML = isNovadUp ? "Up" : "Down";
@@ -140,10 +140,12 @@ block headerAdditions
           dojo.byId("nova_suspects_error_view").style.display = isNovadUp ? "none" : "block";
       }
     };
+    now.updateNovadStatus = updateNovadStatus;
 
-    now.updateHaystackStatus = function (isHaystackUp){
+    var updateHaystackStatus = function (isHaystackUp){
       dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Up" : "Down";
     };
+    now.updateHaystackStatus = updateHaystackStatus;
 
     now.AllSuspectsCleared = function() {
       suspectGrid.Clear();
@@ -388,6 +390,8 @@ block headerAdditions
         ready(function() {
             now.ready(function() {
               Init();
+              now.IsHaystackUp(updateHaystackStatus);
+              now.IsNovadUp(updateNovadStatus);
             });
         });
     });
