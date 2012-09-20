@@ -529,7 +529,6 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 			INTERFACES: config.ListInterfaces().sort(),
 			profiles: honeydConfig.GetProfileNames(),
 			nodes: nodes,
-			subnets: honeydConfig.GetSubnetNames(),
 			groups: honeydConfig.GetGroups(),
 			currentGroup: config.GetGroup()
 		}
@@ -942,7 +941,6 @@ app.get('/nodeReview', passport.authenticate('basic', {session: false}), functio
 			profileNames: honeydConfig.GetGeneratedProfileNames(),
 			profiles: profiles,
 			nodes: nodes,
-			subnets: honeydConfig.GetSubnetNames()
 		}
 	})
 });

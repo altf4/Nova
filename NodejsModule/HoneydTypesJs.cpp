@@ -23,7 +23,6 @@ Handle<Object> HoneydNodeJs::WrapNode(Node* node)
 		// Javascript methods
 		Local<Template> proto = m_NodeTemplate->PrototypeTemplate();
 		proto->Set("GetName",       FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetName>) );
-		proto->Set("GetSubnet",     FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetSubnet>) );
 		proto->Set("GetInterface",  FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetInterface>) );
 		proto->Set("GetProfile",    FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetProfile>) );
 		proto->Set("GetIP",         FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetIP>) );

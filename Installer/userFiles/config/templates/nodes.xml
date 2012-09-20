@@ -2,26 +2,6 @@
 <groups>
 	<group>
 		<name>main</name>
-		<subnets>
-			<manualInterface>
-				<name>eth0</name>
-				<enabled>true</enabled>
-				<IP>192.168.1</IP>
-				<mask>255.255.255.0</mask>
-			</manualInterface>
-			<manualInterface>
-				<name>eth0</name>
-				<enabled>true</enabled>
-				<IP>192.168.10.0</IP>
-				<mask>255.255.255.0</mask>
-			</manualInterface>
-			<manualInterface>
-				<name>lo</name>
-				<enabled>true</enabled>
-				<IP>127.0.0</IP>
-				<mask>255.0.0.0</mask>
-			</manualInterface>
-		</subnets>
 		<nodes>
 			<node>
 				<interface>eth0</interface>

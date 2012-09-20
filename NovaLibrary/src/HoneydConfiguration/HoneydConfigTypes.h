@@ -113,9 +113,6 @@ struct Subnet
 	boost::property_tree::ptree m_tree;
 };
 
-//Container for accessing subnet items
-typedef Nova::HashMap<std::string, Subnet, std::tr1::hash<std::string>, eqstr > SubnetTable;
-
 
 //used to keep track of haystack profile gui items and allow for easy access
 struct NodeProfile
@@ -283,7 +280,6 @@ typedef Nova::HashMap<std::string, NodeProfile, std::tr1::hash<std::string>, eqs
 struct Node
 {
 	std::string m_name;
-	std::string m_sub;
 	std::string m_interface;
 	std::string m_pfile;
 	std::vector<std::string> m_ports;
@@ -296,7 +292,6 @@ struct Node
 
 	// This is for the Javascript bindings in the web m_interface
 	inline std::string GetName() {return m_name;}
-	inline std::string GetSubnet() {return m_sub;}
 	inline std::string GetInterface() {return m_interface;}
 	inline std::string GetProfile() {return m_pfile;}
 	inline std::string GetIP() {return m_IP;}

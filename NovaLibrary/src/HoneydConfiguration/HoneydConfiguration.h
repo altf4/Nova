@@ -135,9 +135,6 @@ public:
     // *Note this function is very limited, for configuring large numbers of nodes you should use the NodeManager
     bool AddNewNodes(std::string profileName, std::string ipAddress, std::string interface, std::string subnet, int numberOfNodes);
 
-    //Just a basic function for added a subnet into the configuration, may not be needed anymore.
-    bool AddSubnet(const Subnet &add);
-
     //This allows easy access to all children profiles of the parent
     // Returns a vector of strings containing the names of the children profile
 	std::vector<std::string> GetProfileChildren(std::string parent);
@@ -149,10 +146,6 @@ public:
 	//This function allows easy access to all nodes
 	// Returns a vector of strings containing the names of all nodes
 	std::vector<std::string> GetNodeNames();
-
-	//This function allows easy access to all subnets
-	// Returns a vector of strings containing the names of all subnets
-	std::vector<std::string> GetSubnetNames();
 
 	//This function allows easy access to all scripts
 	// Returns a vector of strings containing the names of all scripts
@@ -253,7 +246,6 @@ public:
     bool DeleteNode(std::string nodeName);
     Node *GetNode(std::string nodeName);
 
-    std::string GetNodeSubnet(std::string nodeName);
     bool EnableNode(std::string nodeName);
     bool DisableNode(std::string nodeName);
     void DisableProfileNodes(std::string profileName);
@@ -296,7 +288,6 @@ public:
     // Returns a bool indicating whether the update was successful or not.
     bool UpdateNodeMacs(std::string profileName);
 
-	SubnetTable m_subnets;
 	PortTable m_ports;
 	ProfileTable m_profiles;
     NodeTable m_nodes;
@@ -353,8 +344,6 @@ private:
     //recursive descent down profile tree
     bool LoadProfileChildren(std::string parent);
 
-    //Load stored subnets in ptr
-    bool LoadSubnets(boost::property_tree::ptree *ptr);
     //Load stored honeyd nodes ptr
     bool LoadNodes(boost::property_tree::ptree *ptr);
 
@@ -378,10 +367,6 @@ private:
     //	Returns (true) if successful and (false) if no profile with name 'profileName' exists
     bool CreateProfileTree(std::string profileName);
 
-    std::string FindSubnet(in_addr_t ip);
-
-
-    std::vector<Subnet> FindPhysicalInterfaces();
 
     //***************** REFACTORED BELOW  HERE *****************//
 

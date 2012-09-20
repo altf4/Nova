@@ -42,7 +42,6 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNodeNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetNodeNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGroups"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetGroups>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGeneratedNodeNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetGeneratedNodeNames>));
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSubnetNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetSubnetNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetScriptNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetScriptNames>));
 
 	//tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteProfile>));
