@@ -2021,6 +2021,7 @@ var distributeSuspect = function (suspect) {
 var sendBenignToMothership = function(suspect) {
   var s = new Object();
   objCopy(suspect, s);
+  console.log('s.ip ' + s.ip);
   if(String(suspect.GetIsHostile()) == 'false')
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
