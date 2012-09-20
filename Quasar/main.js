@@ -2007,8 +2007,6 @@ var distributeSuspect = function (suspect) {
 	try {
 		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
-	console.log('benignRequest == ' + benignRequest);
-	console.log('suspect.ishostile == ' + suspect.GetIsHostile());
   if(String(suspect.GetIsHostile()) == 'true')
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
@@ -2024,6 +2022,7 @@ var distributeSuspect = function (suspect) {
   }
   else if(String(suspect.GetIsHostile()) == 'false' && benignRequest)
   {
+    console.log('suspect sent it ' + suspect.GetIpString());
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     var send = {};
