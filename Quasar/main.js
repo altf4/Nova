@@ -49,6 +49,8 @@ var novadLog = new Tail(novadLogPath);
 var honeydLogPath = "/var/log/nova/Honeyd.log";
 var honeydLog = new Tail(honeydLogPath);
 
+var benignRequest = false;
+
 var RenderError = function (res, err, link) {
 	// Redirect them to the main page if no link was set
 	link = typeof link !== 'undefined' ? link : "/";
@@ -373,7 +375,9 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               break;
             case 'requestBenign':
               console.log('in requestBenign');
-              nova.getSuspectList(sendBenignToMothership);
+              benignRequest = true;
+              nova.getSuspectList(distributeSuspect);
+              benignRequest = false;
               break;
             case 'updateConfiguration':
               for(var i in json_args)
@@ -2017,11 +2021,7 @@ var distributeSuspect = function (suspect) {
     
     everyone.now.SendHostileEventToMothership(send);
   }
-};
-
-var sendBenignToMothership = function(suspect) {
-  console.log('s.ip ' + suspect.ip);
-  if(String(suspect.GetIsHostile()) == 'false')
+  else if(String(suspect.GetIsHostile()) == 'false' && benignRequest)
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
