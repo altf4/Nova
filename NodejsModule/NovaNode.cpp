@@ -220,17 +220,11 @@ void NovaNode::Init(Handle<Object> target)
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "Shutdown", Shutdown );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetSuspectDetailsString", GetSuspectDetailsString );
 
-
 	// Javascript object constructor
 	target->Set(String::NewSymbol("Instance"),
 			s_ct->GetFunction());
-
-	//LOG(DEBUG, "Attempting to connect to Novad...", "");
-	//CheckConnection();
+	
 	InitializeUI();
-	CheckInitNova();
-	InitNovaCallbackProcessing();
-	LOG(DEBUG, "Initialized NovaNode","");
 }
 
 

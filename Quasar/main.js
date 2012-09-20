@@ -4,7 +4,10 @@
 
 // Modules that provide bindings to C++ code in NovaLibrary and Nova_UI_Core
 var novaconfig = require('novaconfig.node');
+
 var nova = new novaconfig.Instance();
+nova.CheckConnection();
+
 var config = new novaconfig.NovaConfigBinding();
 var honeydConfig = new novaconfig.HoneydConfigBinding();
 var vendorToMacDb = new novaconfig.VendorMacDbBinding();
