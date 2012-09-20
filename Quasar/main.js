@@ -372,6 +372,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               nova.getSuspectList(distributeSuspect);
               break;
             case 'requestBenign':
+              console.log('in requestBenign');
               nova.getSuspectList(sendBenignToMothership);
               break;
             case 'updateConfiguration':
@@ -2019,9 +2020,7 @@ var distributeSuspect = function (suspect) {
 };
 
 var sendBenignToMothership = function(suspect) {
-  var s = new Object();
-  objCopy(suspect, s);
-  console.log('s.ip ' + s.ip);
+  console.log('s.ip ' + suspect.ip);
   if(String(suspect.GetIsHostile()) == 'false')
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);

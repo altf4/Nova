@@ -108,7 +108,12 @@ block headerAdditions
 
     function requestBenign()
     {
+      console.log('requestBenign');
       message.type = 'requestBenign';
+      for(var i in message)
+      {
+        console.log('message: ' + i + ', ' + message[i]);
+      }
       now.MessageSend(message);
     }
 
@@ -174,11 +179,6 @@ block headerAdditions
     now.OnNewSuspect = function(suspect, buffer){
       var type = suspect.type;
       
-      if(type == "hostile" && suspect.ishostile == 'false') 
-      {
-        return;
-      }
-      
       //if(!liveUpdate) {return;}
   
       var row = new Array();
@@ -193,6 +193,7 @@ block headerAdditions
   
       if(buffer.length > 0)
       {
+        console.log('Found suspects in SuspectBuffer, rendering now');
         for(var i in buffer)
         {
           var row = new Array();

@@ -257,10 +257,12 @@ wsServer.on('request', function(request)
             suspect.client = json_args.client;
             if(typeof everyone.now.OnNewSuspect == 'function')
             {
+              console.log('OnNewSuspect exists, calling with suspect');
               everyone.now.OnNewSuspect(suspect, SuspectBuffer);
             }
             else
             {
+              console.log('OnNewSuspect does not exist, putting suspect into buffer');
               SuspectBuffer.push(suspect);
             }
 				    break;
@@ -278,8 +280,6 @@ wsServer.on('request', function(request)
 				  case 'registerClientInterfaces':
 				    fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/' + json_args.filename, json_args.file);
 				    console.log('Interfaces files for ' + json_args.id + ' can be found at ' + json_args.filename);
-				    break;
-				  case 'benignSuspect':
 				    break;
 					// If we've found a message type that we weren't expecting, or don't have a case
           // for, log this message to the console and do nothing.
