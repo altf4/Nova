@@ -371,6 +371,9 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
             case 'getHostileSuspects':
               nova.getSuspectList(distributeSuspect);
               break;
+            case 'requestBenign':
+              nova.getSuspectList(sendBenignToMothership);
+              break;
             case 'updateConfiguration':
               for(var i in json_args)
               {
@@ -1960,6 +1963,15 @@ everyone.now.SendHostileEventToMothership = function(suspect) {
   }
 };
 
+everyone.now.SendBenignSuspectToMothership = function(suspect) {
+  suspect.client = clientId;
+  suspect.type = 'benignSuspect';
+  if(mothership != undefined)
+  {
+    mothership.sendUTF(JSON.stringify(suspect));
+  }
+};
+
 everyone.now.GetLocalIP = function (interface, callback) {
 	callback(nova.GetLocalIP(interface));
 }
@@ -2003,6 +2015,24 @@ var distributeSuspect = function (suspect) {
     send.ishostile = String(suspect.GetIsHostile());
     
     everyone.now.SendHostileEventToMothership(send);
+  }
+};
+
+var sendBenignToMothership = function(suspect) {
+  var s = new Object();
+  objCopy(suspect, s);
+  if(String(suspect.GetIsHostile()) == 'false')
+  {
+    var d = new Date(suspect.GetLastPacketTime() * 1000);
+    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+    var send = {};
+    send.string = suspect.ToString();
+    send.ip = suspect.GetIpString();
+    send.classification = String(suspect.GetClassification());
+    send.lastpacket = dString;
+    send.ishostile = String(suspect.GetIsHostile());
+    
+    everyone.now.SendBenignSuspectToMothership(send);
   }
 };
 

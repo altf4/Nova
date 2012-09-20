@@ -12,6 +12,7 @@ var config = new novaconfig.NovaConfigBinding();
 
 var NovaHomePath = config.GetPathHome();
 var NovaSharedPath = config.GetPathShared();
+var SuspectBuffer = new Array();
 
 // Configure the express server to use the 
 // bodyParser so that we can view and use the 
@@ -106,7 +107,6 @@ everyone.now.GetInterfacesOfClient = function(clientId, cb)
   var interfaceFile = fs.readFileSync(NovaSharedPath + '/Mothership/ClientConfigs/iflist@' + clientId + '.txt', 'utf8');
   console.log('Interfaces on ' + clientId + ': ' + interfaceFile);
   var pass = interfaceFile.split(',');
-  console.log('type of pass is ' + (typeof pass));
   if(typeof cb == 'function')
   {
     cb(pass);
@@ -229,7 +229,7 @@ wsServer.on('request', function(request)
           // Might be able to get away with just sending the JSON object, my intent
           // was to validate the message here with conditionals, just isn't done yet.
 					case 'hostileSuspect':
-            console.log('suspect received');
+            console.log('Hostile Suspect received from ' + json_args.client);
 						var suspect = {};
 						suspect.string = json_args.string;
 						suspect.ip = json_args.ip;
@@ -237,8 +237,33 @@ wsServer.on('request', function(request)
 						suspect.lastpacket = json_args.lastpacket;
 						suspect.ishostile = json_args.ishostile;
 						suspect.client = json_args.client;
-						everyone.now.OnNewSuspect(suspect);
+						if(typeof everyone.now.OnNewSuspect == 'function')
+						{
+						  everyone.now.OnNewSuspect(suspect, SuspectBuffer);
+						}
+						else
+						{
+						  SuspectBuffer.push(suspect);
+						}
 						break;
+				  case 'benignSuspect':
+				    console.log('Benign Suspect received from ' + json_args.client);
+				    var suspect = {};
+            suspect.string = json_args.string;
+            suspect.ip = json_args.ip;
+            suspect.classification = json_args.classification;    
+            suspect.lastpacket = json_args.lastpacket;
+            suspect.ishostile = json_args.ishostile;
+            suspect.client = json_args.client;
+            if(typeof everyone.now.OnNewSuspect == 'function')
+            {
+              everyone.now.OnNewSuspect(suspect, SuspectBuffer);
+            }
+            else
+            {
+              SuspectBuffer.push(suspect);
+            }
+				    break;
 					case 'registerConfig':
 						console.log('Nova Configuration received from ' + json_args.id);
 						// TODO: Check for existing client to add new file association to, extend the .file 
@@ -254,6 +279,8 @@ wsServer.on('request', function(request)
 				    fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/' + json_args.filename, json_args.file);
 				    console.log('Interfaces files for ' + json_args.id + ' can be found at ' + json_args.filename);
 				    break;
+				  case 'benignSuspect':
+				    break;
 					// If we've found a message type that we weren't expecting, or don't have a case
           // for, log this message to the console and do nothing.
 					default:
@@ -261,12 +288,9 @@ wsServer.on('request', function(request)
 						break;
 				}
 			}
-      // TODO: Account for non-UTF8 here
+      // TODO: Account for non-UTF8 here (really shouldn't be using it as the main encoding anyways)
       else
       {
-          var check = document.createElement('input');
-          check.type = 'checkbox';
-
       }
 		}	
 	});

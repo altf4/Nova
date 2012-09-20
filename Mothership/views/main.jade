@@ -27,8 +27,10 @@ block content
   br
   br
 
-  button(type="button", style="width: 160px", onClick='ClearAllSuspects(); suspectGrid.Clear();') Clear All Suspects
-
+  button(id="button4", style="width: 160px", onclick='requestBenign();', disabled=true) Get Benign Suspects
+  button(type="button", style="width: 160px", onclick='ClearAllSuspects(); suspectGrid.Clear();') Clear All Suspects
+  
+  br
   br
 
   div#nova_suspects_header
@@ -104,6 +106,12 @@ block headerAdditions
         now.MessageSend(message);
     }
 
+    function requestBenign()
+    {
+      message.type = 'requestBenign';
+      now.MessageSend(message);
+    }
+
     function setTarget(source, target)
     {
         var firstIndex = message.id.indexOf(target + ':');
@@ -111,7 +119,7 @@ block headerAdditions
         if(document.getElementById(source).checked && firstIndex === -1)
         {
             message.id += target + ':';
-            for(var i = 0; i < 4; i++)
+            for(var i = 0; i < 5; i++)
             {
                 document.getElementById('button' + i).removeAttribute('disabled');
             }
@@ -125,7 +133,7 @@ block headerAdditions
         {
             // If unselected, remove target from message.id
             console.log(source + ' is not checked, can not do anything until target client is set');
-            for(var i = 0; i < 4; i++)
+            for(var i = 0; i < 5; i++)
             {
                 document.getElementById('button' + i).setAttribute('disabled', true);
             }
@@ -156,19 +164,23 @@ block headerAdditions
         console.log(suspect);
         suspectGrid.DeleteRow(suspect.ip);
         suspectGrid.Render();
-        return;
+        return;4
     }
       
     function pad(num) {
         return ("0" + num.toString()).slice(-2);
     }
 
-    now.OnNewSuspect = function(suspect){
+    now.OnNewSuspect = function(suspect, buffer){
       var type = suspect.type;
       
-      if (type == "hostile" && suspect.ishostile == 'false') {return;}
+      if(type == "hostile" && suspect.ishostile == 'false') 
+      {
+        return;
+      }
+      
       //if(!liveUpdate) {return;}
-
+  
       var row = new Array();
       // This is probably a really bad way to do this...
       row.push(String(suspect.ip) + '@' + String(suspect.client));
@@ -178,6 +190,22 @@ block headerAdditions
       row.push(String(suspect.ishostile));
 
       suspectGrid.PushEntry(row);
+  
+      if(buffer.length > 0)
+      {
+        for(var i in buffer)
+        {
+          var row = new Array();
+          // This is probably a really bad way to do this...
+          row.push(String(buffer[i].ip) + '@' + String(buffer[i].client));
+          row.push(String(buffer[i].client));
+          row.push(parseFloat(buffer[i].classification));
+          row.push(String(buffer[i].lastpacket));
+          row.push(String(buffer[i].ishostile));
+    
+          suspectGrid.PushEntry(row);
+        }  
+      }
     };
 
     var applyAdvancedFilter = function() {
