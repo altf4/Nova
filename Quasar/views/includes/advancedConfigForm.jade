@@ -84,6 +84,10 @@ form(method="post", action="/configureNovaSave")
   input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
   br
 
+  a(href="/editTLSCerts")
+    label Click to upload new TLS certificates
+  br
+
   h2 File Paths
   label Path to state save file
   input(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)

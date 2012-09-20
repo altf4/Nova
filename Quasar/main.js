@@ -947,6 +947,40 @@ app.get('/nodeReview', passport.authenticate('basic', {session: false}), functio
 	})
 });
 
+app.get("/editTLSCerts", passport.authenticate('basic', {session: false}), function (req, res) {
+	res.render('editTLSCerts.jade');	
+});
+
+app.post("/editTLSCerts", passport.authenticate('basic', {session: false}), function (req, res) {
+	if (req.files["cert"] == undefined || req.files["key"] == undefined) {
+		RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.");
+		return;
+	}
+
+	if (req.files["cert"].size == 0 || req.files["key"].size == 0) {
+		RenderError(res, "You must choose both a key and certificate to upload");
+		return;
+	}
+
+	fs.readFile(req.files["key"].path, function (readErrKey, data) {
+		fs.writeFile(NovaHomePath + "/config/keys/quasarKey.pem", data, function(writeErrKey) {
+			
+			fs.readFile(req.files["cert"].path, function (readErrCert, certData) {
+				fs.writeFile(NovaHomePath + "/config/keys/quasarCert.pem", certData, function(writeErrCert) {
+					if (readErrKey != null) {RenderError(res, "Error when reading key file"); return;}
+					if (readErrCert != null) {RenderError(res, "Error when reading cert file"); return;}
+					if (writeErrKey != null) {RenderError(res, "Error when writing key file"); return;}
+					if (writeErrCert != null) {RenderError(res, "Error when writing cert file"); return;}
+					
+					res.render('saveRedirect.jade', {
+						locals: {redirectLink: "/"}
+					})
+				});
+			});
+		});
+	});
+});
+
 app.post('/scanning', passport.authenticate('basic', {session: false}), function (req, res) {
 	if (req.body["numNodes"] === undefined) {
 		RenderError(res, "Invalid arguements to /scanning. You most likely tried to refresh a page that you shouldn't");
