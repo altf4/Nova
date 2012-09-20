@@ -376,7 +376,10 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
             case 'requestBenign':
               console.log('in requestBenign');
               benignRequest = true;
-              benignRequest = !(nova.getSuspectList(distributeSuspect));
+              nova.getSuspectList(distributeSuspect);
+              break;
+            case 'cancelRequestBenign':
+              benignRequest = false;
               break;
             case 'updateConfiguration':
               for(var i in json_args)

@@ -28,10 +28,18 @@ block content
   br
 
   button(id="button4", style="width: 160px", onclick='requestBenign();', disabled=true) Get Benign Suspects
+  button(id="button5", style="width: 160px", onclick='stopRequestBenign()', disabled=true) Cancel Benign Request
+  
+  br
+  br 
+  
   button(type="button", style="width: 160px", onclick='ClearAllSuspects(); suspectGrid.Clear();') Clear All Suspects
   
   br
   br
+
+  h2 Currently Requesting Benign Suspects From:
+  input(id="benignList", readonly=true)
 
   div#nova_suspects_header
     h1 Suspect List
@@ -108,13 +116,30 @@ block headerAdditions
 
     function requestBenign()
     {
-      console.log('requestBenign');
+      document.getElementById('benignList').value = message.id;
       message.type = 'requestBenign';
       for(var i in message)
       {
         console.log('message: ' + i + ', ' + message[i]);
       }
       now.MessageSend(message);
+    }
+
+    function stopRequestBenign()
+    {
+      message.type = 'cancelRequestBenign';
+      now.MessageSend(message);
+      var assign = message.id;
+      var remove = message.id.split(':');
+      for(var i in remove)
+      {
+        if((remove[i] != '' || remove[i] != undefined) && assign.indexOf(remove[i]) != -1)
+        {
+          assign = assign.replace(/remove[i]+':'/, '');
+        }
+      }
+      console.log('assign');
+      document.getElementById('benignList').value = assign;
     }
 
     function setTarget(source, target)
@@ -124,7 +149,7 @@ block headerAdditions
         if(document.getElementById(source).checked && firstIndex === -1)
         {
             message.id += target + ':';
-            for(var i = 0; i < 5; i++)
+            for(var i = 0; i < 6; i++)
             {
                 document.getElementById('button' + i).removeAttribute('disabled');
             }
@@ -138,7 +163,7 @@ block headerAdditions
         {
             // If unselected, remove target from message.id
             console.log(source + ' is not checked, can not do anything until target client is set');
-            for(var i = 0; i < 5; i++)
+            for(var i = 0; i < 6; i++)
             {
                 document.getElementById('button' + i).setAttribute('disabled', true);
             }
@@ -169,7 +194,7 @@ block headerAdditions
         console.log(suspect);
         suspectGrid.DeleteRow(suspect.ip);
         suspectGrid.Render();
-        return;4
+        return;
     }
       
     function pad(num) {
