@@ -1276,10 +1276,12 @@ everyone.now.StartHaystack = function () {
 	if (!nova.IsHaystackUp()) {
 		nova.StartHaystack(false);
 	}
+	everyone.now.updateHaystackStatus(nova.IsHaystackUp());
 }
 
 everyone.now.StopHaystack = function () {
 	nova.StopHaystack();
+	everyone.now.updateHaystackStatus(nova.IsHaystackUp());
 }
 
 everyone.now.IsHaystackUp = function (callback) {
@@ -1287,17 +1289,19 @@ everyone.now.IsHaystackUp = function (callback) {
 }
 
 everyone.now.IsNovadUp = function (callback) {
-	callback(nova.IsNovadUp());
+	callback(nova.IsNovadUp(false));
 }
 
 everyone.now.StartNovad = function () {
 	nova.StartNovad(false);
 	nova.CheckConnection();
+	everyone.now.updateNovadStatus(nova.IsNovadUp(false));
 }
 
 everyone.now.StopNovad = function () {
 	nova.StopNovad();
 	nova.CloseNovadConnection();
+	everyone.now.updateNovadStatus(nova.IsNovadUp(false));
 }
 
 
