@@ -1276,12 +1276,16 @@ everyone.now.StartHaystack = function () {
 	if (!nova.IsHaystackUp()) {
 		nova.StartHaystack(false);
 	}
-	everyone.now.updateHaystackStatus(nova.IsHaystackUp());
+	try {
+		everyone.now.updateHaystackStatus(nova.IsHaystackUp())
+	} catch (err) {};
 }
 
 everyone.now.StopHaystack = function () {
 	nova.StopHaystack();
-	everyone.now.updateHaystackStatus(nova.IsHaystackUp());
+	try {
+		everyone.now.updateHaystackStatus(nova.IsHaystackUp());
+	} catch (err) {};
 }
 
 everyone.now.IsHaystackUp = function (callback) {
@@ -1295,13 +1299,17 @@ everyone.now.IsNovadUp = function (callback) {
 everyone.now.StartNovad = function () {
 	nova.StartNovad(false);
 	nova.CheckConnection();
-	everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+	try {
+		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+	} catch (err) {};
 }
 
 everyone.now.StopNovad = function () {
 	nova.StopNovad();
 	nova.CloseNovadConnection();
-	everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+	try {
+		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+	} catch (err) {};
 }
 
 
@@ -1756,6 +1764,22 @@ everyone.now.GetLocalIP = function (interface, callback) {
 
 everyone.now.GenerateMACForVendor = function(vendor, callback) {
 	callback(vendorToMacDb.GenerateRandomMAC(vendor));
+}
+
+everyone.now.restoreDefaultHaystackConfiguration = function(callback) {
+	var source = NovaSharedPath + "/../userFiles/config/templates/*";
+	var destination = NovaHomePath + "/config/templates/";
+	exec('cp -f ' + source + ' ' + destination, function(err) {
+		callback();
+	});	
+}
+
+everyone.now.restoreDefaultSettings = function(callback) {
+	var source = NovaSharedPath + "/../userFiles/config/NOVAConfig.txt";
+	var destination = NovaHomePath + "/config/NOVAConfig.txt";
+	exec('cp -f ' + source + ' ' + destination, function(err) {
+		callback();
+	});	
 }
 
 

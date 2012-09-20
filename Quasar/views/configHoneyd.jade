@@ -177,6 +177,19 @@ block headerAdditions
             return;
         }
     }
+    
+    function restoreDefaults() {
+        try {
+            now.restoreDefaultHaystackConfiguration(configurationRestored);
+        } catch (err) {
+            alert("Unable to contact server");
+            console.log("Error was: " + err);
+        }
+    }
+
+    function configurationRestored() {
+        now.IsHaystackUp(checkIfRestartNeeded); 
+    }
 
 
     require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
@@ -236,6 +249,8 @@ block content
   button(onClick="deleteSelectedItems()") Delete Selected Nodes 
   button(onClick="editSelectedItem()") Edit Selected Node
 
+  br
+  button(onClick="restoreDefaults()") Restore Default Configuration (will erase all changes!)
   br
   br
   h2 Create Honeyd Nodes
