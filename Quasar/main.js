@@ -2008,6 +2008,8 @@ var distributeSuspect = function (suspect) {
 	try {
 		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
+	console.log('benignRequest == ' + benignRequest);
+	console.log('suspect.ishostile == ' + suspect.GetIsHostile());
   if(String(suspect.GetIsHostile()) == 'true')
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
