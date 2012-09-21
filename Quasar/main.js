@@ -411,8 +411,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
       }
     });
     connection.on('close', function(){
-       // If the connection gets closed, we want to try to reconnect; we will use
-       // the stored IP of the Mothership to make the reconnect attempts
+      // If the connection gets closed, we want to try to reconnect; we will use
+      // the stored IP of the Mothership to make the reconnect attempts
       mothership = undefined;
       if(!reconnecting)
       {

@@ -301,12 +301,9 @@ block headerAdditions
         suspectGrid.SetSortByKey(2);
 
         theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
-        //try {
-        //  now.sendAllSuspects(now.OnNewSuspect);
-        // } catch(err) {
-           //alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-        //   console.log("err was: " + err);
-        // }
+        
+        now.GetHostileSuspects();
+        
         setInterval(function(){
                 suspectGrid.Render();
         }, 3000);   

@@ -12,7 +12,6 @@ var config = new novaconfig.NovaConfigBinding();
 
 var NovaHomePath = config.GetPathHome();
 var NovaSharedPath = config.GetPathShared();
-var SuspectBuffer = new Array();
 
 // Configure the express server to use the 
 // bodyParser so that we can view and use the 
@@ -69,6 +68,18 @@ everyone.now.MessageSend = function(message)
     targets.length = 0;
 };
 
+everyone.now.GetHostileSuspects = function()
+{
+  var message = {};
+  message.type = 'getHostileSuspects';
+  
+  for(var i in novaClients)
+  {
+    novaClients[i].sendUTF(JSON.stringify(message));
+  }
+}
+
+// Remove a user-defined group from the client_groups.txt file
 everyone.now.RemoveGroup = function(group)
 {
   console.log('Removing group ' + group + ' from the client groups file');
@@ -80,6 +91,8 @@ everyone.now.RemoveGroup = function(group)
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 };
 
+// Update a group inside the client_groups.txt file to have
+// a new list of member clientIds.
 everyone.now.UpdateGroup = function(group, newMembers)
 {
   if(group != 'all')
@@ -93,6 +106,7 @@ everyone.now.UpdateGroup = function(group, newMembers)
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
 
+// Add a new user-defined group to the client_groups.txt file
 everyone.now.AddGroup = function(group, members)
 {
   console.log('Adding group ' + group + ' with members ' + members);
@@ -101,7 +115,8 @@ everyone.now.AddGroup = function(group, members)
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
 
-
+// Given the client id and a cb function (which will process the results)
+// grab the list of interfaces for that client.
 everyone.now.GetInterfacesOfClient = function(clientId, cb)
 {
   var interfaceFile = fs.readFileSync(NovaSharedPath + '/Mothership/ClientConfigs/iflist@' + clientId + '.txt', 'utf8');
@@ -113,6 +128,9 @@ everyone.now.GetInterfacesOfClient = function(clientId, cb)
   }
 }
 
+// Convenience method for trimming file new-lines, in the case
+// that we eliminate the first group in the client_groups.txt file
+// for example. 
 function trimNewlines(string)
 {
   var ret = string;
@@ -219,7 +237,8 @@ wsServer.on('request', function(request)
 						break;
           // This case is reserved for response from the clients;
           // we should figure out a standard format for the responses 
-          // that includes the client id and the message, at the very least
+          // that includes the client id and the message, at the very least.
+          // Messages are formatted and constructed on the Quasar side.
 					case 'response':
 						console.log(json_args.response_message);
 						break;
@@ -229,7 +248,7 @@ wsServer.on('request', function(request)
           // Might be able to get away with just sending the JSON object, my intent
           // was to validate the message here with conditionals, just isn't done yet.
 					case 'hostileSuspect':
-            console.log('Hostile Suspect received from ' + json_args.client);
+            console.log('Hostile Suspect ' + json_args.ip + ' received from ' + json_args.client + ' at ' + json_args.lastpacket);
 						var suspect = {};
 						suspect.string = json_args.string;
 						suspect.ip = json_args.ip;
@@ -241,13 +260,13 @@ wsServer.on('request', function(request)
 						{
 						  everyone.now.OnNewSuspect(suspect, SuspectBuffer);
 						}
-						else
-						{
-						  SuspectBuffer.push(suspect);
-						}
 						break;
+				  // This case is reserved for properly receiving and addressing benign requests from 
+				  // a client. Similar to hostile suspect (in fact, exactly the same), but in the future
+				  // I anticipate mothership-side logging differences, so I figured i'd make another
+				  // case.
 				  case 'benignSuspect':
-				    console.log('Benign Suspect received from ' + json_args.client);
+				    console.log('Benign Suspect ' + json_args.ip + ' received from ' + json_args.client);
 				    var suspect = {};
             suspect.string = json_args.string;
             suspect.ip = json_args.ip;
@@ -259,11 +278,12 @@ wsServer.on('request', function(request)
             {
               everyone.now.OnNewSuspect(suspect, SuspectBuffer);
             }
-            else
-            {
-              SuspectBuffer.push(suspect);
-            }
 				    break;
+				  // This case is for receiving client configuration files. It places
+				  // of the client configuration files inside one folder, and differentiates them
+				  // by their clientId. In the future, I'm planning to use these files both to show
+				  // a given Quasar instances' configuration options, as well as maintaining synced
+				  // configuration files. 
 					case 'registerConfig':
 						console.log('Nova Configuration received from ' + json_args.id);
 						// TODO: Check for existing client to add new file association to, extend the .file 
@@ -275,6 +295,10 @@ wsServer.on('request', function(request)
 						fs.writeFileSync(push.file, json_args.file);
 						console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);
 						break;
+				  // Rather than just query the client whenever a list of interfaces is needed (like for the haystack
+				  // autoconfig tool) I opted to have the client register a file containing a list of their interfaces.
+				  // Lightens the load on messaging, and once it's more fleshed out, will be polled to ensure
+				  // that it remains up to date. 
 				  case 'registerClientInterfaces':
 				    fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/' + json_args.filename, json_args.file);
 				    console.log('Interfaces files for ' + json_args.id + ' can be found at ' + json_args.filename);
