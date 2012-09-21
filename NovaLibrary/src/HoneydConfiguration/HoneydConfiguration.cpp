@@ -649,7 +649,7 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 	//	Creates the ports unique identifier these names won't collide unless the port is the same
 	if(!pr.m_behavior.compare("script"))
 	{
-		pr.m_portName = pr.m_portNum + "_" + pr.m_type + "_" + pr.m_behavior + pr.m_scriptName;
+		pr.m_portName = pr.m_portNum + "_" + pr.m_type + "_" + pr.m_behavior + "_" + pr.m_scriptName;
 	}
 	else
 	{
