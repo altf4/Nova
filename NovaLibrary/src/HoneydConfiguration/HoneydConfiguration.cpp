@@ -139,7 +139,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 		propTree.put<string>("behavior", it->second.m_behavior);
 
 		//If this port uses a script, save it.
-		if(!it->second.m_behavior.compare("script") || !it->second.m_behavior.compare("internal"))
+		if(!it->second.m_behavior.compare("script") || !it->second.m_behavior.compare("tarpit script") || !it->second.m_behavior.compare("internal"))
 		{
 			propTree.put<string>("script", it->second.m_scriptName);
 		}
@@ -347,10 +347,14 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 
 					out << prt.m_portNum << " ";
 
-					if(!(prt.m_behavior.compare("script")))
+					if(!prt.m_behavior.compare("script") || !prt.m_behavior.compare("tarpit script"))
 					{
 						string scriptName = prt.m_scriptName;
 
+						if (!prt.m_behavior.compare("tarpit script"))
+						{
+							cout << "tarpit ";
+						}
 						if(m_scripts[scriptName].m_path.compare(""))
 						{
 							out << '"' << m_scripts[scriptName].m_path << '"'<< '\n';
@@ -531,7 +535,7 @@ string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
 				out << " udp port ";
 			}
 			out << portPtr->m_portNum << " ";
-			if(!(portPtr->m_behavior.compare("script")))
+			if(!portPtr->m_behavior.compare("script") || !portPtr->m_behavior.compare("tarpit script"))
 			{
 				string scriptName = m_ports[p->m_ports[i].first].m_scriptName;
 				Script *scriptPtr = &m_scripts[scriptName];
@@ -616,6 +620,23 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 			pr.m_scriptName = scriptName;
 			break;
 		}
+		case TARPIT_OPEN:
+		{
+			pr.m_behavior = "tarpit open";
+			break;
+		}
+		case TARPIT_SCRIPT:
+		{
+			//If the script does not exist
+			if(m_scripts.find(scriptName) == m_scripts.end())
+			{
+				LOG(ERROR, "Cannot create port: specified script " + scriptName + " does not exist.", "");
+				return "";
+			}
+			pr.m_behavior = "tarpit script";
+			pr.m_scriptName = scriptName;
+			break;
+		}
 		default:
 		{
 			LOG(ERROR, "Cannot create port: Attempting to use unknown port behavior", "");
@@ -628,7 +649,7 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 	//	Creates the ports unique identifier these names won't collide unless the port is the same
 	if(!pr.m_behavior.compare("script"))
 	{
-		pr.m_portName = pr.m_portNum + "_" + pr.m_type + "_" + pr.m_scriptName;
+		pr.m_portName = pr.m_portNum + "_" + pr.m_type + "_" + pr.m_behavior + pr.m_scriptName;
 	}
 	else
 	{
@@ -1572,7 +1593,7 @@ bool HoneydConfiguration::LoadPortsTemplate()
 			}
 
 			//If this port uses a script, find and assign it.
-			if(!port.m_behavior.compare("script") || !port.m_behavior.compare("internal"))
+			if(!port.m_behavior.compare("script") || !port.m_behavior.compare("tarpit script") || !port.m_behavior.compare("internal"))
 			{
 				port.m_scriptName = value.second.get<string>("script");
 			}
