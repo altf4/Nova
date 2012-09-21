@@ -138,7 +138,7 @@ html, body {
 
 #connectionsList {
   border: 2px solid;
-  border-radius: 12px;
+  border-radius: 4px;
   background: #E8A02F;
   width: inherit;
   text-align: center;
