@@ -257,12 +257,10 @@ wsServer.on('request', function(request)
             suspect.client = json_args.client;
             if(typeof everyone.now.OnNewSuspect == 'function')
             {
-              console.log('OnNewSuspect exists, calling with suspect');
               everyone.now.OnNewSuspect(suspect, SuspectBuffer);
             }
             else
             {
-              console.log('OnNewSuspect does not exist, putting suspect into buffer');
               SuspectBuffer.push(suspect);
             }
 				    break;

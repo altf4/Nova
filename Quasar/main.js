@@ -374,7 +374,6 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               nova.getSuspectList(distributeSuspect);
               break;
             case 'requestBenign':
-              console.log('in requestBenign');
               benignRequest = true;
               nova.getSuspectList(distributeSuspect);
               break;
@@ -2025,7 +2024,6 @@ var distributeSuspect = function (suspect) {
   }
   else if(String(suspect.GetIsHostile()) == 'false' && benignRequest)
   {
-    console.log('suspect sent it ' + suspect.GetIpString());
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     var send = {};

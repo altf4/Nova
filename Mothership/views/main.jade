@@ -135,7 +135,8 @@ block headerAdditions
       {
         if((remove[i] != '' || remove[i] != undefined) && assign.indexOf(remove[i]) != -1)
         {
-          assign = assign.replace(/remove[i]+':'/, '');
+          var regex = new RegExp(remove[i] + ':', 'i')
+          assign = assign.replace(regex, '');
         }
       }
       console.log('assign');
@@ -218,7 +219,6 @@ block headerAdditions
   
       if(buffer.length > 0)
       {
-        console.log('Found suspects in SuspectBuffer, rendering now');
         for(var i in buffer)
         {
           var row = new Array();
