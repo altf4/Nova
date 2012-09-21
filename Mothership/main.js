@@ -68,20 +68,19 @@ everyone.now.MessageSend = function(message)
     targets.length = 0;
 };
 
-everyone.now.GetClients = function()
+everyone.now.GetClients = function(callback)
 {
   var ret = new Array();
   for(var i in novaClients)
   {
     ret.push(i);
   }
-  return ret;
+  callback(ret);
 }
 
 everyone.now.UpdateStatus = function(clients, component, running)
 {
   var clientsToUpdate = clients.split(':');
-  console.log('in UpdateStatus, clientsToUpdate is ' + clientsToUpdate);
   for(var i in clientsToUpdate)
   {
     if(clientsToUpdate[i] != '' && clientsToUpdate[i] != undefined)
@@ -96,21 +95,26 @@ everyone.now.UpdateStatus = function(clients, component, running)
       }
       if(typeof everyone.now.UpdateConnectionsList == 'function')
       {
-        console.log('calling updateStatus on ' + clientsToUpdate[i]);
         everyone.now.UpdateConnectionsList(clientsToUpdate[i], 'updateStatus');
       }
     }
   }
 }
 
-everyone.now.IsNovadUp = function(clientId)
+everyone.now.IsNovadUp = function(clientId, callback)
 {
-  return novaClients[clientId].statusNova; 
+  if(typeof callback == 'function')
+  {
+    callback(novaClients[clientId].statusNova);
+  } 
 }
 
-everyone.now.IsHaystackUp = function(clientId)
+everyone.now.IsHaystackUp = function(clientId, callback)
 {
-  return novaClients[clientId].statusHaystack;
+  if(typeof callback == 'function')
+  {
+    callback(novaClients[clientId].statusHaystack);
+  }
 }
 
 everyone.now.GetHostileSuspects = function()
@@ -264,8 +268,6 @@ wsServer.on('request', function(request)
           // has been created for future reference and connection management
 					case 'addId':
 						// TODO: Check that id doesn't exist before adding
-						console.log('json_args.nova == ' + json_args.nova);
-						console.log('json_args.haystack == ' + json_args.haystack);
 						novaClients[json_args.id.toString()] = {statusNova: json_args.nova, statusHaystack: json_args.haystack, connection: connection};
 						console.log('Connected clients: ');
 						for(var i in novaClients)
@@ -307,7 +309,7 @@ wsServer.on('request', function(request)
 						suspect.client = json_args.client;
 						if(typeof everyone.now.OnNewSuspect == 'function')
 						{
-						  everyone.now.OnNewSuspect(suspect, SuspectBuffer);
+						  everyone.now.OnNewSuspect(suspect);
 						}
 						break;
 				  // This case is reserved for properly receiving and addressing benign requests from 
@@ -325,7 +327,7 @@ wsServer.on('request', function(request)
             suspect.client = json_args.client;
             if(typeof everyone.now.OnNewSuspect == 'function')
             {
-              everyone.now.OnNewSuspect(suspect, SuspectBuffer);
+              everyone.now.OnNewSuspect(suspect);
             }
 				    break;
 				  // This case is for receiving client configuration files. It places
@@ -357,11 +359,11 @@ wsServer.on('request', function(request)
 				  case 'statusChange':
 				    if(json_args.component == 'haystack')
 				    {
-				      
+				      novaClients[json_args.id].statusHaystack = json_args.status;
 				    }
 				    else if(json_args.component == 'novad')
 				    {
-				      
+				      novaClients[json_args.id].statusNovad = json_args.status;
 				    }
 					// If we've found a message type that we weren't expecting, or don't have a case
           // for, log this message to the console and do nothing.

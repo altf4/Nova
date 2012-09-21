@@ -39,34 +39,38 @@ html(lang="en")
             var novadStatus = document.createElement('img');
             novadStatus.width = '16';
             novadStatus.height = '16';
-            novadStatus.id = clientId + 'nova';
+            novadStatus.id = clients[i] + 'nova';
             
-            if(everyone.now.IsNovadUp(clients[i]))
-            {
-              novadStatus.src = 'images/greendot.png';
-              novadStatus.alt = 'Classification is on for ' + clients[i];
-            }
-            else
-            {
-              novadStatus.src = 'images/reddot.png';
-              novadStatus.alt = 'Classification is off for ' + clients[i];
-            }
+            now.IsNovadUp(clients[i], function(status){
+              if(status == 'true' || status == true)
+              {
+                novadStatus.src = 'images/greendot.png';
+                novadStatus.alt = 'Classification is on for ' + clients[i];
+              } 
+              else
+              {
+                novadStatus.src = 'images/reddot.png';
+                novadStatus.alt = 'Classification is off for ' + clients[i];
+              } 
+            });
             
             var haystackStatus = document.createElement('img');
             haystackStatus.width = '16';
             haystackStatus.height = '16';
-            haystackStatus.id = clientId + 'haystack';
+            haystackStatus.id = clients[i] + 'haystack';
               
-            if(everyone.now.IsHaystackUp(clients[i]))
-            {
-              haystackStatus.src = 'images/greendot.png';
-              haystackStatus.alt = 'Haystack is on for ' + clients[i];
-            }
-            else
-            {
-              haystackStatus.src = 'images/reddot.png';
-              haystackStatus.alt = 'Haystack is off for ' + clients[i];
-            }
+            now.IsHaystackUp(clients[i], function(status){
+              if(status == 'true' || status == true)
+              {
+                haystackStatus.src = 'images/greendot.png';
+                haystackStatus.alt = 'Classification is on for ' + clients[i];
+              } 
+              else
+              {
+                haystackStatus.src = 'images/reddot.png';
+                haystackStatus.alt = 'Classification is off for ' + clients[i];
+              } 
+            });
             
             div.appendChild(label);
             div.appendChild(novadStatus);
@@ -100,32 +104,36 @@ html(lang="en")
             novadStatus.height = '16';
             novadStatus.id = clientId + 'nova';
             
-            if(now.IsNovadUp(clientId))
-            {
-              novadStatus.src = 'images/greendot.png';
-              novadStatus.alt = 'Classification is on for ' + clientId;
-            }
-            else
-            {
-              novadStatus.src = 'images/reddot.png';
-              novadStatus.alt = 'Classification is off for ' + clientId;
-            }
+            now.IsNovadUp(clientId, function(status){
+              if(status == 'true' || status == true)
+              {
+                novadStatus.src = 'images/greendot.png';
+                novadStatus.alt = 'Classification is on for ' + clientId;
+              } 
+              else
+              {
+                novadStatus.src = 'images/reddot.png';
+                novadStatus.alt = 'Classification is off for ' + clientId;
+              } 
+            });
             
             var haystackStatus = document.createElement('img');
             haystackStatus.width = '16';
             haystackStatus.height = '16';
             haystackStatus.id = clientId + 'haystack';
               
-            if(now.IsHaystackUp(clientId))
-            {
-              haystackStatus.src = 'images/greendot.png';
-              haystackStatus.alt = 'Haystack is on for ' + clientId;
-            }
-            else
-            {
-              haystackStatus.src = 'images/reddot.png';
-              haystackStatus.alt = 'Haystack is off for ' + clientId;
-            }
+            now.IsHaystackUp(clientId, function(status){
+              if(status == 'true' || status == true)
+              {
+                haystackStatus.src = 'images/greendot.png';
+                haystackStatus.alt = 'Classification is on for ' + clientId;
+              } 
+              else
+              {
+                haystackStatus.src = 'images/reddot.png';
+                haystackStatus.alt = 'Classification is off for ' + clientId;
+              } 
+            });
             
             div.appendChild(label);
             div.appendChild(novadStatus);
@@ -136,9 +144,6 @@ html(lang="en")
             if(document.getElementById(clientId) != undefined)
             {
               divConnectionsList.removeChild(document.getElementById(clientId));
-            }
-            else
-            {
               if(divConnectionsList.childNodes.length == 0)
               {
                 var label = document.createElement('label');
@@ -149,25 +154,32 @@ html(lang="en")
             }
             break;
           case 'updateStatus':
-            console.log('updateStatus hit, clientId is ' + clientId);
-            console.log('now.IsNovadUp(clientId) returns ' + now.IsNovadUp(clientId));
-            console.log('now.IsHaystackUp(clientId) returns ' + now.IsHaystackUp(clientId));
-            if(now.IsNovadUp(clientId) == 'true' || now.IsNovadUp(clientId))
-            {
-              document.getElementById(clientId + 'nova').src = 'images/greendot.png';
-            }
-            else
-            {
-              document.getElementById(clientId + 'nova').src = 'images/reddot.png';;
-            }
-            if(now.IsHaystackUp(clientId) == 'true' || now.IsHaystackUp(clientId))
-            {
-              document.getElementById(clientId + 'haystack').src = 'images/greendot.png';;
-            }
-            else
-            {
-              document.getElementById(clientId + 'haystack').src = 'images/reddot.png';;
-            }
+            now.IsNovadUp(clientId, function(status){
+              console.log('status of Novad in novaClients for ' + clientId + ' is ' + status);
+              if(status == 'true' || status == true)
+              {
+                document.getElementById(clientId + 'nova').src = 'images/greendot.png';
+                document.getElementById(clientId + 'nova').alt = 'Classification is on for ' + clientId;
+              }
+              else
+              {
+                document.getElementById(clientId + 'nova').src = 'images/reddot.png';
+                document.getElementById(clientId + 'nova').alt = 'Classification is off for ' + clientId;
+              }
+            });
+            now.IsHaystackUp(clientId, function(status){
+              console.log('status of Novad in novaClients for ' + clientId + ' is ' + status);
+              if(status == 'true' || status == true)
+              {
+                document.getElementById(clientId + 'haystack').src = 'images/greendot.png';
+                document.getElementById(clientId + 'haystack').alt = 'Haystack is on for ' + clientId;
+              }
+              else
+              {
+                document.getElementById(clientId + 'haystack').src = 'images/reddot.png';
+                document.getElementById(clientId + 'haystack').alt = 'Haystack is off for ' + clientId;
+              }
+            });
             break;
           default:
             console.log('UpdateConnectionsList called with unknown action ' + action + ', doing nothing');
