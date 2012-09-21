@@ -837,9 +837,11 @@ app.get('/setup3', passport.authenticate('basic', {session: false}), function (r
 		SCANERROR: ""
 	});
 });
-app.get('/CaptureTrainingData', passport.authenticate('basic', {session: false}), function (req, res) {
-	res.render('captureTrainingData.jade');
-});
+
+// Training data capture via Quasar isn't currently supported
+//app.get('/CaptureTrainingData', passport.authenticate('basic', {session: false}), function (req, res) {
+//	res.render('captureTrainingData.jade');
+//});
 app.get('/about', passport.authenticate('basic', {session: false}), function (req, res) {
 	res.render('about.jade');
 });
