@@ -58,15 +58,6 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 		}
 	}
 
-	if(!subnetsToUse.empty())
-	{
-		m_hdconfig->m_subnets.clear();
-
-		for(uint i = 0; i < subnetsToUse.size(); i++)
-		{
-			AddSubnet(subnetsToUse[i]);
-		}
-	}
 
 	m_hdconfig->SaveAllTemplates();
 	m_hdconfig->LoadAllTemplates();
@@ -523,11 +514,6 @@ void PersonalityTree::RecursivePrintTree(PersonalityNode *node)
 	{
 		RecursivePrintTree(node->m_children[i].second);
 	}
-}
-
-bool PersonalityTree::AddSubnet(const Subnet &add)
-{
-	return m_hdconfig->AddSubnet(add);
 }
 
 bool PersonalityTree::CalculateDistributions()

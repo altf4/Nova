@@ -52,6 +52,13 @@ uint16_t tempHostspace;
 string localMachine;
 string nmapFileName;
 uint numNodes;
+double nodeRatio;
+
+enum NumberOfNodesType {
+	FIXED_NUMBER_OF_NODES
+	, RATIO_BASED_NUMBER_OF_NODES
+};
+NumberOfNodesType numberOfNodesType;
 
 vector<Subnet> subnetsDetected;
 
@@ -67,7 +74,8 @@ int main(int argc, char ** argv)
 		po::options_description desc("Command line options");
 		desc.add_options()
 				("help,h", "Show command line options")
-				("num-nodes,n", po::value<uint>(&numNodes)->default_value(0), "Number of nodes to create.")
+				("num-nodes,n", po::value<uint>(&numNodes), "Number of nodes to create (can't be used with -r)")
+				("num-nodes-ratio,r", po::value<double>(&nodeRatio), "Ratio of haystack nodes to create vs real nodes (eg, 2 for 2x haystack nodes per real host or 0.5 for half the number of haystack nodes as real hosts)")
 				("interface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
 				("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
 				("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
@@ -89,9 +97,25 @@ int main(int argc, char ** argv)
 			cout << desc << endl;
 			return HHC_CODE_OKAY;
 		}
+
+
+		if (vm.count("num-nodes-ratio") && vm.count("num-nodes"))
+		{
+			cout << "ERROR: You can only use one of -r and -n to specify the number of nodes." << endl;
+			lockFile.close();
+			remove(lockFilePath.c_str());
+			exit(HHC_CODE_BAD_ARG_VALUE);
+		}
+
+		if (vm.count("num-nodes-ratio"))
+		{
+			cout << "Number of nodes to create: " << nodeRatio << " * number of real hosts found" << endl;
+			numberOfNodesType = RATIO_BASED_NUMBER_OF_NODES;
+		}
 		if(vm.count("num-nodes"))
 		{
 			cout << "Number of nodes to create: " << numNodes << '\n';
+			numberOfNodesType = FIXED_NUMBER_OF_NODES;
 		}
 		if(vm.count("interface"))
 		{
@@ -155,8 +179,15 @@ int main(int argc, char ** argv)
 			f_flag_set = true;
 		}
 
-		if(numNodes < 0)
+		if(numberOfNodesType == FIXED_NUMBER_OF_NODES && numNodes < 0)
 		{
+			lockFile.close();
+			remove(lockFilePath.c_str());
+			LOG(ERROR, "num-nodes argument takes an integer greater than or equal to 0. Aborting...", "");
+			exit(HHC_CODE_BAD_ARG_VALUE);
+		}
+
+		if (numberOfNodesType == FIXED_NUMBER_OF_NODES && nodeRatio < 0) {
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			LOG(ERROR, "num-nodes argument takes an integer greater than or equal to 0. Aborting...", "");
@@ -918,7 +949,31 @@ void Nova::GenerateConfiguration()
 	PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
 	persTree.AddAllPorts();
 	NodeManager nodeBuilder = NodeManager(persTree.GetHDConfig());
-	nodeBuilder.SetNumNodesOnProfileTree(&persTree.GetHDConfig()->m_profiles["default"], numNodes);
+
+	uint nodesToCreate = 0;
+	switch (numberOfNodesType)
+	{
+		case FIXED_NUMBER_OF_NODES:
+		{
+			nodesToCreate = numNodes;
+			break;
+		}
+
+		case RATIO_BASED_NUMBER_OF_NODES:
+		{
+			nodesToCreate = ((double)personalities.m_num_of_hosts) * nodeRatio;
+			break;
+		}
+
+		default:
+		{}
+	};
+
+	stringstream ss;
+	ss << "Creating " << nodesToCreate << " new nodes" << endl;
+	LOG(DEBUG, ss.str(), "");
+
+	nodeBuilder.SetNumNodesOnProfileTree(&persTree.GetHDConfig()->m_profiles["default"], nodesToCreate);
 	persTree.GetHDConfig()->SaveAllTemplates();
 }
 

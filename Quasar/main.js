@@ -159,8 +159,8 @@ function (username, password, done) {
 
 // Setup TLS
 var express_options = {
-	key: fs.readFileSync(NovaSharedPath + '/Quasar/serverkey.pem'),
-	cert: fs.readFileSync(NovaSharedPath + '/Quasar/servercert.pem')
+	key: fs.readFileSync(NovaHomePath + '/config/keys/quasarKey.pem'),
+	cert: fs.readFileSync(NovaHomePath + '/config/keys/quasarCert.pem')
 };
 
 var app = express.createServer(express_options);
@@ -609,10 +609,12 @@ app.get('/advancedOptions', passport.authenticate('basic', {session: false}), fu
 			, MASTER_UI_IP: config.ReadSetting("MASTER_UI_IP")
 			, MASTER_UI_RECONNECT_TIME: config.ReadSetting("MASTER_UI_RECONNECT_TIME")
 			, MASTER_UI_CLIENT_ID: config.ReadSetting("MASTER_UI_CLIENT_ID")
-			, MASTER_UI_ENABLED: config.ReadSetting("MASTER_UI_ENABLED")			
+			, MASTER_UI_ENABLED: config.ReadSetting("MASTER_UI_ENABLED") 
 			, FEATURE_WEIGHTS: config.ReadSetting("FEATURE_WEIGHTS")
 			, CLASSIFICATION_ENGINE: config.ReadSetting("CLASSIFICATION_ENGINE")
 			, THRESHOLD_HOSTILE_TRIGGERS: config.ReadSetting("THRESHOLD_HOSTILE_TRIGGERS")
+
+
 			, supportedEngines: nova.GetSupportedEngines()
 		}
 	});
@@ -727,7 +729,6 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 			INTERFACES: config.ListInterfaces().sort(),
 			profiles: honeydConfig.GetProfileNames(),
 			nodes: nodes,
-			subnets: honeydConfig.GetSubnetNames(),
 			groups: honeydConfig.GetGroups(),
 			currentGroup: config.GetGroup()
 		}
@@ -1140,9 +1141,42 @@ app.get('/nodeReview', passport.authenticate('basic', {session: false}), functio
 			profileNames: honeydConfig.GetGeneratedProfileNames(),
 			profiles: profiles,
 			nodes: nodes,
-			subnets: honeydConfig.GetSubnetNames()
 		}
 	})
+});
+
+app.get("/editTLSCerts", passport.authenticate('basic', {session: false}), function (req, res) {
+	res.render('editTLSCerts.jade');	
+});
+
+app.post("/editTLSCerts", passport.authenticate('basic', {session: false}), function (req, res) {
+	if (req.files["cert"] == undefined || req.files["key"] == undefined) {
+		RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.");
+		return;
+	}
+
+	if (req.files["cert"].size == 0 || req.files["key"].size == 0) {
+		RenderError(res, "You must choose both a key and certificate to upload");
+		return;
+	}
+
+	fs.readFile(req.files["key"].path, function (readErrKey, data) {
+		fs.writeFile(NovaHomePath + "/config/keys/quasarKey.pem", data, function(writeErrKey) {
+			
+			fs.readFile(req.files["cert"].path, function (readErrCert, certData) {
+				fs.writeFile(NovaHomePath + "/config/keys/quasarCert.pem", certData, function(writeErrCert) {
+					if (readErrKey != null) {RenderError(res, "Error when reading key file"); return;}
+					if (readErrCert != null) {RenderError(res, "Error when reading cert file"); return;}
+					if (writeErrKey != null) {RenderError(res, "Error when writing key file"); return;}
+					if (writeErrCert != null) {RenderError(res, "Error when writing cert file"); return;}
+					
+					res.render('saveRedirect.jade', {
+						locals: {redirectLink: "/"}
+					})
+				});
+			});
+		});
+	});
 });
 
 app.post('/scanning', passport.authenticate('basic', {session: false}), function (req, res) {
@@ -1248,7 +1282,7 @@ everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macTyp
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "CAPTURE_BUFFER_SIZE", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", "THRESHOLD_HOSTILE_TRIGGERS"];
+	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", "THRESHOLD_HOSTILE_TRIGGERS"];
 
 	Validator.prototype.error = function (msg) {
 		this._errors.push(msg);
@@ -1815,17 +1849,25 @@ everyone.now.GetCaptureSession = function (callback) {
 	callback(ret);
 }
 
-everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback, route, cb) {
+everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subnets, callback, route) {
 	var executionString = 'haystackautoconfig';
 	var nFlag = '-n';
+	var rFlag = '-r';
 	var iFlag = '-i';
 	var aFlag = '-a';
 
 	var hhconfigArgs = new Array();
 
-	if (numNodes !== undefined && parseInt(numNodes) >= 0) {
-		hhconfigArgs.push(nFlag);
-		hhconfigArgs.push(numNodes);
+	if (numNodesType == "fixed") {
+		if (numNodes !== undefined) {
+			hhconfigArgs.push(nFlag);
+			hhconfigArgs.push(numNodes);
+		}
+	} else if (numNodesType == "ratio") {
+		if (numNodes !== undefined) {
+			hhconfigArgs.push(rFlag);
+			hhconfigArgs.push(numNodes);
+		}
 	}
 	if (interfaces !== undefined && interfaces.length > 0) {
 		hhconfigArgs.push(iFlag);
@@ -1854,10 +1896,6 @@ everyone.now.ShowAutoConfig = function (numNodes, interfaces, subnets, callback,
 
 	autoconfig.on('exit', function (code) {
 		console.log("autoconfig exited with code " + code);
-		if(typeof cb == 'function')
-		{
-		  cb('Autoconfiguration complete for ' + clientId);
-		}
 		route("/nodeReview");
 	});
 }

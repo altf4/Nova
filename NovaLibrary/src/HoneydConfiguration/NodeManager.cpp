@@ -221,7 +221,6 @@ bool NodeManager::GenerateNodes(int num_nodes)
 						curNode.m_pfile = m_profileCounters[j].m_profile.m_name;
 						curNode.m_enabled = true;
 						curNode.m_interface = Config::Inst()->GetInterface(0);
-						curNode.m_sub = curNode.m_interface;
 						curNode.m_realIP = 0;
 
 						//Update counters for remaining macs
