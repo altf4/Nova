@@ -2132,20 +2132,22 @@ setInterval(function () {
 	try {
 		everyone.now.updateHaystackStatus(nova.IsHaystackUp());
 		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
-		if(mothership != undefined)
-		{
-		  var message = {};
-		  message.id = clientId;
-		  message.type = 'updateStatus';
-		  message.component = 'nova';
-		  message.status = nova.IsNovadUp(false);
-		  mothership.sendUTF(JSON.stringify(message));
-		  message.component = 'haystack';
-		  message.status = nova.IsHaystackUp();
-		  mothership.sendUTF(JSON.stringify(message));
-		}
-		
 	} catch (err) {
 
 	}
 }, 5000);
+
+setInterval(function() {
+  if(mothership != undefined)
+  {
+    var message = {};
+    message.id = clientId;
+    message.type = 'statusChange';
+    message.component = 'nova';
+    message.status = nova.IsNovadUp(false);
+    mothership.sendUTF(JSON.stringify(message));
+    message.component = 'haystack';
+    message.status = nova.IsHaystackUp();
+    mothership.sendUTF(JSON.stringify(message));
+  }
+}, 10000);
