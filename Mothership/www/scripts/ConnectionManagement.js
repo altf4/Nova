@@ -106,7 +106,7 @@
       }
     }
     
-    now.UpdateConnectionsList = function(clientId, action) {
+    now.UpdateClientsList = function(clientId, action) {
       var divClientList = document.getElementById('clientsList');
       
       switch(action)

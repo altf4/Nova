@@ -60,13 +60,58 @@ everyone.now.MessageSend = function(message)
       }
       if(targets[i] != '' && sendMessage)
       {
-	      novaClients[targets[i]].sendUTF(JSON.stringify(message));
+	      novaClients[targets[i]].connection.sendUTF(JSON.stringify(message));
 	      seen.push(targets[i]);
       }
     }
     seen.length = 0;
     targets.length = 0;
 };
+
+everyone.now.GetClients = function()
+{
+  var ret = new Array();
+  for(var i in novaClients)
+  {
+    ret.push(i);
+  }
+  return ret;
+}
+
+everyone.now.UpdateStatus = function(clients, component, running)
+{
+  var clientsToUpdate = clients.split(':');
+  console.log('in UpdateStatus, clientsToUpdate is ' + clientsToUpdate);
+  for(var i in clientsToUpdate)
+  {
+    if(clientsToUpdate[i] != '' && clientsToUpdate[i] != undefined)
+    {
+      if(component == 'nova')
+      {
+        novaClients[clientsToUpdate[i]].statusNova = running;
+      }
+      else if(component == 'haystack')
+      {
+        novaClients[clientsToUpdate[i]].statusHaystack = running;
+      }
+      if(typeof everyone.now.UpdateConnectionsList == 'function')
+      {
+        console.log('calling updateStatus on ' + clientsToUpdate[i]);
+        everyone.now.UpdateConnectionsList(clientsToUpdate[i], 'updateStatus');
+      }
+    }
+  }
+}
+
+everyone.now.IsNovadUp = function(clientId)
+{
+  return novaClients[clientId].statusNova; 
+}
+
+everyone.now.IsHaystackUp = function(clientId)
+{
+  return novaClients[clientId].statusHaystack;
+}
 
 everyone.now.GetHostileSuspects = function()
 {
@@ -75,7 +120,7 @@ everyone.now.GetHostileSuspects = function()
   
   for(var i in novaClients)
   {
-    novaClients[i].sendUTF(JSON.stringify(message));
+    novaClients[i].connection.sendUTF(JSON.stringify(message));
   }
 }
 
@@ -219,7 +264,9 @@ wsServer.on('request', function(request)
           // has been created for future reference and connection management
 					case 'addId':
 						// TODO: Check that id doesn't exist before adding
-						novaClients[json_args.id.toString()] = connection;
+						console.log('json_args.nova == ' + json_args.nova);
+						console.log('json_args.haystack == ' + json_args.haystack);
+						novaClients[json_args.id.toString()] = {statusNova: json_args.nova, statusHaystack: json_args.haystack, connection: connection};
 						console.log('Connected clients: ');
 						for(var i in novaClients)
 						{
@@ -230,8 +277,10 @@ wsServer.on('request', function(request)
             getHostile.type = 'getHostileSuspects';
             getHostile.id = json_args.id + ':';
             everyone.now.MessageSend(getHostile);
-            if(typeof everyone.now.UpdateConnectionsList == 'function')
+            if(typeof everyone.now.UpdateClientsList == 'function'
+               && typeof everyone.now.UpdateConnectionsList == 'function')
             {
+              everyone.now.UpdateClientsList(json_args.id, 'add');
               everyone.now.UpdateConnectionsList(json_args.id, 'add');
             }
 						break;
@@ -303,6 +352,17 @@ wsServer.on('request', function(request)
 				    fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/' + json_args.filename, json_args.file);
 				    console.log('Interfaces files for ' + json_args.id + ' can be found at ' + json_args.filename);
 				    break;
+				  // Case reserved for status updates from a given client about the classification and 
+				  // haystack components.
+				  case 'statusChange':
+				    if(json_args.component == 'haystack')
+				    {
+				      
+				    }
+				    else if(json_args.component == 'novad')
+				    {
+				      
+				    }
 					// If we've found a message type that we weren't expecting, or don't have a case
           // for, log this message to the console and do nothing.
 					default:
@@ -329,10 +389,15 @@ wsServer.on('close', function(connection, reason, description)
 	console.log('Closed connection: ' + description);
     for(var i in novaClients)
     {
-        if(novaClients[i] === connection)
+        if(novaClients[i].connection === connection)
         {
-            everyone.now.UpdateConnectionsList(i, 'remove');
-            delete novaClients[i];
+            if(typeof everyone.now.UpdateClientsList == 'function'
+               && typeof everyone.now.UpdateConnectionsList == 'function')
+            {
+              everyone.now.UpdateClientsList(i, 'remove');
+              everyone.now.UpdateConnectionsList(i, 'remove');
+            }
+          delete novaClients[i];
         }
     }
 });

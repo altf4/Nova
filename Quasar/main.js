@@ -283,6 +283,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
     var quick = {};
     quick.type = 'addId';
     quick.id = clientId;
+    quick.nova = nova.IsNovadUp().toString();
+    quick.haystack = nova.IsHaystackUp().toString();
     // I don't know that we HAVE to use UTF8 here, there's a send() method as 
     // well as a 'data' member inside the message objects instead of utf8Data.
     // But, as it was in the Websockets tutorial Pherric found, we'll use it for now

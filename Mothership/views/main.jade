@@ -15,8 +15,8 @@ block content
         td
           div(id='groupsList')
 
-  button(id='button0', style='width: 160px', onclick='startNovad();', disabled=true) Start Novad
-  button(id='button1', style='width: 160px',  onclick='stopNovad();', disabled=true) Stop Novad
+  button(id='button0', style='width: 160px', onclick='startNovad();', disabled=true) Start Classifying
+  button(id='button1', style='width: 160px',  onclick='stopNovad();', disabled=true) Stop Classifying
 
   br
   br
@@ -94,24 +94,28 @@ block headerAdditions
     {
         message.type = 'startNovad';
         now.MessageSend(message);
+        now.UpdateStatus(message.id, 'nova', true);
     }
 
     function stopNovad()
     {
         message.type = 'stopNovad';
         now.MessageSend(message);
+        now.UpdateStatus(message.id, 'nova', false);
     }
 
     function startHaystack()
     {
         message.type = 'startHaystack';
         now.MessageSend(message);
+        now.UpdateStatus(message.id, 'haystack', true);
     }
 
     function stopHaystack()
     {
         message.type = 'stopHaystack';
         now.MessageSend(message);
+        now.UpdateStatus(message.id, 'haystack', false);
     }
 
     function requestBenign()
@@ -315,6 +319,7 @@ block headerAdditions
               Init();
               setUpSelect('clientsList');
               setUpGrouplist('groupsList');
+              now.RenderConnectionsList(now.GetClients());
             });
         });
     });
