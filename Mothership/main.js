@@ -365,6 +365,7 @@ wsServer.on('request', function(request)
 				    {
 				      novaClients[json_args.id].statusNovad = json_args.status;
 				    }
+				    break;
 					// If we've found a message type that we weren't expecting, or don't have a case
           // for, log this message to the console and do nothing.
 					default:
