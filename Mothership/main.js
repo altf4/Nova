@@ -135,8 +135,8 @@ var https = require('https');
 // TODO: These paths will need to be relative to the NovaPath
 // or something mothership specific
 var options = {
-	key: fs.readFileSync(NovaSharedPath + '/Quasar/serverkey.pem'),
-	cert: fs.readFileSync(NovaSharedPath + '/Quasar/servercert.pem')
+  key: fs.readFileSync(NovaHomePath + '/config/keys/quasarKey.pem'),
+  cert: fs.readFileSync(NovaHomePath + '/config/keys/quasarCert.pem')
 	/*ca: fs.readFileSync(''),
 	requestCert:		true,
 	rejectUnauthorized:	false*/
