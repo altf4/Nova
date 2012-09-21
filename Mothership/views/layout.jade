@@ -44,12 +44,12 @@ html(lang="en")
             now.IsNovadUp(clients[i], function(status){
               if(status == 'true' || status == true)
               {
-                novadStatus.src = 'images/greendot.png';
+                novadStatus.src = 'images/Ngreendot.png';
                 novadStatus.alt = 'Classification is on for ' + clients[i];
               } 
               else
               {
-                novadStatus.src = 'images/reddot.png';
+                novadStatus.src = 'images/Nreddot.png';
                 novadStatus.alt = 'Classification is off for ' + clients[i];
               } 
             });
@@ -62,12 +62,12 @@ html(lang="en")
             now.IsHaystackUp(clients[i], function(status){
               if(status == 'true' || status == true)
               {
-                haystackStatus.src = 'images/greendot.png';
+                haystackStatus.src = 'images/Hgreendot.png';
                 haystackStatus.alt = 'Classification is on for ' + clients[i];
               } 
               else
               {
-                haystackStatus.src = 'images/reddot.png';
+                haystackStatus.src = 'images/Hreddot.png';
                 haystackStatus.alt = 'Classification is off for ' + clients[i];
               } 
             });
@@ -107,12 +107,12 @@ html(lang="en")
             now.IsNovadUp(clientId, function(status){
               if(status == 'true' || status == true)
               {
-                novadStatus.src = 'images/greendot.png';
+                novadStatus.src = 'images/Ngreendot.png';
                 novadStatus.alt = 'Classification is on for ' + clientId;
               } 
               else
               {
-                novadStatus.src = 'images/reddot.png';
+                novadStatus.src = 'images/Nreddot.png';
                 novadStatus.alt = 'Classification is off for ' + clientId;
               } 
             });
@@ -125,12 +125,12 @@ html(lang="en")
             now.IsHaystackUp(clientId, function(status){
               if(status == 'true' || status == true)
               {
-                haystackStatus.src = 'images/greendot.png';
+                haystackStatus.src = 'images/Hgreendot.png';
                 haystackStatus.alt = 'Classification is on for ' + clientId;
               } 
               else
               {
-                haystackStatus.src = 'images/reddot.png';
+                haystackStatus.src = 'images/Hreddot.png';
                 haystackStatus.alt = 'Classification is off for ' + clientId;
               } 
             });
@@ -155,28 +155,26 @@ html(lang="en")
             break;
           case 'updateStatus':
             now.IsNovadUp(clientId, function(status){
-              console.log('status of Novad in novaClients for ' + clientId + ' is ' + status);
               if(status == 'true' || status == true)
               {
-                document.getElementById(clientId + 'nova').src = 'images/greendot.png';
+                document.getElementById(clientId + 'nova').src = 'images/Ngreendot.png';
                 document.getElementById(clientId + 'nova').alt = 'Classification is on for ' + clientId;
               }
               else
               {
-                document.getElementById(clientId + 'nova').src = 'images/reddot.png';
+                document.getElementById(clientId + 'nova').src = 'images/Nreddot.png';
                 document.getElementById(clientId + 'nova').alt = 'Classification is off for ' + clientId;
               }
             });
             now.IsHaystackUp(clientId, function(status){
-              console.log('status of Novad in novaClients for ' + clientId + ' is ' + status);
               if(status == 'true' || status == true)
               {
-                document.getElementById(clientId + 'haystack').src = 'images/greendot.png';
+                document.getElementById(clientId + 'haystack').src = 'images/Hgreendot.png';
                 document.getElementById(clientId + 'haystack').alt = 'Haystack is on for ' + clientId;
               }
               else
               {
-                document.getElementById(clientId + 'haystack').src = 'images/reddot.png';
+                document.getElementById(clientId + 'haystack').src = 'images/Hreddot.png';
                 document.getElementById(clientId + 'haystack').alt = 'Haystack is off for ' + clientId;
               }
             });
