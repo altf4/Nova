@@ -23,7 +23,6 @@ CREATE TABLE statistics (
 
 		ip_traffic_distribution DOUBLE,
 		port_traffic_distribution DOUBLE,
-		haystack_event_frequency DOUBLE,
 		packet_size_mean DOUBLE,
 		packet_size_deviation DOUBLE,
 		distinct_ips DOUBLE,
@@ -37,19 +36,19 @@ CREATE TABLE statistics (
 		haystack_percent_contacted DOUBLE
 );"
 
-dbFilePath="$DESTDIR/usr/share/nova/database.db"
+dbFilePath="$DESTDIR/usr/share/nova/userFiles/data/database.db"
 
 if [[ $1 == "reset" ]]; then
 	echo "You chose the reset option. This will clear all database data!"
-	rm -fr $dbFilePath
+	rm -fr "$dbFilePath"
 fi
 
 
 
-sqlite3 $dbFilePath <<< $QUERY
+sqlite3 "$dbFilePath" <<< $QUERY
 #sqlite3 "/usr/share/nova/database.db" <<< "INSERT INTO credentials VALUES('nova', '\$4\$nova\$h36yyW3noGPSWnx5JCalQCPoo74\$');"
 
-chgrp nova $dbFilePath
-chmod g+rw $dbFilePath
+chgrp nova "$dbFilePath"
+chmod g+rw "$dbFilePath"
 
 echo "SQL schema has been set up for nova."

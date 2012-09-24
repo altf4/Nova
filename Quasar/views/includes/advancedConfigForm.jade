@@ -37,21 +37,55 @@ script
     document.getElementById("ENABLED_FEATURES").setAttribute("value", changeTo);
     document.getElementById("enabledFeaturesLabel").innerHTML = "Features Mask: " + changeTo;
   }
+
+  function featureWeightChanged() {
+    var enabledMask = document.getElementById("ENABLED_FEATURES").getAttribute("value");
+    var weights = "";
+    for(var i in enabledMask) {
+        weights += String(document.getElementById("featureWeight" + i).value) + " ";
+    }
+    weights = weights.slice(0, -1);
+    document.getElementById("FEATURE_WEIGHTS").value = weights; 
+  }
+
+  function featureThresholdChanged() {
+      var enabledMask = document.getElementById("ENABLED_FEATURES").getAttribute("value");
+      var hostileThresholds = "";
+      for (var i in enabledMask) {
+          hostileThresholds += String(document.getElementById("featureThreshold" + i).value + " ");
+      }
+      hostileThresholds = hostileThresholds.slice(0, -1);
+      document.getElementById("THRESHOLD_HOSTILE_TRIGGERS").value = hostileThresholds;
+  }
+
+  function updateFeatureSettingStates() {
+    var enabledMask = document.getElementById("ENABLED_FEATURES").getAttribute("value");
+    for (var i in enabledMask) {
+        if (document.getElementById("CLASSIFICATION_ENGINE").value == "THRESHOLD_TRIGGER") {
+            document.getElementById("featureWeight" + i).disabled = true;
+            document.getElementById("featureThreshold" + i).disabled = false;
+        } else {
+            document.getElementById("featureWeight" + i).disabled = false;
+            document.getElementById("featureThreshold" + i).disabled = true;
+        }
+    }
+  }
+
+  require(["dojo/domReady!"], function(){
+    updateFeatureSettingStates();
+  });
   
 form(method="post", action="/configureNovaSave")
   h2 General Configuration
 
-  h2 Silent Alarm
-  label Port
-  input(type="number", step="1", min="1025", max="65535", name="SILENT_ALARM_PORT",  value=SILENT_ALARM_PORT)
+  h2 Web Interface
+
+  label Web interface port
+  input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
   br
-  
-  label Max Connection Attempts
-  input(type="number", step="1", min="0", name="SA_MAX_ATTEMPTS", value=SA_MAX_ATTEMPTS)
-  br
-  
-  label Sleep Duration
-  input(type="text", name="SA_SLEEP_DURATION",  value=SA_SLEEP_DURATION)
+
+  a(href="/editTLSCerts")
+    label Click to upload new TLS certificates
   br
 
   h2 File Paths
@@ -128,6 +162,16 @@ form(method="post", action="/configureNovaSave")
   
 
   h2 Classification Settings
+  label Classification Engine
+  select#CLASSIFICATION_ENGINE(name="CLASSIFICATION_ENGINE", onchange="updateFeatureSettingStates()")
+    - for(var i = 0; i < supportedEngines.length; i++)
+      - if (CLASSIFICATION_ENGINE == supportedEngines[i])
+        option(value="#{supportedEngines[i]}", selected='selected') #{supportedEngines[i]}
+      - else
+        option(value="#{supportedEngines[i]}") #{supportedEngines[i]}
+
+  br
+
   label(style="text-align:center;vertical-align:middle", id="enabledFeaturesLabel", name="ENABLED_FEATURES") Features Mask: #{ENABLED_FEATURES}
   br
   br
@@ -135,28 +179,40 @@ form(method="post", action="/configureNovaSave")
     thead
       tr 
         td
-          label(style="text-align:center;vertical-align:middle;font:bold;") Feature Name
+          label(style="text-align:center; width: 300px") Feature Name
         td
-          label(style="text-align:center;vertical-align:middle;font:bold;") Enabled? 
+          label(style="text-align:center; width: 50px") Enabled
+        td
+          label(style="text-align: center; width:100px") Weight
+        td
+          label(style="text-align: center; width: 100px") Hostile Threshold
     tbody
       - for(var i = 0; i < FEATURE_NAMES.length; i++)
-        - if(ENABLED_FEATURES[i] == 1)
-          tr
-            td(style="text-align:center;vertical-align:middle;") 
-              #{FEATURE_NAMES[i]}
+        tr
+          td(style="text-align:center;vertical-align:middle;") 
+            #{FEATURE_NAMES[i]}
+          - if(ENABLED_FEATURES[i] == 1)
             td
-              input(type="checkbox", value="#{i}", id="feature#{i}", checked, onclick="updateEnabledFeaturesString(#{i})")
-        - else
-          tr
-            td(style="text-align:center;vertical-align:middle;")
-              #{FEATURE_NAMES[i]}
+              input(type="checkbox", value="#{i}", id="feature#{i}", checked, onclick="updateEnabledFeaturesString(#{i})", style="width:50px")
+          - else
             td
-              input(type="checkbox", value="#{i}", id="feature#{i}", onclick="updateEnabledFeaturesString(#{i})")
+              input(type="checkbox", value="#{i}", id="feature#{i}", onclick="updateEnabledFeaturesString(#{i})", style="width:50px")
+           
+          td
+            input(type="number", min="0", max="1", value="#{FEATURE_WEIGHTS.split(" ")[i]}", id="featureWeight#{i}", onchange="featureWeightChanged()", style="width:100px")
+          td
+            input(value="#{THRESHOLD_HOSTILE_TRIGGERS.split(" ")[i]}", id="featureThreshold#{i}", onchange="featureThresholdChanged()", style="width: 100px")
   br
   
-  input(type="hidden", id="ENABLED_FEATURES", name="ENABLED_FEATURES", value="#{ENABLED_FEATURES}")
-  
+  input(type="hidden", id="ENABLED_FEATURES", name="ENABLED_FEATURES", value="#{ENABLED_FEATURES}") 
   hidden(id="length", value=FEATURE_NAMES.length)
+  
+  br
+  
+  input(type="hidden", id="FEATURE_WEIGHTS", name="FEATURE_WEIGHTS", value="#{FEATURE_WEIGHTS}") 
+  input(type="hidden", id="THRESHOLD_HOSTILE_TRIGGERS", name="THRESHOLD_HOSTILE_TRIGGERS", value="#{THRESHOLD_HOSTILE_TRIGGERS}") 
+
+
   
   label Neighbors
   input(type="number", step="1", min="1", name="K",  value=K)
@@ -174,30 +230,52 @@ form(method="post", action="/configureNovaSave")
   input(name="CLASSIFICATION_THRESHOLD",  value=CLASSIFICATION_THRESHOLD)
   br
 
-  h2 Training Mode Settings
-  label Training mode?
+  label Packets Needed Before Classification
+  input(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
   br
 
-  if IS_TRAINING != "0"
+  label Clear data after suspect logged as hostile?
+  br
+  if CLEAR_AFTER_HOSTILE_EVENT != "0"
     |Yes
-    input(type="radio", name="IS_TRAINING", value="1", checked)
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
     br
     |No
-    input(type="radio", name="IS_TRAINING", value="0")
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0")
     br
   else
     |Yes
-    input(type="radio", name="IS_TRAINING", value="1")
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1")
     br
     |No
-    input(type="radio", name="IS_TRAINING", value="0", checked)
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0", checked)
     br
   br
-  
-  label Training Capture folder
-  input(name="TRAINING_CAP_FOLDER",  value=TRAINING_CAP_FOLDER)
+
+  label Custom PCAP Filter String
+  input(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
   br
   
+  label Custom PCAP Filter String Mode
+  br
+  if CUSTOM_PCAP_MODE != "0"
+    |Override
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="1", checked)
+    br
+    |Append
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0")
+    br
+  else
+    |Override
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="1")
+    br
+    |Append
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0", checked)
+    br
+  br
+
+  h2 Training Mode Settings
+
   label Thinning Distance
   input(name="THINNING_DISTANCE",  value=THINNING_DISTANCE)
   br
@@ -223,5 +301,36 @@ form(method="post", action="/configureNovaSave")
   label Haystack Storage
   input(name="HAYSTACK_STORAGE",  value=HAYSTACK_STORAGE)
   br
+
+  h2 Master Multi-Instance User Interface
+  if MASTER_UI_ENABLED != "0"
+    |Yes
+    input(type="radio", name="MASTER_UI_ENABLED", value="1", checked)
+    br
+    |No
+    input(type="radio", name="MASTER_UI_ENABLED", value="0")
+    br
+  else
+    |Yes
+    input(type="radio", name="MASTER_UI_ENABLED", value="1")
+    br
+    |No
+    input(type="radio", name="MASTER_UI_ENABLED", value="0", checked)
+    br
+
+
+  label Master UI IP
+  input(name="MASTER_UI_IP",  value=MASTER_UI_IP)
+  br
+  
+  label Master UI Client ID
+  input(name="MASTER_UI_CLIENT_ID",  value=MASTER_UI_CLIENT_ID)
+  br
+  
+  label Master UI Reconnect Time
+  input(name="MASTER_UI_RECONNECT_TIME",  value=MASTER_UI_RECONNECT_TIME)
+  br
+
+
 
 

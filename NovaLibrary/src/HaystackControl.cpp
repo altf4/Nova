@@ -24,28 +24,29 @@
 using namespace std;
 namespace Nova
 {
-bool StartHaystack()
+bool StartHaystack(bool blocking)
 {
 	stringstream ss;
-	ss << "nohup sudo honeyd ";
+	ss << "sudo honeyd ";
 	vector<string> ifList = Config::Inst()->GetInterfaces();
 	while(!ifList.empty())
 	{
 		ss << " -i " << ifList.back();
 		ifList.pop_back();
 	}
+	ss << " --disable-webserver";
 	ss << " -i " << Config::Inst()->GetDoppelInterface();
-	ss << " -f " << Config::Inst()->GetPathHome() <<  '/';
+	ss << " -f " << "\"" << Config::Inst()->GetPathHome() << "/";
 	switch(Config::Inst()->GetHaystackStorage())
 	{
 		case 'I':
 		{
-			ss << Config::Inst()->GetPathConfigHoneydHS();
+			ss << Config::Inst()->GetPathConfigHoneydHS() << "\"";
 			break;
 		}
 		case 'M':
 		{
-			ss << Config::Inst()->GetPathConfigHoneydUser();
+			ss << Config::Inst()->GetPathConfigHoneydUser() << "\"";
 			break;
 		}
 		default:
@@ -54,8 +55,13 @@ bool StartHaystack()
 		}
 	}
 
-	ss << " -p " << Config::Inst()->GetPathReadFolder();
-	ss << "/nmap-os-db -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList > /dev/null &";
+	ss << " -p " << "\"" << Config::Inst()->GetPathShared();
+	ss << "/nmap-os-db\" -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+
+	if (blocking)
+	{
+		ss << " -d";
+	}
 
 	LOG(DEBUG, "Launching haystack with command: " + ss.str(), "");
 	if(system(ss.str().c_str()) != 0)

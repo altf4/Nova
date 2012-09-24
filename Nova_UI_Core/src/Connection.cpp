@@ -53,7 +53,7 @@ bool ConnectToNovad()
 
 	//Builds the key path
 	string key = Config::Inst()->GetPathHome();
-	key += "/keys";
+	key += "/config/keys";
 	key += NOVAD_LISTEN_FILENAME;
 
 	//Builds the address

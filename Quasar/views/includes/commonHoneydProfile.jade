@@ -32,6 +32,7 @@ script
         var addVendor = function(vendName) {};
         var deleteAndClean = function(which) {};
         var clearCreated = function() {};
+        var checkIfRestartNeeded = function() {};
 
         var portIndexes = [];
         var loaded = false;
@@ -583,6 +584,7 @@ script
                         case 0: pfile.tcpAction = "reset"; break;
                         case 1: pfile.tcpAction = "block"; break;
                         case 2: pfile.tcpAction = "open"; break;
+                        case 3: pfile.tcpAction = "tarpit open"; break;
 
                         }
                         switch (dojo.byId("udpAction").selectedIndex) {
@@ -629,6 +631,8 @@ script
                                         case 1: ports[i].behavior = "block"; break;
                                         case 2: ports[i].behavior = "open"; break;
                                         case 3: ports[i].behavior = "script"; break;
+                                        case 4: ports[i].behavior = "tarpit open"; break;
+                                        case 5: ports[i].behavior = "tarpit script"; break;
                                 }
 
                                 ports[i].type = dojo.byId("portType" + portIndexes[i]).value;
@@ -653,9 +657,23 @@ script
                     if (err == null)
                     {
                         window.location="configHoneydProfiles";
+                        now.IsHaystackUp(checkIfRestartNeeded); 
                     } else {
                         alert("Unable to save profile: " + err);
                     }
+                }
+
+
+                 checkIfRestartNeeded = function(haystackUp) {
+                    if (haystackUp) {
+                        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
+                        if (restartHaystack) {
+                            now.StopHaystack();
+                            now.StartHaystack();
+                        }
+                    }
+
+                    location.reload(true);
                 }
 
                 addPort = function(port) 
@@ -802,8 +820,8 @@ script
                         behaviorSelect.onchange = portBehaviorChanged;
                         
                          
-                        options = ["reset", "block", "open", "script"];
-                        longOptions = ["Closed: Respond with TCP RST or ICMP Port Error", "Filter: Drop packets and do not respond", "Open: Establish incoming connections", "Script: Emulate a service"];
+                        options = ["reset", "block", "open", "script", "tarpit open", "tarpit script"];
+                        longOptions = ["Closed: Respond with TCP RST or ICMP Port Error", "Filter: Drop packets and do not respond", "Open: Establish incoming connections", "Script: Emulate a service", "Open with tarpit", "Script with tarpit"];
                         
                         for (j = 0; j < options.length; j++) 
                         {
@@ -947,9 +965,16 @@ script
                                         dojo.byId("portBehavior" + portUID).value = 3;
                                         selectItemByValue(dojo.byId("portScriptDrop" + portUID), portList[Number(dojo.byId("portNum" + portUID).value)].scriptName);
                                 }
-
-
-                        } 
+                                else if (behavior == "tarpit open")
+                                {
+                                        dojo.byId("portBehavior" + portUID).value = 4;
+                                }
+                                else if (behavior == "tarpit script")
+                                {
+                                        dojo.byId("portBehavior" + portUID).value = 5;
+                                        selectItemByValue(dojo.byId("portScriptDrop" + portUID), portList[Number(dojo.byId("portNum" + portUID).value)].scriptName);
+                                }
+                        }
                         else 
                         {
                                 dojo.byId("portBehavior" + portUID).disabled = false;
@@ -975,7 +1000,7 @@ script
                 {
                         for (var i = 0; i < portIndexes.length; i++) 
                         {
-                                if (dojo.byId("portBehavior" + portIndexes[i]).value == "3") 
+                                if (dojo.byId("portBehavior" + portIndexes[i]).value == "3" || dojo.byId("portBehavior" + portIndexes[i]).value == "5") 
                                 {
                                         if (!dojo.byId("portInherited" + portIndexes[i]).checked) 
                                         {
@@ -1406,6 +1431,10 @@ script
                                 {
                                         dojo.byId("tcpAction").selectedIndex = 2;
                                 }
+                                else if (profile.tcpAction == "tarpit open")
+                                {
+                                        dojo.byId("tcpAction").selectedIndex = 3;
+                                }
                         }
 
                         if (dojo.byId("udpAction").disabled = dojo.byId("inheritUdpAction").checked) 
@@ -1531,6 +1560,10 @@ script
                                 else if (profile.tcpAction == "open") 
                                 {
                                         dojo.byId("tcpAction").selectedIndex = 2;
+                                }
+                                else if (profile.tcpAction == "tarpit open")
+                                {
+                                        dojo.byId("tcpAction").selectedIndex = 3;
                                 }
 
                                 if (profile.udpAction == "reset") 

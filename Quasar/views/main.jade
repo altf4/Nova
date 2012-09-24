@@ -26,6 +26,10 @@ block content
 
   div#nova_suspects_header
     h1 Suspect List
+    a(href="/novaState.csv") Get all suspects as a CSV file
+    br
+    br
+
     button#liveUpdateButton(data-dojo-type="dijit.form.Button",type="button") Pause Updates/Auto Scrolling
       script(type="dojo/method", data-dojo-event="onClick", data-dojo-args="evt")
         | liveUpdate = !liveUpdate;
@@ -54,6 +58,8 @@ block content
       br
       button(onClick='applyAdvancedFilter()') Apply Advanced Filters
       button(onClick='disableAdvancedFilter()') Disable Advanced Filters
+    div#tablePages
+    br
 
   div#nova_suspects
     table#suspectTable
@@ -124,7 +130,7 @@ block headerAdditions
         } 
     }
 
-    now.updateNovadStatus = function (isNovadUp){
+    var updateNovadStatus = function (isNovadUp){
       if (lastNovadStatus == "unknown" || lastNovadStatus != isNovadUp) {
           lastNovadStatus = isNovadUp;
           dojo.byId("nova_status").innerHTML = isNovadUp ? "Up" : "Down";
@@ -134,10 +140,12 @@ block headerAdditions
           dojo.byId("nova_suspects_error_view").style.display = isNovadUp ? "none" : "block";
       }
     };
+    now.updateNovadStatus = updateNovadStatus;
 
-    now.updateHaystackStatus = function (isHaystackUp){
+    var updateHaystackStatus = function (isHaystackUp){
       dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Up" : "Down";
     };
+    now.updateHaystackStatus = updateHaystackStatus;
 
     now.AllSuspectsCleared = function() {
       suspectGrid.Clear();
@@ -165,7 +173,7 @@ block headerAdditions
        //if(!liveUpdate) {return;}
       
       var d = new Date(suspect.GetLastPacketTime*1000);
-      var dString = pad(d.getMonth()) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+      var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
       suspect.LastPacketString = dString;
       
       var row = new Array();
@@ -176,11 +184,13 @@ block headerAdditions
       clearButton += '"' + suspect.GetIpString + '"';
       clearButton += ");'>Clear</button>";
       row.push(clearButton);
-      row.push(String(suspect.GetIpString));
+
+      var suspectLink = "<a href='/GetSuspectDetails?suspect=" + String(suspect.GetIpString) + "'> " + String(suspect.GetIpString) + "</a>";
+      row.push(String(suspectLink));
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));
       row.push(String(suspect.GetIsHostile));
-      var enabledFeatures = String(#{enabledFeatures});
+      var enabledFeatures = "#{enabledFeatures}";
       for (var i in suspect.GetFeatures) {  
         suspect[i] = suspect.GetFeatures[i];
         if (enabledFeatures.charAt(i) == "1") row.push(Number(suspect.GetFeatures[i])); 
@@ -278,7 +288,7 @@ block headerAdditions
 
     function classificationFormatter(d) {
         var num = 100 * d;
-        if (num > 0) {
+        if (num >= 0) {
             // Minor performance boost, don't bother with coloring those < than 5% hostile, barely shows anyway
             if (num > 5) {
                 return '<div style="background: rgba(255, 0, 0, ' + d.toFixed(2) + ');">' + num.toFixed(2) + "%</div>";
@@ -296,10 +306,50 @@ block headerAdditions
 
         }
     }
+
+    function onGridRendered() {
+       var gridSize = suspectGrid.GetNumberOfPages();
+       var currentPage = suspectGrid.GetCurrentPage();
+
+       var temp = document.createElement('a');
+       document.getElementById("tablePages").innerHTML = "";
+
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', 'suspectGrid.PreviousPage();');
+       var pageLinkText = document.createTextNode(" <-- ");
+       pageLink.appendChild(pageLinkText);
+       document.getElementById("tablePages").appendChild(pageLink);
+
+       for (var i = 0; i < gridSize; i++) {
+           var pageLink = document.createElement('a');
+           pageLink.setAttribute('href', '#');
+           pageLink.setAttribute('onclick', 'suspectGrid.SetCurrentPage( ' + i + ');');
+
+           var pageLinkText = document.createTextNode(" " + (i + 1) + " ");
+           pageLink.appendChild(pageLinkText);
+
+           if (i == currentPage) {
+               var boldTag = document.createElement('b');
+               boldTag.appendChild(pageLink);
+
+               document.getElementById("tablePages").appendChild(boldTag);
+           } else {
+               document.getElementById("tablePages").appendChild(pageLink);
+           }    
+       }
+
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', 'suspectGrid.NextPage();');
+       var pageLinkText = document.createTextNode(" --> ");
+       pageLink.appendChild(pageLinkText);
+       document.getElementById("tablePages").appendChild(pageLink);
+    }
     
     function Init() {
         theDoc = document;
-        var enabledFeatures = String(#{enabledFeatures});
+        var enabledFeatures = "#{enabledFeatures}";
         var gridStructure = new Array();
         gridStructure.push({name: "Clear"});
         gridStructure.push({name: "Address"});
@@ -316,8 +366,9 @@ block headerAdditions
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(2);
+        suspectGrid.SetRowsPerPage(100);
+        suspectGrid.SetRenderCallback(onGridRendered);
 
-        theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
         try {
           now.sendAllSuspects(now.OnNewSuspect);
          } catch(err) {
@@ -339,6 +390,8 @@ block headerAdditions
         ready(function() {
             now.ready(function() {
               Init();
+              now.IsHaystackUp(updateHaystackStatus);
+              now.IsNovadUp(updateNovadStatus);
             });
         });
     });

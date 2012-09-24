@@ -30,16 +30,19 @@ namespace NovaCLI
 // Connect to Novad if we can, otherwise print error and exit
 void Connect();
 
-void StartNovaWrapper();
-void StartHaystackWrapper();
+void StartNovaWrapper(bool debug);
+void StartHaystackWrapper(bool debug);
+void StartCaptureWrapper();
 
 void StatusNovaWrapper();
 void StatusHaystackWrapper();
 
 void StopNovaWrapper();
 void StopHaystackWrapper();
+void StopCaptureWrapper();
 
 void PrintSuspect(in_addr_t address);
+void PrintSuspectData(in_addr_t address);
 void PrintAllSuspects(enum SuspectListType listType, bool csv);
 
 void ClearSuspectWrapper(std::string address);

@@ -40,7 +40,7 @@ class serializationException : public std::exception
 //    dataToSerialize : Pointer to data to serialize
 //    size            : Size of the data to serialize
 //   maxBufferSize   : Max size of the buffer, throw exception if serialize goes past this
-inline bool SerializeChunk(u_char *buf, uint32_t *offset, char *dataToSerialize, uint32_t size, uint32_t maxBufferSize)
+inline bool SerializeChunk(u_char* buf, uint32_t *offset, char const* dataToSerialize, uint32_t size, uint32_t maxBufferSize)
 {
 	if(*offset + size > maxBufferSize)
 	{

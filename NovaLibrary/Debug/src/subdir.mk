@@ -11,12 +11,17 @@ CPP_SRCS += \
 ../src/Evidence.cpp \
 ../src/EvidenceTable.cpp \
 ../src/FeatureSet.cpp \
+../src/FilePacketCapture.cpp \
 ../src/HaystackControl.cpp \
+../src/InterfacePacketCapture.cpp \
+../src/KnnClassification.cpp \
 ../src/Logger.cpp \
 ../src/NovaUtil.cpp \
+../src/PacketCapture.cpp \
 ../src/Point.cpp \
 ../src/Suspect.cpp \
 ../src/SuspectTable.cpp \
+../src/ThresholdTriggerClassification.cpp \
 ../src/WhitelistConfiguration.cpp 
 
 OBJS += \
@@ -27,12 +32,17 @@ OBJS += \
 ./src/Evidence.o \
 ./src/EvidenceTable.o \
 ./src/FeatureSet.o \
+./src/FilePacketCapture.o \
 ./src/HaystackControl.o \
+./src/InterfacePacketCapture.o \
+./src/KnnClassification.o \
 ./src/Logger.o \
 ./src/NovaUtil.o \
+./src/PacketCapture.o \
 ./src/Point.o \
 ./src/Suspect.o \
 ./src/SuspectTable.o \
+./src/ThresholdTriggerClassification.o \
 ./src/WhitelistConfiguration.o 
 
 CPP_DEPS += \
@@ -43,12 +53,17 @@ CPP_DEPS += \
 ./src/Evidence.d \
 ./src/EvidenceTable.d \
 ./src/FeatureSet.d \
+./src/FilePacketCapture.d \
 ./src/HaystackControl.d \
+./src/InterfacePacketCapture.d \
+./src/KnnClassification.d \
 ./src/Logger.d \
 ./src/NovaUtil.d \
+./src/PacketCapture.d \
 ./src/Point.d \
 ./src/Suspect.d \
 ./src/SuspectTable.d \
+./src/ThresholdTriggerClassification.d \
 ./src/WhitelistConfiguration.d 
 
 

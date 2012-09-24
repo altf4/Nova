@@ -92,15 +92,15 @@ TEST_F(HoneydConfigurationTest, test_Port)
 	while(!scriptNames.empty())
 	{
 		ss.str("");
-		ss << i << "_TCP_" << scriptNames.back();
-		EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(i, TCP, SCRIPT, scriptNames.back()))));
+		ss << i << "_TCP_script_" << scriptNames.back();
+		EXPECT_EQ(ss.str(), m_config->AddPort(i, TCP, SCRIPT, scriptNames.back()));
 		expectedPorts.push_back(ss.str());
 		scriptNames.pop_back();
 		i++;
 	}
 	while(!expectedPorts.empty())
 	{
-		EXPECT_TRUE(m_config->GetPort(expectedPorts.back()).m_portName.compare(""));
+		EXPECT_EQ(m_config->GetPort(expectedPorts.back()).m_portName, expectedPorts.back());
 		expectedPorts.pop_back();
 	}
 }

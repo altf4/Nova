@@ -48,31 +48,14 @@ namespace Nova
 HoneydConfiguration::HoneydConfiguration()
 {
 	m_macAddresses.LoadPrefixFile();
-	m_homePath = Config::Inst()->GetPathHome();
-	m_subnets.set_empty_key("");
 	m_ports.set_empty_key("");
 	m_nodes.set_empty_key("");
 	m_profiles.set_empty_key("");
 	m_scripts.set_empty_key("");
-	m_subnets.set_deleted_key("Deleted");
 	m_nodes.set_deleted_key("Deleted");
 	m_profiles.set_deleted_key("Deleted");
 	m_ports.set_deleted_key("Deleted");
 	m_scripts.set_deleted_key("Deleted");
-}
-
-//This function sets the home directory from which the templates are relative to
-//	homePath: file system path to the directory you wish to use
-void HoneydConfiguration::SetHomePath(string homePath)
-{
-	m_homePath = homePath;
-}
-
-//This function returns the home path from which it is currently reading and writing from
-// Returns: the local file system path in string form to the current home directory
-string HoneydConfiguration::GetHomePath()
-{
-	return m_homePath;
 }
 
 //Attempts to populate the HoneydConfiguration object with the xml templates.
@@ -84,7 +67,6 @@ bool HoneydConfiguration::LoadAllTemplates()
 	m_ports.clear_no_resize();
 	m_profiles.clear_no_resize();
 	m_nodes.clear_no_resize();
-	m_subnets.clear_no_resize();
 
 	if(!LoadScriptsTemplate())
 	{
@@ -157,7 +139,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 		propTree.put<string>("behavior", it->second.m_behavior);
 
 		//If this port uses a script, save it.
-		if(!it->second.m_behavior.compare("script") || !it->second.m_behavior.compare("internal"))
+		if(!it->second.m_behavior.compare("script") || !it->second.m_behavior.compare("tarpit script") || !it->second.m_behavior.compare("internal"))
 		{
 			propTree.put<string>("script", it->second.m_scriptName);
 		}
@@ -170,35 +152,6 @@ bool HoneydConfiguration::SaveAllTemplates()
 		}
 		//Add the child to the tree
 		m_portTree.add_child("ports.port", propTree);
-	}
-
-	m_subnetTree.clear();
-	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
-	{
-		propTree = it->second.m_tree;
-		propTree.put<string>("name", it->second.m_name);
-		propTree.put<bool>("enabled",it->second.m_enabled);
-
-		//Remove /## format mask from the address then put it in the XML.
-		stringstream ss;
-		ss << "/" << it->second.m_maskBits;
-		int i = ss.str().size();
-		string addrString = it->second.m_address.substr(0,(it->second.m_address.size()-i));
-		propTree.put<string>("IP", addrString);
-
-		//Gets the mask from mask bits then put it in XML
-		in_addr_t rawBitMask = ::pow(2, 32-it->second.m_maskBits) - 1;
-
-		//If maskBits is 24 then we have 2^8 -1 = 0x000000FF
-		rawBitMask = ~rawBitMask; //After getting the inverse of this we have the mask in host addr form.
-
-		//Convert to network order, put in in_addr struct
-		//call ntoa to get char pointer and make string
-		in_addr netOrderMask;
-		netOrderMask.s_addr = htonl(rawBitMask);
-		addrString = string(inet_ntoa(netOrderMask));
-		propTree.put<string>("mask", addrString);
-		m_subnetTree.add_child("manualInterface", propTree);
 	}
 
 	//Nodes
@@ -240,7 +193,6 @@ bool HoneydConfiguration::SaveAllTemplates()
 		if(!value.second.get<string>("name").compare(Config::Inst()->GetGroup()))
 		{
 			//Load Subnets first, they are needed before we can load nodes
-			value.second.put_child("subnets", m_subnetTree);
 			value.second.put_child("nodes",m_nodesTree);
 		}
 	}
@@ -256,10 +208,11 @@ bool HoneydConfiguration::SaveAllTemplates()
 	try
 	{
 		boost::property_tree::xml_writer_settings<char> settings('\t', 1);
-		write_xml(m_homePath + "/scripts.xml", m_scriptTree, locale(), settings);
-		write_xml(m_homePath + "/templates/ports.xml", m_portTree, locale(), settings);
-		write_xml(m_homePath + "/templates/nodes.xml", m_groupTree, locale(), settings);
-		write_xml(m_homePath + "/templates/profiles.xml", m_profileTree, locale(), settings);
+		string homePath = Config::Inst()->GetPathHome();
+		write_xml(homePath + "/config/templates/scripts.xml", m_scriptTree, locale(), settings);
+		write_xml(homePath + "/config/templates/ports.xml", m_portTree, locale(), settings);
+		write_xml(homePath + "/config/templates/nodes.xml", m_groupTree, locale(), settings);
+		write_xml(homePath + "/config/templates/profiles.xml", m_profileTree, locale(), settings);
 	}
 	catch(boost::property_tree::xml_parser_error &e)
 	{
@@ -394,10 +347,14 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 
 					out << prt.m_portNum << " ";
 
-					if(!(prt.m_behavior.compare("script")))
+					if(!prt.m_behavior.compare("script") || !prt.m_behavior.compare("tarpit script"))
 					{
 						string scriptName = prt.m_scriptName;
 
+						if (!prt.m_behavior.compare("tarpit script"))
+						{
+							cout << "tarpit ";
+						}
 						if(m_scripts[scriptName].m_path.compare(""))
 						{
 							out << '"' << m_scripts[scriptName].m_path << '"'<< '\n';
@@ -578,7 +535,7 @@ string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
 				out << " udp port ";
 			}
 			out << portPtr->m_portNum << " ";
-			if(!(portPtr->m_behavior.compare("script")))
+			if(!portPtr->m_behavior.compare("script") || !portPtr->m_behavior.compare("tarpit script"))
 			{
 				string scriptName = m_ports[p->m_ports[i].first].m_scriptName;
 				Script *scriptPtr = &m_scripts[scriptName];
@@ -663,6 +620,23 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 			pr.m_scriptName = scriptName;
 			break;
 		}
+		case TARPIT_OPEN:
+		{
+			pr.m_behavior = "tarpit open";
+			break;
+		}
+		case TARPIT_SCRIPT:
+		{
+			//If the script does not exist
+			if(m_scripts.find(scriptName) == m_scripts.end())
+			{
+				LOG(ERROR, "Cannot create port: specified script " + scriptName + " does not exist.", "");
+				return "";
+			}
+			pr.m_behavior = "tarpit script";
+			pr.m_scriptName = scriptName;
+			break;
+		}
 		default:
 		{
 			LOG(ERROR, "Cannot create port: Attempting to use unknown port behavior", "");
@@ -675,7 +649,7 @@ string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBe
 	//	Creates the ports unique identifier these names won't collide unless the port is the same
 	if(!pr.m_behavior.compare("script"))
 	{
-		pr.m_portName = pr.m_portNum + "_" + pr.m_type + "_" + pr.m_scriptName;
+		pr.m_portName = pr.m_portNum + "_" + pr.m_type + "_" + pr.m_behavior + "_" + pr.m_scriptName;
 	}
 	else
 	{
@@ -754,10 +728,6 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 		}
 		newNode.m_realIP = htonl(retVal);
 	}
-	else
-	{
-		newNode.m_sub = newNode.m_interface;
-	}
 
 	//Get the name after assigning the values
 	newNode.m_MAC = macAddress;
@@ -805,21 +775,6 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 		}
 	}
 
-	//Check for a valid subnet
-	if(m_subnets.keyExists(subnet))
-	{
-		newNode.m_sub = subnet;
-	}
-	else if(newNode.m_IP.compare("DHCP"))
-	{
-		newNode.m_sub = FindSubnet(newNode.m_realIP);
-		if(!newNode.m_sub.compare(""))
-		{
-			LOG(ERROR, "Unable to find a valid subnet for new node with IP '" + ipAddress + "'.", "");
-			return false;
-		}
-	}
-
 	//Check validity of NodeProfile
 	NodeProfile *p = &m_profiles[profileName];
 	if(p == NULL)
@@ -835,16 +790,7 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 		newNode.m_isPortInherited.push_back(false);
 	}
 
-	//Check validity of subnet
-	Subnet *subPtr = &m_subnets[newNode.m_sub];
-	if(subPtr == NULL)
-	{
-		LOG(ERROR, "Unable to retrieve expected subnet '" + newNode.m_sub + "' for node '" + newNode.m_name + "'!", "");
-		return false;
-	}
-
 	//Assign all the values
-	subPtr->m_nodes.push_back(newNode.m_name);
 	p->m_nodeKeys.push_back(newNode.m_name);
 	m_nodes[newNode.m_name] = newNode;
 
@@ -864,13 +810,6 @@ bool HoneydConfiguration::AddPreGeneratedNode(Node &newNode)
 		return true;
 	}
 
-	Subnet *subPtr = &m_subnets[newNode.m_sub];
-	if(subPtr == NULL)
-	{
-		LOG(ERROR, "Unable to locate expected subnet '" + newNode.m_sub + "'.", "");
-		return false;
-	}
-
 	NodeProfile *profPtr = &m_profiles[newNode.m_pfile];
 	if(profPtr == NULL)
 	{
@@ -878,7 +817,6 @@ bool HoneydConfiguration::AddPreGeneratedNode(Node &newNode)
 		return false;
 	}
 
-	subPtr->m_nodes.push_back(newNode.m_name);
 	profPtr->m_nodeKeys.push_back(newNode.m_name);
 	m_nodes[newNode.m_name] = newNode;
 
@@ -964,20 +902,6 @@ bool HoneydConfiguration::AddNewNodes(string profileName, string ipAddress, stri
 	return true;
 }
 
-//Just a basic function for added a subnet into the configuration, may not be needed anymore.
-bool HoneydConfiguration::AddSubnet(const Subnet &add)
-{
-	if(m_subnets.find(add.m_name) != m_subnets.end())
-	{
-		return false;
-	}
-	else
-	{
-		m_subnets[add.m_name] = add;
-		return true;
-	}
-}
-
 //This function allows easy access to all children profiles of the parent
 // Returns a vector of strings containing the names of the children profile
 vector<string> HoneydConfiguration::GetProfileChildren(string parent)
@@ -1015,18 +939,6 @@ vector<string> HoneydConfiguration::GetNodeNames()
 		nodeNames.push_back(it->second.m_name);
 	}
 	return nodeNames;
-}
-
-//This function allows easy access to all subnets
-// Returns a vector of strings containing the names of all subnets
-vector<string> HoneydConfiguration::GetSubnetNames()
-{
-	vector<string> subnetNames;
-	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
-	{
-		subnetNames.push_back(it->second.m_name);
-	}
-	return subnetNames;
 }
 
 //This function allows easy access to all scripts
@@ -1580,7 +1492,7 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 	m_scriptTree.clear();
 	try
 	{
-		read_xml(m_homePath + "/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_scriptTree.get_child("scripts"))
 		{
@@ -1642,7 +1554,7 @@ bool HoneydConfiguration::LoadPortsTemplate()
 	m_portTree.clear();
 	try
 	{
-		read_xml(m_homePath + "/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_portTree.get_child("ports"))
 		{
@@ -1681,7 +1593,7 @@ bool HoneydConfiguration::LoadPortsTemplate()
 			}
 
 			//If this port uses a script, find and assign it.
-			if(!port.m_behavior.compare("script") || !port.m_behavior.compare("internal"))
+			if(!port.m_behavior.compare("script") || !port.m_behavior.compare("tarpit script") || !port.m_behavior.compare("internal"))
 			{
 				port.m_scriptName = value.second.get<string>("script");
 			}
@@ -1722,7 +1634,7 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 	m_profileTree.clear();
 	try
 	{
-		read_xml(m_homePath + "/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_profileTree.get_child("profiles"))
 		{
@@ -1830,7 +1742,7 @@ bool HoneydConfiguration::LoadNodesTemplate()
 
 	try
 	{
-		read_xml(m_homePath + "/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
 		m_groups.clear();
 		BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
 		{
@@ -1841,14 +1753,6 @@ bool HoneydConfiguration::LoadNodesTemplate()
 			{
 				try
 				{
-					//Load Subnets first, they are needed before we can load nodes
-					m_subnetTree = value.second.get_child("subnets");
-					if(!LoadSubnets(&m_subnetTree))
-					{
-						LOG(ERROR, "Unable to load subnets from xml templates!", "");
-						return false;
-					}
-
 					try
 					{
 						//If subnets are loaded successfully, load nodes
@@ -1910,108 +1814,6 @@ bool HoneydConfiguration::LoadNodeKeys()
 	}
 	return true;
 }
-
-//loads subnets from file for current group
-bool HoneydConfiguration::LoadSubnets(ptree *propTree)
-{
-	// getifaddrs to get physical ifaces
-	pair<bool, int> replace;
-	replace.first = false;
-	replace.second = 0;
-    vector<Subnet> subnetsFound;
-
-    subnetsFound = FindPhysicalInterfaces();
-
-	try
-	{
-		BOOST_FOREACH(ptree::value_type &value, propTree->get_child(""))
-		{
-			//If real interface
-			if(!string(value.first.data()).compare("manualInterface"))
-			{
-				Subnet sub;
-				sub.m_tree = value.second;
-				//sub.m_isRealDevice =  value.second.get<bool>("isReal");
-				//Extract the data
-				sub.m_name = value.second.get<string>("name");
-				sub.m_address = value.second.get<string>("IP");
-				sub.m_mask = value.second.get<string>("mask");
-				sub.m_enabled = value.second.get<bool>("enabled");
-
-				//Gets the IP address in uint32 form
-				in_addr_t hostOrderAddr = ntohl(inet_addr(sub.m_address.c_str()));
-
-				//Converting the mask to uint32 allows a simple bitwise AND to get the lowest IP in the subnet.
-				in_addr_t hostOrderMask = ntohl(inet_addr(sub.m_mask.c_str()));
-				sub.m_base = (hostOrderAddr & hostOrderMask);
-
-				//Get the number of bits in the mask
-				if((sub.m_maskBits = GetMaskBits(hostOrderMask)) == -1)
-				{
-					LOG(ERROR, "Invalid subnet mask '" + sub.m_mask + "' parsed from xml templates!", "");
-					return false;
-				}
-
-				//Adding the binary inversion of the mask gets the highest usable IP
-				sub.m_max = sub.m_base + ~hostOrderMask;
-				stringstream ss;
-				ss << sub.m_address << "/" << sub.m_maskBits;
-				sub.m_address = ss.str();
-
-				//Save subnet
-				m_subnets[sub.m_name] = sub;
-			}
-			//If virtual honeyd subnet
-			else if(!string(value.first.data()).compare("virtual"))
-			{
-			}
-			else
-			{
-				LOG(ERROR, "Unexpected Entry in file: " + string(value.first.data()) + ".", "");
-				return false;
-			}
-		}
-
-		stringstream ss;
-
-		for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
-		{
-			for(uint i = 0; i < subnetsFound.size(); i++)
-			{
-				if(subnetsFound[i].m_name.compare(it->first))
-				{
-					it->second.m_name = subnetsFound[i].m_name;
-					it->second.m_mask = subnetsFound[i].m_mask;
-					it->second.m_enabled = subnetsFound[i].m_enabled;
-					it->second.m_base = subnetsFound[i].m_base;
-					it->second.m_maskBits = subnetsFound[i].m_maskBits;
-					it->second.m_max = subnetsFound[i].m_max;
-					ss << subnetsFound[i].m_address << "/" << subnetsFound[i].m_maskBits;
-					it->second.m_address = ss.str();
-					ss.str("");
-				}
-			}
-		}
-
-		if(subnetsFound.size() > m_subnets.size())
-		{
-			for(uint i = 0; i < subnetsFound.size(); i++)
-			{
-				if(!m_subnets.keyExists(subnetsFound[i].m_name))
-				{
-					AddSubnet(subnetsFound[i]);
-				}
-			}
-		}
-	}
-	catch(Nova::hashMapException &e)
-	{
-		LOG(ERROR, "Problem loading subnets: " + string(e.what()), "");
-		return false;
-	}
-	return true;
-}
-
 
 //loads haystack nodes from file for current group
 bool HoneydConfiguration::LoadNodes(ptree *propTree)
@@ -2094,13 +1896,9 @@ bool HoneydConfiguration::LoadNodes(ptree *propTree)
 				if(!node.m_IP.compare(Config::Inst()->GetDoppelIp()))
 				{
 					node.m_name = "Doppelganger";
-					node.m_sub = node.m_interface;
 					node.m_realIP = htonl(inet_addr(node.m_IP.c_str())); //convert ip to uint32
 					//save the node in the table
 					m_nodes[node.m_name] = node;
-
-					//Put address of saved node in subnet's list of nodes.
-					m_subnets[m_nodes[node.m_name].m_sub].m_nodes.push_back(node.m_name);
 				}
 				else
 				{
@@ -2122,31 +1920,6 @@ bool HoneydConfiguration::LoadNodes(ptree *propTree)
 					if(node.m_IP != "DHCP")
 					{
 						node.m_realIP = htonl(inet_addr(node.m_IP.c_str())); //convert ip to uint32
-						node.m_sub = FindSubnet(node.m_realIP);
-						//If we have a subnet and node is unique
-						if(node.m_sub != "")
-						{
-							//Put address of saved node in subnet's list of nodes.
-							m_subnets[node.m_sub].m_nodes.push_back(node.m_name);
-						}
-						//If no subnet found, can't use node unless it's doppelganger.
-						else
-						{
-							LOG(ERROR, "Node at IP: " + node.m_IP + "is outside all valid subnet ranges.", "");
-						}
-					}
-					else
-					{
-						node.m_sub = node.m_interface; //TODO virtual subnets will need to be handled when implemented
-						// If no valid subnet/interface found
-						if(!node.m_sub.compare(""))
-						{
-							LOG(ERROR, "DHCP Enabled Node with MAC: " + node.m_name + " is unable to resolve it's interface.","");
-							continue;
-						}
-
-						//Put address of saved node in subnet's list of nodes.
-						m_subnets[node.m_sub].m_nodes.push_back(node.m_name);
 					}
 				}
 
@@ -2174,28 +1947,6 @@ bool HoneydConfiguration::LoadNodes(ptree *propTree)
 	}
 
 	return true;
-}
-
-string HoneydConfiguration::FindSubnet(in_addr_t ip)
-{
-	string subnet = "";
-	int max = 0;
-	//Check each subnet
-	for(SubnetTable::iterator it = m_subnets.begin(); it != m_subnets.end(); it++)
-	{
-		//If node falls outside a subnets range skip it
-		if((ip < it->second.m_base) || (ip > it->second.m_max))
-		{
-			continue;
-		}
-		//If this is the smallest range
-		if(it->second.m_maskBits > max)
-		{
-			subnet = it->second.m_name;
-		}
-	}
-
-	return subnet;
 }
 
 //Inserts the profile into the honeyd configuration
@@ -2237,7 +1988,6 @@ bool HoneydConfiguration::AddGroup(string groupName)
 		newGroup.clear();
 		emptyTree.clear();
 		newGroup.put<string>("name", groupName);
-		newGroup.put_child("subnets", m_subnetTree);
 		newGroup.put_child("nodes", emptyTree);
 		m_groupTree.add_child("groups.group", newGroup);
 	}
@@ -2347,9 +2097,6 @@ bool HoneydConfiguration::EnableNode(string nodeName)
 
 	m_nodes[nodeName].m_enabled = true;
 
-	// Enable the subnet of this node
-	m_subnets[m_nodes[nodeName].m_sub].m_enabled = true;
-
 	return true;
 }
 
@@ -2393,32 +2140,6 @@ bool HoneydConfiguration::DeleteNode(string nodeName)
 		return false;
 	}
 
-	// Make sure the subnet exists
-	Subnet *subPtr = NULL;
-	try
-	{
-		subPtr = &m_subnets[nodePtr->m_sub];
-	}
-	catch(hashMapException &e)
-	{
-		LOG(ERROR, "Unable to locate expected subnet '" + nodePtr->m_sub + "'.","");
-		return false;
-	}
-	if(subPtr == NULL)
-	{
-		LOG(ERROR, "Unable to locate expected subnet '" +nodePtr->m_sub + "'.","");
-		return false;
-	}
-
-	//Update the Subnet
-	for(uint i = 0; i < subPtr->m_nodes.size(); i++)
-	{
-		if(!subPtr->m_nodes[i].compare(nodeName))
-		{
-			subPtr->m_nodes.erase(subPtr->m_nodes.begin() + i);
-		}
-	}
-
 	// Make sure the profile exists
 	NodeProfile *profPtr = NULL;
 	try
@@ -2456,18 +2177,6 @@ Node *HoneydConfiguration::GetNode(string nodeName)
 		return &m_nodes[nodeName];
 	}
 	return NULL;
-}
-
-string HoneydConfiguration::GetNodeSubnet(string nodeName)
-{
-	// Make sure the node exists
-	if(m_nodes.find(nodeName) == m_nodes.end())
-	{
-		LOG(ERROR, string("There was an attempt to retrieve the subnet of a honeyd node (name = ")
-			+ nodeName + string(" that doesn't exist"), "");
-		return "";
-	}
-	return m_nodes[nodeName].m_sub;
 }
 
 void HoneydConfiguration::DisableProfileNodes(string profileName)
@@ -2823,181 +2532,6 @@ bool HoneydConfiguration::CreateProfileTree(string profileName)
 	p.m_tree = temp;
 	m_profiles[profileName] = p;
 	return true;
-}
-
-vector<Subnet> HoneydConfiguration::FindPhysicalInterfaces()
-{
-	vector<Subnet> ret;
-
-	struct ifaddrs *devices = NULL;
-	ifaddrs *curIf = NULL;
-	char addrBuffer[NI_MAXHOST];
-	char bitmaskBuffer[NI_MAXHOST];
-	struct in_addr netOrderAddrStruct;
-	struct in_addr netOrderBitmaskStruct;
-	struct in_addr minAddrInRange;
-	struct in_addr maxAddrInRange;
-	uint32_t hostOrderAddr;
-	uint32_t hostOrderBitmask;
-
-	if(getifaddrs(&devices))
-	{
-		LOG(ERROR, "Ethernet Interface Auto-Detection failed", "");
-	}
-
-	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
-	{
-		// IF we've found a loopback address with an IPv4 address
-		if((curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
-		{
-			Subnet newSubnet;
-			// start processing it to generate the subnet for the interface.
-			// interfaces.push_back(string(curIf->ifa_name));
-
-			// Get the string representation of the interface's IP address,
-			// and put it into the host character array.
-			int socket = getnameinfo(curIf->ifa_addr, sizeof(sockaddr_in), addrBuffer, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-
-			if(socket != 0)
-			{
-				// If getnameinfo returned an error, stop processing for the
-				// method, assign the proper errorCode, and return an empty
-				// vector.
-				LOG(ERROR, "Getting Name info of Interface IP failed", "");
-			}
-
-			// Do the same thing as the above, but for the netmask of the interface
-			// as opposed to the IP address.
-			socket = getnameinfo(curIf->ifa_netmask, sizeof(sockaddr_in), bitmaskBuffer, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-
-			if(socket != 0)
-			{
-				// If getnameinfo returned an error, stop processing for the
-				// method, assign the proper errorCode, and return an empty
-				// vector.
-				LOG(ERROR, "Getting Name info of Interface Netmask failed", "");
-			}
-			// Convert the bitmask and host address character arrays to strings
-			// for use later
-			string bitmaskString = string(bitmaskBuffer);
-			string addrString = string(addrBuffer);
-
-			// Put the network ordered address values into the
-			// address and bitmaks in_addr structs, and then
-			// convert them to host longs for use in
-			// determining how much hostspace is empty
-			// on this interface's subnet.
-			inet_aton(addrString.c_str(), &netOrderAddrStruct);
-			inet_aton(bitmaskString.c_str(), &netOrderBitmaskStruct);
-			hostOrderAddr = ntohl(netOrderAddrStruct.s_addr);
-			hostOrderBitmask = ntohl(netOrderBitmaskStruct.s_addr);
-
-			// Get the base address for the subnet
-			uint32_t hostOrderMinAddrInRange = hostOrderBitmask & hostOrderAddr;
-			minAddrInRange.s_addr = htonl(hostOrderMinAddrInRange);
-
-			// and the max address
-			uint32_t hostOrderMaxAddrInRange = ~(hostOrderBitmask) + hostOrderMinAddrInRange;
-			maxAddrInRange.s_addr = htonl(hostOrderMaxAddrInRange);
-
-			// Find out how many bits there are to work with in
-			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
-			uint32_t tempRawMask = ~hostOrderBitmask;
-			int i = 32;
-
-			while(tempRawMask != 0)
-			{
-				tempRawMask /= 2;
-				i--;
-			}
-
-			// Populate the subnet struct for use in the SubnetTable of the HoneydConfiguration
-			// object.
-			newSubnet.m_address = string(inet_ntoa(minAddrInRange));
-			newSubnet.m_mask = string(inet_ntoa(netOrderBitmaskStruct));
-			newSubnet.m_maskBits = i;
-			newSubnet.m_base = minAddrInRange.s_addr;
-			newSubnet.m_max = maxAddrInRange.s_addr;
-			newSubnet.m_name = string(curIf->ifa_name);
-			newSubnet.m_enabled = (curIf->ifa_flags & IFF_UP);
-
-			ret.push_back(newSubnet);
-		}
-		// If we've found an interface that has an IPv4 address and isn't a loopback
-		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
-		{
-			Subnet newSubnet;
-
-			// Get the string representation of the interface's IP address,
-			// and put it into the host character array.
-			int s = getnameinfo(curIf->ifa_addr, sizeof(sockaddr_in), addrBuffer, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-
-			if(s != 0)
-			{
-				// If getnameinfo returned an error, stop processing for the
-				// method, assign the proper errorCode, and return an empty
-				// vector.
-				LOG(ERROR, "Getting Name info of Interface IP failed", "");
-			}
-
-			// Do the same thing as the above, but for the netmask of the interface
-			// as opposed to the IP address.
-			s = getnameinfo(curIf->ifa_netmask, sizeof(sockaddr_in), bitmaskBuffer, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-
-			if(s != 0)
-			{
-				// If getnameinfo returned an error, stop processing for the
-				// method, assign the proper errorCode, and return an empty
-				// vector.
-				LOG(ERROR, "Getting Name info of Interface Netmask failed", "");
-			}
-			// Convert the bitmask and host address character arrays to strings
-			// for use later
-			string bitmaskString = string(bitmaskBuffer);
-			string addrString = string(addrBuffer);
-
-			// Put the network ordered address values into the
-			// address and bitmaks in_addr structs, and then
-			// convert them to host longs for use in
-			// determining how much hostspace is empty
-			// on this interface's subnet.
-			inet_aton(addrString.c_str(), &netOrderAddrStruct);
-			inet_aton(bitmaskString.c_str(), &netOrderBitmaskStruct);
-			hostOrderAddr = ntohl(netOrderAddrStruct.s_addr);
-			hostOrderBitmask = ntohl(netOrderBitmaskStruct.s_addr);
-
-			// Get the base address for the subnet
-			uint32_t hostOrderMinAddrInRange = hostOrderBitmask & hostOrderAddr;
-			minAddrInRange.s_addr = htonl(hostOrderMinAddrInRange);
-
-			// and the max address
-			uint32_t hostOrderMaxAddrInRange = ~(hostOrderBitmask) + hostOrderMinAddrInRange;
-			maxAddrInRange.s_addr = htonl(hostOrderMaxAddrInRange);
-
-			// Find out how many bits there are to work with in
-			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
-			uint32_t mask = ~hostOrderBitmask;
-			int i = 32;
-
-			while(mask != 0)
-			{
-				mask /= 2;
-				i--;
-			}
-
-			newSubnet.m_address = string(inet_ntoa(minAddrInRange));
-			newSubnet.m_mask = string(inet_ntoa(netOrderBitmaskStruct));
-			newSubnet.m_maskBits = i;
-			newSubnet.m_base = minAddrInRange.s_addr;
-			newSubnet.m_max = maxAddrInRange.s_addr;
-			newSubnet.m_name = string(curIf->ifa_name);
-			newSubnet.m_enabled = (curIf->ifa_flags & IFF_UP);
-
-			ret.push_back(newSubnet);
-		}
-	}
-
-	return ret;
 }
 
 string HoneydConfiguration::SanitizeProfileName(std::string oldName)

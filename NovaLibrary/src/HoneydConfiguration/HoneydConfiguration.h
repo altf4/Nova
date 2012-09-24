@@ -30,29 +30,31 @@ typedef std::string profileName;
 
 enum hdConfigReturn
 {
-	INHERITED,
-	NOT_INHERITED,
-	NO_SUCH_KEY
+	INHERITED
+	, NOT_INHERITED
+	, NO_SUCH_KEY
 };
 
 enum portBehavior
 {
-	BLOCK = 0,
-	RESET,
-	OPEN,
-	SCRIPT
+	BLOCK = 0
+	, RESET
+	, OPEN
+	, SCRIPT
+	, TARPIT_OPEN
+	, TARPIT_SCRIPT
 };
 enum recursiveDirection
 {
-	ALL = 0,
-	UP,
-	DOWN
+	ALL = 0
+	, UP
+	, DOWN
 };
 
 enum portProtocol : bool
 {
-	UDP = 0,
-	TCP
+	UDP = 0
+	, TCP
 };
 
 class HoneydConfiguration
@@ -66,14 +68,6 @@ public:
 	// Initializes the MAC vendor database and hash tables
 	// *Note: To populate the object from the file system you must call LoadAllTemplates();
     HoneydConfiguration();
-
-    //This function sets the home directory from which the templates are relative to
-    //	homePath: file system path to the directory you wish to use
-    void SetHomePath(std::string homePath);
-
-    //This function returns the home path from which it is currently reading and writing from
-    // Returns: the local file system path in string form to the current home directory
-    std::string GetHomePath();
 
     //Attempts to populate the HoneydConfiguration object with the xml templates.
     // The configuration is saved and loaded relative to the homepath specificed by the Nova Configuration
@@ -143,9 +137,6 @@ public:
     // *Note this function is very limited, for configuring large numbers of nodes you should use the NodeManager
     bool AddNewNodes(std::string profileName, std::string ipAddress, std::string interface, std::string subnet, int numberOfNodes);
 
-    //Just a basic function for added a subnet into the configuration, may not be needed anymore.
-    bool AddSubnet(const Subnet &add);
-
     //This allows easy access to all children profiles of the parent
     // Returns a vector of strings containing the names of the children profile
 	std::vector<std::string> GetProfileChildren(std::string parent);
@@ -157,10 +148,6 @@ public:
 	//This function allows easy access to all nodes
 	// Returns a vector of strings containing the names of all nodes
 	std::vector<std::string> GetNodeNames();
-
-	//This function allows easy access to all subnets
-	// Returns a vector of strings containing the names of all subnets
-	std::vector<std::string> GetSubnetNames();
 
 	//This function allows easy access to all scripts
 	// Returns a vector of strings containing the names of all scripts
@@ -261,7 +248,6 @@ public:
     bool DeleteNode(std::string nodeName);
     Node *GetNode(std::string nodeName);
 
-    std::string GetNodeSubnet(std::string nodeName);
     bool EnableNode(std::string nodeName);
     bool DisableNode(std::string nodeName);
     void DisableProfileNodes(std::string profileName);
@@ -304,7 +290,6 @@ public:
     // Returns a bool indicating whether the update was successful or not.
     bool UpdateNodeMacs(std::string profileName);
 
-	SubnetTable m_subnets;
 	PortTable m_ports;
 	ProfileTable m_profiles;
     NodeTable m_nodes;
@@ -314,8 +299,6 @@ public:
     VendorMacDb m_macAddresses;
 
 private:
-    std::string m_homePath;
-
     uint m_nodeProfileIndex;
 
 
@@ -363,8 +346,6 @@ private:
     //recursive descent down profile tree
     bool LoadProfileChildren(std::string parent);
 
-    //Load stored subnets in ptr
-    bool LoadSubnets(boost::property_tree::ptree *ptr);
     //Load stored honeyd nodes ptr
     bool LoadNodes(boost::property_tree::ptree *ptr);
 
@@ -388,10 +369,6 @@ private:
     //	Returns (true) if successful and (false) if no profile with name 'profileName' exists
     bool CreateProfileTree(std::string profileName);
 
-    std::string FindSubnet(in_addr_t ip);
-
-
-    std::vector<Subnet> FindPhysicalInterfaces();
 
     //***************** REFACTORED BELOW  HERE *****************//
 

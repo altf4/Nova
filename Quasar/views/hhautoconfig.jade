@@ -149,7 +149,7 @@ block headerAdditions
             var divWidth = document.getElementById('lightbox').scrollWidth;
             document.getElementById('appendText').style.width = divWidth + 'px';
             try {
-                now.ShowAutoConfig(GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
+                now.ShowAutoConfig(document.getElementById("nodeCountType").value, GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
             } catch (err) {
                 alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
                 console.log("err was: " + err);
@@ -163,8 +163,14 @@ block headerAdditions
 
     function GetNumNodes()
     {
-        console.log("GetNumNodes returning " + document.getElementById("numNodes").value);
-        return parseInt(document.getElementById("numNodes").value);
+        var num;
+        if (document.getElementById("nodeCountType").value == "fixed") {
+            num = parseInt(document.getElementById("numNodes").value);
+        } else {
+            num = parseInt(document.getElementById("numNodesRatio").value);
+        }
+        console.log("GetNumNodes returning " + num);
+        return num;
     }
     
     function GetInterfaces()
@@ -225,6 +231,21 @@ block headerAdditions
         window.location = redirect.toString();
     }
 
+    function nodeNumberTypeChanged()
+    {
+       if (document.getElementById("nodeCountType").value == "fixed") {
+            document.getElementById("numNodesLabel").style.display = "block";
+            document.getElementById("numNodes").style.display = "block";
+            document.getElementById("numNodesRatioLabel").style.display = "none";
+            document.getElementById("numNodesRatio").style.display = "none";
+       } else {
+            document.getElementById("numNodesRatioLabel").style.display = "block";
+            document.getElementById("numNodesRatio").style.display = "block";
+            document.getElementById("numNodesLabel").style.display = "none";
+            document.getElementById("numNodes").style.display = "none";
+       }
+    }
+
 block content
   if(SCANERROR !== undefined)
     label(id="scanError", style="color: red;") #{SCANERROR}
@@ -246,8 +267,16 @@ block content
               
     hidden(id="length", value=INTERFACES.length)
     br
-    label Number of Haystack Nodes to create: 
-    input(type="number", name="numNodes", id="numNodes", width="4", min="1", max="511", onblur="checkIntMax(\"numNodes\")", value="1")
+    select#nodeCountType(onchange="nodeNumberTypeChanged()")
+      option(value="fixed", selected='selected') Create a fixed number of haystack nodes
+      option(value="ratio") Create number of haystack nodes based on number of existing hosts
+
+    br
+    label#numNodesLabel(style="display: block") Number of Haystack Nodes to create
+    input(type="number", name="numNodes", id="numNodes", width="4", min="1", max="511", onblur="checkIntMax(\"numNodes\")", value="1", style="display: block")
+    label#numNodesRatioLabel(style="display:none") Number of nodes to create per real host found
+    input(type="number", name="numNodesRatio", id="numNodesRatio", width="4", min="0", max="511", value="1", style="display:none")
+    
     br
     br
     label(id="errorLabel", style="color:red;") 

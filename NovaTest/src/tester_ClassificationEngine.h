@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : tester_ClassificationEngine.h
+// Name        : tester_KnnClassification.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,45 +13,44 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : This file contains unit tests for the class ClassificationEngine
+// Description : This file contains unit tests for the class KnnClassification
 //============================================================================/*
 
 #include "gtest/gtest.h"
 #include <iostream>
 #include <fstream>
 
-#include "ClassificationEngine.h"
+#include "KnnClassification.h"
 
 using namespace Nova;
 using namespace std;
 
-// The test fixture for testing class ClassificationEngine.
-class ClassificationEngineTest : public ::testing::Test
+// The test fixture for testing class KnnClassification.
+class KnnClassificationTest : public ::testing::Test
 {
 
 protected:
 
-	SuspectTable suspects;
-	ClassificationEngine *testObject;
+	KnnClassification *testObject;
 
 	// Unused methods here may be deleted
-	ClassificationEngineTest()
+	KnnClassificationTest()
 	{
-		testObject = new ClassificationEngine(suspects);
+		testObject = new KnnClassification();
 	}
 };
 
 // Check that someMethod functions
-TEST_F(ClassificationEngineTest, test_someMethod)
+TEST_F(KnnClassificationTest, test_someMethod)
 {
 	bool isDmEn = Config::Inst()->GetIsDmEnabled();
 	Config::Inst()->SetIsDmEnabled(false);
-	EXPECT_EQ(0.42, ClassificationEngine::Normalize(LINEAR, 42, 0, 100));
+	EXPECT_EQ(0.42, KnnClassification::Normalize(LINEAR, 42, 0, 100, 1));
 	Config::Inst()->SetIsDmEnabled(isDmEn);
 }
 
 
-TEST_F(ClassificationEngineTest, DISABLED_test_kFoldCrossValidation)
+TEST_F(KnnClassificationTest, DISABLED_test_kFoldCrossValidation)
 {
 	chdir(Config::Inst()->GetPathHome().c_str());
 

@@ -95,14 +95,13 @@ NovaLibrary/libNovaLibrary.a
 # Quasar
 /Quasar/www/dojo
 /Quasar/build/*
-/Quasar/NodeNovaConfig/build/*
+/NodejsModule/build/*
+/NodejsModule/.lock-wscript
 /Quasar/node_modules
 /Quasar/.lock-wscript
-/Quasar/NodeNovaConfig/.lock-wscript
 /Quasar/libv8-convert-20120219/*
 /Quasar/libv8-convert-20120219.tar.gz.1
 /Quasar/libv8-convert-20120219.tar.gz.2
-/Quasar/NodeNovaConfig/subnet0.xml
 /Quasar/build/*
 /Quasar/www/dojo
 /Quasar/.lock-wscript
@@ -114,7 +113,6 @@ NovaLibrary/libNovaLibrary.a
 /Installer/nova/Config/doppelganger.config
 /Installer/nova/Data/data.txt
 /Installer/nova/Data/training.db
-/Quasar/NodeNovaConfig/.lock-wscript
 /Quasar/libv8-convert-20120219/*
 /Quasar/libv8-convert-20120219.tar.gz.1
 /Quasar/libv8-convert-20120219.tar.gz.2
@@ -129,13 +127,16 @@ NovaLibrary/libNovaLibrary.a
 /1
 
 #Haystack Auto Config
-/HoneydHostConfig/honeydhostconfig
-/HoneydHostConfig/.settings/org.eclipse.cdt.managedbuilder.core.prefs
-/HoneydHostConfig/subnet0.xml
-/HoneydHostConfig/Debug/honeydhostconfig
-/HoneydHostConfig/Release/honeydhostconfig
-/HoneydHostConfig/Debug/subnet0.xml
-/HoneydHostConfig/Debug/test.txt
+/HaystackAutoConfig/haystackautoconfig
+/HaystackAutoConfig/.settings/org.eclipse.cdt.managedbuilder.core.prefs
+/HaystackAutoConfig/subnet0.xml
+/HaystackAutoConfig/Debug/haystackautoconfig
+/HaystackAutoConfig/Release/haystackautoconfig
+/HaystackAutoConfig/Debug/subnet0.xml
+/HaystackAutoConfig/Debug/test.txt
+/HaystackAutoConfig/.settings/org.eclipse.cdt.codan.core.prefs
+/HaystackAutoConfig/.settings/org.eclipse.cdt.core.prefs
+/HaystackAutoConfig/.settings/org.eclipse.ltk.core.refactoring.prefs
 /subnet0.xml
 
 #debian
