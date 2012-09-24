@@ -363,7 +363,7 @@ wsServer.on('request', function(request)
 				      novaClients[json_args.id].statusHaystack = json_args.status;
 				      console.log('status haystack is now ' + novaClients[json_args.id].statusHaystack);
 				    }
-				    else if(json_args.component == 'novad')
+				    else if(json_args.component == 'nova')
 				    {
 				      console.log('status novad is ' + novaClients[json_args.id].statusNova);
 				      novaClients[json_args.id].statusNovad = json_args.status;

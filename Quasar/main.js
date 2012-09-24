@@ -2151,12 +2151,16 @@ setInterval(function() {
     message.id = clientId;
     message.type = 'statusChange';
     message.component = 'nova';
-    console.log('IsNovadUp == ' + nova.IsNovadUp(false));
     message.status = nova.IsNovadUp(false).toString();
+    console.log('IsNovadUp == ' + nova.IsNovadUp(false));
     mothership.sendUTF(JSON.stringify(message));
-    message.component = 'haystack';
-    message.status = nova.IsHaystackUp().toString();
+    
+    var message2 = {};
+    message2.id = clientId;
+    message2.type = 'statusChange';
+    message2.component = 'haystack';
+    message2.status = nova.IsHaystackUp().toString();
     console.log('IsHaystackUp == ' + nova.IsHaystackUp());
-    mothership.sendUTF(JSON.stringify(message));
+    mothership.sendUTF(JSON.stringify(message2));
   }
 }, 10000);
