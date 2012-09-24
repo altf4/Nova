@@ -23,11 +23,6 @@
 #include "FeatureSet.h"
 #include "Point.h"
 
-//If the feature data is local
-#define LOCAL_DATA true
-//If the feature data is broadcast from another nova instance
-#define BROADCAST_DATA false
-
 enum SerializeFeatureMode: uint8_t
 {
 	NO_FEATURE_DATA = 0,

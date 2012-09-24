@@ -17,7 +17,7 @@
 // 		list of suspects.
 //============================================================================/*
 
-#include "KnnClassification.h"
+#include "ClassificationEngine.h"
 #include "SerializationHelper.h"
 #include "SuspectTable.h"
 #include "HashMap.h"
@@ -33,7 +33,7 @@
 using namespace std;
 using namespace Nova;
 
-extern KnnClassification *engine;
+extern ClassificationEngine *engine;
 
 namespace Nova
 {

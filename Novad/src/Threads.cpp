@@ -56,8 +56,6 @@ extern SuspectTable suspects;
 // Suspects not yet written to the state file
 extern SuspectTable suspectsSinceLastSave;
 
-extern vector<struct sockaddr_in> hostAddrs;
-
 extern time_t lastLoadTime;
 extern time_t lastSaveTime;
 
@@ -76,7 +74,6 @@ extern int whitelistWatch;
 
 extern pthread_mutex_t packetCapturesLock;
 
-extern ClassificationEngine *engine;
 extern EvidenceTable suspectEvidence;
 
 extern Doppelganger *doppel;
