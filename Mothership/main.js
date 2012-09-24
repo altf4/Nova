@@ -359,17 +359,16 @@ wsServer.on('request', function(request)
 				  case 'statusChange':
 				    if(json_args.component == 'haystack')
 				    {
-				      console.log('status haystack is ' + novaClients[json_args.id].statusHaystack);
 				      novaClients[json_args.id].statusHaystack = json_args.status;
-				      console.log('status haystack is now ' + novaClients[json_args.id].statusHaystack);
 				    }
 				    else if(json_args.component == 'nova')
 				    {
-				      console.log('status novad is ' + novaClients[json_args.id].statusNova);
-				      novaClients[json_args.id].statusNovad = json_args.status;
-				      console.log('status novad is now ' + novaClients[json_args.id].statusNova);
+				      novaClients[json_args.id].statusNova = json_args.status;
 				    }
-				    everyone.now.UpdateConnectionsList(json_args.id, 'updateStatus');
+				    if(typeof everyone.now.UpdateConnectionsList == 'function')
+				    {
+				      everyone.now.UpdateConnectionsList(json_args.id, 'updateStatus');
+				    }
 				    break;
 					// If we've found a message type that we weren't expecting, or don't have a case
           // for, log this message to the console and do nothing.
