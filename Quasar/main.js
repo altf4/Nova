@@ -2144,10 +2144,10 @@ setInterval(function() {
     message.id = clientId;
     message.type = 'statusChange';
     message.component = 'nova';
-    message.status = nova.IsNovadUp(false);
+    message.status = nova.IsNovadUp(false).toString();
     mothership.sendUTF(JSON.stringify(message));
     message.component = 'haystack';
-    message.status = nova.IsHaystackUp();
+    message.status = nova.IsHaystackUp().toString();
     mothership.sendUTF(JSON.stringify(message));
   }
 }, 10000);
