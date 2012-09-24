@@ -34,6 +34,7 @@ body {
     background: white;
     color: #333;
 }
+
 p {
 	font-family:Consolas,Menlo,"Liberation Mono",Courier,monospace;
 }
@@ -92,7 +93,9 @@ h1 {
     font-size:1.5em;
 }
 
-
+h2 {
+  font-size:1.2em;
+}
 
 html, body {
     height: 100%;
@@ -122,9 +125,26 @@ html, body {
     border-radius: 12px;
     background: #E8A02F;
     width: 250px;
+    text-align: center;
 }
 
-.white_content{
+#groupsList {
+    border: 2px solid;
+    border-radius: 12px;
+    background: #E8A02F;
+    width: 250px;
+    text-align: center;
+}
+
+#connectionsList {
+  border: 2px solid;
+  border-radius: 4px;
+  background: #E8A02F;
+  width: inherit;
+  text-align: center;
+}
+
+.white_content {
 	display: none;
 	position: absolute;
 	top: 25%;

@@ -1,0 +1,29 @@
+extends layout
+block headerAdditions
+  script
+    now.ready(function(){
+      now.RenderConnectionsList();
+    });
+
+block content
+  div(style='margin: 0px auto; text-align:center;width:60%; font-size:17px')
+    h1 NOVA (by 
+      a(href='http://www.datasoft.com/') Datasoft
+      | )
+    
+    p Nova is an Open Source 
+      a(href="license.txt") (GPL)
+      |  software application for preventing and detecting hostile Network Reconnaissance. It does this by first creating a large array of thin virtual machines on the target network (known as the Haystack). Nova then uses machine learning algorithms to automatically detect and classify attempts at hostile reconnaissance, so there's no need to go searching manually through your honeypot's log files.
+
+    br
+
+    h1 Contributors
+    ul(style="padding-left: 30px; text-align: left; display:inline-block")
+      li Addison Waldow (Awal)
+      li Dan Petro (AltF4)
+      li Dave Scott (SythASU)
+      li David Clark (Pherricoxide)
+
+    a(href="http://projectnova.org")
+      h1 Project Webpage
+

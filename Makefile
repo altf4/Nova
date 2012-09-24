@@ -74,6 +74,10 @@ quasar: nodejsmodule
 nodejsmodule:
 	cd NodejsModule;npm --unsafe-perm install	
 
+#Mothership
+mothership:
+	cd Mothership; npm --unsafe-perm install
+
 #Honeyd AutoConfig
 hhconfig-release:
 	$(MAKE) -C HaystackAutoConfig/Release
@@ -255,6 +259,11 @@ install-quasar:
 	cp -frup Quasar "$(DESTDIR)/usr/share/nova/sharedFiles"
 	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Quasar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
 	-install Quasar/quasar "$(DESTDIR)/usr/bin/quasar"
+
+install-mothership:
+	cp -frup Mothership "$(DESTDIR)/usr/share/nova/sharedFiles"
+	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Mothership/www" -xf Quasar/dojo-release-1.7.0.tar.gz
+	-install Mothership/mothership "$(DESTDIR)/usr/bin/mothership"	
 
 install-hhconfig:
 	-install HaystackAutoConfig/haystackautoconfig "$(DESTDIR)/usr/bin/haystackautoconfig"

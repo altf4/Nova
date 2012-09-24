@@ -1,0 +1,285 @@
+doctype 5
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    link(rel="stylesheet", type="text/css", href="style.css", media="screen")
+    link(rel="stylesheet", type="text/css", href="/dojo/dijit/themes/claro/claro.css", media="screen")
+    link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
+    link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
+    link(rel="shortcut icon", href="/favicon.ico")
+
+    script(type="text/javascript", src="/nowjs/now.js")
+    script(type="text/javascript", src="/dojo/dojo/dojo.js", data-dojo-config="async:true, parseOnLoad:true")
+    script
+      // Method to render the left side connection status list;
+      // this list will contain a clientId and two graphics, each
+      // graphic indicating the status of novad and the haystack,
+      // respectively  
+      var notifications = 0;
+      
+      now.RenderConnectionsList = function(clients)
+      {
+        var divConnectionsList = document.getElementById('connectionsList');
+       
+        if(clients == undefined || clients.length == 0)
+        {
+          var label = document.createElement('label');
+          label.id = 'deleteMe';
+          label.innerHTML = 'No clients connected';
+          divConnectionsList.appendChild(label);
+        }
+        else
+        {
+          for(var i in clients)
+          {
+            var div = document.createElement('div');
+            div.id = clients[i];
+            
+            var label = document.createElement('label');
+            label.innerHTML = clients[i];
+            
+            var novadStatus = document.createElement('img');
+            novadStatus.width = '16';
+            novadStatus.height = '16';
+            novadStatus.id = clients[i] + 'nova';
+            
+            now.IsNovadUp(clients[i], function(status){
+              if(status == 'true' || status == true)
+              {
+                novadStatus.src = 'images/Ngreendot.png';
+                novadStatus.alt = 'Classification is on for ' + clients[i];
+              } 
+              else
+              {
+                novadStatus.src = 'images/Nreddot.png';
+                novadStatus.alt = 'Classification is off for ' + clients[i];
+              } 
+            });
+            
+            var haystackStatus = document.createElement('img');
+            haystackStatus.width = '16';
+            haystackStatus.height = '16';
+            haystackStatus.id = clients[i] + 'haystack';
+              
+            now.IsHaystackUp(clients[i], function(status){
+              if(status == 'true' || status == true)
+              {
+                haystackStatus.src = 'images/Hgreendot.png';
+                haystackStatus.alt = 'Classification is on for ' + clients[i];
+              } 
+              else
+              {
+                haystackStatus.src = 'images/Hreddot.png';
+                haystackStatus.alt = 'Classification is off for ' + clients[i];
+              } 
+            });
+            
+            div.appendChild(label);
+            div.appendChild(novadStatus);
+            div.appendChild(haystackStatus);
+            divConnectionsList.appendChild(div);
+          }
+          
+          clients.length = 0;
+        }
+      }
+      
+      now.UpdateConnectionsList = function(clientId, action)
+      {
+        var divConnectionsList = document.getElementById('connectionsList');
+        
+        switch(action)
+        {
+          case 'add':
+            if(document.getElementById('deleteMe') != undefined)
+            {
+              divConnectionsList.removeChild(document.getElementById('deleteMe'));
+            }
+            var div = document.createElement('div');
+            div.id = clientId;
+            
+            var label = document.createElement('label');
+            label.innerHTML = clientId;
+            
+            var novadStatus = document.createElement('img');
+            novadStatus.width = '16';
+            novadStatus.height = '16';
+            novadStatus.id = clientId + 'nova';
+            
+            now.IsNovadUp(clientId, function(status){
+              if(status == 'true' || status == true)
+              {
+                novadStatus.src = 'images/Ngreendot.png';
+                novadStatus.alt = 'Classification is on for ' + clientId;
+              } 
+              else
+              {
+                novadStatus.src = 'images/Nreddot.png';
+                novadStatus.alt = 'Classification is off for ' + clientId;
+              } 
+            });
+            
+            var haystackStatus = document.createElement('img');
+            haystackStatus.width = '16';
+            haystackStatus.height = '16';
+            haystackStatus.id = clientId + 'haystack';
+              
+            now.IsHaystackUp(clientId, function(status){
+              if(status == 'true' || status == true)
+              {
+                haystackStatus.src = 'images/Hgreendot.png';
+                haystackStatus.alt = 'Classification is on for ' + clientId;
+              } 
+              else
+              {
+                haystackStatus.src = 'images/Hreddot.png';
+                haystackStatus.alt = 'Classification is off for ' + clientId;
+              } 
+            });
+            
+            div.appendChild(label);
+            div.appendChild(novadStatus);
+            div.appendChild(haystackStatus);
+            divConnectionsList.appendChild(div);
+            break;
+          case 'remove':
+            if(document.getElementById(clientId) != undefined)
+            {
+              divConnectionsList.removeChild(document.getElementById(clientId));
+              if(divConnectionsList.childNodes.length == 0)
+              {
+                var label = document.createElement('label');
+                label.id = 'deleteMe';
+                label.innerHTML = 'No clients connected';
+                divConnectionsList.appendChild(label);
+              }
+            }
+            break;
+          case 'updateStatus':
+            now.IsNovadUp(clientId, function(status){
+              if(status == 'true' || status == true)
+              {
+                document.getElementById(clientId + 'nova').src = 'images/Ngreendot.png';
+                document.getElementById(clientId + 'nova').alt = 'Classification is on for ' + clientId;
+              }
+              else
+              {
+                document.getElementById(clientId + 'nova').src = 'images/Nreddot.png';
+                document.getElementById(clientId + 'nova').alt = 'Classification is off for ' + clientId;
+              }
+            });
+            now.IsHaystackUp(clientId, function(status){
+              if(status == 'true' || status == true)
+              {
+                document.getElementById(clientId + 'haystack').src = 'images/Hgreendot.png';
+                document.getElementById(clientId + 'haystack').alt = 'Haystack is on for ' + clientId;
+              }
+              else
+              {
+                document.getElementById(clientId + 'haystack').src = 'images/Hreddot.png';
+                document.getElementById(clientId + 'haystack').alt = 'Haystack is off for ' + clientId;
+              }
+            });
+            break;
+          default:
+            console.log('UpdateConnectionsList called with unknown action ' + action + ', doing nothing');
+            break;
+        }
+      }
+      
+      now.UpdateNotificationsButton = function(action)
+      {
+        if(action == 'new')
+        {
+          if(document.URL.indexOf('/notifications') > -1)
+          {
+            while(document.getElementById('notificationsDiv').hasChildNodes())
+            {
+              document.getElementById('notificationsDiv').removeChild(document.getElementById('notificationsDiv').lastChild);
+            }
+            now.GetNotifications(populateNotifications);
+          }
+          else
+          {
+            notifications++;
+            if(notifications > 0)
+            {
+              document.getElementById('notify').setAttribute('style', 'background: red');
+            }
+            document.getElementById('notify').innerHTML = 'Notifications (' + notifications + ')';
+          }
+        }
+        else if(action == 'read')
+        {
+          notifications = 0;
+          document.getElementById('notify').removeAttribute('style');
+          document.getElementById('notify').innerHTML = 'Notifications (' + notifications + ')';
+        }
+        else
+        {
+          console.log('UpdateNotificationsButton received an unknown action "' + action + '", doing nothing');
+        }
+      }
+      
+      require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser", "dojox/grid/DataGrid", "dojox/data/HtmlStore", "dijit/ProgressBar"],
+        function(ready){
+          dojo.addOnLoad(function(){
+            // Some logging of nowjs stuff
+            now.core.on('disconnect', function() {console.log('Warning: Disconnected from nowjs server.');});
+            
+            dojo.style("appLayout", "opacity", 0);
+            dojo.fadeOut({node:"splash", delay:0}).play();
+            dojo.style("appLayout", "visibility", "visible");
+            dojo.fadeIn({node:"appLayout", delay:0}).play();
+          });
+        }
+      );
+    block headerAdditions
+
+  body.claro
+    div#splash(style="position:absolute;left:0px;top:0px;width:100%;height:100%; text-align: center;")
+      // Uncomment below for a simple splash loading screen
+      //h1 Loading... please wait.
+      //img(src="images/novaSplash.png")
+    div#appLayout.demoLayout(data-dojo-type="dijit.layout.BorderContainer", data-dojo-props="design: 'headline', region: 'center'", style="visibility: hidden")
+      div.centerPanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'center', tabPosition: 'bottom'")
+        div(data-dojo-type="dijit.layout.ContentPane",title="NOVA", data-dojo-props="splitter: false")
+          block content
+      // Header panel
+      div.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'top', splitter: false")
+        div(data-dojo-type="dijit.layout.BorderContainer",data-dojo-props="design: 'sidebar', splitter: false",style="height: 140px;")
+          // Header center
+          div(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'center', splitter: false")    
+            a(href="/")
+              img#eyeIcon(src="images/novaIcon.png",class="align-left", width="100px", height="100px")
+              h1 NOVA: Network Obfuscation and Virtualized Anti-reconnaissance System
+            block topPannelAdditions
+    
+      // Left panel
+      div#leftCol.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'left', splitter: false")
+        block buttonPannelAdditions
+      
+       
+        div(style="text-align:center; font-weight:bold; font-size: 150%;") Status
+        a(class="button", href='/') Hostile Events
+        br
+        br
+        div(style="text-align:center; font-weight:bold; font-size: 150%;") Configuration
+        a(class="button", href='/config') Client Configuration Options
+        br
+        a(class="button", href='/haystack') Client Haystack Autoconfiguration
+        br
+        a(class="button", href='/groups') Mothership Configuration Options
+        br
+        br
+        div(style="text-align:center; font-weight:bold; font-size: 150%;") Documentation
+        a(class="button", href='/about') About Nova
+        br
+        a(class="button", id='notify', href='/notifications') Notifications (0) 
+        br
+        br
+        div(style="text-align:center; font-weight:bold; font-size: 150%;") Connected Clients
+        div(id="connectionsList")
+        //a(class="button", href= "logout") Log Out
+        //br
+

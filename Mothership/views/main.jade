@@ -1,0 +1,312 @@
+extends layout
+
+block content
+  h1 Nova Control Panel
+  
+  table
+    thead
+      tr
+        th Connected Clients
+        th Groups
+    tbody
+      tr
+        td
+          div(id='clientsList')
+        td
+          div(id='groupsList')
+
+  br
+
+  button(id='button0', style='width: 160px', onclick='startNovad();', disabled=true) Start Classifying
+  button(id='button1', style='width: 160px',  onclick='stopNovad();', disabled=true) Stop Classifying
+
+  br
+  br
+
+  button(id='button2', style='width: 160px',  onclick='startHaystack();', disabled=true) Start Haystack
+  button(id='button3', style='width: 160px',  onclick='stopHaystack();', disabled=true) Stop Haystack
+
+  br
+  br
+
+  button(id="button4", style="width: 160px", onclick='requestBenign();', disabled=true) Get Benign Suspects
+  button(id="button5", style="width: 160px", onclick='stopRequestBenign()', disabled=true) Cancel Benign Request
+  
+  br
+  br 
+  
+  button(type="button", style="width: 160px", onclick='ClearAllSuspects(); suspectGrid.Clear();') Clear All Suspects
+  
+  br
+  br
+
+  h2 Currently Requesting Benign Suspects From:
+  input(id="benignList", readonly=true)
+
+  div#nova_suspects_header
+    h1 Suspect List
+    button#liveUpdateButton(data-dojo-type="dijit.form.Button",type="button") Pause Updates/Auto Scrolling
+      script(type="dojo/method", data-dojo-event="onClick", data-dojo-args="evt")
+        | liveUpdate = !liveUpdate;
+        | if (!liveUpdate) {dojo.byId("liveUpdateButton").innerHTML = "Unpause table refreshing";}
+        | else {dojo.byId("liveUpdateButton").innerHTML = "Pause table refreshing";}
+    br
+    br
+    
+    
+    a(href="javascript:void(0)", onClick="document.getElementById('advancedFiltering').style.display='block';")
+      p Advanced Filtering Options
+    div#advancedFiltering(style="display: none;")
+      br
+      p Filter by IP (supports standard regular expressions. Example: "192\.168\.10\..*|192\.168\.3\..*")
+      input#ipFilter(type="text", name="ipFilter", value="")
+      br
+      button(onClick='applyAdvancedFilter()') Apply Advanced Filters
+      button(onClick='disableAdvancedFilter()') Disable Advanced Filters
+
+  div#nova_suspects
+    table#suspectTable
+  div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none")
+    h4 Novad is not currently connected or running. Try starting it.
+   
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
+  script(type="text/javascript", src="scripts/NovaGrid.js")
+  script(type="text/javascript", src="scripts/ConnectionManagement.js")
+  script
+    // Performance boost accessing local var over document lookup
+    var theDoc = document;
+
+    var clientCount = 0;
+    var suspectGrid;
+    var liveUpdate = true;
+    var lastNovadStatus = "unknown";
+
+    var advancedFilters = new Object();
+    var advancedFilterEnabled = false;
+    var advancedIpFilter = null;
+
+    var message = {};
+    message.id = '';
+
+    var clients = "#{CLIENTS}".split(':');
+    var groups = !{GROUPS};
+
+    function startNovad()
+    {
+        message.type = 'startNovad';
+        now.MessageSend(message);
+        now.UpdateStatus(message.id, 'nova', true);
+    }
+
+    function stopNovad()
+    {
+        message.type = 'stopNovad';
+        now.MessageSend(message);
+        now.UpdateStatus(message.id, 'nova', false);
+    }
+
+    function startHaystack()
+    {
+        message.type = 'startHaystack';
+        now.MessageSend(message);
+        now.UpdateStatus(message.id, 'haystack', true);
+    }
+
+    function stopHaystack()
+    {
+        message.type = 'stopHaystack';
+        now.MessageSend(message);
+        now.UpdateStatus(message.id, 'haystack', false);
+    }
+
+    function requestBenign()
+    {
+      document.getElementById('benignList').value = message.id;
+      message.type = 'requestBenign';
+      for(var i in message)
+      {
+        console.log('message: ' + i + ', ' + message[i]);
+      }
+      now.MessageSend(message);
+    }
+
+    function stopRequestBenign()
+    {
+      message.type = 'cancelRequestBenign';
+      now.MessageSend(message);
+      var assign = message.id;
+      var remove = message.id.split(':');
+      for(var i in remove)
+      {
+        if((remove[i] != '' || remove[i] != undefined) && assign.indexOf(remove[i]) != -1)
+        {
+          var regex = new RegExp(remove[i] + ':', 'i')
+          assign = assign.replace(regex, '');
+        }
+      }
+      console.log('assign');
+      document.getElementById('benignList').value = assign;
+    }
+
+    function setTarget(source, target)
+    {
+        var firstIndex = message.id.indexOf(target + ':');
+      
+        if(document.getElementById(source).checked && firstIndex === -1)
+        {
+            message.id += target + ':';
+            for(var i = 0; i < 6; i++)
+            {
+                document.getElementById('button' + i).removeAttribute('disabled');
+            }
+        }
+        else if(firstIndex >= 0)
+        {
+          var regex = new RegExp(target + ':', 'i');
+          message.id = message.id.replace(regex, '');
+        }
+        else
+        {
+            // If unselected, remove target from message.id
+            console.log(source + ' is not checked, can not do anything until target client is set');
+            for(var i = 0; i < 6; i++)
+            {
+                document.getElementById('button' + i).setAttribute('disabled', true);
+            }
+        }
+    }
+
+    require(["dijit/form/TextBox"]);
+
+    var ClearAllSuspects = function() 
+    {
+        try 
+        {
+            now.ClearAllSuspects();
+        } 
+        catch(err) 
+        {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
+        } 
+    }
+
+    now.AllSuspectsCleared = function() {
+      suspectGrid.Clear();
+    }
+    
+    now.SuspectCleared = function(suspect) {
+        console.log("Cleared suspect ");
+        console.log(suspect);
+        suspectGrid.DeleteRow(suspect.ip);
+        suspectGrid.Render();
+        return;
+    }
+      
+    function pad(num) {
+        return ("0" + num.toString()).slice(-2);
+    }
+
+    now.OnNewSuspect = function(suspect){
+      var type = suspect.type;
+      
+      //if(!liveUpdate) {return;}
+  
+      var row = new Array();
+      // This is probably a really bad way to do this...
+      row.push(String(suspect.ip) + '@' + String(suspect.client));
+      row.push(String(suspect.client));
+      row.push(parseFloat(suspect.classification));
+      row.push(String(suspect.lastpacket));
+      row.push(String(suspect.ishostile));
+
+      suspectGrid.PushEntry(row);
+    };
+
+    var applyAdvancedFilter = function() {
+        var patt = new RegExp("^[1234567890x\. ()<>=!&|]+$");
+
+        var filter = theDoc.getElementById("ipFilter").value;
+        if (filter != "") {
+            try {
+                advancedIpFilter = new RegExp(filter);
+            } catch (err) {
+                alert("Invalid filter: " + filter);
+                return;
+            }
+        }
+
+        advancedFilterEnabled = true;
+        suspectGrid.Clear();  
+    };
+
+    var disableAdvancedFilter = function() {
+        theDoc.getElementById('advancedFiltering').style.display='none';
+        
+        advancedFilterEnabled = false;
+        var advancedFilters = new Object();
+        
+        suspectGrid.Clear(); 
+    }
+              
+    function featureFormatter(d) {
+        var num = new Number(d);
+        return (num.toFixed(2));
+    }
+
+    function classificationFormatter(d) {
+        var num = 100 * d;
+        if (num > 0) {
+            // Minor performance boost, don't bother with coloring those < than 5% hostile, barely shows anyway
+            if (num > 5) {
+                return '<div style="background: rgba(255, 0, 0, ' + d.toFixed(2) + ');">' + num.toFixed(2) + "%</div>";
+            } else {
+                return num.toFixed(2) + "%";
+            }
+        } else {
+            if (num == -100) {
+                return "Invalid";
+            } else if (num == -200) {
+                return "Not Enough Data";
+            } else {
+                return "Error";
+            }
+
+        }
+    }
+    
+    function Init() {
+        theDoc = document;
+        var gridStructure = new Array();
+        gridStructure.push({name: "Address"});
+        gridStructure.push({name: "Client ID"});
+        gridStructure.push({name: "Classification", formatter: classificationFormatter});
+        gridStructure.push({name: "Last Seen"});
+        gridStructure.push({name: "Hostile"});
+   
+        suspectGrid = new NovaGrid(gridStructure, 0, theDoc.getElementById('suspectTable'));
+
+        // Sort by classification by default
+        suspectGrid.SetSortByKey(2);
+
+        theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
+        
+        now.GetHostileSuspects();
+        
+        setInterval(function(){
+                suspectGrid.Render();
+        }, 3000);   
+    }
+
+    require(["dojo/ready", "dojo/domReady!"], function(ready){
+        ready(function() {
+            now.ready(function() {
+              Init();
+              setUpSelect('clientsList');
+              setUpGrouplist('groupsList');
+              now.GetClients(now.RenderConnectionsList);
+            });
+        });
+    });
+

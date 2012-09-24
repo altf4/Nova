@@ -1,0 +1,216 @@
+extends layout
+               
+block content
+  table
+    thead
+      tr
+        th Connected Clients
+        th Groups
+    tbody
+      tr
+        td
+          div(id='clientsList')
+        td
+          div(id='groupsList')
+
+  h1 Configuration Options
+  h2 TCP Timeout
+  label TCP Timeout
+  input(type='number', name='TCP_TIMEOUT', step='1', min='0', value=TCP_TIMEOUT)    
+  br
+  label TCP Timeout Check Frequency
+  input(type='number', name='TCP_CHECK_FREQ', step='1', min='0', value=TCP_CHECK_FREQ)
+  br
+  
+  h2 Classification Settings
+  label Classification Timeout
+  input(type="number", step="1", min="0", name="CLASSIFICATION_TIMEOUT",  value=CLASSIFICATION_TIMEOUT)
+  br
+  label Neighbors
+  input(type="number", step="1", min="1", name="K",  value=K)
+  br
+  label EPS
+  input(name="EPS",  value=EPS)
+  br
+  label Classification Threshold
+  input(name="CLASSIFICATION_THRESHOLD",  value=CLASSIFICATION_THRESHOLD)
+  br
+  label Packets Needed Before Classification
+  input(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
+  br
+  label Clear data after suspect logged as hostile?
+  br
+  if(CLEAR_AFTER_HOSTILE_EVENT != "0")
+    |Yes
+    input(type="radio", id='clearHostileYes', name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
+    br
+    |No
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0")
+    br
+  else
+    |Yes
+    input(type="radio", id='clearHostileYes', name="CLEAR_AFTER_HOSTILE_EVENT", value="1")
+    br
+    |No
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0", checked)
+    br
+  br
+  label Custom PCAP Filter String
+  input(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
+  br
+  label Custom PCAP Filter String Mode
+  br
+  if(CUSTOM_PCAP_MODE != "0")
+    |Override
+    input(type="radio", id='customPcapYes', name="CUSTOM_PCAP_MODE", value="1", checked)
+    br
+    |Append
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0")
+    br
+  else
+    |Override
+    input(type="radio", id='customPcapYes', name="CUSTOM_PCAP_MODE", value="1")
+    br
+    |Append
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0", checked)
+    br
+  br
+  
+  h2 Special Run Settings
+  label Packet Capture Buffer Size (in bytes)
+  input(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE",  value=CAPTURE_BUFFER_SIZE)
+  br
+  
+  h2 State File Settings
+  label State Save Frequency
+  input(type="number", min="0", name="SAVE_FREQUENCY",  value=SAVE_FREQUENCY)
+  br
+  label Data TTL
+  input(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
+  br
+  
+  h2 Doppelganger
+  label Doppelganger Enabled?
+  br
+  if(DM_ENABLED != "0")
+    |Yes
+    input(type="radio", id="dmEnabledYes", name="DM_ENABLED", value="1", checked)
+    br
+    |No
+    input(type="radio", name="DM_ENABLED", value="0")
+    br
+  else
+    |Yes
+    input(type="radio", id="dmEnabledYes", name="DM_ENABLED", value="1")
+    br
+    |No
+    input(type="radio", name="DM_ENABLED", value="0", checked)
+    br
+  br
+  
+  h2 Logger Settings
+  label Service Preferences
+  input(name="SERVICE_PREFERENCES", value=SERVICE_PREFERENCES)
+  br
+  
+  //Aesthetic note: Probably want to have a spinner or something here
+  //to show that the clients are updating. Once the mothership has received the 
+  //appropriate response from all of the clients that were targeted, notify
+  //the user and redirect to main page
+  button(id="updateButton", onclick="updateConfiguration();") Submit Configuration
+  
+block headerAdditions
+  script(type="text/javascript", src="scripts/ConnectionManagement.js")
+  script
+      var clients = "#{CLIENTS}".split(':');
+      var groups = !{GROUPS};
+      var message = {};
+      message.id = '';
+      
+      function updateConfiguration()
+      {
+        if(message.id == '')
+        {
+          alert('Attemping to submit to null target string, doing nothing');
+          return;
+        }
+        console.log('Sending configuration update requests to targets: ' + message.id);
+        now.UpdateConfiguration();
+      }
+      
+      function setTarget(source, target)
+      {
+        var firstIndex = message.id.indexOf(target + ":");
+        
+        console.log('firstIndex == ' + firstIndex);
+        
+        if((document.getElementById(source).checked) && (firstIndex === -1))
+        {
+          message.id += target + ':';
+          console.log('message.id ' + message.id);
+        }
+        else if(firstIndex >= 0)
+        {
+          // If unselected, remove target from message.id
+          var regex = new RegExp(target + ':', 'i');
+          message.id = message.id.replace(regex, '');
+          console.log('message.id ' + message.id);
+        }
+        else
+        {
+          console.log(source + ' is not checked, can not do anything until target client is set');
+          console.log('message.id ' + message.id);
+        }
+      }
+       
+      now.UpdateConfiguration = function()
+      {
+        //construct json here
+        //message type: updateConfiguration
+        message.type = 'updateConfiguration';
+        
+        message.TCP_TIMEOUT = document.getElementsByName('TCP_TIMEOUT')[0].value;
+        message.TCP_CHECK_FREQ = document.getElementsByName('TCP_CHECK_FREQ')[0].value;
+        message.CLASSIFICATION_TIMEOUT = document.getElementsByName('CLASSIFICATION_TIMEOUT')[0].value;
+        message.K = document.getElementsByName('K')[0].value;
+        message.EPS = document.getElementsByName('EPS')[0].value;
+        message.CLASSIFICATION_THRESHOLD = document.getElementsByName('CLASSIFICATION_THRESHOLD')[0].value;
+        message.MIN_PACKET_THRESHOLD = document.getElementsByName('MIN_PACKET_THRESHOLD')[0].value;
+        if(document.getElementById('clearHostileYes').checked)
+        {
+          message.CLEAR_AFTER_HOSTILE_EVENT = '1';  
+        }
+        else
+        {
+          message.CLEAR_AFTER_HOSTILE_EVENT = '0';
+        }
+        message.CUSTOM_PCAP_FILTER = document.getElementsByName('CUSTOM_PCAP_FILTER')[0].value;
+        if(document.getElementById('customPcapYes').checked)
+        {
+          message.CUSTOM_PCAP_MODE = '1';
+        }
+        else
+        {
+          message.CUSTOM_PCAP_MODE = '0';
+        }
+        message.CAPTURE_BUFFER_SIZE = document.getElementsByName('CAPTURE_BUFFER_SIZE')[0].value;
+        message.SAVE_FREQUENCY = document.getElementsByName('SAVE_FREQUENCY')[0].value;
+        message.DATA_TTL = document.getElementsByName('DATA_TTL')[0].value;
+        if(document.getElementById('dmEnabledYes').checked)
+        {
+          message.DM_ENABLED = '1';
+        }
+        else
+        {
+          message.DM_ENABLED = '0';
+        }
+        message.SERVICE_PREFERENCES = document.getElementsByName('SERVICE_PREFERENCES')[0].value;
+        
+        now.MessageSend(message);
+      }
+        
+      now.ready(function(){
+        setUpSelect('clientsList');
+        setUpGrouplist('groupsList');
+        now.RenderConnectionsList();
+      });

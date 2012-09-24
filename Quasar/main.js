@@ -49,6 +49,8 @@ var novadLog = new Tail(novadLogPath);
 var honeydLogPath = "/var/log/nova/Honeyd.log";
 var honeydLog = new Tail(honeydLogPath);
 
+var benignRequest = false;
+
 var RenderError = function (res, err, link) {
 	// Redirect them to the main page if no link was set
 	link = typeof link !== 'undefined' ? link : "/";
@@ -231,6 +233,206 @@ var initLogWatch = function () {
 
 initLogWatch();
 
+if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
+{
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // SOCKET STUFF FOR MOTHERSHIP 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Thoughts: Probably going to need a global variable for the websocket connection to
+  // the mothership; an emit needs to be made to the mothership in certain circumstances,
+  // such as recieving a hostile suspect, so having that be accessible to the nowjs methods
+  // is ideal. Also need to find a way to maintain IP address of Mothership and any needed
+  // credentials for reboots, etc. 
+  
+  // TODO: Make configurable
+  var connected = config.ReadSetting('MASTER_UI_IP') + ':8081';
+  
+  var WebSocketClient = require('websocket').client;
+  var client = new WebSocketClient();
+  // TODO: Make configurable
+  var clientId = config.ReadSetting('MASTER_UI_CLIENT_ID');
+  var mothership;
+  var reconnecting = false;
+  var clearReconnect;
+  var reconnectTimer = parseInt(config.ReadSetting('MASTER_UI_RECONNECT_TIME')) * 1000;
+  
+  // If the connection fails, print an error message
+  client.on('connectFailed', function(error)
+  {
+    console.log('Connect to Mothership error: ' + error.toString());
+    if(!reconnecting)
+    {
+      console.log('No current attempts to reconnect, starting reconnect attempts every ', (reconnectTimer / 1000) ,' seconds.');
+      // TODO: Don't have static lengths for reconnect interval; make configurable
+      clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, reconnectTimer);
+      reconnecting = true;
+    }
+  });
+  
+  // If we successfully connect to the mothership, perform event-based actions here.
+  // The interface for websockets is a little less nice than socket.io, simply because
+  // you cannot name your own events, everything has to be done within the message
+  // directive; it's only one more level of indirection, however, so no big deal
+  client.on('connect', function(connection){
+    // When the connection is established, we save the connection variable
+    // to the mothership global so that actions can be taken on the connection
+    // outside of this callback if needed (hostile suspect, etc.)
+    reconnecting = false;
+    clearInterval(clearReconnect);
+    mothership = connection;
+    var quick = {};
+    quick.type = 'addId';
+    quick.id = clientId;
+    quick.nova = nova.IsNovadUp(false).toString();
+    quick.haystack = nova.IsHaystackUp(false).toString();
+    // I don't know that we HAVE to use UTF8 here, there's a send() method as 
+    // well as a 'data' member inside the message objects instead of utf8Data.
+    // But, as it was in the Websockets tutorial Pherric found, we'll use it for now
+    mothership.sendUTF(JSON.stringify(quick));
+    console.log('Registering client Id with mothership');
+    
+    var configSend = {};
+    configSend.type = 'registerConfig';
+    configSend.id = clientId;
+    configSend.filename = 'NOVAConfig@' + clientId + '.txt';
+    configSend.file = fs.readFileSync(NovaHomePath + '/config/NOVAConfig.txt', 'utf8');
+    mothership.sendUTF(JSON.stringify(configSend));
+    console.log('Registering NOVAConfig with mothership');
+  
+    var interfaceSend = {};
+    interfaceSend.type = 'registerClientInterfaces';
+    interfaceSend.id = clientId;
+    interfaceSend.filename = 'iflist@' + clientId + '.txt';
+    interfaceSend.file = config.ListInterfaces().sort().join();
+    mothership.sendUTF(JSON.stringify(interfaceSend));
+    console.log('Registering interfaces with mothership');
+  
+    console.log('successfully connected to mothership');
+  
+    connection.on('message', function(message)
+    {
+      if(message.type === 'utf8')
+      {
+        // We send the messages as JSON, so we have to parse it out
+        var json_args = JSON.parse(message.utf8Data);
+        if(json_args != undefined)
+        {
+          // the various actions to take when a message is received
+          switch(json_args.type)
+          {
+            case 'startNovad':
+              nova.StartNovad(false);
+              nova.CheckConnection();
+              var response = {};
+              response.type = 'response';
+              response.response_message = 'Novad is being started';
+              mothership.sendUTF(JSON.stringify(response));
+              break;
+            case 'stopNovad':
+              nova.StopNovad();
+              nova.CloseNovadConnection();
+              var response = {};
+              response.type = 'response';
+              response.response_message = 'Novad is being stopped';
+              mothership.sendUTF(JSON.stringify(response));
+              break;
+            case 'startHaystack':
+              if(!nova.IsHaystackUp())
+              {
+                nova.StartHaystack(false);
+                var response = {};
+                response.type = 'response';
+                response.response_message = 'Haystack is being started';
+                mothership.sendUTF(JSON.stringify(response));
+              }
+              else
+              {
+                var response = {};
+                response.type = 'response';
+                response.response_message = 'Haystack is already up, doing nothing';
+                mothership.sendUTF(JSON.stringify(response));
+              }
+              break;
+            case 'stopHaystack':
+              nova.StopHaystack();
+              var response = {};
+              response.type = 'response';
+              response.response_message = 'Haystack is being stopped';
+              mothership.sendUTF(JSON.stringify(response));
+              break;
+            case 'writeSetting':
+              // The nice thing about using JSON for the message passing is we
+              // can name the object literal members whatever we want, allowing for
+              // implicit specificity when creating and parsing the object
+              var setting = json_args.setting;
+              var value = json_args.value;
+              config.WriteSetting(setting, value);
+              var response = {};
+              response.type = 'response';
+              response.response_message = setting + ' is now ' + value;
+              mothership.sendUTF(JSON.stringify(response));
+              break;
+            case 'getHostileSuspects':
+              nova.getSuspectList(distributeSuspect);
+              break;
+            case 'requestBenign':
+              benignRequest = true;
+              nova.getSuspectList(distributeSuspect);
+              break;
+            case 'cancelRequestBenign':
+              benignRequest = false;
+              break;
+            case 'updateConfiguration':
+              for(var i in json_args)
+              {
+                if(i !== 'type' && i !== 'id')
+                {
+                  config.WriteSetting(i, json_args[i]);
+                }
+              }
+              var response = {};
+              response.type = 'response';
+              response.response_message = 'Configuration for ' + clientId + ' has been updated. Registering new config...';
+              mothership.sendUTF(JSON.stringify(response));
+              configSend.file = fs.readFileSync(NovaHomePath + '/config/NOVAConfig.txt', 'utf8');
+              mothership.sendUTF(JSON.stringify(configSend));
+              break;
+            case 'haystackConfig':
+              everyone.now.ShowAutoConfig(json_args.numNodes, json_args.interface, function(message){
+                var response = {};
+                response.type = 'response';
+                response.response_message = message.toString();
+                mothership.sendUTF(JSON.stringify(response));
+              });
+              break;
+            default:
+              console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
+              break;
+          }
+        }
+      }
+    });
+    connection.on('close', function(){
+      // If the connection gets closed, we want to try to reconnect; we will use
+      // the stored IP of the Mothership to make the reconnect attempts
+      mothership = undefined;
+      if(!reconnecting)
+      {
+        console.log('closed, beginning reconnect attempts every ', (reconnectTimer / 1000) ,' seconds');
+        clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, reconnectTimer);
+        reconnecting = true;
+      }
+    });
+    connection.on('error', function(error){
+      console.log('Error: ' + error.toString());
+    });
+  });
+  
+  client.connect('wss://' + connected, null);
+  
+  //
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+}
 
 app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
 	fs.readFile(novadLogPath, 'utf8', function (err, data) {
@@ -1805,6 +2007,24 @@ everyone.now.ClearHostileEvent = function (id, callback) {
 	});
 }
 
+everyone.now.SendHostileEventToMothership = function(suspect) {
+  suspect.client = clientId;
+  suspect.type = 'hostileSuspect';
+  if(mothership != undefined)
+  {
+    mothership.sendUTF(JSON.stringify(suspect));
+  }
+};
+
+everyone.now.SendBenignSuspectToMothership = function(suspect) {
+  suspect.client = clientId;
+  suspect.type = 'benignSuspect';
+  if(mothership != undefined)
+  {
+    mothership.sendUTF(JSON.stringify(suspect));
+  }
+};
+
 everyone.now.GetLocalIP = function (interface, callback) {
 	callback(nova.GetLocalIP(interface));
 }
@@ -1834,8 +2054,34 @@ var distributeSuspect = function (suspect) {
 	var s = new Object();
 	objCopy(suspect, s);
 	try {
-		everyone.now.OnNewSuspect(s)
+		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
+  if(String(suspect.GetIsHostile()) == 'true')
+  {
+    var d = new Date(suspect.GetLastPacketTime() * 1000);
+    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+    var send = {};
+    send.string = suspect.ToString();
+    send.ip = suspect.GetIpString();
+    send.classification = String(suspect.GetClassification());
+    send.lastpacket = dString;
+    send.ishostile = String(suspect.GetIsHostile());
+    
+    everyone.now.SendHostileEventToMothership(send);
+  }
+  else if(String(suspect.GetIsHostile()) == 'false' && benignRequest)
+  {
+    var d = new Date(suspect.GetLastPacketTime() * 1000);
+    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+    var send = {};
+    send.string = suspect.ToString();
+    send.ip = suspect.GetIpString();
+    send.classification = String(suspect.GetClassification());
+    send.lastpacket = dString;
+    send.ishostile = String(suspect.GetIsHostile());
+    
+    everyone.now.SendBenignSuspectToMothership(send);
+  }
 };
 
 var distributeAllSuspectsCleared = function () {
@@ -1883,6 +2129,10 @@ function switcher(err, user, success, done) {
 	return done(null, user);
 }
 
+function pad(num) {
+    return ("0" + num.toString()).slice(-2);
+}
+
 app.get('/*', passport.authenticate('basic', {session: false}));
 
 setInterval(function () {
@@ -1893,3 +2143,22 @@ setInterval(function () {
 
 	}
 }, 5000);
+
+setInterval(function() {
+  if(mothership != undefined)
+  {
+    var message = {};
+    message.id = clientId;
+    message.type = 'statusChange';
+    message.component = 'nova';
+    message.status = nova.IsNovadUp(false);
+    mothership.sendUTF(JSON.stringify(message));
+    
+    var message2 = {};
+    message2.id = clientId;
+    message2.type = 'statusChange';
+    message2.component = 'haystack';
+    message2.status = nova.IsHaystackUp();
+    mothership.sendUTF(JSON.stringify(message2));
+  }
+}, 10000);
