@@ -26,7 +26,6 @@
 #include "inttypes.h"
 #include "boost/program_options.hpp"
 
-
 namespace po = boost::program_options;
 using namespace std;
 using namespace Nova;
@@ -90,6 +89,7 @@ int main(int argc, const char *argv[])
 			for(int i = 0; i < 100; i++)
 			{
 				StatusNovaWrapper();
+				printf("xxxDEBUGxxx Worked this many times %d \n", i);
 			}
 		}
 		else if(!strcmp(argv[2], "haystack"))

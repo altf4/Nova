@@ -50,6 +50,7 @@
 								<option id="gnu.cpp.link.option.libs.747454199" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
 									<listOptionValue builtIn="false" value="event"/>
+									<listOptionValue builtIn="false" value="event_pthreads"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1808630126" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/Debug"/>
@@ -127,6 +128,7 @@
 								<option id="gnu.cpp.link.option.libs.59215754" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
 									<listOptionValue builtIn="false" value="event"/>
+									<listOptionValue builtIn="false" value="event_pthreads"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1365600769" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -196,6 +198,7 @@
 								<option id="gnu.cpp.link.option.libs.1035353977" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
 									<listOptionValue builtIn="false" value="event"/>
+									<listOptionValue builtIn="false" value="event_pthreads"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1351812563" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="../../NovaLibrary/Coverage"/>

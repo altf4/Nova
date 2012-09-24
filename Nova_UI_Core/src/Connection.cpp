@@ -31,8 +31,7 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 #include "event.h"
-
-#include <time.h>
+#include "event2/thread.h"
 
 using namespace std;
 using namespace Nova;
@@ -63,7 +62,11 @@ bool ConnectToNovad()
 	DisconnectFromNovad();
 
 	//Create new base
-	libeventBase = event_base_new();
+	if(libeventBase == NULL)
+	{
+		evthread_use_pthreads();
+		libeventBase = event_base_new();
+	}
 
 	//Builds the key path
 	string key = Config::Inst()->GetPathHome();
@@ -76,7 +79,7 @@ bool ConnectToNovad()
 	memset(novadAddress.sun_path, '\0', sizeof(novadAddress.sun_path));
 	strncpy(novadAddress.sun_path, key.c_str(), sizeof(novadAddress.sun_path));
 
-	bufferevent = bufferevent_socket_new(libeventBase, -1, BEV_OPT_CLOSE_ON_FREE);
+	bufferevent = bufferevent_socket_new(libeventBase, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
 	if(bufferevent == NULL)
 	{
 		LOG(ERROR, "Unable to create a socket to Nova", "");
@@ -91,7 +94,6 @@ bool ConnectToNovad()
 	if(bufferevent_socket_connect(bufferevent, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) < 0)
 	{
 		LOG(DEBUG, "Unable to connect to NOVAD: "+string(strerror(errno))+".", "");
-		bufferevent = NULL;
 		DisconnectFromNovad();
 		return false;
 	}
@@ -104,6 +106,8 @@ bool ConnectToNovad()
 		bufferevent = NULL;
 		return false;
 	}
+
+	evutil_make_socket_nonblocking(IPCSocketFD);
 
 	MessageManager::Instance().DeleteEndpoint(IPCSocketFD);
 	MessageManager::Instance().StartSocket(IPCSocketFD);
@@ -160,30 +164,31 @@ bool ConnectToNovad()
 
 void DisconnectFromNovad()
 {
-	printf("xxxDEBUGxxx Disconnecting from novad\n");
-
+	printf("xxxDEBUGxxx Disconnecting from Novad...\n");
 	//Close out any possibly remaining socket artifacts
 	if(libeventBase != NULL)
 	{
-		if(event_base_loopbreak(libeventBase) == -1)
+		if(eventDispatchThread != 0)
 		{
-			LOG(WARNING, "Unable to exit event loop", "");
+			if(event_base_loopexit(libeventBase, NULL) == -1)
+			{
+				LOG(WARNING, "Unable to exit event loop", "");
+			}
+			struct timeval start, end;
+			long mtime, secs, usecs;
+			gettimeofday(&start, NULL);
+
+			pthread_join(eventDispatchThread, NULL);
+			eventDispatchThread = 0;
+
+			gettimeofday(&end, NULL);
+			secs  = end.tv_sec  - start.tv_sec;
+			usecs = end.tv_usec - start.tv_usec;
+			mtime = ((secs) * 1000 + usecs/1000.0) + 0.5;
+			printf("xxxDEBUGxxx Elapsed time: %ld millisecs\n", mtime);
+			//event_base_free(libeventBase);
+			//libeventBase = NULL;
 		}
-		struct timeval start, end;
-		long mtime, secs, usecs;
-		gettimeofday(&start, NULL);
-
-		pthread_join(eventDispatchThread, NULL);
-
-		gettimeofday(&end, NULL);
-		secs  = end.tv_sec  - start.tv_sec;
-		usecs = end.tv_usec - start.tv_usec;
-		mtime = ((secs) * 1000 + usecs/1000.0) + 0.5;
-		printf("xxxDEBUGxxx Elapsed time: %ld millisecs\n", mtime);
-
-
-		event_base_free(libeventBase);
-		libeventBase = NULL;
 	}
 	if(bufferevent != NULL)
 	{
