@@ -40,6 +40,17 @@ app.use(express.static(NovaSharedPath + '/Mothership/www'));
 // Initialize nowjs to listen to our express server
 var everyone = nowjs.initialize(app);
 
+// A note about the everyone.now.* functions, especially those
+// that are rooted in the jade files:
+// If, for some reason, a call is made to a nowjs call that isn't
+// yet defined (i.e. something like getting a message that forces a 
+// jade-side nowjs call for updating elements, but that jade file isn't
+// loaded), the mothership connections will break and some undefined
+// behavior begins to occur. To be safe, structure the message cases
+// to update some server side element, and then call any jade-side nowjs
+// magic inside of a conditional checking that the typeof the function
+// to call is the string 'function'
+
 // Generic message sending method; can be called from the jade files
 // as well as on the server side. Parsing for messages sent from here
 // is handled on the Quasar side.
