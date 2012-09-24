@@ -1039,9 +1039,11 @@ app.get('/setup3', passport.authenticate('basic', {session: false}), function (r
 		SCANERROR: ""
 	});
 });
-app.get('/CaptureTrainingData', passport.authenticate('basic', {session: false}), function (req, res) {
-	res.render('captureTrainingData.jade');
-});
+
+// Training data capture via Quasar isn't currently supported
+//app.get('/CaptureTrainingData', passport.authenticate('basic', {session: false}), function (req, res) {
+//	res.render('captureTrainingData.jade');
+//});
 app.get('/about', passport.authenticate('basic', {session: false}), function (req, res) {
 	res.render('about.jade');
 });
@@ -1814,6 +1816,7 @@ everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, ad
 	for (var i = 0; i < ports.size; i++) {
 		// Convert the string to the proper enum number in HoneydConfiguration.h
 		var behavior = ports[i].behavior;
+		console.log("Port behavior is " + behavior);
 		var behaviorEnumValue = new Number();
 		if (behavior == "block") {
 			behaviorEnumValue = 0;
@@ -1823,6 +1826,10 @@ everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, ad
 			behaviorEnumValue = 2;
 		} else if (behavior == "script") {
 			behaviorEnumValue = 3;
+		} else if (behavior == "tarpit open") {
+			behaviorEnumValue = 4;
+		} else if (behavior == "tarpit script") {
+			behaviorEnumValue = 5;
 		}
 
 		portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), behaviorEnumValue, ports[i].script);

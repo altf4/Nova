@@ -30,29 +30,31 @@ typedef std::string profileName;
 
 enum hdConfigReturn
 {
-	INHERITED,
-	NOT_INHERITED,
-	NO_SUCH_KEY
+	INHERITED
+	, NOT_INHERITED
+	, NO_SUCH_KEY
 };
 
 enum portBehavior
 {
-	BLOCK = 0,
-	RESET,
-	OPEN,
-	SCRIPT
+	BLOCK = 0
+	, RESET
+	, OPEN
+	, SCRIPT
+	, TARPIT_OPEN
+	, TARPIT_SCRIPT
 };
 enum recursiveDirection
 {
-	ALL = 0,
-	UP,
-	DOWN
+	ALL = 0
+	, UP
+	, DOWN
 };
 
 enum portProtocol : bool
 {
-	UDP = 0,
-	TCP
+	UDP = 0
+	, TCP
 };
 
 class HoneydConfiguration
