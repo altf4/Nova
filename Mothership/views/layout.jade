@@ -15,6 +15,8 @@ html(lang="en")
       // this list will contain a clientId and two graphics, each
       // graphic indicating the status of novad and the haystack,
       // respectively  
+      var notifications = 0;
+      
       now.RenderConnectionsList = function(clients)
       {
         var divConnectionsList = document.getElementById('connectionsList');
@@ -184,6 +186,41 @@ html(lang="en")
             break;
         }
       }
+      
+      now.UpdateNotificationsButton = function(action)
+      {
+        if(action == 'new')
+        {
+          if(document.URL.indexOf('/notifications') > -1)
+          {
+            while(document.getElementById('notificationsDiv').hasChildNodes())
+            {
+              document.getElementById('notificationsDiv').removeChild(document.getElementById('notificationsDiv').lastChild);
+            }
+            now.GetNotifications(populateNotifications);
+          }
+          else
+          {
+            notifications++;
+            if(notifications > 0)
+            {
+              document.getElementById('notify').setAttribute('style', 'background: red');
+            }
+            document.getElementById('notify').innerHTML = 'Notifications (' + notifications + ')';
+          }
+        }
+        else if(action == 'read')
+        {
+          notifications = 0;
+          document.getElementById('notify').removeAttribute('style');
+          document.getElementById('notify').innerHTML = 'Notifications (' + notifications + ')';
+        }
+        else
+        {
+          console.log('UpdateNotificationsButton received an unknown action "' + action + '", doing nothing');
+        }
+      }
+      
       require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser", "dojox/grid/DataGrid", "dojox/data/HtmlStore", "dijit/ProgressBar"],
         function(ready){
           dojo.addOnLoad(function(){
@@ -237,6 +274,8 @@ html(lang="en")
         br
         div(style="text-align:center; font-weight:bold; font-size: 150%;") Documentation
         a(class="button", href='/about') About Nova
+        br
+        a(class="button", id='notify', href='/notifications') Notifications (0) 
         br
         br
         div(style="text-align:center; font-weight:bold; font-size: 150%;") Connected Clients

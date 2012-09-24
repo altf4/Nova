@@ -1,4 +1,10 @@
 extends layout
+block headerAdditions
+  script
+    now.ready(function(){
+      now.RenderConnectionsList();
+    });
+
 block content
   div(style='margin: 0px auto; text-align:center;width:60%; font-size:17px')
     h1 NOVA (by 

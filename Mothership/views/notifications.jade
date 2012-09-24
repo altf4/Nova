@@ -1,0 +1,26 @@
+extends layout
+
+block headerAdditions
+  script
+    function populateNotifications(cbData)
+    {
+      var notifyLines = cbData.toString().split('\\n');
+      for(var i in notifyLines)
+      {
+        if(notifyLines[i] != '' && notifyLines[i] != undefined)
+        {
+          var p = document.createElement('p');
+          p.innerHTML = notifyLines[i];
+          document.getElementById('notificationsDiv').appendChild(p);
+        }
+      }
+    }
+  
+    now.ready(function(){
+      now.UpdateNotificationsButton('read');
+      now.GetNotifications(populateNotifications);
+      now.RenderConnectionsList();
+    });
+
+block content
+  div(id='notificationsDiv')

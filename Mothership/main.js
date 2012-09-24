@@ -79,6 +79,30 @@ everyone.now.MessageSend = function(message)
     targets.length = 0;
 };
 
+everyone.now.WriteNotification = function(notify)
+{
+  var append = fs.readFileSync(NovaSharedPath + '/Mothership/notifications.txt', 'utf8');
+  var newNotify = '';
+  if(append != undefined)
+  {
+    newNotify = notify.toString() + '\n' + append;
+  }
+  else
+  {
+    newNotify = notify.toString() + '\n';
+  }
+  fs.writeFileSync(NovaSharedPath + '/Mothership/notifications.txt', newNotify);
+}
+
+everyone.now.GetNotifications = function(callback)
+{
+  var notificationData = fs.readFileSync(NovaSharedPath + '/Mothership/notifications.txt', 'utf8');
+  if(typeof callback == 'function')
+  {
+    callback(notificationData);
+  }
+}
+
 everyone.now.GetClients = function(callback)
 {
   var ret = new Array();
@@ -280,6 +304,12 @@ wsServer.on('request', function(request)
 					case 'addId':
 						// TODO: Check that id doesn't exist before adding
 						novaClients[json_args.id.toString()] = {statusNova: json_args.nova, statusHaystack: json_args.haystack, connection: connection};
+						var date = new Date();
+						everyone.now.WriteNotification(json_args.id + ' connected at ' + date);
+						if(typeof everyone.now.UpdateNotificationsButton == 'function')
+						{
+						  everyone.now.UpdateNotificationsButton('new');
+						}
 						console.log('Connected clients: ');
 						for(var i in novaClients)
 						{
@@ -290,10 +320,12 @@ wsServer.on('request', function(request)
             getHostile.type = 'getHostileSuspects';
             getHostile.id = json_args.id + ':';
             everyone.now.MessageSend(getHostile);
-            if(typeof everyone.now.UpdateClientsList == 'function'
-               && typeof everyone.now.UpdateConnectionsList == 'function')
+            if(typeof everyone.now.UpdateClientsList == 'function')
             {
               everyone.now.UpdateClientsList(json_args.id, 'add');
+            }
+            if(typeof everyone.now.UpdateConnectionsList == 'function')
+            {
               everyone.now.UpdateConnectionsList(json_args.id, 'add');
             }
 						break;
@@ -303,6 +335,11 @@ wsServer.on('request', function(request)
           // Messages are formatted and constructed on the Quasar side.
 					case 'response':
 						console.log(json_args.response_message);
+						everyone.now.WriteNotification(json_arg.id + ' says ' + '"' + json_args.response_message + '"');
+						if(typeof everyone.now.UpdateNotificationsButton == 'function')
+            {
+              everyone.now.UpdateNotificationsButton('new');
+            }
 						break;
           // This case is reserved for receiving and properly addressing
           // hostile suspect events from a client. Parses the message out into
@@ -405,19 +442,27 @@ wsServer.on('request', function(request)
 wsServer.on('close', function(connection, reason, description)
 {
 	console.log('Closed connection: ' + description);
-    for(var i in novaClients)
+  for(var i in novaClients)
+  {
+    if(novaClients[i].connection === connection)
     {
-        if(novaClients[i].connection === connection)
-        {
-            if(typeof everyone.now.UpdateClientsList == 'function'
-               && typeof everyone.now.UpdateConnectionsList == 'function')
-            {
-              everyone.now.UpdateClientsList(i, 'remove');
-              everyone.now.UpdateConnectionsList(i, 'remove');
-            }
-          delete novaClients[i];
-        }
+      if(typeof everyone.now.UpdateClientsList == 'function')
+      {
+        everyone.now.UpdateClientsList(i, 'remove');
+      }
+      if(typeof everyone.now.UpdateConnectionsList == 'function')
+      {
+        everyone.now.UpdateConnectionsList(i, 'remove');
+      }
+      var date = new Date();
+      everyone.now.WriteNotification(i + ' disconnected at ' + date);
+      if(typeof everyone.now.UpdateNotificationsButton == 'function')
+      {
+        everyone.now.UpdateNotificationsButton('new');
+      }
+      delete novaClients[i];
     }
+  }
 });
 
 // A function to get a string representation of the clients list 
@@ -520,4 +565,8 @@ app.get('/groups', function(req, res){
     CLIENTS: getClients()
     , GROUPS: getGroups()
   }});
+});
+
+app.get('/notifications', function(req, res){
+  res.render('notifications.jade');
 });
