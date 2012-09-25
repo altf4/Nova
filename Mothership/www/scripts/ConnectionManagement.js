@@ -89,6 +89,7 @@
             check.value = memberList[i];
             check.setAttribute('onchange', 'setTarget(("groupcheck' + i + '"), document.getElementById("groupcheck' + i + '").value.replace("," , ":"))');
             check.setAttribute('style', 'padding-left: 50px');
+            check.setAttribute('disabled', true);
             var label = document.createElement('label');
             label.value = groupList[i];
             label.innerHTML = groupList[i];

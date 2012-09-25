@@ -64,7 +64,8 @@ block headerAdditions
         }
         console.log('message.id ' + message.id);
       }
-      else
+      
+      if(!document.getElementById(source).checked && message.id == '')
       {
         console.log(source + ' is not checked, can not do anything until target client is set');
         console.log('message.id ' + message.id);
