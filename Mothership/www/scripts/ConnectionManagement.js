@@ -119,7 +119,7 @@
           }
           for(var i = 0; i < clientCount; i++)
           {
-            if(document.getElementById('groupLabel' + i).value == clientId)
+            if(document.getElementById('check' + i) != undefined && document.getElementById('check' + i).value == clientId)
             {
               console.log(clientId + ' needlessly attempting to re-establish connection, doing nothing');
               return;
