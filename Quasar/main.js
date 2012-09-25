@@ -405,13 +405,13 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               mothership.sendUTF(JSON.stringify(configSend));
               break;
             case 'haystackConfig':
-              everyone.now.ShowAutoConfig('fixed', json_args.numNodes, json_args.interface, undefined, function(message){
+              everyone.now.ShowAutoConfig('fixed', json_args.numNodes, json_args.interface, undefined, /*function(message){
                 var response = {};
                 response.id = clientId;
                 response.type = 'response';
                 response.response_message = message.toString();
                 mothership.sendUTF(JSON.stringify(response));
-              }, undefined);
+              }*/ undefined, undefined);
               break;
             default:
               console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
