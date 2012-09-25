@@ -405,13 +405,73 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               mothership.sendUTF(JSON.stringify(configSend));
               break;
             case 'haystackConfig':
-              everyone.now.ShowAutoConfig('fixed', json_args.numNodes, json_args.interface, undefined, /*function(message){
+              var executionString = 'haystackautoconfig';
+              var nFlag = '-n';
+              var rFlag = '-r';
+              var iFlag = '-i';
+            
+              var hhconfigArgs = new Array();
+            
+              if(json_args.numNodesType == "fixed") 
+              {
+                if(json_args.numNodes !== undefined) 
+                {
+                  hhconfigArgs.push(nFlag);
+                  hhconfigArgs.push(json_args.numNodes);
+                }
+              } 
+              else if(json_args.numNodesType == "ratio") 
+              {
+                if(json_args.numNodes !== undefined) 
+                {
+                  hhconfigArgs.push(rFlag);
+                  hhconfigArgs.push(json_args.numNodes);
+                }
+              }
+              if(json_args.interface !== undefined && json_args.interface.length > 0) {
+                hhconfigArgs.push(iFlag);
+                hhconfigArgs.push(json_args.interface);
+              }
+            
+              var util = require('util');
+              var spawn = require('child_process').spawn;
+            
+              console.log('execution string ' + executionString);
+              console.log('hhconfigArgs ' + hhconfigArgs.join());
+            
+              var autoconfig = spawn(executionString.toString(), hhconfigArgs);
+            
+              autoconfig.stdout.on('data', function (data){
+                console.log('' + data);
+              });
+            
+              autoconfig.stderr.on('data', function (data){
+                if (/^execvp\(\)/.test(data)) {
+                  console.log("haystackautoconfig failed to start.");
+                  var message = "haystackautoconfig failed to start.";
+                  var response = {};
+                  response.id = clientId;
+                  response.type = 'response';
+                  response.response_message = message;
+                  mothership.sendUTF(JSON.stringify(response));
+                }
+              });
+            
+              autoconfig.on('exit', function (code){
+                console.log("autoconfig exited with code " + code);
+                var message = "autoconfig exited with code " + code;
                 var response = {};
                 response.id = clientId;
                 response.type = 'response';
-                response.response_message = message.toString();
+                response.response_message = message;
                 mothership.sendUTF(JSON.stringify(response));
-              }*/ undefined, undefined);
+              });
+
+              var response = {};
+              response.id = clientId;
+              response.type = 'response';
+              response.response_message = 'Haystack Autoconfiguration commencing';
+              mothership.sendUTF(JSON.stringify(response));
               break;
             default:
               console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
@@ -1898,6 +1958,9 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	var util = require('util');
 	var spawn = require('child_process').spawn;
 
+  console.log('execution string ' + executionString);
+  console.log('hhconfigArgs ' + hhconfigArgs.join());
+
 	var autoconfig = spawn(executionString.toString(), hhconfigArgs);
 
 	autoconfig.stdout.on('data', function (data) {
@@ -1910,18 +1973,20 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	autoconfig.stderr.on('data', function (data) {
 		if (/^execvp\(\)/.test(data)) {
 			console.log("haystackautoconfig failed to start.");
+			var response = "haystackautoconfig failed to start.";
 			if(typeof route == 'function')
 			{
-			  route("/nodeReview");
+			  route("/nodeReview", response);
 			}
 		}
 	});
 
 	autoconfig.on('exit', function (code) {
 		console.log("autoconfig exited with code " + code);
+		var response = "autoconfig exited with code " + code;
 	  if(typeof route == 'function')
     {
-      route("/nodeReview");
+      route("/nodeReview", response);
     }
 	});
 }
