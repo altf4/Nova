@@ -19,6 +19,7 @@
 
 #include "ServerCallback.h"
 #include "MessageManager.h"
+#include "../Logger.h"
 
 namespace Nova
 {
@@ -29,7 +30,16 @@ void ServerCallback::StartServerCallbackThread(int socketFD)
 	MessageManager::Instance().DeleteEndpoint(socketFD);
 	MessageManager::Instance().StartSocket(socketFD);
 	m_socketFD = socketFD;
-	pthread_create(&m_callbackThread, NULL, StaticThreadHelper, this);
+	int err = pthread_create(&m_callbackThread, NULL, StaticThreadHelper, this);
+	if(err != 0)
+	{
+		printf("xxxDEBUGxxx Internal error: Thread failed to launch. Error code: %d\n", err);
+	}
+	else
+	{
+		pthread_detach(m_callbackThread);
+	}
+
 }
 
 void *ServerCallback::StaticThreadHelper(void *ptr)

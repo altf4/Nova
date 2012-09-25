@@ -39,14 +39,11 @@ void NovadCallback::CallbackThread(int socketFD)
 		//Wait for a callback to occur
 		//If register comes back false, then the socket was closed. So exit the thread
 		Ticket ticket;
-		printf("xxxDEBUGxxx Registering for callback on %d\n", socketFD);
 		if(!MessageManager::Instance().RegisterCallback(socketFD, ticket))
 		{
-			printf("xxxDEBUGxxx Quitting callback for %d\n", socketFD);
 			keepLooping = false;
 			continue;
 		}
-		printf("xxxDEBUGxxx Got callback for %d\n", socketFD);
 		Message *message = MessageManager::Instance().ReadMessage(ticket);
 		switch(message->m_messageType)
 		{
@@ -109,9 +106,11 @@ void NovadCallback::CallbackThread(int socketFD)
 		}
 	}
 
+	//XXX Without this delete call, Endpoints will hand around until another connection comes in trying to use the same socket FD
+	//	This could possibly cause unnecessary memory usage. (But not technically a leak. It WILL get cleaned up fully when the above hits)
+	//	The reason it's commented out is because of a race condition. If you delete the endpoint at both the beginning AND end of the
+	//	callback loop, then you can have a situation where the Endpoint is deleted, made, then deleted again.
 	//MessageManager::Instance().DeleteEndpoint(socketFD);
 }
 
 }
-
-

@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lNovaLibrary
+LIBS := -lNovaLibrary -levent -levent_pthreads
 

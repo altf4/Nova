@@ -25,7 +25,6 @@
 #include "Config.h"
 #include "Lock.h"
 
-#include <unistd.h>
 #include <string>
 #include <cerrno>
 #include <sys/un.h>
@@ -47,8 +46,10 @@ namespace Nova
 
 void *EventDispatcherThread(void *arg)
 {
-	int ret = event_base_dispatch(libeventBase);
-	printf("xxxDEBUGxxx Dispatch returned with %d \n", ret);
+	if(event_base_dispatch(libeventBase) != 0)
+	{
+		LOG(WARNING, "Message loop ended uncleanly.", "");
+	}
 	return NULL;
 }
 
@@ -93,8 +94,8 @@ bool ConnectToNovad()
 
 	if(bufferevent_socket_connect(bufferevent, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) < 0)
 	{
+		bufferevent = NULL;
 		LOG(DEBUG, "Unable to connect to NOVAD: "+string(strerror(errno))+".", "");
-		DisconnectFromNovad();
 		return false;
 	}
 
@@ -164,7 +165,6 @@ bool ConnectToNovad()
 
 void DisconnectFromNovad()
 {
-	printf("xxxDEBUGxxx Disconnecting from Novad...\n");
 	//Close out any possibly remaining socket artifacts
 	if(libeventBase != NULL)
 	{
@@ -174,20 +174,9 @@ void DisconnectFromNovad()
 			{
 				LOG(WARNING, "Unable to exit event loop", "");
 			}
-			struct timeval start, end;
-			long mtime, secs, usecs;
-			gettimeofday(&start, NULL);
 
 			pthread_join(eventDispatchThread, NULL);
 			eventDispatchThread = 0;
-
-			gettimeofday(&end, NULL);
-			secs  = end.tv_sec  - start.tv_sec;
-			usecs = end.tv_usec - start.tv_usec;
-			mtime = ((secs) * 1000 + usecs/1000.0) + 0.5;
-			printf("xxxDEBUGxxx Elapsed time: %ld millisecs\n", mtime);
-			//event_base_free(libeventBase);
-			//libeventBase = NULL;
 		}
 	}
 	if(bufferevent != NULL)
