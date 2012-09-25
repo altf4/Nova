@@ -15,7 +15,7 @@ html(lang="en")
       // this list will contain a clientId and two graphics, each
       // graphic indicating the status of novad and the haystack,
       // respectively  
-      var notifications = 0;
+      var notifications;
       
       now.RenderConnectionsList = function(clients)
       {
@@ -202,6 +202,7 @@ html(lang="en")
           else
           {
             notifications++;
+            now.UpdateNotificationsCount(notifications);
             if(notifications > 0)
             {
               document.getElementById('notify').setAttribute('style', 'background: red');
@@ -212,6 +213,7 @@ html(lang="en")
         else if(action == 'read')
         {
           notifications = 0;
+          now.UpdateNotificationsCount(0);
           document.getElementById('notify').removeAttribute('style');
           document.getElementById('notify').innerHTML = 'Notifications (' + notifications + ')';
         }
@@ -219,6 +221,18 @@ html(lang="en")
         {
           console.log('UpdateNotificationsButton received an unknown action "' + action + '", doing nothing');
         }
+      }
+      
+      now.SetUpNotificationsButton = function()
+      {
+        now.GetNotifyCount(function(count){
+          notifications = count;
+          document.getElementById('notify').innerHTML = 'Notifications (' + notifications + ')';
+          if(notifications > 0)
+          {
+            document.getElementById('notify').setAttribute('style', 'background: red');
+          }
+        });
       }
       
       require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser", "dojox/grid/DataGrid", "dojox/data/HtmlStore", "dijit/ProgressBar"],

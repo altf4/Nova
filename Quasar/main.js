@@ -324,6 +324,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               nova.StartNovad(false);
               nova.CheckConnection();
               var response = {};
+              response.id = clientId;
               response.type = 'response';
               response.response_message = 'Novad is being started';
               mothership.sendUTF(JSON.stringify(response));
@@ -332,6 +333,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               nova.StopNovad();
               nova.CloseNovadConnection();
               var response = {};
+              response.id = clientId;
               response.type = 'response';
               response.response_message = 'Novad is being stopped';
               mothership.sendUTF(JSON.stringify(response));
@@ -341,6 +343,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               {
                 nova.StartHaystack(false);
                 var response = {};
+                response.id = clientId;
                 response.type = 'response';
                 response.response_message = 'Haystack is being started';
                 mothership.sendUTF(JSON.stringify(response));
@@ -348,6 +351,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               else
               {
                 var response = {};
+                response.id = clientId;
                 response.type = 'response';
                 response.response_message = 'Haystack is already up, doing nothing';
                 mothership.sendUTF(JSON.stringify(response));
@@ -356,6 +360,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
             case 'stopHaystack':
               nova.StopHaystack();
               var response = {};
+              response.id = clientId;
               response.type = 'response';
               response.response_message = 'Haystack is being stopped';
               mothership.sendUTF(JSON.stringify(response));
@@ -368,6 +373,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               var value = json_args.value;
               config.WriteSetting(setting, value);
               var response = {};
+              response.id = clientId;
               response.type = 'response';
               response.response_message = setting + ' is now ' + value;
               mothership.sendUTF(JSON.stringify(response));
@@ -391,6 +397,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                 }
               }
               var response = {};
+              response.id = clientId;
               response.type = 'response';
               response.response_message = 'Configuration for ' + clientId + ' has been updated. Registering new config...';
               mothership.sendUTF(JSON.stringify(response));
@@ -400,6 +407,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
             case 'haystackConfig':
               everyone.now.ShowAutoConfig(json_args.numNodes, json_args.interface, function(message){
                 var response = {};
+                response.id = clientId;
                 response.type = 'response';
                 response.response_message = message.toString();
                 mothership.sendUTF(JSON.stringify(response));

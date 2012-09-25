@@ -27,6 +27,7 @@ app.configure(function()
 // Quasar clients
 var novaClients = new Object();
 var fileAssociations = new Array();
+var notifications = 0;
 
 // Set the various view options, as well as the listening port
 // and the directory for the server and the jade files to look for 
@@ -103,6 +104,19 @@ everyone.now.GetNotifications = function(callback)
   }
 }
 
+everyone.now.GetNotifyCount = function(callback)
+{
+  if(typeof callback == 'function')
+  {
+    callback(notifications);
+  }
+}
+
+everyone.now.UpdateNotificationsCount = function(count)
+{
+  notifications = count;
+}
+
 everyone.now.GetClients = function(callback)
 {
   var ret = new Array();
@@ -110,7 +124,10 @@ everyone.now.GetClients = function(callback)
   {
     ret.push(i);
   }
-  callback(ret);
+  if(typeof callback == 'function')
+  {
+    callback(ret);
+  }
 }
 
 everyone.now.UpdateStatus = function(clients, component, running)
