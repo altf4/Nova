@@ -136,6 +136,7 @@ block headerAdditions
         var autoconfMessage = {};
         autoconfMessage.type = 'haystackConfig';
         autoconfMessage.id = document.getElementById('autohook' + i).childNodes[0].value;
+        autoconfMessage.numNodesType = 'fixed';
         autoconfMessage.numNodes = document.getElementById('autohook' + i).childNodes[1].value;
         autoconfMessage.interface = document.getElementById('autohook' + i).childNodes[2].value;
         now.MessageSend(autoconfMessage);
