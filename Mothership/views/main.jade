@@ -152,7 +152,7 @@ block headerAdditions
     function setTarget(source, target)
     {
         var firstIndex = message.id.indexOf(target + ':');
-      
+
         if(document.getElementById(source).checked && firstIndex === -1)
         {
             message.id += target + ':';
@@ -166,7 +166,8 @@ block headerAdditions
           var regex = new RegExp(target + ':', 'i');
           message.id = message.id.replace(regex, '');
         }
-        else
+        
+        if(!document.getElementById(source).checked && message.id == '')
         {
             // If unselected, remove target from message.id
             console.log(source + ' is not checked, can not do anything until target client is set');
