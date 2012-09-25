@@ -424,11 +424,27 @@ wsServer.on('request', function(request)
 				  case 'statusChange':
 				    if(json_args.component == 'haystack')
 				    {
-				      novaClients[json_args.id].statusHaystack = json_args.status;
+				      if(novaClients[json_args.id].statusHaystack != json_args.status)
+				      {
+				        everyone.now.WriteNotification(json_args.id + ' has a component status change: IsHaystackUp returned ' + json_args.status);
+                if(typeof everyone.now.UpdateNotificationsButton == 'function')
+                {
+                  everyone.now.UpdateNotificationsButton('new');
+                }
+				        novaClients[json_args.id].statusHaystack = json_args.status; 
+				      }
 				    }
 				    else if(json_args.component == 'nova')
 				    {
-				      novaClients[json_args.id].statusNova = json_args.status;
+				      if(novaClients[json_args.id].statusNova != json_args.status)
+				      {
+  				      everyone.now.WriteNotification(json_args.id + ' has a component status change: IsNovadUp returned ' + json_args.status);
+                if(typeof everyone.now.UpdateNotificationsButton == 'function')
+                {
+                  everyone.now.UpdateNotificationsButton('new');
+                }
+  				      novaClients[json_args.id].statusNova = json_args.status;
+				      }
 				    }
 				    if(typeof everyone.now.UpdateConnectionsList == 'function')
 				    {

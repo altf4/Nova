@@ -33,11 +33,6 @@ block content
   button(id="button5", style="width: 160px", onclick='stopRequestBenign()', disabled=true) Cancel Benign Request
   
   br
-  br 
-  
-  button(type="button", style="width: 160px", onclick='ClearAllSuspects(); suspectGrid.Clear();') Clear All Suspects
-  
-  br
   br
 
   h2 Currently Requesting Benign Suspects From:
@@ -124,10 +119,6 @@ block headerAdditions
     {
       document.getElementById('benignList').value = message.id;
       message.type = 'requestBenign';
-      for(var i in message)
-      {
-        console.log('message: ' + i + ', ' + message[i]);
-      }
       now.MessageSend(message);
     }
 
@@ -145,7 +136,6 @@ block headerAdditions
           assign = assign.replace(regex, '');
         }
       }
-      console.log('assign');
       document.getElementById('benignList').value = assign;
     }
 

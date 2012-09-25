@@ -405,13 +405,13 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               mothership.sendUTF(JSON.stringify(configSend));
               break;
             case 'haystackConfig':
-              everyone.now.ShowAutoConfig(json_args.numNodes, json_args.interface, function(message){
+              everyone.now.ShowAutoConfig('fixed', json_args.numNodes, json_args.interface, undefined, function(message){
                 var response = {};
                 response.id = clientId;
                 response.type = 'response';
                 response.response_message = message.toString();
                 mothership.sendUTF(JSON.stringify(response));
-              });
+              }, undefined);
               break;
             default:
               console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
@@ -1901,19 +1901,28 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	var autoconfig = spawn(executionString.toString(), hhconfigArgs);
 
 	autoconfig.stdout.on('data', function (data) {
-		callback('' + data);
+	  if(typeof callback == 'function')
+	  {
+		  callback('' + data);
+		}
 	});
 
 	autoconfig.stderr.on('data', function (data) {
 		if (/^execvp\(\)/.test(data)) {
 			console.log("haystackautoconfig failed to start.");
-			route("/nodeReview");
+			if(typeof route == 'function')
+			{
+			  route("/nodeReview");
+			}
 		}
 	});
 
 	autoconfig.on('exit', function (code) {
 		console.log("autoconfig exited with code " + code);
-		route("/nodeReview");
+	  if(typeof route == 'function')
+    {
+      route("/nodeReview");
+    }
 	});
 }
 
