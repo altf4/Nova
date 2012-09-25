@@ -335,7 +335,7 @@ wsServer.on('request', function(request)
           // Messages are formatted and constructed on the Quasar side.
 					case 'response':
 						console.log(json_args.response_message);
-						everyone.now.WriteNotification(json_arg.id + ' says ' + '"' + json_args.response_message + '"');
+						everyone.now.WriteNotification(json_args.id + ' says ' + '"' + json_args.response_message + '"');
 						if(typeof everyone.now.UpdateNotificationsButton == 'function')
             {
               everyone.now.UpdateNotificationsButton('new');

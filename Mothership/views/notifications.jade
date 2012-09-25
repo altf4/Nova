@@ -19,7 +19,7 @@ block headerAdditions
     now.ready(function(){
       now.UpdateNotificationsButton('read');
       now.GetNotifications(populateNotifications);
-      now.RenderConnectionsList();
+      now.GetClients(now.RenderConnectionsList);
     });
 
 block content

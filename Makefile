@@ -76,7 +76,7 @@ nodejsmodule:
 
 #Mothership
 mothership:
-	cd Mothership; npm --unsafe-perm install
+	cd Mothership;npm --unsafe-perm install
 
 #Honeyd AutoConfig
 hhconfig-release:
@@ -185,6 +185,9 @@ clean-quasar: clean-nodejsmodule
 
 clean-quasar-modules:
 	-rm -rf Quasar/node_modules
+
+clean-mothership-modules:
+	-rm -rf Mothership/node_modules
 
 clean-hhconfig: clean-hhconfig-debug clean-hhconfig-release
 	

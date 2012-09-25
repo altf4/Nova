@@ -2,7 +2,7 @@ extends layout
 block headerAdditions
   script
     now.ready(function(){
-      now.RenderConnectionsList();
+      now.GetClients(now.RenderConnectionsList);
     });
 
 block content
