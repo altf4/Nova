@@ -50,6 +50,7 @@ var honeydLogPath = "/var/log/nova/Honeyd.log";
 var honeydLog = new Tail(honeydLogPath);
 
 var benignRequest = false;
+var mothership;
 
 var RenderError = function (res, err, link) {
 	// Redirect them to the main page if no link was set
@@ -251,7 +252,6 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   var client = new WebSocketClient();
   // TODO: Make configurable
   var clientId = config.ReadSetting('MASTER_UI_CLIENT_ID');
-  var mothership;
   var reconnecting = false;
   var clearReconnect;
   var reconnectTimer = parseInt(config.ReadSetting('MASTER_UI_RECONNECT_TIME')) * 1000;
@@ -435,9 +435,6 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
             
               var util = require('util');
               var spawn = require('child_process').spawn;
-            
-              console.log('execution string ' + executionString);
-              console.log('hhconfigArgs ' + hhconfigArgs.join());
             
               var autoconfig = spawn(executionString.toString(), hhconfigArgs);
             
@@ -1958,9 +1955,6 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	var util = require('util');
 	var spawn = require('child_process').spawn;
 
-  console.log('execution string ' + executionString);
-  console.log('hhconfigArgs ' + hhconfigArgs.join());
-
 	var autoconfig = spawn(executionString.toString(), hhconfigArgs);
 
 	autoconfig.stdout.on('data', function (data) {
@@ -2089,7 +2083,7 @@ everyone.now.ClearHostileEvent = function (id, callback) {
 	});
 }
 
-everyone.now.SendHostileEventToMothership = function(suspect) {
+var SendHostileEventToMothership  = function(suspect) {
   suspect.client = clientId;
   suspect.type = 'hostileSuspect';
   if(mothership != undefined)
@@ -2097,8 +2091,9 @@ everyone.now.SendHostileEventToMothership = function(suspect) {
     mothership.sendUTF(JSON.stringify(suspect));
   }
 };
+everyone.now.SendHostileEventToMothership = SendHostileEventToMothership;
 
-everyone.now.SendBenignSuspectToMothership = function(suspect) {
+var SendBenignSuspectToMothership = function(suspect) {
   suspect.client = clientId;
   suspect.type = 'benignSuspect';
   if(mothership != undefined)
@@ -2106,6 +2101,9 @@ everyone.now.SendBenignSuspectToMothership = function(suspect) {
     mothership.sendUTF(JSON.stringify(suspect));
   }
 };
+everyone.now.SendBenignSuspectToMothership = SendBenignSuspectToMothership;
+
+
 
 everyone.now.GetLocalIP = function (interface, callback) {
 	callback(nova.GetLocalIP(interface));
@@ -2138,7 +2136,7 @@ var distributeSuspect = function (suspect) {
 	try {
 		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
-  if(String(suspect.GetIsHostile()) == 'true')
+  if(suspect.GetIsHostile() == true)
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
@@ -2149,9 +2147,9 @@ var distributeSuspect = function (suspect) {
     send.lastpacket = dString;
     send.ishostile = String(suspect.GetIsHostile());
     
-    everyone.now.SendHostileEventToMothership(send);
+    SendHostileEventToMothership(send);
   }
-  else if(String(suspect.GetIsHostile()) == 'false' && benignRequest)
+  else if(suspect.GetIsHostile() == false && benignRequest)
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
@@ -2162,7 +2160,11 @@ var distributeSuspect = function (suspect) {
     send.lastpacket = dString;
     send.ishostile = String(suspect.GetIsHostile());
     
-    everyone.now.SendBenignSuspectToMothership(send);
+    SendBenignSuspectToMothership(send);
+  }
+  else
+  {
+    console.log('none, apparently');
   }
 };
 
