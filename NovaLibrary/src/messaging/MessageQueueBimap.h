@@ -54,10 +54,11 @@ public:
 	void AddQueue(uint32_t ourSerial, uint32_t theirSerial);
 
 	//Removes and deletes the MessageQueue at the given "our" serial number
-	//NOTE: Safely does nothing is no MessageQueue exists at ourSerial
-	void RemoveQueue(uint32_t ourSerial);
+	//	ourSerial - The "our" serial number of the MessageQueue to delete
+	//	returns - true on successful delettion, false on error or if the MessageQueue did not exist.
+	//NOTE: Safely does nothing if no MessageQueue exists at ourSerial (but returns false)
+	bool RemoveQueue(uint32_t ourSerial);
 
-	//
 	std::vector<uint32_t> GetUsedSerials();
 
 private:

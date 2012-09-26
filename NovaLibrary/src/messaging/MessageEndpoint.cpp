@@ -128,7 +128,7 @@ bool MessageEndpoint::PushMessage(Message *message)
 		return false;
 	}
 
-	//The other endpoint must always provide a valid serial number, ignore if they don't
+	//The other endpoint must always provide a valid "our" serial number, ignore if they don't
 	if(message->m_ourSerialNumber == 0)
 	{
 		message->DeleteContents();
@@ -187,6 +187,9 @@ bool MessageEndpoint::PushMessage(Message *message)
 		delete message;
 		return false;
 	}
+
+	//Update the MessageQueue to have the received "their" serial. It might not have it yet.
+	m_queues.AddQueue(message->m_theirSerialNumber, message->m_ourSerialNumber);
 	return queue->PushMessage(message);
 }
 
@@ -264,6 +267,11 @@ void MessageEndpoint::Shutdown()
 	}
 
 	pthread_cond_signal(&m_callbackWakeupCondition);
+}
+
+bool MessageEndpoint::RemoveMessageQueue(uint32_t ourSerial)
+{
+	return m_queues.RemoveQueue(ourSerial);
 }
 
 }

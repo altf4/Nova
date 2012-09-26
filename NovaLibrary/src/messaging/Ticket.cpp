@@ -20,6 +20,7 @@
 
 #include "MessageManager.h"
 #include "Ticket.h"
+#include "../Logger.h"
 
 namespace Nova
 {
@@ -43,7 +44,14 @@ Ticket::Ticket(uint32_t ourSerial, uint32_t theirSerial, bool isCallback, bool h
 
 Ticket::~Ticket()
 {
-	//TODO: Delete the MessageQueue this ticket used
+	MessageEndpointLock endpointLock = MessageManager::Instance().GetEndpoint(m_socketFD);
+	if(endpointLock.m_endpoint != NULL)
+	{
+		if(endpointLock.m_endpoint->RemoveMessageQueue(m_ourSerialNum) == false)
+		{
+			LOG(DEBUG, "Tried to delete MessageQueue from ticket, but failed. The endpoint might have died first", "");
+		}
+	}
 }
 
 

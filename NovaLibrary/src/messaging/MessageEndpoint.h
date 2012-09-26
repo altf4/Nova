@@ -80,6 +80,9 @@ public:
 	//Shuts down all MessageQueues for this Endpoint, also wakes up any reading threads
 	void Shutdown();
 
+	//Deletes and removes the message queue indexed by the given ourSerial number
+	bool RemoveMessageQueue(uint32_t ourSerial);
+
 private:
 
 	//Returns a new "our" serial number to use for a conversation. This is guaranteed to not currently be in use and not be 0

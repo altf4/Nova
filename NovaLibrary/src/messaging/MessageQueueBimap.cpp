@@ -122,12 +122,12 @@ void MessageQueueBimap::AddQueue(uint32_t ourSerial, uint32_t theirSerial)
 	}
 }
 
-void MessageQueueBimap::RemoveQueue(uint32_t ourSerial)
+bool MessageQueueBimap::RemoveQueue(uint32_t ourSerial)
 {
 	Lock lock(&m_queuesMutex);
 	if(m_ourQueues.count(ourSerial) == 0)
 	{
-		return;
+		return false;
 	}
 
 	//Get the serial number out of the MessageQueue, then delete it
@@ -139,16 +139,18 @@ void MessageQueueBimap::RemoveQueue(uint32_t ourSerial)
 	{
 		//Zero means "no serial number"
 		//	So there's no need to do anything more here
-		return;
+		return true;
 	}
 
 	if(m_theirQueues.count(theirSerial) == 0)
 	{
 		LOG(ERROR, "Missing MessageQueue in RemoveQueue()", "Tried to remove MessageQueue but it didn't exist. Shouldn't happen.");
-		return;
+		return true;
 	}
 
 	m_theirQueues.erase(theirSerial);
+
+	return true;
 }
 
 std::vector<uint32_t> MessageQueueBimap::GetUsedSerials()
