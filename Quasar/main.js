@@ -2136,7 +2136,7 @@ var distributeSuspect = function (suspect) {
 	try {
 		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
-  if(suspect.GetIsHostile() == true)
+  if(suspect.GetIsHostile() == true && suspect.GetClassification() != -200)
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
@@ -2149,7 +2149,7 @@ var distributeSuspect = function (suspect) {
     
     SendHostileEventToMothership(send);
   }
-  else if(suspect.GetIsHostile() == false && benignRequest)
+  else if(suspect.GetIsHostile() == false && benignRequest && suspect.GetClassification() != -200)
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
