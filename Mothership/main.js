@@ -27,7 +27,10 @@ app.configure(function()
 // Quasar clients
 var novaClients = new Object();
 var fileAssociations = new Array();
+var suspectIPs = new Array();
+var eventCounter = new Array();
 var notifications = 0;
+var hostileEvents = 0;
 
 // Set the various view options, as well as the listening port
 // and the directory for the server and the jade files to look for 
@@ -112,9 +115,22 @@ everyone.now.GetNotifyCount = function(callback)
   }
 }
 
+everyone.now.GetHostileEventsCount = function(callback)
+{
+  if(typeof callback == 'function')
+  {
+    callback(hostileEvents);
+  }
+}
+
 everyone.now.UpdateNotificationsCount = function(count)
 {
   notifications = count;
+}
+
+everyone.now.UpdateHostileEventsCount = function(count)
+{
+  hostileEvents = parseInt(count);
 }
 
 everyone.now.GetClients = function(callback)
@@ -127,6 +143,43 @@ everyone.now.GetClients = function(callback)
   if(typeof callback == 'function')
   {
     callback(ret);
+  }
+}
+
+everyone.now.UpdateEventCounter = function(client, newNum)
+{
+  for(var i in eventCounter)
+  {
+    if(eventCounter[i].client == client)
+    {
+      eventCounter.events = newNum;
+      return;
+    }
+  }
+}
+
+everyone.now.ClearEventCounter = function(callback)
+{
+  for(var i in eventCounter)
+  {
+    eventCounter[i].events = 0;
+  }  
+}
+
+everyone.now.GetEventCount = function(client, callback)
+{
+  var count = 0;
+  for(var i in eventCounter)
+  {
+    if(eventCounter[i].client == client)
+    {
+      count = parseInt(eventCounter[i].events);
+      if(typeof callback == 'function')
+      {
+        callback(count);
+      }
+      break;
+    }
   }
 }
 
@@ -242,6 +295,11 @@ function trimNewlines(string)
   return ret;
 }
 
+function getEventList()
+{
+  return JSON.stringify(eventCounter);
+}
+
 // Begin setup of websocket server. Going to have an 
 // https base server so that we can use wss:// connections
 // instead of basic ws://
@@ -345,6 +403,7 @@ wsServer.on('request', function(request)
             {
               everyone.now.UpdateConnectionsList(json_args.id, 'add');
             }
+            eventCounter.push({client: json_args.id, events: "0"});
 						break;
           // This case is reserved for response from the clients;
           // we should figure out a standard format for the responses 
@@ -375,6 +434,26 @@ wsServer.on('request', function(request)
 						if(typeof everyone.now.OnNewSuspect == 'function')
 						{
 						  everyone.now.OnNewSuspect(suspect);
+						}
+						if(contains(suspectIPs, (suspect.ip + '@' + suspect.client)))
+            {
+              console.log('already found this suspect, not updating hostile events button');
+            }
+            else
+            {
+              console.log('adding suspect to suspectIPs');
+						  suspectIPs.push({ip: suspect.ip + '@' + suspect.client});
+						  for(var i in eventCounter)
+						  {
+						    if(eventCounter[i].client == json_args.client)
+						    {
+						      eventCounter[i].events++;
+						    }
+						  }
+						  if(typeof everyone.now.UpdateHostileEventsButton == 'function')
+						  {
+						    everyone.now.UpdateHostileEventsButton('new',  everyone.now.UpdateConnectionsList(json_args.client, 'updateEvents'));
+						  }
 						}
 						break;
 				  // This case is reserved for properly receiving and addressing benign requests from 
@@ -547,18 +626,43 @@ function getGroups()
   return JSON.stringify(ret);
 }
 
+function contains(a, obj) 
+{
+    var i = a.length;
+    while (i--) 
+    {
+       if (a[i].ip === obj) 
+       {
+           return true;
+       }
+    }
+    return false;
+}
+
 // Going to need to do passport for these soon, I think.
 app.get('/', function(req, res) 
 {
 	res.render('main.jade', {locals:{
 		CLIENTS: getClients()
 		, GROUPS: getGroups()
+		, EVENTS: getEventList()
 	}});
+});
+
+app.get('/hostile', function(req, res)
+{
+  res.render('main.jade', {locals:{
+    CLIENTS: getClients()
+    , GROUPS: getGroups()
+    , EVENTS: getEventList()
+  }});
 });
 
 app.get('/about', function(req, res) 
 {
-    res.render('about.jade');
+    res.render('about.jade', {locals:{
+      EVENTS: getEventList()
+    }});
 });
 
 app.get('/config', function(req, res) 
@@ -566,6 +670,7 @@ app.get('/config', function(req, res)
 	res.render('config.jade', {locals:{
 		CLIENTS: getClients()
 		, GROUPS: getGroups()
+		, EVENTS: getEventList()
 		, TCP_TIMEOUT: config.ReadSetting('TCP_TIMEOUT')
 		, TCP_CHECK_FREQ: config.ReadSetting('TCP_CHECK_FREQ')
 		, CLASSIFICATION_TIMEOUT: config.ReadSetting('CLASSIFICATION_TIMEOUT')
@@ -590,6 +695,7 @@ app.get('/haystack', function(req, res){
   res.render('haystack.jade', {locals:{
     CLIENTS: getClients()
     , GROUPS: getGroups()
+    , EVENTS: getEventList()
   }});
 });
 
@@ -597,9 +703,12 @@ app.get('/groups', function(req, res){
   res.render('groups.jade', {locals:{
     CLIENTS: getClients()
     , GROUPS: getGroups()
+    , EVENTS: getEventList()
   }});
 });
 
 app.get('/notifications', function(req, res){
-  res.render('notifications.jade');
+  res.render('notifications.jade', {locals:{
+    EVENTS: getEventList()
+  }});
 });

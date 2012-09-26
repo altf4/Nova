@@ -20,6 +20,7 @@ block headerAdditions
       now.UpdateNotificationsButton('read');
       now.GetNotifications(populateNotifications);
       now.GetClients(now.RenderConnectionsList);
+      now.SetUpHostileEventsButton();
     });
 
 block content

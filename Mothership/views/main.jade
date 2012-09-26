@@ -298,6 +298,7 @@ block headerAdditions
               setUpGrouplist('groupsList');
               now.GetClients(now.RenderConnectionsList);
               now.SetUpNotificationsButton();
+              now.SetUpHostileEventsButton(now.UpdateHostileEventsButton('read'));
             });
         });
     });
