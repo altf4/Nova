@@ -550,6 +550,29 @@ wsServer.on('request', function(request)
 				      everyone.now.UpdateConnectionsList(json_args.id, 'updateStatus');
 				    }
 				    break;
+				  case 'renameRequest':
+				    novaClients[json_args.newId] = novaClients[json_args.id];
+				    delete novaClients[json_args.id];
+				    everyone.now.WriteNotification(json_args.id + ' has changed its clientId to ' + json_args.newId);
+				    if(typeof everyone.now.UpdateNotificationsButton == 'function')
+            {
+              everyone.now.UpdateNotificationsButton('new');
+            }
+				    if(everyone.now.UpdateConnectionsList == 'function')
+				    {
+				      everyone.now.UpdateConnectionsList(json_args.id, 'remove');
+				      everyone.now.UpdateConnectionsList(json_args.newId, 'add'); 
+				    }
+				    if(typeof everyone.now.UpdateClientsList == 'function')
+            {
+              everyone.now.UpdateClientsList(json_args.id, 'remove');
+              everyone.now.UpdateClientsList(json_args.newId, 'add');
+            }
+            if(typeof everyone.now.RefreshPageAfterRename == 'function')
+            {
+              everyone.now.RefreshPageAfterRename();
+            }
+				    break;
 					// If we've found a message type that we weren't expecting, or don't have a case
           // for, log this message to the console and do nothing.
 					default:

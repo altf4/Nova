@@ -1376,6 +1376,18 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
     config.SetSMTPUseAuth("true");
   }
 
+  if(clientId != undefined && req.body["MASTER_UI_CLIENT_ID"] != clientId)
+  {
+    if(mothership != undefined)
+    {
+      var renameMessage = {};
+      renameMessage.type = 'renameRequest';
+      renameMessage.id = clientId;
+      renameMessage.newId = req.body["MASTER_UI_CLIENT_ID"];
+      mothership.sendUTF(JSON.stringify(renameMessage));
+    }
+  }
+
 	var interfaces = "";
 	var oneIface = false;
 

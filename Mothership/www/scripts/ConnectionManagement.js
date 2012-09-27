@@ -106,6 +106,11 @@
       }
     }
     
+    now.RefreshPageAfterRename = function()
+    {
+      document.location.reload(); 
+    }
+    
     now.UpdateClientsList = function(clientId, action) {
       var divClientList = document.getElementById('clientsList');
       
