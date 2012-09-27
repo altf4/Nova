@@ -7,8 +7,13 @@ var express = require('express');
 var app = require('express').createServer();
 var nowjs = require('now');
 var fs = require('fs');
+var crypto = require('crypto');
+var sql = require('sqlite3');
 var nova = new novaconfig.Instance();
 var config = new novaconfig.NovaConfigBinding();
+
+var passport = require('passport');
+var BasicStrategy = require('passport-http').BasicStrategy;
 
 var NovaHomePath = config.GetPathHome();
 var NovaSharedPath = config.GetPathShared();
@@ -19,9 +24,95 @@ var NovaSharedPath = config.GetPathShared();
 // directives
 app.configure(function()
 {
+  app.use(passport.initialize());
 	app.use(express.bodyParser());
 	app.use(app.router);
 });
+
+var LOG = require("../NodejsModule/Javascript/Logger").LOG;
+
+LOG("ALERT", "Starting MOTHERSHIP version " + config.GetVersionString());
+
+process.chdir(NovaHomePath);
+
+var DATABASE_HOST = config.ReadSetting("DATABASE_HOST");
+var DATABASE_USER = config.ReadSetting("DATABASE_USER");
+var DATABASE_PASS = config.ReadSetting("DATABASE_PASS");
+
+var databaseOpenResult = function (err) {
+  if (err == null) {
+    console.log("Opened sqlite3 database file.");
+  } else {
+    LOG(ERROR, "Error opening sqlite3 database file: " + err);
+  }
+}
+
+var db = new sql.Database(NovaHomePath + "/data/database.db", sql.OPEN_READWRITE, databaseOpenResult);
+
+var dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
+var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
+var dbqCredentialsGetUsers = db.prepare('SELECT user FROM credentials');
+var dbqCredentialsGetUser = db.prepare('SELECT user FROM credentials WHERE user = ?');
+var dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ? WHERE user = ?');
+var dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?)');
+var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = ?');
+
+var HashPassword = function (password) {
+  var shasum = crypto.createHash('sha1');
+  shasum.update(password);
+  return shasum.digest('hex');
+}
+
+passport.serializeUser(function (user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function (user, done) {
+  done(null, user);
+});
+
+passport.use(new BasicStrategy(
+
+function (username, password, done) {
+  var user = username;
+  process.nextTick(function () {
+
+    dbqCredentialsRowCount.all(function (err, rowcount) {
+      if (err) {
+        console.log("Database error: " + err);
+      }
+
+      // If there are no users, add default nova and log in
+      if (rowcount[0].rows == 0) {
+        console.log("No users in user database. Creating default user.");
+        dbqCredentialsInsertUser.run('nova', HashPassword('toor'), function (err) {
+          if (err) {
+            throw err;
+          }
+
+          switcher(err, user, true, done);
+
+        });
+      } else {
+        dbqCredentialsCheckLogin.all(user, HashPassword(password),
+
+        function selectCb(err, results) {
+          if (err) {
+            console.log("Database error: " + err);
+          }
+
+          if (results[0] === undefined) {
+            switcher(err, user, false, done);
+          } else if (user === results[0].user) {
+            switcher(err, user, true, done);
+          } else {
+            switcher(err, user, false, done);
+          }
+        });
+      }
+    });
+  });
+}));
 
 // Initailize the object that will store the connections from the various
 // Quasar clients
@@ -290,6 +381,18 @@ everyone.now.AddGroup = function(group, members)
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
 
+everyone.now.GetGroupMembers = function(group, callback)
+{
+  var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
+  var start = groupFile.indexOf(group);
+  var end = groupFile.indexOf(';', start);
+  if(typeof callback == 'function')
+  {
+    console.log(groupFile.substr(start, end));
+    callback(groupFile.substr(start, end)); 
+  }
+}
+
 // Given the client id and a cb function (which will process the results)
 // grab the list of interfaces for that client.
 everyone.now.GetInterfacesOfClient = function(clientId, cb)
@@ -424,6 +527,9 @@ wsServer.on('request', function(request)
               everyone.now.UpdateConnectionsList(json_args.id, 'add');
             }
             eventCounter.push({client: json_args.id, events: "0"});
+            everyone.now.GetGroupMembers('all', function(members){
+              everyone.now.UpdateGroup('all', members);
+            });
 						break;
           // This case is reserved for response from the clients;
           // we should figure out a standard format for the responses 
@@ -451,6 +557,29 @@ wsServer.on('request', function(request)
 						suspect.lastpacket = json_args.lastpacket;
 						suspect.ishostile = json_args.ishostile;
 						suspect.client = json_args.client;
+						
+						try
+						{
+						  var append = fs.readFileSync(NovaSharedPath + '/Mothership/ClientConfigs/suspects@' + json_args.client + '.txt', 'utf8');
+						  var start = append.indexOf(suspect.ip + '@' + suspect.client);
+						  if(start == -1)
+						  {
+						    append = suspect.ip + '@' + suspect.client + ":" + suspect.classification + " " + suspect.lastpacket + ';\n';
+						  }
+						  else
+						  {
+						    var end = append.indexOf(';', start);
+						    var newAppend = suspect.ip + '@' + suspect.client + ":" + suspect.classification + " " + suspect.lastpacket + ';';
+						    append = append.replace(append.substr(start, end), newAppend);
+						  }
+						  fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/suspects@' + json_args.client + '.txt', append);
+						}
+						catch(err)
+						{
+						  var write = suspect.ip + '@' + suspect.client + ":" + suspect.classification + " " + suspect.lastpacket + ';\n';
+						  fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/suspects@' + json_args.client + '.txt', write); 
+						}
+						
 						if(typeof everyone.now.OnNewSuspect == 'function')
 						{
 						  everyone.now.OnNewSuspect(suspect);
@@ -683,7 +812,7 @@ function contains(a, obj)
 }
 
 // Going to need to do passport for these soon, I think.
-app.get('/', function(req, res) 
+app.get('/', passport.authenticate('basic', {session: false}), function(req, res) 
 {
 	res.render('main.jade', {locals:{
 		CLIENTS: getClients()
@@ -692,7 +821,7 @@ app.get('/', function(req, res)
 	}});
 });
 
-app.get('/hostile', function(req, res)
+app.get('/hostile', passport.authenticate('basic', {session: false}), function(req, res)
 {
   res.render('main.jade', {locals:{
     CLIENTS: getClients()
@@ -701,14 +830,14 @@ app.get('/hostile', function(req, res)
   }});
 });
 
-app.get('/about', function(req, res) 
+app.get('/about', passport.authenticate('basic', {session: false}), function(req, res) 
 {
     res.render('about.jade', {locals:{
       EVENTS: getEventList()
     }});
 });
 
-app.get('/config', function(req, res) 
+app.get('/config', passport.authenticate('basic', {session: false}), function(req, res) 
 {
 	res.render('config.jade', {locals:{
 		CLIENTS: getClients()
@@ -734,7 +863,7 @@ app.get('/config', function(req, res)
 	}});
 });
 
-app.get('/haystack', function(req, res){
+app.get('/haystack', passport.authenticate('basic', {session: false}), function(req, res){
   res.render('haystack.jade', {locals:{
     CLIENTS: getClients()
     , GROUPS: getGroups()
@@ -742,7 +871,7 @@ app.get('/haystack', function(req, res){
   }});
 });
 
-app.get('/groups', function(req, res){
+app.get('/groups', passport.authenticate('basic', {session: false}), function(req, res){
   res.render('groups.jade', {locals:{
     CLIENTS: getClients()
     , GROUPS: getGroups()
@@ -750,8 +879,17 @@ app.get('/groups', function(req, res){
   }});
 });
 
-app.get('/notifications', function(req, res){
+app.get('/notifications', passport.authenticate('basic', {session: false}), function(req, res){
   res.render('notifications.jade', {locals:{
     EVENTS: getEventList()
   }});
 });
+
+function switcher(err, user, success, done) {
+  if (!success) {
+    return done(null, false, {
+      message: 'Username/password combination is incorrect'
+    });
+  }
+  return done(null, user);
+}

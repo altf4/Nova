@@ -166,6 +166,10 @@ block headerAdditions
                 document.getElementById('check' + i).setAttribute('disabled', true);
               } 
             }
+            for(var i = 0; i < 6; i++)
+            {
+              document.getElementById('button' + i).removeAttribute('disabled'); 
+            }
           }
           else
           {
@@ -184,6 +188,10 @@ block headerAdditions
                 document.getElementById('check' + i).removeAttribute('disabled');
               } 
             }
+            for(var i = 0; i < 6; i++)
+            {
+              document.getElementById('button' + i).setAttribute('disabled', true); 
+            }
           }
         }
         else
@@ -191,11 +199,23 @@ block headerAdditions
           if(document.getElementById(source).checked)
           {
             message.id += target + ':';
+            for(var i = 0; i < 6; i++)
+            {
+              document.getElementById('button' + i).removeAttribute('disabled'); 
+            }
           }
           else
           {
             var regex = new RegExp(target + ':', 'i');
             message.id = message.id.replace(regex, '');
+          }
+          
+          if(message.id == '')
+          {
+            for(var i = 0; i < 6; i++)
+            {
+              document.getElementById('button' + i).setAttribute('disabled', true); 
+            }
           }
         }
         document.getElementById('showtargets').value = message.id.replace(new RegExp(':', 'g'), ',').substr(0, message.id.length - 1);
