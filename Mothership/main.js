@@ -152,7 +152,7 @@ everyone.now.UpdateEventCounter = function(client, newNum)
   {
     if(eventCounter[i].client == client)
     {
-      eventCounter.events = newNum;
+      eventCounter[i].events = newNum;
       return;
     }
   }
