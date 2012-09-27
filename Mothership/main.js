@@ -44,6 +44,27 @@ app.use(express.static(NovaSharedPath + '/Mothership/www'));
 // Initialize nowjs to listen to our express server
 var everyone = nowjs.initialize(app);
 
+// TODO: For each of the cases below, there will be code to ensure
+// that any relevant state data is saved s.t. upon the Mothership 
+// coming back up, it's state will be as it was when it died
+// Specifically, we want to save the list of the found suspects, as well
+// as their suspectGrid data. Almost everything else that would need to be
+// saved already should be. 
+process.on('SIGTERM', function(){
+  console.log('SIGTERM recieved');
+  process.exit(1);
+});
+
+process.on('SIGKILL', function(){
+  console.log('SIGKILL received');
+  process.exit(1);
+});
+
+process.on('SIGINT', function(){
+  console.log('SIGINT received');
+  process.exit(1);
+});
+
 // A note about the everyone.now.* functions, especially those
 // that are rooted in the jade files:
 // If, for some reason, a call is made to a nowjs call that isn't
@@ -274,7 +295,6 @@ everyone.now.AddGroup = function(group, members)
 everyone.now.GetInterfacesOfClient = function(clientId, cb)
 {
   var interfaceFile = fs.readFileSync(NovaSharedPath + '/Mothership/ClientConfigs/iflist@' + clientId + '.txt', 'utf8');
-  console.log('Interfaces on ' + clientId + ': ' + interfaceFile);
   var pass = interfaceFile.split(',');
   if(typeof cb == 'function')
   {

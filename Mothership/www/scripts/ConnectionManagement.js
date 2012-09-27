@@ -27,7 +27,7 @@
               if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
               {
                   var div = document.createElement('div');
-                  div.id = clients[i];
+                  div.id = clients[i] + 'div';
                   var check = document.createElement('input');
                   check.type = 'checkbox';
                   check.id = 'check' + i;
@@ -81,15 +81,14 @@
           if(groupList[i] != '' && memberList[i] != '')
           {
             var div = document.createElement('div');
-            div.id = groupList[i];
+            div.id = groupList[i] + 'div';
             var check = document.createElement('input');
             check.type = 'checkbox';
             check.id = 'groupcheck' + i;
             check.name = 'groupcheck' + i;
             check.value = memberList[i];
-            check.setAttribute('onchange', 'setTarget(("groupcheck' + i + '"), document.getElementById("groupcheck' + i + '").value.replace("," , ":"))');
+            check.setAttribute('onchange', 'setTarget(("groupcheck' + i + '"), document.getElementById("groupcheck' + i + '").value.replace(new RegExp("," , "g") , ":"), "true")');
             check.setAttribute('style', 'padding-left: 50px');
-            check.setAttribute('disabled', true);
             var label = document.createElement('label');
             label.value = groupList[i];
             label.innerHTML = groupList[i];
@@ -127,7 +126,7 @@
             }
           }
           var div = document.createElement('div');
-          div.id = clientId;
+          div.id = clientId + 'div';
           var check = document.createElement('input');
           check.type = 'checkbox';
           check.id = 'check' + (parseInt(clientCount) + 1);
@@ -151,7 +150,7 @@
           }
           break;
         case 'remove':
-          divClientList.removeChild(document.getElementById(clientId));
+          divClientList.removeChild(document.getElementById(clientId + 'div'));
           clientCount--;
           for(var i in clients)
           {

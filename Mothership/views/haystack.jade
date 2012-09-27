@@ -25,27 +25,53 @@ block headerAdditions
     var message = {};
     message.id = '';
     var elementCount = 0;
+    var selectedClients = new Array();
     
-    function setTarget(source, target)
+    function checkSelectedClients(clientName)
     {
-      var firstIndex = message.id.indexOf(target + ":");
+      for(var i in selectedClients)
+      {
+        if(selectedClients[i] == clientName)
+        {
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    function setTarget(source, target, group)
+    {
+      /*var firstIndex = message.id.indexOf(target + ":");
       
       var groupToAdd = ((target.split(':')[1] != '' && target.split(':')[1] != undefined) ? document.getElementById(source).parentNode.id : '');
       
       console.log('groupToAdd ' + groupToAdd);
       
-      console.log('firstIndex == ' + firstIndex);
+      if(document.getElementById(groupToAdd) != undefined && groupToAdd != undefined && document.getElementById(source).checked)
+      {
+        console.log('groupToAdd contains ' + document.getElementById(groupToAdd).childNodes[0].value);
+        
+        if(message.id.indexOf(document.getElementById(groupToAdd).childNodes[0].value.replace(new RegExp(",", "g"), ":")) != -1)
+        {
+          document.getElementById(source).checked = false;
+          return;
+        }
+      }
+      console.log('target = ', target);
       
       if((document.getElementById(source).checked) && (firstIndex === -1))
       {
         message.id += target + ':';
-        console.log('message.id ' + message.id);
         var targets = target.split(':');
         for(var i in targets)
         {
-          if(targets[i] != undefined && targets[i] != '')
+          if(targets[i] != undefined && targets[i] != '' && !checkSelectedClients(targets[i]))
           {
             createAutoconfigElement(targets[i], groupToAdd);
+            if(document.getElementById(targets[i] + 'div') != undefined && group != undefined)
+            {
+              document.getElementById(targets[i] + 'div').childNodes[0].setAttribute('disabled', true);
+            }
           }
         }
       }
@@ -54,26 +80,138 @@ block headerAdditions
         // If unselected, remove target from message.id
         var regex = new RegExp(target + ':', 'i');
         message.id = message.id.replace(regex, '');
+        
+        var firstIndex = target.indexOf(':');
+        var lastIndex = target.lastIndexOf(':');
+        
+        console.log('firstIndex of target = ' + firstIndex);
+        console.log('lastIndex of target = ' + lastIndex);
+        
         var targets = target.split(':');
         for(var i in targets)
         {
-          if(targets[i] != undefined && targets[i] != '')
+          if(targets[i] != undefined && targets[i] != '' && checkSelectedClients(targets[i]))
           {
             removeAutoconfigElement(targets[i]);
           }
         }
-        console.log('message.id ' + message.id);
+        
+        console.log('subtracting ' + targets.length + ' from elementCount');
+        elementCount = document.getElementById('autoconfElements').childNodes.length;
+        console.log('elementCount is now ' + elementCount);
+
+        if(elementCount <= 0)
+        {
+          document.getElementById('sendAutoconfig').setAttribute('disabled', true);
+          elementCount = 0;
+        }
       }
       
       if(!document.getElementById(source).checked && message.id == '')
       {
-        console.log(source + ' is not checked, can not do anything until target client is set');
-        console.log('message.id ' + message.id);
+        for(var i in targets)
+        {
+          if(targets[i] != undefined && targets != '')
+          {
+            if(document.getElementById(targets[i] + 'div') != undefined)
+            {
+              document.getElementById(targets[i] + 'div').childNodes[0].removeAttribute('disabled');
+            }
+          }
+        }
+      }*/
+      if(group == 'true' || group == true)
+      {
+        if(document.getElementById(source).checked)
+        {
+          message.id = target + ":";
+          var targets = target.split(":");
+          
+          while(document.getElementById('autoconfElements').hasChildNodes())
+          {
+            document.getElementById('autoconfElements').removeChild(document.getElementById('autoconfElements').lastChild);
+          }
+          
+          for(var i in targets)
+          {
+            if(targets != undefined && targets != '')
+            {
+              createAutoconfigElement(targets[i]);
+            }
+          }
+          for(var i in document.getElementById('groupsList').childNodes)
+          {
+            if(document.getElementById('groupcheck' + i) != undefined && document.getElementById('groupcheck' + i).id.indexOf(source) == -1)
+            {
+              document.getElementById('groupcheck' + i).setAttribute('disabled', true);
+            }
+          }
+          for(var i in document.getElementById('clientsList').childNodes)
+          {
+            if(document.getElementById('check' + i) != undefined)
+            {
+              document.getElementById('check' + i).checked = false;
+              document.getElementById('check' + i).setAttribute('disabled', true);
+            } 
+          }
+        }
+        else
+        {
+          message.id = '';
+          while(document.getElementById('autoconfElements').hasChildNodes())
+          {
+            document.getElementById('autoconfElements').removeChild(document.getElementById('autoconfElements').lastChild);
+          }
+          for(var i in document.getElementById('groupsList').childNodes)
+          {
+            if(document.getElementById('groupcheck' + i) != undefined && document.getElementById('groupcheck' + i).id.indexOf(source) == -1)
+            {
+              document.getElementById('groupcheck' + i).removeAttribute('disabled');
+            }
+          }
+          for(var i in document.getElementById('clientsList').childNodes)
+          {
+            if(document.getElementById('check' + i) != undefined)
+            {
+              document.getElementById('check' + i).removeAttribute('disabled');
+            } 
+          }
+        }
+      }
+      else
+      {
+        if(document.getElementById(source).checked)
+        {
+          message.id += target + ':';
+          var targets = target.split(':');
+          for(var i in targets)
+          {
+            if(targets[i] != undefined && targets[i] != '')
+            {
+              createAutoconfigElement(targets[i]);
+            }
+          }
+        }
+        else
+        {
+          var regex = new RegExp(target + ':', 'i');
+          message.id = message.id.replace(regex, '');
+          
+          var targets = target.split(':');
+          for(var i in targets)
+          {
+            if(targets[i] != undefined && targets[i] != '')
+            {
+              removeAutoconfigElement(targets[i]);
+            }
+          }
+        }
       }
     }
     
     function createAutoconfigElement(clientName, group)
     {
+      selectedClients.push(clientName);
       var div = document.createElement('div');
       div.id = 'autohook' + elementCount;
       var label = document.createElement('label');
@@ -102,7 +240,7 @@ block headerAdditions
       div.appendChild(dropDown);
       if(group != '')
       {
-        
+        document.getElementById('autoconfElements').appendChild(div);
       }
       else
       {
@@ -114,17 +252,21 @@ block headerAdditions
     
     function removeAutoconfigElement(target)
     {
-      for(var i = 0; i < elementCount; i++)
+      for(var i = elementCount; i >= 0; i--)
       {
-        if(document.getElementById('autohook' + i).childNodes[0].value == target)
+        if(document.getElementById('autohook' + i) != undefined && document.getElementById('autohook' + i).childNodes[0].value == target)
         {
           document.getElementById('autoconfElements').removeChild(document.getElementById('autohook' + i));
+          var regex = new RegExp(target + ':', 'i');
+          message.id = message.id.replace(regex, '');
         }
       }
-      elementCount--;
-      if(elementCount == 0)
+      for(var i in selectedClients)
       {
-        document.getElementById('sendAutoconfig').setAttribute('disabled', true);
+        if(selectedClients[i] == target)
+        {
+          delete selectedClients[i];
+        }
       }
     }
 
