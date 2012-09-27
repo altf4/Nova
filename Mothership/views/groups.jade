@@ -113,6 +113,13 @@ block headerAdditions
     {
       var groupToRemove = document.getElementById(group).value;
       now.RemoveGroup(groupToRemove);
+      for(var i in maintainGroups)
+      {
+        if(maintainGroups[i].group == groupToRemove)
+        {
+          delete maintainGroups[i];
+        } 
+      }
       document.getElementById('appendHook').removeChild(document.getElementById('group' + group.substr(10)));
     }
 
@@ -145,6 +152,11 @@ block headerAdditions
           if(group == maintainGroups[i].group)
           {
             alert('Cannot have identical group names');
+            return;
+          }
+          if(members == document.getElementById('members' + maintainGroups[i].idx).value)
+          {
+            alert('Already have a group "' + maintainGroups[i].group + '" with members "' + members + '"');
             return;
           }
         }
