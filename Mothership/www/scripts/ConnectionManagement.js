@@ -37,7 +37,7 @@
                   var label = document.createElement('label');
                   label.value = clients[i];
                   label.innerHTML = clients[i];
-                  label.setAttribute('style', 'text-align: center');
+                  label.setAttribute('style', 'font-weight: bold; padding-left: 25px');
                   div.appendChild(check);
                   div.appendChild(label);
                   document.getElementById(divName).appendChild(div);

@@ -1385,6 +1385,7 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
       renameMessage.id = clientId;
       renameMessage.newId = req.body["MASTER_UI_CLIENT_ID"];
       mothership.sendUTF(JSON.stringify(renameMessage));
+      clientId = req.body["MASTER_UI_CLIENT_ID"];
     }
   }
 
