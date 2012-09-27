@@ -58,7 +58,7 @@ public:
 	enum UpdateType m_updateType;
 	uint32_t m_suspectLength;
 	Suspect *m_suspect;
-	in_addr_t m_IPAddress;
+	SuspectIdentifier m_IPAddress;
 
 protected:
 	//Serializes the Message object into a char array

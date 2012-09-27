@@ -184,8 +184,11 @@ block headerAdditions
       clearButton += '"' + suspect.GetIpString + '"';
       clearButton += ");'>Clear</button>";
       row.push(clearButton);
+        
+      var id = suspect.GetIpString.split(" ");
+      var ip = id[id.length - 1];
 
-      var suspectLink = "<a href='/GetSuspectDetails?suspect=" + String(suspect.GetIpString) + "'> " + String(suspect.GetIpString) + "</a>";
+      var suspectLink = "<a href='/GetSuspectDetails?ip=" + ip + "&interface=" + suspect.GetInterface + "'> " + String(suspect.GetIpString) + "</a>";
       row.push(String(suspectLink));
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));

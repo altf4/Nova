@@ -23,6 +23,7 @@
 
 #include <sys/types.h>
 #include <arpa/inet.h>
+#include "../../Suspect.h"
 
 #include "Message.h"
 
@@ -79,7 +80,7 @@ public:
 	// The argument, if applicable.
 	char m_filePath[MAX_PATH_SIZE];
 
-	in_addr_t m_suspectAddress;
+	SuspectIdentifier m_suspectAddress;
 
 	//Did the requested command succeed?
 	bool m_success;

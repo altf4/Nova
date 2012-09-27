@@ -91,7 +91,7 @@ void *ClassificationLoop(void *ptr)
 		CheckForDroppedPackets();
 
 		//Calculate the "true" Feature Set for each Suspect
-		vector<uint64_t> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
+		vector<SuspectIdentifier> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
 		for(uint i = 0; i < updateKeys.size(); i++)
 		{
 			UpdateAndClassify(updateKeys[i]);
@@ -216,6 +216,8 @@ void *UpdateWhitelistIPFilter(void *ptr)
 
 
 				// Clear any suspects that were whitelisted from the GUIs
+				/*
+				 * TODO: Fix this. Disabled during switch to SuspectIdentifier objects instead of IPs for suspect references
 				for(uint i = 0; i < whitelistIpAddresses.size(); i++)
 				{
 					if(suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str())))
@@ -225,6 +227,7 @@ void *UpdateWhitelistIPFilter(void *ptr)
 						NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 					}
 				}
+				*/
 			}
 		}
 		else

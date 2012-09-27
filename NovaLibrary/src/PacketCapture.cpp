@@ -82,7 +82,7 @@ bool PacketCapture::StartCapture()
 bool PacketCapture::StartCaptureBlocking()
 {
 	LOG(DEBUG, "Starting packet capture on: " + m_identifier, "");
-	return (pcap_loop(m_handle, -1, m_packetCb, 0) == 0);
+	return (pcap_loop(m_handle, -1, m_packetCb, reinterpret_cast<u_char*>(this)) == 0);
 }
 
 void PacketCapture::StopCapture()
@@ -98,7 +98,7 @@ void PacketCapture::StopCapture()
 
 void PacketCapture::InternalThreadEntry()
 {
-	pcap_loop(m_handle, -1, m_packetCb, 0);
+	pcap_loop(m_handle, -1, m_packetCb, reinterpret_cast<u_char*>(this));
 	LOG(DEBUG, "Dropped out of pcap loop for packet capture: " + m_identifier, "");
 }
 

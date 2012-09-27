@@ -19,6 +19,8 @@
 #include "NovaNode.h"
 #include "ClassificationEngine.h"
 
+#include "SuspectTable.h"
+
 using namespace node;
 using namespace v8;
 using namespace Nova;
@@ -63,7 +65,8 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 	m_callbackRunning = true;
 	do
 	{
-		Suspect *s;
+		// TODO DTC see below
+		//Suspect *s;
 		cb = callbackHandler.ProcessCallbackMessage();
 		//            LOG(DEBUG,"callback type " + cb.type,"");
 		switch( cb.m_type )
@@ -81,10 +84,10 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 			break;
 
 		case CALLBACK_SUSPECT_CLEARED:
-			cout << "Got suspect clear on callback for " << cb.m_suspectIP << endl;
-			s = new Suspect();
-			s->SetIpAddress(cb.m_suspectIP);
-			HandleSuspectCleared(s);
+			// TODO DTC: Disabled during suspect IP uid switch
+			//s = new Suspect();
+			//s->SetIpAddress(cb.m_suspectIP);
+			//HandleSuspectCleared(s);
 
 		default:
 			break;
@@ -102,25 +105,32 @@ int NovaNode::AfterNovaCallbackHandling(eio_req*)
 
 void NovaNode::HandleNewSuspect(Suspect* suspect)
 {
-	if (m_suspects.count(suspect->GetIpAddress()) == 0)
+	if (m_suspects.keyExists(suspect->GetIdentifier()))
 	{
-		delete m_suspects[suspect->GetIpAddress()];
-	}	
-	m_suspects[suspect->GetIpAddress()] = suspect;
+		delete m_suspects[suspect->GetIdentifier()];
+		m_suspects.erase(suspect->GetIdentifier());
+	}
+	m_suspects[suspect->GetIdentifier()] = suspect;
 
+	SendSuspect(suspect);
+}
+
+void NovaNode::SendSuspect(Suspect* suspect)
+{
 	if( m_CallbackRegistered )
 	{
 		eio_req* req = (eio_req*) calloc(sizeof(*req),1);
-		req->data = (void*) suspect;
+		req->data = static_cast<void*>(suspect);
 		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleNewSuspectOnV8Thread, suspect);
 	}
 }
 
 void NovaNode::HandleSuspectCleared(Suspect *suspect)
 {
-	if (m_suspects.count(suspect->GetIpAddress()) == 0)
+	if (m_suspects.keyExists(suspect->GetIdentifier()))
 	{
-		delete m_suspects[suspect->GetIpAddress()];
+		delete m_suspects[suspect->GetIdentifier()];
+		m_suspects.erase(suspect->GetIdentifier());
 	}	
 
 	if( m_SuspectClearedCallbackRegistered )
@@ -133,7 +143,7 @@ void NovaNode::HandleSuspectCleared(Suspect *suspect)
 
 void NovaNode::HandleAllSuspectsCleared()
 {
-	for (map<in_addr_t, Suspect*>::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
+	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
 	{
 		delete ((*it).second);
 	}
@@ -192,7 +202,7 @@ void NovaNode::Init(Handle<Object> target)
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetDIM", GetDIM);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetSupportedEngines", GetSupportedEngines);
 
-	NODE_SET_PROTOTYPE_METHOD(s_ct, "getSuspectList", getSuspectList);
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspectList", sendSuspectList);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", ClearAllSuspects);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnNewSuspect", registerOnNewSuspect );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnAllSuspectsCleared", registerOnAllSuspectsCleared );
@@ -223,6 +233,13 @@ void NovaNode::Init(Handle<Object> target)
 	// Javascript object constructor
 	target->Set(String::NewSymbol("Instance"),
 			s_ct->GetFunction());
+
+	SuspectIdentifier initKey;
+	initKey.m_internal = 1;
+	m_suspects.set_empty_key(initKey);
+	initKey.m_internal = 2;
+	m_suspects.set_deleted_key(initKey);
+
 	
 	InitializeUI();
 }
@@ -230,13 +247,19 @@ void NovaNode::Init(Handle<Object> target)
 
 Handle<Value> NovaNode::GetSuspectDetailsString(const Arguments &args) {
 	HandleScope scope;
+	string details;
 
 	string suspectIp = cvv8::CastFromJS<string>(args[0]);
-	in_addr_t address;
+	string suspectInterface = cvv8::CastFromJS<string>(args[1]);
+
+	struct in_addr address;
 	inet_pton(AF_INET, suspectIp.c_str(), &address);
 
-	string details;
-	Suspect *suspect = GetSuspectWithData(ntohl(address));
+	SuspectIdentifier id;
+	id.m_ip = htonl(address.s_addr);
+	id.m_interface = suspectInterface;
+
+	Suspect *suspect = GetSuspectWithData(id);
 	if (suspect != NULL) {
 		details = suspect->ToString();
 		details += "\n";
@@ -329,7 +352,7 @@ NovaNode::~NovaNode()
 // Update our internal suspect list to that of novad
 void NovaNode::SynchInternalList()
 {
-	vector<in_addr_t> *suspects;
+	vector<SuspectIdentifier> *suspects;
 	suspects = GetSuspectList(SUSPECTLIST_ALL);
 
 	if (suspects == NULL)
@@ -343,11 +366,6 @@ void NovaNode::SynchInternalList()
 		if (suspect != NULL)
 		{
 			HandleNewSuspect(suspect);
-			if (m_suspects.count(suspect->GetIpAddress()) == 0)
-			{
-				delete m_suspects[suspect->GetIpAddress()];
-			}	
-			m_suspects[suspect->GetIpAddress()] = suspect;
 		}
 		else
 		{
@@ -366,11 +384,11 @@ Handle<Value> NovaNode::New(const Arguments& args)
 }
 
 
-Handle<Value> NovaNode::getSuspectList(const Arguments& args)
+Handle<Value> NovaNode::sendSuspectList(const Arguments& args)
 {
 	HandleScope scope;
 
-	LOG(DEBUG, "Triggered getSuspectList", "");
+	LOG(DEBUG, "Triggered sendSuspectList", "");
 
 	if( ! args[0]->IsFunction() )
 	{
@@ -382,9 +400,9 @@ Handle<Value> NovaNode::getSuspectList(const Arguments& args)
 	Local<Function> callbackFunction;
 	callbackFunction = Local<Function>::New( args[0].As<Function>() );
 
-	for (map<in_addr_t, Suspect*>::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
+	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
 	{
-		HandleNewSuspect((*it).second);
+		SendSuspect((*it).second);
 	}
 
 	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
@@ -467,7 +485,8 @@ Persistent<Function> NovaNode::m_CallbackFunction=Persistent<Function>();
 Persistent<Function> NovaNode::m_SuspectsClearedCallback=Persistent<Function>();
 Persistent<Function> NovaNode::m_SuspectClearedCallback=Persistent<Function>();
 
-map<in_addr_t, Suspect*> NovaNode::m_suspects = map<in_addr_t, Suspect*>();
+SuspectHashTable NovaNode::m_suspects = SuspectHashTable();
+//map<SuspectIdentifier, Suspect*> NovaNode::m_suspects = map<SuspectIdentifier, Suspect*>();
 bool NovaNode::m_CallbackRegistered=false;
 bool NovaNode::m_AllSuspectsClearedCallbackRegistered=false;
 bool NovaNode::m_SuspectClearedCallbackRegistered=false;

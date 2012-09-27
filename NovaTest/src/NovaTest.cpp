@@ -12,6 +12,7 @@
 #include "tester_HoneydConfiguration.h"
 #include "tester_WhitelistConfiguration.h"
 #include "tester_Database.h"
+#include "tester_messageSerialization.h"
 
 int main(int argc, char **argv)
 {

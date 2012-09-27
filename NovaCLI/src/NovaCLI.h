@@ -41,8 +41,8 @@ void StopNovaWrapper();
 void StopHaystackWrapper();
 void StopCaptureWrapper();
 
-void PrintSuspect(in_addr_t address);
-void PrintSuspectData(in_addr_t address);
+void PrintSuspect(in_addr_t address, std::string);
+void PrintSuspectData(in_addr_t address, std::string);
 void PrintAllSuspects(enum SuspectListType listType, bool csv);
 
 void ClearSuspectWrapper(std::string address);

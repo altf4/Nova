@@ -45,9 +45,9 @@ namespace Nova
 
 
 	void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet);
-	void update(const in_addr_t& key);
+	void update(SuspectIdentifier key);
 	void UpdateHaystackFeatures();
-	void UpdateAndStore(const in_addr_t& key);
+	//void UpdateAndStore(SuspectIdentifier key);
 }
 
 #endif /* NOVATRAINER_H_ */

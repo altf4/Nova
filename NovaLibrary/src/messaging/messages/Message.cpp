@@ -64,17 +64,16 @@ bool Message::WriteMessage(Message *message, int connectFD)
 
 	message->m_serialNumber = MessageManager::Instance().GetSerialNumber(connectFD, message->m_protocolDirection);
 
-	uint32_t length;
+	uint32_t length = 0;
 	char *buffer = message->Serialize(&length);
 	
 	// Total bytes of a write() call that need to be sent
-	uint32_t bytesSoFar;
+	uint32_t bytesSoFar = 0;
 
 	// Return value of the write() call, actual bytes sent
-	int32_t bytesWritten;
+	int32_t bytesWritten = 0;
 
 	// Send the message
-	bytesSoFar = 0;
 	while(bytesSoFar < length)
 	{
 		bytesWritten = write(connectFD, buffer, length - bytesSoFar);
@@ -182,10 +181,4 @@ Message *Message::Deserialize(char *buffer, uint32_t length, enum ProtocolDirect
 		return new ErrorMessage(ERROR_MALFORMED_MESSAGE, direction);
 	}
 	return message;
-}
-
-char *Message::Serialize(uint32_t *length)
-{
-	//Doesn't actually get called
-	return NULL;
 }

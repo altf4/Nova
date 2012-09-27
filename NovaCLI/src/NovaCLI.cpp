@@ -224,11 +224,28 @@ int main(int argc, const char *argv[])
 		}
 		else if (!strcmp(argv[2], "data"))
 		{
+			if (argc != 5)
+			{
+				PrintUsage();
+			}
+
+			in_addr_t address;
+			if(inet_pton(AF_INET, argv[4], &address) != 1)
+			{
+				cout << "Error: Unable to convert to IP address" << endl;
+				exit(EXIT_FAILURE);
+			}
+
+			PrintSuspectData(address, string(argv[3]));
+		}
+		else
+		{
 			if (argc != 4)
 			{
 				PrintUsage();
 			}
 
+			// Some early error checking for the
 			in_addr_t address;
 			if(inet_pton(AF_INET, argv[3], &address) != 1)
 			{
@@ -236,20 +253,7 @@ int main(int argc, const char *argv[])
 				exit(EXIT_FAILURE);
 			}
 
-			PrintSuspectData(address);
-
-		}
-		else
-		{
-			// Some early error checking for the
-			in_addr_t address;
-			if(inet_pton(AF_INET, argv[2], &address) != 1)
-			{
-				cout << "Error: Unable to convert to IP address" << endl;
-				exit(EXIT_FAILURE);
-			}
-
-			PrintSuspect(address);
+			PrintSuspect(address, string(argv[2]));
 		}
 	}
 
@@ -343,10 +347,10 @@ void PrintUsage()
 	cout << "  " << EXECUTABLE_NAME << " get all|hostile|benign [csv]" << endl;
 	cout << "    Outputs the details for all suspects of a type (all, hostile only, or benign only). Optionally can be output in CSV format." << endl;
 	cout << endl;
-	cout << "  " << EXECUTABLE_NAME << " get xxx.xxx.xxx.xxx" << endl;
+	cout << "  " << EXECUTABLE_NAME << " get interface xxx.xxx.xxx.xxx" << endl;
 	cout << "    Outputs the details of a specific suspect with IP address xxx.xxx.xxx.xxx" << endl;
 	cout << endl;
-	cout << "  " << EXECUTABLE_NAME << " get data xxx.xxx.xxx.xxx" << endl;
+	cout << "  " << EXECUTABLE_NAME << " get data interface xxx.xxx.xxx.xxx" << endl;
 	cout << "    Outputs the details of a specific suspect with IP address xxx.xxx.xxx.xxx, including low level data" << endl;
 	cout << endl;
 	cout << "  " << EXECUTABLE_NAME << " clear all" << endl;
@@ -478,11 +482,13 @@ void StopCaptureWrapper()
 	StopPacketCapture();
 }
 
-void PrintSuspect(in_addr_t address)
+void PrintSuspect(in_addr_t address, string interface)
 {
 	Connect();
 
-	Suspect *suspect = GetSuspect(ntohl(address));
+	SuspectIdentifier id(ntohl(address), interface);
+
+	Suspect *suspect = GetSuspect(id);
 
 	if(suspect != NULL)
 	{
@@ -498,11 +504,13 @@ void PrintSuspect(in_addr_t address)
 	CloseNovadConnection();
 }
 
-void PrintSuspectData(in_addr_t address)
+void PrintSuspectData(in_addr_t address, string interface)
 {
 	Connect();
 
-	Suspect *suspect = GetSuspectWithData(ntohl(address));
+	SuspectIdentifier id(ntohl(address), interface);
+
+	Suspect *suspect = GetSuspectWithData(id);
 
 	if (suspect != NULL)
 	{
@@ -528,7 +536,7 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 {
 	Connect();
 
-	vector<in_addr_t> *suspects;
+	vector<SuspectIdentifier> *suspects;
 	suspects = GetSuspectList(listType);
 
 	if(suspects == NULL)
@@ -540,7 +548,8 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 	// Print the CSV header
 	if (csv)
 	{
-		cout << "SUSPECT,";
+		cout << "IP,";
+		cout << "INTERFACE,";
 		for(int i = 0; i < DIM; i++)
 		{
 			cout << FeatureSet::m_featureNames[i] << ",";
@@ -561,6 +570,7 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 			else
 			{
 				cout << suspect->GetIpString() << ",";
+				cout << suspect->GetIdentifier().m_interface << ",";
 				for(int i = 0; i < DIM; i++)
 				{
 					cout << suspect->GetFeatureSet().m_features[i] << ",";
@@ -584,7 +594,7 @@ void PrintSuspectList(enum SuspectListType listType)
 {
 	Connect();
 
-	vector<in_addr_t> *suspects;
+	vector<SuspectIdentifier> *suspects;
 	suspects = GetSuspectList(listType);
 
 
@@ -597,9 +607,9 @@ void PrintSuspectList(enum SuspectListType listType)
 	for(uint i = 0; i < suspects->size(); i++)
 	{
 		in_addr tmp;
-		tmp.s_addr = htonl(suspects->at(i));
+		tmp.s_addr = htonl(suspects->at(i).m_ip);
 		char *address = inet_ntoa((tmp));
-		cout << address << endl;
+		cout << suspects->at(i).m_interface << " " << address << endl;
 	}
 
 	CloseNovadConnection();

@@ -20,6 +20,7 @@
 #ifndef SUSPECT_H_
 #define SUSPECT_H_
 
+#include "SerializationHelper.h"
 #include "FeatureSet.h"
 #include "Point.h"
 
@@ -39,6 +40,81 @@ enum FeatureMode: bool
 
 namespace Nova{
 
+class SuspectIdentifier
+{
+public:
+	// Used internally for empty/deleted keys
+	unsigned char m_internal;
+
+	// IP address of the suspect
+	uint32_t m_ip;
+
+	// Ethernet interface the suspect was seen on
+	std::string m_interface;
+
+	uint32_t Serialize(u_char *buf, uint32_t bufferSize)
+	{
+		uint32_t offset = 0;
+
+		SerializeChunk(buf, &offset, (char*)&m_internal, sizeof m_internal, bufferSize);
+		SerializeChunk(buf, &offset, (char*)&m_ip, sizeof m_ip, bufferSize);
+		SerializeString(buf, &offset, m_interface, bufferSize);
+
+		return offset;
+	}
+
+	uint32_t Deserialize(u_char *buf, uint32_t bufferSize)
+	{
+		uint32_t offset = 0;
+
+		DeserializeChunk(buf, &offset, (char*)&m_internal, sizeof m_internal, bufferSize);
+		DeserializeChunk(buf, &offset, (char*)&m_ip, sizeof m_ip, bufferSize);
+		m_interface = DeserializeString(buf, &offset, bufferSize);
+
+		return offset;
+	}
+
+	uint32_t GetSerializationLength()
+	{
+		return sizeof(m_internal) + sizeof(m_ip) + (sizeof(uint32_t) + m_interface.size());
+	}
+
+
+	bool operator ==(const SuspectIdentifier &rhs) const
+	{
+		// This is for checking equality of empty/deleted keys
+		if (m_internal != 0)
+		{
+			return m_internal == rhs.m_internal;
+		}
+		else
+		{
+			return (m_ip == rhs.m_ip && m_interface == rhs.m_interface);
+		}
+	}
+
+	bool operator != (const SuspectIdentifier &rhs) const
+	{
+		return !(this->operator ==(rhs));
+	}
+
+	SuspectIdentifier()
+		:m_internal(0), m_ip(0)
+	{}
+
+	SuspectIdentifier(uint32_t ip, std::string interface)
+		:m_internal(0), m_ip(ip), m_interface(interface)
+	{}
+};
+
+struct equalityChecker
+{
+	bool operator()(Nova::SuspectIdentifier k1, Nova::SuspectIdentifier k2) const
+	{
+		return (k1 == k2);
+	}
+};
+
 // A Suspect represents a single actor on the network, whether good or bad.
 // Suspects are the target of classification and a major part of Nova.
 class Suspect
@@ -52,20 +128,17 @@ public:
 	// Destructor. Has to delete the FeatureSet object within.
 	~Suspect();
 
+	SuspectIdentifier GetIdentifier();
 
 	// Converts suspect into a human readable std::string
 	//		featureEnabled: Array of size DIM that specifies which features to return in the std::string
 	// Returns: Human readable std::string of the given feature
 	std::string ToString();
 	std::string GetIpString();
+	std::string GetInterface();
 
 	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
-	// Note: This function deallocates the linked list of Evidence objects
-	void ConsumeEvidence(Evidence *evidence);
-
-	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
-	// Note: Unlike Consume, this function does not deallocate the evidence objects, everything else is the same as Consume.
-	void ReadEvidence(Evidence *evidence);
+	void ReadEvidence(Evidence *evidence, bool deleteEvidence);
 
 	// Calculates the feature set for this suspect
 	void CalculateFeatures();
@@ -87,11 +160,6 @@ public:
 	// Returns: number of bytes read from the buffer
 	uint32_t Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
 
-	//Returns a copy of the suspects in_addr, must not be locked or is locked by the owner
-	//Returns: Suspect's in_addr or NULL on failure
-	in_addr GetInAddr();
-	//Sets the suspects in_addr
-	void SetInAddr(in_addr in);
 
 	//Returns a copy of the suspects in_addr
 	//Returns: Suspect's in_addr_t or NULL on failure
@@ -172,11 +240,11 @@ public:
 	std::string m_classificationNotes;
 
 private:
+	SuspectIdentifier m_id;
 
 	// Array of values that represent the quality of suspect classification on each feature
 	double m_featureAccuracy[DIM];
-	// The IP address of the suspect. Serves as a unique identifier for the Suspect
-	struct in_addr m_IpAddress;
+
 	// The current classification assigned to this suspect.
 	//	0-1, where 0 is almost surely benign, and 1 is almost surely hostile.
 	//	-1 indicates no classification or error.

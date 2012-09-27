@@ -25,6 +25,7 @@
 #include "NovaTrainer.h"
 #include "TrainingDump.h"
 #include "Evidence.h"
+#include "Suspect.h"
 #include "Logger.h"
 
 #include <netinet/if_ether.h>
@@ -140,7 +141,11 @@ void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u
 			uint32_t ipSrc = evidencePacket.m_evidencePacket.ip_src;
 
 			suspects.ProcessEvidence(&evidencePacket, true);
-			update(ipSrc);
+
+			SuspectIdentifier id;
+			id.m_ip = ipSrc;
+
+			update(id);
 
 			return;
 		}
@@ -151,9 +156,9 @@ void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u
 	}
 }
 
-void update(const in_addr_t& key)
+void update(SuspectIdentifier key)
 {
-	in_addr_t foo = key;
+	SuspectIdentifier foo = key;
 	suspects.ClassifySuspect(foo);
 
 	//Check that we updated correctly

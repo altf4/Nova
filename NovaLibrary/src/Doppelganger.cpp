@@ -58,11 +58,12 @@ void Doppelganger::UpdateDoppelganger()
 		InitDoppelganger();
 	}
 	//Get latest list of hostile suspects
-	vector<uint64_t> keys = m_suspectTable.GetKeys_of_HostileSuspects();
-	vector<uint64_t> keysCopy = keys;
+	vector<SuspectIdentifier> keys = m_suspectTable.GetKeys_of_HostileSuspects();
+	vector<SuspectIdentifier> keysCopy = keys;
 
 	//A few variable declarations
-	uint64_t temp = 0, i = 0;
+	SuspectIdentifier temp;
+	uint i = 0;
 	bool found = false;
 
 	string prefix = "sudo iptables -t nat -I DOPP -s ";
@@ -96,7 +97,7 @@ void Doppelganger::UpdateDoppelganger()
 		if(!found)
 		{
 			ss.str("");
-			inAddr.s_addr = htonl((in_addr_t)temp);
+			inAddr.s_addr = htonl((in_addr_t)temp.m_ip);
 			ss << prefix << inet_ntoa(inAddr) << suffix;
 			if(system(ss.str().c_str()) != 0)
 			{
@@ -113,7 +114,7 @@ void Doppelganger::UpdateDoppelganger()
 		m_suspectKeys.pop_back();
 
 		ss.str("");
-		inAddr.s_addr = htonl((in_addr_t)temp);
+		inAddr.s_addr = htonl((in_addr_t)temp.m_ip);
 		ss << prefix << inet_ntoa(inAddr) << suffix;
 
 		if(system(ss.str().c_str()) != 0)
@@ -261,7 +262,7 @@ void Doppelganger::ResetDoppelganger()
 	for(uint i = 0; i < m_suspectKeys.size(); i++)
 	{
 		ss.str("");
-		inAddr.s_addr = (in_addr_t)m_suspectKeys[i];
+		inAddr.s_addr = (in_addr_t)m_suspectKeys[i].m_ip;
 		ss << prefix << inet_ntoa(inAddr) << suffix;
 		if(system(ss.str().c_str()) != 0)
 		{

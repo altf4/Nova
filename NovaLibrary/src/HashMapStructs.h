@@ -92,4 +92,15 @@ struct eq_uint16_t
 	}
 };
 
+/*
+template <class typeToCompare>
+struct equalityChecker
+{
+	bool operator()(typeToCompare k1, typeToCompare k2)
+	{
+		return (k1 == k2);
+	}
+};
+*/
+
 #endif /* HASHMAPSTRUCTS_H_ */
