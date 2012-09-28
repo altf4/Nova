@@ -225,10 +225,8 @@ Suspect *GetSuspect(in_addr_t address)
 		return NULL;
 	}
 
-	Suspect *returnSuspect = new Suspect();
-	*returnSuspect = *requestReply->m_suspect;
+	Suspect *suspect = requestReply->m_suspect;
 	delete requestReply;
-
-	return returnSuspect;
+	return suspect;
 }
 }

@@ -25,15 +25,15 @@ namespace Nova
 {
 
 
-void ServerCallback::StartServerCallbackThread(int socketFD)
+void ServerCallback::StartServerCallbackThread(int socketFD, struct bufferevent *bufferevent)
 {
 	MessageManager::Instance().DeleteEndpoint(socketFD);
-	MessageManager::Instance().StartSocket(socketFD);
+	MessageManager::Instance().StartSocket(socketFD, bufferevent);
 	m_socketFD = socketFD;
 	int err = pthread_create(&m_callbackThread, NULL, StaticThreadHelper, this);
 	if(err != 0)
 	{
-		printf("xxxDEBUGxxx Internal error: Thread failed to launch. Error code: %d\n", err);
+		LOG(WARNING, "Internal error: Thread failed to launch. Error code: " + err, "");
 	}
 	else
 	{

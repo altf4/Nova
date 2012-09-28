@@ -111,7 +111,7 @@ bool ConnectToNovad()
 	evutil_make_socket_nonblocking(IPCSocketFD);
 
 	MessageManager::Instance().DeleteEndpoint(IPCSocketFD);
-	MessageManager::Instance().StartSocket(IPCSocketFD);
+	MessageManager::Instance().StartSocket(IPCSocketFD, bufferevent);
 
 	pthread_create(&eventDispatchThread, NULL, EventDispatcherThread, NULL);
 

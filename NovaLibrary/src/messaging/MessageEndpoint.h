@@ -30,6 +30,7 @@
 #include <map>
 #include <set>
 #include <queue>
+#include "event.h"
 
 namespace Nova
 {
@@ -41,7 +42,7 @@ public:
 	//Constructor for MessageQueue
 	//	socketFD - The socket file descriptor the queue will listen on
 	//	direction - The protocol direction that is considered forward
-	MessageEndpoint(int socketFD);
+	MessageEndpoint(int socketFD, struct bufferevent *bufferevent);
 
 	//Destructor should only be called by the callback thread, and also only while
 	//	the protocol lock in MessageManager is held. This is done to avoid
@@ -61,6 +62,11 @@ public:
 	//		of type ERROR_SOCKET_CLOSED. So there is no need to call it again yourself
 	//	NOTE: Due to physical constraints, this function may block for longer than timeout. Don't rely on it being very precise.
 	Message *PopMessage(Ticket &ticket, int timeout);
+
+	//Writes a given Message to the endpoint's socket
+	//	message - A pointer to the message object to send
+	// Returns - true on successfully sending the object, false on error
+	bool WriteMessage(Message *message);
 
 	//Pushes a new message onto the appropriate message queue
 	//	message - The Message to push
@@ -82,6 +88,8 @@ public:
 
 	//Deletes and removes the message queue indexed by the given ourSerial number
 	bool RemoveMessageQueue(uint32_t ourSerial);
+
+	bool m_isShutDown;
 
 private:
 
@@ -107,13 +115,14 @@ private:
 	pthread_cond_t m_callbackWakeupCondition;
 
 	//Marks the message queue as having been shut down. Just waiting to be destroyed properly
-	bool m_isShutDown;
 	pthread_mutex_t m_isShutdownMutex;
 
 	int m_socketFD;
 	uint8_t m_consecutiveTimeouts;
 
 	pthread_mutex_t m_callbackRegisterMutex;
+
+	struct bufferevent *m_bufferevent;
 };
 
 }

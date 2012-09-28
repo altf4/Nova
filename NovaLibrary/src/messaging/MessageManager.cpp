@@ -82,36 +82,16 @@ bool MessageManager::WriteMessage(const Ticket &ticket, Message *message)
 	message->m_ourSerialNumber = ticket.m_ourSerialNum;
 	message->m_theirSerialNumber = ticket.m_theirSerialNum;
 
-	uint32_t length;
-	char *buffer = message->Serialize(&length);
-
-	// Total bytes of a write() call that need to be sent
-	uint32_t bytesSoFar;
-
-	// Return value of the write() call, actual bytes sent
-	int32_t bytesWritten;
-
-	// Send the message
-	bytesSoFar = 0;
-	while(bytesSoFar < length)
+	MessageEndpointLock endpointLock = GetEndpoint(ticket.m_socketFD);
+	if(endpointLock.m_endpoint == NULL)
 	{
-		bytesWritten = write(ticket.m_socketFD, buffer, length - bytesSoFar);
-		if(bytesWritten < 0)
-		{
-			free(buffer);
-			return false;
-		}
-		else
-		{
-			bytesSoFar += bytesWritten;
-		}
+		return false;
 	}
 
-	free(buffer);
-	return true;
+	return endpointLock.m_endpoint->WriteMessage(message);
 }
 
-void MessageManager::StartSocket(int socketFD)
+void MessageManager::StartSocket(int socketFD, struct bufferevent *bufferevent)
 {
 	//Initialize the MessageEndpoint if it doesn't yet exist
 	Lock lock(&m_endpointsMutex);
@@ -123,7 +103,7 @@ void MessageManager::StartSocket(int socketFD)
 		pthread_rwlock_init(rwLock, NULL);
 		//Write lock this new lock because we don't want someone trying to read from it or write to it halfway through our addition
 		Lock endLock(rwLock, WRITE_LOCK);
-		m_endpoints[socketFD] = std::pair<MessageEndpoint*, pthread_rwlock_t*>( new MessageEndpoint(socketFD), rwLock);
+		m_endpoints[socketFD] = std::pair<MessageEndpoint*, pthread_rwlock_t*>( new MessageEndpoint(socketFD, bufferevent), rwLock);
 		return;
 	}
 
@@ -132,7 +112,7 @@ void MessageManager::StartSocket(int socketFD)
 
 	if(m_endpoints[socketFD].first == NULL)
 	{
-		m_endpoints[socketFD].first = new MessageEndpoint(socketFD);
+		m_endpoints[socketFD].first = new MessageEndpoint(socketFD, bufferevent);
 	}
 
 }
@@ -147,12 +127,13 @@ Ticket MessageManager::StartConversation(int socketFD)
 		return Ticket();
 	}
 
+	Lock rwLock(m_endpoints[socketFD].second, READ_LOCK);
 	if(m_endpoints[socketFD].first == NULL)
 	{
 		return Ticket();
 	}
 
-	return Ticket(m_endpoints[socketFD].first->StartConversation(), 0, false, false, socketFD);
+	return Ticket(m_endpoints[socketFD].first->StartConversation(), 0, false, false, socketFD, m_endpoints[socketFD].second);
 }
 
 void MessageManager::DeleteEndpoint(int socketFD)
@@ -164,18 +145,20 @@ void MessageManager::DeleteEndpoint(int socketFD)
 	Lock lock(&m_endpointsMutex);
 	if(m_endpoints.count(socketFD) > 0)
 	{
-		Lock lock(m_endpoints[socketFD].second, WRITE_LOCK);
+		//First, shut down the endpoint, so as to signal anyone using it to clear out
+		{
+			Lock lock(m_endpoints[socketFD].second, READ_LOCK);
+			m_endpoints[socketFD].first->Shutdown();
+		}
 
-		//We can't hold the endpointsMutex while doing a delete here, or else we get a deadlock race condition.
-		//	The destructor does a join on a thread that can grab the mutex.
-		//	So we need to release this lock just for the duration of the delete.
-		//	Note that this is safe because no changes are made to the m_endpoints variable itself. Just the data
-		//	pointed to by a variable in it. Furthermore, we hold the Endpoint's write lock, so we're allowed.
+		//We unlock and relock in order to prevent a deadlock here with ~Ticket
+		pthread_rwlock_t *rwlock = m_endpoints[socketFD].second;
 		pthread_mutex_unlock(&m_endpointsMutex);
-		delete m_endpoints[socketFD].first;
+		Lock lock(rwlock, WRITE_LOCK);
 		pthread_mutex_lock(&m_endpointsMutex);
 
-		//This command, however does make a change to the m_endpoints map, so we need to have a lock on the mutex
+		delete m_endpoints[socketFD].first;
+
 		m_endpoints[socketFD].first = NULL;
 	}
 }
@@ -202,7 +185,11 @@ std::vector <int>MessageManager::GetSocketList()
 		//If the MessageEndpoint is NULL, don't count it
 		if(it->second.first != NULL)
 		{
-			sockets.push_back(it->first);
+			//Don't add the socket if the endpoint is shut down (is old)
+			if(!it->second.first->m_isShutDown)
+			{
+				sockets.push_back(it->first);
+			}
 		}
 	}
 
@@ -233,75 +220,95 @@ MessageEndpointLock MessageManager::GetEndpoint(int socketFD)
 
 void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 {
+
+	bufferevent_lock(bev);
+
 	struct evbuffer *input = bufferevent_get_input(bev);
 	evutil_socket_t socketFD = bufferevent_getfd(bev);
 
 	uint32_t length = 0, evbufferLength;
 
-	evbufferLength = evbuffer_get_length(input);
-	//If we don't even have enough data to read the length, just quit
-	if(evbufferLength < sizeof(length))
+	bool keepGoing = true;
+	while(keepGoing)
 	{
-		return;
-	}
+		evbufferLength = evbuffer_get_length(input);
+		//If we don't even have enough data to read the length, just quit
+		if(evbufferLength < sizeof(length))
+		{
+			keepGoing = false;
+			continue;
+		}
 
-	//Copy the length field out of the message
-	//	We only want to copy this data at first, because if the whole message hasn't reached us,
-	//	we'll want the whole buffer still present here, undrained
-	if(evbuffer_copyout(input, &length, sizeof(length)) != sizeof(length))
-	{
-		return;
-	}
+		//Copy the length field out of the message
+		//	We only want to copy this data at first, because if the whole message hasn't reached us,
+		//	we'll want the whole buffer still present here, undrained
+		if(evbuffer_copyout(input, &length, sizeof(length)) != sizeof(length))
+		{
+			keepGoing = false;
+			continue;
+		}
 
-	evbuffer_drain(input, sizeof(length));
-
-	// Make sure the length appears valid
-	// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
-	if(length < MESSAGE_MIN_SIZE)
-	{
 		evbuffer_drain(input, sizeof(length));
-		return;
-	}
 
-	//If we don't yet have enough data, then just quit and wait for more
-	if(evbufferLength < length)
-	{
-		return;
-	}
+		// Make sure the length appears valid
+		// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
+		if(length < MESSAGE_MIN_SIZE)
+		{
+			LOG(WARNING, "Error parsing message: message too small.", "");
+			evbuffer_drain(input, sizeof(length));
+			keepGoing = false;
+			continue;
+		}
 
-	//Remove the length of the "length" variable itself
-	length -= sizeof(length);
-	char *buffer = (char*)malloc(length);
+		//If we don't yet have enough data, then just quit and wait for more
+		if(evbufferLength < length)
+		{
+			keepGoing = false;
+			continue;
+		}
 
-	if(buffer == NULL)
-	{
-		// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
+		//Remove the length of the "length" variable itself
+		length -= sizeof(length);
+		char *buffer = (char*)malloc(length);
+
+		if(buffer == NULL)
+		{
+			// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
+			LOG(WARNING, "Error parsing message: malloc returned NULL. Out of memory?.", "");
+			free(buffer);
+			keepGoing = false;
+			continue;
+		}
+
+		// Read in the actual message
+		int bytesRead = evbuffer_remove(input, buffer, length);
+		if(bytesRead == -1)
+		{
+			LOG(WARNING, "Error parsing message: couldn't remove data from buffer.", "");
+		}
+		else if((uint32_t)bytesRead != length)
+		{
+			LOG(WARNING, "Error parsing message: incorrect amount of data received than what expected.", "");
+		}
+
+		MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
+		if(endpoint.m_endpoint != NULL)
+		{
+			Message *message = Message::Deserialize(buffer, length);
+			if(!endpoint.m_endpoint->PushMessage(message))
+			{
+				LOG(DEBUG, "Discarding message. Error in pushing it to a queue.", "");
+			}
+		}
+		else
+		{
+			LOG(DEBUG, "Discarding message. Received it for a non-existent endpoint.", "");
+		}
+
 		free(buffer);
-		return;
 	}
 
-	// Read in the actual message
-	int bytesRead = evbuffer_remove(input, buffer, length);
-	if(bytesRead == -1)
-	{
-		LOG(WARNING, "Error parsing message: couldn't remove data from buffer.", "");
-	}
-	else if((uint32_t)bytesRead != length)
-	{
-		LOG(WARNING, "Error parsing message: incorrect amount of data received than what expected.", "");
-	}
-
-	MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
-	if(endpoint.m_endpoint != NULL)
-	{
-		endpoint.m_endpoint->PushMessage(Message::Deserialize(buffer, length));
-	}
-	else
-	{
-		LOG(DEBUG, "Discarding message. Received it for a non-existent endpoint.", "");
-	}
-
-	free(buffer);
+	bufferevent_unlock(bev);
 }
 
 void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void *ctx)
@@ -348,14 +355,9 @@ void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
     }
     else
     {
-		//Create the socket within the messaging subsystem
-		//MessageManager::Instance().StartSocket(fd);
-		//Start the callback thread for this new connection
-		cbArg->m_callback->StartServerCallbackThread(fd);
-
 		struct bufferevent *bev;
 		evutil_make_socket_nonblocking(fd);
-		bev = bufferevent_socket_new(cbArg->m_base, fd, BEV_OPT_CLOSE_ON_FREE);
+		bev = bufferevent_socket_new(cbArg->m_base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
 		if(bev == NULL)
 		{
 			LOG(ERROR, "Failed to connect to UI: socket_new", "");
@@ -368,6 +370,11 @@ void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
 			LOG(ERROR, "Failed to connect to UI: bufferevent_enable", "");
 			return;
 		}
+
+		//Create the socket within the messaging subsystem
+		//MessageManager::Instance().StartSocket(fd);
+		//Start the callback thread for this new connection
+		cbArg->m_callback->StartServerCallbackThread(fd, bev);
     }
 }
 

@@ -33,7 +33,7 @@ public:
 
 	Ticket();
 
-	Ticket(uint32_t, uint32_t, bool, bool, int);
+	Ticket(uint32_t, uint32_t, bool, bool, int, pthread_rwlock_t *);
 
 	~Ticket();
 
@@ -42,6 +42,7 @@ public:
 	bool m_isCallback;
 	bool m_hasInit;
 	int m_socketFD;
+	pthread_rwlock_t *m_endpointLock;
 
 };
 

@@ -305,6 +305,12 @@ void SendSuspectToUIs(Suspect *suspect)
 	{
 		Ticket ticket = MessageManager::Instance().StartConversation(sockets[i]);
 
+		//If the ticket came back bad, then ignore this one. The endpoint must have hung up before we got to it.
+		if(ticket.m_socketFD == -1)
+		{
+			continue;
+		}
+
 		UpdateMessage suspectUpdate(UPDATE_SUSPECT);
 		suspectUpdate.m_suspect = suspect;
 		if(!MessageManager::Instance().WriteMessage(ticket, &suspectUpdate))

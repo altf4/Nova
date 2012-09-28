@@ -79,9 +79,10 @@ public:
 	//	Failing to call StartSocket prior to use will cause you to get get ErrorMessges (but not crash)
 	//TODO: Maybe make the other functions automatically check and call this function for us. So we can make this private
 	//	socketFD - The socket file descriptor for which to make the initialization
+	//	bufferevent - The libevent structure used for i/o to this socket
 	//NOTE: In order to use the returned MessageQueue safely, you must have a lock on it before calling this
 	//NOTE: Safely does nothing if socketFD already exists in the manager
-	void StartSocket(int socketFD);
+	void StartSocket(int socketFD, struct bufferevent *bufferevent);
 
 	//Deletes the MessageQueue object to which socketFD belongs
 	//	NOTE: Does not close the underlying socket. Use CloseSocket to do that.

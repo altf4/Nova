@@ -32,15 +32,19 @@ Ticket::Ticket()
 	m_isCallback = true;
 	m_hasInit = false;
 	m_socketFD = -1;
+	m_endpointLock = NULL;
 }
 
-Ticket::Ticket(uint32_t ourSerial, uint32_t theirSerial, bool isCallback, bool hasInit, int socketFD)
+Ticket::Ticket(uint32_t ourSerial, uint32_t theirSerial, bool isCallback, bool hasInit, int socketFD, pthread_rwlock_t *rwlock)
 {
 	m_ourSerialNum = ourSerial;
 	m_theirSerialNum = theirSerial;
 	m_isCallback = isCallback;
 	m_hasInit = hasInit;
-	m_socketFD = socketFD;}
+	m_socketFD = socketFD;
+	m_endpointLock = rwlock;
+	pthread_rwlock_rdlock(m_endpointLock);
+}
 
 Ticket::~Ticket()
 {
@@ -51,6 +55,10 @@ Ticket::~Ticket()
 		{
 			LOG(DEBUG, "Tried to delete MessageQueue from ticket, but failed. The endpoint might have died first", "");
 		}
+	}
+	if(m_endpointLock != NULL)
+	{
+		pthread_rwlock_unlock(m_endpointLock);
 	}
 }
 

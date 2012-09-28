@@ -33,7 +33,7 @@
 namespace Nova
 {
 
-MessageEndpoint::MessageEndpoint(int socketFD)
+MessageEndpoint::MessageEndpoint(int socketFD, struct bufferevent *bufferevent)
 {
 	pthread_mutex_init(&m_isShutdownMutex, NULL);
 	pthread_mutex_init(&m_theirUsedSerialsMutex, NULL);
@@ -50,6 +50,8 @@ MessageEndpoint::MessageEndpoint(int socketFD)
 
 	m_isShutDown = false;
 	m_socketFD = socketFD;
+
+	m_bufferevent = bufferevent;
 }
 
 //Destructor should only be called by the callback thread, and also only while
@@ -107,6 +109,31 @@ Message *MessageEndpoint::PopMessage(Ticket &ticket, int timeout)
 	return ret;
 }
 
+bool MessageEndpoint::WriteMessage(Message *message)
+{
+	bufferevent_lock(m_bufferevent);
+
+	uint32_t length;
+	char *buffer = message->Serialize(&length);
+
+	struct evbuffer *output = bufferevent_get_output(m_bufferevent);
+	int ret = evbuffer_add(output, buffer, length);
+
+	free(buffer);
+
+	bufferevent_unlock(m_bufferevent);
+
+	if(ret == 0)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
+}
+
 uint32_t MessageEndpoint::StartConversation()
 {
 	uint32_t nextSerial = GetNextOurSerialNum();
@@ -126,6 +153,16 @@ bool MessageEndpoint::PushMessage(Message *message)
 	if(message == NULL)
 	{
 		return false;
+	}
+
+	{
+		Lock shutdownLock(&m_isShutdownMutex);
+		if(m_isShutDown)
+		{
+			message->DeleteContents();
+			delete message;
+			return false;
+		}
 	}
 
 	//The other endpoint must always provide a valid "our" serial number, ignore if they don't
@@ -228,7 +265,10 @@ bool MessageEndpoint::RegisterCallback(Ticket &outTicket)
 		{
 			outTicket.m_theirSerialNum = 0;
 		}
-		outTicket.m_theirSerialNum = queue->GetTheirSerialNum();
+		else
+		{
+			outTicket.m_theirSerialNum = queue->GetTheirSerialNum();
+		}
 	}
 
 	return true;

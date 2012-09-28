@@ -20,6 +20,7 @@
 #define SERVERCALLBACK_H_
 
 #include "pthread.h"
+#include "event.h"
 
 namespace Nova
 {
@@ -29,7 +30,7 @@ class ServerCallback
 
 public:
 
-	void StartServerCallbackThread(int socketFD);
+	void StartServerCallbackThread(int socketFD, struct bufferevent *bufferevent);
 
 	int m_socketFD;
 

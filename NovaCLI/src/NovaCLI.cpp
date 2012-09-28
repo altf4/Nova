@@ -455,6 +455,7 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 		}
 	}
 
+	delete suspects;
 	CloseNovadConnection();
 
 }
@@ -481,6 +482,7 @@ void PrintSuspectList(enum SuspectListType listType)
 		cout << address << endl;
 	}
 
+	delete suspects;
 	CloseNovadConnection();
 }
 
