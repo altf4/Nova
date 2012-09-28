@@ -263,7 +263,8 @@ block headerAdditions
   
       var row = new Array();
       // This is probably a really bad way to do this...
-      row.push(String(suspect.ip) + '@' + String(suspect.client));
+      var inner = String(suspect.ip) + '@' + String(suspect.client);
+      row.push(inner);
       row.push(String(suspect.client));
       row.push(parseFloat(suspect.classification));
       row.push(String(suspect.lastpacket));

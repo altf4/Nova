@@ -195,6 +195,11 @@ everyone.now.MessageSend = function(message)
     targets.length = 0;
 };
 
+everyone.now.GetSuspectDetails = function(suspect, callback)
+{
+  
+}
+
 everyone.now.WriteNotification = function(notify)
 {
   var append = fs.readFileSync(NovaSharedPath + '/Mothership/notifications.txt', 'utf8');
@@ -566,7 +571,6 @@ wsServer.on('request', function(request)
 					case 'hostileSuspect':
             console.log('Hostile Suspect ' + json_args.ip + ' received from ' + json_args.client + ' at ' + json_args.lastpacket);
 						var suspect = {};
-						suspect.string = json_args.string;
 						suspect.ip = json_args.ip;
 						suspect.classification = json_args.classification;		
 						suspect.lastpacket = json_args.lastpacket;
@@ -627,7 +631,6 @@ wsServer.on('request', function(request)
 				  case 'benignSuspect':
 				    console.log('Benign Suspect ' + json_args.ip + ' received from ' + json_args.client);
 				    var suspect = {};
-            suspect.string = json_args.string;
             suspect.ip = json_args.ip;
             suspect.classification = json_args.classification;    
             suspect.lastpacket = json_args.lastpacket;
@@ -899,6 +902,25 @@ app.get('/notifications', passport.authenticate('basic', {session: false}), func
     EVENTS: getEventList()
   }});
 });
+
+/*app.get('/details', passport.authenticate('basic', {session: false}), function(req, res){
+  if(req.query["suspect"] === undefined) 
+  {
+    RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.", "/");
+    return;
+  }
+ 
+  var pass = req.query["suspect"].replace('_', '@');
+  
+  now.GetSuspectDetails(pass, function(suspectString){
+    res.render('suspectDetails.jade', {
+      locals: {
+        suspect: pass
+        , details: suspectString
+      }
+    })
+  });
+});*/
 
 function switcher(err, user, success, done) {
   if (!success) {
