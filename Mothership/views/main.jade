@@ -43,12 +43,12 @@ block content
 
   div#nova_suspects_header
     h1 Suspect List
-    button#liveUpdateButton(data-dojo-type="dijit.form.Button",type="button") Pause Updates/Auto Scrolling
-      script(type="dojo/method", data-dojo-event="onClick", data-dojo-args="evt")
-        | liveUpdate = !liveUpdate;
-        | if (!liveUpdate) {dojo.byId("liveUpdateButton").innerHTML = "Unpause table refreshing";}
-        | else {dojo.byId("liveUpdateButton").innerHTML = "Pause table refreshing";}
-    br
+    //button#liveUpdateButton(data-dojo-type="dijit.form.Button",type="button") Pause Updates/Auto Scrolling
+    //  script(type="dojo/method", data-dojo-event="onClick", data-dojo-args="evt")
+    //    | liveUpdate = !liveUpdate;
+    //    | if (!liveUpdate) {dojo.byId("liveUpdateButton").innerHTML = "Unpause table refreshing";}
+    //    | else {dojo.byId("liveUpdateButton").innerHTML = "Pause table refreshing";}
+    //br
     br
     
     
@@ -59,8 +59,13 @@ block content
       p Filter by IP (supports standard regular expressions. Example: "192\.168\.10\..*|192\.168\.3\..*")
       input#ipFilter(type="text", name="ipFilter", value="")
       br
+      p Filter by clientId (will match with STRING_ENTERED*)
+      input#clientFilter(type='text', name='clientFilter', value="")
+      br
       button(onClick='applyAdvancedFilter()') Apply Advanced Filters
       button(onClick='disableAdvancedFilter()') Disable Advanced Filters
+    div#tablePages
+    br
 
   div#nova_suspects
     table#suspectTable
@@ -83,6 +88,7 @@ block headerAdditions
     var advancedFilters = new Object();
     var advancedFilterEnabled = false;
     var advancedIpFilter = null;
+    var clientIdFilter = null;
 
     var message = {};
     message.id = '';
@@ -254,8 +260,6 @@ block headerAdditions
 
     now.OnNewSuspect = function(suspect){
       var type = suspect.type;
-      
-      //if(!liveUpdate) {return;}
   
       var row = new Array();
       // This is probably a really bad way to do this...
@@ -265,59 +269,169 @@ block headerAdditions
       row.push(String(suspect.lastpacket));
       row.push(String(suspect.ishostile));
 
+       if(advancedFilterEnabled) 
+       {
+         if(advancedIpFilter != null) 
+         {
+            if(!advancedIpFilter.test(suspect.ip)) 
+            {
+                return;
+            }
+         }
+         if(clientIdFilter != null)
+         {
+           if(!clientIdFilter.test(suspect.client))
+           {
+             return; 
+           }
+         }
+       }
+
       suspectGrid.PushEntry(row);
     };
 
-    var applyAdvancedFilter = function() {
+    var applyAdvancedFilter = function() 
+    {
         var patt = new RegExp("^[1234567890x\. ()<>=!&|]+$");
 
         var filter = theDoc.getElementById("ipFilter").value;
-        if (filter != "") {
-            try {
-                advancedIpFilter = new RegExp(filter);
-            } catch (err) {
-                alert("Invalid filter: " + filter);
-                return;
-            }
+        if(filter != "") 
+        {
+          try 
+          {
+              advancedIpFilter = new RegExp(filter);
+          } 
+          catch(err) 
+          {
+              alert("Invalid filter: " + filter);
+              return;
+          }
+        }
+        else
+        {
+          advancedIpFilter = null; 
+        }
+        var clientFilter = theDoc.getElementById("clientFilter").value;
+        if(clientFilter != "")
+        {
+          try
+          {
+            clientIdFilter = new RegExp(clientFilter);
+          }
+          catch(err)
+          {
+            alert("Invalid filter: " + clientFilter);
+            return; 
+          }
+        }
+        else
+        {
+          clientIdFilter = null; 
         }
 
         advancedFilterEnabled = true;
         suspectGrid.Clear();  
+        now.ClearSuspectIPs(function(length){
+          console.log('in callback, suspectIPs reports length ' + length);
+          now.GetHostileSuspects();
+        });
     };
 
-    var disableAdvancedFilter = function() {
+    var disableAdvancedFilter = function() 
+    {
         theDoc.getElementById('advancedFiltering').style.display='none';
         
         advancedFilterEnabled = false;
         var advancedFilters = new Object();
         
-        suspectGrid.Clear(); 
+        suspectGrid.Clear();
+        now.ClearSuspectIPs(function(length){
+          console.log('in callback, suspectIPs reports length ' + length);
+          now.GetHostileSuspects();
+        });
     }
               
-    function featureFormatter(d) {
+    function featureFormatter(d) 
+    {
         var num = new Number(d);
         return (num.toFixed(2));
     }
 
-    function classificationFormatter(d) {
+    function classificationFormatter(d) 
+    {
         var num = 100 * d;
-        if (num > 0) {
+        if (num > 0) 
+        {
             // Minor performance boost, don't bother with coloring those < than 5% hostile, barely shows anyway
-            if (num > 5) {
+            if (num > 5) 
+            {
                 return '<div style="background: rgba(255, 0, 0, ' + d.toFixed(2) + ');">' + num.toFixed(2) + "%</div>";
-            } else {
+            } 
+            else 
+            {
                 return num.toFixed(2) + "%";
             }
-        } else {
-            if (num == -100) {
+        } 
+        else 
+        {
+            if (num == -100) 
+            {
                 return "Invalid";
-            } else if (num == -200) {
+            } 
+            else if (num == -200) 
+            {
                 return "Not Enough Data";
-            } else {
+            } 
+            else 
+            {
                 return "Error";
             }
-
         }
+    }
+    
+    function onGridRendered() 
+    {
+       var gridSize = suspectGrid.GetNumberOfPages();
+       var currentPage = suspectGrid.GetCurrentPage();
+
+       var temp = document.createElement('a');
+       document.getElementById("tablePages").innerHTML = "";
+
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', 'suspectGrid.PreviousPage();');
+       var pageLinkText = document.createTextNode(" <-- ");
+       pageLink.appendChild(pageLinkText);
+       document.getElementById("tablePages").appendChild(pageLink);
+
+       for (var i = 0; i < gridSize; i++) 
+       {
+           var pageLink = document.createElement('a');
+           pageLink.setAttribute('href', '#');
+           pageLink.setAttribute('onclick', 'suspectGrid.SetCurrentPage( ' + i + ');');
+
+           var pageLinkText = document.createTextNode(" " + (i + 1) + " ");
+           pageLink.appendChild(pageLinkText);
+
+           if (i == currentPage) 
+           {
+               var boldTag = document.createElement('b');
+               boldTag.appendChild(pageLink);
+
+               document.getElementById("tablePages").appendChild(boldTag);
+           } 
+           else 
+           {
+               document.getElementById("tablePages").appendChild(pageLink);
+           }    
+       }
+
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', 'suspectGrid.NextPage();');
+       var pageLinkText = document.createTextNode(" --> ");
+       pageLink.appendChild(pageLinkText);
+       document.getElementById("tablePages").appendChild(pageLink);
     }
     
     function Init() {
@@ -333,6 +447,8 @@ block headerAdditions
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(2);
+        suspectGrid.SetRowsPerPage(100);
+        suspectGrid.SetRenderCallback(onGridRendered);
 
         theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
         

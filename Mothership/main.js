@@ -345,6 +345,13 @@ everyone.now.GetHostileSuspects = function()
   }
 }
 
+everyone.now.ClearSuspectIPs = function(callback)
+{
+  suspectIPs.length = 0; 
+  console.log('suspectIPs contains ' + suspectIPs);
+  callback(suspectIPs.length);
+}
+
 // Remove a user-defined group from the client_groups.txt file
 everyone.now.RemoveGroup = function(group)
 {
