@@ -182,4 +182,63 @@
           console.log('UpdateConnectionsList called with invalid action, doing nothing');
           break;
       }
+      
+      now.UpdateGroupList = function(group, action)
+      {
+        var groupDiv = document.getElementById(group + 'div');
+        switch(action)
+        {
+          case 'update':
+            if(groupDiv == undefined || groupDiv.childNodes.length == 0)
+            {
+              var deleteMe = document.getElementById('noGroups');
+              if(deleteMe != undefined)
+              {
+                  document.getElementById(divName).removeChild(deleteMe);
+              }
+              now.GetGroupMembers(group, function(members){
+                var div = document.createElement('div');
+                div.id = group + 'div';
+                var check = document.createElement('input');
+                check.type = 'checkbox';
+                check.id = 'groupcheck' + i;
+                check.name = 'groupcheck' + i;
+                check.value = members;
+                check.setAttribute('onchange', 'setTarget(("groupcheck' + i + '"), document.getElementById("groupcheck' + i + '").value.replace(new RegExp("," , "g") , ":"), "true")');
+                check.setAttribute('style', 'padding-left: 50px');
+                var label = document.createElement('label');
+                label.value = group;
+                label.innerHTML = group;
+                label.title = members;
+                label.setAttribute('style', 'text-align: center; font-weight: bold; padding-left: 25px');
+                if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
+                {
+                  check.setAttribute('disabled', true);
+                }
+                div.appendChild(check);
+                div.appendChild(label);
+                document.getElementById('groupsList').appendChild(div);
+              });
+            }
+            else
+            {
+              now.GetGroupMembers(group, function(members){
+                var check = groupDiv.childNodes[0];
+                check.value = members;
+                if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
+                {
+                  check.setAttribute('disabled', true);
+                }
+                else
+                {
+                  check.removeAttribute('disabled'); 
+                }
+              });
+            }
+            break;
+          default:
+            console.log('UpdateGroupList called with invalid action, doing nothing');
+            break; 
+        }
+      }
     }

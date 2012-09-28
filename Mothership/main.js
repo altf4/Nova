@@ -350,7 +350,7 @@ everyone.now.RemoveGroup = function(group)
 {
   console.log('Removing group ' + group + ' from the client groups file');
   var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
-  var regex = group + ".+?;";
+  var regex = group + ".*?;";
   var replaceWithNull = new RegExp(regex, "g");
   groupFile = groupFile.replace(replaceWithNull, '');
   groupFile = trimNewlines(groupFile);
@@ -366,7 +366,7 @@ everyone.now.UpdateGroup = function(group, newMembers)
     console.log('Updating group ' + group + ' to have members ' + newMembers);
   }
   var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
-  var regex = group + ".+?;";
+  var regex = group + ".*?;";
   var replaceWithNull = new RegExp(regex, "g");
   groupFile = groupFile.replace(replaceWithNull, group + ":" + newMembers + ";");
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
@@ -385,11 +385,10 @@ everyone.now.GetGroupMembers = function(group, callback)
 {
   var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
   var start = groupFile.indexOf(group);
-  var end = groupFile.indexOf(';', start);
+  var end = groupFile.indexOf(';', start) - 2;
   if(typeof callback == 'function')
   {
-    console.log(groupFile.substr(start, end));
-    callback(groupFile.substr(start, end)); 
+    callback(trimNewlines(groupFile.substr((start + group.length + 1), end))); 
   }
 }
 
@@ -414,6 +413,10 @@ function trimNewlines(string)
   if(string[0] == '\n')
   {
     ret = string.substr(1);
+  }
+  if(string[string.length - 1] == '\n')
+  {
+    ret = ret.substr(0, ret.length - 1); 
   }
   return ret;
 }
@@ -528,7 +531,12 @@ wsServer.on('request', function(request)
             }
             eventCounter.push({client: json_args.id, events: "0"});
             everyone.now.GetGroupMembers('all', function(members){
-              everyone.now.UpdateGroup('all', members);
+              var newList = (members.split(';')[0] == '' ? json_args.id : members.split(';')[0] + ',' + json_args.id);
+              everyone.now.UpdateGroup('all', newList);
+              if(typeof everyone.now.UpdateGroupList == 'function')
+              {
+                everyone.now.UpdateGroupList('all', 'update');
+              }
             });
 						break;
           // This case is reserved for response from the clients;
@@ -564,7 +572,7 @@ wsServer.on('request', function(request)
 						  var start = append.indexOf(suspect.ip + '@' + suspect.client);
 						  if(start == -1)
 						  {
-						    append = suspect.ip + '@' + suspect.client + ":" + suspect.classification + " " + suspect.lastpacket + ';\n';
+						    append += suspect.ip + '@' + suspect.client + ":" + suspect.classification + " " + suspect.lastpacket + ';\n';
 						  }
 						  else
 						  {
