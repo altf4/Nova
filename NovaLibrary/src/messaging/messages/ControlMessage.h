@@ -85,7 +85,6 @@ public:
 	//Did the requested command succeed?
 	bool m_success;
 
-protected:
 	//Serializes the UI_Message object into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array

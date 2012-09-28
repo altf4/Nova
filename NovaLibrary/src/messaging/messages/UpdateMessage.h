@@ -60,7 +60,6 @@ public:
 	Suspect *m_suspect;
 	SuspectIdentifier m_IPAddress;
 
-protected:
 	//Serializes the Message object into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array

@@ -691,7 +691,6 @@ void UpdateAndClassify(SuspectIdentifier key)
 	}
 
 
-	//Send silent alarm if needed
 	if(suspectCopy.GetIsHostile() && (!oldIsHostile || Config::Inst()->GetClearAfterHostile()))
 	{
 		try {

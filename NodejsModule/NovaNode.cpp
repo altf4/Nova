@@ -65,10 +65,8 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 	m_callbackRunning = true;
 	do
 	{
-		// TODO DTC see below
-		//Suspect *s;
+		Suspect *s;
 		cb = callbackHandler.ProcessCallbackMessage();
-		//            LOG(DEBUG,"callback type " + cb.type,"");
 		switch( cb.m_type )
 		{
 		case CALLBACK_NEW_SUSPECT:
@@ -84,10 +82,10 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 			break;
 
 		case CALLBACK_SUSPECT_CLEARED:
-			// TODO DTC: Disabled during suspect IP uid switch
-			//s = new Suspect();
-			//s->SetIpAddress(cb.m_suspectIP);
-			//HandleSuspectCleared(s);
+			s = new Suspect();
+			s->SetIdentifier(cb.m_suspectIP);
+			LOG(DEBUG, "Got a clear callback request for a suspect on interface " + cb.m_suspectIP.m_interface, "");
+			HandleSuspectCleared(s);
 
 		default:
 			break;
@@ -222,12 +220,12 @@ void NovaNode::Init(Handle<Object> target)
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "IsHaystackUp", (InvokeMethod<bool, Nova::IsHaystackUp>) );
 	//              
 	//              NODE_SET_PROTOTYPE_METHOD(s_ct, "SaveAllSuspects", (InvokeMethod<Boolean, bool, Nova::SaveAllSuspects>) );
-	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearSuspect", (InvokeMethod<bool, std::string, Nova::ClearSuspect>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ReclassifyAllSuspects", (InvokeMethod<bool, Nova::ReclassifyAllSuspects>) );
 	
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetLocalIP", (InvokeMethod<std::string, std::string, Nova::GetLocalIP>) );
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "Shutdown", Shutdown );
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearSuspect", ClearSuspect );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetSuspectDetailsString", GetSuspectDetailsString );
 
 	// Javascript object constructor
@@ -337,6 +335,19 @@ Handle<Value> NovaNode::Shutdown(const Arguments &)
 	Nova::CloseNovadConnection();
 	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
 	return scope.Close(result);
+}
+
+Handle<Value> NovaNode::ClearSuspect(const Arguments &args)
+{
+	HandleScope scope;
+	string suspectIp = cvv8::CastFromJS<string>(args[0]);
+	string suspectInterface = cvv8::CastFromJS<string>(args[1]);
+
+	in_addr_t address;
+	inet_pton(AF_INET, suspectIp.c_str(), &address);
+
+	SuspectIdentifier id(htonl(address), suspectInterface);
+	return scope.Close(Boolean::New(Nova::ClearSuspect(id)));
 }
 
 NovaNode::NovaNode() :

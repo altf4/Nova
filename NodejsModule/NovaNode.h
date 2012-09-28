@@ -75,6 +75,7 @@ public:
 	static void Init(Handle<Object> target);
 	static Handle<Value> CheckConnection(const Arguments __attribute__((__unused__)) & args);
 	static Handle<Value> Shutdown(const Arguments __attribute__((__unused__)) & args);
+	static Handle<Value> ClearSuspect(const Arguments & args);
 	NovaNode();
 	~NovaNode();
 

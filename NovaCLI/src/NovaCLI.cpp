@@ -271,7 +271,20 @@ int main(int argc, const char *argv[])
 		}
 		else
 		{
-			ClearSuspectWrapper(argv[2]);
+			if(argc < 4)
+			{
+				PrintUsage();
+			}
+
+			// Some early error checking for the
+			in_addr_t address;
+			if(inet_pton(AF_INET, argv[3], &address) != 1)
+			{
+				cout << "Error: Unable to convert to IP address" << endl;
+				exit(EXIT_FAILURE);
+			}
+
+			ClearSuspectWrapper(address, string(argv[2]));
 		}
 	}
 
@@ -356,7 +369,7 @@ void PrintUsage()
 	cout << "  " << EXECUTABLE_NAME << " clear all" << endl;
 	cout << "    Clears all saved data for suspects" << endl;
 	cout << endl;
-	cout << "  " << EXECUTABLE_NAME << " clear xxx.xxx.xxx.xxx" << endl;
+	cout << "  " << EXECUTABLE_NAME << " clear interface xxx.xxx.xxx.xxx" << endl;
 	cout << "    Clears all saved data for a specific suspect" << endl;
 	cout << endl;
 	cout << "  " << EXECUTABLE_NAME << " writesetting SETTING VALUE" << endl;
@@ -631,11 +644,13 @@ void ClearAllSuspectsWrapper()
 	CloseNovadConnection();
 }
 
-void ClearSuspectWrapper(string address)
+void ClearSuspectWrapper(in_addr_t address, string interface)
 {
 	Connect();
 
-	if(ClearSuspect(address))
+	SuspectIdentifier id(ntohl(address), interface);
+
+	if(ClearSuspect(id))
 	{
 		cout << "Suspect data has been cleared for this suspect" << endl;
 	}

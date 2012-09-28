@@ -276,13 +276,14 @@ void HandleControlMessage(ControlMessage &controlMessage, int socketFD)
 			Message::WriteMessage(&clearSuspectReply, socketFD);
 
 			struct in_addr suspectAddress;
-			suspectAddress.s_addr = controlMessage.m_suspectAddress.m_ip;
+			suspectAddress.s_addr = ntohl(controlMessage.m_suspectAddress.m_ip);
 
 			LOG(DEBUG, "Cleared a suspect due to UI request",
-					"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "+string(inet_ntoa(suspectAddress))+".");
+					"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "+string(inet_ntoa(suspectAddress))+ "on interface " + controlMessage.m_suspectAddress.m_interface + ".");
 
 			UpdateMessage *updateMessage = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
 			updateMessage->m_IPAddress = controlMessage.m_suspectAddress;
+			cout << "Sending UpdateMessage with suspect cleared on interface " << updateMessage->m_IPAddress.m_interface << endl;
 			NotifyUIs(updateMessage, UPDATE_SUSPECT_CLEARED_ACK, socketFD);
 
 			break;

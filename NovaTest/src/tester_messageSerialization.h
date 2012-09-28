@@ -19,6 +19,8 @@
 #include "gtest/gtest.h"
 
 #include "messaging/messages/RequestMessage.h"
+#include "messaging/messages/ControlMessage.h"
+#include "messaging/messages/UpdateMessage.h"
 
 using namespace Nova;
 
@@ -73,5 +75,35 @@ TEST_F(MessageSerilaizationTest, REQUEST_SUSPECT_LIST_empty)
 
 	RequestMessage deserializedCopy(buffer + 4, bufferSize);
 	EXPECT_EQ(msg.m_suspectList.size(), deserializedCopy.m_suspectList.size());
-
 }
+
+TEST_F(MessageSerilaizationTest, CONTROL_CLEAR_SUSPECT_REQUEST)
+{
+	// Create and serialize a message
+	ControlMessage msg(CONTROL_CLEAR_SUSPECT_REQUEST, DIRECTION_TO_NOVAD);
+	msg.m_suspectAddress.m_ip = 42;
+	msg.m_suspectAddress.m_interface = "fake0";
+	buffer = msg.Serialize(&bufferSize);
+
+	// Deserialize it and make sure relevant internal variables for that message got copied okay
+	// The 4 offset is hacky, but it's to strip off the message size that would normally be removed in Message::Deserialize
+	ControlMessage deserializedCopy(buffer + 4, bufferSize);
+	EXPECT_EQ(msg.m_suspectAddress, deserializedCopy.m_suspectAddress);
+}
+
+
+TEST_F(MessageSerilaizationTest, UPDATE_SUSPECT_CLEARED)
+{
+	// Create and serialize a message
+	UpdateMessage msg(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_NOVAD);
+	msg.m_IPAddress.m_ip = 42;
+	msg.m_IPAddress.m_interface = "fake0";
+	buffer = msg.Serialize(&bufferSize);
+
+	// Deserialize it and make sure relevant internal variables for that message got copied okay
+	// The 4 offset is hacky, but it's to strip off the message size that would normally be removed in Message::Deserialize
+	UpdateMessage deserializedCopy(buffer + 4, bufferSize);
+	EXPECT_EQ(msg.m_IPAddress, deserializedCopy.m_IPAddress);
+}
+
+

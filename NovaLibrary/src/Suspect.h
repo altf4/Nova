@@ -21,6 +21,7 @@
 #define SUSPECT_H_
 
 #include "SerializationHelper.h"
+#include "SuspectIdentifer.h"
 #include "FeatureSet.h"
 #include "Point.h"
 
@@ -40,81 +41,6 @@ enum FeatureMode: bool
 
 namespace Nova{
 
-class SuspectIdentifier
-{
-public:
-	// Used internally for empty/deleted keys
-	unsigned char m_internal;
-
-	// IP address of the suspect
-	uint32_t m_ip;
-
-	// Ethernet interface the suspect was seen on
-	std::string m_interface;
-
-	uint32_t Serialize(u_char *buf, uint32_t bufferSize)
-	{
-		uint32_t offset = 0;
-
-		SerializeChunk(buf, &offset, (char*)&m_internal, sizeof m_internal, bufferSize);
-		SerializeChunk(buf, &offset, (char*)&m_ip, sizeof m_ip, bufferSize);
-		SerializeString(buf, &offset, m_interface, bufferSize);
-
-		return offset;
-	}
-
-	uint32_t Deserialize(u_char *buf, uint32_t bufferSize)
-	{
-		uint32_t offset = 0;
-
-		DeserializeChunk(buf, &offset, (char*)&m_internal, sizeof m_internal, bufferSize);
-		DeserializeChunk(buf, &offset, (char*)&m_ip, sizeof m_ip, bufferSize);
-		m_interface = DeserializeString(buf, &offset, bufferSize);
-
-		return offset;
-	}
-
-	uint32_t GetSerializationLength()
-	{
-		return sizeof(m_internal) + sizeof(m_ip) + (sizeof(uint32_t) + m_interface.size());
-	}
-
-
-	bool operator ==(const SuspectIdentifier &rhs) const
-	{
-		// This is for checking equality of empty/deleted keys
-		if (m_internal != 0)
-		{
-			return m_internal == rhs.m_internal;
-		}
-		else
-		{
-			return (m_ip == rhs.m_ip && m_interface == rhs.m_interface);
-		}
-	}
-
-	bool operator != (const SuspectIdentifier &rhs) const
-	{
-		return !(this->operator ==(rhs));
-	}
-
-	SuspectIdentifier()
-		:m_internal(0), m_ip(0)
-	{}
-
-	SuspectIdentifier(uint32_t ip, std::string interface)
-		:m_internal(0), m_ip(ip), m_interface(interface)
-	{}
-};
-
-struct equalityChecker
-{
-	bool operator()(Nova::SuspectIdentifier k1, Nova::SuspectIdentifier k2) const
-	{
-		return (k1 == k2);
-	}
-};
-
 // A Suspect represents a single actor on the network, whether good or bad.
 // Suspects are the target of classification and a major part of Nova.
 class Suspect
@@ -129,11 +55,13 @@ public:
 	~Suspect();
 
 	SuspectIdentifier GetIdentifier();
+	void SetIdentifier(SuspectIdentifier id);
 
 	// Converts suspect into a human readable std::string
 	//		featureEnabled: Array of size DIM that specifies which features to return in the std::string
 	// Returns: Human readable std::string of the given feature
 	std::string ToString();
+	std::string GetIdString();
 	std::string GetIpString();
 	std::string GetInterface();
 

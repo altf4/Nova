@@ -1292,9 +1292,9 @@ everyone.now.ClearAllSuspects = function (callback) {
 	}
 }
 
-everyone.now.ClearSuspect = function (suspect, callback) {
+everyone.now.ClearSuspect = function (suspectIp, interface, callback) {
 	nova.CheckConnection();
-	var result = nova.ClearSuspect(suspect);
+	var result = nova.ClearSuspect(suspectIp, interface);
 
 	if (callback != undefined) {
 		callback(result);

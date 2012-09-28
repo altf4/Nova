@@ -55,6 +55,16 @@ Suspect::~Suspect()
 string Suspect::GetIpString()
 {
 	stringstream ss;
+	ss << ((m_id.m_ip & 0xFF000000) >> 24) << ".";
+	ss << ((m_id.m_ip & 0x00FF0000) >> 16) << ".";
+	ss << ((m_id.m_ip & 0x0000FF00) >> 8) << ".";
+	ss << ((m_id.m_ip & 0x000000FF) >> 0);
+	return ss.str();
+}
+
+string Suspect::GetIdString()
+{
+	stringstream ss;
 	ss << m_id.m_interface << " ";
 	ss << ((m_id.m_ip & 0xFF000000) >> 24) << ".";
 	ss << ((m_id.m_ip & 0x00FF0000) >> 16) << ".";
@@ -336,6 +346,11 @@ in_addr_t Suspect::GetIpAddress()
 SuspectIdentifier Suspect::GetIdentifier()
 {
 	return m_id;
+}
+
+void Suspect::SetIdentifier(SuspectIdentifier id)
+{
+	m_id = id;
 }
 
 //Sets the suspects in_addr
