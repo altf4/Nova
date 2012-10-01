@@ -9,6 +9,7 @@ var nowjs = require('now');
 var fs = require('fs');
 var crypto = require('crypto');
 var sql = require('sqlite3');
+var schedule = require('node-schedule');
 var nova = new novaconfig.Instance();
 var config = new novaconfig.NovaConfigBinding();
 
@@ -120,6 +121,7 @@ var novaClients = new Object();
 var fileAssociations = new Array();
 var suspectIPs = new Array();
 var eventCounter = new Array();
+var scheduledMessages = new Array();
 var notifications = 0;
 var hostileEvents = 0;
 
@@ -185,7 +187,7 @@ everyone.now.MessageSend = function(message)
           sendMessage = false;
         }  
       }
-      if(targets[i] != '' && sendMessage)
+      if(targets[i] != '' && targets[i] != undefined && sendMessage)
       {
 	      novaClients[targets[i]].connection.sendUTF(JSON.stringify(message));
 	      seen.push(targets[i]);
@@ -196,6 +198,46 @@ everyone.now.MessageSend = function(message)
 };
 
 everyone.now.GetSuspectDetails = function(suspect, callback)
+{
+  
+}
+
+everyone.now.SetScheduledMessage = function(clientId, name, message, cron)
+{
+  if(cron == '' || cron == undefined)
+  {
+    console.log('Cannot schedule job without cron string'); 
+  }
+  
+  var newSchedule = {};
+  newSchedule.id = (clientId + '_' + name);
+  
+  if(cron != '' && cron != undefined)
+  {
+    newSchedule = schedule.scheduleJob(cron, function(){
+      message.id = clientId + ':';
+      everyone.now.MessageSend(message);
+    });
+  }
+  
+  console.log('setting scheduled message ' + (clientId + '_' + name) + ' with cron ' + cron);
+  
+  scheduledMessages.push(newSchedule);
+}
+
+everyone.now.UnsetScheduledMessage = function(clientId, name)
+{
+  for(var i in scheduledMessages)
+  {
+    if(scheduledMessages[i].id == (clientId + '_' + name))
+    { 
+       scheduledMessages[i].job.cancel();
+       delete scheduledMessages[i];
+    }
+  }
+}
+
+everyone.now.GetMessageIntervalId = function(clientId)
 {
   
 }
@@ -629,7 +671,7 @@ wsServer.on('request', function(request)
 				  // I anticipate mothership-side logging differences, so I figured i'd make another
 				  // case.
 				  case 'benignSuspect':
-				    console.log('Benign Suspect ' + json_args.ip + ' received from ' + json_args.client);
+				    console.log('Benign Suspect ' + json_args.ip + ' received from ' + json_args.client + ' at ' + json_args.lastpacket);
 				    var suspect = {};
             suspect.ip = json_args.ip;
             suspect.classification = json_args.classification;    
@@ -829,6 +871,19 @@ function contains(a, obj)
     return false;
 }
 
+function getMessageTypes()
+{
+  // For now
+  var ret = new Array();
+  ret.push('startNovad');
+  ret.push('startHaystack');
+  ret.push('stopNovad');
+  ret.push('stopHaystack');
+  ret.push('requestBenign');
+  ret.push('cancelRequestBenign');
+  return ret.join();
+}
+
 // Going to need to do passport for these soon, I think.
 app.get('/', passport.authenticate('basic', {session: false}), function(req, res) 
 {
@@ -900,6 +955,15 @@ app.get('/groups', passport.authenticate('basic', {session: false}), function(re
 app.get('/notifications', passport.authenticate('basic', {session: false}), function(req, res){
   res.render('notifications.jade', {locals:{
     EVENTS: getEventList()
+  }});
+});
+
+app.get('/schedule', passport.authenticate('basic', {session: false}), function(req, res){
+  res.render('schedule.jade', {locals:{
+    CLIENTS: getClients()
+    , GROUPS: getGroups()
+    , EVENTS: getEventList()
+    , TYPES: getMessageTypes()
   }});
 });
 
