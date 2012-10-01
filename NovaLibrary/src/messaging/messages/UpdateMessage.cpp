@@ -106,15 +106,8 @@ UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 			//Uses: 1) Message Header
 			//		2) Update Type
 			//		3) Suspect IP
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_updateType) + sizeof(m_IPAddress);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
 
-			memcpy(&m_IPAddress, buffer, sizeof(m_IPAddress));
-			buffer += sizeof(m_IPAddress);
+			m_IPAddress.Deserialize(reinterpret_cast<u_char*>(buffer), length);
 
 			break;
 		}
@@ -189,7 +182,7 @@ char *UpdateMessage::Serialize(uint32_t *length)
 			//Uses: 1) Message Header
 			//		2) update Message Type
 			//		3) IP address of suspect cleared
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) +  sizeof(m_IPAddress) + sizeof(messageSize);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) +  m_IPAddress.GetSerializationLength() + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -198,8 +191,8 @@ char *UpdateMessage::Serialize(uint32_t *length)
 			//Put the Control Message type in
 			memcpy(buffer, &m_updateType, sizeof(m_updateType));
 			buffer += sizeof(m_updateType);
-			memcpy(buffer, &m_IPAddress, sizeof(m_IPAddress));
-			buffer += sizeof(m_IPAddress);
+
+			m_IPAddress.Serialize(reinterpret_cast<u_char*>(buffer), messageSize);
 
 			break;
 		}

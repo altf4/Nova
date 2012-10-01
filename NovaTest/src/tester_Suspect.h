@@ -71,8 +71,8 @@ TEST_F(SuspectTest, EvidenceAddingRemoving)
 	Evidence *t2 = new Evidence();
 	*t1 = p1;
 	*t2 = p2;
-	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t1));
-	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t2));
+	EXPECT_NO_FATAL_FAILURE(suspect->ReadEvidence(t1, true));
+	EXPECT_NO_FATAL_FAILURE(suspect->ReadEvidence(t2, true));
 }
 
 TEST_F(SuspectTest, EvidenceProcessing)
@@ -81,8 +81,8 @@ TEST_F(SuspectTest, EvidenceProcessing)
 	Evidence *t2 = new Evidence();
 	*t1 = p1;
 	*t2 = p2;
-	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t1));
-	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t2));
+	EXPECT_NO_FATAL_FAILURE(suspect->ReadEvidence(t1, true));
+	EXPECT_NO_FATAL_FAILURE(suspect->ReadEvidence(t2, true));
 
 	// Calculate the feature values from the evidence
 	EXPECT_NO_FATAL_FAILURE(suspect->CalculateFeatures());
@@ -114,20 +114,34 @@ TEST_F(SuspectTest, Serialization)
 	*t1 = p1;
 	*t2 = p2;
 	// Just setup to get a suspect to serialize
-	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t1));
-	EXPECT_NO_FATAL_FAILURE(suspect->ConsumeEvidence(t2));
-	EXPECT_NO_FATAL_FAILURE(suspect->CalculateFeatures());
-	//EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
+	suspect->ReadEvidence(t1, true);
+	suspect->ReadEvidence(t2, true);
+	suspect->CalculateFeatures();
 
 	u_char buffer[MAX_MSG_SIZE];
-	EXPECT_NO_FATAL_FAILURE(suspect->Serialize(&buffer[0], MAX_MSG_SIZE, MAIN_FEATURE_DATA));
+	uint32_t bytesSerialized = suspect->Serialize(&buffer[0], MAX_MSG_SIZE, MAIN_FEATURE_DATA);
+	EXPECT_EQ(bytesSerialized, suspect->GetSerializeLength(MAIN_FEATURE_DATA));
+
 
 	Suspect *suspectCopy = new Suspect();
-	EXPECT_NO_FATAL_FAILURE(suspectCopy->Deserialize(&buffer[0], MAX_MSG_SIZE, MAIN_FEATURE_DATA));
+	suspectCopy->Deserialize(&buffer[0], MAX_MSG_SIZE, MAIN_FEATURE_DATA);
 
 	EXPECT_EQ(*suspect, *suspectCopy);
 
-	EXPECT_NO_FATAL_FAILURE(delete suspectCopy);
+	delete suspectCopy;
+}
+
+TEST_F(SuspectTest, SuspectIdSerialization)
+{
+	SuspectIdentifier id(42, "Hello");
+	u_char buffer[MAX_MSG_SIZE];
+	uint32_t bytesSerialized = id.Serialize(buffer, MAX_MSG_SIZE);
+	EXPECT_EQ(bytesSerialized, id.GetSerializationLength());
+
+	SuspectIdentifier idCopy;
+	idCopy.Deserialize(buffer, MAX_MSG_SIZE);
+
+	EXPECT_EQ(idCopy, id);
 }
 
 }

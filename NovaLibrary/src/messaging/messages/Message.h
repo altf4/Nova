@@ -100,7 +100,7 @@ protected:
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use
-	virtual char *Serialize(uint32_t *length);
+	virtual char *Serialize(uint32_t *length) = 0;
 
 	//Deserialize just the Message header, and advance the buffer input variable
 	//	buffer: A pointer to the array of serialized bytes representing a message

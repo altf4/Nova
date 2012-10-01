@@ -19,6 +19,7 @@
 #ifndef SERIALIZATIONHELPER_H_
 #define SERIALIZATIONHELPER_H_
 
+#include <string>
 #include <string.h>
 #include <exception>
 #include <arpa/inet.h>
@@ -52,6 +53,13 @@ inline bool SerializeChunk(u_char* buf, uint32_t *offset, char const* dataToSeri
 	return true;
 }
 
+inline bool SerializeString(u_char* buf, uint32_t *offset, std::string stringToSerialize, uint32_t maxBufferSize)
+{
+	uint32_t sizeOfString = stringToSerialize.size();
+	SerializeChunk(buf, offset, (char*)&sizeOfString, sizeof sizeOfString, maxBufferSize);
+	return SerializeChunk(buf, offset, stringToSerialize.c_str(), sizeOfString, maxBufferSize);
+}
+
 // Deserializes (simple memcpy) a chunk of data with checking on buffer bounds
 //    buf             : Pointer to buffer location where serialized data should go
 //    offset          : Offset from the buffer (will be incremented by DeserializeChunk)
@@ -69,6 +77,23 @@ inline bool DeserializeChunk(u_char *buf, uint32_t *offset, char *deserializeTo,
 	::memcpy(deserializeTo, buf+*offset, size);
 	*offset += size;
 	return true;
+}
+
+inline std::string DeserializeString(u_char *buf, uint32_t *offset, uint32_t maxBufferSize)
+{
+	uint32_t sizeOfString;
+	DeserializeChunk(buf, offset,(char*)&sizeOfString, sizeof sizeOfString, maxBufferSize);
+
+	std::string str;
+
+	if (sizeOfString != 0) {
+		char *stringBytes = new char[sizeOfString + 1];
+		DeserializeChunk(buf, offset, stringBytes, sizeOfString, maxBufferSize);
+		stringBytes[sizeOfString] = '\0';
+		str = std::string(stringBytes);
+		delete[] stringBytes;
+	}
+	return str;
 }
 
 // Serializes a hash map
@@ -110,7 +135,7 @@ inline void SerializeHashTable(u_char *buf, uint32_t *offset, TableType& dataToS
 }
 
 template <typename TableType, typename KeyType, typename ValueType>
-inline int GetSerializeHashTableLength(TableType& dataToSerialize, KeyType nullValue)
+inline uint32_t GetSerializeHashTableLength(TableType& dataToSerialize, KeyType nullValue)
 {
 	typename TableType::iterator it = dataToSerialize.begin();
 	typename TableType::iterator last = dataToSerialize.end();

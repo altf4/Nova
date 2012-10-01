@@ -39,6 +39,8 @@ Evidence::Evidence()
 
 Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 {
+	// TODO: Way too many magic numbers. Cast the packet to into header structs and refer to offsets by name
+
 	//Get timestamp
 	m_evidencePacket.ts = pkthdr->ts.tv_sec;
 

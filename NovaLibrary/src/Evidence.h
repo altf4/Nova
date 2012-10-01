@@ -20,6 +20,7 @@
 #ifndef EVIDENCE_H_
 #define EVIDENCE_H_
 
+#include <string>
 #include <pcap.h>
 #include <arpa/inet.h>
 
@@ -38,6 +39,8 @@ struct _tcpFlags
 
 struct _evidencePacket // Total of 18 bytes
 {
+	std::string interface;
+
 	uint16_t ip_len; 	//Length in bytes
 	uint8_t ip_p;		//Ip protocol (UDP, TCP or ICMP)
 	uint32_t ip_src;	//Source IPv4 address

@@ -83,15 +83,15 @@ bool CloseNovadConnection();
 // Gets a list of suspect addresses currently classified
 //	 listType: Type of list to get (all, just hostile, just benign)
 //	Returns: list of addresses
-std::vector<in_addr_t> *GetSuspectList(enum SuspectListType listType);
+std::vector<SuspectIdentifier> *GetSuspectList(enum SuspectListType listType);
 
 // Gets a suspect from the daemon
 // address: IP address of the suspect
 // Returns: Pointer to the suspect
-Suspect *GetSuspect(in_addr_t address);
+Suspect *GetSuspect(SuspectIdentifier address);
 
 // Same as GetSuspect but returns all the featureset data
-Suspect *GetSuspectWithData(in_addr_t address);
+Suspect *GetSuspectWithData(SuspectIdentifier address);
 
 //Asks Novad to save the suspect list to persistent storage
 //	returns - true if saved correctly, false on error
@@ -104,9 +104,7 @@ bool ClearAllSuspects();
 //Asks Novad to forget data on the specified suspect
 //	suspectAddress - The IP address (unique identifier) of the suspect to forget
 //	returns - true is suspect has been cleared successfully, false on error
-bool ClearSuspect(in_addr_t suspectAddress);
-
-bool ClearSuspect(std::string suspectAddress);
+bool ClearSuspect(SuspectIdentifier suspectAddress);
 
 //Asks Novad to reclassify all suspects
 //	returns - true if all suspects have been reclassified, false on error
