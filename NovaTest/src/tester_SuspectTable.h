@@ -18,7 +18,9 @@
 
 #include "gtest/gtest.h"
 #include "SuspectTable.h"
+#include "Suspect.h"
 
+/*
 
 // The fixture for testing class SuspectTable.
 class SuspectTableTest : public ::testing::Test, public SuspectTable {
@@ -59,8 +61,8 @@ TEST_F(SuspectTableTest, GetKeys) {
 
 	InitSuspects();
 
-	vector<u_int64_t> goodKeys = table.GetKeys_of_BenignSuspects();
-	vector<u_int64_t> badKeys = table.GetKeys_of_HostileSuspects();
+	vector<Nova::SuspectIdentifier> goodKeys = table.GetKeys_of_BenignSuspects();
+	vector<Nova::SuspectIdentifier> badKeys = table.GetKeys_of_HostileSuspects();
 
 	EXPECT_EQ((uint)1, goodKeys.size());
 	EXPECT_EQ((uint)1, goodKeys.at(0));
@@ -69,29 +71,42 @@ TEST_F(SuspectTableTest, GetKeys) {
 	EXPECT_EQ((uint)2, badKeys.at(0));
 }
 
+
 TEST_F(SuspectTableTest, IsValidKey) {
 	// Test for proper result on an empty table
-	EXPECT_FALSE(table.IsValidKey(0));
-	EXPECT_FALSE(table.IsValidKey(42));
+	SuspectIdentifier id;
+	id.m_ip = 0;
+
+	EXPECT_FALSE(table.IsValidKey(id));
+
+	id.m_ip = 42;
+	EXPECT_FALSE(table.IsValidKey(id));
 
 	InitSuspects();
-	EXPECT_FALSE(table.IsValidKey(0));
-	EXPECT_FALSE(table.IsValidKey(42));
-	EXPECT_TRUE(table.IsValidKey(1));
-	EXPECT_TRUE(table.IsValidKey(2));
+	id.m_ip = 0;
+	EXPECT_FALSE(table.IsValidKey(id));
+	id.m_ip = 42;
+	EXPECT_FALSE(table.IsValidKey(id));
+	id.m_ip = 1;
+	EXPECT_TRUE(table.IsValidKey(id));
+	id.m_ip = 2;
+	EXPECT_TRUE(table.IsValidKey(id));
 }
 
 TEST_F(SuspectTableTest, Erase) {
+	SuspectIdentifier id;
+	id.m_ip = 42;
 	// Test for proper result on an empty table
-	EXPECT_FALSE(table.Erase(42));
+	EXPECT_FALSE(table.Erase(id));
 
 	InitSuspects();
-	EXPECT_FALSE(table.Erase(42));
+	EXPECT_FALSE(table.Erase(id));
 
 	//EXPECT_EQ(SUSPECT_NOT_CHECKED_OUT , table.Erase(1));
 	//table.CheckOut(1);
 
-	EXPECT_TRUE(table.Erase(1));
+	id.m_ip = 1;
+	EXPECT_TRUE(table.Erase(id.m_ip));
 }
 
 
@@ -129,11 +144,10 @@ TEST_F(SuspectTableTest, CheckInAndOut) {
 	// Make sure we can't check out the same suspect more than once
 	// xxx: Apparently this is allowed. Make sure the desired functionality is to allow multiple CheckIns in a row
 
-	/* ^^^ regarding above - This is allowed, it performs a manual check out if the suspect isn't already checked out
-	 however this call will fail if another thread beats you to it or the suspect is erased so don't expect it in that case.
-	 - Dave S */
+	// ^^^ regarding above - This is allowed, it performs a manual check out if the suspect isn't already checked out
+	// however this call will fail if another thread beats you to it or the suspect is erased so don't expect it in that case.
+	// - Dave S
 
-	//
 
 	EXPECT_EQ(SUSPECT_TABLE_CALL_SUCCESS, table.CheckIn(&checkedOutS2));
 
@@ -149,3 +163,5 @@ TEST_F(SuspectTableTest, GetSuspect) {
 	EXPECT_EQ((uint)1, table.GetSuspect(1).GetIpAddress());
 	EXPECT_EQ((uint)2, table.GetSuspect(2).GetIpAddress());
 }
+
+*/

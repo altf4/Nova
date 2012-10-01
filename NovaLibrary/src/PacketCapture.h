@@ -42,8 +42,16 @@ public:
 
 	int GetDroppedPackets();
 
+	// This is the pcap API id that's passed to the packet capture callback
+	u_char GetIdIndex() {return m_index;}
+	void SetIdIndex(u_char index) {m_index = index;}
+
+	std::string GetIdentifier() {return m_identifier;}
+	void SetIdentifier(std::string identifier) {m_identifier = identifier;}
+
 protected:
 	std::string m_identifier;
+	u_char m_index;
 	pcap_t *m_handle;
 
 	// This is so we can run blocking pcap_loop in it's own thread

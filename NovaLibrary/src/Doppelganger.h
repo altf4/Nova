@@ -54,7 +54,7 @@ public:
 private:
 
 	SuspectTable& m_suspectTable;
-	std::vector<uint64_t> m_suspectKeys;
+	std::vector<SuspectIdentifier> m_suspectKeys;
 	bool m_initialized;
 
 };

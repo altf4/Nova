@@ -20,6 +20,7 @@ CPP_SRCS += \
 ../src/PacketCapture.cpp \
 ../src/Point.cpp \
 ../src/Suspect.cpp \
+../src/SuspectIdentifer.cpp \
 ../src/SuspectTable.cpp \
 ../src/ThresholdTriggerClassification.cpp \
 ../src/WhitelistConfiguration.cpp 
@@ -41,6 +42,7 @@ OBJS += \
 ./src/PacketCapture.o \
 ./src/Point.o \
 ./src/Suspect.o \
+./src/SuspectIdentifer.o \
 ./src/SuspectTable.o \
 ./src/ThresholdTriggerClassification.o \
 ./src/WhitelistConfiguration.o 
@@ -62,6 +64,7 @@ CPP_DEPS += \
 ./src/PacketCapture.d \
 ./src/Point.d \
 ./src/Suspect.d \
+./src/SuspectIdentifer.d \
 ./src/SuspectTable.d \
 ./src/ThresholdTriggerClassification.d \
 ./src/WhitelistConfiguration.d 

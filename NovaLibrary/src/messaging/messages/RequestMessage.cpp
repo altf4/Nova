@@ -76,32 +76,16 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 			memcpy(&m_listType, buffer, sizeof(m_listType));
 			buffer += sizeof(m_listType);
 
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectListLength) + sizeof(m_listType);
-			if(length < expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
 			// Deserialize the length of the suspect list
 			memcpy(&m_suspectListLength, buffer, sizeof(m_suspectListLength));
 			buffer += sizeof(m_suspectListLength);
 
-			expectedSize += m_suspectListLength;
-			if(expectedSize != length)
-			{
-				m_serializeError = true;
-				return;
-			}
-
 			// Deserialize the list
 			m_suspectList.clear();
-			for(uint i = 0; i < m_suspectListLength; i += sizeof(in_addr_t))
+			for(uint i = 0; i < m_suspectListLength; i++)
 			{
-				in_addr_t address;
-
-				memcpy(&address, buffer, sizeof(in_addr_t));
-				buffer += sizeof(in_addr_t);
+				SuspectIdentifier address;
+				buffer += address.Deserialize(reinterpret_cast<u_char*>(buffer), length);
 
 				m_suspectList.push_back(address);
 			}
@@ -127,16 +111,8 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 		case REQUEST_SUSPECT:
 		{
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectAddress);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
 			// Deserialize the address of the suspect being requested
-			memcpy(&m_suspectAddress, buffer, sizeof(m_suspectAddress));
-			buffer += sizeof(m_suspectAddress);
+			buffer += m_suspectAddress.Deserialize(reinterpret_cast<u_char*>(buffer), length);
 
 			break;
 		}
@@ -178,16 +154,8 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 		case REQUEST_SUSPECT_WITHDATA:
 		{
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectAddress);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
 			// Deserialize the address of the suspect being requested
-			memcpy(&m_suspectAddress, buffer, sizeof(m_suspectAddress));
-			buffer += sizeof(m_suspectAddress);
+			buffer += m_suspectAddress.Deserialize(reinterpret_cast<u_char*>(buffer), length);
 
 			break;
 		}
@@ -283,8 +251,12 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//		4) Size of list
 			//		5) List of suspect IPs
 
-			m_suspectListLength = sizeof(in_addr_t) *m_suspectList.size();
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectListLength) + m_suspectListLength + sizeof(m_listType) + sizeof(messageSize);
+			m_suspectListLength = m_suspectList.size();
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectListLength) + sizeof(m_listType) + sizeof(messageSize);
+			for (uint i = 0; i < m_suspectList.size(); i++)
+			{
+				messageSize += m_suspectList.at(i).GetSerializationLength();
+			}
 
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
@@ -305,9 +277,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//Suspect list buffer itself
 			for(uint i = 0; i < m_suspectList.size(); i++)
 			{
-				in_addr_t address = m_suspectList.at(i);
-				memcpy(buffer, &address, sizeof(in_addr_t));
-				buffer += sizeof(in_addr_t);
+				buffer += m_suspectList.at(i).Serialize(reinterpret_cast<u_char*>(buffer), messageSize);
 			}
 
 			break;
@@ -337,8 +307,8 @@ char *RequestMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) Request Message Type
-			// 		3) IP address of suspect being requested in in_addr_t format
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectAddress) + sizeof(messageSize);
+			// 		3) Suspect ID
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + m_suspectAddress.GetSerializationLength() + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -348,8 +318,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			buffer += sizeof(m_requestType);
 
 			// Serialize our IP
-			memcpy(buffer, &m_suspectAddress, sizeof(m_suspectAddress));
-			buffer += sizeof(m_suspectAddress);
+			buffer += m_suspectAddress.Serialize(reinterpret_cast<u_char*>(buffer), messageSize);
 			break;
 		}
 		case REQUEST_SUSPECT_REPLY:
@@ -390,8 +359,8 @@ char *RequestMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) Request Message Type
-			// 		3) IP address of suspect being requested in in_addr_t format
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectAddress) + sizeof(messageSize);
+			// 		3) Suspect ID
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + m_suspectAddress.GetSerializationLength() + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -401,8 +370,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			buffer += sizeof(m_requestType);
 
 			// Serialize our IP
-			memcpy(buffer, &m_suspectAddress, sizeof(m_suspectAddress));
-			buffer += sizeof(m_suspectAddress);
+			buffer += m_suspectAddress.Serialize(reinterpret_cast<u_char*>(buffer), messageSize);
 			break;
 		}
 		case REQUEST_SUSPECT_WITHDATA_REPLY:

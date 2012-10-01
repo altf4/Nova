@@ -192,18 +192,12 @@ bool ClearAllSuspects()
 	return retSuccess;
 }
 
-bool ClearSuspect(std::string suspectAddress)
-{
-	in_addr_t suspect = htonl(inet_addr(suspectAddress.c_str()));
-	return ClearSuspect(suspect);
-}
-
-bool ClearSuspect(in_addr_t suspectAddress)
+bool ClearSuspect(SuspectIdentifier suspectId)
 {
 	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
 
 	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST, DIRECTION_TO_NOVAD);
-	clearRequest.m_suspectAddress = suspectAddress;
+	clearRequest.m_suspectAddress = suspectId;
 	if(!Message::WriteMessage(&clearRequest, IPCSocketFD) )
 	{
 		LOG(ERROR, "Unable to send CONTROL_CLEAR_SUSPECT_REQUEST to NOVAD" ,"");

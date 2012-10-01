@@ -41,11 +41,11 @@ void StopNovaWrapper();
 void StopHaystackWrapper();
 void StopCaptureWrapper();
 
-void PrintSuspect(in_addr_t address);
-void PrintSuspectData(in_addr_t address);
+void PrintSuspect(in_addr_t address, std::string interface);
+void PrintSuspectData(in_addr_t address, std::string interface);
 void PrintAllSuspects(enum SuspectListType listType, bool csv);
 
-void ClearSuspectWrapper(std::string address);
+void ClearSuspectWrapper(in_addr_t address, std::string interface);
 void ClearAllSuspectsWrapper();
 
 void PrintSuspectList(enum SuspectListType listType);

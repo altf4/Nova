@@ -480,6 +480,8 @@ void StartCapture()
 			cap->Init();
 			cap->SetPacketCb(&Packet_Handler);
 			cap->SetFilter(captureFilterString);
+			cap->SetIdIndex(packetCaptures.size());
+			packetCaptures.push_back(cap);
 
 			vector<string> ips = Config::GetIpAddresses(ipAddressFile);
 			for (uint i = 0; i < ips.size(); i++)
@@ -528,6 +530,7 @@ void StartCapture()
 				cap->Init();
 				cap->SetFilter(captureFilterString.data());
 				cap->StartCapture();
+				cap->SetIdIndex(packetCaptures.size());
 				packetCaptures.push_back(cap);
 			}
 			catch (Nova::PacketCaptureException &e)
@@ -549,9 +552,9 @@ void StopCapture_noLocking()
 	for (uint i = 0; i < packetCaptures.size(); i++)
 	{
 		packetCaptures.at(i)->StopCapture();
-		delete packetCaptures.at(i);
+		//delete packetCaptures.at(i);
 	}
-	packetCaptures.clear();
+	//packetCaptures.clear();
 }
 
 void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet)
@@ -561,6 +564,7 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 		LOG(ERROR, "Failed to capture packet!","");
 		return;
 	}
+
 	switch(ntohs(*(uint16_t *)(packet+12)))
 	{
 		//IPv4, currently the only handled case
@@ -569,11 +573,7 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 
 			//Prepare Packet structure
 			Evidence *evidencePacket = new Evidence(packet + sizeof(struct ether_header), pkthdr);
-			if(localIPs.keyExists(evidencePacket->m_evidencePacket.ip_dst))
-			{
-				//manually setting dst ip to 0.0.0.1 designates the packet was to a real host not a haystack node
-				evidencePacket->m_evidencePacket.ip_dst = 1;
-			}
+			evidencePacket->m_evidencePacket.interface = packetCaptures.at(0)->GetIdentifier();
 
 			if (!Config::Inst()->GetReadPcap())
 			{
@@ -668,7 +668,7 @@ string ConstructFilterString()
 }
 
 
-void UpdateAndClassify(const in_addr_t& key)
+void UpdateAndClassify(SuspectIdentifier key)
 {
 	//Check for a valid suspect
 	Suspect suspectCopy = suspects.GetSuspect(key);
@@ -691,7 +691,6 @@ void UpdateAndClassify(const in_addr_t& key)
 	}
 
 
-	//Send silent alarm if needed
 	if(suspectCopy.GetIsHostile() && (!oldIsHostile || Config::Inst()->GetClearAfterHostile()))
 	{
 		try {
@@ -712,7 +711,7 @@ void UpdateAndClassify(const in_addr_t& key)
 			LOG(DEBUG, ss2.str(), "");
 
 			UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
-			msg->m_IPAddress = suspectCopy.GetIpAddress();
+			msg->m_IPAddress = suspectCopy.GetIdentifier();
 			NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 		}
 		else

@@ -56,7 +56,6 @@ public:
 
 	enum ErrorType m_errorType;
 
-protected:
 
 	//Serializes the ErrorMessage object into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned

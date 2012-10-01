@@ -22,7 +22,6 @@
 #include <v8.h>
 #include <node.h>
 
-#include <map>
 
 /* Nova headers */
 #include "nova_ui_core.h"
@@ -33,6 +32,7 @@
 /* NovaNode headers */
 #include "SuspectJs.h"
 #include "v8Helper.h"
+#include "SuspectTable.h"
 
 using namespace node;
 using namespace v8;
@@ -52,7 +52,7 @@ private:
 	static bool m_AllSuspectsClearedCallbackRegistered;
 	static bool m_SuspectClearedCallbackRegistered;
 	static bool m_callbackRunning;
-	static map<in_addr_t, Suspect*> m_suspects;
+	static SuspectHashTable m_suspects;
 
 	static void InitNovaCallbackProcessing();
 	static void CheckInitNova();
@@ -60,6 +60,7 @@ private:
 	static void NovaCallbackHandling(eio_req __attribute__((__unused__)) *req);
 	static int AfterNovaCallbackHandling(eio_req __attribute__((__unused__)) *req);
 	static void HandleNewSuspect(Suspect* suspect);
+	static void SendSuspect(Suspect* suspect);
 	static void HandleAllSuspectsCleared();
 	static void HandleSuspectCleared(Suspect*);
 	static int HandleNewSuspectOnV8Thread(eio_req* req);
@@ -74,6 +75,7 @@ public:
 	static void Init(Handle<Object> target);
 	static Handle<Value> CheckConnection(const Arguments __attribute__((__unused__)) & args);
 	static Handle<Value> Shutdown(const Arguments __attribute__((__unused__)) & args);
+	static Handle<Value> ClearSuspect(const Arguments & args);
 	NovaNode();
 	~NovaNode();
 
@@ -82,7 +84,7 @@ public:
 	static Handle<Value> GetFeatureNames(const Arguments& args);
 	static Handle<Value> GetDIM(const Arguments& args);
 	static Handle<Value> GetSupportedEngines(const Arguments& args);
-	static Handle<Value> getSuspectList(const Arguments& args);
+	static Handle<Value> sendSuspectList(const Arguments& args);
 	static Handle<Value> ClearAllSuspects(const Arguments& args);
 	static Handle<Value> registerOnNewSuspect(const Arguments& args);
 	static Handle<Value> registerOnAllSuspectsCleared(const Arguments& args);
