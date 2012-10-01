@@ -177,23 +177,8 @@ block headerAdditions
         intervalType.appendChild(option); 
       }
       
-      /*var newEventButton = document.createElement('button');
-      newEventButton.id = clientId + 'newEvent';
-      newEventButton.setAttribute('onclick', 'createScheduledEventElement("' + clientId + '");');
-      newEventButton.innerHTML = 'Create New ' + clientId + ' Event';
-      
-      var removeEventButton = document.createElement('button');
-      removeEventButton.id = clientId + 'removeEvent';
-      removeEventButton.setAttribute('onclick', 'unregisterScheduledMessage("' + clientId + '", document.getElementById("' + clientId + 'name").value);  document.getElementById("elementHook").removeChild(document.getElementById("' + clientId + '"));');
-      removeEventButton.innerHTML = 'Remove Event';*/
-      
       borderDiv.appendChild(label0);
       borderDiv.appendChild(typeSelect);
-      //borderDiv.appendChild(b0);
-      //borderDiv.appendChild(b1);
-      //borderDiv.appendChild(label3);
-      //borderDiv.appendChild(intervalNum);
-      //borderDiv.appendChild(intervalType);
       borderDiv.appendChild(b0);
       borderDiv.appendChild(label5);
       borderDiv.appendChild(cron);
@@ -202,31 +187,18 @@ block headerAdditions
       borderDiv.appendChild(b5);
       borderDiv.appendChild(label4);
       borderDiv.appendChild(name);
-      //borderDiv.appendChild(b2);
-      //borderDiv.appendChild(newEventButton);
-      //borderDiv.appendChild(b4);
-      //borderDiv.appendChild(removeEventButton);
       
       document.getElementById('elementHook').appendChild(borderDiv);
     }
     
     function newTypeSelected(clientId)
     {
-      
+      // For when message types requiring arguments are supported
     }
     
     function registerScheduledMessage(clientId, name, message, cron)
     {
       now.SetScheduledMessage(clientId, name, message, cron);
-      //console.log('clientId ' + clientId);
-      //console.log('name ' + name);
-      
-      //for(var i in message)
-      //{
-      //  console.log('message: ' + i + ', ' + message[i]); 
-      //}
-   
-      //console.log('cron ' + cron); 
     }
     
     function unregisterScheduledMessage(clientId, name)
@@ -252,13 +224,14 @@ block headerAdditions
           && (document.getElementById(id + 'cron').value != ''))
           {
             var name = document.getElementById(id + 'name').value;
+            
             var registerMessage = {};
             registerMessage.type = document.getElementById(id + 'select').value;
-            //var interval = {};
-            //interval.value = document.getElementById(id + 'intervalNum').value;
-            //interval.type = document.getElementById(id + 'intervalType').value;
+            
             var cron = document.getElementById(id + 'cron').value;
+            
             registerScheduledMessage(id, name, registerMessage, cron);
+            
             document.getElementById('elementHook').removeChild(document.getElementById(id));
             document.getElementById(id + 'div').childNodes[0].checked = false;
           }
