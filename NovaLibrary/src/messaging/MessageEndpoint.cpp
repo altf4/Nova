@@ -40,6 +40,7 @@ MessageEndpoint::MessageEndpoint(int socketFD, struct bufferevent *bufferevent)
 	pthread_mutex_init(&m_callbackRegisterMutex, NULL);
 	pthread_mutex_init(&m_availableCBsMutex, NULL);
 	pthread_mutex_init(&m_nextSerialMutex, NULL);
+	pthread_mutex_init(&m_buffereventMutex, NULL);
 
 	pthread_cond_init(&m_callbackWakeupCondition, NULL);
 
@@ -64,13 +65,9 @@ MessageEndpoint::~MessageEndpoint()
 	pthread_mutex_destroy(&m_callbackRegisterMutex);
 	pthread_mutex_destroy(&m_availableCBsMutex);
 	pthread_mutex_destroy(&m_nextSerialMutex);
+	pthread_mutex_destroy(&m_buffereventMutex);
 
 	pthread_cond_destroy(&m_callbackWakeupCondition);
-
-	if(m_bufferevent != NULL)
-	{
-		bufferevent_free(m_bufferevent);
-	}
 }
 
 //blocking call
@@ -116,6 +113,13 @@ Message *MessageEndpoint::PopMessage(Ticket &ticket, int timeout)
 
 bool MessageEndpoint::WriteMessage(Message *message)
 {
+	Lock lock(&m_buffereventMutex);
+
+	if(m_bufferevent == NULL)
+	{
+		return false;
+	}
+
 	bufferevent_lock(m_bufferevent);
 
 	uint32_t length;

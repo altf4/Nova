@@ -327,6 +327,19 @@ void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void 
 	if(error & (BEV_EVENT_EOF | BEV_EVENT_ERROR))
 	{
 		evutil_socket_t socketFD = bufferevent_getfd(bev);
+		{
+			MessageEndpointLock endpointLock = MessageManager::Instance().GetEndpoint(socketFD);
+			if(endpointLock.m_endpoint != NULL)
+			{
+				Lock lock(&endpointLock.m_endpoint->m_buffereventMutex);
+				bufferevent_free(bev);
+				endpointLock.m_endpoint->m_bufferevent = NULL;
+			}
+			else
+			{
+				bufferevent_free(bev);
+			}
+		}
 		MessageManager::Instance().DeleteEndpoint(socketFD);
 		return;
 	}
