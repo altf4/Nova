@@ -239,22 +239,31 @@ void ConvertCaptureToDump(std::string captureFolder)
 
 void CaptureData(std::string captureFolder, std::string interface)
 {
-	LOG(DEBUG, "Starting data capture", "");
+	LOG(DEBUG, "Starting data capture. Storing results in folder:" + captureFolder, "");
+
+    if(system(string("mkdir " + captureFolder).c_str()))
+    {
+        // Not really an problem, throws compiler warning if we don't catch the system call though
+    }
 
     // Write out the state of the haystack at capture
     if(IsHaystackUp())
     {
+    	LOG(DEBUG, "Haystack appears up. Recording current state.", "");
     	string haystackFile = captureFolder + "/haystackIps.txt";
-        vector<string> haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathHome() + Config::Inst()->GetPathConfigHoneydHS());
+        vector<string> haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathConfigHoneydHS());
         vector<string> haystackDhcpAddresses = Config::GetIpAddresses("/var/log/honeyd/ipList");
 
+        LOG(DEBUG, "Writing haystack IPs to file " + haystackFile, "");
         ofstream haystackIpStream(haystackFile);
         for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
         {
+        	LOG(DEBUG, "Found haystack DHCP IP " + haystackDhcpAddresses.at(i), "");
             haystackIpStream << haystackDhcpAddresses.at(i) << endl;
         }
         for(uint i = 0; i < haystackAddresses.size(); i++)
         {
+        	LOG(DEBUG, "Found haystack static IP " + haystackAddresses.at(i), "");
             haystackIpStream << haystackAddresses.at(i) << endl;
         }
 
@@ -263,11 +272,6 @@ void CaptureData(std::string captureFolder, std::string interface)
 
     // Prepare for packet capture
 	string trainingCapFile = captureFolder + "/capture.pcap";
-
-    if(system(string("mkdir " + captureFolder).c_str()))
-    {
-        // Not really an problem, throws compiler warning if we don't catch the system call though
-    }
 
     InterfacePacketCapture *capture = new InterfacePacketCapture(interface);
     capture->Init();
