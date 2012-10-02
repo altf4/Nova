@@ -148,6 +148,11 @@ void MessageManager::DeleteEndpoint(int socketFD)
 		//First, shut down the endpoint, so as to signal anyone using it to clear out
 		{
 			Lock lock(m_endpoints[socketFD].second, READ_LOCK);
+			if(m_endpoints[socketFD].first == NULL)
+			{
+				//If there is no endpoint, then just quit
+				return;
+			}
 			m_endpoints[socketFD].first->Shutdown();
 		}
 
@@ -319,27 +324,10 @@ void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void 
 		return;
 	}
 
-	if(error & BEV_EVENT_EOF)
+	if(error & (BEV_EVENT_EOF | BEV_EVENT_ERROR))
 	{
 		evutil_socket_t socketFD = bufferevent_getfd(bev);
-		MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
-		if(endpoint.m_endpoint != NULL)
-		{
-			endpoint.m_endpoint->Shutdown();
-		}
-		bufferevent_free(bev);
-		return;
-	}
-
-	if(error & BEV_EVENT_ERROR)
-	{
-		evutil_socket_t socketFD = bufferevent_getfd(bev);
-		MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
-		if(endpoint.m_endpoint != NULL)
-		{
-			endpoint.m_endpoint->Shutdown();
-		}
-		bufferevent_free(bev);
+		MessageManager::Instance().DeleteEndpoint(socketFD);
 		return;
 	}
 }

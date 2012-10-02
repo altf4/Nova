@@ -66,6 +66,11 @@ MessageEndpoint::~MessageEndpoint()
 	pthread_mutex_destroy(&m_nextSerialMutex);
 
 	pthread_cond_destroy(&m_callbackWakeupCondition);
+
+	if(m_bufferevent != NULL)
+	{
+		bufferevent_free(m_bufferevent);
+	}
 }
 
 //blocking call
