@@ -164,43 +164,17 @@ block headerAdditions
       }
       
       typeSelect.setAttribute('onclick', 'newTypeSelected("' + clientId + '")');
-      
-      var b0 = document.createElement('br');
-      var b1 = document.createElement('br');
-      var b2 = document.createElement('br');
-      var b3 = document.createElement('br');
-      var b4 = document.createElement('br');
-      var b5 = document.createElement('br');
-      var b6 = document.createElement('br');
-      
-      var label3 = document.createElement('label');
-      label3.innerHTML = 'Every ';
-      
-      var intervalNum = document.createElement('input');
-      intervalNum.type = 'number';
-      intervalNum.min = '1';
-      intervalNum.max = '100';
-      intervalNum.id = clientId + 'intervalNum';
-      
-      var intervalType = document.createElement('select');
-      intervalType.id = clientId + 'intervalType';
-      
-      var label4 = document.createElement('label');
-      label4.innerHTML = 'Event Name: ';
-      
-      var name = document.createElement('input');
-      name.id = clientId + 'name';
-      
+
       var label5 = document.createElement('label');
       label5.innerHTML = 'Cron String: ';
       
       var cron = document.createElement('input');
       cron.id = clientId + 'cron';
-      
+
       var exLabel = document.createElement('label');
       exLabel.innerHTML = '(W, L and # are not supported for the cron syntax. Use 0 for Sunday, not 7)';
       exLabel.setAttribute('style', 'font-style: italic');
-      
+
       var label6 = document.createElement('label');
       label6.innerHTML = 'OR once on ';
       
@@ -210,22 +184,27 @@ block headerAdditions
       date.setAttribute('style', 'font-style: italic; width: 120px');
       date.setAttribute('onblur', 'watermark("' + date.id + '", "Date MM/DD/YYYY")');
       date.setAttribute('onfocus', 'watermark("' + date.id + '", "Date MM/DD/YYYY")');
+      
       var time = document.createElement('input');
       time.id = clientId + 'time';
       time.value = "Time(24hr) HH:MM(:SS)";
       time.setAttribute('style', 'font-style: italic');
       time.setAttribute('onblur', 'watermark("' + time.id + '", "Time(24hr) HH:MM(:SS)")');
       time.setAttribute('onfocus', 'watermark("' + time.id + '", "Time(24hr) HH:MM(:SS)")');
+
+      var label4 = document.createElement('label');
+      label4.innerHTML = 'Event Name: ';
       
-      var options = ['minutes', 'hours', 'days'];
+      var name = document.createElement('input');
+      name.id = clientId + 'name';
       
-      for(var i in options)
-      {
-        var option = document.createElement('option');
-        option.value = options[i];
-        option.innerHTML = options[i];
-        intervalType.appendChild(option); 
-      }
+      var b0 = document.createElement('br');
+      var b1 = document.createElement('br');
+      var b2 = document.createElement('br');
+      var b3 = document.createElement('br');
+      var b4 = document.createElement('br');
+      var b5 = document.createElement('br');
+      var b6 = document.createElement('br');
       
       borderDiv.appendChild(label0);
       borderDiv.appendChild(typeSelect);
@@ -254,18 +233,6 @@ block headerAdditions
     {
       message.id = clientId + ':';
       now.SetScheduledMessage(clientId, name, message, cron, date, cb);
-    }
-    
-    function unregisterScheduledMessage(clientId, name)
-    {
-      if(name == "" || name == undefined)
-      { 
-        return; 
-      }
-      else
-      {
-        console.log('would be unregistering ' + clientId + ' here'); 
-      }
     }
     
     function submitSchedule()

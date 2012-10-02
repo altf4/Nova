@@ -1,0 +1,121 @@
+extends layout
+
+block content
+  h1 Currently Scheduled Events
+  br
+  div(id="elementHook")
+          
+block headerAdditions
+  script
+    var clients = "#{CLIENTS}".split(':');
+    var groups = !{GROUPS};
+    var messageTypes = "#{TYPES}".split(',');
+    var message = {};
+    message.id = '';
+    
+    function watermark(id, text)
+    {
+      var element = document.getElementById(id);
+    
+      if(element.value.length > 0)
+      {
+        if(element.value == text)
+        {
+          element.value = '';
+          if(id.indexOf('date') != -1)
+          {
+            element.setAttribute('style', 'width: 120px;');
+          }
+          else
+          {
+            element.removeAttribute('style'); 
+          }
+        }
+      }
+      else
+      {
+        element.value = text;
+        if(id.indexOf('date') != -1)
+        {
+          element.setAttribute('style', 'font-style: italic; width: 120px;');
+        }
+        else
+        {
+          element.setAttribute('style', 'font-style: italic;');
+        }
+      }
+    }
+    
+    function unregisterScheduledEvent(eventName)
+    {
+      now.UnsetScheduledMessage(eventName, function(bool, response){
+        if(bool == 'true')
+        {
+          document.getElementById('elementHook').removeChild(document.getElementById(eventName));
+        }
+        console.log(response);  
+      }); 
+    }
+    
+    function generateScheduledEventElement(json)
+    {
+      var borderDiv = document.createElement('div');
+      borderDiv.id = json.eventName;
+      borderDiv.setAttribute('style', 'text-align: center; border: 2px solid; border-radius: 12px; background: #E8A02F; width: 65%;');
+      
+      var label0 = document.createElement('label');
+      label0.innerHTML = json.clientId;
+      label0.setAttribute('style', 'font-weight: bold; float: left');
+      
+      var label1 = document.createElement('label');
+      label1.innerHTML = 'Event Name: ' + json.eventName;
+      label1.setAttribute('style', 'font-weight: bold; float: right');
+      
+      var b0 = document.createElement('br');
+      
+      var label2 = document.createElement('label');
+      label2.innerHTML = 'Type: ' + json.eventType;
+      label2.setAttribute('style', 'float: left; font-weight: bold; font-style: italic;');
+      
+      var label3 = document.createElement('label');
+      if(json.cronString == '' && json.dateString != '')
+      {
+        label3.innerHTML = 'Date: ' + json.dateString;
+       
+      }
+      else
+      {
+        label3.innerHTML = 'Cron: ' + json.cronString; 
+      }
+      label3.setAttribute('style', 'font-weight: bold; float: right;');
+      
+      var b1 = document.createElement('br');
+      
+      var button = document.createElement('button');
+      button.setAttribute('onclick', 'unregisterScheduledEvent("' + json.eventName + '")');
+      button.innerHTML = 'Remove Event';
+      
+      borderDiv.appendChild(label0);
+      borderDiv.appendChild(label1);
+      borderDiv.appendChild(b0);
+      borderDiv.appendChild(label2);
+      borderDiv.appendChild(label3);
+      borderDiv.appendChild(b1);
+      borderDiv.appendChild(button);
+      
+      document.getElementById('elementHook').appendChild(borderDiv);
+    }
+    
+    function newTypeSelected(clientId)
+    {
+      // For when message types requiring arguments are supported
+    }
+    
+    now.ready(function(){
+      now.GetClients(now.RenderConnectionsList);
+      now.SetUpNotificationsButton();
+      now.SetUpHostileEventsButton();
+      now.GetScheduledEvents(function(json){
+        generateScheduledEventElement(json);
+      });
+    });

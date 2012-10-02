@@ -214,21 +214,26 @@ everyone.now.SetScheduledMessage = function(clientId, name, message, cron, date,
   
   var newSchedule = {};
   newSchedule.id = (clientId + '_' + name);
+  newSchedule.clientId = clientId;
   
   if(date == undefined && (cron != '' && cron != undefined))
   {
+    newSchedule.eventType = 'cron';
     newSchedule.job = schedule.scheduleJob(newSchedule.id, cron, function(){
       everyone.now.MessageSend(message);
     });
     newSchedule.cron = cron;
+    newSchedule.date = '';
   }
   else if(date != undefined)
   {
+    newSchedule.eventType = 'date';
     var passDate = new Date(date);
     newSchedule.job = schedule.scheduleJob(newSchedule.id, passDate, function(){
       everyone.now.MessageSend(message);
     });
-    newSchedule.date = date;
+    newSchedule.date = passDate.toString();
+    newSchedule.cron = '';
   }
   else
   {
@@ -250,21 +255,33 @@ everyone.now.SetScheduledMessage = function(clientId, name, message, cron, date,
   scheduledMessages.push(newSchedule);
 }
 
-everyone.now.UnsetScheduledMessage = function(clientId, name)
+everyone.now.UnsetScheduledMessage = function(name, cb)
 {
   for(var i in scheduledMessages)
   {
-    if(scheduledMessages[i].id == (clientId + '_' + name))
+    if(scheduledMessages[i].id == name)
     { 
        scheduledMessages[i].job.cancel();
+       cb('true', 'Removed event ' + scheduledMessages[i].id);
        delete scheduledMessages[i];
+       return;
     }
   }
+  cb('false', 'No event by id ' + name + ', doing nothing');
 }
 
-everyone.now.GetScheduledEvents = function()
+everyone.now.GetScheduledEvents = function(callback)
 {
-  
+  for(var i in scheduledMessages)
+  {
+    var json = {};
+    json.clientId = scheduledMessages[i].clientId;
+    json.eventName = scheduledMessages[i].id;
+    json.eventType = scheduledMessages[i].eventType;
+    json.cronString = scheduledMessages[i].cron; 
+    json.dateString = scheduledMessages[i].date;
+    callback(json);
+  }
 }
 
 everyone.now.WriteNotification = function(notify)
@@ -994,13 +1011,14 @@ app.get('/schedule', passport.authenticate('basic', {session: false}), function(
 
 app.get('/listschedule', passport.authenticate('basic', {session: false}), function(req, res){
   // TODO: Put the actual listschedule.jade file here
-  res.render('schedule.jade', {locals:{
+  res.render('listschedule.jade', {locals:{
     CLIENTS: getClients()
     , GROUPS: getGroups()
     , EVENTS: getEventList()
     , TYPES: getMessageTypes()
   }});
 });
+
 /*app.get('/details', passport.authenticate('basic', {session: false}), function(req, res){
   if(req.query["suspect"] === undefined) 
   {
