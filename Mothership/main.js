@@ -41,9 +41,12 @@ var DATABASE_USER = config.ReadSetting("DATABASE_USER");
 var DATABASE_PASS = config.ReadSetting("DATABASE_PASS");
 
 var databaseOpenResult = function (err) {
-  if (err == null) {
+  if (err == null) 
+  {
     console.log("Opened sqlite3 database file.");
-  } else {
+  } 
+  else 
+  {
     LOG(ERROR, "Error opening sqlite3 database file: " + err);
   }
 }
@@ -64,21 +67,19 @@ var HashPassword = function (password) {
   return shasum.digest('hex');
 }
 
-passport.serializeUser(function (user, done) {
+passport.serializeUser(function(user, done) {
   done(null, user);
 });
 
-passport.deserializeUser(function (user, done) {
+passport.deserializeUser(function(user, done) {
   done(null, user);
 });
 
-passport.use(new BasicStrategy(
-
-function (username, password, done) {
+passport.use(new BasicStrategy(function(username, password, done) {
   var user = username;
-  process.nextTick(function () {
-
-    dbqCredentialsRowCount.all(function (err, rowcount) {
+  
+  process.nextTick(function() {
+    dbqCredentialsRowCount.all(function(err, rowcount) {
       if (err) {
         console.log("Database error: " + err);
       }
@@ -86,8 +87,9 @@ function (username, password, done) {
       // If there are no users, add default nova and log in
       if (rowcount[0].rows == 0) {
         console.log("No users in user database. Creating default user.");
-        dbqCredentialsInsertUser.run('nova', HashPassword('toor'), function (err) {
-          if (err) {
+        dbqCredentialsInsertUser.run('nova', HashPassword('toor'), function(err) {
+          if (err) 
+          {
             throw err;
           }
 
@@ -202,26 +204,49 @@ everyone.now.GetSuspectDetails = function(suspect, callback)
   
 }
 
-everyone.now.SetScheduledMessage = function(clientId, name, message, cron)
+everyone.now.SetScheduledMessage = function(clientId, name, message, cron, date, cb)
 {
-  if(cron == '' || cron == undefined)
+  if((cron == '' || cron == undefined) && (date == undefined || date == ''))
   {
-    console.log('Cannot schedule job without cron string'); 
+    cb(clientId, 'failed', 'No cron string or scheduled date for ' + newSchedule.id + '.');
+    return; 
   }
   
   var newSchedule = {};
   newSchedule.id = (clientId + '_' + name);
   
-  if(cron != '' && cron != undefined)
+  if(date == undefined && (cron != '' && cron != undefined))
   {
-    newSchedule = schedule.scheduleJob(cron, function(){
-      message.id = clientId + ':';
+    newSchedule.job = schedule.scheduleJob(newSchedule.id, cron, function(){
       everyone.now.MessageSend(message);
     });
+    newSchedule.cron = cron;
+  }
+  else if(date != undefined)
+  {
+    var passDate = new Date(date);
+    newSchedule.job = schedule.scheduleJob(newSchedule.id, passDate, function(){
+      everyone.now.MessageSend(message);
+    });
+    newSchedule.date = date;
+  }
+  else
+  {
+    console.log('No date or cron string specified in ' + newSchedule.id + ', doing nothing.');
+    return; 
   }
   
-  console.log('setting scheduled message ' + (clientId + '_' + name) + ' with cron ' + cron);
+  for(var i in scheduledMessages)
+  {
+    if(scheduledMessages[i].id == newSchedule.id)
+    {
+      console.log('There is already an event with that name, please choose another name.');
+      cb(clientId, 'failed', 'Name conflict for ' + newSchedule.id + ', choose another name.');
+      return;
+    } 
+  }
   
+  cb(clientId, 'succeeded', 'Adding new scheduled event to list.');
   scheduledMessages.push(newSchedule);
 }
 
@@ -237,7 +262,7 @@ everyone.now.UnsetScheduledMessage = function(clientId, name)
   }
 }
 
-everyone.now.GetMessageIntervalId = function(clientId)
+everyone.now.GetScheduledEvents = function()
 {
   
 }
@@ -967,6 +992,15 @@ app.get('/schedule', passport.authenticate('basic', {session: false}), function(
   }});
 });
 
+app.get('/listschedule', passport.authenticate('basic', {session: false}), function(req, res){
+  // TODO: Put the actual listschedule.jade file here
+  res.render('schedule.jade', {locals:{
+    CLIENTS: getClients()
+    , GROUPS: getGroups()
+    , EVENTS: getEventList()
+    , TYPES: getMessageTypes()
+  }});
+});
 /*app.get('/details', passport.authenticate('basic', {session: false}), function(req, res){
   if(req.query["suspect"] === undefined) 
   {

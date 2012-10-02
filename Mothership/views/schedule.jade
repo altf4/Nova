@@ -27,6 +27,39 @@ block headerAdditions
     var message = {};
     message.id = '';
     
+    function watermark(id, text)
+    {
+      var element = document.getElementById(id);
+    
+      if(element.value.length > 0)
+      {
+        if(element.value == text)
+        {
+          element.value = '';
+          if(id.indexOf('date') != -1)
+          {
+            element.setAttribute('style', 'width: 120px;');
+          }
+          else
+          {
+            element.removeAttribute('style'); 
+          }
+        }
+      }
+      else
+      {
+        element.value = text;
+        if(id.indexOf('date') != -1)
+        {
+          element.setAttribute('style', 'font-style: italic; width: 120px;');
+        }
+        else
+        {
+          element.setAttribute('style', 'font-style: italic;');
+        }
+      }
+    }
+    
     function setTarget(source, target, group)
     {
       if(group == 'true' || group == true)
@@ -138,6 +171,7 @@ block headerAdditions
       var b3 = document.createElement('br');
       var b4 = document.createElement('br');
       var b5 = document.createElement('br');
+      var b6 = document.createElement('br');
       
       var label3 = document.createElement('label');
       label3.innerHTML = 'Every ';
@@ -163,9 +197,25 @@ block headerAdditions
       var cron = document.createElement('input');
       cron.id = clientId + 'cron';
       
-      var exLabel = document.createElement('exLabel');
+      var exLabel = document.createElement('label');
       exLabel.innerHTML = '(W, L and # are not supported for the cron syntax. Use 0 for Sunday, not 7)';
       exLabel.setAttribute('style', 'font-style: italic');
+      
+      var label6 = document.createElement('label');
+      label6.innerHTML = 'OR once on ';
+      
+      var date = document.createElement('input');
+      date.id = clientId + 'date';
+      date.value = "Date MM/DD/YYYY";
+      date.setAttribute('style', 'font-style: italic; width: 120px');
+      date.setAttribute('onblur', 'watermark("' + date.id + '", "Date MM/DD/YYYY")');
+      date.setAttribute('onfocus', 'watermark("' + date.id + '", "Date MM/DD/YYYY")');
+      var time = document.createElement('input');
+      time.id = clientId + 'time';
+      time.value = "Time(24hr) HH:MM(:SS)";
+      time.setAttribute('style', 'font-style: italic');
+      time.setAttribute('onblur', 'watermark("' + time.id + '", "Time(24hr) HH:MM(:SS)")');
+      time.setAttribute('onfocus', 'watermark("' + time.id + '", "Time(24hr) HH:MM(:SS)")');
       
       var options = ['minutes', 'hours', 'days'];
       
@@ -185,6 +235,10 @@ block headerAdditions
       borderDiv.appendChild(b3);
       borderDiv.appendChild(exLabel);
       borderDiv.appendChild(b5);
+      borderDiv.appendChild(label6);
+      borderDiv.appendChild(date);
+      borderDiv.appendChild(time);
+      borderDiv.appendChild(b6);
       borderDiv.appendChild(label4);
       borderDiv.appendChild(name);
       
@@ -196,9 +250,10 @@ block headerAdditions
       // For when message types requiring arguments are supported
     }
     
-    function registerScheduledMessage(clientId, name, message, cron)
+    function registerScheduledMessage(clientId, name, message, cron, date, cb)
     {
-      now.SetScheduledMessage(clientId, name, message, cron);
+      message.id = clientId + ':';
+      now.SetScheduledMessage(clientId, name, message, cron, date, cb);
     }
     
     function unregisterScheduledMessage(clientId, name)
@@ -230,10 +285,70 @@ block headerAdditions
             
             var cron = document.getElementById(id + 'cron').value;
             
-            registerScheduledMessage(id, name, registerMessage, cron);
+            registerScheduledMessage(id, name, registerMessage, cron, undefined, function(id, status, response){
+              if(status == 'failed')
+              {
+                console.log(response);
+              }
+              else if(status == 'succeeded')
+              {
+                console.log(response);
+                document.getElementById('elementHook').removeChild(document.getElementById(id));
+                document.getElementById(id + 'div').childNodes[0].checked = false; 
+              }
+              else
+              {
+                console.log('Unknown status received from SetScheduledMessage, doing nothing.');
+              }  
+            });
+          }
+          else if((document.getElementById(id + 'date').value != '')
+          && (document.getElementById(id + 'time').value != '')
+          && (document.getElementById(id + 'cron').value == '')
+          && (document.getElementById(id + 'name').value != ''))
+          {
+            var temp = new Date();
+            var monthdayyear = document.getElementById(id + 'date').value.split('/');
+            var month = parseInt(monthdayyear[0]) - 1;
+            var day = parseInt(monthdayyear[1]);
+            var year = parseInt(monthdayyear[2]);
+            console.log('monthdayyear = ' + month + '/' + day + '/' + year);
+            var hourminutesecond = document.getElementById(id + 'time').value.split(':');
+            var hour = (parseInt(hourminutesecond[0]) % 24);
+            var minute = parseInt(hourminutesecond[1]);
+            var second = parseInt((hourminutesecond[2] != undefined ? hourminutesecond[2] : 0));
+            console.log('hourminutesecond = ' + hour + ':' + minute + ':' + second);
+            if(isNaN(month) || isNaN(day) || isNaN(year)
+            || isNaN(hour) || isNaN(minute) || isNaN(second))
+            {
+              alert('Define a cron string for recurring events or a one time run date/time'); 
+            }
+            var name = document.getElementById(id + 'name').value;
             
-            document.getElementById('elementHook').removeChild(document.getElementById(id));
-            document.getElementById(id + 'div').childNodes[0].checked = false;
+            var registerMessage = {};
+            registerMessage.type = document.getElementById(id + 'select').value;
+            
+            var date = new Date(year, month, day, hour, minute, second);
+            registerScheduledMessage(id, name, registerMessage, undefined, date, function(id, status, response){
+              if(status == 'failed')
+              {
+                console.log(response);
+              }
+              else if(status == 'succeeded')
+              {
+                console.log(response);
+                document.getElementById('elementHook').removeChild(document.getElementById(id));
+                document.getElementById(id + 'div').childNodes[0].checked = false; 
+              }
+              else
+              {
+                console.log('Unknown status received from SetScheduledMessage, doing nothing.');
+              }  
+            });
+            
+            // Need to register events in a more descriptive format on the server side 
+            // for review of currently set up jobs as well as the ability to 
+            // unregister unwanted scheduled events
           }
           else if(document.getElementById(id + 'name').value == '')
           {
