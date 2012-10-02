@@ -44,7 +44,7 @@ all: novacli
 novacli: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L../../NovaLibrary/Debug/ -L../../Nova_UI_Core/Debug -o "novacli" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L../../NovaLibrary/Release/ -L../../Nova_UI_Core/Release -o "novacli" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

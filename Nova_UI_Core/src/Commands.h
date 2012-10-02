@@ -29,12 +29,8 @@
 namespace Nova
 {
 //************************************************************************
-//**						Initialization								**
+//**						Status Queries								**
 //************************************************************************
-
-//Initializes internal objects and states. MUST be run once first, before any other functions
-void InitializeUI();
-
 
 //Runs the Novad process
 //	returns - True upon successfully running the novad process, false on error
@@ -62,6 +58,10 @@ bool IsNovadUp(bool tryToConnect = false);
 //	returns - true if a successful connection is established, false if no connection (error)
 //	NOTE: If a connection already exists, then the function does nothing and returns true
 bool ConnectToNovad();
+
+//Disconnects from Novad over IPC. (opposite of ConnectToNovad)
+//	NOTE: Safely does nothing if already disconnected
+void DisconnectFromNovad();
 
 //Tries to connect to Novad, waiting for at most timeout_ms milliseconds
 //	timeout_ms - The amount of time in milliseconds at maximum to wait for a connection

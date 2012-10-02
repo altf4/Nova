@@ -24,6 +24,7 @@
 #include "FilePacketCapture.h"
 #include "ProtocolHandler.h"
 #include "PacketCapture.h"
+#include "NovadCallback.h"
 #include "EvidenceTable.h"
 #include "Doppelganger.h"
 #include "SuspectTable.h"
@@ -118,7 +119,8 @@ int RunNovaD()
 		exit(EXIT_FAILURE);
 	}
 
-	MessageManager::Initialize(DIRECTION_TO_UI);
+	// Let the logger initialize before we have multiple threads going
+	Logger::Inst();
 
 	// Change our working folder into the config folder so our relative paths are correct
 	if(chdir(Config::Inst()->GetPathHome().c_str()) == -1)
@@ -151,6 +153,11 @@ int RunNovaD()
 
 	//Need to load the configuration before making the Classification Engine for setting up the DM
 	//Reload requires a CE object so we do a partial config load here.
+	//Loads the configuration file
+	Config::Inst()->LoadConfig();
+
+	NovadCallback *callback = new NovadCallback();
+	MessageManager::Instance().StartServer(callback);
 
 	LOG(ALERT, "Starting NOVA version " + Config::Inst()->GetVersionString(), "");
 
@@ -159,8 +166,6 @@ int RunNovaD()
 
 	engine = ClassificationEngine::MakeEngine();
 	engine->LoadConfiguration();
-
-	Spawn_UI_Handler();
 
 	haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
 	haystackDhcpAddresses = Config::GetIpAddresses(dhcpListFile);
@@ -710,7 +715,7 @@ void UpdateAndClassify(SuspectIdentifier key)
 			ss2 << "LastSave suspect Erase returned: " << suspectsSinceLastSave.Erase(key);
 			LOG(DEBUG, ss2.str(), "");
 
-			UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+			UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
 			msg->m_IPAddress = suspectCopy.GetIdentifier();
 			NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 		}

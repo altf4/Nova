@@ -38,7 +38,7 @@ protected:
 TEST_F(MessageSerilaizationTest, REQUEST_SUSPECT)
 {
 	// Create and serialize a message
-	RequestMessage msg(REQUEST_SUSPECT, DIRECTION_TO_NOVAD);
+	RequestMessage msg(REQUEST_SUSPECT);
 	msg.m_suspectAddress.m_ip = 42;
 	msg.m_suspectAddress.m_interface = "fake0";
 	buffer = msg.Serialize(&bufferSize);
@@ -51,12 +51,12 @@ TEST_F(MessageSerilaizationTest, REQUEST_SUSPECT)
 
 TEST_F(MessageSerilaizationTest, REQEST_SUSPECT_REPLY)
 {
-	RequestMessage msg(REQUEST_SUSPECT_REPLY, DIRECTION_TO_NOVAD);
+	RequestMessage msg(REQUEST_SUSPECT_REPLY);
 }
 
 TEST_F(MessageSerilaizationTest, REQUEST_SUSPECT_LIST)
 {
-	RequestMessage msg(REQUEST_SUSPECTLIST_REPLY, DIRECTION_TO_NOVAD);
+	RequestMessage msg(REQUEST_SUSPECTLIST_REPLY);
 	msg.m_suspectList.push_back(SuspectIdentifier(1, "fake1"));
 	msg.m_suspectList.push_back(SuspectIdentifier(2, "fakeTestaoeuaoeuaoeu2"));
 	msg.m_suspectList.push_back(SuspectIdentifier(3, "f3"));
@@ -70,7 +70,7 @@ TEST_F(MessageSerilaizationTest, REQUEST_SUSPECT_LIST)
 
 TEST_F(MessageSerilaizationTest, REQUEST_SUSPECT_LIST_empty)
 {
-	RequestMessage msg(REQUEST_SUSPECTLIST_REPLY, DIRECTION_TO_NOVAD);
+	RequestMessage msg(REQUEST_SUSPECTLIST_REPLY);
 	buffer = msg.Serialize(&bufferSize);
 
 	RequestMessage deserializedCopy(buffer + 4, bufferSize);
@@ -80,7 +80,7 @@ TEST_F(MessageSerilaizationTest, REQUEST_SUSPECT_LIST_empty)
 TEST_F(MessageSerilaizationTest, CONTROL_CLEAR_SUSPECT_REQUEST)
 {
 	// Create and serialize a message
-	ControlMessage msg(CONTROL_CLEAR_SUSPECT_REQUEST, DIRECTION_TO_NOVAD);
+	ControlMessage msg(CONTROL_CLEAR_SUSPECT_REQUEST);
 	msg.m_suspectAddress.m_ip = 42;
 	msg.m_suspectAddress.m_interface = "fake0";
 	buffer = msg.Serialize(&bufferSize);
@@ -95,7 +95,7 @@ TEST_F(MessageSerilaizationTest, CONTROL_CLEAR_SUSPECT_REQUEST)
 TEST_F(MessageSerilaizationTest, UPDATE_SUSPECT_CLEARED)
 {
 	// Create and serialize a message
-	UpdateMessage msg(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_NOVAD);
+	UpdateMessage msg(UPDATE_SUSPECT_CLEARED);
 	msg.m_IPAddress.m_ip = 42;
 	msg.m_IPAddress.m_interface = "fake0";
 	buffer = msg.Serialize(&bufferSize);

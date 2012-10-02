@@ -25,23 +25,35 @@
 #include "Config.h"
 #include "Lock.h"
 
-#include <unistd.h>
 #include <string>
 #include <cerrno>
 #include <sys/un.h>
 #include <sys/socket.h>
+#include "event.h"
+#include "event2/thread.h"
 
 using namespace std;
 using namespace Nova;
 //Socket communication variables
 int IPCSocketFD = -1;
 
+struct event_base *libeventBase = NULL;
+struct bufferevent *bufferevent = NULL;
+pthread_t eventDispatchThread;
+
 namespace Nova
 {
 
-void InitializeUI()
+void *EventDispatcherThread(void *arg)
 {
-	MessageManager::Initialize(DIRECTION_TO_NOVAD);
+	int ret = event_base_dispatch(libeventBase);
+	if(ret != 0)
+	{
+		stringstream ss;
+		ss << ret;
+		LOG(WARNING, "Message loop ended uncleanly. Error code: " + ss.str(), "");
+	}
+	return NULL;
 }
 
 bool ConnectToNovad()
@@ -49,6 +61,15 @@ bool ConnectToNovad()
 	if(IsNovadUp(false))
 	{
 		return true;
+	}
+
+	DisconnectFromNovad();
+
+	//Create new base
+	if(libeventBase == NULL)
+	{
+		evthread_use_pthreads();
+		libeventBase = event_base_new();
 	}
 
 	//Builds the key path
@@ -59,38 +80,60 @@ bool ConnectToNovad()
 	//Builds the address
 	struct sockaddr_un novadAddress;
 	novadAddress.sun_family = AF_UNIX;
-	strcpy(novadAddress.sun_path, key.c_str());
+	memset(novadAddress.sun_path, '\0', sizeof(novadAddress.sun_path));
+	strncpy(novadAddress.sun_path, key.c_str(), sizeof(novadAddress.sun_path));
 
-	if((IPCSocketFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	bufferevent = bufferevent_socket_new(libeventBase, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+	if(bufferevent == NULL)
 	{
-		LOG(ERROR, " socket: "+string(strerror(errno))+".", "");
+		LOG(ERROR, "Unable to create a socket to Nova", "");
+		DisconnectFromNovad();
 		return false;
 	}
 
-	MessageManager::Instance().DeleteQueue(IPCSocketFD);
+	bufferevent_setcb(bufferevent, MessageManager::MessageDispatcher, NULL, MessageManager::ErrorDispatcher, NULL);
 
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	if(bufferevent_enable(bufferevent, EV_READ) == -1)
+	{
+		LOG(ERROR, "Unable to enable socket events", "");
+		return false;
+	}
 
-	if(connect(IPCSocketFD, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
+	if(bufferevent_socket_connect(bufferevent, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
+	{
+		bufferevent = NULL;
+		LOG(DEBUG, "Unable to connect to NOVAD: "+string(strerror(errno))+".", "");
+		return false;
+	}
+
+	IPCSocketFD = bufferevent_getfd(bufferevent);
+	if(IPCSocketFD == -1)
 	{
 		LOG(DEBUG, "Unable to connect to NOVAD: "+string(strerror(errno))+".", "");
-		MessageManager::Instance().CloseSocket(IPCSocketFD);
-		IPCSocketFD = -1;
+		bufferevent_free(bufferevent);
+		bufferevent = NULL;
 		return false;
 	}
 
-	MessageManager::Instance().StartSocket(IPCSocketFD);
+	evutil_make_socket_nonblocking(IPCSocketFD);
 
-	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST, DIRECTION_TO_NOVAD);
-	if(!Message::WriteMessage(&connectRequest, IPCSocketFD))
+	MessageManager::Instance().DeleteEndpoint(IPCSocketFD);
+	MessageManager::Instance().StartSocket(IPCSocketFD, bufferevent);
+
+	pthread_create(&eventDispatchThread, NULL, EventDispatcherThread, NULL);
+
+	//Send a connection request
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
+
+	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST);
+	if(!MessageManager::Instance().WriteMessage(ticket, &connectRequest))
 	{
 		LOG(ERROR, "Could not send CONTROL_CONNECT_REQUEST to NOVAD", "");
-		MessageManager::Instance().CloseSocket(IPCSocketFD);
-		IPCSocketFD = -1;
+		DisconnectFromNovad();
 		return false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -106,8 +149,7 @@ bool ConnectToNovad()
 
 		reply->DeleteContents();
 		delete reply;
-		MessageManager::Instance().CloseSocket(IPCSocketFD);
-		IPCSocketFD = -1;
+		//DisconnectFromNovad();
 		return false;
 	}
 	ControlMessage *connectionReply = (ControlMessage*)reply;
@@ -119,8 +161,7 @@ bool ConnectToNovad()
 
 		reply->DeleteContents();
 		delete reply;
-		MessageManager::Instance().CloseSocket(IPCSocketFD);
-		IPCSocketFD = -1;
+		DisconnectFromNovad();
 		return false;
 	}
 	bool replySuccess = connectionReply->m_success;
@@ -129,6 +170,31 @@ bool ConnectToNovad()
 	return replySuccess;
 }
 
+void DisconnectFromNovad()
+{
+	//Close out any possibly remaining socket artifacts
+	if(libeventBase != NULL)
+	{
+		if(eventDispatchThread != 0)
+		{
+			if(event_base_loopexit(libeventBase, NULL) == -1)
+			{
+				LOG(WARNING, "Unable to exit event loop", "");
+			}
+
+			pthread_join(eventDispatchThread, NULL);
+			eventDispatchThread = 0;
+		}
+	}
+
+	if(bufferevent != NULL)
+	{
+		bufferevent_free(bufferevent);
+		bufferevent = NULL;
+	}
+
+	IPCSocketFD = -1;
+}
 
 bool TryWaitConnectToNovad(int timeout_ms)
 {
@@ -146,7 +212,7 @@ bool TryWaitConnectToNovad(int timeout_ms)
 
 bool CloseNovadConnection()
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
 	if(IPCSocketFD == -1)
 	{
@@ -155,13 +221,13 @@ bool CloseNovadConnection()
 
 	bool success = true;
 
-	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE, DIRECTION_TO_NOVAD);
-	if(!Message::WriteMessage(&disconnectNotice, IPCSocketFD))
+	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE);
+	if(!MessageManager::Instance().WriteMessage(ticket, &disconnectNotice))
 	{
 		success = false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -186,8 +252,7 @@ bool CloseNovadConnection()
 		}
 	}
 
-	MessageManager::Instance().CloseSocket(IPCSocketFD);
-	IPCSocketFD = -1;
+	DisconnectFromNovad();
 	LOG(DEBUG, "Call to CloseNovadConnection complete", "");
 	return success;
 }

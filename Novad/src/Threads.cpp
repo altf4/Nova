@@ -222,7 +222,7 @@ void *UpdateWhitelistIPFilter(void *ptr)
 				{
 					if(suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str())))
 					{
-						UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED, DIRECTION_TO_UI);
+						UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
 						msg->m_IPAddress = inet_addr(whitelistIpAddresses.at(i).c_str());
 						NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 					}

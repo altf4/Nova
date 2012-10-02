@@ -28,20 +28,10 @@
 #define REPLY_TIMEOUT 3
 
 //Currently, size is 2
-#define MESSADE_HDR_SIZE sizeof(m_protocolDirection) + sizeof(m_messageType) + sizeof(m_serialNumber)
+#define MESSADE_HDR_SIZE sizeof(m_messageType) + sizeof(m_ourSerialNumber) + sizeof(m_theirSerialNumber)
 
 namespace Nova
 {
-
-//The direction that this message's PROTOCOL (not individual message) is going. Who initiated the first message in the protocol
-//	IE: Is this a callback for Novad or the UI?
-//Value is used by MessageQueue to allow for dumb queueing of messages
-//	Otherwise the queue would have to be aware of the protocol used to know the direction
-enum ProtocolDirection: char
-{
-	DIRECTION_TO_UI = 0,
-	DIRECTION_TO_NOVAD = 1
-};
 
 enum MessageType: char
 {
@@ -64,21 +54,6 @@ public:
 	// can be safely deleted while what it wraps can continue to be used.
 	virtual void DeleteContents();
 
-	//Reads a Message from the given socket
-	//	NOTE: Blocking call, will wait until message appears
-	//	connectFD - A valid socket
-	//	timeout - Number of seconds to before returning a timeout error if no message received
-	// Returns - Pointer to newly allocated Message object
-	//				returns an ErrorMessage object on error. Will never return NULL.
-	//	NOTE: The caller must manually delete the returned object when finished with it
-	static Message *ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout = REPLY_TIMEOUT);
-
-	//Writes a given Message to the provided socket
-	//	message - A pointer to the message object to send
-	//	connectFD - a valid socket to send the message to
-	// Returns - true on successfully sending the object, false on error
-	static bool WriteMessage(Message *message, int connectFD);
-
 	//Creates a new Message from a given buffer. Calls the appropriate child constructor
 	//	buffer - char pointer to a buffer in memory where the serialized message is at
 	//	length - length of the buffer
@@ -86,21 +61,20 @@ public:
 	// Returns - Pointer to newly allocated Message object
 	//				returns ErrorMessage on error
 	//	NOTE: The caller must manually delete the returned object when finished with it
-	static Message *Deserialize(char *buffer, uint32_t length, enum ProtocolDirection direction);
-
-	enum ProtocolDirection m_protocolDirection;
-
-	enum MessageType m_messageType;
-
-	uint32_t m_serialNumber;
-
-protected:
+	static Message *Deserialize(char *buffer, uint32_t length);
 
 	//Serializes the Message object into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use
 	virtual char *Serialize(uint32_t *length) = 0;
+
+	enum MessageType m_messageType;
+
+	uint32_t m_ourSerialNumber;
+	uint32_t m_theirSerialNumber;
+
+protected:
 
 	//Deserialize just the Message header, and advance the buffer input variable
 	//	buffer: A pointer to the array of serialized bytes representing a message

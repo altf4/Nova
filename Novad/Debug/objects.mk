@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lNovaLibrary -lpcap -lcurl -lnotify -lann -lpthread -lsqlite3
+LIBS := -lNovaLibrary -levent -levent_pthreads -lpcap -lcurl -lnotify -lann -lpthread -lsqlite3
 

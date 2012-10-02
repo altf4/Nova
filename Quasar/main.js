@@ -1842,11 +1842,17 @@ var distributeSuspect = function (suspect) {
 	objCopy(suspect, s);
 	try {
 		everyone.now.OnNewSuspect(s)
-	} catch (err) {};
+	} catch (err) {
+		// We can safely ignore this, it's just because no browsers are connected
+	};
 };
 
 var distributeAllSuspectsCleared = function () {
-	everyone.now.AllSuspectsCleared();
+	try {
+		everyone.now.AllSuspectsCleared();
+	} catch (err) {
+		// We can safely ignore this, it's just because no browsers are connected
+	};
 }
 
 var distributeSuspectCleared = function (suspect) {

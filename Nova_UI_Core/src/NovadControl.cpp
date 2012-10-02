@@ -69,16 +69,16 @@ bool StartNovad(bool blocking)
 
 bool StopNovad()
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	ControlMessage killRequest(CONTROL_EXIT_REQUEST, DIRECTION_TO_NOVAD);
-	if(!Message::WriteMessage(&killRequest, IPCSocketFD) )
+	ControlMessage killRequest(CONTROL_EXIT_REQUEST);
+	if(!MessageManager::Instance().WriteMessage(ticket, &killRequest))
 	{
 		LOG(ERROR, "Error sending command to NOVAD (CONTROL_EXIT_REQUEST)", "");
 		return false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -105,25 +105,25 @@ bool StopNovad()
 	delete killReply;
 
 	LOG(DEBUG, "Call to StopNovad complete", "");
-	MessageManager::Instance().CloseSocket(IPCSocketFD);
+	DisconnectFromNovad();
 
 	return retSuccess;
 }
 
 bool SaveAllSuspects(std::string file)
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	ControlMessage saveRequest(CONTROL_SAVE_SUSPECTS_REQUEST, DIRECTION_TO_NOVAD);
+	ControlMessage saveRequest(CONTROL_SAVE_SUSPECTS_REQUEST);
 	strcpy(saveRequest.m_filePath, file.c_str());
 
-	if(!Message::WriteMessage(&saveRequest, IPCSocketFD) )
+	if(!MessageManager::Instance().WriteMessage(ticket, &saveRequest))
 	{
 		LOG(ERROR, "Error sending command to NOVAD (CONTROL_SAVE_SUSPECTS_REQUEST)", "");
 		return false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket, IPCSocketFD);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -154,16 +154,16 @@ bool SaveAllSuspects(std::string file)
 
 bool ClearAllSuspects()
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	ControlMessage clearRequest(CONTROL_CLEAR_ALL_REQUEST, DIRECTION_TO_NOVAD);
-	if(!Message::WriteMessage(&clearRequest, IPCSocketFD) )
+	ControlMessage clearRequest(CONTROL_CLEAR_ALL_REQUEST);
+	if(!MessageManager::Instance().WriteMessage(ticket, &clearRequest))
 	{
 		LOG(ERROR, "Error sending command to NOVAD (CONTROL_CLEAR_ALL_REQUEST)", "");
 		return false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -194,17 +194,17 @@ bool ClearAllSuspects()
 
 bool ClearSuspect(SuspectIdentifier suspectId)
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST, DIRECTION_TO_NOVAD);
+	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST);
 	clearRequest.m_suspectAddress = suspectId;
-	if(!Message::WriteMessage(&clearRequest, IPCSocketFD) )
+	if(!MessageManager::Instance().WriteMessage(ticket, &clearRequest))
 	{
 		LOG(ERROR, "Unable to send CONTROL_CLEAR_SUSPECT_REQUEST to NOVAD" ,"");
 		return false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -235,16 +235,16 @@ bool ClearSuspect(SuspectIdentifier suspectId)
 
 bool ReclassifyAllSuspects()
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	ControlMessage reclassifyRequest(CONTROL_RECLASSIFY_ALL_REQUEST, DIRECTION_TO_NOVAD);
-	if(!Message::WriteMessage(&reclassifyRequest, IPCSocketFD) )
+	ControlMessage reclassifyRequest(CONTROL_RECLASSIFY_ALL_REQUEST);
+	if(!MessageManager::Instance().WriteMessage(ticket, &reclassifyRequest))
 	{
 		LOG(ERROR, "Error sending command to NOVAD (CONTROL_RECLASSIFY_ALL_REQUEST)", "");
 		return false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -276,16 +276,16 @@ bool ReclassifyAllSuspects()
 
 bool StartPacketCapture()
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	ControlMessage request(CONTROL_START_CAPTURE, DIRECTION_TO_NOVAD);
-	if(!Message::WriteMessage(&request, IPCSocketFD) )
+	ControlMessage request(CONTROL_START_CAPTURE);
+	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
 		LOG(ERROR, "Error sending command to NOVAD (CONTROL_STOP_CAPTURE)", "");
 		return false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
@@ -308,16 +308,16 @@ bool StartPacketCapture()
 
 bool StopPacketCapture()
 {
-	Lock lock = MessageManager::Instance().UseSocket(IPCSocketFD);
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	ControlMessage request(CONTROL_STOP_CAPTURE, DIRECTION_TO_NOVAD);
-	if(!Message::WriteMessage(&request, IPCSocketFD) )
+	ControlMessage request(CONTROL_STOP_CAPTURE);
+	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
 		LOG(ERROR, "Error sending command to NOVAD (CONTROL_STOP_CAPTURE)", "");
 		return false;
 	}
 
-	Message *reply = Message::ReadMessage(IPCSocketFD, DIRECTION_TO_NOVAD);
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");

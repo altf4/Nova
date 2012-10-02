@@ -6,18 +6,21 @@
 CPP_SRCS += \
 ../NovadSource/Control.cpp \
 ../NovadSource/Novad.cpp \
+../NovadSource/NovadCallback.cpp \
 ../NovadSource/ProtocolHandler.cpp \
 ../NovadSource/Threads.cpp 
 
 OBJS += \
 ./NovadSource/Control.o \
 ./NovadSource/Novad.o \
+./NovadSource/NovadCallback.o \
 ./NovadSource/ProtocolHandler.o \
 ./NovadSource/Threads.o 
 
 CPP_DEPS += \
 ./NovadSource/Control.d \
 ./NovadSource/Novad.d \
+./NovadSource/NovadCallback.d \
 ./NovadSource/ProtocolHandler.d \
 ./NovadSource/Threads.d 
 

@@ -64,7 +64,7 @@ class RequestMessage : public Message
 
 public:
 
-	RequestMessage(enum RequestType requestType, enum ProtocolDirection direction);
+	RequestMessage(enum RequestType requestType);
 	~RequestMessage();
 	virtual void DeleteContents();
 
