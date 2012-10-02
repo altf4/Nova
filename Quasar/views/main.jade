@@ -150,17 +150,27 @@ block headerAdditions
     now.AllSuspectsCleared = function() {
       suspectGrid.Clear();
     }
-    
+
     now.SuspectCleared = function(suspect) {
         console.log("Cleared suspect ");
         console.log(suspect);
-        suspectGrid.DeleteRow(suspect.GetIpString);
+        suspectGrid.DeleteRow(suspect.GetIdString);
         suspectGrid.Render();
         return;
     }
       
     function pad(num) {
         return ("0" + num.toString()).slice(-2);
+    }
+    
+    function ClearSuspect(ip, interface, idString) {
+        now.ClearSuspect(idString);
+        suspectGrid.DeleteRow(buildLink(ip, interface, idString));
+    }
+
+    function buildLink(ip, interface, idString) {
+      var res = "<a href='/GetSuspectDetails?ip=" + ip + "&interface=" + interface + "'> " + idString + "</a>";
+      return res;
     }
 
     now.OnNewSuspect = function(suspect){
@@ -177,15 +187,14 @@ block headerAdditions
       suspect.LastPacketString = dString;
       
       var row = new Array();
-      // This is probably a really bad way to do this...
-      var clearButton = "<button onClick='now.ClearSuspect(";
-      clearButton += '"' + suspect.GetIpString + '"';
-      clearButton += "); suspectGrid.DeleteRow(";
-      clearButton += '"' + suspect.GetIpString + '"';
+      var clearButton = "<button onClick='ClearSuspect(";
+      clearButton += '"' + suspect.GetIpString + '"' + ', ' + '"' + suspect.GetInterface + '"' + ', ' + '"' + suspect.GetIdString + '"';
       clearButton += ");'>Clear</button>";
       row.push(clearButton);
-
-      var suspectLink = "<a href='/GetSuspectDetails?suspect=" + String(suspect.GetIpString) + "'> " + String(suspect.GetIpString) + "</a>";
+        
+      var ip = suspect.GetIpString;
+    
+      var suspectLink = buildLink(ip, suspect.GetInterface, suspect.GetIdString);
       row.push(String(suspectLink));
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));
@@ -206,7 +215,7 @@ block headerAdditions
          }
 
          if (advancedIpFilter != null) {
-            if (!advancedIpFilter.test(suspect.GetIpString)) {
+            if (!advancedIpFilter.test(suspect.GetIdString)) {
                 return;
             }
          }

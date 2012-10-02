@@ -134,9 +134,3 @@ Message *Message::Deserialize(char *buffer, uint32_t length)
 	}
 	return message;
 }
-
-char *Message::Serialize(uint32_t *length)
-{
-	//Doesn't actually get called
-	return NULL;
-}

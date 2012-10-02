@@ -115,15 +115,7 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 			//		2) ControlMessage Type
 			//		3) Suspect IP to clear
 
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_suspectAddress);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			memcpy(&m_suspectAddress, buffer, sizeof(m_suspectAddress));
-			buffer += sizeof(m_suspectAddress);
+			m_suspectAddress.Deserialize(reinterpret_cast<u_char*>(buffer), length);
 
 			break;
 		}
@@ -219,7 +211,7 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) IP of suspect to clear
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_suspectAddress) + sizeof(messageSize);
+			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize) + m_suspectAddress.GetSerializationLength();
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -227,9 +219,9 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Put the Control Message type in
 			memcpy(buffer, &m_controlType, sizeof(m_controlType));
 			buffer += sizeof(m_controlType);
+
 			//Put the Control Message type in
-			memcpy(buffer, &m_suspectAddress, sizeof(m_suspectAddress));
-			buffer += sizeof(m_suspectAddress);
+			m_suspectAddress.Serialize(reinterpret_cast<u_char*>(buffer), messageSize);
 
 			break;
 		}

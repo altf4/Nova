@@ -33,7 +33,6 @@ namespace Nova{
 
 Suspect::Suspect()
 {
-	m_IpAddress.s_addr = 0;
 	m_hostileNeighbors = 0;
 	m_classification = -1;
 	m_needsClassificationUpdate = false;
@@ -55,18 +54,28 @@ Suspect::~Suspect()
 
 string Suspect::GetIpString()
 {
-	// Not thread safe! inet_ntoa puts result string in global static buffer.
-	//in_addr temp;
-	//temp.s_addr = htonl(m_IpAddress.s_addr);
-	//return string(inet_ntoa(temp));
-
 	stringstream ss;
-	ss << ((m_IpAddress.s_addr & 0xFF000000) >> 24) << ".";
-	ss << ((m_IpAddress.s_addr & 0x00FF0000) >> 16) << ".";
-	ss << ((m_IpAddress.s_addr & 0x0000FF00) >> 8) << ".";
-	ss << ((m_IpAddress.s_addr & 0x000000FF) >> 0);
+	ss << ((m_id.m_ip & 0xFF000000) >> 24) << ".";
+	ss << ((m_id.m_ip & 0x00FF0000) >> 16) << ".";
+	ss << ((m_id.m_ip & 0x0000FF00) >> 8) << ".";
+	ss << ((m_id.m_ip & 0x000000FF) >> 0);
 	return ss.str();
+}
 
+string Suspect::GetIdString()
+{
+	stringstream ss;
+	ss << m_id.m_interface << " ";
+	ss << ((m_id.m_ip & 0xFF000000) >> 24) << ".";
+	ss << ((m_id.m_ip & 0x00FF0000) >> 16) << ".";
+	ss << ((m_id.m_ip & 0x0000FF00) >> 8) << ".";
+	ss << ((m_id.m_ip & 0x000000FF) >> 0);
+	return ss.str();
+}
+
+string Suspect::GetInterface()
+{
+	return m_id.m_interface;
 }
 
 string Suspect::ToString()
@@ -105,11 +114,12 @@ string Suspect::ToString()
 }
 
 //Just like Consume but doesn't deallocate
-void Suspect::ReadEvidence(Evidence *evidence)
+void Suspect::ReadEvidence(Evidence *evidence, bool deleteEvidence)
 {
-	if(m_IpAddress.s_addr == 0)
+	if(m_id.m_ip == 0)
 	{
-		m_IpAddress.s_addr = evidence->m_evidencePacket.ip_src;
+		m_id.m_ip = evidence->m_evidencePacket.ip_src;
+		m_id.m_interface = evidence->m_evidencePacket.interface;
 	}
 
 	Evidence *curEvidence = evidence, *tempEv = NULL;
@@ -117,6 +127,7 @@ void Suspect::ReadEvidence(Evidence *evidence)
 	{
 		m_unsentFeatures.UpdateEvidence(curEvidence);
 		m_features.UpdateEvidence(curEvidence);
+		m_id.m_interface = curEvidence->m_evidencePacket.interface;
 
 		if(m_lastPacketTime < evidence->m_evidencePacket.ts)
 		{
@@ -125,33 +136,12 @@ void Suspect::ReadEvidence(Evidence *evidence)
 
 		tempEv = curEvidence;
 		curEvidence = tempEv->m_next;
-	}
-	m_isLive = (Config::Inst()->GetReadPcap());
-}
 
-void Suspect::ConsumeEvidence(Evidence *evidence)
-{
-	if(m_IpAddress.s_addr == 0)
-	{
-		m_IpAddress.s_addr = evidence->m_evidencePacket.ip_src;
-	}
-
-	Evidence *curEvidence = evidence, *tempEv = NULL;
-	while(curEvidence != NULL)
-	{
-		m_unsentFeatures.UpdateEvidence(curEvidence);
-		m_features.UpdateEvidence(curEvidence);
-
-		if(m_lastPacketTime < evidence->m_evidencePacket.ts)
+		if (deleteEvidence)
 		{
-			m_lastPacketTime = evidence->m_evidencePacket.ts;
+			delete tempEv;
 		}
-
-		tempEv = curEvidence;
-		curEvidence = tempEv->m_next;
-		delete tempEv;
 	}
-	m_isLive = (Config::Inst()->GetReadPcap());
 }
 
 //Calculates the suspect's features based on it's feature set
@@ -168,7 +158,6 @@ uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMo
 	uint32_t offset = 0;
 
 	//Copies the value and increases the offset
-	SerializeChunk(buf, &offset,(char*)&m_IpAddress.s_addr, sizeof m_IpAddress.s_addr, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
@@ -176,10 +165,9 @@ uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMo
 	SerializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
 
-	const char *notes = m_classificationNotes.c_str();
-	int sizeOfNotes = m_classificationNotes.size();
-	SerializeChunk(buf, &offset, (char*)&sizeOfNotes, sizeof sizeOfNotes, bufferSize);
-	SerializeChunk(buf, &offset, notes, sizeOfNotes, bufferSize);
+	SerializeString(buf, &offset, m_classificationNotes, bufferSize);
+
+	offset += m_id.Serialize(buf + offset, bufferSize - offset);
 
 
 	//Copies the value and increases the offset
@@ -239,7 +227,7 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 {
 	//Adds the sizeof results for the static required fields to messageSize
 	uint32_t messageSize =
-		sizeof(m_IpAddress.s_addr)
+		m_id.GetSerializationLength()
 		+ sizeof(m_classification)
 		+ sizeof(m_isHostile)
 		+ sizeof(m_flaggedByAlarm)
@@ -288,7 +276,6 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 {
 	uint32_t offset = 0;
 
-	DeserializeChunk(buf, &offset,(char*)&m_IpAddress.s_addr, sizeof m_IpAddress.s_addr, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
@@ -296,13 +283,9 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 	DeserializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
 
-	int sizeOfNotes;
-	DeserializeChunk(buf, &offset,(char*)&sizeOfNotes, sizeof sizeOfNotes, bufferSize);
+	m_classificationNotes = DeserializeString(buf, &offset, bufferSize);
 
-	char *notes = new char[sizeOfNotes];
-	DeserializeChunk(buf, &offset, notes, sizeOfNotes, bufferSize);
-	m_classificationNotes = string(notes);
-	delete[] notes;
+	offset += m_id.Deserialize(buf + offset, bufferSize - offset);
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
@@ -357,26 +340,23 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 //Returns: Suspect's in_addr.s_addr
 in_addr_t Suspect::GetIpAddress()
 {
-	return m_IpAddress.s_addr;
+	return m_id.m_ip;
+}
+
+SuspectIdentifier Suspect::GetIdentifier()
+{
+	return m_id;
+}
+
+void Suspect::SetIdentifier(SuspectIdentifier id)
+{
+	m_id = id;
 }
 
 //Sets the suspects in_addr
 void Suspect::SetIpAddress(in_addr_t ip)
 {
-	m_IpAddress.s_addr = ip;
-}
-
-//Returns a copy of the suspects in_addr.s_addr
-//Returns: Suspect's in_addr
-in_addr Suspect::GetInAddr()
-{
-	return m_IpAddress;
-}
-
-//Sets the suspects in_addr
-void Suspect::SetInAddr(in_addr in)
-{
-	m_IpAddress = in;
+	m_id.m_ip= ip;
 }
 
 //Returns a copy of the Suspects classification double
@@ -563,7 +543,7 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];
 	}
 
-	m_IpAddress = rhs.m_IpAddress;
+	m_id = rhs.m_id;
 	m_classification = rhs.m_classification;
 	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
@@ -580,7 +560,7 @@ bool Suspect::operator==(const Suspect &rhs) const
 	{
 		return false;
 	}
-	if(m_IpAddress.s_addr != rhs.m_IpAddress.s_addr)
+	if(m_id != rhs.m_id)
 	{
 		return false;
 	}
@@ -641,7 +621,7 @@ Suspect::Suspect(const Suspect &rhs)
 		m_featureAccuracy[i] = rhs.m_featureAccuracy[i];
 	}
 
-	m_IpAddress = rhs.m_IpAddress;
+	m_id = rhs.m_id;
 	m_classification = rhs.m_classification;
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;

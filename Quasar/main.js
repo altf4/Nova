@@ -557,17 +557,24 @@ app.get('/configHoneydProfiles', passport.authenticate('basic', {session: false}
 });
 
 app.get('/GetSuspectDetails', passport.authenticate('basic', {session: false}), function (req, res) {
-	if (req.query["suspect"] === undefined) {
+	if (req.query["ip"] === undefined) {
 		RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.", "/");
 		return;
 	}
 	
-	var suspectId = req.query["suspect"];
-	var suspectString = nova.GetSuspectDetailsString(suspectId);
+	if (req.query["interface"] === undefined) {
+		RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.", "/");
+		return;
+	}
+	
+	var suspectIp = req.query["ip"];
+	var suspectInterface = req.query["interface"];
+	var suspectString = nova.GetSuspectDetailsString(suspectIp, suspectInterface);
 
 	res.render('suspectDetails.jade', {
 		locals: {
-			suspect: suspectId
+			suspect: suspectIp
+			, interface: suspectInterface
 			, details: suspectString
 		}
 	})
@@ -1285,9 +1292,9 @@ everyone.now.ClearAllSuspects = function (callback) {
 	}
 }
 
-everyone.now.ClearSuspect = function (suspect, callback) {
+everyone.now.ClearSuspect = function (suspectIp, interface, callback) {
 	nova.CheckConnection();
-	var result = nova.ClearSuspect(suspect);
+	var result = nova.ClearSuspect(suspectIp, interface);
 
 	if (callback != undefined) {
 		callback(result);
@@ -1348,7 +1355,7 @@ everyone.now.StopNovad = function () {
 
 
 everyone.now.sendAllSuspects = function (callback) {
-	nova.getSuspectList(callback);
+	nova.sendSuspectList(callback);
 }
 
 

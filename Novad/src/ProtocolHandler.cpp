@@ -104,10 +104,6 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 		{
 			bool result;
 
-			stringstream ss;
-			ss << "Got a command to erase suspect " << hex << controlMessage.m_suspectAddress;
-			LOG(DEBUG, ss.str(), "");
-
 			result = suspects.Erase(controlMessage.m_suspectAddress);
 
 			if (!result)
@@ -130,16 +126,14 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 			MessageManager::Instance().WriteMessage(ticket, &clearSuspectReply);
 
 			struct in_addr suspectAddress;
-			suspectAddress.s_addr = controlMessage.m_suspectAddress;
+			suspectAddress.s_addr = ntohl(controlMessage.m_suspectAddress.m_ip);
 
 			LOG(DEBUG, "Cleared a suspect due to UI request",
-					"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "+string(inet_ntoa(suspectAddress))+".");
+					"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "+string(inet_ntoa(suspectAddress))+ "on interface " + controlMessage.m_suspectAddress.m_interface + ".");
 
 			UpdateMessage *updateMessage = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
 			updateMessage->m_IPAddress = controlMessage.m_suspectAddress;
-			stringstream ss2;
-			ss2 << "Sending suspect cleared notification for " << hex << updateMessage->m_IPAddress << endl;
-			LOG(DEBUG, ss2.str(), "");
+			cout << "Sending UpdateMessage with suspect cleared on interface " << updateMessage->m_IPAddress.m_interface << endl;
 			NotifyUIs(updateMessage, UPDATE_SUSPECT_CLEARED_ACK, ticket.m_socketFD);
 
 			break;
@@ -235,34 +229,34 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 			{
 				case SUSPECTLIST_ALL:
 				{
-					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
+					vector<SuspectIdentifier> benign = suspects.GetKeys_of_BenignSuspects();
 					for(uint i = 0; i < benign.size(); i++)
 					{
-						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
+						reply.m_suspectList.push_back(benign.at(i));
 					}
 
-					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
+					vector<SuspectIdentifier> hostile = suspects.GetKeys_of_HostileSuspects();
 					for(uint i = 0; i < hostile.size(); i++)
 					{
-						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
+						reply.m_suspectList.push_back(hostile.at(i));
 					}
 					break;
 				}
 				case SUSPECTLIST_HOSTILE:
 				{
-					vector<uint64_t> hostile = suspects.GetKeys_of_HostileSuspects();
+					vector<SuspectIdentifier> hostile = suspects.GetKeys_of_HostileSuspects();
 					for(uint i = 0; i < hostile.size(); i++)
 					{
-						reply.m_suspectList.push_back((in_addr_t)hostile.at(i));
+						reply.m_suspectList.push_back(hostile.at(i));
 					}
 					break;
 				}
 				case SUSPECTLIST_BENIGN:
 				{
-					vector<uint64_t> benign = suspects.GetKeys_of_BenignSuspects();
+					vector<SuspectIdentifier> benign = suspects.GetKeys_of_BenignSuspects();
 					for(uint i = 0; i < benign.size(); i++)
 					{
-						reply.m_suspectList.push_back((in_addr_t)benign.at(i));
+						reply.m_suspectList.push_back(benign.at(i));
 					}
 					break;
 				}

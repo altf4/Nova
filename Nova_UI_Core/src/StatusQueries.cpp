@@ -141,7 +141,7 @@ uint64_t GetStartTime()
 	return ret;
 }
 
-vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
+vector<SuspectIdentifier> *GetSuspectList(enum SuspectListType listType)
 {
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
@@ -179,14 +179,14 @@ vector<in_addr_t> *GetSuspectList(enum SuspectListType listType)
 		return NULL;
 	}
 
-	vector<in_addr_t> *ret = new vector<in_addr_t>;
+	vector<SuspectIdentifier> *ret = new vector<SuspectIdentifier>;
 	*ret = requestReply->m_suspectList;
 
 	delete requestReply;
 	return ret;
 }
 
-Suspect *GetSuspect(in_addr_t address)
+Suspect *GetSuspect(SuspectIdentifier address)
 {
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
@@ -230,7 +230,7 @@ Suspect *GetSuspect(in_addr_t address)
 	return suspect;
 }
 
-Suspect *GetSuspectWithData(in_addr_t address)
+Suspect *GetSuspectWithData(SuspectIdentifier address)
 {
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 

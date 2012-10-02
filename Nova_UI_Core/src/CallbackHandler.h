@@ -38,7 +38,7 @@ struct CallbackChange
 {
 	enum CallbackChangeType m_type;
 	Nova::Suspect *m_suspect;			//Used in type: CALLBACK_NEW_SUSPECT
-	in_addr_t m_suspectIP;				//Used in CALLBACK_SUSPECT_CLEARED
+	SuspectIdentifier m_suspectIP;				//Used in CALLBACK_SUSPECT_CLEARED
 };
 
 class CallbackHandler

@@ -20,13 +20,10 @@
 #ifndef SUSPECT_H_
 #define SUSPECT_H_
 
+#include "SerializationHelper.h"
+#include "SuspectIdentifer.h"
 #include "FeatureSet.h"
 #include "Point.h"
-
-//If the feature data is local
-#define LOCAL_DATA true
-//If the feature data is broadcast from another nova instance
-#define BROADCAST_DATA false
 
 enum SerializeFeatureMode: uint8_t
 {
@@ -57,20 +54,19 @@ public:
 	// Destructor. Has to delete the FeatureSet object within.
 	~Suspect();
 
+	SuspectIdentifier GetIdentifier();
+	void SetIdentifier(SuspectIdentifier id);
 
 	// Converts suspect into a human readable std::string
 	//		featureEnabled: Array of size DIM that specifies which features to return in the std::string
 	// Returns: Human readable std::string of the given feature
 	std::string ToString();
+	std::string GetIdString();
 	std::string GetIpString();
+	std::string GetInterface();
 
 	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
-	// Note: This function deallocates the linked list of Evidence objects
-	void ConsumeEvidence(Evidence *evidence);
-
-	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
-	// Note: Unlike Consume, this function does not deallocate the evidence objects, everything else is the same as Consume.
-	void ReadEvidence(Evidence *evidence);
+	void ReadEvidence(Evidence *evidence, bool deleteEvidence);
 
 	// Calculates the feature set for this suspect
 	void CalculateFeatures();
@@ -92,11 +88,6 @@ public:
 	// Returns: number of bytes read from the buffer
 	uint32_t Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
 
-	//Returns a copy of the suspects in_addr, must not be locked or is locked by the owner
-	//Returns: Suspect's in_addr or NULL on failure
-	in_addr GetInAddr();
-	//Sets the suspects in_addr
-	void SetInAddr(in_addr in);
 
 	//Returns a copy of the suspects in_addr
 	//Returns: Suspect's in_addr_t or NULL on failure
@@ -177,11 +168,11 @@ public:
 	std::string m_classificationNotes;
 
 private:
+	SuspectIdentifier m_id;
 
 	// Array of values that represent the quality of suspect classification on each feature
 	double m_featureAccuracy[DIM];
-	// The IP address of the suspect. Serves as a unique identifier for the Suspect
-	struct in_addr m_IpAddress;
+
 	// The current classification assigned to this suspect.
 	//	0-1, where 0 is almost surely benign, and 1 is almost surely hostile.
 	//	-1 indicates no classification or error.

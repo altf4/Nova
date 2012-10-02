@@ -84,17 +84,16 @@ public:
 	// For suspect list
 	enum SuspectListType m_listType;
 	uint32_t m_suspectListLength;
-	std::vector<in_addr_t> m_suspectList;
+	std::vector<SuspectIdentifier> m_suspectList;
 
 	// For returning a single suspect
 	Suspect *m_suspect;
 	uint32_t m_suspectLength;
-	in_addr_t m_suspectAddress;
+	SuspectIdentifier m_suspectAddress;
 
 	// For uptime
 	uint32_t m_startTime;
 
-protected:
 	//Serializes the request into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
