@@ -66,11 +66,11 @@ public:
 
 	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
 	// Note: This function deallocates the linked list of Evidence objects
-	void ConsumeEvidence(Evidence *&evidence);
+	void ConsumeEvidence(Evidence *evidence);
 
 	// Proccesses a packet in m_evidence and puts them into the suspects unsent FeatureSet data
 	// Note: Unlike Consume, this function does not deallocate the evidence objects, everything else is the same as Consume.
-	void ReadEvidence(Evidence *&evidence);
+	void ReadEvidence(Evidence *evidence);
 
 	// Calculates the feature set for this suspect
 	void CalculateFeatures();
@@ -162,7 +162,6 @@ public:
 
 	Suspect& operator=(const Suspect &rhs);
 	Suspect(const Suspect &rhs);
-	Suspect& operator*(Suspect *rhs);
 
 	// Equality operator, mainly used for test cases
 	bool operator==(const Suspect &rhs) const;
@@ -174,6 +173,8 @@ public:
 	FeatureSet m_features;
 	// FeatureSet containing data not yet sent through a SA
 	FeatureSet m_unsentFeatures;
+
+	std::string m_classificationNotes;
 
 private:
 

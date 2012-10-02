@@ -58,9 +58,9 @@ bool KnockPort(bool mode);
 // Returns: false if any sort of error
 bool Start_Packet_Handler();
 
-// Loads configuration variables
-//		configFilePath - Location of configuration file
-void LoadConfiguration();
+void StartCapture();
+void StopCapture();
+void StopCapture_noLocking();
 
 // Append to state file
 void AppendToStateFile();
@@ -100,9 +100,6 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr *pkthdr,const u_cha
 // Masks the kill signals of a thread so they will get
 // sent to the main thread's signal handler.
 void MaskKillSignals();
-
-// Updates suspect and stores it as a training data point
-void UpdateAndStore(const in_addr_t& key);
 
 // Updates data and classification for a suspect
 void UpdateAndClassify(const in_addr_t& key);

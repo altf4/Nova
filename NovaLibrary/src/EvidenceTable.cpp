@@ -81,6 +81,7 @@ namespace Nova
 			//This should never be invalid unless the workflow of this class is modified or bypassed
 			ret = m_table[lookup->m_evidencePacket.ip_src]->PopAll();
 			delete lookup;
+			lookup = NULL;
 		}
 		return ret;
 	}

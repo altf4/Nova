@@ -4,6 +4,56 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
 
   script
+    var currentInterface;
+
+    function SaveNode() {
+        var profile = document.getElementById("profile").value;
+        var intface = currentInterface;
+        var oldName = "#{oldName}";
+        var ipType = document.getElementById("ipType").value;
+        var macType = document.getElementById("macType").value;
+        var ip = document.getElementById("ip0").value + "." + document.getElementById("ip1").value + "." + document.getElementById("ip2").value + "." + document.getElementById("ip3").value;
+        var mac = document.getElementById("mac0").value + ":" + document.getElementById("mac1").value + ":" + document.getElementById("mac2").value + ":" + document.getElementById("mac3").value;
+        mac += ":" + document.getElementById("mac4").value + ":" + document.getElementById("mac5").value;
+
+        now.SaveHoneydNode(profile, intface, oldName, ipType, macType, ip, mac, saveNodeCallback);
+    }
+
+    function populateVendorList(profile) {
+        document.getElementById("vendorList").innerHTML = "";
+        for (var vendor in profile.ethernet) {
+            var v = profile.ethernet[vendor].vendor;
+            var option = document.createElement('option');
+            option.innerHTML = v;
+            document.getElementById("vendorList").appendChild(option);
+        }
+    }
+
+    function profileChanged() {
+        now.GetProfile(document.getElementById("profile").value, populateVendorList);
+    }
+
+    function saveNodeCallback(err) {
+      if(err != null) {
+        alert("Unable to complete operation due to error: " + err);
+        window.location = "/configHoneydNodes";
+        return;
+      }
+     now.IsHaystackUp(checkIfRestartNeeded); 
+    }
+
+    function checkIfRestartNeeded(haystackUp) {
+      if (haystackUp) {
+        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
+        if (restartHaystack) {
+          now.StopHaystack();
+          now.StartHaystack();
+        }
+      }
+
+      window.location = "/configHoneydNodes";
+    }
+
     function ipTypeChanged() {
       var ipEditEnabled;
       var macEditEnabled;
@@ -36,6 +86,7 @@ block headerAdditions
       var forLength = document.getElementById("length").getAttribute("value");
       
       var checkAgainst = checkedBox.getAttribute("id");
+      currentInterface = checkedBox.value;
       
       if(forLength == 1)
       {
@@ -56,97 +107,129 @@ block headerAdditions
         checkedBox.checked = true; 
       }  
     }
+
+    function GenerateMac() {
+        var vendor = document.getElementById("vendorList").value;
+        now.GenerateMACForVendor(vendor, MACAddressCb);
+    }
+
+    function MACAddressCb(mac) {
+        if (mac == null) {
+            alert("Unable to get MAC Address");
+            return;
+        }
+
+        var splitMac = mac.split(":");
+        for (var i = 0; i < 6; i++) {
+            document.getElementById("mac" + i).value = splitMac[i];
+        }
+    }
+    
+    require(["dojo/domReady!"],
+    function(){
+        now.ready( function() {
+            checkOnlyOne(if0);
+            profileChanged();
+        });
+    });
     
 
 
 block content
   br
-  form(method="post", action="/editHoneydNodeSave")
-    h2 Editing Honeyd Node "#{oldName}"
+  h2 Editing Honeyd Node "#{oldName}"
 
-    input(type="hidden", name="oldName", value="#{oldName}")
+  input(type="hidden", name="oldName", value="#{oldName}")
 
-    label Profile
-    select(name="profile")
-      each p, i in profiles
-        if p == profile
-          option(SELECTED) #{p}
-        else
-          option #{p}
-    br
-    br
-
-    label Network Interface
-    // TODO: Somehow show the user valid interface options
-    table
-      thead
-        tr 
-          th Interfaces
-      tbody
-      - if(INTERFACES.length == 1)
-        tr 
-          td
-            input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
-            #{INTERFACES[0]}
-      - else
-        tr 
-          td
-            input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
-            #{INTERFACES[0]}
-        - for (var i = 1; i < INTERFACES.length; i++)
-            tr 
-              td
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
-                #{INTERFACES[i]}
-    hidden(id="length", value=INTERFACES.length)
-   
-    br
-    br
-    label IP Address Range Type
-    select#ipType(name="ipType", onChange="ipTypeChanged()")
-      if ip == 'DHCP'
-        option(SELECTED) DHCP
+  label Profile
+  select#profile(name="profile", onChange="profileChanged()")
+    each p, i in profiles
+      if p == profile
+        option(SELECTED) #{p}
       else
-        option DHCP
+        option #{p}
+  br
+  br
 
-      if ip == 'DHCP'
-        option IP Address
-      else
-        option(SELECTED) IP Address
+  label Network Interface
+  // TODO: Somehow show the user valid interface options
+  table
+    thead
+      tr 
+        th Interfaces
+    tbody
+    - if(INTERFACES.length == 1)
+      tr 
+        td
+          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
+          #{INTERFACES[0]}
+    - else
+      tr 
+        td
+          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
+          #{INTERFACES[0]}
+      - for (var i = 1; i < INTERFACES.length; i++)
+          tr 
+            td
+              input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
+              #{INTERFACES[i]}
+  hidden(id="length", value=INTERFACES.length)
+ 
+  br
+  br
+  label IP Address Range Type
+  select#ipType(name="ipType", onChange="ipTypeChanged()")
+    if ip == 'DHCP'
+      option(SELECTED) DHCP
+    else
+      option DHCP
 
-    br
-    label IP address
-    - for (var i = 0; i < 4; i++)
-      - if (ip == 'DHCP')
-        input.ip(id = "ip" + i,type="number", name="#{"ip" + i}", min="0", max="255", required="true", value="1", disabled="disabled")
-      - else
-        input.ip(id = "ip" + i,type="number", name="#{"ip" + i}", min="0", max="255", required="true", value="#{ip.split(".")[i]}")
-    
+    if ip == 'DHCP'
+      option IP Address
+    else
+      option(SELECTED) IP Address
+
+  br
+  label IP address
+  - for (var i = 0; i < 4; i++)
+    - if (ip == 'DHCP')
+      input.ip(id = "ip" + i,type="number", name="#{"ip" + i}", min="0", max="255", required="true", value="1", disabled="disabled")
+    - else
+      input.ip(id = "ip" + i,type="number", name="#{"ip" + i}", min="0", max="255", required="true", value="#{ip.split(".")[i]}")
+  
 
 
-    br
-    br
-    label MAC Address Type
-    select#macType(name="macType", onChange="macTypeChanged()")
-      if mac != 'RANDOM'
-        option(SELECTED) Specific MAC
-      else
-        option Specific MAC
+  br
+  br
+  label MAC Address Type
+  select#macType(name="macType", onChange="macTypeChanged()")
+    if mac != 'RANDOM'
+      option(SELECTED) Specific MAC
+    else
+      option Specific MAC
 
-      if mac != 'RANDOM'
-        option RANDOM
-      else
-        option(SELECTED) RANDOM
+    if mac != 'RANDOM'
+      option RANDOM
+    else
+      option(SELECTED) RANDOM
+  
+  br
+  label &nbsp
+  a(class="button", href="#", onclick="GenerateMac()") Generate new MAC
 
-    br
-    label MAC Address
-    - for (var i = 0; i < 6; i++)
-      - if (mac == 'RANDOM')
-        input(id = "mac" + i, type="text", name="#{"mac" + i}", pattern="[0-9a-f]{2}", required="true", value="00", disabled="disabled", style="width: 25px")
-      - else
-        input(id = "mac" + i, type="text", name="#{"mac" + i}", pattern="[0-9a-f]{2}", required="true", value="#{mac.split(":")[i]}", style="width: 25px")
+  br
+  label Ethernet Vendor
+  select#vendorList(name"vendorList")
+
+  br
+  label MAC Address
+  - for (var i = 0; i < 6; i++)
+    - if (mac == 'RANDOM')
+      input(id = "mac" + i, type="text", name="#{"mac" + i}", pattern="[0-9a-f]{2}", required="true", value="00", disabled="disabled", style="width: 25px")
+    - else
+      input(id = "mac" + i, type="text", name="#{"mac" + i}", pattern="[0-9a-f]{2}", required="true", value="#{mac.split(":")[i]}", style="width: 25px")
 
 
-    br
-    br
-    input(type="Submit",value="Confirm Node Edits")
+  br
+  br
+  input(type="Submit",value="Confirm Node Edits", onclick="SaveNode();")

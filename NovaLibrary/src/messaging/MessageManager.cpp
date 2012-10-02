@@ -315,6 +315,7 @@ void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void 
 {
 	if(error & BEV_EVENT_CONNECTED)
 	{
+		LOG(DEBUG, "New connection established", "");
 		return;
 	}
 
@@ -381,7 +382,7 @@ void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
 void *MessageManager::AcceptDispatcher(void *arg)
 {
 	int len;
-	string inKeyPath = Config::Inst()->GetPathHome() + "/keys" + NOVAD_LISTEN_FILENAME;
+	string inKeyPath = Config::Inst()->GetPathHome() + "/config/keys" + NOVAD_LISTEN_FILENAME;
 	evutil_socket_t IPCParentSocket;
 	struct event_base *base;
 	struct event *listener_event;

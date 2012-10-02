@@ -46,9 +46,12 @@ namespace Nova
 
 void *EventDispatcherThread(void *arg)
 {
-	if(event_base_dispatch(libeventBase) != 0)
+	int ret = event_base_dispatch(libeventBase);
+	if(ret != 0)
 	{
-		LOG(WARNING, "Message loop ended uncleanly.", "");
+		stringstream ss;
+		ss << ret;
+		LOG(WARNING, "Message loop ended uncleanly. Error code: " + ss.str(), "");
 	}
 	return NULL;
 }
@@ -71,7 +74,7 @@ bool ConnectToNovad()
 
 	//Builds the key path
 	string key = Config::Inst()->GetPathHome();
-	key += "/keys";
+	key += "/config/keys";
 	key += NOVAD_LISTEN_FILENAME;
 
 	//Builds the address
@@ -90,9 +93,13 @@ bool ConnectToNovad()
 
 	bufferevent_setcb(bufferevent, MessageManager::MessageDispatcher, NULL, MessageManager::ErrorDispatcher, NULL);
 
-	bufferevent_enable(bufferevent, EV_READ);
+	if(bufferevent_enable(bufferevent, EV_READ) == -1)
+	{
+		LOG(ERROR, "Unable to enable socket events", "");
+		return false;
+	}
 
-	if(bufferevent_socket_connect(bufferevent, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) < 0)
+	if(bufferevent_socket_connect(bufferevent, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
 	{
 		bufferevent = NULL;
 		LOG(DEBUG, "Unable to connect to NOVAD: "+string(strerror(errno))+".", "");
@@ -142,7 +149,7 @@ bool ConnectToNovad()
 
 		reply->DeleteContents();
 		delete reply;
-		DisconnectFromNovad();
+		//DisconnectFromNovad();
 		return false;
 	}
 	ControlMessage *connectionReply = (ControlMessage*)reply;
@@ -179,6 +186,7 @@ void DisconnectFromNovad()
 			eventDispatchThread = 0;
 		}
 	}
+
 	if(bufferevent != NULL)
 	{
 		bufferevent_free(bufferevent);

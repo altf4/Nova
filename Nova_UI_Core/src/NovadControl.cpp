@@ -35,20 +35,35 @@ extern int IPCSocketFD;
 
 namespace Nova
 {
-bool StartNovad()
+bool StartNovad(bool blocking)
 {
 	if(IsNovadUp(false))
 	{
 		return true;
 	}
 
-	if(system("nohup novad > /dev/null&") != 0)
+	if (!blocking)
 	{
-		return false;
+		if(system("nohup novad > /dev/null&") != 0)
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
 	}
 	else
 	{
-		return true;
+		if(system("novad") != 0)
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+
 	}
 }
 
@@ -264,4 +279,69 @@ bool ReclassifyAllSuspects()
 	delete reclassifyReply;
 	return retSuccess;
 }
+
+bool StartPacketCapture()
+{
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
+
+	ControlMessage request(CONTROL_START_CAPTURE);
+	if(!MessageManager::Instance().WriteMessage(ticket, &request))
+	{
+		LOG(ERROR, "Error sending command to NOVAD (CONTROL_STOP_CAPTURE)", "");
+		return false;
+	}
+
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
+	ControlMessage *controlReply = dynamic_cast<ControlMessage*>(reply);
+	if(controlReply == NULL || controlReply->m_controlType != CONTROL_START_CAPTURE_ACK )
+	{
+		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
+		delete reply;
+		return false;
+	}
+
+	delete reply;
+	return true;
+}
+
+bool StopPacketCapture()
+{
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
+
+	ControlMessage request(CONTROL_STOP_CAPTURE);
+	if(!MessageManager::Instance().WriteMessage(ticket, &request))
+	{
+		LOG(ERROR, "Error sending command to NOVAD (CONTROL_STOP_CAPTURE)", "");
+		return false;
+	}
+
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return false;
+	}
+
+	ControlMessage *controlReply = dynamic_cast<ControlMessage*>(reply);
+	if(controlReply == NULL || controlReply->m_controlType != CONTROL_STOP_CAPTURE_ACK )
+	{
+		LOG(ERROR, "Received the wrong kind of reply message", "");
+		reply->DeleteContents();
+		delete reply;
+		return false;
+	}
+
+	delete reply;
+	return true;
+}
+
 }

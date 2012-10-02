@@ -2,42 +2,48 @@
 What is Nova?
 ===============================
 
-    Nova is a software application for preventing and detecting hostile Network Reconnaissance. It does this by first creating a large array of thin virtual machines on the target network. These VMs are created using an updated Honeyd to be extremely lightweight. They're not your typical VMs that you might see from VirtualBox or VMWare. They just appear to be real from the perspective of the network, and run network "services" which are just shell scripts.
+- Nova is a software application for preventing and detecting hostile Network Reconnaissance. 
+It does this by first creating the Haystack: a large array of thin virtual machines on the target 
+network. These VMs are created using an updated Honeyd to be extremely lightweight. They're not 
+your typical VMs that you might see from VirtualBox or VMWare. They just appear to be real from the
+perspective of the network, and run network "services", which are just shell scripts.
 
-    Second, Nova uses machine learning algorithms to automatically detect and classify attempts at hostile reconnaissance, so there's no need to go searching manually through your honeypot's log files.
+- Second, Nova uses machine learning algorithms to automatically detect and classify attempts at 
+hostile reconnaissance, so there's no need to go searching manually through your honeypot's log 
+files.
 
 ===============================
 The Installation Guide
 ===============================
 
-- The first thing to note is that Nova is currently only compatible with
-Linux, so if you do not have a Linux machine or a Linux partition on another
-machine, I would suggest that you go download Ubuntu 10.04 or higher and install
-it, either as a partition or for the whole machine. This guide will not address
-any issues with installing Linux; it is concerned with the installation and
-proper setup of Nova.
+- The first thing to note is that Nova is currently only compatible with Linux.
+All of our development is done on Ubuntu 12.04, so we suggest using that
+to make installation easiest. We provide a helper script which should get all dependencies 
+and download, build, and install Nova and Honeyd. 
+
+	sudo bash debian/novaInstallHelper.sh
+
+- This script has only been tested on the most recent stable version of Ubuntu.
+Any other distributions or versions should manually compile using the instructions below.
 
 
 ===============================
-Getting Dependencies
+Getting Dependencies on Ubuntu
 ===============================
 
-- Once you have Ubuntu up and running, you must now download the libraries
-required to compile Nova correctly. Make sure to watch the terminals at the
-beginning of the install process, and be sure to type 'Y' when asked to do so.
-Install the libraries with the following command:
+- Install required dependencies with the following command:
 
     sudo apt-get install git build-essential libcap2-bin libann-dev libpcap0.8-dev libsparsehash-dev libboost-program-options-dev libboost-serialization-dev libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables
 
-
 - Now, we'll have to take a quick detour to get another integral component
-of Nova: honeyd. We will have to download some extra libraries for honeyd as
+of Nova: Honeyd. We will have to download some extra libraries for Honeyd as
 well; you can get them using this command:
 
     sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake 
 
-- For the Honeyd Autoconfiguration tool, we require Nmap 6.00 or higher. The current version in the apt repository is 
-5.21, so you'll have to go to the Nmap website and get 6.00. It can be found here: 
+- For the Honeyd Autoconfiguration tool, we require Nmap 6.00 or higher. The current version in 
+the apt repository is 5.21, so you'll have to go to the Nmap website and get 6.00. 
+It can be found here: 
 
     http://nmap.org/download.html
 
@@ -45,41 +51,49 @@ well; you can get them using this command:
 
     wget http://nmap.org/dist/nmap-6.01.tar.bz2
 
-There are instructions for manual install on the same page (but are just the standard ./configure, make, and sudo make install commands).
+- There are instructions for manual install on the same page (but are just the standard ./configure,
+make, and sudo make install commands).
 
 
-- NOTE: Honeyd requires libevent version 2.x. If you are running Ubuntu 10.10 or lower, the version of libevent available in the repos is only 1.x. So you will need to either find a backport or build libevent 2.x from source.
+- NOTE: Honeyd requires libevent version 2.x. If you are running Ubuntu 10.10 or lower, the 
+version of libevent available in the repos is only 1.x. So you will need to either find a 
+backport or build libevent 2.x from source.
 
 - If you wish to optionally generate Debian packages for Nova, you will also require dpkg-dev:
 
     sudo apt-get install dpkg-dev
 
-
 ===============================
 Getting the newest code
 ===============================
 
-
-Go to the directory you wish to download the code to and run the following commands,
+- Nova and Honeyd are stored as seperate Git repositories on github. Go to the directory you wish 
+to download the code to and run the following commands,
 
     git clone git://github.com/DataSoft/Honeyd.git
-    git clone git://github.com/DataSoft/Nova.git
+    
+	git clone git://github.com/DataSoft/Nova.git Nova
 
-This will create a "honeyd" and "Nova" folder with the source located inside. From this point on 
+	# You also need to get the git submodules where training data is stored in it's own repo
+	cd Nova
+	git submodule init
+	git submodule update
+
+- This will create a "honeyd" and "Nova" folder with the source located inside. From this point on 
 they will be referred to as $HONEYD_SOURCE and $NOVA_SOURCE. 
 
-This will default to the "master" branch, which is the latest stable release. If you want to use
-the latest unstable version of Nova, cd to the $NOVA_SOURCE folder and run the following,
+- This will default to the "master" branch, which is the latest stable release. If you want to use
+the latest unstable version, cd to the $NOVA_SOURCE and $HONEYD_SOURCE and run the following,
 
 	git checkout integration
 
-Beware that the integration branch changes often on a daily basis.
+- Beware that the integration branch changes on a daily basis and may be unstable.
 
 ===============================
 Building Honeyd
 ===============================
 
-Change directories to the $HONEYD_SOURCE folder where all of the honeyd source code should 
+- Change directories to the $HONEYD_SOURCE folder where all of the Honeyd source code should 
 be on your machine. When inside the source directory, follow the next steps to build and install.
 
     Step 1: ./autogen.sh
@@ -93,14 +107,13 @@ be on your machine. When inside the source directory, follow the next steps to b
 Building Nova
 ===============================
 
-Change into the $NOVAD_SOURCE folder where the novad source code resides.
+- Change into the $NOVAD_SOURCE folder where the novad source code resides.
 
-    cd ~/Code/Nova
-
-To get the dependencies for the Quasar web UI (nodejs, npm's forever, and cvv8) you can either 
+- To get the dependencies for the Quasar web UI (nodejs, npm's forever, and cvv8) you can either 
 install them manually or get them by running the following script,
 
-    sudo bash getDependencies.sh
+    sudo bash Quasar/getDependencies.sh
+
 
 To build and install Nova run the commands,
 
@@ -117,48 +130,174 @@ and to set up database tables for the web interface.
 
     Step 5: sudo nova_init
 
-- Your user will have to be in the "nova" group in order for nova and honeyd to
+- Your user will have to be in the "nova" group in order for nova and Honeyd to
 run properly. The nova_init script will do this, but you must log in and
 back out for the change to take effect.
 
     Step 6: Log out and log back in
 
-- After these steps are completed without errors, Nova is set up on your
-system. You'll probably want to install a GUI for nova, either the QT based or web based GUI.
-Instructions for installing the GUIs follow below.
+Refer to the Nova wiki on github for more information.
 
-Refer to the Help tab in the GUI and the Nova wiki for more information.
 
 ===============================
- Web Interface
-===============================
-Nova's main GUI, Quasar, is a web interface run with a nodejs web server.
-
-Note that the internal web interface uses SSL. If you want to generate or use your own
-SSL certificate and private key, put them in /usr/share/nova/Quasar/servercert.pem and
-/usr/share/nova/Quasar/serverkey.pem after installation.
-
-To start the web interface, run the command "quasar" and go to https://localhost:8080 in
-a web browser (default login is username "nova" and password "toor"). 
-"quasar --debug" may provide more information if there are problems. Quasar
-launches the nodejs server with the "forever" daemon so it will be restarted if it crashes. 
-The command "forever list" can be useful for seeing the current status, and it can be stopped with
-"forever stop index (usually 0)". See the forever documentation for more information.
-
-===============================
-Unit Tests
+High Level Nova Components
 ===============================
 
-If you're a developer interested in using the unit tests in NovaTest, you can find instructions at,
+Haystack: Active honeypots
+	- The Haystack is the collection of honeypots which emulate machines on the network.
+	The haystack is created using the Honeyd daemon and runs in it's own executable. Configuration
+	for Honeyd is auto generated at /usr/share/nova/nova/Config/haystack_honeyd.config.
+
+Novad: Classification tool
+	- The Novad executable is the daemon that monitors and classifies network traffic to 
+	identify hostile looking traffic. Novad will listen promiscuously on the configured 
+	network interfaces and keep track of various statistics such as IPs contacted, ports contacted,
+	honeypots contacted, and other details. Novad is can be configured manually via the
+	configuration file /usr/share/nova/nova/Config/NOVAConfig.txt, but it is recommended that
+	you use the GUI (Quasar) unless you know what you're doing.
+
+NovaCLI: Nova Command line Interface
+	- NovaCLI provides a simple interface for accessing some of the Novad functionality. 
+	Usage for the tool can be gotten by running "novacli --help".
+
+Quasar: Nova Web Interface
+	- Nova's main GUI, Quasar, is a web interface run with a nodejs web server.
+	
+	- To start the web interface, run the command "quasar" and go to https://localhost:8080 in
+	a web browser.
+
+	Default username: nova
+	Default password: toor
+	
+	- "quasar --debug" may provide more information if there are problems. Quasar
+	launches the nodejs server with the "forever" daemon so it will be restarted if it crashes. 
+	The command "forever list" can be useful for seeing the current status, and it can be stopped 
+	with "forever stop index (usually 0)". See the forever documentation for more information.
+	
+	- Note that the internal web interface uses SSL. If you want to generate or use your own
+	SSL certificate and private key, put them in /usr/share/nova/Quasar/servercert.pem and
+	/usr/share/nova/Quasar/serverkey.pem after installation.
+
+Haystack Auto Configuration Tool: Generates honeyd configurations based off of nmap scans
+
+	- This tool can scan your network with nmap and then generate honeypot configurations
+	that are based on the operating systems and ethernet vendors that it finds.
+
+NovaTest: Unit Tests
+
+- If you're a developer interested in using the unit tests in NovaTest, you can find instructions at,
 
 https://github.com/DataSoft/Nova/wiki/Unit-Testing
 
 ===============================
 Debian Packages
 ===============================
-To generate a Debian package, simply checkout what version of the software you like (or make what changes to it that you want) and run the generateDebs script (as a normal user). 
+
+- To generate a Debian package, simply checkout what version of the software you like (or make 
+what changes to it that you want) and run the generateDebs script (as a normal user). 
 
 	./generateDebs <version number>
+
+===============================
+Common Problems and solutions
+===============================
+	
+	================== Haystack Autoconfig nmap fails on large networks ==================
+	  
+	  Nmap will often fail when scanning networks of size greater than 1024 IPs with the error
+	  "nexthost: failed to determine route" or "Strange connect error(105): No buffer space available".
+	  This is usually caused by the kernel ARP table running out of space and not being garbaged collected
+	  fast enough to handle all of the ARP requests nmap is doing. The solution is to increase the size
+	  by adding the following lines to /etc/sysctl.conf,
+
+		net.ipv4.neigh.default.gc_thresh1 = 1024
+		net.ipv4.neigh.default.gc_thresh2 = 4096
+		net.ipv4.neigh.default.gc_thresh3 = 65536
+
+	  Then run the command,
+
+		sysctl -p
+	
+	  And try running the Haystack autoconfig tool again.
+
+
+===============================
+Tips for debugging problems
+===============================
+
+	================== General problems ==================
+	 
+	  To enable verbose debug log messages, run the command,
+
+		novacli writesetting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
+
+	  If the above fails for some reason, you can also change the logging settings manually
+	  in the /usr/share/nova/nova/Config/NOVAConfig.txt file under the SERVICE_PREFERENCES setting.
+
+	=================== Permission Problems ===================
+
+	  You should be able to run quasar/novad/honeyd without needing explicit root permissions. One
+	  requirement for this is that the user you're running with is in the "nova" group and has
+	  run the nova_init script located in Installer/. This script adds the user to the group
+	  and also configures sudo (via adding a file to /etc/sudoers.d). Logging out and back in
+	  is required for the group addition to work.
+
+	  If you're seeing permission related errors, you can try the following commands,
+
+		sudo chmod -R g+rw /usr/share/nova 
+		sudo chgrp -R nova /usr/share/nova
+
+	=================== Web interface problems ===================
+	  
+	  If you can't access the web interface, try stopping it if it's running in 'forever' and 
+	  manually running it as a foreground process with the commands,
+
+		forever stopall
+		quasal --debug
+
+	  This should provide more verbose output and show if it is crashing rather than running it
+	  as a background daemon process.
+
+
+	  =================== Novad Problems ===================
+
+	  If Novad appears to be having problems, try to start it manually instead of as a background
+	  process with the command
+		
+		novacli start nova debug
+
+
+	  =================== Haystack Problems ===================
+
+	    If the Haystack appears to be having problems, try to start it manually instead of as a
+	    background process with the command,
+
+		novacli start haystack debug
+	
+	  =================== Reinstalling ===================
+
+	    If something gets messed up to the point you want to start over, you can do so with the
+	    commands,
+
+		cd $NOVA_SOURCE
+		sudo make reinstall
+
+	    Note that this will remove any configuration changes that you made.
+
+	  =================== Building with debugging symbols ===================
+
+	    If you're seeing novad crash, it might be helpful to compile with debugging symbols and 
+	    get a stack trace. 
+
+		cd $NOVA_SOURCE
+		make clean
+		make debug
+		make reinstall
+
+		gdb novad
+		run
+		backtrack
+
 
 ===============================
 Contact us

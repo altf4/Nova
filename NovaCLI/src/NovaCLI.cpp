@@ -108,7 +108,21 @@ int main(int argc, const char *argv[])
 
 		if(!strcmp(argv[2], "nova"))
 		{
-			StartNovaWrapper();
+			if (argc > 3)
+			{
+				if (!strcmp(argv[3], "debug"))
+				{
+					StartNovaWrapper(true);
+				}
+				else
+				{
+					PrintUsage();
+				}
+			}
+			else
+			{
+				StartNovaWrapper(false);
+			}
 		}
 		else if(!strcmp(argv[2], "haystack"))
 		{
@@ -128,6 +142,10 @@ int main(int argc, const char *argv[])
 				StartHaystackWrapper(false);
 			}
 
+		}
+		else if (!strcmp(argv[2], "capture"))
+		{
+			StartCaptureWrapper();
 		}
 		else
 		{
@@ -150,6 +168,10 @@ int main(int argc, const char *argv[])
 		else if(!strcmp(argv[2], "haystack"))
 		{
 			StopHaystackWrapper();
+		}
+		else if (!strcmp(argv[2], "capture"))
+		{
+			StopCaptureWrapper();
 		}
 		else
 		{
@@ -197,6 +219,23 @@ int main(int argc, const char *argv[])
 			{
 				PrintAllSuspects(SUSPECTLIST_BENIGN, false);
 			}
+		}
+		else if (!strcmp(argv[2], "data"))
+		{
+			if (argc != 4)
+			{
+				PrintUsage();
+			}
+
+			in_addr_t address;
+			if(inet_pton(AF_INET, argv[3], &address) != 1)
+			{
+				cout << "Error: Unable to convert to IP address" << endl;
+				exit(EXIT_FAILURE);
+			}
+
+			PrintSuspectData(address);
+
 		}
 		else
 		{
@@ -254,7 +293,14 @@ int main(int argc, const char *argv[])
 			PrintUsage();
 		}
 
-		cout << Config::Inst()->WriteSetting(string(argv[2]), string(argv[3])) << endl;
+		if(Config::Inst()->WriteSetting(string(argv[2]), string(argv[3])))
+		{
+			LOG(DEBUG, "Finished writing setting to configuration file", "");
+		}
+		else
+		{
+			LOG(ERROR, "Unable to write setting to configuration file.", "");
+		}
 	}
 
 	else if(!strcmp(argv[1], "listsettings"))
@@ -280,17 +326,41 @@ namespace NovaCLI
 void PrintUsage()
 {
 	cout << "Usage:" << endl;
-	cout << "    " << EXECUTABLE_NAME << " status nova|haystack" << endl;
-	cout << "    " << EXECUTABLE_NAME << " start nova|haystack [debug]" << endl;
-	cout << "    " << EXECUTABLE_NAME << " stop nova|haystack" << endl;
-	cout << "    " << EXECUTABLE_NAME << " list all|hostile|benign" << endl;
-	cout << "    " << EXECUTABLE_NAME << " get all|hostile|benign [csv]" << endl;
-	cout << "    " << EXECUTABLE_NAME << " get xxx.xxx.xxx.xxx" << endl;
-	cout << "    " << EXECUTABLE_NAME << " clear all" << endl;
-	cout << "    " << EXECUTABLE_NAME << " clear xxx.xxx.xxx.xxx" << endl;
-	cout << "    " << EXECUTABLE_NAME << " writesetting SETTING VALUE" << endl;
-	cout << "    " << EXECUTABLE_NAME << " readsetting SETTING" << endl;
-	cout << "    " << EXECUTABLE_NAME << " listsettings" << endl;
+	cout << "  " << EXECUTABLE_NAME << " status nova|haystack" << endl;
+	cout << "    Outputs if the nova or haystack process is running and responding" << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " start nova|capture|haystack [debug]" << endl;
+	cout << "    Starts the nova or haystack process, or starts capture on existing process. 'debug' will run in a blocking and verbose mode." << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " stop nova|capture|haystack" << endl;
+	cout << "    Stops the nova, haystack process, or live packet capture" << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " list all|hostile|benign" << endl;
+	cout << "    Outputs the current list of suspect IP addresses of a given type" << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " get all|hostile|benign [csv]" << endl;
+	cout << "    Outputs the details for all suspects of a type (all, hostile only, or benign only). Optionally can be output in CSV format." << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " get xxx.xxx.xxx.xxx" << endl;
+	cout << "    Outputs the details of a specific suspect with IP address xxx.xxx.xxx.xxx" << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " get data xxx.xxx.xxx.xxx" << endl;
+	cout << "    Outputs the details of a specific suspect with IP address xxx.xxx.xxx.xxx, including low level data" << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " clear all" << endl;
+	cout << "    Clears all saved data for suspects" << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " clear xxx.xxx.xxx.xxx" << endl;
+	cout << "    Clears all saved data for a specific suspect" << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " writesetting SETTING VALUE" << endl;
+	cout << "    Writes setting to configuration file" << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " readsetting SETTING" << endl;
+	cout << "    Reads setting from configuration file" << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " listsettings" << endl;
+	cout << "    Lists settings that can be set in the configuration file" << endl;
 	cout << endl;
 
 	exit(EXIT_FAILURE);
@@ -329,11 +399,11 @@ void StatusHaystackWrapper()
 	}
 }
 
-void StartNovaWrapper()
+void StartNovaWrapper(bool debug)
 {
 	if(!ConnectToNovad())
 	{
-		if(StartNovad())
+		if(StartNovad(debug))
 		{
 			cout << "Started Novad" << endl;
 		}
@@ -394,6 +464,18 @@ void StopHaystackWrapper()
 	}
 }
 
+void StartCaptureWrapper()
+{
+	Connect();
+	StartPacketCapture();
+}
+
+void StopCaptureWrapper()
+{
+	Connect();
+	StopPacketCapture();
+}
+
 void PrintSuspect(in_addr_t address)
 {
 	Connect();
@@ -414,6 +496,32 @@ void PrintSuspect(in_addr_t address)
 	CloseNovadConnection();
 }
 
+void PrintSuspectData(in_addr_t address)
+{
+	Connect();
+
+	Suspect *suspect = GetSuspectWithData(ntohl(address));
+
+	if (suspect != NULL)
+	{
+		cout << suspect->ToString() << endl;
+
+
+		cout << "Details follow" << endl;
+		cout << suspect->GetFeatureSet(MAIN_FEATURES).toString() << endl;
+	}
+	else
+	{
+		cout << "Error: No suspect received" << endl;
+	}
+
+	delete suspect;
+
+	CloseNovadConnection();
+
+
+}
+
 void PrintAllSuspects(enum SuspectListType listType, bool csv)
 {
 	Connect();
@@ -425,6 +533,17 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 	{
 		cout << "Failed to get suspect list" << endl;
 		exit(EXIT_FAILURE);
+	}
+
+	// Print the CSV header
+	if (csv)
+	{
+		cout << "SUSPECT,";
+		for(int i = 0; i < DIM; i++)
+		{
+			cout << FeatureSet::m_featureNames[i] << ",";
+		}
+		cout << "CLASSIFICATION" << endl;
 	}
 
 	for(uint i = 0; i < suspects->size(); i++)

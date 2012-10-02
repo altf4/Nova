@@ -197,6 +197,23 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 
 			break;
 		}
+		case CONTROL_START_CAPTURE:
+		{
+			ControlMessage ack(CONTROL_START_CAPTURE_ACK);
+			MessageManager::Instance().WriteMessage(ticket, &ack);
+
+			StartCapture();
+			break;
+		}
+		case CONTROL_STOP_CAPTURE:
+		{
+			ControlMessage ack(CONTROL_STOP_CAPTURE_ACK);
+			MessageManager::Instance().WriteMessage(ticket, &ack);
+
+			StopCapture();
+
+			break;
+		}
 		default:
 		{
 			LOG(DEBUG, "UI sent us an invalid message","Got an unexpected ControlMessage type");
@@ -263,6 +280,15 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 		case REQUEST_SUSPECT:
 		{
 			RequestMessage reply(REQUEST_SUSPECT_REPLY);
+			Suspect tempSuspect = suspects.GetSuspect(msg.m_suspectAddress);
+			reply.m_suspect = &tempSuspect;
+			MessageManager::Instance().WriteMessage(ticket, &reply);
+
+			break;
+		}
+		case REQUEST_SUSPECT_WITHDATA:
+		{
+			RequestMessage reply(REQUEST_SUSPECT_WITHDATA_REPLY);
 			Suspect tempSuspect = suspects.GetSuspect(msg.m_suspectAddress);
 			reply.m_suspect = &tempSuspect;
 			MessageManager::Instance().WriteMessage(ticket, &reply);

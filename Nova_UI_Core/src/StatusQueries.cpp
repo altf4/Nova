@@ -229,4 +229,50 @@ Suspect *GetSuspect(in_addr_t address)
 	delete requestReply;
 	return suspect;
 }
+
+Suspect *GetSuspectWithData(in_addr_t address)
+{
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
+
+	RequestMessage request(REQUEST_SUSPECT_WITHDATA);
+	request.m_suspectAddress = address;
+
+
+	if(!MessageManager::Instance().WriteMessage(ticket, &request))
+	{
+		//There was an error in sending the message
+		return NULL;
+	}
+
+
+	Message *reply = MessageManager::Instance().ReadMessage(ticket, IPCSocketFD);
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		delete ((ErrorMessage*)reply);
+		return NULL;
+	}
+
+	if(reply->m_messageType != REQUEST_MESSAGE)
+	{
+		//Received the wrong kind of message
+		delete reply;
+		return NULL;
+	}
+
+	RequestMessage *requestReply = (RequestMessage*)reply;
+	if(requestReply->m_requestType != REQUEST_SUSPECT_WITHDATA_REPLY)
+	{
+		//Received the wrong kind of control message
+		delete requestReply;
+		return NULL;
+	}
+
+	Suspect *returnSuspect = new Suspect();
+	*returnSuspect = *requestReply->m_suspect;
+	delete requestReply;
+
+	return returnSuspect;
+}
+
 }

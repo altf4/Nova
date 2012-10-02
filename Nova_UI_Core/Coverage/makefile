@@ -8,8 +8,8 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include subdir.mk
 -include src/subdir.mk
+-include subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -44,7 +44,7 @@ all: libNova_UI_Core.so
 libNova_UI_Core.so: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L../../NovaLibrary/Coverage -fprofile-arcs -shared -Wl,-soname=Nova_UI_Core -o "libNova_UI_Core.so" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -fprofile-arcs -shared -Wl,-soname=Nova_UI_Core -o "libNova_UI_Core.so" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

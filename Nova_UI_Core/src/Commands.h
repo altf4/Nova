@@ -35,7 +35,7 @@ namespace Nova
 //Runs the Novad process
 //	returns - True upon successfully running the novad process, false on error
 //	NOTE: This function will return true if Novad was already running
-bool StartNovad();
+bool StartNovad(bool blocking = false);
 
 //Kills the Novad process
 //	returns - True upon successfully stopping the novad process, false on error
@@ -90,6 +90,9 @@ std::vector<in_addr_t> *GetSuspectList(enum SuspectListType listType);
 // Returns: Pointer to the suspect
 Suspect *GetSuspect(in_addr_t address);
 
+// Same as GetSuspect but returns all the featureset data
+Suspect *GetSuspectWithData(in_addr_t address);
+
 //Asks Novad to save the suspect list to persistent storage
 //	returns - true if saved correctly, false on error
 bool SaveAllSuspects(std::string file);
@@ -112,6 +115,10 @@ bool ReclassifyAllSuspects();
 // Asks novad for it's uptime.
 //  returns - The time (in standard unix time) when the server started. 0 on error
 uint64_t GetStartTime();
+
+// Command nova to start or stop live packet capture
+bool StartPacketCapture();
+bool StopPacketCapture();
 
 }
 

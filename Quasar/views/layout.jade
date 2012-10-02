@@ -4,14 +4,12 @@ html(lang="en")
     meta(charset="utf-8")
     link(rel="stylesheet", type="text/css", href="style.css", media="screen")
     link(rel="stylesheet", type="text/css", href="/dojo/dijit/themes/claro/claro.css", media="screen")
-    link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
-    link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
     link(rel="shortcut icon", href="/favicon.ico")
 
     script(type="text/javascript", src="/nowjs/now.js")
     script(type="text/javascript", src="/dojo/dojo/dojo.js", data-dojo-config="async:true, parseOnLoad:true")
     script
-      require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser", "dojox/grid/DataGrid", "dojox/data/HtmlStore", "dijit/ProgressBar"],
+      require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser"],
         function(ready){
           dojo.addOnLoad(function(){
             // Some logging of nowjs stuff
@@ -67,6 +65,9 @@ html(lang="en")
         div(style="text-align:center; font-weight:bold; font-size: 150%;") Logs
         a(class="button", href= "/novadlog") Nova Log
         br
+        
+        a(class="button", href= "/honeydlog") Haystack Log
+        br
         br
         
        
@@ -93,8 +94,8 @@ html(lang="en")
         
         
         div(style="text-align:center; font-weight:bold; font-size: 150%;") Training
-        a(class="button", href= "/captureTrainingData") Capture Training Data
-        br
+        //a(class="button", href= "/captureTrainingData") Capture Training Data
+        //br
         
         a(class="button", href= "customizeTraining") Choose Training Data
         br

@@ -16,14 +16,20 @@
 // Description : Class to load and parse the NOVA configuration file
 //============================================================================
 
+#include <boost/algorithm/string.hpp>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <ifaddrs.h>
+#include <unistd.h>
 #include <net/if.h>
 #include <sys/un.h>
 #include <syslog.h>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <math.h>
+#include <pwd.h>
+#include <string>
 #include <iostream>
 
 #include "Config.h"
@@ -36,7 +42,7 @@ using namespace std;
 namespace Nova
 {
 
-string Config::m_pathsFile = "/etc/nova/paths";
+string Config::m_pathsFile = "/usr/share/nova/sharedFiles/paths";
 string Config::m_pathPrefix = "";
 
 string Config::m_prefixes[] =
@@ -49,20 +55,15 @@ string Config::m_prefixes[] =
 	"PCAP_FILE",
 	"GO_TO_LIVE",
 	"CLASSIFICATION_TIMEOUT",
-	"SILENT_ALARM_PORT",
 	"K",
 	"EPS",
-	"IS_TRAINING",
 	"CLASSIFICATION_THRESHOLD",
 	"DATAFILE",
-	"SA_MAX_ATTEMPTS",
-	"SA_SLEEP_DURATION",
 	"USER_HONEYD_CONFIG",
 	"DOPPELGANGER_IP",
 	"DOPPELGANGER_INTERFACE",
 	"DM_ENABLED",
 	"ENABLED_FEATURES",
-	"TRAINING_CAP_FOLDER",
 	"THINNING_DISTANCE",
 	"SAVE_FREQUENCY",
 	"DATA_TTL",
@@ -80,26 +81,15 @@ string Config::m_prefixes[] =
 	"CUSTOM_PCAP_MODE",
 	"TRAINING_SESSION",
 	"WEB_UI_PORT",
-	"DATABASE_HOST",
-	"DATABASE_USER",
-	"DATABASE_PASS",
 	"CLEAR_AFTER_HOSTILE_EVENT",
-	"CAPTURE_BUFFER_SIZE"
-};
-
-// Files we need to run (that will be loaded with defaults if deleted)
-string Config::m_requiredFiles[] =
-{
-	"/settings",
-	"/Config",
-	"/keys",
-	"/templates",
-	"/Config/NOVAConfig.txt",
-	"/scripts.xml",
-	"/templates/ports.xml",
-	"/templates/profiles.xml",
-	"/templates/routes.xml",
-	"/templates/nodes.xml"
+	"CAPTURE_BUFFER_SIZE",
+	"MASTER_UI_IP",
+	"MASTER_UI_RECONNECT_TIME",
+	"MASTER_UI_CLIENT_ID",
+	"MASTER_UI_ENABLED",
+	"FEATURE_WEIGHTS",
+	"CLASSIFICATION_ENGINE",
+	"THRESHOLD_HOSTILE_TRIGGERS"
 };
 
 Config *Config::m_instance = NULL;
@@ -125,15 +115,14 @@ Config::Config()
 	}
 	LoadPaths();
 
-	if(!InitUserConfigs(m_pathHome))
+	if(!InitUserConfigs())
 	{
 		// Do not call LOG here, Config and logger are not yet initialized
 		cout << "CRITICAL ERROR: InitUserConfigs failed" << endl;
 	}
 
-	m_configFilePath = m_pathHome + string("/Config/NOVAConfig.txt");
-	m_userConfigFilePath = m_pathHome + string("/settings");
-	SetDefaults();
+	m_configFilePath = m_pathHome + string("/config/NOVAConfig.txt");
+	m_userConfigFilePath = m_pathHome + string("/config/settings");
 	LoadUserConfig();
 	LoadConfig_Internal();
 	LoadVersionFile();
@@ -328,26 +317,6 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
-			// SILENT_ALARM_PORT
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				if(line.size() == prefix.size())
-				{
-					line += " ";
-				}
-
-				line = line.substr(prefix.size() + 1, line.size());
-
-				if(atoi(line.c_str()) > 0)
-				{
-					m_saPort = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
 			// K
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -371,20 +340,6 @@ void Config::LoadConfig_Internal()
 				if(atof(line.c_str()) >= 0)
 				{
 					m_eps = atof(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// IS_TRAINING
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
-				{
-					m_isTraining = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -414,34 +369,6 @@ void Config::LoadConfig_Internal()
 						line.size()).compare(".txt"))
 				{
 					m_pathTrainingFile = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// SA_MAX_ATTEMPTS
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					m_saMaxAttempts = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// SA_SLEEP_DURATION
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atof(line.c_str()) >= 0)
-				{
-					m_saSleepDuration = atof(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -518,20 +445,6 @@ void Config::LoadConfig_Internal()
 				}
 				continue;
 
-			}
-
-			// TRAINING_CAP_FOLDER
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_pathTrainingCapFolder = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
 			}
 
 			// THINNING_DISTANCE
@@ -715,7 +628,7 @@ void Config::LoadConfig_Internal()
 						case 'I':
 						{
 							m_haystackStorage = 'I';
-							m_userPath = m_pathHome + "/Config/haystack_honeyd.config";
+							m_userPath = m_pathHome + "/config/haystack_honeyd.config";
 							isValid[prefixIndex] = true;
 							break;
 						}
@@ -820,48 +733,6 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
-			// DATABASE_HOST
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_DBHost = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// DATABASE_USER
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_DBUser = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// DATABASE_PASS
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_DBPass = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
 
 			// CLEAR_AFTER_HOSTILE_EVENT
 			prefixIndex++;
@@ -887,6 +758,210 @@ void Config::LoadConfig_Internal()
 				{
 					m_captureBufferSize = atoi(line.c_str());
 					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// MASTER_UI_IP
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIIP = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// MASTER_UI_RECONNECT_TIME
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIReconnectTime = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// MASTER_UI_CLIENT_ID
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIClientID = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// MASTER_UI_ENABLED
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_masterUIEnabled = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+			// FEATURE_WEIGHTS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+
+					istringstream is(line);
+					m_featureWeights.clear();
+					double n;
+					while (is >> n)
+					{
+						m_featureWeights.push_back(n);
+					}
+
+					if (m_featureWeights.size() == DIM)
+					{
+						isValid[prefixIndex] = true;
+					}
+
+				}
+				continue;
+			}
+
+			// CLASSIFICATION_ENGINE
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_classificationType = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// THRESHOLD_HOSTILE_TRIGGERS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_hostileThresholds.clear();
+
+					vector<string> thresholds;
+					boost::split(thresholds, line, boost::is_any_of("\t "));
+
+					if (thresholds.size() != DIM)
+					{
+						LOG(ERROR, "THRESHOLD_HOSTILE_TRIGGERS does not contain the correct number of entries", "");
+						continue;
+					}
+
+					for (uint i = 0; i < thresholds.size(); i++)
+					{
+						HostileThreshold setting;
+						setting.hasMaxValueTrigger = false;
+						setting.hasMinValueTrigger = false;
+
+						if (thresholds.at(i).at(0) == '-')
+						{
+
+						}
+						else if (thresholds.at(i).at(0) == '>')
+						{
+							// Check if this has both a > and a < symbol
+							vector<string> parts;
+							boost::split(parts, thresholds.at(i), boost::is_any_of("<"));
+							if (parts.size() == 2)
+							{
+								string maxValueString = parts.at(0).substr(1, string::npos);
+								istringstream s1(maxValueString);
+								if (!(s1 >> setting.maxValueTrigger))
+								{
+									LOG(ERROR, "Unable to parse max value for THRESHOLD_HOSTILE_TRIGGERS", "");
+								}
+								else
+								{
+									setting.hasMaxValueTrigger = true;
+								}
+
+
+								string minValueString = parts.at(1);
+								istringstream s2(minValueString);
+								if (!(s2 >> setting.minValueTrigger))
+								{
+									LOG(ERROR, "Unable to parse min value for THRESHOLD_HOSTILE_TRIGGERS", "");
+								}
+								else
+								{
+									setting.hasMinValueTrigger = true;
+								}
+							}
+							else
+							{
+								istringstream s(thresholds.at(i).substr(1, string::npos));
+								if (!(s >> setting.maxValueTrigger))
+								{
+									LOG(ERROR, "Unable to parse max value for THRESHOLD_HOSTILE_TRIGGERS", "");
+								}
+								else
+								{
+									setting.hasMaxValueTrigger = true;
+								}
+							}
+
+						}
+						else if (thresholds.at(i).at(0) == '<')
+						{
+							istringstream s(thresholds.at(i).substr(1, thresholds.at(i).npos));
+							if (!(s >> setting.minValueTrigger))
+							{
+								LOG(ERROR, "Unable to parse min value for THRESHOLD_HOSTILE_TRIGGERS", "");
+							}
+							else
+							{
+								setting.hasMinValueTrigger = true;
+							}
+						}
+
+						m_hostileThresholds.push_back(setting);
+					}
+
+					isValid[prefixIndex] = true;
+
+					/*
+					for (uint i = 0; i < m_hostileThresholds.size(); i++)
+					{
+						if (m_hostileThresholds.at(i).hasMaxValueTrigger)
+						{
+							cout << "Max value for feature " << i << " is " << m_hostileThresholds.at(i).maxValueTrigger << endl;
+						}
+
+						if (m_hostileThresholds.at(i).hasMinValueTrigger)
+						{
+							cout << "Min value for feature " << i << " is " << m_hostileThresholds.at(i).minValueTrigger << endl;
+						}
+					}
+					*/
 				}
 				continue;
 			}
@@ -924,7 +999,7 @@ bool Config::SaveUserConfig()
 
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_userConfigFilePath + ".tmp";
-	string copyCommand = "cp -f " + m_userConfigFilePath + " " + configurationBackup;
+	string copyCommand = "cp -fp \"" + m_userConfigFilePath + "\" \"" + configurationBackup + "\"";
 	if(system(copyCommand.c_str()) != 0)
 	{
 		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
@@ -1054,6 +1129,21 @@ bool Config::LoadPaths()
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 
+	// Try getting the $HOME env var
+	char *homePath = getenv("HOME");
+	if (homePath != NULL)
+	{
+		m_pathHome = string(homePath);
+	}
+	// Resort to checking the passwd file
+	else
+	{
+		struct passwd *pw = getpwuid(getuid());
+		m_pathHome = string(pw->pw_dir);
+	}
+
+	m_pathHome += "/.config/nova";
+
 	//Get locations of nova files
 	ifstream *paths =  new ifstream(m_pathPrefix + Config::m_pathsFile);
 	string prefix, line;
@@ -1063,14 +1153,6 @@ bool Config::LoadPaths()
 		while(paths->good())
 		{
 			getline(*paths,line);
-
-			prefix = "NOVA_HOME";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				m_pathHome = m_pathPrefix + ResolvePathVars(line);
-				continue;
-			}
 
 			prefix = "NOVA_RD";
 			if(!line.substr(0,prefix.size()).compare(prefix))
@@ -1173,29 +1255,7 @@ void Config::LoadInterfaces()
 			//Pop an interface name
 			string temp = interfaces.back();
 			interfaces.pop_back();
-
-			for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
-			{
-				//If we match the interface exit the loop early (curIf != NULL)
-				if(!(curIf->ifa_flags & IFF_LOOPBACK) && (!temp.compare(string(curIf->ifa_name)))
-					&& ((int)curIf->ifa_addr->sa_family == AF_INET))
-				{
-					m_interfaces.push_back(temp);
-					break;
-				}
-			}
-
-			//If we couldn't match every interface notify the user and exit the while loop
-			if(curIf == NULL)
-			{
-				ss.str("");
-				ss << "ERROR File: " << __FILE__ << "at line: " << __LINE__
-					<< "Configuration option 'INTERFACE' is invalid.";
-				::openlog("Nova", OPEN_SYSL, LOG_AUTHPRIV);
-				syslog(ERROR, "%s %s", "ERROR", ss.str().c_str());
-				closelog();
-				break;
-			}
+			m_interfaces.push_back(temp);
 		}
 	}
 	freeifaddrs(devices);
@@ -1203,7 +1263,7 @@ void Config::LoadInterfaces()
 
 bool Config::LoadVersionFile()
 {
-	ifstream versionFile((m_pathHome + "/" + VERSION_FILE_NAME).c_str());
+	ifstream versionFile((m_pathHome + "/config/" + VERSION_FILE_NAME).c_str());
 	string line;
 
 	if(versionFile.is_open())
@@ -1296,7 +1356,7 @@ bool Config::SaveConfig()
 
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_configFilePath + ".tmp";
-	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
+	string copyCommand = "cp -fp \"" + m_configFilePath + "\" \"" + configurationBackup + "\"";
 	if(system(copyCommand.c_str()) != 0)
 	{
 		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
@@ -1328,20 +1388,6 @@ bool Config::SaveConfig()
 				continue;
 			}
 
-			prefix = "IS_TRAINING";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				if(GetIsTraining())
-				{
-					*out << "IS_TRAINING 1"<< endl;
-				}
-				else
-				{
-					*out << "IS_TRAINING 0"<<endl;
-				}
-				continue;
-			}
-
 			prefix = "INTERFACE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -1365,27 +1411,6 @@ bool Config::SaveConfig()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				*out << prefix << " " << GetPathTrainingFile() << endl;
-				continue;
-			}
-
-			prefix = "SA_SLEEP_DURATION";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetSaSleepDuration() << endl;
-				continue;
-			}
-
-			prefix = "SA_MAX_ATTEMPTS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetSaMaxAttempts() << endl;
-				continue;
-			}
-
-			prefix = "SILENT_ALARM_PORT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetSaPort() << endl;
 				continue;
 			}
 
@@ -1551,44 +1576,9 @@ bool Config::SaveConfig()
 	return true;
 }
 
-
-
-void Config::SetDefaults()
-{
-	m_interfaces.push_back("default");
-	m_pathConfigHoneydHs 	= "Config/haystack.config";
-	m_pathPcapFile 		= "../pcapfile";
-	m_pathTrainingFile 	= "Config/data.txt";
-	m_pathWhitelistFile = "Config/whitelist.txt";
-	m_pathConfigHoneydUser	= "Config/doppelganger.config";
-	m_pathTrainingCapFolder = "Data";
-	m_pathCESaveFile = "ceStateSave";
-
-	m_tcpTimout = 7;
-	m_tcpCheckFreq = 3;
-	m_readPcap = false;
-	m_gotoLive = true;
-	m_isDmEnabled = true;
-
-	m_classificationTimeout = 3;
-	m_saPort = 12024;
-	m_k = 3;
-	m_eps = 0.01;
-	m_isTraining = 0;
-	m_classificationThreshold = .5;
-	m_saMaxAttempts = 3;
-	m_saSleepDuration = .5;
-	m_doppelIp = "10.0.0.1";
-	m_loopbackIF = "lo";
-	m_enabledFeatureMask = "111111111";
-	m_thinningDistance = 0;
-	m_saveFreq = 1440;
-	m_dataTTL = 0;
-}
-
 //	Returns: True if(after the function) the user has all necessary nova config files
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
-bool Config::InitUserConfigs(string homeNovaPath)
+bool Config::InitUserConfigs()
 {
 	bool returnValue = true;
 	struct stat fileAttr;
@@ -1597,46 +1587,25 @@ bool Config::InitUserConfigs(string homeNovaPath)
 	// This is called before the logger is initialized. Calling LOG here will likely result in a crash. Just use cout instead.
 
 	//check for home folder
-	if(stat(homeNovaPath.c_str(), &fileAttr ) == 0)
+	if(!stat(m_pathHome.c_str(), &fileAttr ) == 0)
 	{
-		// Do all of the important files exist?
-		for(uint i = 0; i < sizeof(m_requiredFiles)/sizeof(m_requiredFiles[0]); i++)
-		{
-			string fullPath = homeNovaPath + Config::m_requiredFiles[i];
-			if(stat (fullPath.c_str(), &fileAttr ) != 0)
-			{
-				string defaultLocation = m_pathPrefix + "/etc/nova/nova" + Config::m_requiredFiles[i];
-				string copyCommand = "cp -fr " + defaultLocation + " " + fullPath;
+		string fromPath = m_pathPrefix + "/usr/share/nova/userFiles";
+		string toPath = m_pathHome;
+		string copyString = "cp -rfp \"" + fromPath + "\" \"" + toPath + "\"";
 
-				cout << "The required file " << fullPath << " does not exist. Copying it from the defaults folder." << endl;
-				if(system(copyCommand.c_str()) != 0)
-				{
-					cout << "Unable to load defaults from " << defaultLocation << "System Command " << copyCommand <<" has failed." << endl;
-					returnValue = false;
-				}
-			}
-		}
-	}
-	else
-	{
-		//TODO: Do this command programmatically. Not by calling system()
-		string fromPath = m_pathPrefix + "/etc/nova/nova";
-		string toPath = m_pathPrefix + "/usr/share/nova";
-		string copyString = "cp -rf " + fromPath + " " + toPath;
-		if(system(copyString.c_str()) == -1)
+		if(system(copyString.c_str()) != 0)
 		{
-			cout << "Was unable to create directory " << toPath << endl;
-			returnValue = false;
+			cout << "Error copying files to user's HOME folder. Failed copy command was: " + copyString << endl;
 		}
 
 		//Check the nova dir again
-		if(stat(homeNovaPath.c_str(), &fileAttr) == 0)
+		if(stat(m_pathHome.c_str(), &fileAttr) == 0)
 		{
 			return returnValue;
 		}
 		else
 		{
-			cout << "Was unable to create directory " << homeNovaPath << endl;
+			cout << "Was unable to create directory " << m_pathHome << endl;
 			returnValue = false;
 		}
 	}
@@ -1667,26 +1636,21 @@ string Config::ToString()
 	ss << "GetPathConfigHoneydDm() " << GetPathConfigHoneydUser() << endl;
 	ss << "GetPathConfigHoneydHs() " << GetPathConfigHoneydHS() << endl;
 	ss << "GetPathPcapFile() " << GetPathPcapFile() << endl;
-	ss << "GetPathTrainingCapFolder() " << GetPathTrainingCapFolder() << endl;
 	ss << "GetPathTrainingFile() " << GetPathTrainingFile() << endl;
 
 	ss << "GetReadPcap() " << GetReadPcap() << endl;
 	ss << "GetIsDmEnabled() " << GetIsDmEnabled() << endl;
-	ss << "GetIsTraining() " << GetIsTraining() << endl;
 	ss << "GetGotoLive() " << GetGotoLive() << endl;
 
 	ss << "GetClassificationTimeout() " << GetClassificationTimeout() << endl;
 	ss << "GetDataTTL() " << GetDataTTL() << endl;
 	ss << "GetK() " << GetK() << endl;
-	ss << "GetSaMaxAttempts() " << GetSaMaxAttempts() << endl;
-	ss << "GetSaPort() " << GetSaPort() << endl;
 	ss << "GetSaveFreq() " << GetSaveFreq() << endl;
 	ss << "GetTcpCheckFreq() " << GetTcpCheckFreq() << endl;
 	ss << "GetTcpTimout() " << GetTcpTimout() << endl;
 	ss << "GetThinningDistance() " << GetThinningDistance() << endl;
 
 	ss << "GetClassificationThreshold() " << GetClassificationThreshold() << endl;
-	ss << "GetSaSleepDuration() " << GetSaSleepDuration() << endl;
 	ss << "GetEps() " << GetEps() << endl;
 
 
@@ -1758,7 +1722,7 @@ bool Config::WriteSetting(std::string key, std::string value)
 
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_configFilePath + ".tmp";
-	string copyCommand = "cp -f " + m_configFilePath + " " + configurationBackup;
+	string copyCommand = "cp -fp " + m_configFilePath + " " + configurationBackup;
 	if(system(copyCommand.c_str()) != 0)
 	{
 		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
@@ -1964,12 +1928,6 @@ bool Config::GetIsDmEnabled()
 	return m_isDmEnabled;
 }
 
-bool Config::GetIsTraining()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_isTraining;
-}
-
 int Config::GetK()
 {
 	Lock lock(&m_lock, READ_LOCK);
@@ -2000,12 +1958,6 @@ string Config::GetPathPcapFile()
 	return m_pathPcapFile;
 }
 
-string Config::GetPathTrainingCapFolder()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathTrainingCapFolder;
-}
-
 string Config::GetPathTrainingFile()
 {
 	Lock lock(&m_lock, READ_LOCK);
@@ -2022,24 +1974,6 @@ bool Config::GetReadPcap()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_readPcap;
-}
-
-int Config::GetSaMaxAttempts()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_saMaxAttempts;
-}
-
-int Config::GetSaPort()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_saPort;
-}
-
-double Config::GetSaSleepDuration()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_saSleepDuration;
 }
 
 int Config::GetSaveFreq()
@@ -2086,9 +2020,9 @@ string Config::GetGroup()
 
 bool Config::GetSMTPSettings_FromFile()
 {
-	string debugPath = m_pathHome + "/Config/smtp.txt";
+	string debugPath = m_pathHome + "/config/smtp.txt";
 
-	ifstream ifs(m_pathHome + "/Config/smtp.txt");
+	ifstream ifs(m_pathHome + "/config/smtp.txt");
 
 	if (!ifs.is_open())
 	{
@@ -2112,7 +2046,7 @@ bool Config::GetSMTPSettings_FromFile()
 
 bool Config::SaveSMTPSettings()
 {
-	string debugPath = m_pathHome + "/Config/smtp.txt";
+	string debugPath = m_pathHome + "/config/smtp.txt";
 	ofstream out(debugPath.c_str());
 
 	if (!out.is_open())
@@ -2354,12 +2288,6 @@ void Config::SetIsDmEnabled(bool isDmEnabled)
 	m_isDmEnabled = isDmEnabled;
 }
 
-void Config::SetIsTraining(bool isTraining)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_isTraining = isTraining;
-}
-
 void Config::SetK(int k)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -2390,12 +2318,6 @@ void Config::SetPathPcapFile(string pathPcapFile)
 	m_pathPcapFile = pathPcapFile;
 }
 
-void Config::SetPathTrainingCapFolder(string pathTrainingCapFolder)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_pathTrainingCapFolder = pathTrainingCapFolder;
-}
-
 void Config::SetPathTrainingFile(string pathTrainingFile)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -2413,24 +2335,6 @@ void Config::SetReadPcap(bool readPcap)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_readPcap = readPcap;
-}
-
-void Config::SetSaMaxAttempts(int saMaxAttempts)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_saMaxAttempts = saMaxAttempts;
-}
-
-void Config::SetSaPort(int saPort)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_saPort = saPort;
-}
-
-void Config::SetSaSleepDuration(double saSleepDuration)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_saSleepDuration = saSleepDuration;
 }
 
 void Config::SetSaveFreq(int saveFreq)
@@ -2517,25 +2421,6 @@ std::string Config::GetSMTPPass()
 	return m_SMTPPass;
 }
 
-std::string Config::GetDBHost()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_DBHost;
-}
-
-std::string Config::GetDBUser()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_DBUser;
-}
-
-std::string Config::GetDBPass()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_DBPass;
-}
-
-
 void Config::SetLoggerPreferences(string loggerPreferences)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -2568,27 +2453,6 @@ void Config::SetSMTPDomain(string SMTPDomain)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_SMTPDomain = SMTPDomain;
-
-}
-
-void Config::SetDBHost(string host)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_DBHost = host;
-
-}
-
-void Config::SetDBUser(string user)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_DBUser = user;
-
-}
-
-void Config::SetDBPass(string pass)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_DBPass = pass;
 
 }
 
@@ -2717,7 +2581,7 @@ void Config::SetOverridePcapString(bool overridePcapString)
 
 vector <string> Config::GetIpAddresses(string ipListFile)
 {
-	ifstream ipListFileStream(ipListFile.data());
+	ifstream ipListFileStream(ipListFile.c_str());
 	vector<string> whitelistedAddresses;
 
 	if(ipListFileStream.is_open())
@@ -2725,8 +2589,8 @@ vector <string> Config::GetIpAddresses(string ipListFile)
 		while(ipListFileStream.good())
 		{
 			string line;
-			getline (ipListFileStream,line);
-			if(strcmp(line.c_str(), "")&& line.at(0) != '#' )
+			getline(ipListFileStream,line);
+			if(line != "" && line.at(0) != '#' )
 			{
 				whitelistedAddresses.push_back(line);
 			}
@@ -2851,6 +2715,23 @@ bool Config::GetSMTPUseAuth()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_SMTPUseAuth;
+}
+
+vector<double> Config::GetFeatureWeights() {
+	Lock lock(&m_lock, READ_LOCK);
+	return m_featureWeights;
+}
+
+string Config::GetClassificationEngineType()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_classificationType;
+}
+
+vector<HostileThreshold> Config::GetHostileThresholds()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_hostileThresholds;
 }
 
 }

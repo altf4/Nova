@@ -36,6 +36,8 @@ public:
 	///	The ANN Point, which represents this suspect in feature space
 	ANNpoint m_annPoint;
 
+	ANNpoint m_notNormalized;
+
 	///	The classification given to the point on the basis of k-NN
 	int m_classification;
 
