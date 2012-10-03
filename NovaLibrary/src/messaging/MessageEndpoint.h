@@ -91,6 +91,9 @@ public:
 
 	bool m_isShutDown;
 
+	pthread_mutex_t m_buffereventMutex;
+	struct bufferevent *m_bufferevent;
+
 private:
 
 	//Returns a new "our" serial number to use for a conversation. This is guaranteed to not currently be in use and not be 0
@@ -121,8 +124,6 @@ private:
 	uint8_t m_consecutiveTimeouts;
 
 	pthread_mutex_t m_callbackRegisterMutex;
-
-	struct bufferevent *m_bufferevent;
 };
 
 }
