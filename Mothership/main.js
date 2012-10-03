@@ -170,7 +170,13 @@ function saveScheduledEvents(callback)
   // Upon restart, read from this file and convert the object
   // literal information back into the format required by the 
   // array, and the schedule module for Nodejs
-  fs.unlinkSync(NovaSharedPath + '/Mothership/scheduledEvents.txt');
+  try
+  {
+    fs.unlinkSync(NovaSharedPath + '/Mothership/scheduledEvents.txt');
+  }
+  catch(err)
+  {
+  }
   var writer = fs.createWriteStream(NovaSharedPath + '/Mothership/scheduledEvents.txt', {'flags':'a'});
   
   for(var i in scheduledMessages)
