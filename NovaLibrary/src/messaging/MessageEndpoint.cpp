@@ -40,7 +40,6 @@ MessageEndpoint::MessageEndpoint(int socketFD, struct bufferevent *bufferevent)
 	pthread_mutex_init(&m_callbackRegisterMutex, NULL);
 	pthread_mutex_init(&m_availableCBsMutex, NULL);
 	pthread_mutex_init(&m_nextSerialMutex, NULL);
-	pthread_mutex_init(&m_buffereventMutex, NULL);
 
 	pthread_cond_init(&m_callbackWakeupCondition, NULL);
 
@@ -50,10 +49,7 @@ MessageEndpoint::MessageEndpoint(int socketFD, struct bufferevent *bufferevent)
 	m_consecutiveTimeouts = 0;
 
 	m_isShutDown = false;
-	m_socketFD = socketFD;
-
-	m_bufferevent = bufferevent;
-}
+	m_socketFD = socketFD;}
 
 //Destructor should only be called by the callback thread, and also only while
 //	the protocol lock in MessageManager is held. This is done to avoid
@@ -65,7 +61,6 @@ MessageEndpoint::~MessageEndpoint()
 	pthread_mutex_destroy(&m_callbackRegisterMutex);
 	pthread_mutex_destroy(&m_availableCBsMutex);
 	pthread_mutex_destroy(&m_nextSerialMutex);
-	pthread_mutex_destroy(&m_buffereventMutex);
 
 	pthread_cond_destroy(&m_callbackWakeupCondition);
 }
@@ -109,38 +104,6 @@ Message *MessageEndpoint::PopMessage(Ticket &ticket, int timeout)
 	}
 
 	return ret;
-}
-
-bool MessageEndpoint::WriteMessage(Message *message)
-{
-	Lock lock(&m_buffereventMutex);
-
-	if(m_bufferevent == NULL)
-	{
-		return false;
-	}
-
-	bufferevent_lock(m_bufferevent);
-
-	uint32_t length;
-	char *buffer = message->Serialize(&length);
-
-	struct evbuffer *output = bufferevent_get_output(m_bufferevent);
-	int ret = evbuffer_add(output, buffer, length);
-
-	free(buffer);
-
-	bufferevent_unlock(m_bufferevent);
-
-	if(ret == 0)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-
 }
 
 uint32_t MessageEndpoint::StartConversation()
