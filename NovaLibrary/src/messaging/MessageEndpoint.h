@@ -63,11 +63,6 @@ public:
 	//	NOTE: Due to physical constraints, this function may block for longer than timeout. Don't rely on it being very precise.
 	Message *PopMessage(Ticket &ticket, int timeout);
 
-	//Writes a given Message to the endpoint's socket
-	//	message - A pointer to the message object to send
-	// Returns - true on successfully sending the object, false on error
-	bool WriteMessage(Message *message);
-
 	//Pushes a new message onto the appropriate message queue
 	//	message - The Message to push
 	//	NOTE: The direction of the message is read directly from the message itself
@@ -90,9 +85,6 @@ public:
 	bool RemoveMessageQueue(uint32_t ourSerial);
 
 	bool m_isShutDown;
-
-	pthread_mutex_t m_buffereventMutex;
-	struct bufferevent *m_bufferevent;
 
 private:
 
