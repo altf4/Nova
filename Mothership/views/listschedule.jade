@@ -63,48 +63,51 @@ block headerAdditions
       borderDiv.id = json.eventName;
       borderDiv.setAttribute('style', 'text-align: center; border: 2px solid; border-radius: 12px; background: #E8A02F; width: 65%;');
       
-      var label0 = document.createElement('label');
-      label0.innerHTML = json.clientId;
-      label0.setAttribute('style', 'font-weight: bold; float: left');
-      
-      var label1 = document.createElement('label');
-      label1.innerHTML = 'Event Name: ' + json.eventName;
-      label1.setAttribute('style', 'font-weight: bold; float: right');
+      var label0 = document.createElement('h2');
+      label0.innerHTML = json.clientId + ':' + json.eventName;
+      label0.setAttribute('style', 'font-weight: bold; width: 100%;');
       
       var b0 = document.createElement('br');
       
       var label2 = document.createElement('label');
       label2.innerHTML = 'Type: ' + json.eventType;
-      label2.setAttribute('style', 'float: left; font-weight: bold; font-style: italic;');
+      label2.setAttribute('style', 'font-weight: bold; font-style: italic;');
       
-      var label3 = document.createElement('label');
+      var b1 = document.createElement('br');
+      
+      var label3 = document.createElement('input');
       if(json.cronString == '' && json.dateString != '')
       {
-        label3.innerHTML = 'Date: ' + json.dateString;
+        label3.value = 'Date: ' + json.dateString;
        
       }
       else
       {
-        label3.innerHTML = 'Cron: ' + json.cronString; 
+        label3.value = 'Cron: ' + json.cronString; 
       }
-      label3.setAttribute('style', 'font-weight: bold; float: right;');
-      
-      var b1 = document.createElement('br');
+      label3.setAttribute('style', 'font-weight: bold; width: 80%; text-align: center;');
+      label3.setAttribute('readonly', true);
+
+      var b2 = document.createElement('br');
       
       var label4 = document.createElement('label');
       label4.innerHTML = 'Message Type: ' + json.messageType;
+      label4.setAttribute('style', 'font-weight: bold;');
+      
+      var b3 = document.createElement('br');
       
       var button = document.createElement('button');
       button.setAttribute('onclick', 'unregisterScheduledEvent("' + json.eventName + '")');
       button.innerHTML = 'Remove Event';
       
       borderDiv.appendChild(label0);
-      borderDiv.appendChild(label1);
-      borderDiv.appendChild(b0);
+      //borderDiv.appendChild(b0);
       borderDiv.appendChild(label2);
-      borderDiv.appendChild(label3);
       borderDiv.appendChild(b1);
+      borderDiv.appendChild(label3);
+      borderDiv.appendChild(b2);
       borderDiv.appendChild(label4);
+      borderDiv.appendChild(b3);
       borderDiv.appendChild(button);
       
       document.getElementById('elementHook').appendChild(borderDiv);
