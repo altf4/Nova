@@ -368,6 +368,7 @@ void NovaNode::SynchInternalList()
 	if (suspects == NULL)
 	{
 		cout << "Failed to get suspect list" << endl;
+		return;
 	}
 	for (uint i = 0; i < suspects->size(); i++)
 	{
