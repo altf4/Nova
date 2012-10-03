@@ -91,6 +91,9 @@ block headerAdditions
       
       var b1 = document.createElement('br');
       
+      var label4 = document.createElement('label');
+      label4.innerHTML = 'Message Type: ' + json.messageType;
+      
       var button = document.createElement('button');
       button.setAttribute('onclick', 'unregisterScheduledEvent("' + json.eventName + '")');
       button.innerHTML = 'Remove Event';
@@ -101,6 +104,7 @@ block headerAdditions
       borderDiv.appendChild(label2);
       borderDiv.appendChild(label3);
       borderDiv.appendChild(b1);
+      borderDiv.appendChild(label4);
       borderDiv.appendChild(button);
       
       document.getElementById('elementHook').appendChild(borderDiv);

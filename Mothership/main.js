@@ -147,18 +147,138 @@ var everyone = nowjs.initialize(app);
 // saved already should be. 
 process.on('SIGTERM', function(){
   console.log('SIGTERM recieved');
-  process.exit(1);
+  saveScheduledEvents(function(){process.exit(1)});
 });
 
 process.on('SIGKILL', function(){
   console.log('SIGKILL received');
-  process.exit(1);
+  saveScheduledEvents(function(){process.exit(1)});
 });
 
 process.on('SIGINT', function(){
   console.log('SIGINT received');
-  process.exit(1);
+  saveScheduledEvents(function(){process.exit(1)});
 });
+
+readScheduledEvents();
+
+function saveScheduledEvents(callback)
+{
+  // Convert the objects within the scheduledMessages array
+  // into JSON (or some other format easily parsed into and 
+  // from XML) and write them to a file;
+  // Upon restart, read from this file and convert the object
+  // literal information back into the format required by the 
+  // array, and the schedule module for Nodejs
+  fs.unlinkSync(NovaSharedPath + '/Mothership/scheduledEvents.txt');
+  var writer = fs.createWriteStream(NovaSharedPath + '/Mothership/scheduledEvents.txt', {'flags':'a'});
+  
+  for(var i in scheduledMessages)
+  {
+    writeScheduledEventStructure(scheduledMessages[i], function(data){
+      writer.write(data);
+    });
+  } 
+  writer.end();
+  
+  writer.on('close', function(){
+    callback();
+  });
+}
+
+function readScheduledEvents()
+{
+  try
+  {
+    var fsread = fs.readFileSync(NovaSharedPath + '/Mothership/scheduledEvents.txt', 'utf8');
+    var splitUp = fsread.split(/\r\n|\r|\n/);
+    if(splitUp != '')
+    {
+      for(var i in splitUp)
+      {
+        if(splitUp[i] != '')
+        {
+          addScheduledEventToArray(JSON.parse(splitUp[i])); 
+        }      
+      }
+    }
+    else
+    {
+      console.log('No scheduled events saved');
+      fs.unlinkSync(NovaSharedPath + '/Mothership/scheduledEvents.txt'); 
+    }
+  }
+  catch(err)
+  {
+    console.log('Exception caught: ' + err);
+    console.log('No scheduled events saved.');
+  } 
+}
+
+function addScheduledEventToArray(json)
+{
+  if((json.cron == '' || json.cron == undefined) && (json.date == undefined || json.date == ''))
+  {
+    return; 
+  }
+  
+  var newSchedule = {};
+  newSchedule.id = json.id;
+  newSchedule.clientId = json.clientId;
+  newSchedule.messageType = json.messageType;
+  
+  var message = {};
+  message.id = json.clientId + ':';
+  message.type = json.messageType;
+  
+  if((json.date == undefined || json.date == '') && (json.cron != '' && json.cron != undefined))
+  {
+    newSchedule.eventType = 'cron';
+    newSchedule.job = schedule.scheduleJob(newSchedule.id, json.cron, function(){
+      everyone.now.MessageSend(message);
+    });
+    newSchedule.cron = json.cron;
+    newSchedule.date = '';
+  }
+  else if(json.date != undefined && json.date != '')
+  {
+    newSchedule.eventType = 'date';
+    var passDate = new Date(json.date);
+    newSchedule.job = schedule.scheduleJob(newSchedule.id, passDate, function(){
+      everyone.now.MessageSend(message);
+    });
+    newSchedule.date = passDate.toString();
+    newSchedule.cron = '';
+  }
+  else
+  {
+    console.log('No date or cron string specified in ' + newSchedule.id + ', doing nothing.');
+    return; 
+  }
+  
+  for(var i in scheduledMessages)
+  {
+    if(scheduledMessages[i].id == newSchedule.id)
+    {
+      console.log('There is already an event with that name, please choose another name.');
+      return;
+    } 
+  }
+  
+  scheduledMessages.push(newSchedule);
+}
+
+function writeScheduledEventStructure(sEvent, callback)
+{
+  var stringifyMe = {};
+  stringifyMe.id = sEvent.id;
+  stringifyMe.clientId = sEvent.clientId;
+  stringifyMe.messageType = sEvent.messageType;
+  stringifyMe.eventType = sEvent.eventType;
+  stringifyMe.cron = sEvent.cron;
+  stringifyMe.date = sEvent.date;
+  callback(JSON.stringify(stringifyMe) + '\n');
+}
 
 // A note about the everyone.now.* functions, especially those
 // that are rooted in the jade files:
@@ -215,6 +335,7 @@ everyone.now.SetScheduledMessage = function(clientId, name, message, cron, date,
   var newSchedule = {};
   newSchedule.id = (clientId + '_' + name);
   newSchedule.clientId = clientId;
+  newSchedule.messageType = message.type;
   
   if(date == undefined && (cron != '' && cron != undefined))
   {
@@ -276,6 +397,7 @@ everyone.now.GetScheduledEvents = function(callback)
   {
     var json = {};
     json.clientId = scheduledMessages[i].clientId;
+    json.messageType = scheduledMessages[i].messageType;
     json.eventName = scheduledMessages[i].id;
     json.eventType = scheduledMessages[i].eventType;
     json.cronString = scheduledMessages[i].cron; 
