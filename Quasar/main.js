@@ -379,11 +379,11 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               mothership.sendUTF(JSON.stringify(response));
               break;
             case 'getHostileSuspects':
-              nova.getSuspectList(distributeSuspect);
+              nova.sendSuspectList(distributeSuspect);
               break;
             case 'requestBenign':
               benignRequest = true;
-              nova.getSuspectList(distributeSuspect);
+              nova.sendSuspectList(distributeSuspect);
               break;
             case 'cancelRequestBenign':
               benignRequest = false;
