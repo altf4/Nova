@@ -26,7 +26,6 @@
 #include "inttypes.h"
 #include "boost/program_options.hpp"
 
-
 namespace po = boost::program_options;
 using namespace std;
 using namespace Nova;
@@ -35,7 +34,7 @@ using namespace NovaCLI;
 
 int main(int argc, const char *argv[])
 {
-	// Fail if no arguements
+	// Fail if no arguments
 	if(argc < 2)
 	{
 		PrintUsage();
@@ -46,7 +45,6 @@ int main(int argc, const char *argv[])
 	// Disable notifications and email in the CLI
 	Logger::Inst()->SetUserLogPreferences(LIBNOTIFY, EMERGENCY, '+');
 	Logger::Inst()->SetUserLogPreferences(EMAIL, EMERGENCY, '+');
-	InitializeUI();
 
 	// We parse the input arguments here,
 	// but refer to other functions to do any
@@ -599,6 +597,7 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 		}
 	}
 
+	delete suspects;
 	CloseNovadConnection();
 
 }
@@ -625,6 +624,7 @@ void PrintSuspectList(enum SuspectListType listType)
 		cout << suspects->at(i).m_interface << " " << address << endl;
 	}
 
+	delete suspects;
 	CloseNovadConnection();
 }
 

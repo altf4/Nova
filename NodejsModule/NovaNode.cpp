@@ -239,7 +239,6 @@ void NovaNode::Init(Handle<Object> target)
 	m_suspects.set_deleted_key(initKey);
 
 	
-	InitializeUI();
 }
 
 

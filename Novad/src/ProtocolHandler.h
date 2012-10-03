@@ -23,6 +23,7 @@
 #include "messaging/messages/ControlMessage.h"
 #include "messaging/messages/RequestMessage.h"
 #include "messaging/messages/UpdateMessage.h"
+#include "messaging/Ticket.h"
 #include "Suspect.h"
 
 namespace Nova
@@ -35,26 +36,11 @@ struct UI_NotificationPackage
 	int m_socketFD_sender;
 };
 
-//This is the only thread Novad needs to call to set up a UI Message Handler
-//Launches a UI Handling thread
-//	returns - true if listening successfully, false on error
-bool Spawn_UI_Handler();
-
-//Helper thread launched by Spawn_UI_Handler() so that it can return
-//	Loops, listening on the main IPC socket for new connections. When one is found, spawn a new thread to handle it (Handle_UI_Thread)
-void *Handle_UI_Helper(void *ptr);
-
-//Looping thread which receives UI messages and handles them
-//	NOTE: Must manually free() the socketPtr after using it.
-//		This eliminates a race condition on passing the socket parameter
-void *Handle_UI_Thread(void *socketVoidPtr);
-
 //Processes a single ControlMessage received from the UI
 //	controlMessage - A reference to the received ControlMessage
 //	socketFD - The socket on which to contact the UI
-void HandleControlMessage(ControlMessage &controlMessage, int socketFD);
-void HandleRequestMessage(RequestMessage &requestMessage, int socketFD);
-
+void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket);
+void HandleRequestMessage(RequestMessage &requestMessage, Ticket &ticket);
 
 //Commands and Updates to UI:
 

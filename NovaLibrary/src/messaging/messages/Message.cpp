@@ -49,49 +49,6 @@ void Message::DeleteContents()
 
 }
 
-
-Message *Message::ReadMessage(int connectFD, enum ProtocolDirection direction, int timeout)
-{
-	return MessageManager::Instance().PopMessage(connectFD, direction, timeout);
-}
-
-bool Message::WriteMessage(Message *message, int connectFD)
-{
-	if(connectFD == -1)
-	{
-		return false;
-	}
-
-	message->m_serialNumber = MessageManager::Instance().GetSerialNumber(connectFD, message->m_protocolDirection);
-
-	uint32_t length = 0;
-	char *buffer = message->Serialize(&length);
-	
-	// Total bytes of a write() call that need to be sent
-	uint32_t bytesSoFar = 0;
-
-	// Return value of the write() call, actual bytes sent
-	int32_t bytesWritten = 0;
-
-	// Send the message
-	while(bytesSoFar < length)
-	{
-		bytesWritten = write(connectFD, buffer, length - bytesSoFar);
-		if(bytesWritten < 0)
-		{
-			free(buffer);
-			return false;
-		}
-		else
-		{
-			bytesSoFar += bytesWritten;
-		}
-	}
-
-	free(buffer);
-	return true;
-}
-
 bool Message::DeserializeHeader(char **buffer)
 {
 	if(buffer == NULL)
@@ -106,16 +63,11 @@ bool Message::DeserializeHeader(char **buffer)
 	memcpy(&m_messageType, *buffer, sizeof(m_messageType));
 	*buffer += sizeof(m_messageType);
 
-	memcpy(&m_protocolDirection, *buffer, sizeof(m_protocolDirection));
-	*buffer += sizeof(m_protocolDirection);
+	memcpy(&m_theirSerialNumber, *buffer, sizeof(m_theirSerialNumber));
+	*buffer += sizeof(m_theirSerialNumber);
 
-	memcpy(&m_serialNumber, *buffer, sizeof(m_serialNumber));
-	*buffer += sizeof(m_serialNumber);
-
-	if((m_protocolDirection != DIRECTION_TO_UI) && (m_protocolDirection != DIRECTION_TO_NOVAD))
-	{
-		return false;
-	}
+	memcpy(&m_ourSerialNumber, *buffer, sizeof(m_ourSerialNumber));
+	*buffer += sizeof(m_ourSerialNumber);
 
 	return true;
 }
@@ -129,18 +81,18 @@ void Message::SerializeHeader(char **buffer, uint32_t messageSize)
 	memcpy(*buffer, &m_messageType, sizeof(m_messageType));
 	*buffer += sizeof(m_messageType);
 
-	memcpy(*buffer, &m_protocolDirection, sizeof(m_protocolDirection));
-	*buffer += sizeof(m_protocolDirection);
+	memcpy(*buffer, &m_theirSerialNumber, sizeof(m_theirSerialNumber));
+	*buffer += sizeof(m_theirSerialNumber);
 
-	memcpy(*buffer, &m_serialNumber, sizeof(m_serialNumber));
-	*buffer += sizeof(m_serialNumber);
+	memcpy(*buffer, &m_ourSerialNumber, sizeof(m_ourSerialNumber));
+	*buffer += sizeof(m_ourSerialNumber);
 }
 
-Message *Message::Deserialize(char *buffer, uint32_t length, enum ProtocolDirection direction)
+Message *Message::Deserialize(char *buffer, uint32_t length)
 {
 	if(length < MESSAGE_MIN_SIZE)
 	{
-		return new ErrorMessage(ERROR_MALFORMED_MESSAGE, direction);
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 
 	enum MessageType thisType;
@@ -171,14 +123,14 @@ Message *Message::Deserialize(char *buffer, uint32_t length, enum ProtocolDirect
 		}
 		default:
 		{
-			return new ErrorMessage(ERROR_UNKNOWN_MESSAGE_TYPE, direction);
+			return new ErrorMessage(ERROR_UNKNOWN_MESSAGE_TYPE);
 		}
 	}
 
 	if(message->m_serializeError)
 	{
 		delete message;
-		return new ErrorMessage(ERROR_MALFORMED_MESSAGE, direction);
+		return new ErrorMessage(ERROR_MALFORMED_MESSAGE);
 	}
 	return message;
 }

@@ -25,13 +25,12 @@
 namespace Nova
 {
 
-RequestMessage::RequestMessage(enum RequestType requestType, enum ProtocolDirection direction)
+RequestMessage::RequestMessage(enum RequestType requestType)
 {
 	m_suspect = NULL;
 	m_messageType = REQUEST_MESSAGE;
 	m_suspectListLength = 0;
 	m_requestType = requestType;
-	m_protocolDirection = direction;
 }
 
 RequestMessage::~RequestMessage()

@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : MessageQueue.h
+// Name        : MessageEndpointLock.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,54 +13,50 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : An item in the MessageManager's table. Contains a pair of queues
-//	of received messages on a particular socket
+// Description : Contains a pair of a MessageQueue and a r/w lock
 //============================================================================
 
-#ifndef MESSAGEQUEUE_H_
-#define MESSAGEQUEUE_H_
+#ifndef MESSAGEENDPOINTLOCK_H_
+#define MESSAGEENDPOINTLOCK_H_
 
-#include "messages/Message.h"
+#include "MessageEndpoint.h"
+#include "../Lock.h"
 
 #include "pthread.h"
-#include <queue>
 
 namespace Nova
 {
 
-class MessageQueue
+class MessageEndpointLock
 {
 
 public:
 
-	MessageQueue();
-	~MessageQueue();
+	MessageEndpointLock()
+	{
+		m_endpoint = NULL;
+		m_rwLock = NULL;
+	}
 
-	//Functions for pushing and popping messages off the Message queue
-	Message *PopMessage(int timeout);
-	bool PushMessage(Message *message);
+	MessageEndpointLock(MessageEndpoint *endpoint, pthread_rwlock_t *rwLock)
+	{
+		m_endpoint = endpoint;
+		m_rwLock = rwLock;
+	}
+	~MessageEndpointLock()
+	{
+		if(m_rwLock != NULL)
+		{
+			pthread_rwlock_unlock(m_rwLock);
+		}
+	}
 
-	uint32_t GetTheirSerialNum();
-
-	//Shuts down MessageQueue, also wakes up any reading threads
-	void Shutdown();
+	MessageEndpoint *m_endpoint;
 
 private:
 
-	void SetTheirSerialNum(uint32_t serial);
-
-	std::queue<Message*> m_queue;
-	pthread_mutex_t m_queueMutex;
-
-	pthread_cond_t m_popWakeupCondition;
-
-	uint32_t m_theirSerialNum;
-	pthread_mutex_t m_theirSerialNumMutex;
-
-	bool isShutdown;
-
+	pthread_rwlock_t *m_rwLock;
 };
 
 }
-
-#endif /* MESSAGEQUEUE_H_ */
+#endif /* MESSAGEENDPOINTLOCK_H_ */
