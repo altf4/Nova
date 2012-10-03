@@ -270,8 +270,6 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			continue;
 		}
 
-		evbuffer_drain(input, sizeof(length));
-
 		// Make sure the length appears valid
 		// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
 		if(length < MESSAGE_MIN_SIZE)
@@ -288,6 +286,8 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			keepGoing = false;
 			continue;
 		}
+
+		evbuffer_drain(input, sizeof(length));
 
 		//Remove the length of the "length" variable itself
 		length -= sizeof(length);
