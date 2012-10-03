@@ -182,12 +182,6 @@ bool TrainingDump::SaveToDb(string dbFile)
 
 bool TrainingDump::MergeIPs(vector<string> idsToMerge, string newName)
 {
-    // Return if less than 2 entries are trying to be combined
-    if(idsToMerge.size() < 2)
-    {
-        return false;
-    }
-
     string rootuid = newName;
     (*trainingTable)[rootuid] = new _trainingFileSuspect();
     (*trainingTable)[rootuid]->points = vector<string>();
@@ -229,10 +223,16 @@ bool TrainingDump::MergeBenign(std::string newName)
 		}
 	}
 
+	if (benignIps.size() <= 0)
+	{
+		return true;
+	}
+
 	bool error = false;
 	if (!MergeIPs(benignIps, newName))
 	{
 		error = true;
+		return error;
 	}
 
 	if (!SetIsHostile(newName, false))
