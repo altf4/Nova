@@ -58,7 +58,6 @@ html(lang="en")
             novadStatus.width = '16';
             novadStatus.height = '16';
             novadStatus.id = clients[i] + 'nova';
-            novadStatus.setAttribute('style', 'float: left');
             
             now.IsNovadUp(clients[i], function(client, status){
               if(status == 'true')
@@ -78,11 +77,12 @@ html(lang="en")
               }
             });
             
+            novadStatus.setAttribute('style', 'float: left');
+            
             var haystackStatus = document.createElement('img');
             haystackStatus.width = '16';
             haystackStatus.height = '16';
             haystackStatus.id = clients[i] + 'haystack';
-            haystackStatus.setAttribute('style', 'float: left');
               
             now.IsHaystackUp(clients[i], function(client, status){
               if(status == 'true')
@@ -101,6 +101,8 @@ html(lang="en")
                 haystackStatus.alt = 'No Haystack status for ' + client;
               }
             });
+            
+            haystackStatus.setAttribute('style', 'float: left');
             
             var events = document.createElement('div');
             events.id = clients[i] + 'events';

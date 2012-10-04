@@ -1,21 +1,23 @@
 #!/bin/bash
 
-cd /usr/share/nova/Mothership
+SHARED_PATH="/usr/share/nova/sharedFiles"
+MAIN_PATH="$SHARED_PATH/Mothership/main.js"
+MODULE_PATH="$SHARED_PATH/NodejsModule"
 
-NODE_PATH="/usr/share/nova/NodejsModule"
+cd "$SHARED_PATH/Mothership"
 
 if (($# == 1)); then
-	if [[ "$1" == "--debug" ]] || [[ "$1" == "-d" ]]; then
-		echo "Debug mode: Running mothership without forever"
-		node /usr/share/nova/Mothership/main.js
-		exit
-	else
-		echo "Unkown argument. Usage: mothership [-d (--debug)]"
-		echo "  -d (--debug) Run node directly and show ouput in stdout instead of using forever to daemonize."
-		exit
-	fi
+        if [[ "$1" == "--debug" ]] || [[ "$1" == "-d" ]]; then
+                echo "Debug mode: Running mothership without forever"
+                NODE_PATH="$MODULE_PATH" node $MAIN_PATH
+                exit
+        else
+                echo "Unknown arguement. Usage: quasar [-d (--debug)]"
+                echo "  -d (--debug) Run node directly and show output in stdout instead of using forever to daemonize."
+                exit
+        fi
 fi
 
-echo "Starting the Mothership with the forever daemon"
-forever start /usr/share/nova/Mothership/main.js
+echo "Starting quasar with the forever daemon"
+NODE_PATH="$MODULE_PATH" forever start $MAIN_PATH
 exit
