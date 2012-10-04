@@ -169,6 +169,9 @@ int NovaNode::HandleSuspectClearedOnV8Thread(eio_req* req)
 	HandleScope scope;
 	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
 	m_SuspectClearedCallback->Call(m_SuspectClearedCallback, 1, argv);
+
+	// TODO: Is this a memory leak? Probably safe to clear the suspect? Or do we need to do some
+	// sort of magic makeWeak call to clear it when the wrapped suspect is done being accessed in js?
 	return 0;
 }
 
