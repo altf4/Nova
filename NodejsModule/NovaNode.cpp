@@ -117,8 +117,6 @@ void NovaNode::SendSuspect(Suspect* suspect)
 {
 	if( m_CallbackRegistered )
 	{
-		eio_req* req = (eio_req*) calloc(sizeof(*req),1);
-		req->data = static_cast<void*>(suspect);
 		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleNewSuspectOnV8Thread, suspect);
 	}
 }
@@ -133,8 +131,6 @@ void NovaNode::HandleSuspectCleared(Suspect *suspect)
 
 	if( m_SuspectClearedCallbackRegistered )
 	{
-		eio_req* req = (eio_req*) calloc(sizeof(*req),1);
-		req->data = (void*) suspect;
 		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleSuspectClearedOnV8Thread, suspect);
 	}
 }
@@ -149,7 +145,6 @@ void NovaNode::HandleAllSuspectsCleared()
 
 	if (m_AllSuspectsClearedCallbackRegistered)
 	{
-		eio_req* req = (eio_req*) calloc(sizeof(*req),1);
 		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleAllClearedOnV8Thread, NULL);
 	}
 }
@@ -169,6 +164,9 @@ int NovaNode::HandleSuspectClearedOnV8Thread(eio_req* req)
 	HandleScope scope;
 	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
 	m_SuspectClearedCallback->Call(m_SuspectClearedCallback, 1, argv);
+
+	// TODO: Is this a memory leak? Probably safe to clear the suspect? Or do we need to do some
+	// sort of magic makeWeak call to clear it when the wrapped suspect is done being accessed in js?
 	return 0;
 }
 
@@ -362,16 +360,11 @@ NovaNode::~NovaNode()
 // Update our internal suspect list to that of novad
 void NovaNode::SynchInternalList()
 {
-	vector<SuspectIdentifier> *suspects;
-	suspects = GetSuspectList(SUSPECTLIST_ALL);
+	vector<SuspectIdentifier> suspects = GetSuspectList(SUSPECTLIST_ALL);
 
-	if (suspects == NULL)
+	for (uint i = 0; i < suspects.size(); i++)
 	{
-		cout << "Failed to get suspect list" << endl;
-	}
-	for (uint i = 0; i < suspects->size(); i++)
-	{
-		Suspect *suspect = GetSuspect(suspects->at(i));
+		Suspect *suspect = GetSuspect(suspects.at(i));
 
 		if (suspect != NULL)
 		{

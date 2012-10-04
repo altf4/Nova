@@ -121,6 +121,7 @@ bool ConnectToNovad()
 	MessageManager::Instance().StartSocket(IPCSocketFD, bufferevent);
 
 	pthread_create(&eventDispatchThread, NULL, EventDispatcherThread, NULL);
+	pthread_detach(eventDispatchThread);
 
 	//Send a connection request
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
@@ -182,16 +183,15 @@ void DisconnectFromNovad()
 				LOG(WARNING, "Unable to exit event loop", "");
 			}
 
-			pthread_join(eventDispatchThread, NULL);
 			eventDispatchThread = 0;
 		}
 	}
 
-	if(bufferevent != NULL)
-	{
-		bufferevent_free(bufferevent);
-		bufferevent = NULL;
-	}
+//	if(bufferevent != NULL)
+//	{
+//		bufferevent_free(bufferevent);
+//		bufferevent = NULL;
+//	}
 
 	IPCSocketFD = -1;
 }

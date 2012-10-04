@@ -82,13 +82,30 @@ bool MessageManager::WriteMessage(const Ticket &ticket, Message *message)
 	message->m_ourSerialNumber = ticket.m_ourSerialNum;
 	message->m_theirSerialNumber = ticket.m_theirSerialNum;
 
-	MessageEndpointLock endpointLock = GetEndpoint(ticket.m_socketFD);
-	if(endpointLock.m_endpoint == NULL)
+	uint32_t length;
+	char *buffer = message->Serialize(&length);
+
+	//TODO: There's the possibility for two writers of the same socket to get mixed up, here.
+	//	Thread A could write half of his data to a socket, then thread B could write his first half.
+	//	This would produce garbage on the other end. So we really ought to lock other writers of
+	//	the same socket out, here. But doing so safely might be hard.
+
+	//Looping write, because the write() might not do it all at one time
+	int bytesWritten = 0;
+	uint totalBytesWritten = 0;
+	while(totalBytesWritten < length)
 	{
-		return false;
+		bytesWritten = write(ticket.m_socketFD, buffer, length);
+		if(bytesWritten == -1)
+		{
+			free(buffer);
+			return false;
+		}
+		totalBytesWritten += bytesWritten;
 	}
 
-	return endpointLock.m_endpoint->WriteMessage(message);
+	free(buffer);
+	return true;
 }
 
 void MessageManager::StartSocket(int socketFD, struct bufferevent *bufferevent)
@@ -253,8 +270,6 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			continue;
 		}
 
-		evbuffer_drain(input, sizeof(length));
-
 		// Make sure the length appears valid
 		// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
 		if(length < MESSAGE_MIN_SIZE)
@@ -271,6 +286,8 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			keepGoing = false;
 			continue;
 		}
+
+		evbuffer_drain(input, sizeof(length));
 
 		//Remove the length of the "length" variable itself
 		length -= sizeof(length);
@@ -327,19 +344,7 @@ void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void 
 	if(error & (BEV_EVENT_EOF | BEV_EVENT_ERROR))
 	{
 		evutil_socket_t socketFD = bufferevent_getfd(bev);
-		{
-			MessageEndpointLock endpointLock = MessageManager::Instance().GetEndpoint(socketFD);
-			if(endpointLock.m_endpoint != NULL)
-			{
-				Lock lock(&endpointLock.m_endpoint->m_buffereventMutex);
-				bufferevent_free(bev);
-				endpointLock.m_endpoint->m_bufferevent = NULL;
-			}
-			else
-			{
-				bufferevent_free(bev);
-			}
-		}
+		bufferevent_free(bev);
 		MessageManager::Instance().DeleteEndpoint(socketFD);
 		return;
 	}
