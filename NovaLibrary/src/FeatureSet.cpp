@@ -38,9 +38,10 @@ string FeatureSet::m_featureNames[] =
 		"Packet Size Mean",
 		"Packet Size Deviation",
 		"Protected IPs Contacted",
-		"Ports Contacted",
-		"Packets Per Second",
-		"Packet Interval Deviation",
+		"Distinct TCP Ports Contacted",
+		"Distinct UDP Ports Contacted",
+		"Average TCP Ports Per Host",
+		"Average UDP Ports Per Host",
 		"TCP Percent SYN",
 		"TCP Percent FIN",
 		"TCP Percent RST",
@@ -51,18 +52,39 @@ string FeatureSet::m_featureNames[] =
 FeatureSet::FeatureSet()
 {
 	m_IPTable.set_empty_key(0);
+	m_tcpPortsContactedForIP.set_empty_key(0);
+	m_udpPortsContactedForIP.set_empty_key(0);
 	m_HaystackIPTable.set_empty_key(0);
 	m_PortTCPTable.set_empty_key(0);
 	m_PortUDPTable.set_empty_key(0);
 	m_packTable.set_empty_key(0);
-	m_intervalTable.set_empty_key(~0);
-	m_lastTimes.set_empty_key(0);
 
-	// This could be derrived from the m_HaystackIPTable but it saves
-	// having to iterate over it all the time
-	m_haystackNodesContacted = 0;
+	m_hasUdpPortIpBeenContacted.set_empty_key(IpPortCombination::GetEmptyKey());
+	m_hasTcpPortIpBeenContacted.set_empty_key(IpPortCombination::GetEmptyKey());
 
-	ClearFeatureSet();
+	m_numberOfHaystackNodes = 0;
+
+	//Temp variables
+	m_startTime = 2147483647; //2^31 - 1 (IE: Y2.038K bug) (IE: The largest standard Unix time value)
+	m_endTime = 0;
+	m_totalInterval = 0;
+
+	m_rstCount = 0;
+	m_ackCount = 0;
+	m_synCount = 0;
+	m_finCount = 0;
+	m_synAckCount = 0;
+
+	m_packetCount = 0;
+	m_tcpPacketCount = 0;
+	m_bytesTotal = 0;
+	m_lastTime = 0;
+
+	//Features
+	for(int i = 0; i < DIM; i++)
+	{
+		m_features[i] = 0;
+	}
 }
 
 
@@ -116,38 +138,6 @@ string FeatureSet::toString()
 	return ss.str();
 }
 
-void FeatureSet::ClearFeatureSet()
-{
-	//Temp variables
-	m_startTime = 2147483647; //2^31 - 1 (IE: Y2.038K bug) (IE: The largest standard Unix time value)
-	m_endTime = 0;
-	m_totalInterval = 0;
-
-	m_IPTable.clear();
-	m_HaystackIPTable.clear();
-	m_PortTCPTable.clear();
-	m_PortUDPTable.clear();
-	m_packTable.clear();
-	m_intervalTable.clear();
-	m_lastTimes.clear();
-
-	m_rstCount = 0;
-	m_ackCount = 0;
-	m_synCount = 0;
-	m_finCount = 0;
-	m_synAckCount = 0;
-
-	m_packetCount = 0;
-	m_tcpPacketCount = 0;
-	m_bytesTotal = 0;
-	m_lastTime = 0;
-
-	//Features
-	for(int i = 0; i < DIM; i++)
-	{
-		m_features[i] = 0;
-	}
-}
 
 
 void FeatureSet::CalculateAll()
@@ -177,23 +167,22 @@ void FeatureSet::CalculateAll()
 	{
 			Calculate(DISTINCT_IPS);
 	}
-	if(Config::Inst()->IsFeatureEnabled(DISTINCT_PORTS))
+	if(Config::Inst()->IsFeatureEnabled(DISTINCT_TCP_PORTS))
 	{
-			Calculate(DISTINCT_PORTS);
+			Calculate(DISTINCT_TCP_PORTS);
 	}
-	if(Config::Inst()->IsFeatureEnabled(PACKETS_PER_SECOND))
+	if(Config::Inst()->IsFeatureEnabled(DISTINCT_UDP_PORTS))
 	{
-			Calculate(PACKETS_PER_SECOND);
+			Calculate(DISTINCT_UDP_PORTS);
 	}
-	if(Config::Inst()->IsFeatureEnabled(PACKET_INTERVAL_DEVIATION))
+	if(Config::Inst()->IsFeatureEnabled(AVG_TCP_PORTS_PER_HOST))
 	{
-		if(!Config::Inst()->IsFeatureEnabled(PACKETS_PER_SECOND))
-		{
-			Calculate(PACKETS_PER_SECOND);
-		}
-		Calculate(PACKET_INTERVAL_DEVIATION);
+			Calculate(AVG_TCP_PORTS_PER_HOST);
 	}
-
+	if(Config::Inst()->IsFeatureEnabled(AVG_UDP_PORTS_PER_HOST))
+	{
+			Calculate(AVG_UDP_PORTS_PER_HOST);
+	}
 	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYN))
 	{
 		Calculate(TCP_PERCENT_SYN);
@@ -315,34 +304,52 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			break;
 		}
 		/// Number of distinct ports contacted
-		case DISTINCT_PORTS:
+		case DISTINCT_TCP_PORTS:
 		{
-			m_features[DISTINCT_PORTS] =  m_PortTCPTable.size() + m_PortUDPTable.size();
+			m_features[DISTINCT_TCP_PORTS] =  m_PortTCPTable.size();
 			break;
 		}
-		///Measures the distribution of intervals between packets
-		case PACKETS_PER_SECOND:
+		/// Number of distinct ports contacted
+		case DISTINCT_UDP_PORTS:
 		{
-			if(m_intervalTable.size() == 0)
+			m_features[DISTINCT_UDP_PORTS] =  m_PortUDPTable.size();
+			break;
+		}
+		case AVG_TCP_PORTS_PER_HOST:
+		{
+			if (m_tcpPortsContactedForIP.size() == 0)
 			{
-				m_features[PACKETS_PER_SECOND] = 0;
-				break;
+				m_features[AVG_TCP_PORTS_PER_HOST] = 0;
 			}
-			m_features[PACKETS_PER_SECOND] = (((double)m_totalInterval)/((double)(m_packetCount - 1)));
-			break;
-		}
-		///Measures the distribution of intervals between packets
-		case PACKET_INTERVAL_DEVIATION:
-		{
-			double mean = m_features[PACKETS_PER_SECOND], variance = 0, totalCount = m_intervalTable.size();
-			for(Interval_Table::iterator it = m_intervalTable.begin() ; it != m_intervalTable.end(); it++)
+			else
 			{
-				variance += it->second*(pow((it->first - mean), 2)/totalCount);
+				double acc = 0;
+				for (IP_Table::iterator it = m_tcpPortsContactedForIP.begin(); it != m_tcpPortsContactedForIP.end(); it++)
+				{
+					acc += it->second;
+				}
+				m_features[AVG_TCP_PORTS_PER_HOST] = acc / m_tcpPortsContactedForIP.size();
 			}
-			m_features[PACKET_INTERVAL_DEVIATION] = sqrt(variance);
 			break;
 		}
+		case AVG_UDP_PORTS_PER_HOST:
+		{
+			if (m_udpPortsContactedForIP.size() == 0)
+			{
+				m_features[AVG_UDP_PORTS_PER_HOST] = 0;
+			}
+			else
+			{
+				double acc = 0;
+				for (IP_Table::iterator it = m_udpPortsContactedForIP.begin(); it != m_udpPortsContactedForIP.end(); it++)
+				{
+					acc += it->second;
+				}
 
+				m_features[AVG_UDP_PORTS_PER_HOST] = acc / m_udpPortsContactedForIP.size();
+			}
+			break;
+		}
 		case TCP_PERCENT_SYN:
 		{
 			m_features[TCP_PERCENT_SYN] = ((double)m_synCount)/((double)m_tcpPacketCount + 1);
@@ -368,7 +375,7 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 		{
 			if(m_HaystackIPTable.size())
 			{
-				m_features[HAYSTACK_PERCENT_CONTACTED] = (double)m_haystackNodesContacted / (double)m_HaystackIPTable.size();
+				m_features[HAYSTACK_PERCENT_CONTACTED] = (double)m_HaystackIPTable.size()/(double)m_numberOfHaystackNodes;
 			}
 			else
 			{
@@ -408,9 +415,26 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		//If UDP
 		case 17:
 		{
+			// TODO: This is bad. We should be able to handle port 0 (currently empty key)
 			if(evidence->m_evidencePacket.dst_port != 0)
 			{
 				m_PortUDPTable[evidence->m_evidencePacket.dst_port]++;
+
+				IpPortCombination t;
+				t.m_ip = evidence->m_evidencePacket.ip_dst;
+				t.m_port = evidence->m_evidencePacket.dst_port;
+				if (!m_hasUdpPortIpBeenContacted.keyExists(t))
+				{
+					m_hasUdpPortIpBeenContacted[t] = true;
+					if (m_udpPortsContactedForIP.keyExists(t.m_ip))
+					{
+						m_udpPortsContactedForIP[t.m_ip]++;
+					}
+					else
+					{
+						m_udpPortsContactedForIP[t.m_ip] = 1;
+					}
+				}
 			}
 			break;
 		}
@@ -421,8 +445,23 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 			if(evidence->m_evidencePacket.dst_port != 0)
 			{
 				m_PortTCPTable[evidence->m_evidencePacket.dst_port]++;
-			}
 
+				IpPortCombination t;
+				t.m_ip = evidence->m_evidencePacket.ip_dst;
+				t.m_port = evidence->m_evidencePacket.dst_port;
+				if (!m_hasTcpPortIpBeenContacted.keyExists(t))
+				{
+					m_hasTcpPortIpBeenContacted[t] = true;
+					if (m_tcpPortsContactedForIP.keyExists(t.m_ip))
+					{
+						m_tcpPortsContactedForIP[t.m_ip]++;
+					}
+					else
+					{
+						m_tcpPortsContactedForIP[t.m_ip] = 1;
+					}
+				}
+			}
 
 			if(evidence->m_evidencePacket.tcp_hdr.syn && evidence->m_evidencePacket.tcp_hdr.ack)
 			{
@@ -468,46 +507,13 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 	if(m_HaystackIPTable.keyExists(evidence->m_evidencePacket.ip_dst))
 	{
 		m_HaystackIPTable[evidence->m_evidencePacket.ip_dst]++;
-
-		if(m_HaystackIPTable[evidence->m_evidencePacket.ip_dst] == 1)
-		{
-			m_haystackNodesContacted++;
-		}
+	}
+	else
+	{
+		m_HaystackIPTable[evidence->m_evidencePacket.ip_dst] = 1;
 	}
 
 	m_packTable[evidence->m_evidencePacket.ip_len]++;
-
-	//If we have already gotten a packet from the source to dest host
-	if(m_lastTimes.keyExists(evidence->m_evidencePacket.ip_dst))
-	{
-
-		if(evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst] < 0)
-		{
-			/*
-			// This is the case where we have out of order packets... log a message?
-
-			in_addr dst;
-			dst.s_addr = htonl(evidence->m_evidencePacket.ip_dst);
-			char *dstIp = inet_ntoa(dst);
-			cout << dstIp << "<-";
-
-			in_addr src;
-			src.s_addr = htonl(evidence->m_evidencePacket.ip_src);
-			char *srcIp = inet_ntoa(src);
-			cout << srcIp << endl;
-			*/
-		}
-		else
-		{
-			//Calculate and add the interval into the feature data
-			m_intervalTable[evidence->m_evidencePacket.ts - m_lastTimes[evidence->m_evidencePacket.ip_dst]]++;
-		}
-
-	}
-	//Update or Insert the timestamp value in the table
-	m_lastTimes[evidence->m_evidencePacket.ip_dst] = evidence->m_evidencePacket.ts;
-
-
 	m_lastTime = evidence->m_evidencePacket.ts;
 
 	//Accumulate to find the lowest Start time and biggest end time.
@@ -547,6 +553,25 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 		m_IPTable[it->first] += rhs.m_IPTable[it->first];
 	}
 
+	for(IP_Table::iterator it = rhs.m_tcpPortsContactedForIP.begin(); it != rhs.m_tcpPortsContactedForIP.end(); it++)
+	{
+		m_tcpPortsContactedForIP[it->first] += rhs.m_tcpPortsContactedForIP[it->first];
+	}
+	for(IP_Table::iterator it = rhs.m_udpPortsContactedForIP.begin(); it != rhs.m_udpPortsContactedForIP.end(); it++)
+	{
+		m_udpPortsContactedForIP[it->first] += rhs.m_udpPortsContactedForIP[it->first];
+	}
+
+	for (IpPortTable::iterator it = rhs.m_hasTcpPortIpBeenContacted.begin(); it != rhs.m_hasTcpPortIpBeenContacted.end(); it++)
+	{
+		m_hasTcpPortIpBeenContacted[it->first] = true;
+	}
+
+	for (IpPortTable::iterator it = rhs.m_hasUdpPortIpBeenContacted.begin(); it != rhs.m_hasUdpPortIpBeenContacted.end(); it++)
+	{
+		m_hasUdpPortIpBeenContacted[it->first] = true;
+	}
+
 	for(IP_Table::iterator it = m_HaystackIPTable.begin(); it != m_HaystackIPTable.end(); it++)
 	{
 		if(!rhs.m_HaystackIPTable.keyExists(it->first))
@@ -569,11 +594,6 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 	for(Packet_Table::iterator it = rhs.m_packTable.begin(); it != rhs.m_packTable.end(); it++)
 	{
 		m_packTable[it->first] += rhs.m_packTable[it->first];
-	}
-
-	for(Interval_Table::iterator it = rhs.m_intervalTable.begin(); it != rhs.m_intervalTable.end(); it++)
-	{
-		m_intervalTable[it->first] += rhs.m_intervalTable[it->first];
 	}
 
 	m_synCount += rhs.m_synCount;
@@ -615,32 +635,6 @@ uint32_t FeatureSet::DeserializeFeatureSet(u_char *buf, uint32_t bufferSize)
 	return offset;
 }
 
-void FeatureSet::ClearFeatureData()
-{
-		m_totalInterval = 0;
-		m_packetCount = 0;
-		m_tcpPacketCount = 0;
-		m_bytesTotal = 0;
-
-		m_startTime = ~0;
-		m_endTime = 0;
-		m_lastTime = 0;
-		m_intervalTable.clear();
-		m_packTable.clear();
-		m_IPTable.clear();
-
-		m_haystackNodesContacted = 0;
-		for(IP_Table::iterator it = m_HaystackIPTable.begin(); it != m_HaystackIPTable.end(); it++)
-		{
-				m_HaystackIPTable[it->first] = 0;
-		}
-
-
-		m_PortTCPTable.clear();
-		m_PortUDPTable.clear();
-		m_lastTimes.clear();
-}
-
 uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 {
 	uint32_t offset = 0;
@@ -661,14 +655,18 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 	SerializeChunk(buf, &offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_haystackNodesContacted, sizeof m_haystackNodesContacted, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_numberOfHaystackNodes, sizeof m_numberOfHaystackNodes, bufferSize);
 
-	SerializeHashTable<Interval_Table, time_t, uint32_t> (buf, &offset, m_intervalTable, ~0, bufferSize);
 	SerializeHashTable<Packet_Table, uint16_t, uint32_t> (buf, &offset, m_packTable, 0, bufferSize);
 	SerializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_IPTable, 0, bufferSize);
 	SerializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_HaystackIPTable, 0, bufferSize);
 	SerializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortTCPTable, 0, bufferSize);
 	SerializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortUDPTable, 0, bufferSize);
+
+	SerializeHashTable<IP_Table, uint32_t, uint32_t>  (buf, &offset, m_tcpPortsContactedForIP, 0, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint32_t>  (buf, &offset, m_udpPortsContactedForIP, 0, bufferSize);
+	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted, IpPortCombination::GetEmptyKey(), bufferSize);
+	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted, IpPortCombination::GetEmptyKey(), bufferSize);
 
 	return offset;
 }
@@ -691,14 +689,17 @@ uint32_t FeatureSet::GetFeatureDataLength()
 			+ sizeof m_finCount
 			+ sizeof m_synAckCount
 			+ sizeof m_tcpPacketCount
-			+ sizeof m_haystackNodesContacted;
+			+ sizeof m_numberOfHaystackNodes;
 
-	out += GetSerializeHashTableLength<Interval_Table, time_t, uint32_t> (m_intervalTable, ~0);
 	out += GetSerializeHashTableLength<Packet_Table, uint16_t, uint32_t> (m_packTable, 0);
 	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t>     (m_IPTable, 0);
 	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t>     (m_HaystackIPTable, 0);
 	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint32_t>  (m_PortTCPTable, 0);
 	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint32_t>  (m_PortUDPTable, 0);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t> (m_tcpPortsContactedForIP, 0);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t> (m_udpPortsContactedForIP, 0);
+	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (m_hasTcpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
+	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (m_hasUdpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
 
 	return out;
 }
@@ -758,35 +759,35 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_tcpPacketCount, bufferSize);
 	m_tcpPacketCount = temp;
 
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_haystackNodesContacted, bufferSize);
-	m_haystackNodesContacted = temp;
+	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_numberOfHaystackNodes, bufferSize);
+	m_numberOfHaystackNodes = temp;
 
 	/***************************************************************************************************
 	 For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
 	 i += the # of packets in the bin, if we haven't reached packet count we know there's another item
 	****************************************************************************************************/
-	DeserializeHashTable<Interval_Table, time_t, uint32_t> (buf, &offset, m_intervalTable, bufferSize);
 	DeserializeHashTable<Packet_Table, uint16_t, uint32_t> (buf, &offset, m_packTable, bufferSize);
 	DeserializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_IPTable, bufferSize);
 	DeserializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_HaystackIPTable, bufferSize);
 	DeserializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortTCPTable, bufferSize);
 	DeserializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortUDPTable, bufferSize);
 
+	DeserializeHashTable<IP_Table, uint32_t, uint32_t>  (buf, &offset, m_tcpPortsContactedForIP, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint32_t>  (buf, &offset, m_udpPortsContactedForIP, bufferSize);
+	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted, bufferSize);
+	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted, bufferSize);
+
 	return offset;
 }
 
 void FeatureSet::SetHaystackNodes(std::vector<uint32_t> nodes)
 {
-	// TODO (maybe)
+	// TODO DTC
 	// We could possibly do something a little more advanced here. If an IP was in
 	// the old list and also is in the new list, we could update the data instead of just
 	// deleting all of our old data. Not worrying about it right now though.
-	m_haystackNodesContacted = 0;
 	m_HaystackIPTable.clear();
-	for(uint i = 0; i < nodes.size(); i++)
-	{
-		m_HaystackIPTable[nodes[i]] = 0;
-	}
+	m_numberOfHaystackNodes = nodes.size();
 }
 
 bool FeatureSet::operator ==(const FeatureSet &rhs) const

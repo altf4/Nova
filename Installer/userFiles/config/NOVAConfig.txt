@@ -224,7 +224,7 @@ GO_TO_LIVE 1
 # 	0: Disabled
 #	1: Enabled
 #
-ENABLED_FEATURES 1111111111111
+ENABLED_FEATURES 11111111111111
 
 ############################################
 # SAVE_FREQUENCY #
@@ -452,7 +452,7 @@ MASTER_UI_CLIENT_ID nova1
 ############################################
 # FEATURE_WEIGHTS #
 ############################################
-FEATURE_WEIGHTS 1 1 1 1 1 1 1 1 1 1 1 1 1
+FEATURE_WEIGHTS 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 
 ############################################
 # CLASSIFICATION_ENGINE
@@ -467,5 +467,5 @@ CLASSIFICATION_ENGINE KNN
 ############################################
 # THRESHOLD_HOSTILE_TRIGGERS #
 ############################################
-THRESHOLD_HOSTILE_TRIGGERS - - - - >6 >20 - - - - - - >0.5
+THRESHOLD_HOSTILE_TRIGGERS - - - - >6 >20 >20 - - - - - - >0.5
 

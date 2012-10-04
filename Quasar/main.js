@@ -1,6 +1,6 @@
 // Used for debugging. Download the node-segfault-handler to use
-//var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
-//segvhandler.registerHandler();
+var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
+segvhandler.registerHandler();
 
 // Modules that provide bindings to C++ code in NovaLibrary and Nova_UI_Core
 var novaconfig = require('novaconfig.node');
