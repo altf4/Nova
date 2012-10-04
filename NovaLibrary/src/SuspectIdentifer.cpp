@@ -57,7 +57,7 @@ std::string SuspectIdentifier::GetInterface()
 bool SuspectIdentifier::operator ==(const SuspectIdentifier &rhs) const
 {
 	// This is for checking equality of empty/deleted keys
-	if (m_internal != 0)
+	if (m_internal != 0 || rhs.m_internal != 0)
 	{
 		return m_internal == rhs.m_internal;
 	}

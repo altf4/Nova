@@ -76,6 +76,11 @@ int main(int argc, const char *argv[])
 		}
 	}
 
+	else if (!strcmp(argv[1], "monitor"))
+	{
+		MonitorCallback();
+	}
+
 	// Checking status of components
 	else if(!strcmp(argv[1], "status"))
 	{
@@ -379,6 +384,8 @@ void PrintUsage()
 	cout << "  " << EXECUTABLE_NAME << " listsettings" << endl;
 	cout << "    Lists settings that can be set in the configuration file" << endl;
 	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " monitor" << endl;
+	cout << "    Monitors live output from novad (mainly for debugging)" << endl;
 
 	exit(EXIT_FAILURE);
 }
@@ -547,14 +554,7 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 {
 	Connect();
 
-	vector<SuspectIdentifier> *suspects;
-	suspects = GetSuspectList(listType);
-
-	if(suspects == NULL)
-	{
-		cout << "Failed to get suspect list" << endl;
-		exit(EXIT_FAILURE);
-	}
+	vector<SuspectIdentifier> suspects = GetSuspectList(listType);
 
 	// Print the CSV header
 	if (csv)
@@ -568,9 +568,9 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 		cout << "CLASSIFICATION" << endl;
 	}
 
-	for(uint i = 0; i < suspects->size(); i++)
+	for(uint i = 0; i < suspects.size(); i++)
 	{
-		Suspect *suspect = GetSuspect(suspects->at(i));
+		Suspect *suspect = GetSuspect(suspects.at(i));
 
 		if(suspect != NULL)
 		{
@@ -597,7 +597,6 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 		}
 	}
 
-	delete suspects;
 	CloseNovadConnection();
 
 }
@@ -606,25 +605,16 @@ void PrintSuspectList(enum SuspectListType listType)
 {
 	Connect();
 
-	vector<SuspectIdentifier> *suspects;
-	suspects = GetSuspectList(listType);
+	vector<SuspectIdentifier> suspects = GetSuspectList(listType);
 
-
-	if(suspects == NULL)
-	{
-		cout << "Failed to get suspect list" << endl;
-		exit(EXIT_FAILURE);
-	}
-
-	for(uint i = 0; i < suspects->size(); i++)
+	for(uint i = 0; i < suspects.size(); i++)
 	{
 		in_addr tmp;
-		tmp.s_addr = htonl(suspects->at(i).m_ip);
+		tmp.s_addr = htonl(suspects.at(i).m_ip);
 		char *address = inet_ntoa((tmp));
-		cout << suspects->at(i).m_interface << " " << address << endl;
+		cout << suspects.at(i).m_interface << " " << address << endl;
 	}
 
-	delete suspects;
 	CloseNovadConnection();
 }
 
@@ -676,6 +666,48 @@ void Connect()
 		cout << "ERROR: Unable to connect to Nova" << endl;
 		exit(EXIT_FAILURE);
 	}
+}
+
+void MonitorCallback()
+{
+	Connect();
+
+	CallbackChange cb;
+	CallbackHandler callbackHandler;
+    Suspect s;
+
+    do
+    {
+        cb = callbackHandler.ProcessCallbackMessage();
+        switch( cb.m_type )
+        {
+        case CALLBACK_NEW_SUSPECT:
+        	cout << "Got new suspect: " << cb.m_suspect->GetIdString() << + " with classification of " << cb.m_suspect->GetClassification() << endl;
+
+        	// We get a suspect pointer and are responsible for deleting it
+        	delete cb.m_suspect;
+            break;
+
+        case CALLBACK_ERROR:
+            cout << "WARNING: Recieved a callback error message!" << endl;
+            break;
+
+        case CALLBACK_ALL_SUSPECTS_CLEARED:
+        	cout << "Got notice that all suspects were cleared" << endl;
+            break;
+
+        case CALLBACK_SUSPECT_CLEARED:
+            s.SetIdentifier(cb.m_suspectIP);
+            cout << "Got a notice that suspect was cleared: " + s.GetIdString() << endl;
+            break;
+        default:
+        	cout << "WARNING: Got a callback message we don't know what to do with. Type " << cb.m_type << endl;
+            break;
+        }
+    }
+    while(cb.m_type != CALLBACK_HUNG_UP);
+    cout << "Novad hung up, closing callback processing" << endl;
+
 }
 
 }

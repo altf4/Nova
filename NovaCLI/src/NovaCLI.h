@@ -53,6 +53,8 @@ void PrintSuspectList(enum SuspectListType listType);
 void PrintUptime();
 
 void PrintUsage();
+
+void MonitorCallback();
 }
 
 
