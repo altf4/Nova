@@ -40,7 +40,6 @@ void NovaNode::CheckInitNova()
 {
 	if( Nova::IsNovadUp() )
 	{
-		cout << "Nova::IsNovadUp() returned true" << endl;
 		return;
 	}
 
@@ -49,8 +48,6 @@ void NovaNode::CheckInitNova()
 		LOG(ERROR, "Error connecting to Novad","");
 		return;
 	}
-
-	cout << "Syncing internal list" << endl;
 
 	SynchInternalList();
 
@@ -154,7 +151,6 @@ int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 
 void NovaNode::DoneWithSuspectCallback(Persistent<Value> suspect, void *paramater) {
 	Suspect *s = static_cast<Suspect*>(paramater);
-	cout << "DoneWithSuspectCallback callback called on suspect: " << s->GetIpString() << endl;
 	delete s;	
 }
 
