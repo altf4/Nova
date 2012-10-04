@@ -469,7 +469,6 @@ namespace Nova
 			j++;
 		}
 
-		delete parse;
 		delete[] tokens;
 	}
 
