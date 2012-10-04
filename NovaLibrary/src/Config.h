@@ -216,6 +216,7 @@ public:
 
 	static std::vector <std::string> GetHaystackAddresses(std::string honeyDConfigPath);
 	static std::vector <std::string> GetIpAddresses(std::string ipListFile);
+	static std::vector <std::string> GetHoneydIpAddresses(std::string ipListFile);
 
 	std::vector<std::string> GetPrefixes();
 
