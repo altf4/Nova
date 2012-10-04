@@ -334,5 +334,13 @@ block headerAdditions
       setUpGrouplist('groupsList');
       now.GetClients(now.RenderConnectionsList);
       now.SetUpNotificationsButton();
-      now.SetUpHostileEventsButton();
+      now.GetClients(function(list){
+        for(var i in list)
+        {
+          if(list[i] != '')
+          {
+            now.UpdateConnectionsList(list[i], 'updateStatus');  
+          } 
+        }
+      });
     });

@@ -125,4 +125,13 @@ block headerAdditions
       now.GetScheduledEvents(function(json){
         generateScheduledEventElement(json);
       });
+      now.GetClients(function(list){
+        for(var i in list)
+        {
+          if(list[i] != '')
+          {
+            now.UpdateConnectionsList(list[i], 'updateStatus');  
+          } 
+        }
+      });
     });

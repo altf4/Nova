@@ -470,7 +470,6 @@ everyone.now.GetClients = function(callback)
   var ret = new Array();
   for(var i in novaClients)
   {
-    console.log('pushing ' + i + ' to ret');
     ret.push(i);
   }
   if(typeof callback == 'function')
@@ -701,7 +700,7 @@ function populateNovaClients()
     for(var i in clientFileList)
     {
       var push = true;
-      if(clientFileList[i] != '')
+      if(clientFileList[i].toString().trim() != '')
       {
         for(var i in seen)
         {
@@ -712,6 +711,7 @@ function populateNovaClients()
         }  
         if(push)
         {
+          console.log('Adding clientId ' + clientFileList[i].toString().trim() + ' to novaClients');
           novaClients[clientFileList[i].toString().trim()] = {statusNova: '', statusHaystack: '', connection: null};
           seen.push(clientFileList[i].toString().trim());
         }
@@ -1077,7 +1077,7 @@ function getClients()
 	var ret = '';
 	for(var i in novaClients)
 	{
-		if(i != undefined)
+		if(i != undefined && novaClients[i].connection != null)
 		{
 			ret += (i + ':');
 		}	
