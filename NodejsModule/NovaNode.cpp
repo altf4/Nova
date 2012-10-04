@@ -117,8 +117,6 @@ void NovaNode::SendSuspect(Suspect* suspect)
 {
 	if( m_CallbackRegistered )
 	{
-		eio_req* req = (eio_req*) calloc(sizeof(*req),1);
-		req->data = static_cast<void*>(suspect);
 		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleNewSuspectOnV8Thread, suspect);
 	}
 }
@@ -133,8 +131,6 @@ void NovaNode::HandleSuspectCleared(Suspect *suspect)
 
 	if( m_SuspectClearedCallbackRegistered )
 	{
-		eio_req* req = (eio_req*) calloc(sizeof(*req),1);
-		req->data = (void*) suspect;
 		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleSuspectClearedOnV8Thread, suspect);
 	}
 }
@@ -149,7 +145,6 @@ void NovaNode::HandleAllSuspectsCleared()
 
 	if (m_AllSuspectsClearedCallbackRegistered)
 	{
-		eio_req* req = (eio_req*) calloc(sizeof(*req),1);
 		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleAllClearedOnV8Thread, NULL);
 	}
 }
@@ -365,17 +360,11 @@ NovaNode::~NovaNode()
 // Update our internal suspect list to that of novad
 void NovaNode::SynchInternalList()
 {
-	vector<SuspectIdentifier> *suspects;
-	suspects = GetSuspectList(SUSPECTLIST_ALL);
+	vector<SuspectIdentifier> suspects = GetSuspectList(SUSPECTLIST_ALL);
 
-	if (suspects == NULL)
+	for (uint i = 0; i < suspects.size(); i++)
 	{
-		cout << "Failed to get suspect list" << endl;
-		return;
-	}
-	for (uint i = 0; i < suspects->size(); i++)
-	{
-		Suspect *suspect = GetSuspect(suspects->at(i));
+		Suspect *suspect = GetSuspect(suspects.at(i));
 
 		if (suspect != NULL)
 		{

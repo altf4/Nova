@@ -554,14 +554,7 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 {
 	Connect();
 
-	vector<SuspectIdentifier> *suspects;
-	suspects = GetSuspectList(listType);
-
-	if(suspects == NULL)
-	{
-		cout << "Failed to get suspect list" << endl;
-		exit(EXIT_FAILURE);
-	}
+	vector<SuspectIdentifier> suspects = GetSuspectList(listType);
 
 	// Print the CSV header
 	if (csv)
@@ -575,9 +568,9 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 		cout << "CLASSIFICATION" << endl;
 	}
 
-	for(uint i = 0; i < suspects->size(); i++)
+	for(uint i = 0; i < suspects.size(); i++)
 	{
-		Suspect *suspect = GetSuspect(suspects->at(i));
+		Suspect *suspect = GetSuspect(suspects.at(i));
 
 		if(suspect != NULL)
 		{
@@ -604,7 +597,6 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 		}
 	}
 
-	delete suspects;
 	CloseNovadConnection();
 
 }
@@ -613,25 +605,16 @@ void PrintSuspectList(enum SuspectListType listType)
 {
 	Connect();
 
-	vector<SuspectIdentifier> *suspects;
-	suspects = GetSuspectList(listType);
+	vector<SuspectIdentifier> suspects = GetSuspectList(listType);
 
-
-	if(suspects == NULL)
-	{
-		cout << "Failed to get suspect list" << endl;
-		exit(EXIT_FAILURE);
-	}
-
-	for(uint i = 0; i < suspects->size(); i++)
+	for(uint i = 0; i < suspects.size(); i++)
 	{
 		in_addr tmp;
-		tmp.s_addr = htonl(suspects->at(i).m_ip);
+		tmp.s_addr = htonl(suspects.at(i).m_ip);
 		char *address = inet_ntoa((tmp));
-		cout << suspects->at(i).m_interface << " " << address << endl;
+		cout << suspects.at(i).m_interface << " " << address << endl;
 	}
 
-	delete suspects;
 	CloseNovadConnection();
 }
 

@@ -83,7 +83,7 @@ bool CloseNovadConnection();
 // Gets a list of suspect addresses currently classified
 //	 listType: Type of list to get (all, just hostile, just benign)
 //	Returns: list of addresses
-std::vector<SuspectIdentifier> *GetSuspectList(enum SuspectListType listType);
+std::vector<SuspectIdentifier> GetSuspectList(enum SuspectListType listType);
 
 // Gets a suspect from the daemon
 // address: IP address of the suspect
