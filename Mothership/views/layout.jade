@@ -66,11 +66,16 @@ html(lang="en")
                 novadStatus.src = 'images/Ngreendot.png';
                 novadStatus.alt = 'Classification is on for ' + clients[i];
               } 
-              else
+              else if(status == 'false' || status == false)
               {
                 novadStatus.src = 'images/Nreddot.png';
                 novadStatus.alt = 'Classification is off for ' + clients[i];
               } 
+              else
+              {
+                novadStatus.src = 'images/Ngreydot.png';
+                novadStatus.alt = 'No Classification status for ' + clients[i]; 
+              }
             });
             
             var haystackStatus = document.createElement('img');
@@ -83,13 +88,18 @@ html(lang="en")
               if(status == 'true' || status == true)
               {
                 haystackStatus.src = 'images/Hgreendot.png';
-                haystackStatus.alt = 'Classification is on for ' + clients[i];
+                haystackStatus.alt = 'Haystack is on for ' + clients[i];
+              } 
+              else if(status == 'false' || status == false)
+              {
+                haystackStatus.src = 'images/Hreddot.png';
+                haystackStatus.alt = 'Haystack is off for ' + clients[i];
               } 
               else
               {
-                haystackStatus.src = 'images/Hreddot.png';
-                haystackStatus.alt = 'Classification is off for ' + clients[i];
-              } 
+                haystackStatus.src = 'images/Hgreydot.png';
+                haystackStatus.alt = 'Haystack is off for ' + clients[i];
+              }
             });
             
             var events = document.createElement('div');

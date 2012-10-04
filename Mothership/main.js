@@ -650,6 +650,40 @@ function getEventList()
   return JSON.stringify(eventCounter);
 }
 
+function getClientIds()
+{
+  var ret = '';
+  for(var i in novaClients)
+  {
+     ret += i + '\n';
+  }
+  return ret;
+}
+
+function populateNovaClients()
+{
+  try
+  {
+    var clientFileList = fs.readFileSync(NovaSharedPath + '/Mothership/clientIds.txt').split('\\n'); 
+    if(clientFileList == '' || clientFileList == undefined)
+    {
+      console.log('clientIds.txt file empty, doing nothing');
+      return;
+    }
+    for(var i in clientFileList)
+    {
+      if(clientFileList[i] != '')
+      {
+        novaClients[clientFileList[i]] = {statusNova: '', statusHaystack: '', connection: null};  
+      } 
+    }
+  }
+  catch(err)
+  {
+    console.log('clientIds.txt file does not exist, doing nothing'); 
+  } 
+}
+
 // Begin setup of websocket server. Going to have an 
 // https base server so that we can use wss:// connections
 // instead of basic ws://
@@ -728,6 +762,16 @@ wsServer.on('request', function(request)
           // has been created for future reference and connection management
 					case 'addId':
 						// TODO: Check that id doesn't exist before adding
+						for(var i in novaClients)
+						{
+						  if(i == json_args.id.toString() && novaClients[i].connection != null)
+						  {
+						    // TODO: test
+						    console.log('There is already a client connected with id ' + json_args.id);
+						    connection.close();
+						    return;
+						  }
+						}
 						novaClients[json_args.id.toString()] = {statusNova: json_args.nova, statusHaystack: json_args.haystack, connection: connection};
 						var date = new Date();
 						everyone.now.WriteNotification(json_args.id + ' connected at ' + date);
@@ -762,6 +806,7 @@ wsServer.on('request', function(request)
                 everyone.now.UpdateGroupList('all', 'update');
               }
             });
+            fs.writeSync(NovaSharedPath + '/Mothership/clientIds.txt', getClientIds());
 						break;
           // This case is reserved for response from the clients;
           // we should figure out a standard format for the responses 

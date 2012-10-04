@@ -1,50 +1,54 @@
     var clientCount = 0;
             
+    var clientDivName = '';
+    var groupDivName ='';
+            
     function setUpSelect(divName)
     {     
-        if(clients == undefined)
+      if(clients == undefined)
+      {
+        console.log('looks like someone forgot to pass clients through the GET for this page');
+        return;
+      }
+      if(clients[0] == '' || clients.length == 0)
+      {
+          var label = document.createElement('label');
+          label.id = 'noClients';
+          label.value = 'noClients';
+          label.innerHTML = 'There are no clients currently connected';
+          document.getElementById(divName).appendChild(label);
+      }  
+      else
+      {
+        var deleteMe = document.getElementById('noClients');
+        if(deleteMe != undefined)
         {
-          console.log('looks like someone forgot to pass clients through the GET for this page');
-          return;
+            document.getElementById(divName).removeChild(deleteMe);
         }
-        if(clients[0] == '' || clients.length == 0)
+        for(var i = 0; i < clients.length; i++)
         {
-            var label = document.createElement('label');
-            label.id = 'noClients';
-            label.value = 'noClients';
-            label.innerHTML = 'There are no clients currently connected';
-            document.getElementById(divName).appendChild(label);
-        }  
-        else
-        {
-          var deleteMe = document.getElementById('noClients');
-          if(deleteMe != undefined)
-          {
-              document.getElementById(divName).removeChild(deleteMe);
-          }
-          for(var i = 0; i < clients.length; i++)
-          {
-              if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
-              {
-                  var div = document.createElement('div');
-                  div.id = clients[i] + 'div';
-                  var check = document.createElement('input');
-                  check.type = 'checkbox';
-                  check.id = 'check' + i;
-                  check.name = 'check' + i;
-                  check.value = clients[i];
-                  check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
-                  var label = document.createElement('label');
-                  label.value = clients[i];
-                  label.innerHTML = clients[i];
-                  label.setAttribute('style', 'font-weight: bold; padding-left: 25px');
-                  div.appendChild(check);
-                  div.appendChild(label);
-                  document.getElementById(divName).appendChild(div);
-                  clientCount++;
-              }
-          }
+            if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
+            {
+                var div = document.createElement('div');
+                div.id = clients[i] + 'div';
+                var check = document.createElement('input');
+                check.type = 'checkbox';
+                check.id = 'check' + i;
+                check.name = 'check' + i;
+                check.value = clients[i];
+                check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
+                var label = document.createElement('label');
+                label.value = clients[i];
+                label.innerHTML = clients[i];
+                label.setAttribute('style', 'font-weight: bold; padding-left: 25px');
+                div.appendChild(check);
+                div.appendChild(label);
+                document.getElementById(divName).appendChild(div);
+                clientCount++;
+            }
         }
+      }
+      clientDivName = divName;
     }
     
     function setUpGrouplist(divName)
@@ -104,6 +108,7 @@
           }
         }
       }
+      groupDivName = divName;
     }
     
     now.RefreshPageAfterRename = function()
@@ -112,7 +117,7 @@
     }
     
     now.UpdateClientsList = function(clientId, action) {
-      var divClientList = document.getElementById('clientsList');
+      var divClientList = document.getElementById(clientDivName);
       
       switch(action)
       {
@@ -194,7 +199,7 @@
               var deleteMe = document.getElementById('noGroups');
               if(deleteMe != undefined)
               {
-                  document.getElementById(divName).removeChild(deleteMe);
+                  document.getElementById(groupDivName).removeChild(deleteMe);
               }
               now.GetGroupMembers(group, function(members){
                 var div = document.createElement('div');
@@ -217,7 +222,7 @@
                 }
                 div.appendChild(check);
                 div.appendChild(label);
-                document.getElementById('groupsList').appendChild(div);
+                document.getElementById(groupDivName).appendChild(div);
               });
             }
             else
