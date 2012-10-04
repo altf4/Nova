@@ -121,18 +121,10 @@ public:
 	//Sets the 'from live capture' bool
 	void SetIsLive(bool b);
 
-	//Clears the FeatureData of a suspect
-	// whichFeatures: specifies which FeatureSet's Data to clear
-	void ClearFeatureData(FeatureMode whichFeatures = MAIN_FEATURES);
-
 	//Returns a copy of the suspects FeatureSet
 	FeatureSet GetFeatureSet(FeatureMode whichFeatures = MAIN_FEATURES);
 	//Sets or overwrites the suspects FeatureSet
 	void SetFeatureSet(FeatureSet *fs, FeatureMode whichFeatures = MAIN_FEATURES);
-
-	//Clears the feature set of the suspect
-	// whichFeatures: specifies which FeatureSet to clear
-	void ClearFeatureSet(FeatureMode whichFeatures = MAIN_FEATURES);
 
 	//Adds the feature set 'fs' to the suspect's feature set
 	void AddFeatureSet(FeatureSet *fs, FeatureMode whichFeatures = MAIN_FEATURES);
