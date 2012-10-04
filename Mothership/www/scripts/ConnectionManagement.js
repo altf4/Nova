@@ -1,7 +1,7 @@
     var clientCount = 0;
             
-    var clientDivName = '';
-    var groupDivName ='';
+    var clientDivName = 'clientsList';
+    var groupDivName = 'groupsList';
             
     function setUpSelect(divName)
     {     
@@ -118,7 +118,6 @@
     
     now.UpdateClientsList = function(clientId, action) {
       var divClientList = document.getElementById(clientDivName);
-      
       switch(action)
       {
         case 'add':
@@ -190,6 +189,7 @@
       
       now.UpdateGroupList = function(group, action)
       {
+
         var groupDiv = document.getElementById(group + 'div');
         switch(action)
         {
@@ -199,7 +199,7 @@
               var deleteMe = document.getElementById('noGroups');
               if(deleteMe != undefined)
               {
-                  document.getElementById(groupDivName).removeChild(deleteMe);
+                document.getElementById(groupDivName).removeChild(deleteMe);
               }
               now.GetGroupMembers(group, function(members){
                 var div = document.createElement('div');

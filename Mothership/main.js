@@ -147,16 +147,19 @@ var everyone = nowjs.initialize(app);
 // saved already should be. 
 process.on('SIGTERM', function(){
   console.log('SIGTERM recieved');
+  SaveClientIds();
   saveScheduledEvents(function(){process.exit(1)});
 });
 
 process.on('SIGKILL', function(){
   console.log('SIGKILL received');
+  SaveClientIds();
   saveScheduledEvents(function(){process.exit(1)});
 });
 
 process.on('SIGINT', function(){
   console.log('SIGINT received');
+  SaveClientIds();
   saveScheduledEvents(function(){process.exit(1)});
 });
 
@@ -467,6 +470,7 @@ everyone.now.GetClients = function(callback)
   var ret = new Array();
   for(var i in novaClients)
   {
+    console.log('pushing ' + i + ' to ret');
     ret.push(i);
   }
   if(typeof callback == 'function')
@@ -539,7 +543,7 @@ everyone.now.IsNovadUp = function(clientId, callback)
 {
   if(typeof callback == 'function')
   {
-    callback(novaClients[clientId].statusNova);
+    callback(clientId, novaClients[clientId].statusNova);
   } 
 }
 
@@ -547,7 +551,7 @@ everyone.now.IsHaystackUp = function(clientId, callback)
 {
   if(typeof callback == 'function')
   {
-    callback(novaClients[clientId].statusHaystack);
+    callback(clientId, novaClients[clientId].statusHaystack);
   }
 }
 
@@ -558,7 +562,10 @@ everyone.now.GetHostileSuspects = function()
   
   for(var i in novaClients)
   {
-    novaClients[i].connection.sendUTF(JSON.stringify(message));
+    if(novaClients[i].connection != null)
+    {
+      novaClients[i].connection.sendUTF(JSON.stringify(message));
+    }
   }
 }
 
@@ -653,34 +660,68 @@ function getEventList()
 function getClientIds()
 {
   var ret = '';
+  var seen = new Array();
+  var push = true;
   for(var i in novaClients)
   {
+    for(var i in seen)
+    {
+      if(i == seen[i])
+      {
+        push = false;
+      } 
+    }
+    if(push)
+    {
      ret += i + '\n';
+     seen.push(i);
+    }
   }
+  seen = null;
   return ret;
+}
+
+function SaveClientIds()
+{
+  fs.writeFileSync(NovaSharedPath + '/Mothership/clientIds.txt', getClientIds());
 }
 
 function populateNovaClients()
 {
   try
   {
-    var clientFileList = fs.readFileSync(NovaSharedPath + '/Mothership/clientIds.txt').split('\\n'); 
+    var seen = new Array();
+    var clientFileList = fs.readFileSync(NovaSharedPath + '/Mothership/clientIds.txt', 'utf8').split(/\r\n|\r|\n/); 
+    console.log('clientFileList: ' + clientFileList.join());
     if(clientFileList == '' || clientFileList == undefined)
     {
-      console.log('clientIds.txt file empty, doing nothing');
+      console.log('clientIds.txt empty, doing nothing');
       return;
     }
     for(var i in clientFileList)
     {
+      var push = true;
       if(clientFileList[i] != '')
       {
-        novaClients[clientFileList[i]] = {statusNova: '', statusHaystack: '', connection: null};  
+        for(var i in seen)
+        {
+          if(clientFileList[i].toString().trim() == seen[i])
+          {
+            push = false;
+          }
+        }  
+        if(push)
+        {
+          novaClients[clientFileList[i].toString().trim()] = {statusNova: '', statusHaystack: '', connection: null};
+          seen.push(clientFileList[i].toString().trim());
+        }
       } 
     }
+    seen = null;
   }
   catch(err)
   {
-    console.log('clientIds.txt file does not exist, doing nothing'); 
+    console.log('clientIds.txt does not exist, err: ' + err); 
   } 
 }
 
@@ -729,6 +770,8 @@ httpsServer.listen(8081, function()
 var wsServer = new WebSocketServer({
 	httpServer: httpsServer
 });
+
+populateNovaClients();
 
 // On request, accept the connection. I'm a little wary of the way this is 
 // structured (in terms of connection acceptance) but I've made Quasar attempt to 
@@ -806,7 +849,7 @@ wsServer.on('request', function(request)
                 everyone.now.UpdateGroupList('all', 'update');
               }
             });
-            fs.writeSync(NovaSharedPath + '/Mothership/clientIds.txt', getClientIds());
+            SaveClientIds();
 						break;
           // This case is reserved for response from the clients;
           // we should figure out a standard format for the responses 
@@ -1005,13 +1048,14 @@ wsServer.on('close', function(connection, reason, description)
   {
     if(novaClients[i].connection === connection)
     {
+      novaClients[i] = {statusNova: '', statusHaystack: '', connection: null};
       if(typeof everyone.now.UpdateClientsList == 'function')
       {
         everyone.now.UpdateClientsList(i, 'remove');
       }
       if(typeof everyone.now.UpdateConnectionsList == 'function')
       {
-        everyone.now.UpdateConnectionsList(i, 'remove');
+        everyone.now.UpdateConnectionsList(i, 'updateStatus');
       }
       var date = new Date();
       everyone.now.WriteNotification(i + ' disconnected at ' + date);
@@ -1019,7 +1063,6 @@ wsServer.on('close', function(connection, reason, description)
       {
         everyone.now.UpdateNotificationsButton('new');
       }
-      delete novaClients[i];
     }
   }
 });
