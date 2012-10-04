@@ -41,7 +41,6 @@ Suspect::Suspect()
 	m_isLive = false;
 	m_lastPacketTime = 0;
 	m_classificationNotes = "";
-	m_usedByJavascript = false;
 
 	for(int i = 0; i < DIM; i++)
 	{

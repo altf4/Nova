@@ -158,7 +158,6 @@ public:
 	FeatureSet m_unsentFeatures;
 
 	std::string m_classificationNotes;
-	bool m_usedByJavascript;
 
 private:
 	SuspectIdentifier m_id;
