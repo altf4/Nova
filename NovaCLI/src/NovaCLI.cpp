@@ -678,10 +678,18 @@ void MonitorCallback()
 	        sleep(3);
 	        continue;
 	    }
-
 		CallbackChange cb;
 		CallbackHandler callbackHandler;
 	    Suspect s;
+
+    while (true)
+    {
+	    if( ! Nova::ConnectToNovad() )
+	    {
+	        LOG(ERROR, "CLI Unable to connect to Novad right now. Trying again in 3 seconds...","");
+	        sleep(3);
+	        continue;
+	    }
 
 		do
 		{

@@ -20,6 +20,7 @@
 #include "ClassificationEngine.h"
 
 #include "SuspectTable.h"
+#include "Suspect.h"
 
 using namespace node;
 using namespace v8;
@@ -39,6 +40,7 @@ void NovaNode::CheckInitNova()
 {
 	if( Nova::IsNovadUp() )
 	{
+		cout << "Nova::IsNovadUp() returned true" << endl;
 		return;
 	}
 
@@ -47,6 +49,8 @@ void NovaNode::CheckInitNova()
 		LOG(ERROR, "Error connecting to Novad","");
 		return;
 	}
+
+	cout << "Syncing internal list" << endl;
 
 	SynchInternalList();
 
@@ -103,59 +107,55 @@ int NovaNode::AfterNovaCallbackHandling(eio_req*)
 
 void NovaNode::HandleNewSuspect(Suspect* suspect)
 {
-	if (m_suspects.keyExists(suspect->GetIdentifier()))
-	{
-		delete m_suspects[suspect->GetIdentifier()];
-		m_suspects.erase(suspect->GetIdentifier());
-	}
-	m_suspects[suspect->GetIdentifier()] = suspect;
-
 	SendSuspect(suspect);
 }
 
 void NovaNode::SendSuspect(Suspect* suspect)
 {
-	if( m_CallbackRegistered )
-	{
-		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleNewSuspectOnV8Thread, suspect);
-	}
+	eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleNewSuspectOnV8Thread, suspect);
 }
 
 void NovaNode::HandleSuspectCleared(Suspect *suspect)
 {
-	if (m_suspects.keyExists(suspect->GetIdentifier()))
-	{
-		delete m_suspects[suspect->GetIdentifier()];
-		m_suspects.erase(suspect->GetIdentifier());
-	}	
-
-	if( m_SuspectClearedCallbackRegistered )
-	{
-		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleSuspectClearedOnV8Thread, suspect);
-	}
+	eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleSuspectClearedOnV8Thread, suspect);
 }
 
 void NovaNode::HandleAllSuspectsCleared()
 {
-	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
-	{
-		delete ((*it).second);
-	}
-	m_suspects.clear();
-
-	if (m_AllSuspectsClearedCallbackRegistered)
-	{
-		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleAllClearedOnV8Thread, NULL);
-	}
+	eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleAllClearedOnV8Thread, NULL);
 }
 
 int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 {
-	Suspect* suspect = static_cast<Suspect*>(req->data);
 	HandleScope scope;
-	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
-	m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
+	
+	Suspect* suspect = static_cast<Suspect*>(req->data);
+		
+	if (suspect != NULL) {	
+		if (m_suspects.keyExists(suspect->GetIdentifier())) {
+			delete m_suspects[suspect->GetIdentifier()];
+		}
+		
+		m_suspects[suspect->GetIdentifier()] = suspect;
+
+	    if (m_CallbackRegistered) {
+			Suspect *suspectCopy = new Suspect((*suspect));
+			v8::Persistent<Value> weak_handle = Persistent<Value>::New(SuspectJs::WrapSuspect(suspectCopy));
+			weak_handle.MakeWeak(suspectCopy, &DoneWithSuspectCallback);
+			Persistent<Value> argv[1] = { weak_handle };
+			m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
+		}
+	} else {
+		LOG(DEBUG, "HandleNewSuspectOnV8Thread got a NULL suspect pointer. Ignoring.", "");
+	}
 	return 0;
+
+}
+
+void NovaNode::DoneWithSuspectCallback(Persistent<Value> suspect, void *paramater) {
+	Suspect *s = static_cast<Suspect*>(paramater);
+	cout << "DoneWithSuspectCallback callback called on suspect: " << s->GetIpString() << endl;
+	delete s;	
 }
 
 int NovaNode::HandleSuspectClearedOnV8Thread(eio_req* req)
@@ -403,9 +403,16 @@ Handle<Value> NovaNode::sendSuspectList(const Arguments& args)
 	Local<Function> callbackFunction;
 	callbackFunction = Local<Function>::New( args[0].As<Function>() );
 
-	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
-	{
-		SendSuspect((*it).second);
+	    
+	if (m_CallbackRegistered) {
+		for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
+		{
+			Suspect *suspectCopy = new Suspect(*((*it).second));
+			v8::Persistent<Value> weak_handle = Persistent<Value>::New(SuspectJs::WrapSuspect(suspectCopy));
+			weak_handle.MakeWeak(suspectCopy, &DoneWithSuspectCallback);
+			Persistent<Value> argv[1] = { weak_handle };
+			m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
+		}
 	}
 
 	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );

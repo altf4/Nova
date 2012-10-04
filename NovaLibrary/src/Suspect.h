@@ -158,6 +158,7 @@ public:
 	FeatureSet m_unsentFeatures;
 
 	std::string m_classificationNotes;
+	bool m_usedByJavascript;
 
 private:
 	SuspectIdentifier m_id;
@@ -180,6 +181,7 @@ private:
 	bool m_flaggedByAlarm;
 	// Is this a live capture or is NOVA reading from a pcap file?
 	bool m_isLive;
+
 };
 
 }
