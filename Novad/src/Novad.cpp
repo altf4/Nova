@@ -168,7 +168,7 @@ int RunNovaD()
 	engine->LoadConfiguration();
 
 	haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
-	haystackDhcpAddresses = Config::GetIpAddresses(dhcpListFile);
+	haystackDhcpAddresses = Config::GetHoneydIpAddresses(dhcpListFile);
 	whitelistIpAddresses = WhitelistConfiguration::GetIps();
 	whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 	UpdateHaystackFeatures();

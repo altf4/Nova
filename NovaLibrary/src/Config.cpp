@@ -2606,6 +2606,37 @@ vector <string> Config::GetIpAddresses(string ipListFile)
 	return whitelistedAddresses;
 }
 
+vector <string> Config::GetHoneydIpAddresses(string ipListFile)
+{
+	ifstream ipListFileStream(ipListFile.c_str());
+	vector<string> whitelistedAddresses;
+
+	if(ipListFileStream.is_open())
+	{
+		while(ipListFileStream.good())
+		{
+			string line;
+			getline(ipListFileStream,line);
+			if(line != "" && line.at(0) != '#' )
+			{
+				std::vector<std::string> strs;
+				boost::split(strs, line, boost::is_any_of(", "));
+				if (strs.size() > 0)
+				{
+					whitelistedAddresses.push_back(strs.at(0));
+				}
+			}
+		}
+		ipListFileStream.close();
+	}
+	else
+	{
+		LOG(ERROR,"Unable to open file: " + ipListFile, "");
+	}
+
+	return whitelistedAddresses;
+}
+
 
 vector <string> Config::GetHaystackAddresses(string honeyDConfigPath)
 {
