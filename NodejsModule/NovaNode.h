@@ -80,6 +80,7 @@ public:
 	~NovaNode();
 
 	static void SynchInternalList();
+	static void DoneWithSuspectCallback(Persistent<Value> suspect, void *paramater);
 	static Handle<Value> New(const Arguments& args);
 	static Handle<Value> GetFeatureNames(const Arguments& args);
 	static Handle<Value> GetDIM(const Arguments& args);

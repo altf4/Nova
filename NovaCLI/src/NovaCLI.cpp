@@ -670,44 +670,57 @@ void Connect()
 
 void MonitorCallback()
 {
-	Connect();
-
-	CallbackChange cb;
-	CallbackHandler callbackHandler;
-    Suspect s;
-
-    do
+    while (true)
     {
-        cb = callbackHandler.ProcessCallbackMessage();
-        switch( cb.m_type )
-        {
-        case CALLBACK_NEW_SUSPECT:
-        	cout << "Got new suspect: " << cb.m_suspect->GetIdString() << + " with classification of " << cb.m_suspect->GetClassification() << endl;
+	    if( ! Nova::ConnectToNovad() )
+	    {
+	        LOG(ERROR, "CLI Unable to connect to Novad right now. Trying again in 3 seconds...","");
+	        sleep(3);
+	        continue;
+	    }
 
-        	// We get a suspect pointer and are responsible for deleting it
-        	delete cb.m_suspect;
-            break;
 
-        case CALLBACK_ERROR:
-            cout << "WARNING: Recieved a callback error message!" << endl;
-            break;
+		CallbackChange cb;
+		CallbackHandler callbackHandler;
+	    Suspect s;
 
-        case CALLBACK_ALL_SUSPECTS_CLEARED:
-        	cout << "Got notice that all suspects were cleared" << endl;
-            break;
+		do
+		{
+			cb = callbackHandler.ProcessCallbackMessage();
+			switch( cb.m_type )
+			{
+			case CALLBACK_NEW_SUSPECT:
+				cout << "Got new suspect: " << cb.m_suspect->GetIdString() << + " with classification of " << cb.m_suspect->GetClassification() << endl;
 
-        case CALLBACK_SUSPECT_CLEARED:
-            s.SetIdentifier(cb.m_suspectIP);
-            cout << "Got a notice that suspect was cleared: " + s.GetIdString() << endl;
-            break;
-        default:
-        	cout << "WARNING: Got a callback message we don't know what to do with. Type " << cb.m_type << endl;
-            break;
-        }
-    }
-    while(cb.m_type != CALLBACK_HUNG_UP);
-    cout << "Novad hung up, closing callback processing" << endl;
+				// We get a suspect pointer and are responsible for deleting it
+				delete cb.m_suspect;
+				break;
 
+			case CALLBACK_ERROR:
+				cout << "WARNING: Recieved a callback error message!" << endl;
+				break;
+
+			case CALLBACK_ALL_SUSPECTS_CLEARED:
+				cout << "Got notice that all suspects were cleared" << endl;
+				break;
+
+			case CALLBACK_SUSPECT_CLEARED:
+				s.SetIdentifier(cb.m_suspectIP);
+				cout << "Got a notice that suspect was cleared: " + s.GetIdString() << endl;
+				break;
+			case CALLBACK_HUNG_UP:
+				cout << "Got CALLBACK_HUNG_UP" << endl;
+				break;
+			default:
+				cout << "WARNING: Got a callback message we don't know what to do with. Type " << cb.m_type << endl;
+				break;
+			}
+		}
+		while(cb.m_type != CALLBACK_HUNG_UP);
+		cout << "Novad hung up, closing callback processing and trying again in 3 seconds" << endl;
+		sleep(3);
+   }
 }
+
 
 }
