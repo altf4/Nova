@@ -343,9 +343,12 @@ void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void 
 
 	if(error & (BEV_EVENT_EOF | BEV_EVENT_ERROR))
 	{
-		evutil_socket_t socketFD = bufferevent_getfd(bev);
-		bufferevent_free(bev);
-		MessageManager::Instance().DeleteEndpoint(socketFD);
+		//If we're a server...
+		if(ctx != NULL)
+		{
+			bufferevent_free(bev);
+			MessageManager::Instance().DeleteEndpoint(bufferevent_getfd(bev));
+		}
 		return;
 	}
 }
@@ -370,7 +373,7 @@ void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
 			LOG(ERROR, "Failed to connect to UI: socket_new", "");
 			return;
 		}
-		bufferevent_setcb(bev, MessageDispatcher, NULL, ErrorDispatcher, NULL);
+		bufferevent_setcb(bev, MessageDispatcher, NULL, ErrorDispatcher, cbArg);
 		bufferevent_setwatermark(bev, EV_READ, 0, 0);
 		if(bufferevent_enable(bev, EV_READ|EV_WRITE) == -1)
 		{
