@@ -57,6 +57,8 @@ void *EventDispatcherThread(void *arg)
 	{
 		LOG(DEBUG, "Message loop ended cleanly.", "");
 	}
+
+	DisconnectFromNovad();
 	return NULL;
 }
 
