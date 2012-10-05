@@ -170,6 +170,7 @@ int NovaNode::HandleSuspectClearedOnV8Thread(eio_req* req)
 	if (m_suspects.keyExists(suspect->GetIdentifier())) {
 		delete m_suspects[suspect->GetIdentifier()];
 	}
+	m_suspects.erase(suspect->GetIdentifier());
 
 	v8::Persistent<Value> weak_handle = Persistent<Value>::New(SuspectJs::WrapSuspect(suspect));
 	weak_handle.MakeWeak(suspect, &DoneWithSuspectCallback);
