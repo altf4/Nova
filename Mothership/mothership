@@ -18,6 +18,6 @@ if (($# == 1)); then
         fi
 fi
 
-echo "Starting quasar with the forever daemon"
+echo "Starting mothership with the forever daemon"
 NODE_PATH="$MODULE_PATH" forever start $MAIN_PATH
 exit
