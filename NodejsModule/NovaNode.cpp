@@ -27,7 +27,6 @@ using namespace v8;
 using namespace Nova;
 using namespace std;
 
-
 void NovaNode::InitNovaCallbackProcessing()
 {
 	m_callbackRunning = false;
@@ -104,12 +103,29 @@ int NovaNode::AfterNovaCallbackHandling(eio_req*)
 
 void NovaNode::HandleNewSuspect(Suspect* suspect)
 {
-	SendSuspect(suspect);
+	eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleNewSuspectOnV8Thread, suspect);
 }
 
+
+// Sends a copy of the suspect from the C++ side to the server side Javascript side
+// Note: Only call this from inside the v8 thread. Provides no locking.
 void NovaNode::SendSuspect(Suspect* suspect)
 {
-	eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleNewSuspectOnV8Thread, suspect);
+	// Do we have anyplace to actually send the suspect?
+	if (m_CallbackRegistered) {
+		// Make a copy of it so we can safely delete the one in the suspect table when updates come in
+		Suspect *suspectCopy = new Suspect((*suspect));
+
+		// Wrap it in Javascript voodoo so main.js can handle it
+		v8::Persistent<Value> weak_handle = Persistent<Value>::New(SuspectJs::WrapSuspect(suspectCopy));
+
+		// When JS is done with it, call DoneWithSuspectCallback to clean it up
+		weak_handle.MakeWeak(suspectCopy, &DoneWithSuspectCallback);
+
+		// Send it off to the callback in main.js
+		Persistent<Value> argv[1] = { weak_handle };
+		m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
+	}
 }
 
 void NovaNode::HandleSuspectCleared(Suspect *suspect)
@@ -134,14 +150,7 @@ int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 		}
 		
 		m_suspects[suspect->GetIdentifier()] = suspect;
-
-	    if (m_CallbackRegistered) {
-			Suspect *suspectCopy = new Suspect((*suspect));
-			v8::Persistent<Value> weak_handle = Persistent<Value>::New(SuspectJs::WrapSuspect(suspectCopy));
-			weak_handle.MakeWeak(suspectCopy, &DoneWithSuspectCallback);
-			Persistent<Value> argv[1] = { weak_handle };
-			m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
-		}
+		SendSuspect(suspect);
 	} else {
 		LOG(DEBUG, "HandleNewSuspectOnV8Thread got a NULL suspect pointer. Ignoring.", "");
 	}
@@ -156,19 +165,28 @@ void NovaNode::DoneWithSuspectCallback(Persistent<Value> suspect, void *paramate
 
 int NovaNode::HandleSuspectClearedOnV8Thread(eio_req* req)
 {
-	Suspect* suspect = static_cast<Suspect*>(req->data);
 	HandleScope scope;
-	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
-	m_SuspectClearedCallback->Call(m_SuspectClearedCallback, 1, argv);
+	Suspect* suspect = static_cast<Suspect*>(req->data);
+	if (m_suspects.keyExists(suspect->GetIdentifier())) {
+		delete m_suspects[suspect->GetIdentifier()];
+	}
 
-	// TODO: Is this a memory leak? Probably safe to clear the suspect? Or do we need to do some
-	// sort of magic makeWeak call to clear it when the wrapped suspect is done being accessed in js?
+	v8::Persistent<Value> weak_handle = Persistent<Value>::New(SuspectJs::WrapSuspect(suspect));
+	weak_handle.MakeWeak(suspect, &DoneWithSuspectCallback);
+	Persistent<Value> argv[1] = { weak_handle };	
+	m_SuspectClearedCallback->Call(m_SuspectClearedCallback, 1, argv);
+	
 	return 0;
 }
 
 int NovaNode::HandleAllClearedOnV8Thread(eio_req*)
 {
 	HandleScope scope;
+	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
+	{
+		delete (*it).second;
+	}
+	m_suspects.clear();
 	m_SuspectsClearedCallback->Call(m_SuspectsClearedCallback, 0, NULL);
 	return 0;
 }
@@ -350,7 +368,12 @@ NovaNode::NovaNode() :
 
 NovaNode::~NovaNode()
 {
-
+	cout << "Destructing NovaNode." << endl;
+	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
+	{
+		delete (*it).second;
+	}
+	m_suspects.clear();
 }
 
 // Update our internal suspect list to that of novad
@@ -403,11 +426,7 @@ Handle<Value> NovaNode::sendSuspectList(const Arguments& args)
 	if (m_CallbackRegistered) {
 		for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
 		{
-			Suspect *suspectCopy = new Suspect(*((*it).second));
-			v8::Persistent<Value> weak_handle = Persistent<Value>::New(SuspectJs::WrapSuspect(suspectCopy));
-			weak_handle.MakeWeak(suspectCopy, &DoneWithSuspectCallback);
-			Persistent<Value> argv[1] = { weak_handle };
-			m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
+			SendSuspect((*it).second);
 		}
 	}
 
@@ -498,8 +517,4 @@ bool NovaNode::m_AllSuspectsClearedCallbackRegistered=false;
 bool NovaNode::m_SuspectClearedCallbackRegistered=false;
 bool NovaNode::m_callbackRunning=false;
 pthread_t NovaNode::m_NovaCallbackThread=0;
-
-
-
-
 
