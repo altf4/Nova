@@ -85,7 +85,7 @@ NovaGrid.prototype = {
 
 	, PreviousPage: function() {
 		if (this.GetNumberOfPages() == 1) {return};
-		if (this.m_currentPage - 1 <= 0) {
+		if (this.m_currentPage - 1 < 0) {
 			this.SetCurrentPage(this.GetNumberOfPages() - 1);
 		} else {
 			this.SetCurrentPage(this.m_currentPage - 1);
