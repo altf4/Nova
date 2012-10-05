@@ -1592,7 +1592,15 @@ bool Config::InitUserConfigs()
 	{
 		string fromPath = m_pathPrefix + "/usr/share/nova/userFiles";
 		string toPath = m_pathHome;
-		string copyString = "cp -rfp \"" + fromPath + "\" \"" + toPath + "\"";
+		string mkdirString = "mkdir -p \"" + toPath + "\"";
+
+		if(system(mkdirString.c_str()) != 0)
+		{
+			cout << "Error creating folder for user configuration. Failed command was: " + mkdirString << endl;
+		}
+
+
+		string copyString = "cp -rfpT \"" + fromPath + "\" \"" + toPath + "\"";
 
 		if(system(copyString.c_str()) != 0)
 		{

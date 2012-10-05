@@ -149,14 +149,20 @@ block headerAdditions
     }
 
     function onProfileClicked(profile) {
-        if (!event.ctrlKey) {
+        var ctrlKeyPressed = true;
+        if (typeof(event) !== 'undefined') {
+                if (!event.ctrlKey) {
+                        ctrlKeyPressed = false;
+                } else {
+                        ctrlKeyPressed = true;
+                }
+        }
+
+        if (!ctrlKeyPressed) {
             for (entry in profilesArray) {
                 profilesArray[entry].isSelected = false;
                 UnsetHighlighted(profilesArray[entry].listElement);
             }
-
-        } else {
-
         }
 
         profilesArray[profile].isSelected = !profilesArray[profile].isSelected;
