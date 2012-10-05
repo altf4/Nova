@@ -2191,7 +2191,7 @@ var distributeSuspect = function (suspect) {
     send.classification = String(suspect.GetClassification());
     send.lastpacket = dString;
     send.ishostile = String(suspect.GetIsHostile());
-    send.interface = String(suspect.GetInterfaces());
+    send.interface = String(suspect.GetInterface());
     
     SendHostileEventToMothership(send);
   }
@@ -2204,7 +2204,7 @@ var distributeSuspect = function (suspect) {
     send.classification = String(suspect.GetClassification());
     send.lastpacket = dString;
     send.ishostile = String(suspect.GetIsHostile());
-    send.interface = String(suspect.GetInterfaces());
+    send.interface = String(suspect.GetInterface());
     
     SendBenignSuspectToMothership(send);
   }
