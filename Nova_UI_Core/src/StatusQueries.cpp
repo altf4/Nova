@@ -35,7 +35,7 @@ namespace Nova
 {
 bool IsNovadUp(bool tryToConnect)
 {
-
+	bool isUp = true;
 	if(tryToConnect)
 	{
 		//If we couldn't connect, then it's definitely not up
@@ -45,57 +45,69 @@ bool IsNovadUp(bool tryToConnect)
 		}
 	}
 
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	RequestMessage ping(REQUEST_PING);
-	if(!MessageManager::Instance().WriteMessage(ticket, &ping))
+	//Funny syntax just so I can break; out of the context
+	do
 	{
-		//There was an error in sending the message
-		return false;
-	}
+		Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-
-	if(reply->m_messageType == ERROR_MESSAGE )
-	{
-		ErrorMessage *error = (ErrorMessage*)reply;
-		if(error->m_errorType == ERROR_SOCKET_CLOSED)
+		RequestMessage ping(REQUEST_PING);
+		if(!MessageManager::Instance().WriteMessage(ticket, &ping))
 		{
-			// This was breaking things during the mess of isNovadUp calls
-			// when the QT GUi starts and connects to novad. If there was some
-			// important reason for it being here that I don't know about, we
-			// might need to put it back and track down why exactly it was
-			// causing problems.
-			//CloseNovadConnection();
+			//There was an error in sending the message
+			isUp = false;
+			break;
 		}
-		delete error;
-		return false;
-	}
-	if(reply->m_messageType != REQUEST_MESSAGE )
-	{
-		//Received the wrong kind of message
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
 
-	RequestMessage *pong = (RequestMessage*)reply;
-	if(pong->m_requestType != REQUEST_PONG)
-	{
-		//Received the wrong kind of control message
-		pong->DeleteContents();
+		Message *reply = MessageManager::Instance().ReadMessage(ticket);
+		if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+		{
+			LOG(ERROR, "Timeout error when waiting for message reply", "");
+			reply->DeleteContents();
+			delete reply;
+			isUp = false;
+			break;
+		}
+
+		if(reply->m_messageType == ERROR_MESSAGE )
+		{
+			ErrorMessage *error = (ErrorMessage*)reply;
+			if(error->m_errorType == ERROR_SOCKET_CLOSED)
+			{
+				// This was breaking things during the mess of isNovadUp calls
+				// when the QT GUi starts and connects to novad. If there was some
+				// important reason for it being here that I don't know about, we
+				// might need to put it back and track down why exactly it was
+				// causing problems.
+				//CloseNovadConnection();
+			}
+			delete error;
+			isUp = false;
+			break;
+		}
+		if(reply->m_messageType != REQUEST_MESSAGE )
+		{
+			//Received the wrong kind of message
+			reply->DeleteContents();
+			delete reply;
+			isUp = false;
+			break;
+		}
+
+		RequestMessage *pong = (RequestMessage*)reply;
+		if(pong->m_requestType != REQUEST_PONG)
+		{
+			//Received the wrong kind of control message
+			pong->DeleteContents();
+			isUp = false;
+		}
 		delete pong;
-		return false;
+	}while(0);
+
+	if(isUp == false)
+	{
+		DisconnectFromNovad();
 	}
-	delete pong;
-	return true;
+	return isUp;
 }
 
 uint64_t GetStartTime()

@@ -69,42 +69,46 @@ bool StartNovad(bool blocking)
 
 bool StopNovad()
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	ControlMessage killRequest(CONTROL_EXIT_REQUEST);
-	if(!MessageManager::Instance().WriteMessage(ticket, &killRequest))
+	bool retSuccess;
+	//Keep the scope of the following Ticket out of the call to Disconnect
 	{
-		LOG(ERROR, "Error sending command to NOVAD (CONTROL_EXIT_REQUEST)", "");
-		return false;
-	}
+		Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
-		return false;
-	}
-	if(reply->m_messageType != CONTROL_MESSAGE )
-	{
-		LOG(ERROR, "Received the wrong kind of reply message", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
+		ControlMessage killRequest(CONTROL_EXIT_REQUEST);
+		if(!MessageManager::Instance().WriteMessage(ticket, &killRequest))
+		{
+			LOG(ERROR, "Error sending command to NOVAD (CONTROL_EXIT_REQUEST)", "");
+			return false;
+		}
 
-	ControlMessage *killReply = (ControlMessage*)reply;
-	if( killReply->m_controlType != CONTROL_EXIT_REPLY )
-	{
-		LOG(ERROR, "Received the wrong kind of control message", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-	bool retSuccess = killReply->m_success;
-	delete killReply;
+		Message *reply = MessageManager::Instance().ReadMessage(ticket);
+		if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+		{
+			LOG(ERROR, "Timeout error when waiting for message reply", "");
+			delete ((ErrorMessage*)reply);
+			return false;
+		}
+		if(reply->m_messageType != CONTROL_MESSAGE )
+		{
+			LOG(ERROR, "Received the wrong kind of reply message", "");
+			reply->DeleteContents();
+			delete reply;
+			return false;
+		}
 
-	LOG(DEBUG, "Call to StopNovad complete", "");
+		ControlMessage *killReply = (ControlMessage*)reply;
+		if( killReply->m_controlType != CONTROL_EXIT_REPLY )
+		{
+			LOG(ERROR, "Received the wrong kind of control message", "");
+			reply->DeleteContents();
+			delete reply;
+			return false;
+		}
+		retSuccess = killReply->m_success;
+		delete killReply;
+
+		LOG(DEBUG, "Call to StopNovad complete", "");
+	}
 	DisconnectFromNovad();
 
 	return retSuccess;
