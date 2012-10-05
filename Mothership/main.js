@@ -124,6 +124,7 @@ var fileAssociations = new Array();
 var suspectIPs = new Array();
 var eventCounter = new Array();
 var scheduledMessages = new Array();
+var details = '';
 var notifications = 0;
 var hostileEvents = 0;
 
@@ -328,9 +329,14 @@ everyone.now.MessageSend = function(message)
     targets.length = 0;
 };
 
-everyone.now.GetSuspectDetails = function(suspect, callback)
+everyone.now.GetSuspectDetails = function(suspect)
 {
-  
+  var message = {};
+  message.type = 'suspectDetails';
+  message.id = suspect.clientId;
+  message.ip = suspect.ip;
+  message.iface = suspect.interface;
+  novaClients[suspect.clientId].connection.sendUTF(JSON.stringify(message));
 }
 
 everyone.now.SetScheduledMessage = function(clientId, name, message, cron, date, cb)
@@ -876,26 +882,27 @@ wsServer.on('request', function(request)
 						suspect.lastpacket = json_args.lastpacket;
 						suspect.ishostile = json_args.ishostile;
 						suspect.client = json_args.client;
+						suspect.interface = json_args.interface;
 						
 						try
 						{
 						  var append = fs.readFileSync(NovaSharedPath + '/Mothership/ClientConfigs/suspects@' + json_args.client + '.txt', 'utf8');
-						  var start = append.indexOf(suspect.ip + '@' + suspect.client);
+						  var start = append.indexOf(suspect.ip + '@' + suspect.client + '_' + suspect.interface);
 						  if(start == -1)
 						  {
-						    append += suspect.ip + '@' + suspect.client + ":" + suspect.classification + " " + suspect.lastpacket + ';\n';
+						    append += suspect.ip + '@' + suspect.client + '_' + suspect.interface + ":" + suspect.classification + " " + suspect.lastpacket + ';\n';
 						  }
 						  else
 						  {
 						    var end = append.indexOf(';', start);
-						    var newAppend = suspect.ip + '@' + suspect.client + ":" + suspect.classification + " " + suspect.lastpacket + ';';
+						    var newAppend = suspect.ip + '@' + suspect.client + '_' + suspect.interface + ":" + suspect.classification + " " + suspect.lastpacket + ';';
 						    append = append.replace(append.substr(start, end), newAppend);
 						  }
 						  fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/suspects@' + json_args.client + '.txt', append);
 						}
 						catch(err)
 						{
-						  var write = suspect.ip + '@' + suspect.client + ":" + suspect.classification + " " + suspect.lastpacket + ';\n';
+						  var write = suspect.ip + '@' + suspect.client + '_' + suspect.interface + ":" + suspect.classification + " " + suspect.lastpacket + ';\n';
 						  fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/suspects@' + json_args.client + '.txt', write); 
 						}
 						
@@ -936,6 +943,7 @@ wsServer.on('request', function(request)
             suspect.lastpacket = json_args.lastpacket;
             suspect.ishostile = json_args.ishostile;
             suspect.client = json_args.client;
+            suspect.interface = json_args.interface;
             if(typeof everyone.now.OnNewSuspect == 'function')
             {
               everyone.now.OnNewSuspect(suspect);
@@ -1019,6 +1027,10 @@ wsServer.on('request', function(request)
             {
               everyone.now.RefreshPageAfterRename();
             }
+				    break;
+				  case 'detailsReceived':
+				    console.log('Receiving suspect details from ' + json_args.id);
+				    details = json_args.data;
 				    break;
 					// If we've found a message type that we weren't expecting, or don't have a case
           // for, log this message to the console and do nothing.
@@ -1236,22 +1248,7 @@ app.get('/listschedule', passport.authenticate('basic', {session: false}), funct
 });
 
 /*app.get('/details', passport.authenticate('basic', {session: false}), function(req, res){
-  if(req.query["suspect"] === undefined) 
-  {
-    RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.", "/");
-    return;
-  }
- 
-  var pass = req.query["suspect"].replace('_', '@');
   
-  now.GetSuspectDetails(pass, function(suspectString){
-    res.render('suspectDetails.jade', {
-      locals: {
-        suspect: pass
-        , details: suspectString
-      }
-    })
-  });
 });*/
 
 function switcher(err, user, success, done) {

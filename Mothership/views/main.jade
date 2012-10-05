@@ -1,76 +1,81 @@
 extends layout
 
 block content
-  label(style='font-weight: bold') Message Targets:
-  input(readonly=true, id='showtargets')
-
-  h1 Nova Control Panel
+  div#setup
+    label(style='font-weight: bold') Message Targets:
+    input(readonly=true, id='showtargets')
   
-  table
-    thead
-      tr
-        th Connected Clients
-        th Groups
-    tbody
-      tr
-        td
-          div(id='clientsList')
-        td
-          div(id='groupsList')
-
-  br
-
-  button(id='button0', style='width: 160px', onclick='startNovad();', disabled=true) Start Classifying
-  button(id='button1', style='width: 160px',  onclick='stopNovad();', disabled=true) Stop Classifying
-
-  br
-  br
-
-  button(id='button2', style='width: 160px',  onclick='startHaystack();', disabled=true) Start Haystack
-  button(id='button3', style='width: 160px',  onclick='stopHaystack();', disabled=true) Stop Haystack
-
-  br
-  br
-
-  button(id="button4", style="width: 160px", onclick='requestBenign();', disabled=true) Get Benign Suspects
-  button(id="button5", style="width: 160px", onclick='stopRequestBenign()', disabled=true) Cancel Benign Request
+    h1 Nova Control Panel
+    
+    table
+      thead
+        tr
+          th Connected Clients
+          th Groups
+      tbody
+        tr
+          td
+            div(id='clientsList')
+          td
+            div(id='groupsList')
   
-  br
-  br
-
-  h2 Currently Requesting Benign Suspects From:
-  input(id="benignList", readonly=true)
-
-  div#nova_suspects_header
-    h1 Suspect List
-    //button#liveUpdateButton(data-dojo-type="dijit.form.Button",type="button") Pause Updates/Auto Scrolling
-    //  script(type="dojo/method", data-dojo-event="onClick", data-dojo-args="evt")
-    //    | liveUpdate = !liveUpdate;
-    //    | if (!liveUpdate) {dojo.byId("liveUpdateButton").innerHTML = "Unpause table refreshing";}
-    //    | else {dojo.byId("liveUpdateButton").innerHTML = "Pause table refreshing";}
-    //br
     br
-    
-    
-    a(href="javascript:void(0)", onClick="document.getElementById('advancedFiltering').style.display='block';")
-      p Advanced Filtering Options
-    div#advancedFiltering(style="display: none;")
-      br
-      p Filter by IP (supports standard regular expressions. Example: "192\.168\.10\..*|192\.168\.3\..*")
-      input#ipFilter(type="text", name="ipFilter", value="")
-      br
-      p Filter by clientId (will match with STRING_ENTERED*)
-      input#clientFilter(type='text', name='clientFilter', value="")
-      br
-      button(onClick='applyAdvancedFilter()') Apply Advanced Filters
-      button(onClick='disableAdvancedFilter()') Disable Advanced Filters
-    div#tablePages
+  
+    button(id='button0', style='width: 160px', onclick='startNovad();', disabled=true) Start Classifying
+    button(id='button1', style='width: 160px',  onclick='stopNovad();', disabled=true) Stop Classifying
+  
     br
-
-  div#nova_suspects
-    table#suspectTable
-  div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none")
-    h4 Novad is not currently connected or running. Try starting it.
+    br
+  
+    button(id='button2', style='width: 160px',  onclick='startHaystack();', disabled=true) Start Haystack
+    button(id='button3', style='width: 160px',  onclick='stopHaystack();', disabled=true) Stop Haystack
+  
+    br
+    br
+  
+    button(id="button4", style="width: 160px", onclick='requestBenign();', disabled=true) Get Benign Suspects
+    button(id="button5", style="width: 160px", onclick='stopRequestBenign()', disabled=true) Cancel Benign Request
+    
+    br
+    br
+  
+    h2 Currently Requesting Benign Suspects From:
+    input(id="benignList", readonly=true)
+  
+    div#nova_suspects_header
+      h1 Suspect List
+      //button#liveUpdateButton(data-dojo-type="dijit.form.Button",type="button") Pause Updates/Auto Scrolling
+      //  script(type="dojo/method", data-dojo-event="onClick", data-dojo-args="evt")
+      //    | liveUpdate = !liveUpdate;
+      //    | if (!liveUpdate) {dojo.byId("liveUpdateButton").innerHTML = "Unpause table refreshing";}
+      //    | else {dojo.byId("liveUpdateButton").innerHTML = "Pause table refreshing";}
+      //br
+      br
+      
+      
+      a(href="javascript:void(0)", onClick="document.getElementById('advancedFiltering').style.display='block';")
+        p Advanced Filtering Options
+      div#advancedFiltering(style="display: none;")
+        br
+        p Filter by IP (supports standard regular expressions. Example: "192\.168\.10\..*|192\.168\.3\..*")
+        input#ipFilter(type="text", name="ipFilter", value="")
+        br
+        p Filter by clientId (will match with STRING_ENTERED*)
+        input#clientFilter(type='text', name='clientFilter', value="")
+        br
+        button(onClick='applyAdvancedFilter()') Apply Advanced Filters
+        button(onClick='disableAdvancedFilter()') Disable Advanced Filters
+      div#tablePages
+      br
+  
+    div#nova_suspects
+      table#suspectTable
+    div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none")
+      h4 Novad is not currently connected or running. Try starting it.
+    
+  div(id="lightbox", class="white_content")
+    div(id='spinnerDiv', style="height: 30px; padding-botton: 30px;")
+    div(id='details', style='height: 60%; width: auto; overflow-y: scroll; overflow-x: hidden')
    
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
@@ -96,32 +101,75 @@ block headerAdditions
     var clients = "#{CLIENTS}".split(':');
     var groups = !{GROUPS};
 
+    function getDetails(suspect)
+    {
+      var send = {};
+      var splitString = suspect.split('@');
+      var ip = suspect[0];
+      splitString = splitString[1].split('_');
+      var clientId = splitString[0];
+      var iface = splitString[1];
+      console.log('ip ' + ip);
+      console.log('clientId ' + clientId);
+      console.log('interface ' + iface);
+      splitString = null;
+      /*
+      theDoc.getElementById("lightbox").style.display='block';
+      theDoc.getElementById("setup").style.display='none';
+      var opts = {
+          lines: 17,
+          length: 0,
+          width: 4,
+          radius: 27,
+          corners: 0.6,
+          rotate: 0,
+          color: '#E8A02F',
+          speed: 1,
+          trail: 34,
+          shadow: false,
+          hwaccel: false,
+          className: 'spinner',
+          zIndex: 1003,
+          top: 20,
+          left: 'auto'
+      };
+      
+      var spinner = new Spinner(opts).spin(theDoc.getElementById('spinnerDiv'));
+      theDoc.getElementById('spinnerDiv').style.height = ((opts.radius * 2) + 30)+ 'px';
+      var divWidth = theDoc.getElementById('lightbox').scrollWidth;*/
+    }
+
+    now.RenderSuspectDetails = function(details)
+    {
+       
+    }
+
     function startNovad()
     {
         message.type = 'startNovad';
         now.MessageSend(message);
-        now.UpdateStatus(message.id, 'nova', true);
+        now.UpdateStatus(message.id, 'nova', 'true');
     }
 
     function stopNovad()
     {
         message.type = 'stopNovad';
         now.MessageSend(message);
-        now.UpdateStatus(message.id, 'nova', false);
+        now.UpdateStatus(message.id, 'nova', 'false');
     }
 
     function startHaystack()
     {
         message.type = 'startHaystack';
         now.MessageSend(message);
-        now.UpdateStatus(message.id, 'haystack', true);
+        now.UpdateStatus(message.id, 'haystack', 'true');
     }
 
     function stopHaystack()
     {
         message.type = 'stopHaystack';
         now.MessageSend(message);
-        now.UpdateStatus(message.id, 'haystack', false);
+        now.UpdateStatus(message.id, 'haystack', 'false');
     }
 
     function requestBenign()
@@ -145,69 +193,69 @@ block headerAdditions
           assign = assign.replace(regex, '');
         }
       }
-      document.getElementById('benignList').value = assign;
+      theDoc.getElementById('benignList').value = assign;
     }
 
     function setTarget(source, target, group)
     {
         if(group == 'true' || group == true)
         {
-          if(document.getElementById(source).checked)
+          if(theDoc.getElementById(source).checked)
           {
             message.id = target + ":";
             var targets = target.split(":");
 
-            for(var i in document.getElementById('groupsList').childNodes)
+            for(var i in theDoc.getElementById('groupsList').childNodes)
             {
-              if(document.getElementById('groupcheck' + i) != undefined && document.getElementById('groupcheck' + i).id.indexOf(source) == -1)
+              if(theDoc.getElementById('groupcheck' + i) != undefined && theDoc.getElementById('groupcheck' + i).id.indexOf(source) == -1)
               {
-                document.getElementById('groupcheck' + i).setAttribute('disabled', true);
+                theDoc.getElementById('groupcheck' + i).setAttribute('disabled', true);
               }
             }
-            for(var i in document.getElementById('clientsList').childNodes)
+            for(var i in theDoc.getElementById('clientsList').childNodes)
             {
-              if(document.getElementById('check' + i) != undefined)
+              if(theDoc.getElementById('check' + i) != undefined)
               {
-                document.getElementById('check' + i).checked = false;
-                document.getElementById('check' + i).setAttribute('disabled', true);
+                theDoc.getElementById('check' + i).checked = false;
+                theDoc.getElementById('check' + i).setAttribute('disabled', true);
               } 
             }
             for(var i = 0; i < 6; i++)
             {
-              document.getElementById('button' + i).removeAttribute('disabled'); 
+              theDoc.getElementById('button' + i).removeAttribute('disabled'); 
             }
           }
           else
           {
             message.id = '';
-            for(var i in document.getElementById('groupsList').childNodes)
+            for(var i in theDoc.getElementById('groupsList').childNodes)
             {
-              if(document.getElementById('groupcheck' + i) != undefined && document.getElementById('groupcheck' + i).id.indexOf(source) == -1)
+              if(theDoc.getElementById('groupcheck' + i) != undefined && theDoc.getElementById('groupcheck' + i).id.indexOf(source) == -1)
               {
-                document.getElementById('groupcheck' + i).removeAttribute('disabled');
+                theDoc.getElementById('groupcheck' + i).removeAttribute('disabled');
               }
             }
-            for(var i in document.getElementById('clientsList').childNodes)
+            for(var i in theDoc.getElementById('clientsList').childNodes)
             {
-              if(document.getElementById('check' + i) != undefined)
+              if(theDoc.getElementById('check' + i) != undefined)
               {
-                document.getElementById('check' + i).removeAttribute('disabled');
+                theDoc.getElementById('check' + i).removeAttribute('disabled');
               } 
             }
             for(var i = 0; i < 6; i++)
             {
-              document.getElementById('button' + i).setAttribute('disabled', true); 
+              theDoc.getElementById('button' + i).setAttribute('disabled', true); 
             }
           }
         }
         else
         {
-          if(document.getElementById(source).checked)
+          if(theDoc.getElementById(source).checked)
           {
             message.id += target + ':';
             for(var i = 0; i < 6; i++)
             {
-              document.getElementById('button' + i).removeAttribute('disabled'); 
+              theDoc.getElementById('button' + i).removeAttribute('disabled'); 
             }
           }
           else
@@ -220,11 +268,11 @@ block headerAdditions
           {
             for(var i = 0; i < 6; i++)
             {
-              document.getElementById('button' + i).setAttribute('disabled', true); 
+              theDoc.getElementById('button' + i).setAttribute('disabled', true); 
             }
           }
         }
-        document.getElementById('showtargets').value = message.id.replace(new RegExp(':', 'g'), ',').substr(0, message.id.length - 1);
+        theDoc.getElementById('showtargets').value = message.id.replace(new RegExp(':', 'g'), ',').substr(0, message.id.length - 1);
     }
 
     require(["dijit/form/TextBox"]);
@@ -263,7 +311,7 @@ block headerAdditions
   
       var row = new Array();
       // This is probably a really bad way to do this...
-      var inner = String(suspect.ip) + '@' + String(suspect.client);
+      var inner = '<button onclick="getDetails("' + String(suspect.ip) + '@' + String(suspect.client) + '_' + String(suspect.interface) + '");">' + String(suspect.ip) + '@' + String(suspect.client) + '_' + String(suspect.interface) + '</button>';
       row.push(inner);
       row.push(String(suspect.client));
       row.push(parseFloat(suspect.classification));
@@ -395,90 +443,89 @@ block headerAdditions
        var gridSize = suspectGrid.GetNumberOfPages();
        var currentPage = suspectGrid.GetCurrentPage();
 
-       var temp = document.createElement('a');
-       document.getElementById("tablePages").innerHTML = "";
+       var temp = theDoc.createElement('a');
+       theDoc.getElementById("tablePages").innerHTML = "";
 
-       var pageLink = document.createElement('a');
+       var pageLink = theDoc.createElement('a');
        pageLink.setAttribute('href', '#');
        pageLink.setAttribute('onclick', 'suspectGrid.PreviousPage();');
-       var pageLinkText = document.createTextNode(" <-- ");
+       var pageLinkText = theDoc.createTextNode(" <-- ");
        pageLink.appendChild(pageLinkText);
-       document.getElementById("tablePages").appendChild(pageLink);
+       theDoc.getElementById("tablePages").appendChild(pageLink);
 
        for (var i = 0; i < gridSize; i++) 
        {
-           var pageLink = document.createElement('a');
+           var pageLink = theDoc.createElement('a');
            pageLink.setAttribute('href', '#');
            pageLink.setAttribute('onclick', 'suspectGrid.SetCurrentPage( ' + i + ');');
 
-           var pageLinkText = document.createTextNode(" " + (i + 1) + " ");
+           var pageLinkText = theDoc.createTextNode(" " + (i + 1) + " ");
            pageLink.appendChild(pageLinkText);
 
            if (i == currentPage) 
            {
-               var boldTag = document.createElement('b');
+               var boldTag = theDoc.createElement('b');
                boldTag.appendChild(pageLink);
 
-               document.getElementById("tablePages").appendChild(boldTag);
+               theDoc.getElementById("tablePages").appendChild(boldTag);
            } 
            else 
            {
-               document.getElementById("tablePages").appendChild(pageLink);
+               theDoc.getElementById("tablePages").appendChild(pageLink);
            }    
        }
 
-       var pageLink = document.createElement('a');
+       var pageLink = theDoc.createElement('a');
        pageLink.setAttribute('href', '#');
        pageLink.setAttribute('onclick', 'suspectGrid.NextPage();');
-       var pageLinkText = document.createTextNode(" --> ");
+       var pageLinkText = theDoc.createTextNode(" --> ");
        pageLink.appendChild(pageLinkText);
-       document.getElementById("tablePages").appendChild(pageLink);
+       theDoc.getElementById("tablePages").appendChild(pageLink);
     }
     
     function Init() {
-        theDoc = document;
-        var gridStructure = new Array();
-        gridStructure.push({name: "Address"});
-        gridStructure.push({name: "Client ID"});
-        gridStructure.push({name: "Classification", formatter: classificationFormatter});
-        gridStructure.push({name: "Last Seen"});
-        gridStructure.push({name: "Hostile"});
-   
-        suspectGrid = new NovaGrid(gridStructure, 0, theDoc.getElementById('suspectTable'));
+      var gridStructure = new Array();
+      gridStructure.push({name: "Address"});
+      gridStructure.push({name: "Client ID"});
+      gridStructure.push({name: "Classification", formatter: classificationFormatter});
+      gridStructure.push({name: "Last Seen"});
+      gridStructure.push({name: "Hostile"});
+ 
+      suspectGrid = new NovaGrid(gridStructure, 0, theDoc.getElementById('suspectTable'));
 
-        // Sort by classification by default
-        suspectGrid.SetSortByKey(2);
-        suspectGrid.SetRowsPerPage(100);
-        suspectGrid.SetRenderCallback(onGridRendered);
+      // Sort by classification by default
+      suspectGrid.SetSortByKey(2);
+      suspectGrid.SetRowsPerPage(100);
+      suspectGrid.SetRenderCallback(onGridRendered);
 
-        theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
-        
-        now.GetHostileSuspects();
-        
-        setInterval(function(){
-                suspectGrid.Render();
-        }, 3000);   
+      theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
+      
+      now.GetHostileSuspects();
+      
+      setInterval(function(){
+              suspectGrid.Render();
+      }, 3000);   
     }
 
     require(["dojo/ready", "dojo/domReady!"], function(ready){
-        ready(function() {
-            now.ready(function() {
-              Init();
-              setUpSelect('clientsList');
-              setUpGrouplist('groupsList');
-              now.GetClients(now.RenderConnectionsList);
-              now.SetUpNotificationsButton();
-              now.SetUpHostileEventsButton(now.UpdateHostileEventsButton('read'));
-              now.GetClients(function(list){
-                for(var i in list)
-                {
-                  if(list[i] != '')
-                  {
-                    now.UpdateConnectionsList(list[i], 'updateStatus');  
-                  } 
-                }
-              });
-            });
+      ready(function() {
+        now.ready(function() {
+          Init();
+          setUpSelect('clientsList');
+          setUpGrouplist('groupsList');
+          now.GetClients(now.RenderConnectionsList);
+          now.SetUpNotificationsButton();
+          now.SetUpHostileEventsButton(now.UpdateHostileEventsButton('read'));
+          now.GetClients(function(list){
+            for(var i in list)
+            {
+              if(list[i] != '')
+              {
+                now.UpdateConnectionsList(list[i], 'updateStatus');  
+              } 
+            }
+          });
         });
+      });
     });
 

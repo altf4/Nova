@@ -470,6 +470,14 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.response_message = 'Haystack Autoconfiguration commencing';
               mothership.sendUTF(JSON.stringify(response));
               break;
+            case 'suspectDetails':
+              var suspectString = nova.GetSuspectDetailsString(json_args.ip, json_args.iface);
+              var response = {};
+              response.id = clientId;
+              response.type = 'detailsReceived';
+              response.data = suspectString;
+              mothership.sendUTF(JSON.stringify(response));
+              break;
             default:
               console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
               break;
@@ -2183,6 +2191,7 @@ var distributeSuspect = function (suspect) {
     send.classification = String(suspect.GetClassification());
     send.lastpacket = dString;
     send.ishostile = String(suspect.GetIsHostile());
+    send.interface = String(suspect.GetInterfaces());
     
     SendHostileEventToMothership(send);
   }
@@ -2195,6 +2204,7 @@ var distributeSuspect = function (suspect) {
     send.classification = String(suspect.GetClassification());
     send.lastpacket = dString;
     send.ishostile = String(suspect.GetIsHostile());
+    send.interface = String(suspect.GetInterfaces());
     
     SendBenignSuspectToMothership(send);
   }
