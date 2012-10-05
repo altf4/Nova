@@ -55,11 +55,8 @@ public:
 	// Returns - A pointer to a valid Message object. Never NULL. Caller is responsible for life cycle of this message
 	//		On error, this function returns an ErrorMessage with the details of the error
 	//		IE: Returns ErrorMessage of type ERROR_TIMEOUT if timeout has been exceeded
-	//	NOTE: You must have the lock on the socket by calling UseSocket() prior to calling this
-	//		(Or bad things will happen)
+	//	NOTE: You can get a Ticket by calling StartConversation()
 	//	NOTE: Blocking function
-	//	NOTE: Will automatically call CloseSocket() for you if the message returned happens to be an ERROR_MESSAGE
-	//		of type ERROR_SOCKET_CLOSED. So there is no need to call it again yourself
 	//	NOTE: Due to physical constraints, this function may block for longer than timeout. Don't rely on it being very precise.
 	Nova::Message *ReadMessage(Ticket &ticket, int timeout = REPLY_TIMEOUT);
 
@@ -69,10 +66,10 @@ public:
 	// Returns - true on successfully sending the object, false on error
 	bool WriteMessage(const Ticket &ticket, Message *message);
 
-	//Informs the message manager that you would like to use the specified socket. Locks everyone else out from the socket.
+	//Informs the message manager that you would like to use the specified socket.
 	//	socketFD - The socket file descriptor to use
-	//	returns - A Ticket object which contains all the information necessary to continue the
-	//NOTE: Blocking function
+	//	returns - A Ticket object which contains all the information necessary to have a conversation
+	//		on error, the Ticket object will be set with m_socketFD = -1
 	Ticket StartConversation(int socketFD);
 
 	//Initializes the socket and its underlying MessageQueues. Should be called prior to other socket operations on this socketFD
@@ -80,13 +77,11 @@ public:
 	//TODO: Maybe make the other functions automatically check and call this function for us. So we can make this private
 	//	socketFD - The socket file descriptor for which to make the initialization
 	//	bufferevent - The libevent structure used for i/o to this socket
-	//NOTE: In order to use the returned MessageQueue safely, you must have a lock on it before calling this
 	//NOTE: Safely does nothing if socketFD already exists in the manager
 	void StartSocket(int socketFD, struct bufferevent *bufferevent);
 
 	//Deletes the MessageQueue object to which socketFD belongs
-	//	NOTE: Does not close the underlying socket. Use CloseSocket to do that.
-	//	NOTE: Only called by callback thread
+	//	NOTE: Does not close the underlying socket.
 	void DeleteEndpoint(int socketFD);
 
 	//Waits for a new callback message to arrive on the given socketFD
@@ -104,12 +99,13 @@ public:
 
 	//Begins server accept() loop. Only run this function if you want to be a server (not a UI)
 	//	callback - Pointer to a user defined ServerCallback object that contains the callback function to be run
-	//	NOTE: Non-blocking, always returns immediately.
-	//	NOTE: Will only run once, multiple tries will safely do nothing
+	//	NOTE: Blocking function. Begins the server main loop. Does not return.
 	void StartServer(ServerCallback *callback);
 
 	//Function returns a read-locked MessageEndpoint
-	//	Empty on error
+	//	socketFD - The socket file descriptor of the endpoint you want
+	//	returns - An RAII MessageEndpointLock object that contains a read-locked MessageEndpoint
+	//		on error, the m_endpint  pointer will be NULL
 	MessageEndpointLock GetEndpoint(int socketFD);
 
 	static void MessageDispatcher(struct bufferevent *bev, void *ctx);
@@ -130,9 +126,6 @@ private:
 	pthread_mutex_t m_endpointsMutex;
 
 	pthread_mutex_t m_deleteEndpointMutex;;
-
-	pthread_t m_acceptThread;
-
 };
 
 }
