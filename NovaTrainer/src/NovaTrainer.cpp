@@ -54,6 +54,8 @@ ofstream trainingFileStream;
 trainingMode mode;
 string captureFolder;
 
+vector<string> haystackAddresses;
+vector<string> haystackDhcpAddresses;
 
 int main(int argc, const char *argv[])
 {
@@ -107,7 +109,7 @@ void PrintUsage()
 	cout << "Usage:" << endl;
 	// TODO
 	cout << "  novatrainer --writeToDatabase novaCaptureFolder databaseFile.db" << endl;
-	cout << "  novatrainer --convert novaCaptureFolder" << endl;
+	cout << "  novatrainer --save novaCaptureFolder" << endl;
 	cout << "  novatrainer --capture novaCaptureFolder interface" << endl;
 	cout << endl;
 
@@ -145,7 +147,7 @@ void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u
 			SuspectIdentifier id;
 			id.m_ip = ipSrc;
 
-			update(id);
+			//update(id);
 
 			return;
 		}
@@ -188,7 +190,7 @@ void update(SuspectIdentifier key)
 
 void UpdateHaystackFeatures(string haystackFilePath)
 {
-	vector<string> haystackAddresses = Config::GetIpAddresses(haystackFilePath);
+	haystackAddresses = Config::GetIpAddresses(haystackFilePath);
 
 	vector<uint32_t> haystackNodes;
 	for(uint i = 0; i < haystackAddresses.size(); i++)
@@ -200,6 +202,45 @@ void UpdateHaystackFeatures(string haystackFilePath)
 	suspects.SetHaystackNodes(haystackNodes);
 }
 
+string ConstructFilterString()
+{
+	string filterString = "not src host 0.0.0.0";
+	if(Config::Inst()->GetCustomPcapString() != "") {
+		if(Config::Inst()->GetOverridePcapString())
+		{
+			filterString = Config::Inst()->GetCustomPcapString();
+			LOG(DEBUG, "Pcap filter string is "+filterString,"");
+			return filterString;
+		}
+		else
+		{
+			filterString += " && " + Config::Inst()->GetCustomPcapString();
+		}
+	}
+
+	//Insert static haystack IP's
+	vector<string> hsAddresses = haystackAddresses;
+	while(hsAddresses.size())
+	{
+		//Remove and add the haystack host entry
+		filterString += " && not src host ";
+		filterString += hsAddresses.back();
+		hsAddresses.pop_back();
+	}
+
+	// Whitelist the DHCP haystack node IP addresses
+	hsAddresses = haystackDhcpAddresses;
+	while(hsAddresses.size())
+	{
+		//Remove and add the haystack host entry
+		filterString += " && not src host ";
+		filterString += hsAddresses.back();
+		hsAddresses.pop_back();
+	}
+
+	LOG(DEBUG, "Pcap filter string is "+filterString,"");
+	return filterString;
+}
 
 void ConvertCaptureToDump(std::string captureFolder)
 {
@@ -229,32 +270,48 @@ void ConvertCaptureToDump(std::string captureFolder)
 	FilePacketCapture capture(pcapFile);
 	capture.SetPacketCb(HandleTrainingPacket);
 	capture.Init();
+	capture.SetFilter(ConstructFilterString());
 	capture.StartCaptureBlocking();
 
 
 	LOG(DEBUG, "Done processing PCAP file.", "");
+
+	vector<SuspectIdentifier> ids = suspects.GetAllKeys();
+	for (uint i = 0; i < ids.size(); i++)
+	{
+		update(ids.at(i));
+	}
 
 	trainingFileStream.close();
 }
 
 void CaptureData(std::string captureFolder, std::string interface)
 {
-	LOG(DEBUG, "Starting data capture", "");
+	LOG(DEBUG, "Starting data capture. Storing results in folder:" + captureFolder, "");
+
+    if(system(string("mkdir " + captureFolder).c_str()))
+    {
+        // Not really an problem, throws compiler warning if we don't catch the system call though
+    }
 
     // Write out the state of the haystack at capture
     if(IsHaystackUp())
     {
+    	LOG(DEBUG, "Haystack appears up. Recording current state.", "");
     	string haystackFile = captureFolder + "/haystackIps.txt";
-        vector<string> haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathHome() + Config::Inst()->GetPathConfigHoneydHS());
-        vector<string> haystackDhcpAddresses = Config::GetIpAddresses("/var/log/honeyd/ipList");
+        haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathConfigHoneydHS());
+        haystackDhcpAddresses = Config::GetIpAddresses("/var/log/honeyd/ipList");
 
+        LOG(DEBUG, "Writing haystack IPs to file " + haystackFile, "");
         ofstream haystackIpStream(haystackFile);
         for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
         {
+        	LOG(DEBUG, "Found haystack DHCP IP " + haystackDhcpAddresses.at(i), "");
             haystackIpStream << haystackDhcpAddresses.at(i) << endl;
         }
         for(uint i = 0; i < haystackAddresses.size(); i++)
         {
+        	LOG(DEBUG, "Found haystack static IP " + haystackAddresses.at(i), "");
             haystackIpStream << haystackAddresses.at(i) << endl;
         }
 
@@ -263,11 +320,6 @@ void CaptureData(std::string captureFolder, std::string interface)
 
     // Prepare for packet capture
 	string trainingCapFile = captureFolder + "/capture.pcap";
-
-    if(system(string("mkdir " + captureFolder).c_str()))
-    {
-        // Not really an problem, throws compiler warning if we don't catch the system call though
-    }
 
     InterfacePacketCapture *capture = new InterfacePacketCapture(interface);
     capture->Init();

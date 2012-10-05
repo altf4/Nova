@@ -854,10 +854,23 @@ app.get('/about', passport.authenticate('basic', {session: false}), function (re
 });
 
 app.get('/haystackStatus', passport.authenticate('basic', {session: false}), function (req, res) {
-	var dhcpIps = config.GetIpAddresses("/var/log/honeyd/ipList");
-	res.render('haystackStatus.jade', {
-		locals: {
-			haystackDHCPIps: config.GetIpAddresses("/var/log/honeyd/ipList")
+	fs.readFile("/var/log/honeyd/ipList", 'utf8', function (err, data) {
+		var DHCPIps = new Array();
+		if (err) {
+			RenderError(res, "Unable to open Honeyd status file for reading due to error: " + err);
+			return;
+		} else {
+
+			data = data.toString().split("\n");
+			for(var i = 0; i < data.length; i++) {
+				if (data[i] == "") {continue};
+				DHCPIps.push(data[i].toString().split(","));
+			}	
+			res.render('haystackStatus.jade', {
+				locals: {
+					haystackDHCPIps: DHCPIps
+				}
+			});
 		}
 	});
 });
@@ -1338,8 +1351,13 @@ everyone.now.IsNovadUp = function (callback) {
 }
 
 everyone.now.StartNovad = function () {
-	nova.StartNovad(false);
-	nova.CheckConnection();
+	console.log("Calling StartNovad(false)");
+	var result = nova.StartNovad(false);
+	console.log("Got " + result);
+
+	console.log("Calling CheckConnection");
+	var result = nova.CheckConnection();
+	console.log("Done! Got " + result + ".Calling IsNovadup to check status");
 	try {
 		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
 	} catch (err) {};

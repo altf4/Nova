@@ -153,17 +153,19 @@ uint64_t GetStartTime()
 	return ret;
 }
 
-vector<SuspectIdentifier> *GetSuspectList(enum SuspectListType listType)
+vector<SuspectIdentifier> GetSuspectList(enum SuspectListType listType)
 {
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
 	RequestMessage request(REQUEST_SUSPECTLIST);
 	request.m_listType = listType;
 
+	vector<SuspectIdentifier> ret;
+
 	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
 		//There was an error in sending the message
-		return NULL;
+		return ret;
 	}
 
 	Message *reply = MessageManager::Instance().ReadMessage(ticket);
@@ -171,7 +173,7 @@ vector<SuspectIdentifier> *GetSuspectList(enum SuspectListType listType)
 	{
 		LOG(ERROR, "Timeout error when waiting for message reply", "");
 		delete ((ErrorMessage*)reply);
-		return NULL;
+		return ret;
 	}
 
 	if(reply->m_messageType != REQUEST_MESSAGE )
@@ -179,7 +181,8 @@ vector<SuspectIdentifier> *GetSuspectList(enum SuspectListType listType)
 		//Received the wrong kind of message
 		delete reply;
 		reply->DeleteContents();
-		return NULL;
+		LOG(ERROR, "Recieved wrong kind of message", "");
+		return ret;
 	}
 
 	RequestMessage *requestReply = (RequestMessage*)reply;
@@ -188,11 +191,12 @@ vector<SuspectIdentifier> *GetSuspectList(enum SuspectListType listType)
 		//Received the wrong kind of control message
 		reply->DeleteContents();
 		delete reply;
-		return NULL;
+		LOG(ERROR, "Recieved wrong kind of message", "");
+		return ret;
 	}
 
-	vector<SuspectIdentifier> *ret = new vector<SuspectIdentifier>;
-	*ret = requestReply->m_suspectList;
+
+	ret = requestReply->m_suspectList;
 
 	delete requestReply;
 	return ret;

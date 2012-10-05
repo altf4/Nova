@@ -66,11 +66,6 @@ double KnnClassification::Classify(Suspect *suspect)
 	double d;
 	featureIndex fi;
 
-	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
-	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
-
-	//Allocate the ANNpoint;
-	ANNpoint aNN = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
 	FeatureSet fs = suspect->m_features;
 	uint ai = 0;
 
@@ -81,6 +76,18 @@ double KnnClassification::Classify(Suspect *suspect)
 		suspect->SetClassification(-2);
 		return -2;
 	}
+
+	//Allocate the ANNpoint;
+	ANNpoint aNN = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
+	if(aNN == NULL)
+	{
+		LOG(ERROR, "Classification engine has encountered an error.",
+			"Classify had trouble allocating the ANN point. Aborting.");
+		return -1;
+	}
+
+	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
+	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
 
 	vector<double> weights = Config::Inst()->GetFeatureWeights();
 	//Iterate over the features, asserting the range is [min,max] and normalizing over that range
@@ -108,13 +115,6 @@ double KnnClassification::Classify(Suspect *suspect)
 			}
 			ai++;
 		}
-	}
-
-	if(aNN == NULL)
-	{
-		LOG(ERROR, "Classification engine has encountered an error.",
-			"Classify had trouble allocating the ANN point. Aborting.");
-		return -1;
 	}
 
 	m_kdTree->annkSearch(							// search
@@ -204,9 +204,10 @@ double KnnClassification::Classify(Suspect *suspect)
 				ss << "Data point has invalid classification. Should by 0 or 1, but is " << m_dataPtsWithClass[nnIdx[i]]->m_classification;
 				LOG(ERROR, "Classification engine has encountered an error.", ss.str());
 				suspect->SetClassification(-1);
-				delete [] nnIdx;							// clean things up
-				delete [] dists;
-				annClose();
+				delete [] nnIdx;
+			    delete [] dists;
+			    annClose();
+			    annDeallocPt(aNN);
 				return -1;
 			}
 		}
@@ -239,9 +240,8 @@ double KnnClassification::Classify(Suspect *suspect)
 		suspect->SetIsHostile(false);
 	}
 
-	delete [] nnIdx;							// clean things up
+	delete [] nnIdx;
     delete [] dists;
-
     annClose();
     annDeallocPt(aNN);
 

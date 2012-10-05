@@ -44,6 +44,8 @@ namespace Nova
 	void SaveAndExit(int param);
 
 
+	std::string ConstructFilterString();
+
 	void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet);
 	void update(SuspectIdentifier key);
 	void UpdateHaystackFeatures();
