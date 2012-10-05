@@ -164,7 +164,7 @@ block headerAdditions
     }
     
     function ClearSuspect(ip, interface, idString) {
-        now.ClearSuspect(idString);
+        now.ClearSuspect(ip, interface);
         suspectGrid.DeleteRow(buildLink(ip, interface, idString));
     }
 
