@@ -53,7 +53,7 @@ block content
       br
       
       
-      a(href="javascript:void(0)", onClick="document.getElementById('advancedFiltering').style.display='block';")
+      a(href="javascript:void(0)", onclick="document.getElementById('advancedFiltering').style.display='block';")
         p Advanced Filtering Options
       div#advancedFiltering(style="display: none;")
         br
@@ -76,11 +76,13 @@ block content
   div(id="lightbox", class="white_content")
     div(id='spinnerDiv', style="height: 30px; padding-botton: 30px;")
     div(id='details', style='height: 60%; width: auto; overflow-y: scroll; overflow-x: hidden')
+    button(id='close', onclick='closeLightbox()') Close
    
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
   script(type="text/javascript", src="scripts/ConnectionManagement.js")
+  script(type="text/javascript", src="scripts/spin.js")
   script
     // Performance boost accessing local var over document lookup
     var theDoc = document;
@@ -95,6 +97,8 @@ block headerAdditions
     var advancedIpFilter = null;
     var clientIdFilter = null;
 
+    var spinner = null;
+
     var message = {};
     message.id = '';
 
@@ -105,17 +109,20 @@ block headerAdditions
     {
       var send = {};
       var splitString = suspect.split('@');
-      var ip = suspect[0];
+      var ip = splitString[0];
       splitString = splitString[1].split('_');
       var clientId = splitString[0];
       var iface = splitString[1];
-      console.log('ip ' + ip);
-      console.log('clientId ' + clientId);
-      console.log('interface ' + iface);
       splitString = null;
-      /*
-      theDoc.getElementById("lightbox").style.display='block';
-      theDoc.getElementById("setup").style.display='none';
+      
+      send.ip = ip;
+      send.clientId = clientId;
+      send.interface = iface;
+      
+      now.GetSuspectDetails(send);
+      
+      theDoc.getElementById("lightbox").style.display = 'block';
+      theDoc.getElementById("setup").style.display = 'none';
       var opts = {
           lines: 17,
           length: 0,
@@ -134,42 +141,73 @@ block headerAdditions
           left: 'auto'
       };
       
-      var spinner = new Spinner(opts).spin(theDoc.getElementById('spinnerDiv'));
+      spinner = new Spinner(opts).spin(theDoc.getElementById('spinnerDiv'));
       theDoc.getElementById('spinnerDiv').style.height = ((opts.radius * 2) + 30)+ 'px';
-      var divWidth = theDoc.getElementById('lightbox').scrollWidth;*/
+      var divWidth = theDoc.getElementById('lightbox').scrollWidth;
+      theDoc.getElementById('details').style.width = divWidth + 'px';
+      theDoc.getElementById('details').style.height = '95%';
     }
 
-    now.RenderSuspectDetails = function(details)
+    function closeLightbox()
     {
-       
+      theDoc.getElementById('lightbox').style.display = 'none';
+      theDoc.getElementById('setup').style.display = 'block'; 
+      while(theDoc.getElementById('details').hasChildNodes())
+      {
+        theDoc.getElementById('details').removeChild(theDoc.getElementById('details').lastChild); 
+      }
     }
+
+    now.RenderSuspectDetails = function(detailString)
+    {
+      if(theDoc.getElementById('lightbox').style.display == 'block')
+      {
+        spinner.stop();
+        spinner = null;
+        
+        theDoc.getElementById('spinnerDiv').style.height = '0px';
+        
+        var list = detailString.split('\\n');
+        
+        for(var i in list)
+        {
+          if(list[i] != '')
+          {
+            var p = theDoc.createElement('p');
+            p.innerHTML = list[i];
+            theDoc.getElementById('details').appendChild(p);
+          }  
+        }
+      }
+      else
+      {
+        console.log('did not hit block check');
+        return; 
+      }
+    };
 
     function startNovad()
     {
         message.type = 'startNovad';
         now.MessageSend(message);
-        now.UpdateStatus(message.id, 'nova', 'true');
     }
 
     function stopNovad()
     {
         message.type = 'stopNovad';
         now.MessageSend(message);
-        now.UpdateStatus(message.id, 'nova', 'false');
     }
 
     function startHaystack()
     {
         message.type = 'startHaystack';
         now.MessageSend(message);
-        now.UpdateStatus(message.id, 'haystack', 'true');
     }
 
     function stopHaystack()
     {
         message.type = 'stopHaystack';
         now.MessageSend(message);
-        now.UpdateStatus(message.id, 'haystack', 'false');
     }
 
     function requestBenign()
@@ -292,7 +330,7 @@ block headerAdditions
 
     now.AllSuspectsCleared = function() {
       suspectGrid.Clear();
-    }
+    };
     
     now.SuspectCleared = function(suspect) {
         console.log("Cleared suspect ");
@@ -300,7 +338,7 @@ block headerAdditions
         suspectGrid.DeleteRow(suspect.ip);
         suspectGrid.Render();
         return;
-    }
+    };
       
     function pad(num) {
         return ("0" + num.toString()).slice(-2);
@@ -311,8 +349,8 @@ block headerAdditions
   
       var row = new Array();
       // This is probably a really bad way to do this...
-      var inner = '<button onclick="getDetails("' + String(suspect.ip) + '@' + String(suspect.client) + '_' + String(suspect.interface) + '");">' + String(suspect.ip) + '@' + String(suspect.client) + '_' + String(suspect.interface) + '</button>';
-      row.push(inner);
+      var inner = '<button onclick=getDetails("' + String(suspect.ip) + '@' + String(suspect.client) + '_' + String(suspect.interface) + '");>' + String(suspect.ip) + '@' + String(suspect.client) + '_' + String(suspect.interface) + '</button>';
+      row.push(String(inner));
       row.push(String(suspect.client));
       row.push(parseFloat(suspect.classification));
       row.push(String(suspect.lastpacket));

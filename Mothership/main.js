@@ -1031,6 +1031,10 @@ wsServer.on('request', function(request)
 				  case 'detailsReceived':
 				    console.log('Receiving suspect details from ' + json_args.id);
 				    details = json_args.data;
+				    if(typeof everyone.now.RenderSuspectDetails == 'function')
+				    {
+				      everyone.now.RenderSuspectDetails(details);
+				    }
 				    break;
 					// If we've found a message type that we weren't expecting, or don't have a case
           // for, log this message to the console and do nothing.
@@ -1246,10 +1250,6 @@ app.get('/listschedule', passport.authenticate('basic', {session: false}), funct
     , TYPES: getMessageTypes()
   }});
 });
-
-/*app.get('/details', passport.authenticate('basic', {session: false}), function(req, res){
-  
-});*/
 
 function switcher(err, user, success, done) {
   if (!success) {

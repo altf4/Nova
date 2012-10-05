@@ -147,10 +147,9 @@ html, body {
 .white_content {
 	display: none;
 	position: absolute;
-	top: 25%;
 	left: 0%;
 	width: 75%;
-	height: 60%;
+	height: 80%;
 	padding: 16px;
 	border: 16px outset #E8A02F;
 	background-color: white;
