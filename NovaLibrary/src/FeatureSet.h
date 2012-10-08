@@ -261,7 +261,7 @@ public:
 	IpPortTable m_hasUdpPortIpBeenContacted;
 
 
-	int m_numberOfHaystackNodes;
+	int m_numberOfHaystackNodesContacted;
 
 	// TODO DTC: Think this is depricated, remove it when sure
 	//XXX Temporarily using SANITY_CHECK/2, rather than that, we should serialize a total byte size before the
