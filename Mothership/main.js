@@ -1076,6 +1076,12 @@ wsServer.on('close', function(connection, reason, description)
       {
         everyone.now.UpdateConnectionsList(i, 'updateStatus');
       }
+      everyone.now.GetGroupMembers('all', function(members){
+        var newList = members.replace(new RegExp(i), '');
+        newList = newList.substr(0, newList.length - 1);
+        everyone.now.UpdateGroup('all', newList);
+      });
+      
       var date = new Date();
       everyone.now.WriteNotification(i + ' disconnected at ' + date);
       if(typeof everyone.now.UpdateNotificationsButton == 'function')
