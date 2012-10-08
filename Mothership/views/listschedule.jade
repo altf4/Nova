@@ -3,7 +3,13 @@ extends layout
 block content
   h1 Currently Scheduled Events
   br
-  div(id="elementHook")
+  table(style='border: solid 2px; background: #E8A02F; text-align: center;', border="1")
+    tbody(id="elementHook")
+      tr
+        th Event Name
+        th Schedule Type
+        th Value
+        th Message Type
           
 block headerAdditions
   script
@@ -12,39 +18,6 @@ block headerAdditions
     var messageTypes = "#{TYPES}".split(',');
     var message = {};
     message.id = '';
-    
-    function watermark(id, text)
-    {
-      var element = document.getElementById(id);
-    
-      if(element.value.length > 0)
-      {
-        if(element.value == text)
-        {
-          element.value = '';
-          if(id.indexOf('date') != -1)
-          {
-            element.setAttribute('style', 'width: 120px;');
-          }
-          else
-          {
-            element.removeAttribute('style'); 
-          }
-        }
-      }
-      else
-      {
-        element.value = text;
-        if(id.indexOf('date') != -1)
-        {
-          element.setAttribute('style', 'font-style: italic; width: 120px;');
-        }
-        else
-        {
-          element.setAttribute('style', 'font-style: italic;');
-        }
-      }
-    }
     
     function unregisterScheduledEvent(eventName)
     {
@@ -59,58 +32,57 @@ block headerAdditions
     
     function generateScheduledEventElement(json)
     {
-      var borderDiv = document.createElement('div');
-      borderDiv.id = json.eventName;
-      borderDiv.setAttribute('style', 'text-align: center; border: 2px solid; border-radius: 12px; background: #E8A02F; width: 65%;');
+      var row = document.createElement('tr');
+      row.id = json.eventName;
       
-      var label0 = document.createElement('h2');
+      var td1 = document.createElement('td');
+      
+      var label0 = document.createElement('label');
       label0.innerHTML = json.eventName;
-      label0.setAttribute('style', 'font-weight: bold; width: 100%;');
       
-      var b0 = document.createElement('br');
+      var td2 = document.createElement('td');
       
       var label2 = document.createElement('label');
-      label2.innerHTML = 'Type: ' + json.eventType;
-      label2.setAttribute('style', 'font-weight: bold; font-style: italic;');
+      label2.innerHTML = json.eventType;
       
-      var b1 = document.createElement('br');
+      var td3 = document.createElement('td');
       
-      var label3 = document.createElement('input');
+      var label3 = document.createElement('label');
       if(json.cronString == '' && json.dateString != '')
       {
-        label3.value = 'Date: ' + json.dateString;
+        label3.innerHTML = json.dateString;
        
       }
       else
       {
-        label3.value = 'Cron: ' + json.cronString; 
+        label3.innerHTML = json.cronString; 
       }
-      label3.setAttribute('style', 'font-weight: bold; width: 80%; text-align: center;');
-      label3.setAttribute('readonly', true);
 
-      var b2 = document.createElement('br');
+      var td4 = document.createElement('td');
       
       var label4 = document.createElement('label');
-      label4.innerHTML = 'Message Type: ' + json.messageType;
-      label4.setAttribute('style', 'font-weight: bold;');
+      label4.innerHTML = json.messageType;
       
-      var b3 = document.createElement('br');
+      var td5 = document.createElement('td');
       
       var button = document.createElement('button');
       button.setAttribute('onclick', 'unregisterScheduledEvent("' + json.eventName + '")');
       button.innerHTML = 'Remove Event';
       
-      borderDiv.appendChild(label0);
-      //borderDiv.appendChild(b0);
-      borderDiv.appendChild(label2);
-      borderDiv.appendChild(b1);
-      borderDiv.appendChild(label3);
-      borderDiv.appendChild(b2);
-      borderDiv.appendChild(label4);
-      borderDiv.appendChild(b3);
-      borderDiv.appendChild(button);
+      td1.appendChild(label0);
+      td2.appendChild(label2);
+      td3.appendChild(label3);
+      td4.appendChild(label4);
+      td5.appendChild(button);
       
-      document.getElementById('elementHook').appendChild(borderDiv);
+      row.appendChild(td1);
+      row.appendChild(td2);
+      row.appendChild(td3);
+      row.appendChild(td4);
+      row.appendChild(td5);
+      
+      
+      document.getElementById('elementHook').appendChild(row);
     }
     
     function newTypeSelected(clientId)

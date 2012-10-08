@@ -147,7 +147,10 @@ block headerAdditions
       
       var label0 = document.createElement('label');
       label0.innerHTML = clientId;
-      label0.setAttribute('style', 'font-weight: bold');
+      label0.setAttribute('style', 'font-weight: bold; text-align: center;');
+      
+      var label1 = document.createElement('label');
+      label1.innerHTML = 'Message Type: ';
       
       var typeSelect = document.createElement('select');
       typeSelect.id = clientId + 'select';
@@ -207,6 +210,8 @@ block headerAdditions
       var b6 = document.createElement('br');
       
       borderDiv.appendChild(label0);
+      borderDiv.appendChild(b1);
+      borderDiv.appendChild(label1);
       borderDiv.appendChild(typeSelect);
       borderDiv.appendChild(b0);
       borderDiv.appendChild(label5);
