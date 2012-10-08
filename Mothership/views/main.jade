@@ -113,13 +113,14 @@ block headerAdditions
       splitString = splitString[1].split('_');
       var clientId = splitString[0];
       var iface = splitString[1];
-      splitString = null;
       
       send.ip = ip;
       send.clientId = clientId;
       send.interface = iface;
       
       now.GetSuspectDetails(send);
+      
+      splitString = null;
       
       theDoc.getElementById("lightbox").style.display = 'block';
       theDoc.getElementById("setup").style.display = 'none';
@@ -168,6 +169,17 @@ block headerAdditions
         theDoc.getElementById('spinnerDiv').style.height = '0px';
         
         var list = detailString.split('\\n');
+        
+        if(list[0].indexOf('Unable') != -1)
+        {
+          var sorry = theDoc.createElement('p');
+          sorry.innerHTML = 'Unable to complete request, please check that Novad';
+          var sorry1 = theDoc.createElement('p');
+          sorry1.innerHTML = ' is running on the client the suspect was requested from';
+          theDoc.getElementById('details').appendChild(sorry);
+          theDoc.getElementById('details').appendChild(sorry1);
+          return; 
+        }
         
         for(var i in list)
         {
