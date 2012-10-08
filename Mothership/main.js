@@ -1045,6 +1045,9 @@ wsServer.on('request', function(request)
               everyone.now.UpdateClientsList(json_args.id, 'remove');
               everyone.now.UpdateClientsList(json_args.newId, 'add');
             }
+            var change = fs.readFileSync(NovaSharedPath + '/Mothership/clientIds.txt', 'utf8');
+            change = change.replace(new RegExp(json_args.id), json_args.newId);
+            fs.writeFileSync(NovaSharedPath + '/Mothership/clientIds.txt', change);
             if(typeof everyone.now.RefreshPageAfterRename == 'function')
             {
               everyone.now.RefreshPageAfterRename();
