@@ -325,7 +325,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               var response = {};
               response.id = clientId;
               response.type = 'response';
-              response.response_message = 'Novad is being started ' + clientId;
+              response.response_message = 'Novad is being started on ' + clientId;
               mothership.sendUTF(JSON.stringify(response));
               break;
             case 'stopNovad':
@@ -501,6 +501,23 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   
   client.connect('wss://' + connected, null);
   
+  setInterval(function() {
+    if(mothership != undefined && mothership != null)
+    {
+      var message1 = {};
+      message1.id = clientId;
+      message1.type = 'statusChange';
+      message1.component = 'nova';
+      message1.status = nova.IsNovadUp(false).toString();
+      var message2 = {};
+      message2.id = clientId;
+      message2.type = 'statusChange';
+      message2.component = 'haystack';
+      message2.status = nova.IsHaystackUp().toString();
+      mothership.sendUTF(JSON.stringify(message1));
+      mothership.sendUTF(JSON.stringify(message2));
+    }
+  }, 10000);
   //
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
@@ -2275,3 +2292,5 @@ setInterval(function () {
 
 	}
 }, 5000);
+
+console.log('setInterval here');
