@@ -7,40 +7,38 @@ block topPannelAdditions
   div#haystack_status unknown
 
 block content
-  h1 Nova Control Panel
-  button(type="button", style="width:160px", onClick='StartNovad()') Start Nova
-  button(type="button", style="width:160px", onClick='StopNovad()') Stop Nova
+  div(style="width: 600px; margin:0 auto; text-align: center")
+    button(type="button", style="width:160px", onClick='StartNovad()') Start Nova
+    &nbsp
+    &nbsp
+    button(type="button", style="width:160px", onClick='StartHaystack()') Start Haystack
+    &nbsp
+    &nbsp
+    button(type="button", style="width:160px", onClick='ClearAllSuspects(); suspectGrid.Clear();') Clear All Suspects
   
-  br
-  br
-  
-  button(type="button", style="width:160px", onClick='StartHaystack()') Start Haystack
-  button(type="button", style="width:160px", onClick='StopHaystack()') Stop Haystack
-  
-  br
-  br
-  
-  button(type="button", style="width:160px", onClick='ClearAllSuspects(); suspectGrid.Clear();') Clear All Suspects
-
-  br
-
-  div#nova_suspects_header
-    h1 Suspect List
-    a(href="/novaState.csv") Get all suspects as a CSV file
     br
-    br
-
-    button#liveUpdateButton(data-dojo-type="dijit.form.Button",type="button") Pause Updates/Auto Scrolling
+    
+    button(type="button", style="width:160px", onClick='StopNovad()') Stop Nova
+    &nbsp
+    &nbsp
+    button(type="button", style="width:160px", onClick='StopHaystack()') Stop Haystack 
+    &nbsp
+    &nbsp
+    button#liveUpdateButton(type="button", style="width:160px") Pause Updates
       script(type="dojo/method", data-dojo-event="onClick", data-dojo-args="evt")
         | liveUpdate = !liveUpdate;
         | if (!liveUpdate) {dojo.byId("liveUpdateButton").innerHTML = "Unpause table refreshing";}
         | else {dojo.byId("liveUpdateButton").innerHTML = "Pause table refreshing";}
+  
+
+  div#nova_suspects_header(style="width:600px; margin: 0 auto; text-align:center;")
     br
+    a(class="button", href="/novaState.csv") Suspects as CSV file
+    &nbsp
+    
+    a(class="button", href="javascript:void(0)", onClick="document.getElementById('advancedFiltering').style.display='block';") Filtering Options
     br
-    
-    
-    a(href="javascript:void(0)", onClick="document.getElementById('advancedFiltering').style.display='block';")
-      p Advanced Filtering Options
+
     div#advancedFiltering(style="display: none;")
       br
       p Filter by IP (supports standard regular expressions. Example: "192\.168\.10\..*|192\.168\.3\..*")
@@ -58,12 +56,13 @@ block content
       br
       button(onClick='applyAdvancedFilter()') Apply Advanced Filters
       button(onClick='disableAdvancedFilter()') Disable Advanced Filters
+    br
     div#tablePages
     br
 
   div#nova_suspects
     table#suspectTable
-  div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none")
+  div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none; width: 600px; margin: 0 auto; text-align: center")
    h4 Novad is not currently connected or running. Try starting it.
    
 block headerAdditions
@@ -140,21 +139,19 @@ block headerAdditions
           dojo.byId("nova_suspects_error_view").style.display = isNovadUp ? "none" : "block";
       }
     };
-    now.updateNovadStatus = updateNovadStatus;
 
     var updateHaystackStatus = function (isHaystackUp){
       dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Up" : "Down";
     };
-    now.updateHaystackStatus = updateHaystackStatus;
-
-    now.AllSuspectsCleared = function() {
+    
+    var AllSuspectsCleared = function() {
       suspectGrid.Clear();
     }
-
-    now.SuspectCleared = function(suspect) {
+    
+    var SuspectCleared = function(suspect) {
         console.log("Cleared suspect ");
         console.log(suspect);
-        suspectGrid.DeleteRow(suspect.GetIdString);
+        suspectGrid.DeleteRow(buildLink(suspect.ip, suspect.interface, suspect.idString));
         suspectGrid.Render();
         return;
     }
@@ -164,7 +161,7 @@ block headerAdditions
     }
     
     function ClearSuspect(ip, interface, idString) {
-        now.ClearSuspect(idString);
+        now.ClearSuspect(ip, interface);
         suspectGrid.DeleteRow(buildLink(ip, interface, idString));
     }
 
@@ -172,8 +169,8 @@ block headerAdditions
       var res = "<a href='/GetSuspectDetails?ip=" + ip + "&interface=" + interface + "'> " + idString + "</a>";
       return res;
     }
-
-    now.OnNewSuspect = function(suspect){
+    
+    var OnNewSuspect = function(suspect){
        var type = "#{type}";
       
        if (type == "hostile" && !suspect.GetIsHostile) {return;}
@@ -268,7 +265,7 @@ block headerAdditions
         advancedFilterEnabled = true;
         suspectGrid.Clear();
         try {
-            now.sendAllSuspects(now.OnNewSuspect);
+            now.sendAllSuspects(OnNewSuspect);
         } catch(err) {
             alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
             console.log("err was: " + err);
@@ -283,7 +280,7 @@ block headerAdditions
         
         suspectGrid.Clear();
         try {
-            now.sendAllSuspects(now.OnNewSuspect);
+            now.sendAllSuspects(OnNewSuspect);
         } catch(err) {
             alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
             console.log("err was: " + err);
@@ -379,7 +376,7 @@ block headerAdditions
         suspectGrid.SetRenderCallback(onGridRendered);
 
         try {
-          now.sendAllSuspects(now.OnNewSuspect);
+          now.sendAllSuspects(OnNewSuspect);
          } catch(err) {
            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
            console.log("err was: " + err);
@@ -398,9 +395,16 @@ block headerAdditions
     require(["dojo/ready", "dojo/domReady!"], function(ready){
         ready(function() {
             now.ready(function() {
-              Init();
-              now.IsHaystackUp(updateHaystackStatus);
-              now.IsNovadUp(updateNovadStatus);
+            Init();
+
+            now.updateHaystackStatus = updateHaystackStatus;
+            now.updateNovadStatus = updateNovadStatus;
+            now.AllSuspectsCleared = AllSuspectsCleared;
+            now.SuspectCleared = SuspectCleared;
+            now.OnNewSuspect = OnNewSuspect;
+
+            now.IsHaystackUp(updateHaystackStatus);
+            now.IsNovadUp(updateNovadStatus);
             });
         });
     });

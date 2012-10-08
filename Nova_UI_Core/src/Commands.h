@@ -59,10 +59,6 @@ bool IsNovadUp(bool tryToConnect = false);
 //	NOTE: If a connection already exists, then the function does nothing and returns true
 bool ConnectToNovad();
 
-//Disconnects from Novad over IPC. (opposite of ConnectToNovad)
-//	NOTE: Safely does nothing if already disconnected
-void DisconnectFromNovad();
-
 //Tries to connect to Novad, waiting for at most timeout_ms milliseconds
 //	timeout_ms - The amount of time in milliseconds at maximum to wait for a connection
 //	NOTE: Blocks for at most timeout_ms milliseconds
@@ -70,8 +66,19 @@ void DisconnectFromNovad();
 //	NOTE: If a connection already exists, then the function does nothing and returns true
 bool TryWaitConnectToNovad(int timeout_ms);
 
-//Closes any connection Novad over IPC
+//Disconnects from Novad over IPC. (opposite of ConnectToNovad) Sends no messages
+//	NOTE: Cannot be called in the same scope as a Ticket! Disconnecting from a socket
+//		requires that we write lock it, while a Ticket has a read lock. Trying to do
+//		both will cause a deadlock.
+//	NOTE: Safely does nothing if already disconnected
+void DisconnectFromNovad();
+
+//Cleanly closes the connection to Novad by sending a notice and receiving an ack, then
+//		disconnecting from the socket
 //	returns - true if no connections to Novad exists, false if there is a connection (error)
+//	NOTE: Cannot be called in the same scope as a Ticket! Disconnecting from a socket
+//		requires that we write lock it, while a Ticket has a read lock. Trying to do
+//		both will cause a deadlock.
 //	NOTE: If there was already no connection, then the function does nothing and returns true
 bool CloseNovadConnection();
 
@@ -83,7 +90,7 @@ bool CloseNovadConnection();
 // Gets a list of suspect addresses currently classified
 //	 listType: Type of list to get (all, just hostile, just benign)
 //	Returns: list of addresses
-std::vector<SuspectIdentifier> *GetSuspectList(enum SuspectListType listType);
+std::vector<SuspectIdentifier> GetSuspectList(enum SuspectListType listType);
 
 // Gets a suspect from the daemon
 // address: IP address of the suspect

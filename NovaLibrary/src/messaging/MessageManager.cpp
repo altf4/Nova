@@ -343,9 +343,12 @@ void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void 
 
 	if(error & (BEV_EVENT_EOF | BEV_EVENT_ERROR))
 	{
-		evutil_socket_t socketFD = bufferevent_getfd(bev);
-		bufferevent_free(bev);
-		MessageManager::Instance().DeleteEndpoint(socketFD);
+		//If we're a server...
+		if(ctx != NULL)
+		{
+			bufferevent_free(bev);
+			MessageManager::Instance().DeleteEndpoint(bufferevent_getfd(bev));
+		}
 		return;
 	}
 }
@@ -370,7 +373,7 @@ void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
 			LOG(ERROR, "Failed to connect to UI: socket_new", "");
 			return;
 		}
-		bufferevent_setcb(bev, MessageDispatcher, NULL, ErrorDispatcher, NULL);
+		bufferevent_setcb(bev, MessageDispatcher, NULL, ErrorDispatcher, cbArg);
 		bufferevent_setwatermark(bev, EV_READ, 0, 0);
 		if(bufferevent_enable(bev, EV_READ|EV_WRITE) == -1)
 		{
@@ -385,7 +388,7 @@ void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
     }
 }
 
-void *MessageManager::AcceptDispatcher(void *arg)
+void MessageManager::StartServer(ServerCallback *callback)
 {
 	int len;
 	string inKeyPath = Config::Inst()->GetPathHome() + "/config/keys" + NOVAD_LISTEN_FILENAME;
@@ -398,13 +401,14 @@ void *MessageManager::AcceptDispatcher(void *arg)
 	base = event_base_new();
 	if (!base)
 	{
-		return NULL;
+		LOG(ERROR, "Failed to set up socket base", "");
+		return;
 	}
 
 	if((IPCParentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 	{
-		LOG(ERROR, "Failed to connect to UI", "socket: "+string(strerror(errno)));
-		return NULL;
+		LOG(ERROR, "Failed to create socket for accept()", "socket: "+string(strerror(errno)));
+		return;
 	}
 
 	evutil_make_socket_nonblocking(IPCParentSocket);
@@ -417,38 +421,28 @@ void *MessageManager::AcceptDispatcher(void *arg)
 
 	if(::bind(IPCParentSocket, (struct sockaddr *)&msgLocal, len) == -1)
 	{
-		LOG(ERROR, "Failed to connect to UI", "bind: "+string(strerror(errno)));
+		LOG(ERROR, "Failed to bind to socket", "bind: "+string(strerror(errno)));
 		close(IPCParentSocket);
-		return NULL;
+		return;
 	}
 
 	if(listen(IPCParentSocket, SOMAXCONN) == -1)
 	{
-		LOG(ERROR, "Failed to connect to UI", "listen: "+string(strerror(errno)));
+		LOG(ERROR, "Failed to listen for UIs", "listen: "+string(strerror(errno)));
 		close(IPCParentSocket);
-		return NULL;
+		return;
 	}
 
 	struct CallbackArg *cbArg = new struct CallbackArg;
 	cbArg->m_base = base;
-	cbArg->m_callback = (ServerCallback*)arg;
+	cbArg->m_callback = callback;
 
 	listener_event = event_new(base, IPCParentSocket, EV_READ|EV_PERSIST, DoAccept, (void*)cbArg);
 	event_add(listener_event, NULL);
 	event_base_dispatch(base);
 
-	return NULL;
-}
-
-void MessageManager::StartServer(ServerCallback *callback)
-{
-	static bool hasServerStarted = false;
-
-	if(!hasServerStarted)
-	{
-		pthread_create(&m_acceptThread, NULL, AcceptDispatcher, callback);
-		hasServerStarted = true;
-	}
+	LOG(ERROR, "Main accept dispatcher returned. This should not occur.", "");
+	return;
 }
 
 }

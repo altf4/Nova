@@ -37,8 +37,8 @@ using namespace Nova;
 //Socket communication variables
 int IPCSocketFD = -1;
 
-struct event_base *libeventBase = NULL;
-struct bufferevent *bufferevent = NULL;
+static struct event_base *libeventBase = NULL;
+static struct bufferevent *bufferevent = NULL;
 pthread_t eventDispatchThread;
 
 namespace Nova
@@ -51,8 +51,14 @@ void *EventDispatcherThread(void *arg)
 	{
 		stringstream ss;
 		ss << ret;
-		LOG(WARNING, "Message loop ended uncleanly. Error code: " + ss.str(), "");
+		LOG(DEBUG, "Message loop ended. Error code: " + ss.str(), "");
 	}
+	else
+	{
+		LOG(DEBUG, "Message loop ended cleanly.", "");
+	}
+
+	DisconnectFromNovad();
 	return NULL;
 }
 
@@ -109,19 +115,24 @@ bool ConnectToNovad()
 	IPCSocketFD = bufferevent_getfd(bufferevent);
 	if(IPCSocketFD == -1)
 	{
-		LOG(DEBUG, "Unable to connect to NOVAD: "+string(strerror(errno))+".", "");
+		LOG(DEBUG, "Unable to connect to Novad: "+string(strerror(errno))+".", "");
 		bufferevent_free(bufferevent);
 		bufferevent = NULL;
 		return false;
 	}
 
-	evutil_make_socket_nonblocking(IPCSocketFD);
+	if(evutil_make_socket_nonblocking(IPCSocketFD) == -1)
+	{
+		LOG(DEBUG, "Unable to connect to Novad", "Could not set socket to non-blocking mode");
+		bufferevent_free(bufferevent);
+		bufferevent = NULL;
+		return false;
+	}
 
 	MessageManager::Instance().DeleteEndpoint(IPCSocketFD);
 	MessageManager::Instance().StartSocket(IPCSocketFD, bufferevent);
 
 	pthread_create(&eventDispatchThread, NULL, EventDispatcherThread, NULL);
-	pthread_detach(eventDispatchThread);
 
 	//Send a connection request
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
@@ -130,7 +141,6 @@ bool ConnectToNovad()
 	if(!MessageManager::Instance().WriteMessage(ticket, &connectRequest))
 	{
 		LOG(ERROR, "Could not send CONTROL_CONNECT_REQUEST to NOVAD", "");
-		DisconnectFromNovad();
 		return false;
 	}
 
@@ -150,7 +160,6 @@ bool ConnectToNovad()
 
 		reply->DeleteContents();
 		delete reply;
-		//DisconnectFromNovad();
 		return false;
 	}
 	ControlMessage *connectionReply = (ControlMessage*)reply;
@@ -162,7 +171,6 @@ bool ConnectToNovad()
 
 		reply->DeleteContents();
 		delete reply;
-		DisconnectFromNovad();
 		return false;
 	}
 	bool replySuccess = connectionReply->m_success;
@@ -178,20 +186,22 @@ void DisconnectFromNovad()
 	{
 		if(eventDispatchThread != 0)
 		{
-			if(event_base_loopexit(libeventBase, NULL) == -1)
+			if(event_base_loopbreak(libeventBase) == -1)
 			{
 				LOG(WARNING, "Unable to exit event loop", "");
 			}
-
+			pthread_join(eventDispatchThread, NULL);
 			eventDispatchThread = 0;
 		}
 	}
 
-//	if(bufferevent != NULL)
-//	{
-//		bufferevent_free(bufferevent);
-//		bufferevent = NULL;
-//	}
+	if(bufferevent != NULL)
+	{
+		bufferevent_free(bufferevent);
+		bufferevent = NULL;
+	}
+
+	MessageManager::Instance().DeleteEndpoint(IPCSocketFD);
 
 	IPCSocketFD = -1;
 }
@@ -212,46 +222,47 @@ bool TryWaitConnectToNovad(int timeout_ms)
 
 bool CloseNovadConnection()
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	if(IPCSocketFD == -1)
-	{
-		return true;
-	}
-
 	bool success = true;
+	//Keep the scope of the following Ticket out of the call to Disconnect
+	{
+		Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE);
-	if(!MessageManager::Instance().WriteMessage(ticket, &disconnectNotice))
-	{
-		success = false;
-	}
-
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		reply->DeleteContents();
-		delete reply;
-		success = false;
-	}
-	else if(reply->m_messageType != CONTROL_MESSAGE)
-	{
-		reply->DeleteContents();
-		delete reply;
-		success = false;
-	}
-	else
-	{
-		ControlMessage *connectionReply = (ControlMessage*)reply;
-		if(connectionReply->m_controlType != CONTROL_DISCONNECT_ACK)
+		if(IPCSocketFD == -1)
 		{
-			connectionReply->DeleteContents();
-			delete connectionReply;
+			return true;
+		}
+
+		ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE);
+		if(!MessageManager::Instance().WriteMessage(ticket, &disconnectNotice))
+		{
 			success = false;
 		}
-	}
 
+		Message *reply = MessageManager::Instance().ReadMessage(ticket);
+		if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+		{
+			LOG(ERROR, "Timeout error when waiting for message reply", "");
+			reply->DeleteContents();
+			delete reply;
+			success = false;
+		}
+		else if(reply->m_messageType != CONTROL_MESSAGE)
+		{
+			reply->DeleteContents();
+			delete reply;
+			success = false;
+		}
+		else
+		{
+			ControlMessage *connectionReply = (ControlMessage*)reply;
+			if(connectionReply->m_controlType != CONTROL_DISCONNECT_ACK)
+			{
+				connectionReply->DeleteContents();
+				delete connectionReply;
+				success = false;
+			}
+		}
+	}
 	DisconnectFromNovad();
 	LOG(DEBUG, "Call to CloseNovadConnection complete", "");
 	return success;

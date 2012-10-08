@@ -420,26 +420,6 @@ void Suspect::SetIsLive(bool b)
 	m_isLive = b;
 }
 
-//Clears the FeatureData of a suspect
-// whichFeatures: specifies which FeatureSet's Data to clear
-void Suspect::ClearFeatureData(FeatureMode whichFeatures)
-{
-	switch(whichFeatures)
-	{
-		default:
-		case MAIN_FEATURES:
-		{
-			m_features.ClearFeatureData();
-			break;
-		}
-		case UNSENT_FEATURES:
-		{
-			m_unsentFeatures.ClearFeatureData();
-			break;
-		}
-	}
-}
-
 //Returns a copy of the suspects FeatureSet
 FeatureSet Suspect::GetFeatureSet(FeatureMode whichFeatures)
 {
@@ -497,29 +477,6 @@ void Suspect::AddFeatureSet(FeatureSet *fs, FeatureMode whichFeatures)
 		}
 	}
 
-}
-
-//Clears the feature set of the suspect
-// whichFeatures: specifies which FeatureSet to clear
-void Suspect::ClearFeatureSet(FeatureMode whichFeatures)
-{
-	switch(whichFeatures)
-	{
-		case MAIN_FEATURES:
-		{
-			m_features.ClearFeatureSet();
-			break;
-		}
-		case UNSENT_FEATURES:
-		{
-			m_unsentFeatures.ClearFeatureSet();
-			break;
-		}
-		default:
-		{
-			break;
-		}
-	}
 }
 
 //Returns the accuracy double of the feature using featureIndex 'fi'

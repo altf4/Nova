@@ -2,6 +2,27 @@
 var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
 segvhandler.registerHandler();
 
+//var agent = require('webkit-devtools-agent');
+
+/*var memwatch = require('memwatch');
+
+memwatch.on('leak', function(info) {
+    console.log(info);
+});
+
+var hd = new memwatch.HeapDiff();
+memwatch.on('stats', function(stats) {
+    console.log(stats);
+    var diff = hd.end();
+
+    console.log(diff.change.details);
+    //console.log(diff);
+    console.log("\n\n");
+
+    hd = new memwatch.HeapDiff();
+});
+*/
+
 // Modules that provide bindings to C++ code in NovaLibrary and Nova_UI_Core
 var novaconfig = require('novaconfig.node');
 
@@ -854,10 +875,23 @@ app.get('/about', passport.authenticate('basic', {session: false}), function (re
 });
 
 app.get('/haystackStatus', passport.authenticate('basic', {session: false}), function (req, res) {
-	var dhcpIps = config.GetIpAddresses("/var/log/honeyd/ipList");
-	res.render('haystackStatus.jade', {
-		locals: {
-			haystackDHCPIps: config.GetIpAddresses("/var/log/honeyd/ipList")
+	fs.readFile("/var/log/honeyd/ipList", 'utf8', function (err, data) {
+		var DHCPIps = new Array();
+		if (err) {
+			RenderError(res, "Unable to open Honeyd status file for reading due to error: " + err);
+			return;
+		} else {
+
+			data = data.toString().split("\n");
+			for(var i = 0; i < data.length; i++) {
+				if (data[i] == "") {continue};
+				DHCPIps.push(data[i].toString().split(","));
+			}	
+			res.render('haystackStatus.jade', {
+				locals: {
+					haystackDHCPIps: DHCPIps
+				}
+			});
 		}
 	});
 });
@@ -1338,8 +1372,13 @@ everyone.now.IsNovadUp = function (callback) {
 }
 
 everyone.now.StartNovad = function () {
-	nova.StartNovad(false);
-	nova.CheckConnection();
+	console.log("Calling StartNovad(false)");
+	var result = nova.StartNovad(false);
+	console.log("Got " + result);
+
+	console.log("Calling CheckConnection");
+	var result = nova.CheckConnection();
+	console.log("Done! Got " + result + ".Calling IsNovadup to check status");
 	try {
 		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
 	} catch (err) {};
@@ -1857,7 +1896,9 @@ var distributeAllSuspectsCleared = function () {
 
 var distributeSuspectCleared = function (suspect) {
 	var s = new Object;
-	s['GetIpString'] = suspect.GetIpString();
+	s['interface'] = suspect.GetInterface();
+	s['ip'] = suspect.GetIpString();
+	s['idString'] = suspect.GetIdString();
 	everyone.now.SuspectCleared(s);
 }
 

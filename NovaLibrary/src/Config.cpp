@@ -159,7 +159,8 @@ void Config::LoadConfig_Internal()
 
 	bool isValid[sizeof(m_prefixes)/sizeof(m_prefixes[0])];
 
-	ifstream config(m_configFilePath.c_str());
+	ifstream config;
+	config.open(m_configFilePath.c_str());
 
 	if(config.is_open())
 	{
@@ -872,7 +873,7 @@ void Config::LoadConfig_Internal()
 
 					if (thresholds.size() != DIM)
 					{
-						LOG(ERROR, "THRESHOLD_HOSTILE_TRIGGERS does not contain the correct number of entries", "");
+						cout << "ERROR: THRESHOLD_HOSTILE_TRIGGERS does not contain the correct number of entries" << endl;
 						continue;
 					}
 
@@ -971,7 +972,7 @@ void Config::LoadConfig_Internal()
 	else
 	{
 		// Do not call LOG here, Config and Logger are not yet initialized
-		cout << "CRITICAL ERROR: No configuration file found!" << endl;
+		cout << "CRITICAL ERROR: No configuration file found! Could not open: " << m_configFilePath << endl;
 	}
 
 	config.close();
@@ -1591,7 +1592,15 @@ bool Config::InitUserConfigs()
 	{
 		string fromPath = m_pathPrefix + "/usr/share/nova/userFiles";
 		string toPath = m_pathHome;
-		string copyString = "cp -rfp \"" + fromPath + "\" \"" + toPath + "\"";
+		string mkdirString = "mkdir -p \"" + toPath + "\"";
+
+		if(system(mkdirString.c_str()) != 0)
+		{
+			cout << "Error creating folder for user configuration. Failed command was: " + mkdirString << endl;
+		}
+
+
+		string copyString = "cp -rfpT \"" + fromPath + "\" \"" + toPath + "\"";
 
 		if(system(copyString.c_str()) != 0)
 		{
@@ -2593,6 +2602,37 @@ vector <string> Config::GetIpAddresses(string ipListFile)
 			if(line != "" && line.at(0) != '#' )
 			{
 				whitelistedAddresses.push_back(line);
+			}
+		}
+		ipListFileStream.close();
+	}
+	else
+	{
+		LOG(ERROR,"Unable to open file: " + ipListFile, "");
+	}
+
+	return whitelistedAddresses;
+}
+
+vector <string> Config::GetHoneydIpAddresses(string ipListFile)
+{
+	ifstream ipListFileStream(ipListFile.c_str());
+	vector<string> whitelistedAddresses;
+
+	if(ipListFileStream.is_open())
+	{
+		while(ipListFileStream.good())
+		{
+			string line;
+			getline(ipListFileStream,line);
+			if(line != "" && line.at(0) != '#' )
+			{
+				std::vector<std::string> strs;
+				boost::split(strs, line, boost::is_any_of(", "));
+				if (strs.size() > 0)
+				{
+					whitelistedAddresses.push_back(strs.at(0));
+				}
 			}
 		}
 		ipListFileStream.close();

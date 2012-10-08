@@ -8,5 +8,7 @@ block content
   - if (haystackDHCPIps == '')
     li No DHCP addresses
   each ip in haystackDHCPIps
-    li= ip
+    li
+      a(href = "/editHoneydNode?node=DHCP - " + ip[1].replace(" ", ""))= "DHCP -" + ip[1]
+      span  is currently at IP address #{ip[0]}
   

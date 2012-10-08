@@ -20,12 +20,12 @@
 #include "ClassificationEngine.h"
 
 #include "SuspectTable.h"
+#include "Suspect.h"
 
 using namespace node;
 using namespace v8;
 using namespace Nova;
 using namespace std;
-
 
 void NovaNode::InitNovaCallbackProcessing()
 {
@@ -103,78 +103,93 @@ int NovaNode::AfterNovaCallbackHandling(eio_req*)
 
 void NovaNode::HandleNewSuspect(Suspect* suspect)
 {
-	if (m_suspects.keyExists(suspect->GetIdentifier()))
-	{
-		delete m_suspects[suspect->GetIdentifier()];
-		m_suspects.erase(suspect->GetIdentifier());
-	}
-	m_suspects[suspect->GetIdentifier()] = suspect;
-
-	SendSuspect(suspect);
+	eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleNewSuspectOnV8Thread, suspect);
 }
 
+
+// Sends a copy of the suspect from the C++ side to the server side Javascript side
+// Note: Only call this from inside the v8 thread. Provides no locking.
 void NovaNode::SendSuspect(Suspect* suspect)
 {
-	if( m_CallbackRegistered )
-	{
-		eio_req* req = (eio_req*) calloc(sizeof(*req),1);
-		req->data = static_cast<void*>(suspect);
-		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleNewSuspectOnV8Thread, suspect);
+	// Do we have anyplace to actually send the suspect?
+	if (m_CallbackRegistered) {
+		// Make a copy of it so we can safely delete the one in the suspect table when updates come in
+		Suspect *suspectCopy = new Suspect((*suspect));
+
+		// Wrap it in Javascript voodoo so main.js can handle it
+		v8::Persistent<Value> weak_handle = Persistent<Value>::New(SuspectJs::WrapSuspect(suspectCopy));
+
+		// When JS is done with it, call DoneWithSuspectCallback to clean it up
+		weak_handle.MakeWeak(suspectCopy, &DoneWithSuspectCallback);
+
+		// Send it off to the callback in main.js
+		m_CallbackFunction->Call(m_CallbackFunction, 1, &weak_handle);
 	}
 }
 
 void NovaNode::HandleSuspectCleared(Suspect *suspect)
 {
-	if (m_suspects.keyExists(suspect->GetIdentifier()))
-	{
-		delete m_suspects[suspect->GetIdentifier()];
-		m_suspects.erase(suspect->GetIdentifier());
-	}	
-
-	if( m_SuspectClearedCallbackRegistered )
-	{
-		eio_req* req = (eio_req*) calloc(sizeof(*req),1);
-		req->data = (void*) suspect;
-		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleSuspectClearedOnV8Thread, suspect);
-	}
+	eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleSuspectClearedOnV8Thread, suspect);
 }
 
 void NovaNode::HandleAllSuspectsCleared()
 {
-	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
-	{
-		delete ((*it).second);
-	}
-	m_suspects.clear();
-
-	if (m_AllSuspectsClearedCallbackRegistered)
-	{
-		eio_req* req = (eio_req*) calloc(sizeof(*req),1);
-		eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleAllClearedOnV8Thread, NULL);
-	}
+	eio_nop( EIO_PRI_DEFAULT, NovaNode::HandleAllClearedOnV8Thread, NULL);
 }
 
 int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 {
-	Suspect* suspect = static_cast<Suspect*>(req->data);
 	HandleScope scope;
-	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
-	m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
+	
+	Suspect* suspect = static_cast<Suspect*>(req->data);
+		
+	if (suspect != NULL) {	
+		if (m_suspects.keyExists(suspect->GetIdentifier())) {
+			delete m_suspects[suspect->GetIdentifier()];
+		}
+		
+		m_suspects[suspect->GetIdentifier()] = suspect;
+		SendSuspect(suspect);
+	} else {
+		LOG(DEBUG, "HandleNewSuspectOnV8Thread got a NULL suspect pointer. Ignoring.", "");
+	}
 	return 0;
+
+}
+
+void NovaNode::DoneWithSuspectCallback(Persistent<Value> suspect, void *paramater) {
+	Suspect *s = static_cast<Suspect*>(paramater);
+	delete s;	
+	suspect.ClearWeak();
+	suspect.Dispose();
+	suspect.Clear();
 }
 
 int NovaNode::HandleSuspectClearedOnV8Thread(eio_req* req)
 {
-	Suspect* suspect = static_cast<Suspect*>(req->data);
 	HandleScope scope;
-	Local<Value> argv[1] = { Local<Value>::New(SuspectJs::WrapSuspect(suspect)) };
+	Suspect* suspect = static_cast<Suspect*>(req->data);
+	if (m_suspects.keyExists(suspect->GetIdentifier())) {
+		delete m_suspects[suspect->GetIdentifier()];
+	}
+	m_suspects.erase(suspect->GetIdentifier());
+
+	v8::Persistent<Value> weak_handle = Persistent<Value>::New(SuspectJs::WrapSuspect(suspect));
+	weak_handle.MakeWeak(suspect, &DoneWithSuspectCallback);
+	Persistent<Value> argv[1] = { weak_handle };	
 	m_SuspectClearedCallback->Call(m_SuspectClearedCallback, 1, argv);
+	
 	return 0;
 }
 
 int NovaNode::HandleAllClearedOnV8Thread(eio_req*)
 {
 	HandleScope scope;
+	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
+	{
+		delete (*it).second;
+	}
+	m_suspects.clear();
 	m_SuspectsClearedCallback->Call(m_SuspectsClearedCallback, 0, NULL);
 	return 0;
 }
@@ -356,23 +371,22 @@ NovaNode::NovaNode() :
 
 NovaNode::~NovaNode()
 {
-
+	cout << "Destructing NovaNode." << endl;
+	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
+	{
+		delete (*it).second;
+	}
+	m_suspects.clear();
 }
 
 // Update our internal suspect list to that of novad
 void NovaNode::SynchInternalList()
 {
-	vector<SuspectIdentifier> *suspects;
-	suspects = GetSuspectList(SUSPECTLIST_ALL);
+	vector<SuspectIdentifier> suspects = GetSuspectList(SUSPECTLIST_ALL);
 
-	if (suspects == NULL)
+	for (uint i = 0; i < suspects.size(); i++)
 	{
-		cout << "Failed to get suspect list" << endl;
-		return;
-	}
-	for (uint i = 0; i < suspects->size(); i++)
-	{
-		Suspect *suspect = GetSuspect(suspects->at(i));
+		Suspect *suspect = GetSuspect(suspects.at(i));
 
 		if (suspect != NULL)
 		{
@@ -411,9 +425,12 @@ Handle<Value> NovaNode::sendSuspectList(const Arguments& args)
 	Local<Function> callbackFunction;
 	callbackFunction = Local<Function>::New( args[0].As<Function>() );
 
-	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
-	{
-		SendSuspect((*it).second);
+	    
+	if (m_CallbackRegistered) {
+		for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
+		{
+			SendSuspect((*it).second);
+		}
 	}
 
 	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
@@ -503,8 +520,4 @@ bool NovaNode::m_AllSuspectsClearedCallbackRegistered=false;
 bool NovaNode::m_SuspectClearedCallbackRegistered=false;
 bool NovaNode::m_callbackRunning=false;
 pthread_t NovaNode::m_NovaCallbackThread=0;
-
-
-
-
 

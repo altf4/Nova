@@ -156,9 +156,6 @@ int RunNovaD()
 	//Loads the configuration file
 	Config::Inst()->LoadConfig();
 
-	NovadCallback *callback = new NovadCallback();
-	MessageManager::Instance().StartServer(callback);
-
 	LOG(ALERT, "Starting NOVA version " + Config::Inst()->GetVersionString(), "");
 
 	doppel = new Doppelganger(suspects);
@@ -168,7 +165,7 @@ int RunNovaD()
 	engine->LoadConfiguration();
 
 	haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
-	haystackDhcpAddresses = Config::GetIpAddresses(dhcpListFile);
+	haystackDhcpAddresses = Config::GetHoneydIpAddresses(dhcpListFile);
 	whitelistIpAddresses = WhitelistConfiguration::GetIps();
 	whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 	UpdateHaystackFeatures();
@@ -213,10 +210,11 @@ int RunNovaD()
 
 	StartCapture();
 
-	while (1)
-	{
-		sleep(1000);
-	}
+	//Go into the main accept() loop
+	NovadCallback *callback = new NovadCallback();
+	MessageManager::Instance().StartServer(callback);
+
+	return EXIT_FAILURE;
 }
 
 bool LockNovad()
