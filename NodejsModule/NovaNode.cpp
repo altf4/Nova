@@ -123,8 +123,7 @@ void NovaNode::SendSuspect(Suspect* suspect)
 		weak_handle.MakeWeak(suspectCopy, &DoneWithSuspectCallback);
 
 		// Send it off to the callback in main.js
-		Persistent<Value> argv[1] = { weak_handle };
-		m_CallbackFunction->Call(m_CallbackFunction, 1, argv);
+		m_CallbackFunction->Call(m_CallbackFunction, 1, &weak_handle);
 	}
 }
 
@@ -161,6 +160,9 @@ int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 void NovaNode::DoneWithSuspectCallback(Persistent<Value> suspect, void *paramater) {
 	Suspect *s = static_cast<Suspect*>(paramater);
 	delete s;	
+	suspect.ClearWeak();
+	suspect.Dispose();
+	suspect.Clear();
 }
 
 int NovaNode::HandleSuspectClearedOnV8Thread(eio_req* req)
