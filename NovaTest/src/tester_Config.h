@@ -34,7 +34,7 @@ TEST_F(ConfigTest, test_ReaderWriter)
 
 // Tests that changing the enabled features sets all needed config options
 TEST_F(ConfigTest, test_setEnabledFeatures) {
-	string enabledFeatureString = "1100100111101";
+	string enabledFeatureString = "11001001111010";
 	Config::Inst()->SetEnabledFeatures(enabledFeatureString);
 
 	// Check the enabled feature mask string
@@ -60,6 +60,7 @@ TEST_F(ConfigTest, test_setEnabledFeatures) {
 	EXPECT_TRUE(Config::Inst()->IsFeatureEnabled(10));
 	EXPECT_FALSE(Config::Inst()->IsFeatureEnabled(11));
 	EXPECT_TRUE(Config::Inst()->IsFeatureEnabled(12));
+	EXPECT_FALSE(Config::Inst()->IsFeatureEnabled(13));
 
 
 }

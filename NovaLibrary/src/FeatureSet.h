@@ -59,8 +59,70 @@ typedef Nova::HashMap<uint32_t, uint32_t, std::tr1::hash<time_t>, eqtime > IP_Ta
 typedef Nova::HashMap<in_port_t, uint32_t, std::tr1::hash<in_port_t>, eqport > Port_Table;
 //Table of packet sizes and a count
 typedef Nova::HashMap<uint16_t, uint32_t, std::tr1::hash<uint16_t>, eq_uint16_t > Packet_Table;
-//Table of packet intervals and a count
-typedef Nova::HashMap<time_t, uint32_t, std::tr1::hash<time_t>, eqtime > Interval_Table;
+
+struct IpPortCombination {
+	uint32_t m_ip;
+	uint16_t m_port;
+	uint16_t m_internal;
+
+	IpPortCombination()
+	{
+		m_ip = 0;
+		m_port = 0;
+		m_internal = 0;
+	}
+
+	static IpPortCombination GetEmptyKey()
+	{
+		IpPortCombination empty;
+		empty.m_internal = 1;
+		return empty;
+	}
+
+	bool operator ==(const IpPortCombination &rhs) const
+	{
+		// This is for checking equality of empty/deleted keys
+		if (m_internal != 0 || rhs.m_internal != 0)
+		{
+			return m_internal == rhs.m_internal;
+		}
+		else
+		{
+			return (m_ip == rhs.m_ip && m_port == rhs.m_port);
+		}
+	}
+
+	bool operator != (const IpPortCombination &rhs) const
+	{
+		return !(this->operator ==(rhs));
+	}
+};
+
+
+// Make a IpPortCombination hash and equals function for the Google hash maps
+namespace std {
+    namespace tr1 {
+        template<>
+        struct hash< IpPortCombination > {
+        	// TODO: This should be passed by reference, doesn't compile though. Look into it.
+            std::size_t operator()( IpPortCombination c ) const
+            {
+            	uint64_t temp = 0 | c.m_ip | (((uint64_t)c.m_port) << 32);
+                return tr1::hash<uint64_t>()(temp);
+            }
+        };
+    }
+}
+
+struct IpPortCombinationEquals
+{
+	bool operator()(IpPortCombination k1, IpPortCombination k2) const
+	{
+		return k1 == k2;
+	}
+};
+
+typedef Nova::HashMap<IpPortCombination, uint8_t, std::tr1::hash<IpPortCombination>, IpPortCombinationEquals> IpPortTable;
 
 //Table of timestamps, with the dst_ip as the key. Used to track intervals between packets to a host from a particular suspect
 typedef Nova::HashMap<uint32_t, time_t, std::tr1::hash<uint32_t>, eq_uint32_t > LastTimeTable;
@@ -72,14 +134,15 @@ enum featureIndex: uint8_t
 	PACKET_SIZE_MEAN = 2,
 	PACKET_SIZE_DEVIATION = 3,
 	DISTINCT_IPS = 4,
-	DISTINCT_PORTS = 5,
-	PACKETS_PER_SECOND = 6,
-	PACKET_INTERVAL_DEVIATION = 7,
-	TCP_PERCENT_SYN = 8,
-	TCP_PERCENT_FIN = 9,
-	TCP_PERCENT_RST = 10,
-	TCP_PERCENT_SYNACK = 11,
-	HAYSTACK_PERCENT_CONTACTED = 12
+	DISTINCT_TCP_PORTS = 5,
+	DISTINCT_UDP_PORTS = 6,
+	AVG_TCP_PORTS_PER_HOST = 7,
+	AVG_UDP_PORTS_PER_HOST = 8,
+	TCP_PERCENT_SYN = 9,
+	TCP_PERCENT_FIN = 10,
+	TCP_PERCENT_RST = 11,
+	TCP_PERCENT_SYNACK = 12,
+	HAYSTACK_PERCENT_CONTACTED = 13
 };
 
 namespace Nova{
@@ -104,12 +167,6 @@ public:
 	~FeatureSet();
 
 	std::string toString();
-
-	// Clears out the current values, and also any temp variables used to calculate them
-	void ClearFeatureSet();
-
-	void ClearFeatureData();
-
 
 	FeatureSet& operator+=(FeatureSet &rhs);
 	bool operator ==(const FeatureSet &rhs) const;
@@ -191,17 +248,22 @@ public:
 	//Total number of bytes in all packets
 	uint32_t m_bytesTotal;
 
-	///A table of the intervals between packet arrival times for tracking traffic over time.
-	Interval_Table m_intervalTable;
-
 	//Table of IP addresses and associated packet counts
 	IP_Table m_IPTable;
 	IP_Table m_HaystackIPTable;
-	int m_haystackNodesContacted;
 
-	//Table of timestamps for the time at which a host last received a packet from this suspect
-	LastTimeTable m_lastTimes;
+	// Maps IP to number of ports contacted on that IP
+	IP_Table m_tcpPortsContactedForIP;
+	IP_Table m_udpPortsContactedForIP;
 
+	// Maps IP/port to a bool, used for checking if m_portContactedPerIP needs incrementing for this IP
+	IpPortTable m_hasTcpPortIpBeenContacted;
+	IpPortTable m_hasUdpPortIpBeenContacted;
+
+
+	int m_numberOfHaystackNodesContacted;
+
+	// TODO DTC: Think this is depricated, remove it when sure
 	//XXX Temporarily using SANITY_CHECK/2, rather than that, we should serialize a total byte size before the
 	// feature data then proceed like before, this will allow Deserialized to perform a real sanity checking and
 	// this max table entries var can be replaced with a total bytesize check
