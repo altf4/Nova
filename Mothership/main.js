@@ -149,20 +149,39 @@ var everyone = nowjs.initialize(app);
 process.on('SIGTERM', function(){
   console.log('SIGTERM recieved');
   SaveClientIds();
+  cleanUI();
   saveScheduledEvents(function(){process.exit(1)});
 });
 
 process.on('SIGKILL', function(){
   console.log('SIGKILL received');
   SaveClientIds();
+  cleanUI();
   saveScheduledEvents(function(){process.exit(1)});
 });
 
 process.on('SIGINT', function(){
   console.log('SIGINT received');
   SaveClientIds();
+  cleanUI();
   saveScheduledEvents(function(){process.exit(1)});
 });
+
+function cleanUI()
+{
+  if(typeof everyone.now.UpdateConnectionsList == 'function')
+  {
+    everyone.now.UpdateConnectionsList('', 'clear'); 
+  }
+  if(typeof everyone.now.UpdateClientsList == 'function')
+  {
+    everyone.now.UpdateClientsList('', 'clear');
+  }
+  if(typeof everyone.now.UpdateGroupList == 'function')
+  {
+    everyone.now.UpdateGroupList('', 'clear');
+  } 
+}
 
 readScheduledEvents();
 

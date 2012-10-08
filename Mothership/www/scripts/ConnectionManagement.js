@@ -182,6 +182,12 @@
             updateGroup('all', clients.join());
           }
           break;
+        case 'clear':
+          while(divClientList.hasChildNodes())
+          {
+            divClientList.removeChild(divClientList.lastChild); 
+          }
+          break;
         default:
           console.log('UpdateConnectionsList called with invalid action, doing nothing');
           break;
@@ -189,7 +195,7 @@
       
       now.UpdateGroupList = function(group, action)
       {
-
+        var divGroupList = document.getElementById(groupDivName);
         var groupDiv = document.getElementById(group + 'div');
         switch(action)
         {
@@ -239,6 +245,13 @@
                   check.removeAttribute('disabled'); 
                 }
               });
+            }
+            break;
+          case 'clear':
+            while(divGroupList.hasChildNodes())
+            {
+              divGroupList.lastChild.removeAttribute('readonly');
+              divGroupList.removeChild(divGroupList.lastChild); 
             }
             break;
           default:
