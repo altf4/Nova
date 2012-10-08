@@ -2,6 +2,27 @@
 //var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
 //segvhandler.registerHandler();
 
+//var agent = require('webkit-devtools-agent');
+
+/*var memwatch = require('memwatch');
+
+memwatch.on('leak', function(info) {
+    console.log(info);
+});
+
+var hd = new memwatch.HeapDiff();
+memwatch.on('stats', function(stats) {
+    console.log(stats);
+    var diff = hd.end();
+
+    console.log(diff.change.details);
+    //console.log(diff);
+    console.log("\n\n");
+
+    hd = new memwatch.HeapDiff();
+});
+*/
+
 // Modules that provide bindings to C++ code in NovaLibrary and Nova_UI_Core
 var novaconfig = require('novaconfig.node');
 
