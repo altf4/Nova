@@ -848,11 +848,14 @@ wsServer.on('request', function(request)
             }
             eventCounter.push({client: json_args.id, events: "0"});
             everyone.now.GetGroupMembers('all', function(members){
-              var newList = (members.split(';')[0] == '' ? json_args.id : members.split(';')[0] + ',' + json_args.id);
-              everyone.now.UpdateGroup('all', newList);
-              if(typeof everyone.now.UpdateGroupList == 'function')
+              if(members.indexOf(json_args.id) == -1)
               {
-                everyone.now.UpdateGroupList('all', 'update');
+                var newList = (members.split(';')[0] == '' ? json_args.id : members.split(';')[0] + ',' + json_args.id);
+                everyone.now.UpdateGroup('all', newList);
+                if(typeof everyone.now.UpdateGroupList == 'function')
+                {
+                  everyone.now.UpdateGroupList('all', 'update');
+                }
               }
             });
             SaveClientIds();

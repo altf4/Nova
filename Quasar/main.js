@@ -321,31 +321,29 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
           switch(json_args.type)
           {
             case 'startNovad':
-              nova.StartNovad(false);
-              nova.CheckConnection();
+              everyone.now.StartNovad();
               var response = {};
               response.id = clientId;
               response.type = 'response';
-              response.response_message = 'Novad is being started';
+              response.response_message = 'Novad is being started ' + clientId;
               mothership.sendUTF(JSON.stringify(response));
               break;
             case 'stopNovad':
-              nova.StopNovad();
-              nova.CloseNovadConnection();
+              everyone.now.StopNovad();
               var response = {};
               response.id = clientId;
               response.type = 'response';
-              response.response_message = 'Novad is being stopped';
+              response.response_message = 'Novad is being stopped on ' + clientId;
               mothership.sendUTF(JSON.stringify(response));
               break;
             case 'startHaystack':
               if(!nova.IsHaystackUp())
               {
-                nova.StartHaystack(false);
+                everyone.now.StartHaystack();
                 var response = {};
                 response.id = clientId;
                 response.type = 'response';
-                response.response_message = 'Haystack is being started';
+                response.response_message = 'Haystack is being started on ' + clientId;
                 mothership.sendUTF(JSON.stringify(response));
               }
               else
@@ -358,11 +356,11 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               }
               break;
             case 'stopHaystack':
-              nova.StopHaystack();
+              everyone.now.StopHaystack();
               var response = {};
               response.id = clientId;
               response.type = 'response';
-              response.response_message = 'Haystack is being stopped';
+              response.response_message = 'Haystack is being stopped on ' + clientId;
               mothership.sendUTF(JSON.stringify(response));
               break;
             case 'writeSetting':
