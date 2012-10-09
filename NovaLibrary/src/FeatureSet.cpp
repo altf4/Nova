@@ -658,14 +658,14 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 	SerializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_numberOfHaystackNodesContacted, sizeof m_numberOfHaystackNodesContacted, bufferSize);
 
-	SerializeHashTable<Packet_Table, uint16_t, uint32_t> (buf, &offset, m_packTable, 0, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_IPTable, 0, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_HaystackIPTable, 0, bufferSize);
-	SerializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortTCPTable, 0, bufferSize);
-	SerializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortUDPTable, 0, bufferSize);
+	SerializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, &offset, m_packTable, 0, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_IPTable, 0, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_HaystackIPTable, 0, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortTCPTable, 0, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortUDPTable, 0, bufferSize);
 
-	SerializeHashTable<IP_Table, uint32_t, uint32_t>  (buf, &offset, m_tcpPortsContactedForIP, 0, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint32_t>  (buf, &offset, m_udpPortsContactedForIP, 0, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_tcpPortsContactedForIP, 0, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_udpPortsContactedForIP, 0, bufferSize);
 	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted, IpPortCombination::GetEmptyKey(), bufferSize);
 	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted, IpPortCombination::GetEmptyKey(), bufferSize);
 
@@ -692,13 +692,13 @@ uint32_t FeatureSet::GetFeatureDataLength()
 			+ sizeof m_tcpPacketCount
 			+ sizeof m_numberOfHaystackNodesContacted;
 
-	out += GetSerializeHashTableLength<Packet_Table, uint16_t, uint32_t> (m_packTable, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t>     (m_IPTable, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t>     (m_HaystackIPTable, 0);
-	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint32_t>  (m_PortTCPTable, 0);
-	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint32_t>  (m_PortUDPTable, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t> (m_tcpPortsContactedForIP, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint32_t> (m_udpPortsContactedForIP, 0);
+	out += GetSerializeHashTableLength<Packet_Table, uint16_t, uint64_t> (m_packTable, 0);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t>     (m_IPTable, 0);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t>     (m_HaystackIPTable, 0);
+	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint64_t>  (m_PortTCPTable, 0);
+	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint64_t>  (m_PortUDPTable, 0);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_tcpPortsContactedForIP, 0);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_udpPortsContactedForIP, 0);
 	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (m_hasTcpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
 	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (m_hasUdpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
 
@@ -767,14 +767,14 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	 For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
 	 i += the # of packets in the bin, if we haven't reached packet count we know there's another item
 	****************************************************************************************************/
-	DeserializeHashTable<Packet_Table, uint16_t, uint32_t> (buf, &offset, m_packTable, bufferSize);
-	DeserializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_IPTable, bufferSize);
-	DeserializeHashTable<IP_Table, uint32_t, uint32_t>     (buf, &offset, m_HaystackIPTable, bufferSize);
-	DeserializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortTCPTable, bufferSize);
-	DeserializeHashTable<Port_Table, in_port_t, uint32_t>  (buf, &offset, m_PortUDPTable, bufferSize);
+	DeserializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, &offset, m_packTable, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_IPTable, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_HaystackIPTable, bufferSize);
+	DeserializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortTCPTable, bufferSize);
+	DeserializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortUDPTable, bufferSize);
 
-	DeserializeHashTable<IP_Table, uint32_t, uint32_t>  (buf, &offset, m_tcpPortsContactedForIP, bufferSize);
-	DeserializeHashTable<IP_Table, uint32_t, uint32_t>  (buf, &offset, m_udpPortsContactedForIP, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_tcpPortsContactedForIP, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_udpPortsContactedForIP, bufferSize);
 	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted, bufferSize);
 	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted, bufferSize);
 
