@@ -130,14 +130,39 @@ block headerAdditions
       }
     }
     
+    function changeLabel(type, index)
+    {
+      if(type == 'ratio')
+      {
+        document.getElementById('change' + index).innerHTML = ' times the amount of real nodes found on ';
+      }
+      else
+      {
+        document.getElementById('change' + index).innerHTML = ' nodes on '; 
+      }
+    }
+    
     function createAutoconfigElement(clientName, group)
     {
       selectedClients.push(clientName);
       var div = document.createElement('div');
       div.id = 'autohook' + elementCount;
+      div.setAttribute('style', 'border: 2px solid; border-radius: 12px; background: #E8A02F;');
       var label = document.createElement('label');
       label.value = clientName;
-      label.innerHTML = clientName;
+      label.innerHTML = clientName + ': Create ';
+      var inputType = document.createElement('select');
+      inputType.id = 'type' + elementCount;
+      var types = ['number', 'ratio'];
+      for(var i = 0; i < 2; i++)
+      {
+        var option = document.createElement('option');
+        option.value = types[i];
+        option.innerHTML = types[i];
+        inputType.appendChild(option);
+      }
+      inputType.setAttribute('onclick', 'changeLabel(document.getElementById("type' + elementCount + '").value, ' + elementCount + ')');
+      
       var input = document.createElement('input');
       input.type = 'number';
       input.min = '0';
@@ -146,6 +171,9 @@ block headerAdditions
       input.value = '0';
       //dropDown needs to be a dojo select containing a list of the interfaces on the 
       //host with clientId clientName
+      var label1 = document.createElement('label');
+      label1.innerHTML = ' nodes on ';
+      label1.id = 'change' + elementCount;
       var dropDown = document.createElement('select');
       now.GetInterfacesOfClient(clientName, function(interfaces){
         for(var i in interfaces)
@@ -157,7 +185,9 @@ block headerAdditions
         }
       });
       div.appendChild(label);
+      div.appendChild(inputType);
       div.appendChild(input);
+      div.appendChild(label1);
       div.appendChild(dropDown);
       if(group != '')
       {
@@ -199,9 +229,9 @@ block headerAdditions
         var autoconfMessage = {};
         autoconfMessage.type = 'haystackConfig';
         autoconfMessage.id = document.getElementById('autohook' + i).childNodes[0].value;
-        autoconfMessage.numNodesType = 'fixed';
-        autoconfMessage.numNodes = document.getElementById('autohook' + i).childNodes[1].value;
-        autoconfMessage.interface = document.getElementById('autohook' + i).childNodes[2].value;
+        autoconfMessage.numNodesType = document.getElementById('autohook' + i).childNodes[1].value;
+        autoconfMessage.numNodes = document.getElementById('autohook' + i).childNodes[2].value;
+        autoconfMessage.interface = document.getElementById('autohook' + i).childNodes[4].value;
         now.MessageSend(autoconfMessage);
       }
     }

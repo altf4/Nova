@@ -431,7 +431,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
             
               var hhconfigArgs = new Array();
             
-              if(json_args.numNodesType == "fixed") 
+              if(json_args.numNodesType == "number") 
               {
                 if(json_args.numNodes !== undefined) 
                 {
