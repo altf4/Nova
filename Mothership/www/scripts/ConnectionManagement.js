@@ -73,9 +73,6 @@
       var groupList = groups.groups.split(':');
       var memberList = groups.members.split('|');
       
-      //console.log('groupList "' + groupList + '"');
-      //console.log('memberList "' + memberList + '"');
-      
       if(groupList[0] == '' || (memberList[0] == '' || memberList[0] == undefined))
       {
         var label = document.createElement('label');

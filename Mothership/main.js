@@ -182,6 +182,10 @@ function cleanUI(callback)
   {
     everyone.now.UpdateGroupList('', 'clear');
   } 
+  else
+  {
+    console.log('ConnectionManagement.js did not load UpdateGroupsList.');  
+  }
   if(typeof(everyone.now.UpdateConnectionsList) == 'function')
   {
     everyone.now.UpdateConnectionsList('', 'clear'); 

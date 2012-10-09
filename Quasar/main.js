@@ -342,7 +342,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
           switch(json_args.type)
           {
             case 'startNovad':
-              everyone.now.StartNovad();
+              nova.StartNovad(false);
+              nova.CheckConnection();
               var response = {};
               response.id = clientId;
               response.type = 'response';
@@ -350,7 +351,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               mothership.sendUTF(JSON.stringify(response));
               break;
             case 'stopNovad':
-              everyone.now.StopNovad();
+              nova.StopNovad();
+              nova.CloseNovadConnection();
               var response = {};
               response.id = clientId;
               response.type = 'response';
@@ -360,7 +362,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
             case 'startHaystack':
               if(!nova.IsHaystackUp())
               {
-                everyone.now.StartHaystack();
+                nova.StartHaystack();
                 var response = {};
                 response.id = clientId;
                 response.type = 'response';
@@ -377,7 +379,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               }
               break;
             case 'stopHaystack':
-              everyone.now.StopHaystack();
+              nova.StopHaystack();
               var response = {};
               response.id = clientId;
               response.type = 'response';
@@ -2315,5 +2317,3 @@ setInterval(function () {
 
 	}
 }, 5000);
-
-console.log('setInterval here');
