@@ -283,13 +283,25 @@ block headerAdditions
             var monthdayyear = document.getElementById(id + 'date').value.split('/');
             var month = parseInt(monthdayyear[0]) - 1;
             var day = parseInt(monthdayyear[1]);
+            if(day.length == 2 && day[0] == '0')
+            {
+              day = parseInt(day[1]); 
+            }
+            else if(day.length > 2)
+            {
+              alert('Invalid day value for MM/DD/YYYY string');
+              return; 
+            }
             var year = parseInt(monthdayyear[2]);
-            console.log('monthdayyear = ' + month + '/' + day + '/' + year);
+            if(monthdayyear[2].length != 4)
+            {
+              alert('Year value for MM/DD/YYYY string must be four characters');
+              return; 
+            }
             var hourminutesecond = document.getElementById(id + 'time').value.split(':');
             var hour = (parseInt(hourminutesecond[0]) % 24);
             var minute = parseInt(hourminutesecond[1]);
             var second = parseInt((hourminutesecond[2] != undefined ? hourminutesecond[2] : 0));
-            console.log('hourminutesecond = ' + hour + ':' + minute + ':' + second);
             if(isNaN(month) || isNaN(day) || isNaN(year)
             || isNaN(hour) || isNaN(minute) || isNaN(second))
             {
