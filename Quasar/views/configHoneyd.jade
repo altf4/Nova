@@ -4,6 +4,7 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
   link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
   link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
+  script(type="text/javascript", src="scripts/NovaPiChart.js")
 
   script
     var grid;
@@ -223,38 +224,8 @@ block headerAdditions
         }
 
         arr = arr.sort(function(a,b) {return b.value - a.value});
-        console.log(arr);
+        var piChart = new NovaPiChart("piChart", 200, arr);
 
-
-
-        var canvas = document.getElementById("nodeDistribution");
-        var ctx = canvas.getContext("2d");
-        var lastend = 0;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (var pfile = 0; pfile < arr.length; pfile++) {
-            var randomColor = ((1<<24)*Math.random()|0).toString(16);
-            if (randomColor.length != 6) {
-                for (var i = randomColor.length; i < 6; i++) {
-                    randomColor = "0" + randomColor;
-                }
-            }
-            randomColor = "#" + randomColor;
-
-            ctx.fillStyle = randomColor;
-            ctx.beginPath();
-            ctx.moveTo(150,150);
-            ctx.arc(150,150,150,lastend,lastend+(Math.PI*2*(arr[pfile].value/numberOfNodes)),false);
-            ctx.lineTo(150,150);
-            ctx.fill();
-            lastend += Math.PI*2*(arr[pfile].value/numberOfNodes);
-
-            var text = document.createElement("p");
-            text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*arr[pfile].value/numberOfNodes).toFixed(2) + "% " + arr[pfile].name;
-            document.getElementById("piChartLegend").appendChild(text);
-
-        }
-
-        console.log(nodesPerProfile);
       });
     });
 
@@ -271,9 +242,6 @@ block headerAdditions
 block content
   h1 Current Haytack Node Configuration
   div#piChart
-    div#chart
-      canvas#nodeDistribution(width="300", height="300") Please upgrade to a browser that supports HTML5 canvas elements
-    div#piChartLegend
   br
   label Group
     select#GROUP(name="GROUP", onchange="changeGroup()")
