@@ -10,6 +10,12 @@
         console.log('looks like someone forgot to pass clients through the GET for this page');
         return;
       }
+      
+      while(document.getElementById(divName).hasChildNodes())
+      {
+        document.getElementById(divName).removeChild(document.getElementById(divName).lastChild);
+      }
+      
       if(clients[0] == '' || clients.length == 0)
       {
           var label = document.createElement('label');
@@ -57,6 +63,11 @@
       {
         console.log('There are no groups set');
         return;
+      }
+      
+      while(document.getElementById(divName).hasChildNodes())
+      {
+        document.getElementById(divName).removeChild(document.getElementById(divName).lastChild);
       }
       
       var groupList = groups.groups.split(':');
@@ -199,6 +210,13 @@
         var groupDiv = document.getElementById(group + 'div');
         switch(action)
         {
+          case 'clear':
+            while(divGroupList.hasChildNodes())
+            {
+              divGroupList.lastChild.removeAttribute('readonly');
+              divGroupList.removeChild(divGroupList.lastChild); 
+            }
+            break;
           case 'update':
             if(groupDiv == undefined || groupDiv.childNodes.length == 0)
             {
@@ -245,13 +263,6 @@
                   check.removeAttribute('disabled'); 
                 }
               });
-            }
-            break;
-          case 'clear':
-            while(divGroupList.hasChildNodes())
-            {
-              divGroupList.lastChild.removeAttribute('readonly');
-              divGroupList.removeChild(divGroupList.lastChild); 
             }
             break;
           default:

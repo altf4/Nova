@@ -148,39 +148,52 @@ var everyone = nowjs.initialize(app);
 // saved already should be. 
 process.on('SIGTERM', function(){
   console.log('SIGTERM recieved');
-  SaveClientIds();
-  cleanUI();
-  saveScheduledEvents(function(){process.exit(1)});
+  cleanUI(function(){
+    SaveClientIds();
+  });
+  saveScheduledEvents(function(){
+    process.exit(1);
+  });
 });
 
 process.on('SIGKILL', function(){
   console.log('SIGKILL received');
-  SaveClientIds();
-  cleanUI();
-  saveScheduledEvents(function(){process.exit(1)});
+  cleanUI(function(){
+    SaveClientIds();
+  });
+  saveScheduledEvents(function(){
+    process.exit(1);
+  });
 });
 
 process.on('SIGINT', function(){
   console.log('SIGINT received');
-  SaveClientIds();
-  cleanUI();
-  saveScheduledEvents(function(){process.exit(1)});
+  cleanUI(function(){
+    SaveClientIds();
+  });
+  saveScheduledEvents(function(){
+    process.exit(1);
+  });
 });
 
-function cleanUI()
+function cleanUI(callback)
 {
-  if(typeof everyone.now.UpdateConnectionsList == 'function')
-  {
-    everyone.now.UpdateConnectionsList('', 'clear'); 
-  }
-  if(typeof everyone.now.UpdateClientsList == 'function')
-  {
-    everyone.now.UpdateClientsList('', 'clear');
-  }
-  if(typeof everyone.now.UpdateGroupList == 'function')
+  if(typeof(everyone.now.UpdateGroupList) == 'function')
   {
     everyone.now.UpdateGroupList('', 'clear');
   } 
+  if(typeof(everyone.now.UpdateConnectionsList) == 'function')
+  {
+    everyone.now.UpdateConnectionsList('', 'clear'); 
+  }
+  if(typeof(everyone.now.UpdateClientsList) == 'function')
+  {
+    everyone.now.UpdateClientsList('', 'clear');
+  }
+  if(typeof(callback) == 'function')
+  {
+    callback; 
+  }
 }
 
 readScheduledEvents();
@@ -705,9 +718,13 @@ function getClientIds()
   return ret;
 }
 
-function SaveClientIds()
+function SaveClientIds(callback)
 {
   fs.writeFileSync(NovaSharedPath + '/Mothership/clientIds.txt', getClientIds());
+  if(typeof callback == 'function')
+  {
+    callback; 
+  }
 }
 
 function populateNovaClients()
