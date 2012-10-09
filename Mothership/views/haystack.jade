@@ -134,10 +134,12 @@ block headerAdditions
     {
       if(type == 'ratio')
       {
+        document.getElementById('autohook' + index).style.width = '80%';
         document.getElementById('change' + index).innerHTML = ' times the amount of real nodes found on ';
       }
       else
       {
+        document.getElementById('autohook' + index).style.width = '55%';
         document.getElementById('change' + index).innerHTML = ' nodes on '; 
       }
     }
@@ -147,7 +149,7 @@ block headerAdditions
       selectedClients.push(clientName);
       var div = document.createElement('div');
       div.id = 'autohook' + elementCount;
-      div.setAttribute('style', 'border: 2px solid; border-radius: 12px; background: #E8A02F;');
+      div.setAttribute('style', 'border: 2px solid; border-radius: 12px; background: #E8A02F; width: 55%;');
       var label = document.createElement('label');
       label.value = clientName;
       label.innerHTML = clientName + ': Create ';
@@ -223,7 +225,6 @@ block headerAdditions
 
     function processAutoconfigElements()
     {
-      console.log('Processing autoconfig selections...');
       for(var i = 0; i < elementCount; i++)
       {
         var autoconfMessage = {};
