@@ -4,6 +4,7 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
   link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
   link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
+  script(type="text/javascript", src="scripts/NovaPiChart.js")
 
   script
     var grid;
@@ -97,6 +98,7 @@ block headerAdditions
 
     function checkOnlyOne(checkedBox)
     {
+      var checkedBox = document.getElementById(checkedBox);
       var forLength = document.getElementById("length").getAttribute("value");
       
       var checkAgainst = checkedBox.getAttribute("id");
@@ -200,7 +202,31 @@ block headerAdditions
         grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:100, autoWidth:true});
         dojo.byId("gridDiv").appendChild(grid.domNode);
       now.ready(function() {
-        checkOnlyOne(if0);
+        checkOnlyOne("if0");
+            
+        var nodesPerProfile = new Object();
+        var rows = document.getElementById("nodeTableBody").childNodes;
+        var numberOfNodes = rows.length;
+        for (var i = 0; i < rows.length; i++) {
+          var pfile = rows[i].childNodes[2].innerHTML;
+          if (nodesPerProfile[pfile] === undefined) {
+            nodesPerProfile[pfile] = 1;
+          } else {
+            nodesPerProfile[pfile]++;
+          }
+        }
+
+        var arr = new Array();
+        for (var pfile in nodesPerProfile) {
+            var p = new Object();
+            p.name = pfile;
+            p.value = nodesPerProfile[pfile];
+            arr.push(p);
+        }
+
+        arr = arr.sort(function(a,b) {return b.value - a.value});
+        var piChart = new NovaPiChart("piChart", 200, arr);
+
       });
     });
 
@@ -215,7 +241,8 @@ block headerAdditions
     ]];
 
 block content
-  h1 Current Honeyd Nodes
+  h1 Current Haytack Node Configuration
+  div#piChart
   br
   label Group
     select#GROUP(name="GROUP", onchange="changeGroup()")
@@ -233,7 +260,7 @@ block content
         th Profile
         th IP
         th MAC
-    tbody
+    tbody#nodeTableBody
       each node, i in nodes
         tr
           td #{node.IsEnabled()}
@@ -273,17 +300,17 @@ block content
     - if(INTERFACES.length == 1)
       tr 
         td
-          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
+          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
           #{INTERFACES[0]}
     - else
       tr 
         td
-          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
+          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
           #{INTERFACES[0]}
       - for (var i = 1; i < INTERFACES.length; i++)
           tr 
             td
-              input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
+              input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne('if#{i}')")
               #{INTERFACES[i]}
   hidden(id="length", value=INTERFACES.length)
   br

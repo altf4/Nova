@@ -54,11 +54,11 @@ typedef struct _packet Packet;
 #define REMOVE false
 
 //Table of IP destinations and a count;
-typedef Nova::HashMap<uint32_t, uint32_t, std::tr1::hash<time_t>, eqtime > IP_Table;
+typedef Nova::HashMap<uint32_t, uint64_t, std::tr1::hash<time_t>, eqtime > IP_Table;
 //Table of destination ports and a count;
-typedef Nova::HashMap<in_port_t, uint32_t, std::tr1::hash<in_port_t>, eqport > Port_Table;
+typedef Nova::HashMap<in_port_t, uint64_t, std::tr1::hash<in_port_t>, eqport > Port_Table;
 //Table of packet sizes and a count
-typedef Nova::HashMap<uint16_t, uint32_t, std::tr1::hash<uint16_t>, eq_uint16_t > Packet_Table;
+typedef Nova::HashMap<uint16_t, uint64_t, std::tr1::hash<uint16_t>, eq_uint16_t > Packet_Table;
 
 struct IpPortCombination {
 	uint32_t m_ip;
@@ -124,9 +124,6 @@ struct IpPortCombinationEquals
 
 typedef Nova::HashMap<IpPortCombination, uint8_t, std::tr1::hash<IpPortCombination>, IpPortCombinationEquals> IpPortTable;
 
-//Table of timestamps, with the dst_ip as the key. Used to track intervals between packets to a host from a particular suspect
-typedef Nova::HashMap<uint32_t, time_t, std::tr1::hash<uint32_t>, eq_uint32_t > LastTimeTable;
-
 enum featureIndex: uint8_t
 {
 	IP_TRAFFIC_DISTRIBUTION = 0,
@@ -160,8 +157,8 @@ public:
 	static std::string m_featureNames[];
 
 	//Number of packets total
-	uint32_t m_packetCount;
-	uint32_t m_tcpPacketCount;
+	uint64_t m_packetCount;
+	uint64_t m_tcpPacketCount;
 
 	FeatureSet();
 	~FeatureSet();
@@ -237,16 +234,16 @@ public:
 	time_t m_lastTime;
 
 	// For some TCP flag ratios and statistics
-	uint32_t m_rstCount;
-	uint32_t m_ackCount;
-	uint32_t m_synCount;
-	uint32_t m_finCount;
-	uint32_t m_synAckCount;
+	uint64_t m_rstCount;
+	uint64_t m_ackCount;
+	uint64_t m_synCount;
+	uint64_t m_finCount;
+	uint64_t m_synAckCount;
 
 	time_t m_totalInterval;
 
 	//Total number of bytes in all packets
-	uint32_t m_bytesTotal;
+	uint64_t m_bytesTotal;
 
 	//Table of IP addresses and associated packet counts
 	IP_Table m_IPTable;
@@ -261,22 +258,7 @@ public:
 	IpPortTable m_hasUdpPortIpBeenContacted;
 
 
-	int m_numberOfHaystackNodesContacted;
-
-	// TODO DTC: Think this is depricated, remove it when sure
-	//XXX Temporarily using SANITY_CHECK/2, rather than that, we should serialize a total byte size before the
-	// feature data then proceed like before, this will allow Deserialized to perform a real sanity checking and
-	// this max table entries var can be replaced with a total bytesize check
-	static const uint32_t m_maxTableEntries = (((SANITY_CHECK) -
-		//(Message Handling m_messageType + (m_callbackType || m_requestType) + m_suspectLength
-		((3*sizeof(uint32_t)
-		//(Suspect Members) IP + Classificiation + 5x flags + hostile neighbors + featureAccuracy[DIM] + features[DIM]
-		+ sizeof(in_addr_t)+ sizeof(double) + 5*(sizeof(bool)) +  sizeof(int32_t) + 2*DIM*(sizeof(double)))
-		// + 2*(4x Table entry count + m_bytesTotal + m_packetCount) (could serialized two feature sets)
-		+ (2*(6*(sizeof(uint32_t)) + 4*(sizeof(time_t))))))
-		// All of the Above divided by (8 bytes per table entry)*(up to two feature sets per serialization)
-		/(8*2));
-
+	uint32_t m_numberOfHaystackNodesContacted;
 };
 }
 
