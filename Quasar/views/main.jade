@@ -395,7 +395,6 @@ block headerAdditions
     require(["dojo/ready", "dojo/domReady!"], function(ready){
         ready(function() {
             now.ready(function() {
-            Init();
 
             now.updateHaystackStatus = updateHaystackStatus;
             now.updateNovadStatus = updateNovadStatus;
@@ -403,6 +402,8 @@ block headerAdditions
             now.SuspectCleared = SuspectCleared;
             now.OnNewSuspect = OnNewSuspect;
 
+            Init();
+            
             now.IsHaystackUp(updateHaystackStatus);
             now.IsNovadUp(updateNovadStatus);
             });
