@@ -362,7 +362,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
             case 'startHaystack':
               if(!nova.IsHaystackUp())
               {
-                nova.StartHaystack();
+                nova.StartHaystack(false);
                 var response = {};
                 response.id = clientId;
                 response.type = 'response';
