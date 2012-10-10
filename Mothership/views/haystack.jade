@@ -244,8 +244,6 @@ block headerAdditions
     }
     
     now.ready(function(){
-      setUpSelect('clientsList');
-      setUpGrouplist('groupsList');
       now.GetClients(now.RenderConnectionsList);
       now.SetUpNotificationsButton();
       now.SetUpHostileEventsButton();
@@ -258,4 +256,6 @@ block headerAdditions
           } 
         }
       });
+      setUpSelect('clientsList');
+      setUpGrouplist('groupsList');
     });

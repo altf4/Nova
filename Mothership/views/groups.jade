@@ -229,9 +229,6 @@ block headerAdditions
     }
 
     now.ready(function(){
-      setUpSelect('clientsList');
-      setUpGroups('appendHook');
-      
       var members = '';
       
       for(var i = 0; i < clientCount; i++)
@@ -257,6 +254,9 @@ block headerAdditions
           } 
         }
       });
+      
+      setUpSelect('clientsList');
+      setUpGroups('appendHook');
     });
 
 block content
