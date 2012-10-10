@@ -654,10 +654,19 @@ everyone.now.AddGroup = function(group, members)
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
 
-everyone.now.AddClientBenignRequest = function(clientId)
+AddClientBenignRequest = function(clientId)
 {
+  for(var i in clientsBenignRequests)
+  {
+    if(clientsBenignRequests[i] == clientId)
+    {
+      return; 
+    }
+  }
   clientsBenignRequests.push(clientId);
 }
+
+everyone.now.AddClientBenignRequest = AddClientBenignRequest;
 
 everyone.now.RemoveClientBenignRequest = function(clientId)
 {
@@ -892,6 +901,12 @@ wsServer.on('request', function(request)
 						    return;
 						  }
 						}
+						if(json_args.benignRequest == 'true')
+						{
+						   AddClientBenignRequest(json_args.id);
+						   console.log('benignRequest was true on connection, adding to benign request list');
+						}
+						
 						novaClients[json_args.id.toString()] = {statusNova: json_args.nova, statusHaystack: json_args.haystack, connection: connection};
 						var date = new Date();
 						everyone.now.WriteNotification(json_args.id + ' connected at ' + date);
