@@ -1103,6 +1103,18 @@ app.get('/suspects', passport.authenticate('basic', {session: false}), function 
 	});
 });
 
+
+app.get('/monitor', passport.authenticate('basic', {session: false}), function (req, res) {
+	var suspectIp = req.query["ip"];
+	var suspectInterface = req.query["interface"];
+	
+	res.render('monitor.jade', {
+		featureNames: nova.GetFeatureNames()
+		, suspectIp: suspectIp
+		, suspectInterface: suspectInterface
+	});
+});
+
 app.get('/events', passport.authenticate('basic', {session: false}), function (req, res) {
 	res.render('events.jade', {
 		featureNames: nova.GetFeatureNames()

@@ -1,0 +1,122 @@
+extends layout
+
+block content
+  - for (var i = 0; i < 14; i++) {
+    div(style="display: inline-block;")
+      h3 #{String(featureNames).split(",")[i]}
+      canvas(id = "chart#{i}", width="200px", height="200px", style="border: 1px solid black")
+      p(id = "p#{i}")     ....................
+    - if (i%5 == 4) {
+    br
+    -}
+  -}
+   
+block headerAdditions
+  script
+    var data = new Array();
+    function Init() {};
+    function OnNewSuspect(suspect) {
+        if (suspect.GetIpString == "#{suspectIp}" && suspect.GetInterface == "#{suspectInterface}") {
+            data.push(suspect.GetFeatures);
+
+            // TODO Don't hard code
+            if (data.length > 25) {
+                data.shift();
+            }
+            for (var i = 0; i < 14; i++) {
+                drawGraph("chart" + i, data, i);
+            }
+        }
+
+    };
+
+    function drawGraph(canvas, data, index) {
+        // TODO Don't hard code
+        var width = 190;
+        var height = 190;
+        
+        var c = document.getElementById(canvas);
+        var p = document.getElementById("p" + index);
+        var ctx = c.getContext("2d");
+        ctx.clearRect (0, 0,200 ,200);
+       
+        ctx.fillSTyle="#0000FF";
+
+        var minY = data[0][index];
+        var maxY = data[0][index];
+
+        var points = new Array();
+        for (var i = 0; i < data.length; i++) {
+            if (data[i][index] > maxY) {
+                maxY = data[i][index];
+            }
+
+            if (data[i][index] < minY) {
+                minY = data[i][index];
+            }
+        }
+        
+         
+        for (var i = 0; i < data.length; i++) {
+            var point = new Object();
+            point.x = (width/(data.length - 1))*i;
+            point.y = 5 + height - ((1.0*data[i][index] - minY)/maxY * height);
+            if (maxY == 0) {
+                point.y = 5 + height;
+            }
+            points.push(point);
+        }
+
+        
+        ctx.strokeStyle="#FF0000";
+        for (var i = 1; i < points.length; i++) {
+            ctx.beginPath();
+            ctx.moveTo(points[i-1].x, points[i-1].y);
+            ctx.lineTo(points[i].x, points[i].y);
+            ctx.stroke();
+        }
+
+        ctx.fillStyle="#0000FF";
+        for (var i = 0; i < points.length; i++) {
+            ctx.beginPath();
+            ctx.arc(points[i].x,points[i].y,2,0,2*Math.PI);
+            ctx.fill();
+        }
+        
+        
+        var trendString = "";
+        // TODO Don't hard code
+        var trendStringCutoff = 25;
+        for (var i = points.length - 2; i >= 0; i--) {
+            if (trendString.length > trendStringCutoff) {
+                break;
+            }
+
+            if (points[i].y > points[i+1].y) {
+                trendString = "+" + trendString;
+            } else if (points[i].y < points[i+1].y) {
+                trendString = "-" + trendString;
+            } else {
+                trendString = "=" + trendString;
+            }
+        }
+
+        p.innerHTML = trendString;
+            
+
+    }
+
+
+
+    require(["dojo/ready", "dojo/domReady!"], function(ready){
+        ready(function() {
+            now.ready(function() {
+            Init();
+  
+            now.OnNewSuspect = OnNewSuspect;
+  
+            });
+        });
+    });
+
+
