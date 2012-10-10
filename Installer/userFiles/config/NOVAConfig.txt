@@ -469,3 +469,8 @@ CLASSIFICATION_ENGINE KNN
 ############################################
 THRESHOLD_HOSTILE_TRIGGERS - - - - >6 >20 >20 - - - - - - >0.5
 
+############################################
+# ONLY_CLASSIFY_HONEYPOT_TRAFFIC
+############################################
+ONLY_CLASSIFY_HONEYPOT_TRAFFIC 0
+

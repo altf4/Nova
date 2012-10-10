@@ -218,6 +218,24 @@ form(method="post", action="/configureNovaSave")
   input(type="number", step="1", min="1", name="K",  value=K)
   br
   
+  label Only classify packets going to honeypots?
+  br
+  if ONLY_CLASSIFY_HONEYPOT_TRAFFIC != "0"
+    |Yes
+    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="1", checked)
+    br
+    |No
+    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="0")
+    br
+  else
+    |Yes
+    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="1")
+    br
+    |No
+    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="0", checked)
+    br
+  br
+  
   label Classification Timeout
   input(type="number", step="1", min="0", name="CLASSIFICATION_TIMEOUT",  value=CLASSIFICATION_TIMEOUT)
   br

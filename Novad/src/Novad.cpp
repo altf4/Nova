@@ -613,7 +613,7 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 //Convert monitored ip address into a csv string
 string ConstructFilterString()
 {
-	string filterString = "not src host 0.0.0.0";
+	string filterString = "not src net 0.0.0.0";
 	if(Config::Inst()->GetCustomPcapString() != "") {
 		if(Config::Inst()->GetOverridePcapString())
 		{
@@ -632,7 +632,7 @@ string ConstructFilterString()
 	while(hsAddresses.size())
 	{
 		//Remove and add the haystack host entry
-		filterString += " && not src host ";
+		filterString += " && not src net ";
 		filterString += hsAddresses.back();
 		hsAddresses.pop_back();
 	}
@@ -642,7 +642,7 @@ string ConstructFilterString()
 	while(hsAddresses.size())
 	{
 		//Remove and add the haystack host entry
-		filterString += " && not src host ";
+		filterString += " && not src net ";
 		filterString += hsAddresses.back();
 		hsAddresses.pop_back();
 	}
@@ -651,7 +651,7 @@ string ConstructFilterString()
 	while(hsAddresses.size())
 	{
 		//Remove and add the haystack host entry
-		filterString += " && not src host ";
+		filterString += " && not src net ";
 		filterString += hsAddresses.back();
 		hsAddresses.pop_back();
 	}
@@ -664,6 +664,22 @@ string ConstructFilterString()
 		filterString += " mask ";
 		filterString += WhitelistConfiguration::GetSubnet(hsAddresses.back());
 		hsAddresses.pop_back();
+	}
+
+
+	// Are we only classifying on honeypot traffic?
+	if (Config::Inst()->GetOnlyClassifyHoneypotTraffic())
+	{
+		hsAddresses = haystackDhcpAddresses;
+		hsAddresses.insert(hsAddresses.end(), haystackAddresses.begin(), haystackAddresses.end());
+		filterString += " && (0 == 1";
+		while(hsAddresses.size())
+		{
+			filterString += " || dst net ";
+			filterString += hsAddresses.back();
+			hsAddresses.pop_back();
+		}
+		filterString += ")";
 	}
 
 	LOG(DEBUG, "Pcap filter string is "+filterString,"");

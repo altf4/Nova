@@ -229,6 +229,7 @@ public:
 	std::vector<double> GetFeatureWeights();
 	std::string GetClassificationEngineType();
 	std::vector<HostileThreshold> GetHostileThresholds();
+	bool GetOnlyClassifyHoneypotTraffic();
 
 protected:
 	Config();
@@ -331,6 +332,8 @@ private:
 	int m_masterUIReconnectTime;
 	std::string m_masterUIIP;
 	std::string m_masterUIClientID;
+
+	bool m_onlyClassifyHoneypotTraffic;
 
 	std::vector<double> m_featureWeights;
 

@@ -89,7 +89,8 @@ string Config::m_prefixes[] =
 	"MASTER_UI_ENABLED",
 	"FEATURE_WEIGHTS",
 	"CLASSIFICATION_ENGINE",
-	"THRESHOLD_HOSTILE_TRIGGERS"
+	"THRESHOLD_HOSTILE_TRIGGERS",
+	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC"
 };
 
 Config *Config::m_instance = NULL;
@@ -965,6 +966,19 @@ void Config::LoadConfig_Internal()
 					*/
 				}
 				continue;
+			}
+
+			// ONLY_CLASSIFY_HONEYPOT_TRAFFIC
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_onlyClassifyHoneypotTraffic = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
 			}
 
 		}
@@ -2772,6 +2786,12 @@ vector<HostileThreshold> Config::GetHostileThresholds()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_hostileThresholds;
+}
+
+bool Config::GetOnlyClassifyHoneypotTraffic()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_onlyClassifyHoneypotTraffic;
 }
 
 }
