@@ -905,6 +905,10 @@ wsServer.on('request', function(request)
 						{
 						   AddClientBenignRequest(json_args.id);
 						   console.log('benignRequest was true on connection, adding to benign request list');
+						   if(typeof(everyone.now.RenderBenignRequests) == 'function')
+						   {
+						     everyone.now.RenderBenignRequests(); 
+						   }
 						}
 						
 						novaClients[json_args.id.toString()] = {statusNova: json_args.nova, statusHaystack: json_args.haystack, connection: connection};

@@ -555,6 +555,21 @@ block headerAdditions
        theDoc.getElementById("tablePages").appendChild(pageLink);
     }
     
+    now.RenderBenignRequests = function()
+    {
+      now.GetClientBenignRequest(function(list){
+        var set = '';
+        for(var i in list)
+        {
+          if(list[i] != '')
+          {
+            set += list[i] + ':';
+          }
+        }
+        document.getElementById('benignList').value = set;
+      }); 
+    }
+    
     function Init() {
       var gridStructure = new Array();
       gridStructure.push({name: "Address"});
@@ -583,20 +598,11 @@ block headerAdditions
       ready(function() {
         now.ready(function() {
           Init();
+          document.getElementById('showtargets').value = '';
           now.GetClients(now.RenderConnectionsList);
           now.SetUpNotificationsButton();
           now.SetUpHostileEventsButton(now.UpdateHostileEventsButton('read'));
-          now.GetClientBenignRequest(function(list){
-            var set = '';
-            for(var i in list)
-            {
-              if(list[i] != '')
-              {
-                set += list[i] + ':';
-              }
-            }
-            document.getElementById('benignList').value = set;
-          });
+          now.RenderBenignRequests();
           now.GetClients(function(list){
             for(var i in list)
             {
