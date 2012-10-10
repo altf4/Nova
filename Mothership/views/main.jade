@@ -225,6 +225,18 @@ block headerAdditions
     function requestBenign()
     {
       document.getElementById('benignList').value = message.id;
+      var iter = message.id.split(':');
+      
+      now.GetClientBenignRequest(function(list){
+        for(var i in iter)
+        {
+          if(list.join().indexOf(iter[i]) == -1)
+          {
+            now.AddClientBenignRequest(iter[i]);
+          }
+        }
+      });
+      
       message.type = 'requestBenign';
       now.MessageSend(message);
     }
@@ -234,6 +246,18 @@ block headerAdditions
       message.type = 'cancelRequestBenign';
       now.MessageSend(message);
       var assign = message.id;
+      var iter = message.id.split(':');
+      
+      now.GetClientBenignRequest(function(list){
+        for(var i in iter)
+        {
+          if(list.join().indexOf(iter[i]) != -1)
+          {
+            now.RemoveClientBenignRequest(iter[i]);
+          }
+        }
+      });
+      
       var remove = message.id.split(':');
       for(var i in remove)
       {
@@ -564,6 +588,17 @@ block headerAdditions
           now.GetClients(now.RenderConnectionsList);
           now.SetUpNotificationsButton();
           now.SetUpHostileEventsButton(now.UpdateHostileEventsButton('read'));
+          now.GetClientBenignRequest(function(list){
+            var set = '';
+            for(var i in list)
+            {
+              if(list[i] != '')
+              {
+                set += list[i] + ':';
+              }
+            }
+            document.getElementById('benignList').value = set;
+          });
           now.GetClients(function(list){
             for(var i in list)
             {
