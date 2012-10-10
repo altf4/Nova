@@ -107,8 +107,22 @@ namespace std {
         	// TODO: This should be passed by reference, doesn't compile though. Look into it.
             std::size_t operator()( IpPortCombination c ) const
             {
-            	uint64_t temp = 0 | c.m_ip | (((uint64_t)c.m_port) << 32);
-                return tr1::hash<uint64_t>()(temp);
+            	  uint32_t a = c.m_ip;
+
+            	  // Thomas Wang's integer hash function
+            	  // http://www.cris.com/~Ttwang/tech/inthash.htm
+            	  a = (a ^ 61) ^ (a >> 16);
+            	  a = a + (a << 3);
+            	  a = a ^ (a >> 4);
+            	  a = a * 0x27d4eb2d;
+            	  a = a ^ (a >> 15);
+
+            	  const int SECRET_CONSTANT = 104729; // 1,000th prime number
+
+            	  // Map 16-bit port 1:1 to a random-looking number
+            	  a += ((uint32_t)c.m_port * (SECRET_CONSTANT*4 + 1)) & 0xffff;
+
+            	  return a;
             }
         };
     }
