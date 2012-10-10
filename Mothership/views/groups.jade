@@ -229,19 +229,6 @@ block headerAdditions
     }
 
     now.ready(function(){
-      var members = '';
-      
-      for(var i = 0; i < clientCount; i++)
-      {
-        members += clients[i] + ',';
-      }
-      if(members[members.length - 1] == ',')
-      {
-        members = members.substr(0, members.length - 1);
-      }
-      
-      updateGroup('all', members);
-      
       now.GetClients(now.RenderConnectionsList);
       now.SetUpNotificationsButton();
       now.SetUpHostileEventsButton();
@@ -257,6 +244,19 @@ block headerAdditions
       
       setUpSelect('clientsList');
       setUpGroups('appendHook');
+      
+      var members = '';
+      
+      for(var i = 0; i < clientCount; i++)
+      {
+        members += clients[i] + ',';
+      }
+      if(members[members.length - 1] == ',')
+      {
+        members = members.substr(0, members.length - 1);
+      }
+      
+      updateGroup('all', members);
     });
 
 block content
