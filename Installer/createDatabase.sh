@@ -1,6 +1,9 @@
 #!/bin/bash
 
 QUERY="
+
+PRAGMA journal_mode = WAL;
+
 CREATE TABLE firstrun(
 	run TIMESTAMP PRIMARY KEY
 );
