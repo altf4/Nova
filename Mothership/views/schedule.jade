@@ -200,6 +200,7 @@ block headerAdditions
       
       var name = document.createElement('input');
       name.id = clientId + 'name';
+      name.maxlength = '10';
       
       var b0 = document.createElement('br');
       var b1 = document.createElement('br');
@@ -245,6 +246,14 @@ block headerAdditions
       for(var i in document.getElementById('elementHook').childNodes)
       {
         var id = document.getElementById('elementHook').childNodes[i].id; 
+        
+        if(/^[a-z0-9]+$/i.test(document.getElementById(id + 'name').value) || document.getElementById(id + 'name').value.length <= 1)
+        {
+          document.getElementById(id + 'name').value = '';
+          alert('Scheduled event names must consist of 2-10 alphanumeric characters');
+          return;
+        }
+        
         if(id != undefined)
         {
           if((document.getElementById(id + 'name').value != '')

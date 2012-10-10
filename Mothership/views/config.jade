@@ -29,19 +29,19 @@ block content
   h2 Classification Settings
   label Classification Timeout
   br
-  input(type="number", step="1", min="0", name="CLASSIFICATION_TIMEOUT",  value=CLASSIFICATION_TIMEOUT)
+  input(type="number", step="1", min="0", name="CLASSIFICATION_TIMEOUT", value=CLASSIFICATION_TIMEOUT)
   br
   label Neighbors
   br
-  input(type="number", step="1", min="1", name="K",  value=K)
+  input(type="number", step="1", min="1", name="K", value=K)
   br
   label EPS
   br
-  input(name="EPS",  value=EPS)
+  input(name="EPS", type="number", value=EPS)
   br
   label Classification Threshold
   br
-  input(name="CLASSIFICATION_THRESHOLD",  value=CLASSIFICATION_THRESHOLD)
+  input(name="CLASSIFICATION_THRESHOLD", type="number", value=CLASSIFICATION_THRESHOLD)
   br
   label Packets Needed Before Classification
   br
@@ -89,17 +89,17 @@ block content
   h2 Special Run Settings
   label Packet Capture Buffer Size (in bytes)
   br
-  input(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE",  value=CAPTURE_BUFFER_SIZE)
+  input(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE", value=CAPTURE_BUFFER_SIZE)
   br
   
   h2 State File Settings
   label State Save Frequency
   br
-  input(type="number", min="0", name="SAVE_FREQUENCY",  value=SAVE_FREQUENCY)
+  input(type="number", min="0", name="SAVE_FREQUENCY", value=SAVE_FREQUENCY)
   br
   label Data TTL
   br
-  input(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
+  input(type="number", min="0", name="DATA_TTL", value=DATA_TTL)
   br
   
   h2 Doppelganger
@@ -124,7 +124,7 @@ block content
   h2 Logger Settings
   label Service Preferences
   br
-  input(name="SERVICE_PREFERENCES", value=SERVICE_PREFERENCES)
+  input(name="SERVICE_PREFERENCES", id="SERVICE_PREFERENCES", value=SERVICE_PREFERENCES)
   br
   br
   //Aesthetic note: Probably want to have a spinner or something here
@@ -140,6 +140,7 @@ block headerAdditions
       var groups = !{GROUPS};
       var message = {};
       message.id = '';
+      var replace = "#{SERVICE_PREFERENCES}";
       
       function updateConfiguration()
       {
@@ -224,6 +225,7 @@ block headerAdditions
         message.EPS = document.getElementsByName('EPS')[0].value;
         message.CLASSIFICATION_THRESHOLD = document.getElementsByName('CLASSIFICATION_THRESHOLD')[0].value;
         message.MIN_PACKET_THRESHOLD = document.getElementsByName('MIN_PACKET_THRESHOLD')[0].value;
+        
         if(document.getElementById('clearHostileYes').checked)
         {
           message.CLEAR_AFTER_HOSTILE_EVENT = '1';  
@@ -232,7 +234,9 @@ block headerAdditions
         {
           message.CLEAR_AFTER_HOSTILE_EVENT = '0';
         }
+        
         message.CUSTOM_PCAP_FILTER = document.getElementsByName('CUSTOM_PCAP_FILTER')[0].value;
+        
         if(document.getElementById('customPcapYes').checked)
         {
           message.CUSTOM_PCAP_MODE = '1';
@@ -241,9 +245,11 @@ block headerAdditions
         {
           message.CUSTOM_PCAP_MODE = '0';
         }
+        
         message.CAPTURE_BUFFER_SIZE = document.getElementsByName('CAPTURE_BUFFER_SIZE')[0].value;
         message.SAVE_FREQUENCY = document.getElementsByName('SAVE_FREQUENCY')[0].value;
         message.DATA_TTL = document.getElementsByName('DATA_TTL')[0].value;
+        
         if(document.getElementById('dmEnabledYes').checked)
         {
           message.DM_ENABLED = '1';
@@ -252,7 +258,15 @@ block headerAdditions
         {
           message.DM_ENABLED = '0';
         }
+        
         message.SERVICE_PREFERENCES = document.getElementsByName('SERVICE_PREFERENCES')[0].value;
+        
+        if(/^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;$/.test(message.SERVICE_PREFERENCES) == false)
+        {
+          document.getElementById('SERVICE_PREFERENCES').value = replace;
+          alert('Service Preferences string is not formatted correctly.');
+          return;
+        }
         
         now.MessageSend(message);
       }

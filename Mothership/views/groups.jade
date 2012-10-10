@@ -170,6 +170,14 @@ block headerAdditions
         
         maintainGroups.push({group:group,idx:parseInt(clientCount) + 1});
        
+        if(/^[a-z0-9]+$/i.test(group) || group.length <= 1)
+        {
+          alert('Group name must be between 2 and 10 alphanumeric characters');
+          return;
+        }
+       
+        consle.log('group is ' + group);
+       
         now.AddGroup(group, members);
         
         document.getElementById('groupName').value = '';
@@ -258,7 +266,7 @@ block content
   br
   h1 Add Group
   label New Group Name: 
-  input(id='groupName', value='')
+  input(id='groupName', value='', maxlength='10', size='10')
   button(id='addGroup', onclick='addGroup(document.getElementById("groupName").value, getMembers())') Add Group
   h1 Current Groups
   table(id='groupsList')

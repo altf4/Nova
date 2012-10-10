@@ -232,6 +232,12 @@ block headerAdditions
         autoconfMessage.id = document.getElementById('autohook' + i).childNodes[0].value;
         autoconfMessage.numNodesType = document.getElementById('autohook' + i).childNodes[1].value;
         autoconfMessage.numNodes = document.getElementById('autohook' + i).childNodes[2].value;
+        if(/^[0-9]+$/i.test(autoconfMessage.numNodes))
+        {
+          document.getElementById('autohook' + i).childNodes[2].value = '0';
+          alert('Number of nodes/ratio of nodes to create must be a digit');
+          return;
+        }
         autoconfMessage.interface = document.getElementById('autohook' + i).childNodes[4].value;
         now.MessageSend(autoconfMessage);
       }
