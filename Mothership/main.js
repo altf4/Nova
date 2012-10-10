@@ -125,6 +125,7 @@ var suspectIPs = new Array();
 var eventCounter = new Array();
 var scheduledMessages = new Array();
 var details = '';
+var clientsBenignRequests = new Array();
 var notifications = 0;
 var hostileEvents = 0;
 
@@ -653,6 +654,45 @@ everyone.now.AddGroup = function(group, members)
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
 
+AddClientBenignRequest = function(clientId)
+{
+  for(var i in clientsBenignRequests)
+  {
+    if(clientsBenignRequests[i] == clientId)
+    {
+      return; 
+    }
+  }
+  clientsBenignRequests.push(clientId);
+}
+
+everyone.now.AddClientBenignRequest = AddClientBenignRequest;
+
+everyone.now.RemoveClientBenignRequest = function(clientId)
+{
+  for(var i in clientsBenignRequests)
+  {
+    if(clientsBenignRequests[i] == clientId)
+    { 
+      delete clientsBenignRequests[i]; 
+    }
+  }
+}
+
+everyone.now.GetClientBenignRequest = function(callback)
+{
+  var ret = [];
+  for(var i in clientsBenignRequests)
+  {
+    ret.push(clientsBenignRequests[i]);
+  }
+  
+  if(typeof(callback) == 'function')
+  {
+    callback(ret);
+  } 
+}
+
 everyone.now.GetGroupMembers = function(group, callback)
 {
   var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
@@ -861,6 +901,16 @@ wsServer.on('request', function(request)
 						    return;
 						  }
 						}
+						if(json_args.benignRequest == 'true')
+						{
+						   AddClientBenignRequest(json_args.id);
+						   console.log('benignRequest was true on connection, adding to benign request list');
+						   if(typeof(everyone.now.RenderBenignRequests) == 'function')
+						   {
+						     everyone.now.RenderBenignRequests(); 
+						   }
+						}
+						
 						novaClients[json_args.id.toString()] = {statusNova: json_args.nova, statusHaystack: json_args.haystack, connection: connection};
 						var date = new Date();
 						everyone.now.WriteNotification(json_args.id + ' connected at ' + date);
