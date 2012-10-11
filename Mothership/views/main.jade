@@ -112,8 +112,19 @@ block headerAdditions
 
     function clearSuspects()       
     {
+      var check = message.id.split(':');
       message.type = 'clearSuspects';
       now.MessageSend(message);
+      for(var i in suspectGrid.m_elements)
+      {
+        for(var j in check)
+        {
+          if(suspectGrid.m_elements[i].indexOf(check[i]) != -1)
+          {
+            suspectGrid.DeleteRow(i);
+          } 
+        }
+      }
     }
 
     function getDetails(suspect)
