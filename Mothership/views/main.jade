@@ -119,9 +119,10 @@ block headerAdditions
       {
         for(var j in check)
         {
-          if(suspectGrid.m_elements[i].indexOf(check[i]) != -1)
+          if(suspectGrid.m_elements[i][1].indexOf(check[j]) != -1 && check[j] != '')
           {
             suspectGrid.DeleteRow(i);
+            break;
           } 
         }
       }
