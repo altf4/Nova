@@ -963,13 +963,10 @@ wsServer.on('request', function(request)
               everyone.now.UpdateConnectionsList(json_args.id, 'add');
             }
             eventCounter.push({client: json_args.id, events: "0"});
-            console.log('calling GetGroupMembers');
             GetGroupMembers('all', function(members){
-              console.log('members before if ' + members);
               if(members.indexOf(json_args.id) == -1)
               {
                 var newList = (members.split(';')[0] == '' ? json_args.id : members.split(';').join() + json_args.id);
-                console.log('newList ' + newList);
                 UpdateGroup('all', newList);
                 if(typeof everyone.now.UpdateGroupList == 'function')
                 {
