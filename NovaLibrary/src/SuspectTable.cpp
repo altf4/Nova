@@ -299,6 +299,28 @@ Suspect SuspectTable::GetSuspect(SuspectIdentifier key)
 	}
 }
 
+// Lookup and get an Asynchronous copy of the Suspect
+// 		key: IP address of the suspect as a uint value (host byte order)
+// Returns an empty suspect on failure
+// Note: To modify or lock a suspect use CheckOut();
+// Note: This is the same as GetSuspectStatus except it copies the feature set object which can grow very large.
+Suspect SuspectTable::GetShallowSuspect(SuspectIdentifier key)
+{
+	//Read lock the table, Suspects can only change in the table while it's write locked.
+	Lock lock(&m_lock, READ_LOCK);
+	if(IsValidKey_NonBlocking(key))
+	{
+		//Create a copy of the suspect
+		Suspect ret = m_suspectTable[key]->GetShallowCopy();
+		return ret;
+	}
+	else
+	{
+		Suspect ret = m_emptySuspect;
+		return ret;
+	}
+}
+
 //Erases a suspect from the table if it is not locked
 // 		key: IP address of the suspect as a uint value (host byte order)
 // Returns (true) on success, (false) if the suspect does not exist (key is invalid)

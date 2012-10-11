@@ -54,6 +54,9 @@ public:
 	// Destructor. Has to delete the FeatureSet object within.
 	~Suspect();
 
+	// This gets a copy of the suspect without the featureset hash tables being copied for performance reasons
+	Suspect GetShallowCopy();
+
 	SuspectIdentifier GetIdentifier();
 	void SetIdentifier(SuspectIdentifier id);
 

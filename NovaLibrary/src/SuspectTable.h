@@ -118,6 +118,7 @@ public:
 	// Note: To modify or lock a suspect use CheckOut();
 	// Note: This is the same as GetSuspectStatus except it copies the feature set object which can grow very large.
 	Suspect GetSuspect(Nova::SuspectIdentifier key);
+	Suspect GetShallowSuspect(Nova::SuspectIdentifier key);
 
 	//Erases a suspect from the table if it is not locked
 	// 		key: IP address of the suspect as a uint value (host byte order)

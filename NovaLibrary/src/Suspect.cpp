@@ -490,6 +490,34 @@ void Suspect::SetFeatureAccuracy(featureIndex fi, double d)
 	m_featureAccuracy[fi] = d;
 }
 
+Suspect Suspect::GetShallowCopy()
+{
+	Suspect ret;
+
+	// We just copy the featureset instead of the hashtables too
+	// TODO: this entire thing should really be refactored so featureset isn't part of suspect
+	for (uint i = 0; i < DIM; i++)
+	{
+		ret.m_features.m_features[i] = m_features.m_features[i];
+	}
+
+	ret.m_lastPacketTime = m_lastPacketTime;
+	for(uint i = 0; i < DIM; i++)
+	{
+		ret.m_featureAccuracy[i] = m_featureAccuracy[i];
+	}
+
+	ret.m_id = m_id;
+	ret.m_classification = m_classification;
+	ret.m_needsClassificationUpdate = m_needsClassificationUpdate;
+	ret.m_hostileNeighbors = m_hostileNeighbors;
+	ret.m_isHostile = m_isHostile;
+	ret.m_flaggedByAlarm = m_flaggedByAlarm;
+	ret.m_isLive = m_isLive;
+	ret.m_classificationNotes = m_classificationNotes;
+	return ret;
+}
+
 Suspect& Suspect::operator=(const Suspect &rhs)
 {
 	m_features = rhs.m_features;

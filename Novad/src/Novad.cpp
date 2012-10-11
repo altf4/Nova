@@ -690,7 +690,7 @@ string ConstructFilterString()
 void UpdateAndClassify(SuspectIdentifier key)
 {
 	//Check for a valid suspect
-	Suspect suspectCopy = suspects.GetSuspect(key);
+	Suspect suspectCopy = suspects.GetShallowSuspect(key);
 	if(suspects.IsEmptySuspect(&suspectCopy))
 	{
 		return;
@@ -703,7 +703,7 @@ void UpdateAndClassify(SuspectIdentifier key)
 	suspects.ClassifySuspect(key);
 
 	//Check that we updated correctly
-	suspectCopy = suspects.GetSuspect(key);
+	suspectCopy = suspects.GetShallowSuspect(key);
 	if(suspects.IsEmptySuspect(&suspectCopy))
 	{
 		return;

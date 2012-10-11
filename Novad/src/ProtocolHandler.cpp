@@ -274,7 +274,7 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 		case REQUEST_SUSPECT:
 		{
 			RequestMessage reply(REQUEST_SUSPECT_REPLY);
-			Suspect tempSuspect = suspects.GetSuspect(msg.m_suspectAddress);
+			Suspect tempSuspect = suspects.GetShallowSuspect(msg.m_suspectAddress);
 			reply.m_suspect = &tempSuspect;
 			MessageManager::Instance().WriteMessage(ticket, &reply);
 
