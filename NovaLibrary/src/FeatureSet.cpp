@@ -112,6 +112,15 @@ string FeatureSet::toString()
 	ss << "TCP SYN ACK Packets: " << m_synAckCount << endl;
 	ss << endl;
 
+	ss << "Contacted " << m_numberOfHaystackNodesContacted << " honeypot IP addresses out of " << m_HaystackIPTable.size() << endl;
+	for (IP_Table::iterator it = m_HaystackIPTable.begin(); it != m_HaystackIPTable.end(); it++)
+	{
+		in_addr t;
+		t.s_addr = ntohl(it->first);
+		ss << "Contacted honeypot " << inet_ntoa(t) << "    " << boolalpha << (bool)it->second << endl;
+	}
+	ss << endl;
+
 	ss << "IPs contacted and number of packets to IP: " << endl;
 	for (IP_Table::iterator it = m_IPTable.begin(); it != m_IPTable.end(); it++)
 	{
@@ -134,6 +143,7 @@ string FeatureSet::toString()
 		ss << "    " << it->first << "    " << it->second << endl;
 	}
 	ss << endl;
+
 
 	return ss.str();
 }
@@ -573,14 +583,12 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 		m_hasUdpPortIpBeenContacted[it->first] = true;
 	}
 
-	for(IP_Table::iterator it = m_HaystackIPTable.begin(); it != m_HaystackIPTable.end(); it++)
+	m_HaystackIPTable.clear();
+	for(IP_Table::iterator it = rhs.m_HaystackIPTable.begin(); it != rhs.m_HaystackIPTable.end(); it++)
 	{
-		if(!rhs.m_HaystackIPTable.keyExists(it->first))
-		{
 			m_HaystackIPTable[it->first] += rhs.m_HaystackIPTable[it->first];
-
-		}
 	}
+	m_numberOfHaystackNodesContacted = rhs.m_numberOfHaystackNodesContacted;
 
 	for(Port_Table::iterator it = rhs.m_PortTCPTable.begin(); it != rhs.m_PortTCPTable.end(); it++)
 	{
@@ -847,6 +855,25 @@ bool FeatureSet::operator ==(const FeatureSet &rhs) const
 		{
 			return false;
 		}
+	}
+
+	int size1 = m_PortTCPTable.size();
+	int size2 = rhs.m_PortTCPTable.size();
+	if (size1 != size2)
+	{
+		return false;
+	}
+
+	size1 = m_HaystackIPTable.size();
+	size2 = rhs.m_HaystackIPTable.size();
+	if (size1 != size2)
+	{
+		return false;
+	}
+
+	if (m_numberOfHaystackNodesContacted != rhs.m_numberOfHaystackNodesContacted)
+	{
+		return false;
 	}
 	return true;
 }
