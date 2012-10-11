@@ -500,6 +500,15 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.data = suspectString;
               mothership.sendUTF(JSON.stringify(response));
               break;
+            case 'clearSuspects':
+              everyone.now.ClearAllSuspects(function(){
+                var response = {};
+                response.id = clientId;
+                response.type = 'response';
+                response.response_message = 'Suspects cleared on ' + json_args.id;
+                mothership.sendUTF(JSON.stringify(response));
+              });
+              break;
             default:
               console.log('Unexpected/unknown message type ' + json_args.type + ' received, doing nothing');
               break;
