@@ -341,7 +341,7 @@ function writeScheduledEventStructure(sEvent, callback)
 // Generic message sending method; can be called from the jade files
 // as well as on the server side. Parsing for messages sent from here
 // is handled on the Quasar side.
-everyone.now.MessageSend = function(message) 
+MessageSend = function(message) 
 {
     var targets = message.id.split(':');
     var seen = new Array();
@@ -365,8 +365,9 @@ everyone.now.MessageSend = function(message)
     seen.length = 0;
     targets.length = 0;
 };
+everyone.now.MessageSend = MessageSend;
 
-everyone.now.GetSuspectDetails = function(suspect)
+GetSuspectDetails = function(suspect)
 {
   var message = {};
   message.type = 'suspectDetails';
@@ -375,8 +376,9 @@ everyone.now.GetSuspectDetails = function(suspect)
   message.iface = suspect.interface;
   novaClients[suspect.clientId].connection.sendUTF(JSON.stringify(message));
 }
+everyone.now.GetSuspectDetails = GetSuspectDetails
 
-everyone.now.SetScheduledMessage = function(clientId, name, message, cron, date, cb)
+SetScheduledMessage = function(clientId, name, message, cron, date, cb)
 {
   if((cron == '' || cron == undefined) && (date == undefined || date == ''))
   {
@@ -427,8 +429,9 @@ everyone.now.SetScheduledMessage = function(clientId, name, message, cron, date,
   cb(clientId, 'succeeded', 'Adding new scheduled event to list.');
   scheduledMessages.push(newSchedule);
 }
+everyone.now.SetScheduledMessage = SetScheduledMessage;
 
-everyone.now.UnsetScheduledMessage = function(name, cb)
+UnsetScheduledMessage = function(name, cb)
 {
   for(var i in scheduledMessages)
   {
@@ -442,8 +445,9 @@ everyone.now.UnsetScheduledMessage = function(name, cb)
   }
   cb('false', 'No event by id ' + name + ', doing nothing');
 }
+everyone.now.UnsetScheduledMessage = UnsetScheduledMessage;
 
-everyone.now.GetScheduledEvents = function(callback)
+GetScheduledEvents = function(callback)
 {
   for(var i in scheduledMessages)
   {
@@ -457,8 +461,9 @@ everyone.now.GetScheduledEvents = function(callback)
     callback(json);
   }
 }
+everyone.now.GetScheduledEvents = GetScheduledEvents;
 
-everyone.now.WriteNotification = function(notify)
+WriteNotification = function(notify)
 {
   var append = fs.readFileSync(NovaSharedPath + '/Mothership/notifications.txt', 'utf8');
   var newNotify = '';
@@ -472,8 +477,9 @@ everyone.now.WriteNotification = function(notify)
   }
   fs.writeFileSync(NovaSharedPath + '/Mothership/notifications.txt', newNotify);
 }
+everyone.now.WriteNotification = WriteNotification;
 
-everyone.now.GetNotifications = function(callback)
+GetNotifications = function(callback)
 {
   var notificationData = fs.readFileSync(NovaSharedPath + '/Mothership/notifications.txt', 'utf8');
   if(typeof callback == 'function')
@@ -481,34 +487,39 @@ everyone.now.GetNotifications = function(callback)
     callback(notificationData);
   }
 }
+everyone.now.GetNotifications = GetNotifications;
 
-everyone.now.GetNotifyCount = function(callback)
+GetNotifyCount = function(callback)
 {
   if(typeof callback == 'function')
   {
     callback(notifications);
   }
 }
+everyone.now.GetNotifyCount = GetNotifyCount;
 
-everyone.now.GetHostileEventsCount = function(callback)
+GetHostileEventsCount = function(callback)
 {
   if(typeof callback == 'function')
   {
     callback(hostileEvents);
   }
 }
+everyone.now.GetHostileEventsCount = GetHostileEventsCount;
 
-everyone.now.UpdateNotificationsCount = function(count)
+UpdateNotificationsCount = function(count)
 {
   notifications = count;
 }
+everyone.now.UpdateNotificationsCount = UpdateNotificationsCount;
 
-everyone.now.UpdateHostileEventsCount = function(count)
+UpdateHostileEventsCount = function(count)
 {
   hostileEvents = parseInt(count);
 }
+everyone.now.UpdateHostileEventsCount = UpdateHostileEventsCount;
 
-everyone.now.GetClients = function(callback)
+GetClients = function(callback)
 {
   var ret = new Array();
   for(var i in novaClients)
@@ -520,8 +531,9 @@ everyone.now.GetClients = function(callback)
     callback(ret);
   }
 }
+everyone.now.GetClients = GetClients;
 
-everyone.now.UpdateEventCounter = function(client, newNum)
+UpdateEventCounter = function(client, newNum)
 {
   for(var i in eventCounter)
   {
@@ -532,16 +544,18 @@ everyone.now.UpdateEventCounter = function(client, newNum)
     }
   }
 }
+everyone.now.UpdateEventCounter = UpdateEventCounter;
 
-everyone.now.ClearEventCounter = function(callback)
+ClearEventCounter = function(callback)
 {
   for(var i in eventCounter)
   {
     eventCounter[i].events = 0;
   }  
 }
+everyone.now.ClearEventCounter = ClearEventCounter;
 
-everyone.now.GetEventCount = function(client, callback)
+GetEventCount = function(client, callback)
 {
   var count = 0;
   for(var i in eventCounter)
@@ -557,8 +571,9 @@ everyone.now.GetEventCount = function(client, callback)
     }
   }
 }
+everyone.now.GetEventCount = GetEventCount;
 
-everyone.now.UpdateStatus = function(clients, component, running)
+UpdateStatus = function(clients, component, running)
 {
   var clientsToUpdate = clients.split(':');
   for(var i in clientsToUpdate)
@@ -580,24 +595,27 @@ everyone.now.UpdateStatus = function(clients, component, running)
     }
   }
 }
+everyone.now.UpdateStatus = UpdateStatus;
 
-everyone.now.IsNovadUp = function(clientId, callback)
+IsNovadUp = function(clientId, callback)
 {
   if(typeof callback == 'function')
   {
     callback(clientId, novaClients[clientId].statusNova);
   } 
 }
+everyone.now.IsNovadUp = IsNovadUp;
 
-everyone.now.IsHaystackUp = function(clientId, callback)
+IsHaystackUp = function(clientId, callback)
 {
   if(typeof callback == 'function')
   {
     callback(clientId, novaClients[clientId].statusHaystack);
   }
 }
+everyone.now.IsHaystackUp = IsHaystackUp;
 
-everyone.now.GetHostileSuspects = function()
+GetHostileSuspects = function()
 {
   var message = {};
   message.type = 'getHostileSuspects';
@@ -610,16 +628,18 @@ everyone.now.GetHostileSuspects = function()
     }
   }
 }
+everyone.now.GetHostileSuspects = GetHostileSuspects;
 
-everyone.now.ClearSuspectIPs = function(callback)
+ClearSuspectIPs = function(callback)
 {
   suspectIPs.length = 0; 
   console.log('suspectIPs contains ' + suspectIPs);
   callback(suspectIPs.length);
 }
+everyone.now.ClearSuspectIPs = ClearSuspectIPs;
 
 // Remove a user-defined group from the client_groups.txt file
-everyone.now.RemoveGroup = function(group)
+RemoveGroup = function(group)
 {
   console.log('Removing group ' + group + ' from the client groups file');
   var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
@@ -629,10 +649,11 @@ everyone.now.RemoveGroup = function(group)
   groupFile = trimNewlines(groupFile);
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 };
+everyone.now.RemoveGroup = RemoveGroup;
 
 // Update a group inside the client_groups.txt file to have
 // a new list of member clientIds.
-everyone.now.UpdateGroup = function(group, newMembers)
+UpdateGroup = function(group, newMembers)
 {
   if(group != 'all')
   {
@@ -644,15 +665,17 @@ everyone.now.UpdateGroup = function(group, newMembers)
   groupFile = groupFile.replace(replaceWithNull, group + ":" + newMembers + ";");
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
+everyone.now.UpdateGroup = UpdateGroup;
 
 // Add a new user-defined group to the client_groups.txt file
-everyone.now.AddGroup = function(group, members)
+AddGroup = function(group, members)
 {
   console.log('Adding group ' + group + ' with members ' + members);
   var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
   groupFile += '\n' + group + ":" + members + ";";
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
+everyone.now.AddGroup = AddGroup;
 
 AddClientBenignRequest = function(clientId)
 {
@@ -665,10 +688,9 @@ AddClientBenignRequest = function(clientId)
   }
   clientsBenignRequests.push(clientId);
 }
-
 everyone.now.AddClientBenignRequest = AddClientBenignRequest;
 
-everyone.now.RemoveClientBenignRequest = function(clientId)
+RemoveClientBenignRequest = function(clientId)
 {
   for(var i in clientsBenignRequests)
   {
@@ -678,8 +700,9 @@ everyone.now.RemoveClientBenignRequest = function(clientId)
     }
   }
 }
+everyone.now.RemoveClientBenignRequest = RemoveClientBenignRequest;
 
-everyone.now.GetClientBenignRequest = function(callback)
+GetClientBenignRequest = function(callback)
 {
   var ret = [];
   for(var i in clientsBenignRequests)
@@ -692,8 +715,9 @@ everyone.now.GetClientBenignRequest = function(callback)
     callback(ret);
   } 
 }
+everyone.now.GetClientBenignRequest = GetClientBenignRequest;
 
-everyone.now.GetGroupMembers = function(group, callback)
+GetGroupMembers = function(group, callback)
 {
   var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
   var start = groupFile.indexOf(group);
@@ -703,10 +727,11 @@ everyone.now.GetGroupMembers = function(group, callback)
     callback(trimNewlines(groupFile.substr((start + group.length + 1), end))); 
   }
 }
+everyone.now.GetGroupMembers = GetGroupMembers;
 
 // Given the client id and a cb function (which will process the results)
 // grab the list of interfaces for that client.
-everyone.now.GetInterfacesOfClient = function(clientId, cb)
+GetInterfacesOfClient = function(clientId, cb)
 {
   var interfaceFile = fs.readFileSync(NovaSharedPath + '/Mothership/ClientConfigs/iflist@' + clientId + '.txt', 'utf8');
   var pass = interfaceFile.split(',');
@@ -715,6 +740,7 @@ everyone.now.GetInterfacesOfClient = function(clientId, cb)
     cb(pass);
   }
 }
+everyone.now.GetInterfacesOfClient = GetInterfacesOfClient;
 
 // Convenience method for trimming file new-lines, in the case
 // that we eliminate the first group in the client_groups.txt file
@@ -913,7 +939,7 @@ wsServer.on('request', function(request)
 						
 						novaClients[json_args.id.toString()] = {statusNova: json_args.nova, statusHaystack: json_args.haystack, connection: connection};
 						var date = new Date();
-						everyone.now.WriteNotification(json_args.id + ' connected at ' + date);
+						WriteNotification(json_args.id + ' connected at ' + date);
 						if(typeof everyone.now.UpdateNotificationsButton == 'function')
 						{
 						  everyone.now.UpdateNotificationsButton('new');
@@ -927,7 +953,7 @@ wsServer.on('request', function(request)
             var getHostile = {};
             getHostile.type = 'getHostileSuspects';
             getHostile.id = json_args.id + ':';
-            everyone.now.MessageSend(getHostile);
+            MessageSend(getHostile);
             if(typeof everyone.now.UpdateClientsList == 'function')
             {
               everyone.now.UpdateClientsList(json_args.id, 'add');
@@ -937,11 +963,14 @@ wsServer.on('request', function(request)
               everyone.now.UpdateConnectionsList(json_args.id, 'add');
             }
             eventCounter.push({client: json_args.id, events: "0"});
-            everyone.now.GetGroupMembers('all', function(members){
+            console.log('calling GetGroupMembers');
+            GetGroupMembers('all', function(members){
+              console.log('members before if ' + members);
               if(members.indexOf(json_args.id) == -1)
               {
-                var newList = (members.split(';')[0] == '' ? json_args.id : members.split(';')[0] + ',' + json_args.id);
-                everyone.now.UpdateGroup('all', newList);
+                var newList = (members.split(';')[0] == '' ? json_args.id : members.split(';').join() + json_args.id);
+                console.log('newList ' + newList);
+                UpdateGroup('all', newList);
                 if(typeof everyone.now.UpdateGroupList == 'function')
                 {
                   everyone.now.UpdateGroupList('all', 'update');
@@ -956,7 +985,7 @@ wsServer.on('request', function(request)
           // Messages are formatted and constructed on the Quasar side.
 					case 'response':
 						console.log(json_args.response_message);
-						everyone.now.WriteNotification(json_args.id + ' says ' + '"' + json_args.response_message + '"');
+						WriteNotification(json_args.id + ' says ' + '"' + json_args.response_message + '"');
 						if(typeof everyone.now.UpdateNotificationsButton == 'function')
             {
               everyone.now.UpdateNotificationsButton('new');
@@ -968,7 +997,7 @@ wsServer.on('request', function(request)
           // Might be able to get away with just sending the JSON object, my intent
           // was to validate the message here with conditionals, just isn't done yet.
 					case 'hostileSuspect':
-            console.log('Hostile Suspect ' + json_args.ip + ' received from ' + json_args.client + ' at ' + json_args.lastpacket);
+            //console.log('Hostile Suspect ' + json_args.ip + ' received from ' + json_args.client + ' at ' + json_args.lastpacket);
 						var suspect = {};
 						suspect.ip = json_args.ip;
 						suspect.classification = json_args.classification;		
@@ -1005,7 +1034,7 @@ wsServer.on('request', function(request)
 						}
 						if(contains(suspectIPs, (suspect.ip + '@' + suspect.client)))
             {
-              console.log('already found this suspect, not updating hostile events button');
+              //console.log('already found this suspect, not updating hostile events button');
             }
             else
             {
@@ -1073,7 +1102,7 @@ wsServer.on('request', function(request)
 				    {
 				      if(novaClients[json_args.id].statusHaystack != json_args.status)
 				      {
-				        everyone.now.WriteNotification(json_args.id + ' has a component status change: IsHaystackUp returned ' + json_args.status);
+				        WriteNotification(json_args.id + ' has a component status change: IsHaystackUp returned ' + json_args.status);
                 if(typeof everyone.now.UpdateNotificationsButton == 'function')
                 {
                   everyone.now.UpdateNotificationsButton('new');
@@ -1085,7 +1114,7 @@ wsServer.on('request', function(request)
 				    {
 				      if(novaClients[json_args.id].statusNova != json_args.status)
 				      {
-  				      everyone.now.WriteNotification(json_args.id + ' has a component status change: IsNovadUp returned ' + json_args.status);
+  				      WriteNotification(json_args.id + ' has a component status change: IsNovadUp returned ' + json_args.status);
                 if(typeof everyone.now.UpdateNotificationsButton == 'function')
                 {
                   everyone.now.UpdateNotificationsButton('new');
@@ -1101,7 +1130,7 @@ wsServer.on('request', function(request)
 				  case 'renameRequest':
 				    novaClients[json_args.newId] = novaClients[json_args.id];
 				    delete novaClients[json_args.id];
-				    everyone.now.WriteNotification(json_args.id + ' has changed its clientId to ' + json_args.newId);
+				    WriteNotification(json_args.id + ' has changed its clientId to ' + json_args.newId);
 				    if(typeof everyone.now.UpdateNotificationsButton == 'function')
             {
               everyone.now.UpdateNotificationsButton('new');
@@ -1169,14 +1198,14 @@ wsServer.on('close', function(connection, reason, description)
       {
         everyone.now.UpdateConnectionsList(i, 'updateStatus');
       }
-      everyone.now.GetGroupMembers('all', function(members){
+      GetGroupMembers('all', function(members){
         var newList = members.replace(new RegExp(i), '');
         newList = newList.substr(0, newList.length - 1);
-        everyone.now.UpdateGroup('all', newList);
+        UpdateGroup('all', newList);
       });
       
       var date = new Date();
-      everyone.now.WriteNotification(i + ' disconnected at ' + date);
+      WriteNotification(i + ' disconnected at ' + date);
       if(typeof everyone.now.UpdateNotificationsButton == 'function')
       {
         everyone.now.UpdateNotificationsButton('new');
