@@ -59,8 +59,8 @@ public:
 	void clear();
 	void clear_no_resize();
 	void resize(size_t newSize);
-	uint size();
-	bool empty();
+	uint size() const;
+	bool empty() const;
 
 	// Expose the iterators
 	typedef typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator iterator;
@@ -162,13 +162,13 @@ void HashMap<KeyType,ValueType,HashFcn,EqualKey>::erase(KeyType key)
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
-uint HashMap<KeyType,ValueType,HashFcn,EqualKey>::size()
+uint HashMap<KeyType,ValueType,HashFcn,EqualKey>::size() const
 {
 	return m_map.size();
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
-bool HashMap<KeyType,ValueType,HashFcn,EqualKey>::empty()
+bool HashMap<KeyType,ValueType,HashFcn,EqualKey>::empty() const
 {
 	return m_map.empty();
 }

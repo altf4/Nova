@@ -284,8 +284,7 @@ Suspect *GetSuspectWithData(SuspectIdentifier address)
 		return NULL;
 	}
 
-	Suspect *returnSuspect = new Suspect();
-	*returnSuspect = *requestReply->m_suspect;
+	Suspect *returnSuspect = requestReply->m_suspect;
 	delete requestReply;
 
 	return returnSuspect;
