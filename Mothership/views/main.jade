@@ -39,6 +39,11 @@ block content
     br
     br
   
+    button(id="button6", style="width: 160px", onclick='clearSuspects()', disabled=true) Clear Suspects For Selected
+    
+    br
+    br
+  
     h2 Currently Requesting Benign Suspects From:
     input(id="benignList", readonly=true)
   
@@ -104,6 +109,24 @@ block headerAdditions
 
     var clients = "#{CLIENTS}".split(':');
     var groups = !{GROUPS};
+
+    function clearSuspects()       
+    {
+      var check = message.id.split(':');
+      message.type = 'clearSuspects';
+      now.MessageSend(message);
+      for(var i in suspectGrid.m_elements)
+      {
+        for(var j in check)
+        {
+          if(suspectGrid.m_elements[i][1].indexOf(check[j]) != -1 && check[j] != '')
+          {
+            suspectGrid.DeleteRow(i);
+            break;
+          } 
+        }
+      }
+    }
 
     function getDetails(suspect)
     {
@@ -292,7 +315,7 @@ block headerAdditions
                 theDoc.getElementById('check' + i).setAttribute('disabled', true);
               } 
             }
-            for(var i = 0; i < 6; i++)
+            for(var i = 0; i < 7; i++)
             {
               theDoc.getElementById('button' + i).removeAttribute('disabled'); 
             }
@@ -314,7 +337,7 @@ block headerAdditions
                 theDoc.getElementById('check' + i).removeAttribute('disabled');
               } 
             }
-            for(var i = 0; i < 6; i++)
+            for(var i = 0; i < 7; i++)
             {
               theDoc.getElementById('button' + i).setAttribute('disabled', true); 
             }
@@ -325,7 +348,7 @@ block headerAdditions
           if(theDoc.getElementById(source).checked)
           {
             message.id += target + ':';
-            for(var i = 0; i < 6; i++)
+            for(var i = 0; i < 7; i++)
             {
               theDoc.getElementById('button' + i).removeAttribute('disabled'); 
             }
@@ -338,7 +361,7 @@ block headerAdditions
           
           if(message.id == '')
           {
-            for(var i = 0; i < 6; i++)
+            for(var i = 0; i < 7; i++)
             {
               theDoc.getElementById('button' + i).setAttribute('disabled', true); 
             }
