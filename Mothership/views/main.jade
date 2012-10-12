@@ -92,6 +92,8 @@ block headerAdditions
     // Performance boost accessing local var over document lookup
     var theDoc = document;
 
+    var doRender = false;
+
     var clientCount = 0;
     var suspectGrid;
     var liveUpdate = true;
@@ -402,6 +404,7 @@ block headerAdditions
     }
 
     now.OnNewSuspect = function(suspect){
+      doRender = true;
       var type = suspect.type;
   
       var row = new Array();
@@ -612,8 +615,14 @@ block headerAdditions
       
       now.GetHostileSuspects();
       
+      suspectGrid.Render();
+      
       setInterval(function(){
-              suspectGrid.Render();
+        if(doRender == true)
+        {
+          suspectGrid.Render();
+          doRender = false;
+        }
       }, 3000);   
     }
 
