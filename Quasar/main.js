@@ -1112,6 +1112,18 @@ app.get('/suspects', passport.authenticate('basic', {session: false}), function 
 	});
 });
 
+
+app.get('/monitor', passport.authenticate('basic', {session: false}), function (req, res) {
+	var suspectIp = req.query["ip"];
+	var suspectInterface = req.query["interface"];
+	
+	res.render('monitor.jade', {
+		featureNames: nova.GetFeatureNames()
+		, suspectIp: suspectIp
+		, suspectInterface: suspectInterface
+	});
+});
+
 app.get('/events', passport.authenticate('basic', {session: false}), function (req, res) {
 	res.render('events.jade', {
 		featureNames: nova.GetFeatureNames()
@@ -1711,6 +1723,17 @@ everyone.now.StopNovad = function () {
 
 everyone.now.sendAllSuspects = function (callback) {
 	nova.sendSuspectList(callback);
+}
+
+everyone.now.sendSuspect = function (interface, ip, callback) {
+	var suspect = nova.sendSuspect(interface, ip);
+	if (suspect.GetIdString === undefined) {
+		console.log("Failed to get suspect");
+		return;
+	}
+	var s = new Object();
+	objCopy(suspect, s);
+	callback(s);
 }
 
 

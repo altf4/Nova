@@ -214,6 +214,18 @@ uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMo
 			break;
 		}
 		case NO_FEATURE_DATA:
+			SerializeChunk(buf, &offset,(char*)&m_features.m_synCount, sizeof m_features.m_synCount, bufferSize);
+			SerializeChunk(buf, &offset,(char*)&m_features.m_synAckCount, sizeof m_features.m_synAckCount, bufferSize);
+			SerializeChunk(buf, &offset,(char*)&m_features.m_ackCount, sizeof m_features.m_ackCount, bufferSize);
+			SerializeChunk(buf, &offset,(char*)&m_features.m_finCount, sizeof m_features.m_finCount, bufferSize);
+			SerializeChunk(buf, &offset,(char*)&m_features.m_rstCount, sizeof m_features.m_rstCount, bufferSize);
+
+			SerializeChunk(buf, &offset,(char*)&m_features.m_tcpPacketCount, sizeof m_features.m_tcpPacketCount, bufferSize);
+			SerializeChunk(buf, &offset,(char*)&m_features.m_udpPacketCount, sizeof m_features.m_udpPacketCount, bufferSize);
+			SerializeChunk(buf, &offset,(char*)&m_features.m_icmpPacketCount, sizeof m_features.m_icmpPacketCount, bufferSize);
+			SerializeChunk(buf, &offset,(char*)&m_features.m_otherPacketCount, sizeof m_features.m_otherPacketCount, bufferSize);
+
+			break;
 		default:
 		{
 			break;
@@ -258,6 +270,17 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 			break;
 		}
 		case NO_FEATURE_DATA:
+			messageSize += sizeof m_features.m_synCount;
+			messageSize += sizeof m_features.m_synAckCount;
+			messageSize += sizeof m_features.m_ackCount;
+			messageSize += sizeof m_features.m_finCount;
+			messageSize += sizeof m_features.m_rstCount;
+
+			messageSize += sizeof m_features.m_tcpPacketCount;
+			messageSize += sizeof m_features.m_udpPacketCount;
+			messageSize += sizeof m_features.m_icmpPacketCount;
+			messageSize += sizeof m_features.m_otherPacketCount;
+			break;
 		default:
 		{
 			break;
@@ -328,6 +351,16 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 			break;
 		}
 		case NO_FEATURE_DATA:
+			DeserializeChunk(buf, &offset,(char*)&m_features.m_synCount, sizeof m_features.m_synCount, bufferSize);
+			DeserializeChunk(buf, &offset,(char*)&m_features.m_synAckCount, sizeof m_features.m_synAckCount, bufferSize);
+			DeserializeChunk(buf, &offset,(char*)&m_features.m_ackCount, sizeof m_features.m_ackCount, bufferSize);
+			DeserializeChunk(buf, &offset,(char*)&m_features.m_finCount, sizeof m_features.m_finCount, bufferSize);
+			DeserializeChunk(buf, &offset,(char*)&m_features.m_rstCount, sizeof m_features.m_rstCount, bufferSize);
+
+			DeserializeChunk(buf, &offset,(char*)&m_features.m_tcpPacketCount, sizeof m_features.m_tcpPacketCount, bufferSize);
+			DeserializeChunk(buf, &offset,(char*)&m_features.m_udpPacketCount, sizeof m_features.m_udpPacketCount, bufferSize);
+			DeserializeChunk(buf, &offset,(char*)&m_features.m_icmpPacketCount, sizeof m_features.m_icmpPacketCount, bufferSize);
+			DeserializeChunk(buf, &offset,(char*)&m_features.m_otherPacketCount, sizeof m_features.m_otherPacketCount, bufferSize);
 		default:
 		{
 			break;
@@ -500,6 +533,17 @@ Suspect Suspect::GetShallowCopy()
 	{
 		ret.m_features.m_features[i] = m_features.m_features[i];
 	}
+
+	ret.m_features.m_ackCount = m_features.m_ackCount;
+	ret.m_features.m_synCount = m_features.m_synCount;
+	ret.m_features.m_synAckCount = m_features.m_synAckCount;
+	ret.m_features.m_rstCount = m_features.m_rstCount;
+	ret.m_features.m_finCount = m_features.m_finCount;
+
+	ret.m_features.m_tcpPacketCount = m_features.m_tcpPacketCount;
+	ret.m_features.m_udpPacketCount = m_features.m_udpPacketCount;
+	ret.m_features.m_icmpPacketCount = m_features.m_icmpPacketCount;
+	ret.m_features.m_otherPacketCount = m_features.m_otherPacketCount;
 
 	ret.m_lastPacketTime = m_lastPacketTime;
 	for(uint i = 0; i < DIM; i++)

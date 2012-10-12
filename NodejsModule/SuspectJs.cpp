@@ -31,6 +31,18 @@ Handle<Object> SuspectJs::WrapSuspect(Suspect* suspect)
 		proto->Set("GetLastPacketTime", FunctionTemplate::New(InvokeMethod<long int, Suspect, &Suspect::GetLastPacketTime>) );
 		proto->Set("GetIsHostile", 		FunctionTemplate::New(InvokeMethod<bool, Suspect, &Suspect::GetIsHostile>) );
 		proto->Set("GetFlaggedByAlarm", FunctionTemplate::New(InvokeMethod<bool, Suspect, &Suspect::GetFlaggedByAlarm>) );
+		
+		
+		proto->Set("GetRstCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetRstCount>) );
+		proto->Set("GetAckCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetAckCount>) );
+		proto->Set("GetSynCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetSynCount>) );
+		proto->Set("GetFinCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetFinCount>) );
+		proto->Set("GetSynAckCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetSynAckCount>) );
+		
+		proto->Set("GetTcpPacketCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetTcpPacketCount>) );
+		proto->Set("GetUdpPacketCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetUdpPacketCount>) );
+		proto->Set("GetIcmpPacketCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetIcmpPacketCount>) );
+		proto->Set("GetOtherPacketCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetOtherPacketCount>) );
 
 		// Accessing features is a special case
 		proto->Set("GetFeatures", FunctionTemplate::New(GetFeatures) );

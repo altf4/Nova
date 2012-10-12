@@ -216,6 +216,7 @@ void NovaNode::Init(Handle<Object> target)
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetSupportedEngines", GetSupportedEngines);
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspectList", sendSuspectList);
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspect", sendSuspect);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", ClearAllSuspects);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnNewSuspect", registerOnNewSuspect );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnAllSuspectsCleared", registerOnAllSuspectsCleared );
@@ -406,6 +407,35 @@ Handle<Value> NovaNode::New(const Arguments& args)
 	NovaNode* hw = new NovaNode();
 	hw->Wrap(args.This());
 	return args.This();
+}
+
+
+Handle<Value> NovaNode::sendSuspect(const Arguments& args)
+{
+	HandleScope scope;
+
+	string suspectIp = cvv8::CastFromJS<string>(args[0]);
+	string suspectInterface = cvv8::CastFromJS<string>(args[1]);
+	Local<Function> callbackFunction = Local<Function>::Cast(args[2]);
+
+	struct in_addr address;
+	inet_pton(AF_INET, suspectIp.c_str(), &address);
+
+	SuspectIdentifier id;
+	id.m_ip = htonl(address.s_addr);
+	id.m_interface = suspectInterface;
+
+	Suspect *suspect = GetSuspect(id);
+
+	if (suspect == NULL) {
+		Local<Boolean> result = Local<Boolean>::New( Boolean::New(false) );
+		return scope.Close(result);
+	}
+	
+
+	v8::Persistent<Value> weak_handle = Persistent<Value>::New(SuspectJs::WrapSuspect(suspect));
+	weak_handle.MakeWeak(suspect, &DoneWithSuspectCallback);
+	return scope.Close(weak_handle);
 }
 
 

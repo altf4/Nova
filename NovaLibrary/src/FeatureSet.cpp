@@ -77,6 +77,9 @@ FeatureSet::FeatureSet()
 
 	m_packetCount = 0;
 	m_tcpPacketCount = 0;
+	m_udpPacketCount = 0;
+	m_icmpPacketCount = 0;
+	m_otherPacketCount = 0;
 	m_bytesTotal = 0;
 	m_lastTime = 0;
 
@@ -103,7 +106,10 @@ string FeatureSet::toString()
 	ss << endl;
 	ss << "Total bytes in IP packets: " << m_bytesTotal << endl;
 	ss << "Packets seen: " << m_packetCount << endl;
-	ss << "TCP Packet Seen: " << m_tcpPacketCount << endl;
+	ss << "TCP Packets Seen: " << m_tcpPacketCount << endl;
+	ss << "UDP Packets Seen: " << m_udpPacketCount << endl;
+	ss << "ICMP Packets Seen: " << m_icmpPacketCount << endl;
+	ss << "Other protocol Packets Seen: " << m_otherPacketCount << endl;
 	ss << endl;
 	ss << "TCP RST Packets: " << m_rstCount << endl;
 	ss << "TCP ACK Packets: " << m_ackCount << endl;
@@ -425,6 +431,7 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		//If UDP
 		case 17:
 		{
+			m_udpPacketCount++;
 			// TODO: This is bad. We should be able to handle port 0 (currently empty key)
 			if(evidence->m_evidencePacket.dst_port != 0)
 			{
@@ -501,11 +508,13 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		//If ICMP
 		case 1:
 		{
+			m_icmpPacketCount++;
 			break;
 		}
 		//If untracked IP protocol or error case ignore it
 		default:
 		{
+			m_otherPacketCount++;
 			break;
 		}
 	}
@@ -664,6 +673,9 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 	SerializeChunk(buf, &offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_udpPacketCount, sizeof m_udpPacketCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_icmpPacketCount, sizeof m_icmpPacketCount, bufferSize);
+	SerializeChunk(buf, &offset, (char*)&m_otherPacketCount, sizeof m_otherPacketCount, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_numberOfHaystackNodesContacted, sizeof m_numberOfHaystackNodesContacted, bufferSize);
 
 	SerializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, &offset, m_packTable, 0, bufferSize);
@@ -698,6 +710,9 @@ uint32_t FeatureSet::GetFeatureDataLength()
 			+ sizeof m_finCount
 			+ sizeof m_synAckCount
 			+ sizeof m_tcpPacketCount
+			+ sizeof m_udpPacketCount
+			+ sizeof m_icmpPacketCount
+			+ sizeof m_otherPacketCount
 			+ sizeof m_numberOfHaystackNodesContacted;
 
 	out += GetSerializeHashTableLength<Packet_Table, uint16_t, uint64_t> (m_packTable, 0);
@@ -723,15 +738,9 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 
 
 	//Required, individual variables for calculation
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_totalInterval, bufferSize);
-	m_totalInterval = temp;
-
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_packetCount, bufferSize);
-	m_packetCount = temp;
-
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_bytesTotal, bufferSize);
-	m_bytesTotal = temp;
-
+	DeserializeChunk(buf, &offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);
+	DeserializeChunk(buf, &offset, (char*)&m_packetCount, sizeof m_packetCount, bufferSize);
+	DeserializeChunk(buf, &offset, (char*)&m_bytesTotal, sizeof m_bytesTotal, bufferSize);
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_startTime, bufferSize);
 	if(m_startTime > (time_t)temp)
 	{
@@ -750,23 +759,16 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 		m_lastTime = temp;
 	}
 
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_rstCount, bufferSize);
-	m_rstCount = temp;
+	DeserializeChunk(buf, &offset, (char*)&m_rstCount, sizeof m_rstCount, bufferSize);
+	DeserializeChunk(buf, &offset, (char*)&m_ackCount, sizeof m_ackCount, bufferSize);
+	DeserializeChunk(buf, &offset, (char*)&m_synCount, sizeof m_synCount, bufferSize);
+	DeserializeChunk(buf, &offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
+	DeserializeChunk(buf, &offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
 
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_ackCount, bufferSize);
-	m_ackCount = temp;
-
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_synCount, bufferSize);
-	m_synCount = temp;
-
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_finCount, bufferSize);
-	m_finCount = temp;
-
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_synAckCount, bufferSize);
-	m_synAckCount = temp;
-
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_tcpPacketCount, bufferSize);
-	m_tcpPacketCount = temp;
+	DeserializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
+	DeserializeChunk(buf, &offset, (char*)&m_udpPacketCount, sizeof m_udpPacketCount, bufferSize);
+	DeserializeChunk(buf, &offset, (char*)&m_icmpPacketCount, sizeof m_icmpPacketCount, bufferSize);
+	DeserializeChunk(buf, &offset, (char*)&m_otherPacketCount, sizeof m_otherPacketCount, bufferSize);
 
 	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_numberOfHaystackNodesContacted, bufferSize);
 	m_numberOfHaystackNodesContacted = temp;
