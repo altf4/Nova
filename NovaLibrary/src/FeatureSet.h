@@ -172,7 +172,11 @@ public:
 
 	//Number of packets total
 	uint64_t m_packetCount;
+
 	uint64_t m_tcpPacketCount;
+	uint64_t m_udpPacketCount;
+	uint64_t m_icmpPacketCount;
+	uint64_t m_otherPacketCount;
 
 	FeatureSet();
 	~FeatureSet();

@@ -1,7 +1,10 @@
 extends layout
 
 block content
-  div#tcpPiChart
+  div
+    div#ProtocolPiChart(style="display: inline-block;float: left; margin: 10px;")
+    div#tcpPiChart(style="display: inline-block; margin: 20px")
+  br
 
   - for (var i = 0; i < 14; i++) {
     div(style="display: inline-block; margin: 8px")
@@ -14,12 +17,17 @@ block headerAdditions
   script(type="text/javascript", src="scripts/NovaPiChart.js")
   script
     var data = new Array();
-    var piChart = new NovaPiChart("tcpPiChart", 200);
+    var tcpChart = new NovaPiChart("tcpPiChart", 200);
+    var protocolChart = new NovaPiChart("ProtocolPiChart", 200);
     
-    function Init() {};
+    // TODO: Don't send all the suspects, set up the plumbing to just request one
+    function Init() {
+        now.sendAllSuspects(OnNewSuspect)
+    };
 
     function OnNewSuspect(suspect) {
         if (suspect.GetIpString == "#{suspectIp}" && suspect.GetInterface == "#{suspectInterface}") {
+            console.log(suspect);
             data.push(suspect.GetFeatures);
 
             // TODO Don't hard code
@@ -37,7 +45,17 @@ block headerAdditions
             arr.push({name: "FIN Packets", value: suspect.GetFinCount});
             arr.push({name: "SYN ACK Packets", value: suspect.GetSynAckCount});
             arr = arr.sort(function(a,b) {return b.value - a.value});
-            piChart.Render(arr);
+            tcpChart.Render(arr);
+
+
+
+            arr = new Array();
+            arr.push({name: "TCP Packets", value: suspect.GetTcpPacketCount});
+            arr.push({name: "UDP Packets", value: suspect.GetUdpPacketCount});
+            arr.push({name: "ICMP Packets", value: suspect.GetIcmpPacketCount});
+            arr.push({name: "Other", value: suspect.GetOtherPacketCount});
+            arr = arr.sort(function(a,b) {return b.value - a.value});
+            protocolChart.Render(arr);
         }
 
     };
@@ -163,10 +181,8 @@ block headerAdditions
     require(["dojo/ready", "dojo/domReady!"], function(ready){
         ready(function() {
             now.ready(function() {
-            Init();
-  
-            now.OnNewSuspect = OnNewSuspect;
-  
+                now.OnNewSuspect = OnNewSuspect;
+                Init();
             });
         });
     });

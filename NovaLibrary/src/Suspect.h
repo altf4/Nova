@@ -160,6 +160,11 @@ public:
 	uint64_t GetFinCount() {return m_features.m_finCount;}
 	uint64_t GetSynAckCount() {return m_features.m_synAckCount;}
 
+	uint64_t GetTcpPacketCount() {return m_features.m_tcpPacketCount;}
+	uint64_t GetUdpPacketCount() {return m_features.m_udpPacketCount;}
+	uint64_t GetIcmpPacketCount() {return m_features.m_icmpPacketCount;}
+	uint64_t GetOtherPacketCount() {return m_features.m_otherPacketCount;}
+
 	bool m_needsClassificationUpdate;
 
 	// The main FeatureSet for this Suspect
