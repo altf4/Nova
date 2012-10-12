@@ -1716,6 +1716,17 @@ everyone.now.sendAllSuspects = function (callback) {
 	nova.sendSuspectList(callback);
 }
 
+everyone.now.sendSuspect = function (interface, ip, callback) {
+	var suspect = nova.sendSuspect(interface, ip);
+	if (suspect.GetIdString === undefined) {
+		console.log("Failed to get suspect");
+		return;
+	}
+	var s = new Object();
+	objCopy(suspect, s);
+	callback(s);
+}
+
 
 everyone.now.deleteUserEntry = function (usernamesToDelete, callback) {
 	var username;

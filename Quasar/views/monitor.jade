@@ -16,18 +16,24 @@ block content
 block headerAdditions
   script(type="text/javascript", src="scripts/NovaPiChart.js")
   script
+    var init = true;
     var data = new Array();
     var tcpChart = new NovaPiChart("tcpPiChart", 200);
     var protocolChart = new NovaPiChart("ProtocolPiChart", 200);
     
-    // TODO: Don't send all the suspects, set up the plumbing to just request one
     function Init() {
-        now.sendAllSuspects(OnNewSuspect)
+        now.sendSuspect("#{suspectIp}", "#{suspectInterface}", OnNewSuspect)
     };
 
     function OnNewSuspect(suspect) {
+        // We throw the first suspect in the graphs twice so it'll have a line instead of nothing
+        if (init)
+        {
+            init = false;
+            OnNewSuspect(suspect);
+        }
+        
         if (suspect.GetIpString == "#{suspectIp}" && suspect.GetInterface == "#{suspectInterface}") {
-            console.log(suspect);
             data.push(suspect.GetFeatures);
 
             // TODO Don't hard code
@@ -181,8 +187,8 @@ block headerAdditions
     require(["dojo/ready", "dojo/domReady!"], function(ready){
         ready(function() {
             now.ready(function() {
-                now.OnNewSuspect = OnNewSuspect;
                 Init();
+                now.OnNewSuspect = OnNewSuspect;
             });
         });
     });
