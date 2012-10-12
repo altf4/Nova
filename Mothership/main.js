@@ -994,7 +994,7 @@ wsServer.on('request', function(request)
           // Might be able to get away with just sending the JSON object, my intent
           // was to validate the message here with conditionals, just isn't done yet.
 					case 'hostileSuspect':
-            //console.log('Hostile Suspect ' + json_args.ip + ' received from ' + json_args.client + ' at ' + json_args.lastpacket);
+            console.log('Hostile Suspect ' + json_args.ip + ' received from ' + json_args.client + ' at ' + json_args.lastpacket);
 						var suspect = {};
 						suspect.ip = json_args.ip;
 						suspect.classification = json_args.classification;		
@@ -1031,11 +1031,11 @@ wsServer.on('request', function(request)
 						}
 						if(contains(suspectIPs, (suspect.ip + '@' + suspect.client)))
             {
-              //console.log('already found this suspect, not updating hostile events button');
+              console.log('already found suspect ' + suspect.ip + '@' + suspect.client + ', not updating hostile events button');
             }
             else
             {
-              console.log('adding suspect to suspectIPs');
+              console.log('adding suspect ' + suspect.ip + '@' + suspect.client + ' to suspectIPs');
 						  suspectIPs.push({ip: suspect.ip + '@' + suspect.client});
 						  for(var i in eventCounter)
 						  {

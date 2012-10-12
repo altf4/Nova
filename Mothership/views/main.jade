@@ -245,7 +245,7 @@ block headerAdditions
 
     function requestBenign()
     {
-      document.getElementById('benignList').value = message.id;
+      theDoc.getElementById('benignList').value = message.id;
       var iter = message.id.split(':');
       
       now.GetClientBenignRequest(function(list){
@@ -589,7 +589,7 @@ block headerAdditions
             set += list[i] + ':';
           }
         }
-        document.getElementById('benignList').value = set;
+        theDoc.getElementById('benignList').value = set;
       }); 
     }
     
@@ -621,7 +621,7 @@ block headerAdditions
       ready(function() {
         now.ready(function() {
           Init();
-          document.getElementById('showtargets').value = '';
+          theDoc.getElementById('showtargets').value = '';
           now.GetClients(now.RenderConnectionsList);
           now.SetUpNotificationsButton();
           now.SetUpHostileEventsButton(now.UpdateHostileEventsButton('read'));

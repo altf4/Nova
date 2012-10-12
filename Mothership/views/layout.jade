@@ -137,6 +137,7 @@ html(lang="en")
           
           clients.length = 0;
         }
+        divConnectionsList = null;
       }
       
       now.UpdateConnectionsList = function(clientId, action)
@@ -301,6 +302,8 @@ html(lang="en")
             console.log('UpdateConnectionsList called with unknown action ' + action + ', doing nothing');
             break;
         }
+        
+        divConnectionsList = null;
       }
       
       now.UpdateNotificationsButton = function(action)
