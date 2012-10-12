@@ -23,12 +23,6 @@
 //     name: String name of the item
 //     value: Number of this item present
 var NovaPiChart = function(divId, size, items) {
-	this.m_items = items;
-
-    this.m_numberOfItems = 0;
-    for (var i = 0; i < items.length; i++) {
-       this.m_numberOfItems += items[i].value;
-    }
 	this.m_id = divId;
     
 	this.SetSize(size);
@@ -36,13 +30,22 @@ var NovaPiChart = function(divId, size, items) {
 
 NovaPiChart.prototype = {
     SetSize: function(size) {
+		// Used so when we redrow we use the same colors
+		this.m_usedColors = new Object();
         this.m_size = size;
         this.m_halfSize = parseInt(size/2);
-        this.Render();
     },
 
 	// Renders the chart
-	Render: function() {
+	Render: function(items) {
+		if (items !== undefined) {
+			this.m_items = items;
+		}
+
+		this.m_numberOfItems = 0;
+		for (var i = 0; i < items.length; i++) {
+		   this.m_numberOfItems += items[i].value;
+		}
         // Reset the div
         document.getElementById(this.m_id).innerHTML = "";
 
@@ -55,16 +58,22 @@ NovaPiChart.prototype = {
         // Draw the pi chart on the canvas
         var ctx = canvas.getContext("2d");
         var lastend = 0;
+		var randomColor;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (var pfile = 0; pfile < this.m_items.length; pfile++) {
-            var randomColor = ((1<<24)*Math.random()|0).toString(16);
-            // Pad color with 0's on the left
-            if (randomColor.length != 6) {
-                for (var i = randomColor.length; i < 6; i++) {
-                    randomColor = "0" + randomColor;
-                }
-            }
-            randomColor = "#" + randomColor;
+			if (this.m_usedColors[this.m_items[pfile].name] === undefined) {
+				randomColor = ((1<<24)*Math.random()|0).toString(16);
+				// Pad color with 0's on the left
+				if (randomColor.length != 6) {
+					for (var i = randomColor.length; i < 6; i++) {
+						randomColor = "0" + randomColor;
+					}
+				}
+				randomColor = "#" + randomColor;
+				this.m_usedColors[this.m_items[pfile].name] = randomColor;
+			} else {
+				randomColor = this.m_usedColors[this.m_items[pfile].name];
+			}
 
             ctx.fillStyle = randomColor;
             ctx.beginPath();

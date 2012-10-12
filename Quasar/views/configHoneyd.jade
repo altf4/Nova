@@ -225,7 +225,8 @@ block headerAdditions
         }
 
         arr = arr.sort(function(a,b) {return b.value - a.value});
-        var piChart = new NovaPiChart("piChart", 200, arr);
+        var piChart = new NovaPiChart("piChart", 200);
+        piChart.Render(arr);
 
       });
     });

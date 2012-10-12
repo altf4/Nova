@@ -56,7 +56,7 @@ NovaGrid.prototype = {
 			if (this.m_sortByKey == c) {
 				title = '<div class="sortArrow">' + (this.m_sortDescending ? '&#8744;' : '&#8743;') + '</div>' + title;
 			}
-			this.headerHTML += '<TH><A HREF="javascript:void(0)" onclick="suspectGrid.SetSortByKey(' + c + ');">' + title + '</A></TH>';
+			this.headerHTML += '<TH><A HREF="javascript:void(0)" style="font-size: 12px;" onclick="suspectGrid.SetSortByKey(' + c + ');">' + title + '</A></TH>';
 		}
 		this.headerHTML += '</TR>';
 	}

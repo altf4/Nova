@@ -1,49 +1,71 @@
 extends layout
 
 block content
+  div#tcpPiChart
+
   - for (var i = 0; i < 14; i++) {
-    div(style="display: inline-block;")
+    div(style="display: inline-block; margin: 8px")
       h3 #{String(featureNames).split(",")[i]}
       canvas(id = "chart#{i}", width="200px", height="200px", style="border: 1px solid black")
-      p(id = "p#{i}")     ....................
-    - if (i%5 == 4) {
-    br
-    -}
+      p(id = "p#{i}")     
   -}
    
 block headerAdditions
+  script(type="text/javascript", src="scripts/NovaPiChart.js")
   script
     var data = new Array();
+    var piChart = new NovaPiChart("tcpPiChart", 200);
+    
     function Init() {};
+
     function OnNewSuspect(suspect) {
         if (suspect.GetIpString == "#{suspectIp}" && suspect.GetInterface == "#{suspectInterface}") {
             data.push(suspect.GetFeatures);
 
             // TODO Don't hard code
-            if (data.length > 25) {
+            if (data.length > 100) {
                 data.shift();
             }
             for (var i = 0; i < 14; i++) {
                 drawGraph("chart" + i, data, i);
             }
+
+            arr = new Array();
+            arr.push({name: "SYN Packets", value: suspect.GetSynCount});
+            arr.push({name: "RST Packets", value: suspect.GetRstCount});
+            arr.push({name: "ACK Packets", value: suspect.GetAckCount});
+            arr.push({name: "FIN Packets", value: suspect.GetFinCount});
+            arr.push({name: "SYN ACK Packets", value: suspect.GetSynAckCount});
+            arr = arr.sort(function(a,b) {return b.value - a.value});
+            piChart.Render(arr);
         }
 
     };
 
     function drawGraph(canvas, data, index) {
         // TODO Don't hard code
-        var width = 190;
-        var height = 190;
+        var m_width = 200;
+        var m_height = 200;
+        var border = 15;
+
+        var width = m_width;
+        var height = m_height - border*2;
         
         var c = document.getElementById(canvas);
         var p = document.getElementById("p" + index);
         var ctx = c.getContext("2d");
-        ctx.clearRect (0, 0,200 ,200);
+        ctx.clearRect (0, 0,m_width ,m_height);
        
         ctx.fillSTyle="#0000FF";
 
         var minY = data[0][index];
         var maxY = data[0][index];
+        
+        if (data.length == 1) {
+            p.innerHTML = "<br> Current: " + data[data.length-1][index].toFixed(12);
+            return;
+        }
+
 
         var points = new Array();
         for (var i = 0; i < data.length; i++) {
@@ -55,17 +77,47 @@ block headerAdditions
                 minY = data[i][index];
             }
         }
-        
+
          
         for (var i = 0; i < data.length; i++) {
             var point = new Object();
             point.x = (width/(data.length - 1))*i;
-            point.y = 5 + height - ((1.0*data[i][index] - minY)/maxY * height);
-            if (maxY == 0) {
-                point.y = 5 + height;
+
+            if (maxY == minY) {
+                point.y = height/2;
+            } else {
+                point.y = border + height - ((1.0*data[i][index] - minY)/(maxY-minY) * height);
             }
             points.push(point);
         }
+       
+        // Draw grid lines
+        ctx.strokeStyle="#A1A1A1";
+        ctx.beginPath();
+        ctx.moveTo(0, border);
+        ctx.lineTo(width, border);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, height+border);
+        ctx.lineTo(width, height+border);
+        ctx.stroke();
+        for (var i = 0; i < points.length; i++) {
+            ctx.beginPath();
+            ctx.moveTo(points[i].x,border);
+            ctx.lineTo(points[i].x,height+border);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(0, points[i].y);
+            ctx.lineTo(width, points[i].y);
+            ctx.stroke();
+        }
+        
+        ctx.fillStyle = "blue";
+        ctx.font = "10px Arial";
+        ctx.fillText(minY, 0, m_height); 
+        ctx.fillText(maxY, 0, 10);
+        
 
         
         ctx.strokeStyle="#FF0000";
@@ -102,8 +154,8 @@ block headerAdditions
         }
 
         p.innerHTML = trendString;
-            
-
+        p.innerHTML += "<br> Current: " + data[data.length-1][index].toFixed(12);
+        p.innerHTML += "<br> Delta: " + (data[data.length-1][index]- data[data.length-2][index]).toFixed(12);
     }
 
 

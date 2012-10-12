@@ -165,6 +165,10 @@ block headerAdditions
         suspectGrid.DeleteRow(buildLink(ip, interface, idString));
     }
 
+    function MonitorSuspect(ip, interface, idString) {
+        window.location = "/monitor?ip=" + ip + "&interface=" + interface;
+    }
+
     function buildLink(ip, interface, idString) {
       var res = "<a href='/GetSuspectDetails?ip=" + ip + "&interface=" + interface + "'> " + idString + "</a>";
       return res;
@@ -184,10 +188,11 @@ block headerAdditions
       suspect.LastPacketString = dString;
       
       var row = new Array();
-      var clearButton = "<button onClick='ClearSuspect(";
-      clearButton += '"' + suspect.GetIpString + '"' + ', ' + '"' + suspect.GetInterface + '"' + ', ' + '"' + suspect.GetIdString + '"';
-      clearButton += ");'>Clear</button>";
-      row.push(clearButton);
+      
+      var monitorButton = "<button onClick='MonitorSuspect(";
+      monitorButton += '"' + suspect.GetIpString + '"' + ', ' + '"' + suspect.GetInterface + '"' + ', ' + '"' + suspect.GetIdString + '"';
+      monitorButton += ");'>Monitor</button>";
+      row.push(monitorButton);
         
       var ip = suspect.GetIpString;
     
@@ -217,6 +222,11 @@ block headerAdditions
             }
          }
        }
+      
+      var clearButton = "<button onClick='ClearSuspect(";
+      clearButton += '"' + suspect.GetIpString + '"' + ', ' + '"' + suspect.GetInterface + '"' + ', ' + '"' + suspect.GetIdString + '"';
+      clearButton += ");'>Clear</button>";
+      row.push(clearButton);
 
       suspectGrid.PushEntry(row);
     };
@@ -357,7 +367,7 @@ block headerAdditions
         theDoc = document;
         var enabledFeatures = "#{enabledFeatures}";
         var gridStructure = new Array();
-        gridStructure.push({name: "Clear"});
+        gridStructure.push({name: "Monitor"});
         gridStructure.push({name: "Address"});
         gridStructure.push({name: "Classification", formatter: classificationFormatter});
         gridStructure.push({name: "Last Seen"});
@@ -367,6 +377,7 @@ block headerAdditions
         for (var i = 0; i < featureNames.length; i++) {
             if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], formatter: featureFormatter});
         }
+        gridStructure.push({name: "Clear"});
    
         suspectGrid = new NovaGrid(gridStructure, 1, document.getElementById('suspectTable'));
 
