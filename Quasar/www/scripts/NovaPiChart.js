@@ -60,6 +60,22 @@ NovaPiChart.prototype = {
         var lastend = 0;
 		var randomColor;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		if (this.m_numberOfItems == 0) {
+            ctx.fillStyle = "#A1A1A1";
+            ctx.beginPath();
+            ctx.moveTo(this.m_halfSize,this.m_halfSize);
+            ctx.arc(this.m_halfSize,this.m_halfSize, this.m_halfSize,lastend,lastend+Math.PI*2,false);
+            ctx.lineTo(this.m_halfSize, this.m_halfSize);
+            ctx.fill();
+
+			for (var i = 0; i < this.m_items.length; i++) {
+        		var text = document.createElement("p");
+            	text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp 0% " + this.m_items[i].name;
+            	document.getElementById(this.m_id).appendChild(text);
+			}
+			return;
+		}
         for (var pfile = 0; pfile < this.m_items.length; pfile++) {
 			if (this.m_usedColors[this.m_items[pfile].name] === undefined) {
 				randomColor = ((1<<24)*Math.random()|0).toString(16);
@@ -84,7 +100,7 @@ NovaPiChart.prototype = {
             lastend += Math.PI*2*(this.m_items[pfile].value/this.m_numberOfItems);
 
             // Draw the legend
-            var text = document.createElement("p");
+        	var text = document.createElement("p");
             text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% " + this.m_items[pfile].name;
             document.getElementById(this.m_id).appendChild(text);
 
