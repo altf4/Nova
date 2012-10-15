@@ -30,28 +30,28 @@ app.configure(function()
 	app.use(app.router);
 });
 
-var LOG = require("../NodejsModule/Javascript/Logger").LOG;
+var LOG = require('../NodejsModule/Javascript/Logger').LOG;
 
-LOG("ALERT", "Starting MOTHERSHIP version " + config.GetVersionString());
+LOG('ALERT', 'Starting MOTHERSHIP version ' + config.GetVersionString());
 
 process.chdir(NovaHomePath);
 
-var DATABASE_HOST = config.ReadSetting("DATABASE_HOST");
-var DATABASE_USER = config.ReadSetting("DATABASE_USER");
-var DATABASE_PASS = config.ReadSetting("DATABASE_PASS");
+var DATABASE_HOST = config.ReadSetting('DATABASE_HOST');
+var DATABASE_USER = config.ReadSetting('DATABASE_USER');
+var DATABASE_PASS = config.ReadSetting('DATABASE_PASS');
 
 var databaseOpenResult = function (err) {
   if (err == null) 
   {
-    console.log("Opened sqlite3 database file.");
+    console.log('Opened sqlite3 database file.');
   } 
   else 
   {
-    LOG(ERROR, "Error opening sqlite3 database file: " + err);
+    LOG(ERROR, 'Error opening sqlite3 database file: ' + err);
   }
 }
 
-var db = new sql.Database(NovaHomePath + "/data/database.db", sql.OPEN_READWRITE, databaseOpenResult);
+var db = new sql.Database(NovaHomePath + '/data/database.db', sql.OPEN_READWRITE, databaseOpenResult);
 
 var dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
 var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
@@ -81,12 +81,12 @@ passport.use(new BasicStrategy(function(username, password, done) {
   process.nextTick(function() {
     dbqCredentialsRowCount.all(function(err, rowcount) {
       if (err) {
-        console.log("Database error: " + err);
+        console.log('Database error: ' + err);
       }
 
       // If there are no users, add default nova and log in
       if (rowcount[0].rows == 0) {
-        console.log("No users in user database. Creating default user.");
+        console.log('No users in user database. Creating default user.');
         dbqCredentialsInsertUser.run('nova', HashPassword('toor'), function(err) {
           if (err) 
           {
@@ -101,7 +101,7 @@ passport.use(new BasicStrategy(function(username, password, done) {
 
         function selectCb(err, results) {
           if (err) {
-            console.log("Database error: " + err);
+            console.log('Database error: ' + err);
           }
 
           if (results[0] === undefined) {
@@ -643,8 +643,8 @@ RemoveGroup = function(group)
 {
   console.log('Removing group ' + group + ' from the client groups file');
   var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
-  var regex = group + ".*?;";
-  var replaceWithNull = new RegExp(regex, "g");
+  var regex = group + '.*?;';
+  var replaceWithNull = new RegExp(regex, 'g');
   groupFile = groupFile.replace(replaceWithNull, '');
   groupFile = trimNewlines(groupFile);
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
@@ -660,9 +660,9 @@ UpdateGroup = function(group, newMembers)
     console.log('Updating group ' + group + ' to have members ' + newMembers);
   }
   var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
-  var regex = group + ".*?;";
-  var replaceWithNull = new RegExp(regex, "g");
-  groupFile = groupFile.replace(replaceWithNull, group + ":" + newMembers + ";");
+  var regex = group + '.*?;';
+  var replaceWithNull = new RegExp(regex, 'g');
+  groupFile = groupFile.replace(replaceWithNull, group + ':' + newMembers + ';');
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
 everyone.now.UpdateGroup = UpdateGroup;
@@ -672,7 +672,7 @@ AddGroup = function(group, members)
 {
   console.log('Adding group ' + group + ' with members ' + members);
   var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
-  groupFile += '\n' + group + ":" + members + ";";
+  groupFile += '\n' + group + ':' + members + ';';
   fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
 }
 everyone.now.AddGroup = AddGroup;
@@ -962,7 +962,7 @@ wsServer.on('request', function(request)
             {
               everyone.now.UpdateConnectionsList(json_args.id, 'add');
             }
-            eventCounter.push({client: json_args.id, events: "0"});
+            eventCounter.push({client: json_args.id, events: '0'});
             GetGroupMembers('all', function(members){
               if(members.indexOf(json_args.id) == -1)
               {
@@ -1009,19 +1009,19 @@ wsServer.on('request', function(request)
 						  var start = append.indexOf(suspect.ip + '@' + suspect.client + '_' + suspect.interface);
 						  if(start == -1)
 						  {
-						    append += suspect.ip + '@' + suspect.client + '_' + suspect.interface + ":" + suspect.classification + " " + suspect.lastpacket + ';\n';
+						    append += suspect.ip + '@' + suspect.client + '_' + suspect.interface + ':' + suspect.classification + ' ' + suspect.lastpacket + ';\n';
 						  }
 						  else
 						  {
 						    var end = append.indexOf(';', start);
-						    var newAppend = suspect.ip + '@' + suspect.client + '_' + suspect.interface + ":" + suspect.classification + " " + suspect.lastpacket + ';';
+						    var newAppend = suspect.ip + '@' + suspect.client + '_' + suspect.interface + ':' + suspect.classification + ' ' + suspect.lastpacket + ';';
 						    append = append.replace(append.substr(start, end), newAppend);
 						  }
 						  fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/suspects@' + json_args.client + '.txt', append);
 						}
 						catch(err)
 						{
-						  var write = suspect.ip + '@' + suspect.client + '_' + suspect.interface + ":" + suspect.classification + " " + suspect.lastpacket + ';\n';
+						  var write = suspect.ip + '@' + suspect.client + '_' + suspect.interface + ':' + suspect.classification + ' ' + suspect.lastpacket + ';\n';
 						  fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/suspects@' + json_args.client + '.txt', write); 
 						}
 						
@@ -1251,7 +1251,7 @@ function getGroups()
       if(clientGroups[i] != '' && clientGroups[i].length > 1)
       {
         var members = clientGroups[i].split(':');
-        ret.groups += members[0].replace(/(\r\n|\n|\r)/gm,"") + ':';
+        ret.groups += members[0].replace(/(\r\n|\n|\r)/gm,'') + ':';
         ret.members += members[1] + '|';
       }
     }
