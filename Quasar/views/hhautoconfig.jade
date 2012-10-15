@@ -167,9 +167,9 @@ block headerAdditions
         if (document.getElementById("nodeCountType").value == "fixed") {
             num = parseInt(document.getElementById("numNodes").value);
         } else {
-            num = parseInt(document.getElementById("numNodesRatio").value);
+            num = parseFloat(document.getElementById("numNodesRatio").value);
         }
-        console.log("GetNumNodes returning " + num);
+        console.log("GetNumNodes returning number " + num);
         return num;
     }
     
