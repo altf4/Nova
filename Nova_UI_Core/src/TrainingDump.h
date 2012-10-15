@@ -38,7 +38,7 @@ struct _trainingFileSuspect
 
 typedef struct _trainingFileSuspect trainingFileSuspect;
 
-typedef Nova::HashMap<std::string, trainingFileSuspect*, std::tr1::hash<std::string>, eqstr > trainingFileSuspectMap;
+typedef Nova::HashMap<std::string, trainingFileSuspect*, std::hash<std::string>, eqstr > trainingFileSuspectMap;
 
 class TrainingDump
 {

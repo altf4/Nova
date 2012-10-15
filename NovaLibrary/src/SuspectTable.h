@@ -30,20 +30,18 @@
 #define EMPTY_SUSPECT_CLASSIFICATION -1337
 
 namespace std {
-    namespace tr1 {
         template<>
         struct hash< Nova::SuspectIdentifier > {
         	// TODO: This should be passed by reference, doesn't compile though. Look into it.
             //std::size_t operator()( Nova::SuspectIdentifier &c ) const
             std::size_t operator()( Nova::SuspectIdentifier c ) const
             {
-                return tr1::hash<uint32_t>()(c.m_ip);
+                return hash<uint32_t>()(c.m_ip);
             }
         };
-    }
 }
 
-typedef Nova::HashMap<Nova::SuspectIdentifier, Nova::Suspect *, std::tr1::hash<Nova::SuspectIdentifier>, Nova::equalityChecker> SuspectHashTable;
+typedef Nova::HashMap<Nova::SuspectIdentifier, Nova::Suspect *, std::hash<Nova::SuspectIdentifier>, Nova::equalityChecker> SuspectHashTable;
 
 struct SuspectLock
 {
@@ -52,7 +50,7 @@ struct SuspectLock
 	bool deleted;
 };
 
-typedef Nova::HashMap<Nova::SuspectIdentifier,SuspectLock, std::tr1::hash<Nova::SuspectIdentifier>, Nova::equalityChecker> SuspectLockTable;
+typedef Nova::HashMap<Nova::SuspectIdentifier,SuspectLock, std::hash<Nova::SuspectIdentifier>, Nova::equalityChecker> SuspectLockTable;
 
 namespace Nova {
 

@@ -1,8 +1,9 @@
 #ifndef NOVAHASH_H_
 #define NOVAHASH_H_
 
-#include <google/dense_hash_map>
 #include <exception>
+#include <sys/types.h>
+#include <unordered_map>
 
 namespace Nova
 {
@@ -63,15 +64,15 @@ public:
 	bool empty() const;
 
 	// Expose the iterators
-	typedef typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator iterator;
+	typedef typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator iterator;
 
-	typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator begin();
-	typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator end();
-	typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator find(KeyType key);
+	typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator begin();
+	typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator end();
+	typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator find(KeyType key);
 
 private:
 
-	google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey> m_map;
+	std::unordered_map<KeyType, ValueType, HashFcn, EqualKey> m_map;
 
 	KeyType m_emptyKey;
 	KeyType m_deletedKey;
@@ -98,7 +99,7 @@ void HashMap<KeyType,ValueType,HashFcn,EqualKey>::set_deleted_key(KeyType key)
 {
 	m_isDeletedKeyUsed = true;
 	m_deletedKey = key;
-	m_map.set_deleted_key(key);
+	//m_map.set_deleted_key(key);
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
@@ -107,23 +108,23 @@ void HashMap<KeyType,ValueType,HashFcn,EqualKey>::set_empty_key(KeyType key)
 	m_isEmptyKeyUsed = true;
 
 	m_emptyKey = key;
-	m_map.set_empty_key(key);
+	//m_map.set_empty_key(key);
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
-typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator HashMap<KeyType,ValueType,HashFcn,EqualKey>::begin()
+typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator HashMap<KeyType,ValueType,HashFcn,EqualKey>::begin()
 {
 	return m_map.begin();
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
-typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator HashMap<KeyType,ValueType,HashFcn,EqualKey>::end()
+typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator HashMap<KeyType,ValueType,HashFcn,EqualKey>::end()
 {
 	return m_map.end();
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
-typename google::dense_hash_map<KeyType, ValueType, HashFcn, EqualKey>::iterator HashMap<KeyType,ValueType,HashFcn,EqualKey>::find(KeyType key)
+typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator HashMap<KeyType,ValueType,HashFcn,EqualKey>::find(KeyType key)
 {
 	return m_map.find(key);
 }
@@ -137,7 +138,7 @@ void HashMap<KeyType,ValueType,HashFcn,EqualKey>::clear()
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 void HashMap<KeyType,ValueType,HashFcn,EqualKey>::resize(size_t size)
 {
-	m_map.resize(size);
+	//m_map.resize(size);
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
@@ -176,7 +177,7 @@ bool HashMap<KeyType,ValueType,HashFcn,EqualKey>::empty() const
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 void HashMap<KeyType,ValueType,HashFcn,EqualKey>::clear_no_resize()
 {
-	m_map.clear_no_resize();
+	//m_map.clear_no_resize();
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>

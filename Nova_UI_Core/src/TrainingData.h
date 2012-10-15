@@ -42,8 +42,8 @@ struct _trainingSuspect
 
 typedef struct _trainingSuspect trainingSuspect;
 
-typedef HashMap<std::string, trainingSuspect*, std::tr1::hash<std::string>, eqstr > trainingSuspectMap;
-typedef HashMap<std::string, std::vector<std::string>*, std::tr1::hash<std::string>, eqstr > trainingDumpMap;
+typedef HashMap<std::string, trainingSuspect*, std::hash<std::string>, eqstr > trainingSuspectMap;
+typedef HashMap<std::string, std::vector<std::string>*, std::hash<std::string>, eqstr > trainingDumpMap;
 
 class TrainingData
 {

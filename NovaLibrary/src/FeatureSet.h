@@ -54,11 +54,11 @@ typedef struct _packet Packet;
 #define REMOVE false
 
 //Table of IP destinations and a count;
-typedef Nova::HashMap<uint32_t, uint64_t, std::tr1::hash<time_t>, eqtime > IP_Table;
+typedef Nova::HashMap<uint32_t, uint64_t, std::hash<time_t>, eqtime > IP_Table;
 //Table of destination ports and a count;
-typedef Nova::HashMap<in_port_t, uint64_t, std::tr1::hash<in_port_t>, eqport > Port_Table;
+typedef Nova::HashMap<in_port_t, uint64_t, std::hash<in_port_t>, eqport > Port_Table;
 //Table of packet sizes and a count
-typedef Nova::HashMap<uint16_t, uint64_t, std::tr1::hash<uint16_t>, eq_uint16_t > Packet_Table;
+typedef Nova::HashMap<uint16_t, uint64_t, std::hash<uint16_t>, eq_uint16_t > Packet_Table;
 
 struct IpPortCombination {
 	uint32_t m_ip;
@@ -101,7 +101,6 @@ struct IpPortCombination {
 
 // Make a IpPortCombination hash and equals function for the Google hash maps
 namespace std {
-    namespace tr1 {
         template<>
         struct hash< IpPortCombination > {
         	// TODO: This should be passed by reference, doesn't compile though. Look into it.
@@ -125,7 +124,6 @@ namespace std {
             	  return a;
             }
         };
-    }
 }
 
 struct IpPortCombinationEquals
@@ -136,7 +134,7 @@ struct IpPortCombinationEquals
 	}
 };
 
-typedef Nova::HashMap<IpPortCombination, uint8_t, std::tr1::hash<IpPortCombination>, IpPortCombinationEquals> IpPortTable;
+typedef Nova::HashMap<IpPortCombination, uint8_t, std::hash<IpPortCombination>, IpPortCombinationEquals> IpPortTable;
 
 enum featureIndex: uint8_t
 {
