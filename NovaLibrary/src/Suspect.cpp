@@ -36,9 +36,7 @@ Suspect::Suspect()
 	m_hostileNeighbors = 0;
 	m_classification = -1;
 	m_needsClassificationUpdate = false;
-	m_flaggedByAlarm = false;
 	m_isHostile = false;
-	m_isLive = false;
 	m_lastPacketTime = 0;
 	m_classificationNotes = "";
 
@@ -160,8 +158,6 @@ uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMo
 	//Copies the value and increases the offset
 	SerializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
-	SerializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
-	SerializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
 	SerializeChunk(buf, &offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
 
@@ -242,8 +238,6 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 		m_id.GetSerializationLength()
 		+ sizeof(m_classification)
 		+ sizeof(m_isHostile)
-		+ sizeof(m_flaggedByAlarm)
-		+ sizeof(m_isLive)
 		+ sizeof(m_hostileNeighbors)
 		+ sizeof(m_lastPacketTime);
 	//Adds the dynamic elements to the messageSize
@@ -301,8 +295,6 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 
 	DeserializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
-	DeserializeChunk(buf, &offset,(char*)&m_flaggedByAlarm, sizeof m_flaggedByAlarm, bufferSize);
-	DeserializeChunk(buf, &offset,(char*)&m_isLive, sizeof m_isLive, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
 	DeserializeChunk(buf, &offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
 
@@ -430,29 +422,6 @@ void Suspect::SetIsHostile(bool b)
 }
 
 
-//Returns the flagged by silent alarm bool
-bool Suspect::GetFlaggedByAlarm()
-{
-	return m_flaggedByAlarm;
-}
-//Sets the flagged by silent alarm bool
-void Suspect::SetFlaggedByAlarm(bool b)
-{
-	m_flaggedByAlarm = b;
-}
-
-
-//Returns the 'from live capture' bool
-bool Suspect::GetIsLive()
-{
-	return m_isLive;
-}
-//Sets the 'from live capture' bool
-void Suspect::SetIsLive(bool b)
-{
-	m_isLive = b;
-}
-
 //Returns a copy of the suspects FeatureSet
 FeatureSet Suspect::GetFeatureSet(FeatureMode whichFeatures)
 {
@@ -556,8 +525,6 @@ Suspect Suspect::GetShallowCopy()
 	ret.m_needsClassificationUpdate = m_needsClassificationUpdate;
 	ret.m_hostileNeighbors = m_hostileNeighbors;
 	ret.m_isHostile = m_isHostile;
-	ret.m_flaggedByAlarm = m_flaggedByAlarm;
-	ret.m_isLive = m_isLive;
 	ret.m_classificationNotes = m_classificationNotes;
 	return ret;
 }
@@ -577,8 +544,6 @@ Suspect& Suspect::operator=(const Suspect &rhs)
 	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
-	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
-	m_isLive = rhs.m_isLive;
 	m_classificationNotes = rhs.m_classificationNotes;
 	return *this;
 }
@@ -617,11 +582,6 @@ bool Suspect::operator==(const Suspect &rhs) const
 		return false;
 	}
 
-	if(m_flaggedByAlarm != rhs.m_flaggedByAlarm)
-	{
-		return false;
-	}
-
 	if(m_lastPacketTime != rhs.m_lastPacketTime)
 	{
 		return false;
@@ -654,8 +614,6 @@ Suspect::Suspect(const Suspect &rhs)
 	m_classification = rhs.m_classification;
 	m_hostileNeighbors = rhs.m_hostileNeighbors;
 	m_isHostile = rhs.m_isHostile;
-	m_flaggedByAlarm = rhs.m_flaggedByAlarm;
-	m_isLive = rhs.m_isLive;
 	m_needsClassificationUpdate = rhs.m_needsClassificationUpdate;
 	m_classificationNotes = rhs.m_classificationNotes;
 }
