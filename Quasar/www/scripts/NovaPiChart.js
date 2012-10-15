@@ -99,9 +99,9 @@ NovaPiChart.prototype = {
             ctx.fill();
             lastend += Math.PI*2*(this.m_items[pfile].value/this.m_numberOfItems);
 
-            // Draw the legend
+            // Draw the legend and values
         	var text = document.createElement("p");
-            text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% " + this.m_items[pfile].name;
+            text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
             document.getElementById(this.m_id).appendChild(text);
 
         }
