@@ -1,9 +1,30 @@
 extends layout
 
+block content
+  h1 Connected Clients List
+  div(id='clientsList')
+  br
+  br
+  h1 Add Group
+  label New Group Name: 
+  input(id='groupName', maxlength='10', size='10', value='')
+  button(id='addGroup', onclick='addGroup(document.getElementById("groupName").value, getMembers())') Add Group
+  h1 Current Groups
+  table(id='groupsList')
+    thead
+      tr
+        th Group
+        th Members
+    tbody(id='appendHook')
+  br
+  br
+ 
 block headerAdditions
-  script(type="text/javascript", src="scripts/ConnectionManagement.js")
+  script(type='text/javascript', src='scripts/ConnectionManagement.js')
+  script(type='text/javascript', src='scripts/Groups.js')
   script
-    var clients = "#{CLIENTS}".split(':');
+    var clients = '#{CLIENTS}'.split(':');
+    var theDoc = document;
     if(clients[0] == '')
     {
       clients.length = 0;
@@ -13,220 +34,6 @@ block headerAdditions
     var groups = !{GROUPS};
   
     var maintainGroups = new Array();
-
-    function setTarget(source, target)
-    {
-      
-    }
-
-    function setUpGroups(bodyId)
-    {
-      if(groups == undefined)
-      {
-        return;
-      }
-      
-      var groupList = groups.groups.split(':');
-      var memberList = groups.members.split('|');
-      var ah = document.getElementById(bodyId);
-      
-      for(var i in groupList)
-      {
-        if(groupList[i] != '')
-        {
-          maintainGroups.push({group:groupList[i],idx:i});
-          var tr = document.createElement('tr');
-          tr.id = 'group' + i;
-          
-          var td1 = document.createElement('td');
-          var td2 = document.createElement('td');
-          
-          var label = document.createElement('label');
-          label.id = 'groupLabel' + i;
-          label.innerHTML = groupList[i];
-          label.value = groupList[i];
-          var input = document.createElement('input');
-          input.id = 'members' + i;
-          input.value = memberList[i];
-          if(groupList[i] == 'all')
-          {
-            input.setAttribute('readonly', 'true');
-          }
-          
-          td1.appendChild(label);
-          td2.appendChild(input);
-          tr.appendChild(td1);
-          tr.appendChild(td2);
-          
-          if(groupList[i] != 'all')
-          {
-            var td3 = document.createElement('td');
-            var deleteButton = document.createElement('button');
-            deleteButton.setAttribute('onclick', 'removeGroup("groupLabel' + i + '")');
-            deleteButton.innerHTML = 'Delete';
-            td3.appendChild(deleteButton);
-            tr.appendChild(td3);
-            
-            var td4 = document.createElement('td');
-            var updateButton = document.createElement('button');
-            updateButton.setAttribute('onclick', 'updateGroup(document.getElementById("groupLabel' + i + '").value, document.getElementById("members' + i + '").value)');
-            updateButton.innerHTML = 'Update';
-            td4.appendChild(updateButton);
-            tr.appendChild(td4);
-          }
-          
-          ah.appendChild(tr);
-        }
-      }
-    }
-    
-    function getMembers()
-    {
-      if(clients == '' || clients.length == 0)
-      {
-        return undefined;
-      }
-      else
-      {
-        var members = '';
-        for(var i = 0; i < clientCount; i++)
-        {
-          if(document.getElementById('check' + i) != null && document.getElementById('check' + i).checked)
-          {
-            members += document.getElementById('check' + i).value + ',';
-          }
-        }
-        if(members[members.length - 1] === ',')
-        {
-          members = members.substr(0, members.length - 1);
-        }
-        if(members == '')
-        {
-          return undefined;
-        }
-        
-        return members;
-      }
-    }
-    
-    function removeGroup(group)
-    {
-      var groupToRemove = document.getElementById(group).value;
-      now.RemoveGroup(groupToRemove);
-      for(var i in maintainGroups)
-      {
-        if(maintainGroups[i].group == groupToRemove)
-        {
-          delete maintainGroups[i];
-        } 
-      }
-      document.getElementById('appendHook').removeChild(document.getElementById('group' + group.substr(10)));
-    }
-
-    function updateGroup(group, newMembers)
-    {
-      now.UpdateGroup(group, newMembers);
-      var idx = 0;
-      for(var i in maintainGroups)
-      {
-        if(group == maintainGroups[i].group)
-        {
-          idx = maintainGroups[i].idx;
-        }
-      }
-      document.getElementById('members' + idx).value = newMembers;
-      var checkGroupCount = newMembers.split(',');
-      if(document.getElementById('groupcheck' + idx) !== null && (checkGroupCount[1] == '' || checkGroupCount[1] == undefined))
-      {
-        document.getElementById('groupcheck' + idx).setAttribute('disabled', true);
-      }
-    }
-
-    function addGroup(group, members)
-    {
-      
-      if(members != undefined && group != undefined)
-      {
-        for(var i in maintainGroups)
-        {
-          if(group == maintainGroups[i].group)
-          {
-            alert('Cannot have identical group names');
-            return;
-          }
-          if(members == document.getElementById('members' + maintainGroups[i].idx).value)
-          {
-            alert('Already have a group "' + maintainGroups[i].group + '" with members "' + members + '"');
-            return;
-          }
-        }
-        
-        var checkMemberCount = members.split(',');
-        if(checkMemberCount[1] == '' || checkMemberCount[1] == undefined)
-        {
-          alert('Groups must consist of two or more clients');
-          return;
-        }
-        
-        maintainGroups.push({group:group,idx:parseInt(clientCount) + 1});
-       
-        if(/^[a-z0-9]+$/i.test(group) || group.length <= 1)
-        {
-          alert('Group name must be between 2 and 10 alphanumeric characters');
-          return;
-        }
-       
-        consle.log('group is ' + group);
-       
-        now.AddGroup(group, members);
-        
-        document.getElementById('groupName').value = '';
-        
-        var ah = document.getElementById('appendHook');
-        
-        var tr = document.createElement('tr');
-        tr.id = 'group' + (parseInt(clientCount) + 1);
-        
-        var td1 = document.createElement('td');
-        var td2 = document.createElement('td');
-        
-        var label = document.createElement('label');
-        label.id = 'groupLabel' + (parseInt(clientCount) + 1);
-        label.innerHTML = group;
-        label.value = group;
-        var input = document.createElement('input');
-        input.id = 'members' + (parseInt(clientCount) + 1);
-        input.value = members;
-        
-        td1.appendChild(label);
-        td2.appendChild(input);
-        tr.appendChild(td1);
-        tr.appendChild(td2);
-        
-        if(group != 'all')
-        {
-          var td3 = document.createElement('td');
-          var deleteButton = document.createElement('button');
-          deleteButton.setAttribute('onclick', 'removeGroup("groupLabel' + (parseInt(clientCount) + 1) + '")');
-          deleteButton.innerHTML = 'Delete';
-          td3.appendChild(deleteButton);
-          tr.appendChild(td3);
-          
-          var td4 = document.createElement('td');
-          var updateButton = document.createElement('button');
-          updateButton.setAttribute('onclick', 'updateGroup(document.getElementById("groupLabel' + (parseInt(clientCount) + 1) + '").value, document.getElementById("members' + (parseInt(clientCount) + 1) + '").value)');
-          updateButton.innerHTML = 'Update';
-          td4.appendChild(updateButton);
-          tr.appendChild(td4);
-        }
-        
-        ah.appendChild(tr);
-      }
-      else
-      {
-        alert('To add a group, at least one client must be checked and a group name must be entered!');
-      }
-    }
 
     now.ready(function(){
       now.GetClients(now.RenderConnectionsList);
@@ -258,22 +65,3 @@ block headerAdditions
       
       updateGroup('all', members);
     });
-
-block content
-  h1 Connected Clients List
-  div(id='clientsList')
-  br
-  br
-  h1 Add Group
-  label New Group Name: 
-  input(id='groupName', value='', maxlength='10', size='10')
-  button(id='addGroup', onclick='addGroup(document.getElementById("groupName").value, getMembers())') Add Group
-  h1 Current Groups
-  table(id='groupsList')
-    thead
-      tr
-        th Group
-        th Members
-    tbody(id='appendHook')
-  br
-  br

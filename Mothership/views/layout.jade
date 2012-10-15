@@ -1,15 +1,15 @@
 doctype 5
-html(lang="en")
+html(lang='en')
   head
-    meta(charset="utf-8")
-    link(rel="stylesheet", type="text/css", href="style.css", media="screen")
-    link(rel="stylesheet", type="text/css", href="/dojo/dijit/themes/claro/claro.css", media="screen")
-    link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
-    link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
-    link(rel="shortcut icon", href="/favicon.ico")
+    meta(charset='utf-8')
+    link(rel='stylesheet', type='text/css', href='style.css', media='screen')
+    link(rel='stylesheet', type='text/css', href='/dojo/dijit/themes/claro/claro.css', media='screen')
+    link(rel='stylesheet', type='text/css', href='/dojo/dojox/grid/resources/Grid.css')
+    link(rel='stylesheet', type='text/css', href='/dojo/dojox/grid/resources/claroGrid.css')
+    link(rel='shortcut icon', href='/favicon.ico')
 
-    script(type="text/javascript", src="/nowjs/now.js")
-    script(type="text/javascript", src="/dojo/dojo/dojo.js", data-dojo-config="async:true, parseOnLoad:true")
+    script(type='text/javascript', src='/nowjs/now.js')
+    script(type='text/javascript', src='/dojo/dojo/dojo.js', data-dojo-config='async:true, parseOnLoad:true')
     script
       // Method to render the left side connection status list;
       // this list will contain a clientId and two graphics, each
@@ -28,7 +28,7 @@ html(lang="en")
             return eventList[i].events;
           }
         }
-        return "0";
+        return '0';
       }
 
       now.RenderConnectionsList = function(clients, optional)
@@ -108,8 +108,8 @@ html(lang="en")
             events.id = clients[i] + 'events';
             if(document.URL.indexOf('/hostile') != -1)
             {
-              now.UpdateEventCounter(clients[i], "0");
-              events.innerHTML = "0";
+              now.UpdateEventCounter(clients[i], '0');
+              events.innerHTML = '0';
               events.setAttribute('style', 'border: 2px; border-radius: 20px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
             }
             else
@@ -276,7 +276,7 @@ html(lang="en")
             if(document.URL.indexOf('/hostile') == -1)
             { 
               now.GetEventCount(clientId, function(events){
-                document.getElementById(clientId + 'events').innerHTML = (parseInt(events) == null ? "0" : parseInt(events));
+                document.getElementById(clientId + 'events').innerHTML = (parseInt(events) == null ? '0' : parseInt(events));
                 if(parseInt(events) > 0)
                 {
                   document.getElementById(clientId + 'events').setAttribute('style', 'border: 2px; border-radius: 20px; background: #FF5447; font-weight: bold; color: white; text-align: center; float: right; padding-left: 2px; padding-right: 2px;');
@@ -419,69 +419,69 @@ html(lang="en")
         }
       }
       
-      require(["dijit/layout/BorderContainer", "dijit/layout/TabContainer", "dijit/layout/ContentPane", "dijit/form/Button", "dojo/parser", "dojox/grid/DataGrid", "dojox/data/HtmlStore", "dijit/ProgressBar"],
+      require(['dijit/layout/BorderContainer', 'dijit/layout/TabContainer', 'dijit/layout/ContentPane', 'dijit/form/Button', 'dojo/parser', 'dojox/grid/DataGrid', 'dojox/data/HtmlStore', 'dijit/ProgressBar'],
         function(ready){
           dojo.addOnLoad(function(){
             // Some logging of nowjs stuff
             now.core.on('disconnect', function() {console.log('Warning: Disconnected from nowjs server.');});
             
-            dojo.style("appLayout", "opacity", 0);
-            dojo.fadeOut({node:"splash", delay:0}).play();
-            dojo.style("appLayout", "visibility", "visible");
-            dojo.fadeIn({node:"appLayout", delay:0}).play();
+            dojo.style('appLayout', 'opacity', 0);
+            dojo.fadeOut({node:'splash', delay:0}).play();
+            dojo.style('appLayout', 'visibility', 'visible');
+            dojo.fadeIn({node:'appLayout', delay:0}).play();
           });
         }
       );
     block headerAdditions
 
   body.claro
-    div#splash(style="position:absolute;left:0px;top:0px;width:100%;height:100%; text-align: center;")
+    div#splash(style='position:absolute;left:0px;top:0px;width:100%;height:100%; text-align: center;')
       // Uncomment below for a simple splash loading screen
       //h1 Loading... please wait.
       //img(src="images/novaSplash.png")
-    div#appLayout.demoLayout(data-dojo-type="dijit.layout.BorderContainer", data-dojo-props="design: 'headline', region: 'center'", style="visibility: hidden")
-      div.centerPanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'center', tabPosition: 'bottom'")
-        div(data-dojo-type="dijit.layout.ContentPane",title="NOVA", data-dojo-props="splitter: false")
+    div#appLayout.demoLayout(data-dojo-type='dijit.layout.BorderContainer', data-dojo-props='design: "headline", region: "center"', style='visibility: hidden')
+      div.centerPanel(data-dojo-type='dijit.layout.ContentPane', data-dojo-props='region: "center", tabPosition: "bottom"')
+        div(data-dojo-type='dijit.layout.ContentPane',title='NOVA', data-dojo-props='splitter: false')
           block content
       // Header panel
-      div.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'top', splitter: false")
-        div(data-dojo-type="dijit.layout.BorderContainer",data-dojo-props="design: 'sidebar', splitter: false",style="height: 140px;")
+      div.edgePanel(data-dojo-type='dijit.layout.ContentPane', data-dojo-props='region: "top", splitter: false')
+        div(data-dojo-type='dijit.layout.BorderContainer',data-dojo-props='design: "sidebar", splitter: false',style='height: 140px;')
           // Header center
-          div(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'center', splitter: false")    
-            a(href="/")
-              img#eyeIcon(src="images/novaIcon.png",class="align-left", width="100px", height="100px")
+          div(data-dojo-type='dijit.layout.ContentPane', data-dojo-props='region: "center", splitter: false')    
+            a(href='/')
+              img#eyeIcon(src='images/novaIcon.png',class='align-left', width='100px', height='100px')
               h1 NOVA: Network Obfuscation and Virtualized Anti-reconnaissance System
             block topPannelAdditions
     
       // Left panel
-      div#leftCol.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'left', splitter: false")
+      div#leftCol.edgePanel(data-dojo-type='dijit.layout.ContentPane', data-dojo-props='region: "left", splitter: false')
         block buttonPannelAdditions
       
        
-        div(style="text-align:center; font-weight:bold; font-size: 150%;") Status
-        a(class="button", id='hostileButton', href='/hostile') Hostile Events
+        div(style='text-align:center; font-weight:bold; font-size: 150%;') Status
+        a(class='button', id='hostileButton', href='/hostile') Hostile Events
         br
         br
-        div(style="text-align:center; font-weight:bold; font-size: 150%;") Configuration
-        a(class="button", href='/config') Client Configuration Options
+        div(style='text-align:center; font-weight:bold; font-size: 150%;') Configuration
+        a(class='button', href='/config') Client Configuration Options
         br
-        a(class="button", href='/haystack') Client Haystack Autoconfiguration
+        a(class='button', href='/haystack') Client Haystack Autoconfiguration
         br
-        a(class="button", href='/groups') Group Configuration Options
+        a(class='button', href='/groups') Group Configuration Options
         br
-        a(class="button", href='/schedule') New Scheduled Event
+        a(class='button', href='/schedule') New Scheduled Event
         br
-        a(class="button", href='/listschedule') View Scheduled Events
-        br
-        br
-        div(style="text-align:center; font-weight:bold; font-size: 150%;") Documentation
-        a(class="button", href='/about') About Nova
-        br
-        a(class="button", id='notify', href='/notifications') Notifications (0) 
+        a(class='button', href='/listschedule') View Scheduled Events
         br
         br
-        div(style="text-align:center; font-weight:bold; font-size: 150%;") Connected Clients
-        div(id="connectionsList")
+        div(style='text-align:center; font-weight:bold; font-size: 150%;') Documentation
+        a(class='button', href='/about') About Nova
+        br
+        a(class='button', id='notify', href='/notifications') Notifications (0) 
+        br
+        br
+        div(style='text-align:center; font-weight:bold; font-size: 150%;') Connected Clients
+        div(id='connectionsList')
         //a(class="button", href= "logout") Log Out
         //br
 

@@ -29,261 +29,133 @@ block content
   h2 Classification Settings
   label Classification Timeout
   br
-  input(type="number", step="1", min="0", name="CLASSIFICATION_TIMEOUT", value=CLASSIFICATION_TIMEOUT)
+  input(type='number', step='1', min='0', name='CLASSIFICATION_TIMEOUT', value=CLASSIFICATION_TIMEOUT)
   br
   label Neighbors
   br
-  input(type="number", step="1", min="1", name="K", value=K)
+  input(type='number', step='1', min='1', name='K', value=K)
   br
   label EPS
   br
-  input(name="EPS", type="number", value=EPS)
+  input(name='EPS', type='number', value=EPS)
   br
   label Classification Threshold
   br
-  input(name="CLASSIFICATION_THRESHOLD", type="number", value=CLASSIFICATION_THRESHOLD)
+  input(name='CLASSIFICATION_THRESHOLD', type='number', value=CLASSIFICATION_THRESHOLD)
   br
   label Packets Needed Before Classification
   br
-  input(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
+  input(type='number', name='MIN_PACKET_THRESHOLD', value=MIN_PACKET_THRESHOLD);
   br
   label Clear data after suspect logged as hostile?
   br
-  if(CLEAR_AFTER_HOSTILE_EVENT != "0")
+  if(CLEAR_AFTER_HOSTILE_EVENT != '0')
     |Yes
-    input(type="radio", id='clearHostileYes', name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
+    input(type='radio', id='clearHostileYes', name='CLEAR_AFTER_HOSTILE_EVENT', value='1', checked)
     br
     |No
-    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0")
+    input(type='radio', name='CLEAR_AFTER_HOSTILE_EVENT', value='0')
     br
   else
     |Yes
-    input(type="radio", id='clearHostileYes', name="CLEAR_AFTER_HOSTILE_EVENT", value="1")
+    input(type='radio', id='clearHostileYes', name='CLEAR_AFTER_HOSTILE_EVENT', value='1')
     br
     |No
-    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0", checked)
+    input(type='radio', name='CLEAR_AFTER_HOSTILE_EVENT', value='0', checked)
     br
   br
   label Custom PCAP Filter String
   br
-  input(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
+  input(type='text', name='CUSTOM_PCAP_FILTER', value=CUSTOM_PCAP_FILTER)
   br
   label Custom PCAP Filter String Mode
   br
-  if(CUSTOM_PCAP_MODE != "0")
+  if(CUSTOM_PCAP_MODE != '0')
     |Override
-    input(type="radio", id='customPcapYes', name="CUSTOM_PCAP_MODE", value="1", checked)
+    input(type='radio', id='customPcapYes', name='CUSTOM_PCAP_MODE', value='1', checked)
     br
     |Append
-    input(type="radio", name="CUSTOM_PCAP_MODE", value="0")
+    input(type='radio', name='CUSTOM_PCAP_MODE', value='0')
     br
   else
     |Override
-    input(type="radio", id='customPcapYes', name="CUSTOM_PCAP_MODE", value="1")
+    input(type='radio', id='customPcapYes', name='CUSTOM_PCAP_MODE', value='1')
     br
     |Append
-    input(type="radio", name="CUSTOM_PCAP_MODE", value="0", checked)
+    input(type='radio', name='CUSTOM_PCAP_MODE', value='0', checked)
     br
   br
   
   h2 Special Run Settings
   label Packet Capture Buffer Size (in bytes)
   br
-  input(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE", value=CAPTURE_BUFFER_SIZE)
+  input(type='number', step='1', min='1024', name='CAPTURE_BUFFER_SIZE', value=CAPTURE_BUFFER_SIZE)
   br
   
   h2 State File Settings
   label State Save Frequency
   br
-  input(type="number", min="0", name="SAVE_FREQUENCY", value=SAVE_FREQUENCY)
+  input(type='number', min='0', name='SAVE_FREQUENCY', value=SAVE_FREQUENCY)
   br
   label Data TTL
   br
-  input(type="number", min="0", name="DATA_TTL", value=DATA_TTL)
+  input(type='number', min='0', name='DATA_TTL', value=DATA_TTL)
   br
   
   h2 Doppelganger
   label Doppelganger Enabled?
   br
-  if(DM_ENABLED != "0")
+  if(DM_ENABLED != '0')
     |Yes
-    input(type="radio", id="dmEnabledYes", name="DM_ENABLED", value="1", checked)
+    input(type='radio', id='dmEnabledYes', name='DM_ENABLED', value='1', checked)
     br
     |No
-    input(type="radio", name="DM_ENABLED", value="0")
+    input(type='radio', name='DM_ENABLED', value='0')
     br
   else
     |Yes
-    input(type="radio", id="dmEnabledYes", name="DM_ENABLED", value="1")
+    input(type='radio', id='dmEnabledYes', name='DM_ENABLED', value='1')
     br
     |No
-    input(type="radio", name="DM_ENABLED", value="0", checked)
+    input(type='radio', name='DM_ENABLED', value='0', checked)
     br
   br
   
   h2 Logger Settings
   label Service Preferences
   br
-  input(name="SERVICE_PREFERENCES", id="SERVICE_PREFERENCES", value=SERVICE_PREFERENCES)
+  input(name='SERVICE_PREFERENCES', id='SERVICE_PREFERENCES', value=SERVICE_PREFERENCES)
   br
   br
   //Aesthetic note: Probably want to have a spinner or something here
   //to show that the clients are updating. Once the mothership has received the 
   //appropriate response from all of the clients that were targeted, notify
   //the user and redirect to main page
-  button(id="updateButton", onclick="updateConfiguration();") Submit Configuration
+  button(id='updateButton', onclick='updateConfiguration();') Submit Configuration
   
 block headerAdditions
-  script(type="text/javascript", src="scripts/ConnectionManagement.js")
+  script(type='text/javascript', src='scripts/ConnectionManagement.js')
+  script(type='text/javascript', src='scripts/Config.js')
   script
-      var clients = "#{CLIENTS}".split(':');
-      var groups = !{GROUPS};
-      var message = {};
-      message.id = '';
-      var replace = "#{SERVICE_PREFERENCES}";
-      
-      function updateConfiguration()
-      {
-        if(message.id == '')
+    var clients = '#{CLIENTS}'.split(':');
+    var groups = !{GROUPS};
+    var message = {};
+    message.id = '';
+    var replace = '#{SERVICE_PREFERENCES}';
+  
+    now.ready(function(){
+      now.GetClients(now.RenderConnectionsList);
+      now.SetUpNotificationsButton();
+      now.SetUpHostileEventsButton();
+      now.GetClients(function(list){
+        for(var i in list)
         {
-          alert('Attemping to submit to null target string, doing nothing');
-          return;
-        }
-        console.log('Sending configuration update requests to targets: ' + message.id);
-        now.UpdateConfiguration();
-      }
-      
-      function setTarget(source, target, group)
-      {
-        if(group == 'true' || group == true)
-        {
-          if(document.getElementById(source).checked)
+          if(list[i] != '')
           {
-            message.id = target + ":";
-            var targets = target.split(":");
-
-            for(var i in document.getElementById('groupsList').childNodes)
-            {
-              if(document.getElementById('groupcheck' + i) != undefined && document.getElementById('groupcheck' + i).id.indexOf(source) == -1)
-              {
-                document.getElementById('groupcheck' + i).setAttribute('disabled', true);
-              }
-            }
-            for(var i in document.getElementById('clientsList').childNodes)
-            {
-              if(document.getElementById('check' + i) != undefined)
-              {
-                document.getElementById('check' + i).checked = false;
-                document.getElementById('check' + i).setAttribute('disabled', true);
-              } 
-            }
-          }
-          else
-          {
-            message.id = '';
-            for(var i in document.getElementById('groupsList').childNodes)
-            {
-              if(document.getElementById('groupcheck' + i) != undefined && document.getElementById('groupcheck' + i).id.indexOf(source) == -1)
-              {
-                document.getElementById('groupcheck' + i).removeAttribute('disabled');
-              }
-            }
-            for(var i in document.getElementById('clientsList').childNodes)
-            {
-              if(document.getElementById('check' + i) != undefined)
-              {
-                document.getElementById('check' + i).removeAttribute('disabled');
-              } 
-            }
-          }
+            now.UpdateConnectionsList(list[i], 'updateStatus');  
+          } 
         }
-        else
-        {
-          if(document.getElementById(source).checked)
-          {
-            message.id += target + ':';
-          }
-          else
-          {
-            var regex = new RegExp(target + ':', 'i');
-            message.id = message.id.replace(regex, '');
-          }
-        }
-        document.getElementById('showtargets').value = message.id.replace(new RegExp(':', 'g'), ',').substr(0, message.id.length - 1);
-      }
-       
-      now.UpdateConfiguration = function()
-      {
-        //construct json here
-        //message type: updateConfiguration
-        message.type = 'updateConfiguration';
-        
-        message.TCP_TIMEOUT = document.getElementsByName('TCP_TIMEOUT')[0].value;
-        message.TCP_CHECK_FREQ = document.getElementsByName('TCP_CHECK_FREQ')[0].value;
-        message.CLASSIFICATION_TIMEOUT = document.getElementsByName('CLASSIFICATION_TIMEOUT')[0].value;
-        message.K = document.getElementsByName('K')[0].value;
-        message.EPS = document.getElementsByName('EPS')[0].value;
-        message.CLASSIFICATION_THRESHOLD = document.getElementsByName('CLASSIFICATION_THRESHOLD')[0].value;
-        message.MIN_PACKET_THRESHOLD = document.getElementsByName('MIN_PACKET_THRESHOLD')[0].value;
-        
-        if(document.getElementById('clearHostileYes').checked)
-        {
-          message.CLEAR_AFTER_HOSTILE_EVENT = '1';  
-        }
-        else
-        {
-          message.CLEAR_AFTER_HOSTILE_EVENT = '0';
-        }
-        
-        message.CUSTOM_PCAP_FILTER = document.getElementsByName('CUSTOM_PCAP_FILTER')[0].value;
-        
-        if(document.getElementById('customPcapYes').checked)
-        {
-          message.CUSTOM_PCAP_MODE = '1';
-        }
-        else
-        {
-          message.CUSTOM_PCAP_MODE = '0';
-        }
-        
-        message.CAPTURE_BUFFER_SIZE = document.getElementsByName('CAPTURE_BUFFER_SIZE')[0].value;
-        message.SAVE_FREQUENCY = document.getElementsByName('SAVE_FREQUENCY')[0].value;
-        message.DATA_TTL = document.getElementsByName('DATA_TTL')[0].value;
-        
-        if(document.getElementById('dmEnabledYes').checked)
-        {
-          message.DM_ENABLED = '1';
-        }
-        else
-        {
-          message.DM_ENABLED = '0';
-        }
-        
-        message.SERVICE_PREFERENCES = document.getElementsByName('SERVICE_PREFERENCES')[0].value;
-        
-        if(/^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;$/.test(message.SERVICE_PREFERENCES) == false)
-        {
-          document.getElementById('SERVICE_PREFERENCES').value = replace;
-          alert('Service Preferences string is not formatted correctly.');
-          return;
-        }
-        
-        now.MessageSend(message);
-      }
-        
-      now.ready(function(){
-        now.GetClients(now.RenderConnectionsList);
-        now.SetUpNotificationsButton();
-        now.SetUpHostileEventsButton();
-        now.GetClients(function(list){
-          for(var i in list)
-          {
-            if(list[i] != '')
-            {
-              now.UpdateConnectionsList(list[i], 'updateStatus');  
-            } 
-          }
-        });
-        setUpSelect('clientsList');
-        setUpGrouplist('groupsList');
       });
+      setUpSelect('clientsList');
+      setUpGrouplist('groupsList');
+    });

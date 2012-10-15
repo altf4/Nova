@@ -3,8 +3,8 @@ extends layout
 block content
   h1 Currently Scheduled Events
   br
-  table(style='border: solid 2px; background: #E8A02F; text-align: center;', border="1")
-    tbody(id="elementHook")
+  table(border='1', style='border: solid 2px; background: #E8A02F; text-align: center;')
+    tbody(id='elementHook')
       tr
         th Event Name
         th Schedule Type
@@ -13,9 +13,9 @@ block content
           
 block headerAdditions
   script
-    var clients = "#{CLIENTS}".split(':');
+    var clients = '#{CLIENTS}'.split(':');
     var groups = !{GROUPS};
-    var messageTypes = "#{TYPES}".split(',');
+    var messageTypes = '#{TYPES}'.split(',');
     var message = {};
     message.id = '';
     
