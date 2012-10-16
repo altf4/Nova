@@ -60,6 +60,7 @@ var crypto = require('crypto');
 var exec = require('child_process').exec;
 var nowjs = require("now");
 var Validator = require('validator').Validator;
+var dns = require('dns');
 
 var Tail = require('tail').Tail;
 var NovaHomePath = config.GetPathHome();
@@ -2245,6 +2246,10 @@ everyone.now.restoreDefaultSettings = function(callback) {
 	exec('cp -f ' + source + ' ' + destination, function(err) {
 		callback();
 	});	
+}
+
+everyone.now.reverseDNS = function(ip, callback) {
+	dns.reverse(ip, callback);
 }
 
 

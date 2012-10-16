@@ -1,6 +1,19 @@
 extends layout
 
 block content
+  table
+    tr
+      td Suspect IP Address:
+      td
+        b #{suspectIp}
+    tr
+      td Suspect Interface:
+      td
+        b #{suspectInterface}
+    tr
+      td Reverse DNS: 
+      td
+        b#domain Waiting for reply...
   div
     div#ProtocolPiChart(style="display: inline-block;float: left; margin: 10px;")
     div#tcpPiChart(style="display: inline-block; margin: 20px")
@@ -23,7 +36,18 @@ block headerAdditions
     
     function Init() {
         now.sendSuspect("#{suspectIp}", "#{suspectInterface}", OnNewSuspect)
+        now.reverseDNS("#{suspectIp}", reverseDNScb);
     };
+
+    function reverseDNScb(err, domains) {
+        var prefix = '';
+        var suffix = '';
+        if (err != null) {
+            document.getElementById("domain").innerHTML = prefix + err.code + suffix;
+        } else {
+            document.getElementById("domain").innerHTML = prefix + domains + suffix;
+        }
+    }
 
     function OnNewSuspect(suspect) {
         // We throw the first suspect in the graphs twice so it'll have a line instead of nothing
