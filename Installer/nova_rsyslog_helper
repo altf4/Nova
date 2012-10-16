@@ -1,0 +1,27 @@
+#!/bin/bash
+
+TARGET=$1
+FILE=/etc/rsyslog.d/40-nova.conf
+
+if [[ -z $TARGET ]]
+then
+{
+  echo 'Usage: nova_rsyslog_helper TARGET_IP:TARGET_PORT'
+  exit 1
+}
+fi
+
+NEWCMND='if $programname == "novad" or $programname == "Nova" or $programname == "honeyd" then @@'
+
+if grep -qs "$NEWCMND" $FILE
+then
+{
+  sed -i "s|if.*$|$NEWCMND$TARGET|" $FILE
+}
+else
+{
+  echo $NEWCMND$TARGET >> $FILE
+}
+fi
+
+sudo restart rsyslog

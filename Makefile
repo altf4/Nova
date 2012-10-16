@@ -240,6 +240,7 @@ install-data:
 
 	#Copy the scripts and logs
 	install Installer/nova_init "$(DESTDIR)/usr/bin"
+	install Installer/nova_rsyslog_helper "$(DESTDIR)/usr/bin"
 	#Install permissions
 	install Installer/miscFiles/sudoers_nova "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 	install Installer/miscFiles/40-nova.conf "$(DESTDIR)/etc/rsyslog.d/" --mode=664
@@ -299,7 +300,7 @@ uninstall-files:
 	rm -f "$(DESTDIR)/usr/bin/novacli"
 	rm -f "$(DESTDIR)/usr/bin/novad"
 	rm -f "$(DESTDIR)/usr/bin/haystackautoconfig"
-	rm -f "$(DESTDIR)/usr/bin/nova_mailer"
+	rm -f "$(DESTDIR)/usr/bin/nova_rsyslog_helper"
 	rm -f "$(DESTDIR)/usr/bin/nova_init"
 	rm -f "$(DESTDIR)/usr/bin/quasar"
 	rm -f "$(DESTDIR)/usr/bin/novatrainer"
