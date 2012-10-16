@@ -316,27 +316,26 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 						string vendorString = "";
 						string macString = "";
 
-						int s;
 						struct ifreq buffer;
 						vector<string> interfacesFromConfig = Config::Inst()->ListInterfaces();
 
 						for(uint j = 0; j < interfacesFromConfig.size() && macString.empty(); j++)
 						{
-							s = socket(PF_INET, SOCK_DGRAM, 0);
+							int socketFD = socket(PF_INET, SOCK_DGRAM, 0);
 
 							memset(&buffer, 0x00, sizeof(buffer));
-							strcpy(buffer.ifr_name, interfacesFromConfig[j].c_str());
-							ioctl(s, SIOCGIFHWADDR, &buffer);
-							close(s);
+							strncpy(buffer.ifr_name, interfacesFromConfig[j].c_str(), sizeof(buffer.ifr_name));
+							ioctl(socketFD, SIOCGIFHWADDR, &buffer);
+							close(socketFD);
 
 							char macPair[3];
 
 							stringstream ss;
 							string zeroCheck;
 
-							for(s = 0; s < 6; s++)
+							for(uint k = 0; k < 6; k++)
 							{
-								sprintf(macPair, "%2x", (unsigned char)buffer.ifr_hwaddr.sa_data[s]);
+								sprintf(macPair, "%2x", (unsigned char)buffer.ifr_hwaddr.sa_data[k]);
 								zeroCheck = string(macPair);
 
 								zeroCheck = boost::trim_left_copy(zeroCheck);
@@ -350,7 +349,7 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 								{
 									ss << macPair;
 								}
-								if(s != 5)
+								if(k != 5)
 								{
 									ss << ":";
 								}
