@@ -298,12 +298,41 @@ Tips for debugging problems
 		run
 		backtrack
 
+===============================
+RSyslog Support
+===============================
+
+There is an option for designating a target Rsyslog instance electing to receive
+messages exposed within the Advanced Options page of the Quasar Web UI. Some suggestions:
+
+ -Make sure that whatever IP is pointed is given in the format IP_ADDRESS:PORT. 
+
+ -Make sure the designated port is both open and listening on the receiving machine. The
+  easiest way to do this is to uncomment the InputTCPServer lines in /etc/rsyslog.conf
+  and change the port number away from 514 (because rsyslog now drops permissions, using
+  port 514 is no longer an option, as it's < 1024). To test that rsyslog is listening, run
+  
+	netstat -tlnup | grep 514
+ 
+  as root and check that the PID/Name combination for rsyslogd is listed under the results.
+
+ -Within /etc/rsyslog.d/ lie the configuration files; in one of these files, a rule MUST be 
+  created similar to the following:
+  
+	if $programname == "novad" or $programname == "Nova" or $programname == "honeyd" then YOUR_ACTION_CHOICE
+
+  where YOUR_ACTION_CHOICE represents the action (most likely a write to a destination) to take upon 
+  receipt of messages from a client server that have those program names. This is to help organize the logs,
+  as Nova can potentially send many log messages that would otherwise pollute the normal syslog file.
+
+Testing that these changes worked is a good idea as well. Simply start and stop novad on the client with the novacli 
+command line interface and check that the log messages sent at startup arrived at the right place
 
 ===============================
 Contact us
 ===============================
 
-feel free to contact the authors with issues and suggestions. 
+Feel free to contact the authors with issues and suggestions. 
 
 Found a bug? Had an install problem? Tell us about it on our issue tracker:
     https://github.com/DataSoft/Nova/issues
