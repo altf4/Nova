@@ -737,8 +737,7 @@ app.get('/advancedOptions', passport.authenticate('basic', {session: false}), fu
 			, CLASSIFICATION_ENGINE: config.ReadSetting("CLASSIFICATION_ENGINE")
 			, THRESHOLD_HOSTILE_TRIGGERS: config.ReadSetting("THRESHOLD_HOSTILE_TRIGGERS")
 			, ONLY_CLASSIFY_HONEYPOT_TRAFFIC: config.ReadSetting("ONLY_CLASSIFY_HONEYPOT_TRAFFIC")
-
-
+      , RSYSLOG_IP: getRsyslogIp()
 			, supportedEngines: nova.GetSupportedEngines()
 		}
 	});
@@ -1440,7 +1439,15 @@ everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macTyp
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", "THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC"];
+	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
+	"TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
+	"K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", 
+	"DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", 
+	"DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", 
+	"SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", 
+	"CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", 
+	"MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", 
+	"THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC"];
 
 	Validator.prototype.error = function (msg) {
 		this._errors.push(msg);
@@ -1534,7 +1541,11 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 		case "THINNING_DISTANCE":
 			validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
 			break;
-
+			
+    case "RSYSLOG_IP":
+      validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$');
+      break;
+      
 		case "DOPPELGANGER_IP":
 			validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
 			var split = req.body[configItems[item]].split('.');
@@ -1590,12 +1601,40 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 		}
 	}
 
-
 	var errors = validator.getErrors();
+
+  var writeIP = req.body["RSYSLOG_IP"];
+
+  if(writeIP != undefined && writeIP != getRsyslogIp())
+  {
+    var util = require('util');
+    var spawn = require('sudo');
+    var options = {
+      cachePassword: true
+      , prompt: 'You have requested to change the target server for Rsyslog. This requires superuser permissions'
+    };
+  
+    var execution = ['nova_rsyslog_helper', writeIP.toString()];
+  
+    var rsyslogHelper = spawn(execution, options);
+
+    rsyslogHelper.on('exit', function(code){
+      if(code.toString() != '0')
+      {
+        console.log('nova_rsyslog_helper could not complete update of rsyslog configuration, exited with code ' + code);
+      }
+      else
+      {
+        console.log('nova_rsyslog_helper updated rsyslog configuration');
+      }
+    });
+  }
 
 	if (errors.length > 0) {
 		RenderError(res, errors, "/suspects");
-	} else {
+	} 
+	else 
+	{
 		if (req.body["INTERFACE"] !== undefined && req.body["DEFAULT"] === undefined) {
 			req.body["DEFAULT"] = false;
 			config.UseAllInterfaces(false);
@@ -1617,7 +1656,7 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 		}
 
 		//if no errors, send the validated form data to the WriteSetting method
-		for (var item = 4; item < configItems.length; item++) {
+		for (var item = 5; item < configItems.length; item++) {
 			if (req.body[configItems[item]] != undefined) {
 				config.WriteSetting(configItems[item], req.body[configItems[item]]);
 			}
@@ -2338,7 +2377,21 @@ function switcher(err, user, success, done) {
 }
 
 function pad(num) {
-    return ("0" + num.toString()).slice(-2);
+  return ("0" + num.toString()).slice(-2);
+}
+
+function getRsyslogIp()
+{
+  var read = fs.readFileSync('/etc/rsyslog.d/40-nova.conf', 'utf8');
+  var idx = read.indexOf('if $programname');
+  var ret = '';
+  
+  if(idx != -1)
+  {
+    ret = read.substr(idx);
+  }  
+  
+  return ret;
 }
 
 app.get('/*', passport.authenticate('basic', {session: false}));

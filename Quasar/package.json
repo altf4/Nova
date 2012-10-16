@@ -13,5 +13,6 @@
 		, "validator" : "0.4.6-2"
 		, "tail" : "0.2.x"
 		, "websocket" : "1.x.x"
+		, "sudo" : ""
 	}
 }
