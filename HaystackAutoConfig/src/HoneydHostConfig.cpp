@@ -220,6 +220,7 @@ int main(int argc, char ** argv)
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			LOG(ERROR, "Must designate an Nmap XML file to parse, or provide either an interface or a subnet to scan. Aborting...", "");
+			cout << endl << desc << endl;
 			return errVar;
 		}
 		else
@@ -266,6 +267,8 @@ int main(int argc, char ** argv)
 	catch(exception &e)
 	{
 		LOG(ERROR, "Uncaught exception: " + string(e.what()) + ".", "");
+
+		cout << endl << desc << endl;
 	}
 }
 
