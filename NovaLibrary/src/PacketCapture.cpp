@@ -38,7 +38,12 @@ void PacketCapture::SetPacketCb(void (*cb)(unsigned char *index, const struct pc
 
 void PacketCapture::SetFilter(string filter)
 {
+	if (m_handle == NULL) {
+		return;
+	}
+
 	struct bpf_program fp;
+
 
 	if(pcap_compile(m_handle, &fp, filter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1)
 	{
@@ -60,6 +65,10 @@ pcap_t* PacketCapture::GetPcapHandle()
 
 int PacketCapture::GetDroppedPackets()
 {
+	if (m_handle == NULL) {
+		return 0;
+	}
+
 	pcap_stat captureStats;
 	int result = pcap_stats(m_handle, &captureStats);
 

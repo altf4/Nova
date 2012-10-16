@@ -26,7 +26,8 @@
 namespace Nova
 {
 void SaveAndExit(int param)
-{
+{	
+	StopCapture();
 	AppendToStateFile();
 
 	if(system("sudo iptables -F") == -1)
