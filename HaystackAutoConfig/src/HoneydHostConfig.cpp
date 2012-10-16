@@ -52,6 +52,7 @@ uint16_t tempHostspace;
 string localMachine;
 string nmapFileName;
 uint numNodes;
+string groupName;
 double nodeRatio;
 
 enum NumberOfNodesType {
@@ -79,6 +80,7 @@ int main(int argc, char ** argv)
 				("interface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
 				("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
 				("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
+				("group-name,g", po::value<string>(), "User-designated name for generated profile group. Only used if one profile or subnet is scanned.")
 		;
 
 		po::variables_map vm;
@@ -99,7 +101,7 @@ int main(int argc, char ** argv)
 		}
 
 
-		if (vm.count("num-nodes-ratio") && vm.count("num-nodes"))
+		if(vm.count("num-nodes-ratio") && vm.count("num-nodes"))
 		{
 			cout << "ERROR: You can only use one of -r and -n to specify the number of nodes." << endl;
 			lockFile.close();
@@ -107,7 +109,7 @@ int main(int argc, char ** argv)
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 
-		if (vm.count("num-nodes-ratio"))
+		if(vm.count("num-nodes-ratio"))
 		{
 			cout << "Number of nodes to create: " << nodeRatio << " * number of real hosts found" << endl;
 			numberOfNodesType = RATIO_BASED_NUMBER_OF_NODES;
@@ -178,6 +180,11 @@ int main(int argc, char ** argv)
 			nmapFileName = vm["nmap-xml"].as<string>();
 			f_flag_set = true;
 		}
+		if(vm.count("group-name"))
+		{
+			cout<< "selected group name is " << vm["group-name"].as< string >() << endl;
+			groupName = vm["group-name"].as< string >();
+		}
 
 		if(numberOfNodesType == FIXED_NUMBER_OF_NODES && numNodes < 0)
 		{
@@ -187,10 +194,10 @@ int main(int argc, char ** argv)
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 
-		if (numberOfNodesType == FIXED_NUMBER_OF_NODES && nodeRatio < 0) {
+		if (numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES && nodeRatio < 0) {
 			lockFile.close();
 			remove(lockFilePath.c_str());
-			LOG(ERROR, "num-nodes argument takes an integer greater than or equal to 0. Aborting...", "");
+			LOG(ERROR, "num-nodes ratio argument must be greater than or equal to 0. Aborting...", "");
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 
