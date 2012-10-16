@@ -1740,13 +1740,8 @@ everyone.now.IsNovadUp = function (callback) {
 }
 
 everyone.now.StartNovad = function () {
-	console.log("Calling StartNovad(false)");
 	var result = nova.StartNovad(false);
-	console.log("Got " + result);
-
-	console.log("Calling CheckConnection");
-	var result = nova.CheckConnection();
-	console.log("Done! Got " + result + ".Calling IsNovadup to check status");
+	result = nova.CheckConnection();
 	try {
 		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
 	} catch (err) {};
