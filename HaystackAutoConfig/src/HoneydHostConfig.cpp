@@ -68,10 +68,10 @@ string lockFilePath;
 
 int main(int argc, char ** argv)
 {
+	namespace po = boost::program_options;
 	po::options_description desc("Command line options");
 	try
 	{
-		namespace po = boost::program_options;
 		desc.add_options()
 				("help,h", "Show command line options")
 				("num-nodes,n", po::value<uint>(&numNodes), "Number of nodes to create (can't be used with -r)")
