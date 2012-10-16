@@ -24,12 +24,7 @@ block content
     button(type="button", style="width:160px", onClick='StopHaystack()') Stop Haystack 
     &nbsp
     &nbsp
-    button#liveUpdateButton(type="button", style="width:160px") Pause Updates
-      script(type="dojo/method", data-dojo-event="onClick", data-dojo-args="evt")
-        | liveUpdate = !liveUpdate;
-        | if (!liveUpdate) {dojo.byId("liveUpdateButton").innerHTML = "Unpause table refreshing";}
-        | else {dojo.byId("liveUpdateButton").innerHTML = "Pause table refreshing";}
-  
+    button#liveUpdateButton(type="button", style="width:160px", onclick='toggleLiveUpdate()') Pause Updates 
 
   div#nova_suspects_header(style="width:600px; margin: 0 auto; text-align:center;")
     br
@@ -82,6 +77,15 @@ block headerAdditions
 
     require(["dijit/form/TextBox"]);
 
+    var toggleLiveUpdate = function() {
+      liveUpdate = !liveUpdate;
+      console.log("Toggled live update to " + liveUpdate);
+      if (!liveUpdate) {
+        dojo.byId("liveUpdateButton").innerHTML = "Unpause table refreshing";}
+      else {
+        dojo.byId("liveUpdateButton").innerHTML = "Pause table refreshing";
+      }
+    }
 
     // Wrappers for now.js calls with some try/catches
     var StartNovad = function() {
@@ -166,12 +170,17 @@ block headerAdditions
     }
 
     function MonitorSuspect(ip, interface, idString) {
-        window.location = "/monitor?ip=" + ip + "&interface=" + interface;
+        window.open("/monitor?ip=" + ip + "&interface=" + interface, 'Monitoring ' + ip);
     }
 
     function buildLink(ip, interface, idString) {
-      var res = "<a href='/GetSuspectDetails?ip=" + ip + "&interface=" + interface + "'> " + idString + "</a>";
+      var res = "<a  href='javascript:void(0)' onclick='getSuspectDetails(";
+      res += '"' + ip + '","' + interface + "\\")'> " + idString + "</a>";
       return res;
+    }
+
+    function getSuspectDetails(ip, interface) {
+        window.open('/GetSuspectDetails?ip=' + ip + '&interface=' + interface, 'Details for suspect ' + ip);
     }
     
     var OnNewSuspect = function(suspect){
@@ -189,7 +198,7 @@ block headerAdditions
       
       var row = new Array();
       
-      var monitorButton = "<button onClick='MonitorSuspect(";
+      var monitorButton = "<a href='javascript:void(0)' onClick='MonitorSuspect(";
       monitorButton += '"' + suspect.GetIpString + '"' + ', ' + '"' + suspect.GetInterface + '"' + ', ' + '"' + suspect.GetIdString + '"';
       monitorButton += ");'>Monitor</button>";
       row.push(monitorButton);

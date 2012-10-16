@@ -103,7 +103,7 @@ pthread_t ipUpdateThread;
 pthread_t ipWhitelistUpdateThread;
 pthread_t consumer;
 
-typedef HashMap<uint32_t, uint32_t, std::tr1::hash<uint32_t>, eqkey> LocalIPTable;
+typedef HashMap<uint32_t, uint32_t, std::hash<uint32_t>, eqkey> LocalIPTable;
 LocalIPTable localIPs;
 
 namespace Nova

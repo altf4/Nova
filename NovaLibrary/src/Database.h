@@ -24,6 +24,7 @@
 
 #include <string>
 #include <sqlite3.h>
+#include <stdexcept>
 
 
 namespace Nova

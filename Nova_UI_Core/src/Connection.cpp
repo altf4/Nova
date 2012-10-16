@@ -140,7 +140,7 @@ bool ConnectToNovad()
 	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST);
 	if(!MessageManager::Instance().WriteMessage(ticket, &connectRequest))
 	{
-		LOG(ERROR, "Could not send CONTROL_CONNECT_REQUEST to NOVAD", "");
+		LOG(WARNING, "Could not send CONTROL_CONNECT_REQUEST to NOVAD", "");
 		return false;
 	}
 

@@ -29,8 +29,8 @@
 #define LOWER_OFFSET 87
 #define UPPER_OFFSET 65
 
-typedef Nova::HashMap<uint, std::string, std::tr1::hash<uint>, eqint> MACToVendorTable;
-typedef Nova::HashMap<std::string, std::vector<uint> *,  std::tr1::hash<std::string>, eqstr > VendorToMACTable;
+typedef Nova::HashMap<uint, std::string, std::hash<uint>, eqint> MACToVendorTable;
+typedef Nova::HashMap<std::string, std::vector<uint> *,  std::hash<std::string>, eqstr > VendorToMACTable;
 
 class VendorMacDb
 {

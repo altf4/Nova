@@ -64,7 +64,7 @@ struct Script
 };
 
 //Container for accessing script items
-typedef Nova::HashMap<std::string, Script, std::tr1::hash<std::string>, eqstr > ScriptTable;
+typedef Nova::HashMap<std::string, Script, std::hash<std::string>, eqstr > ScriptTable;
 
 //used to maintain information about a port, it's type and behavior
 struct Port
@@ -96,7 +96,7 @@ struct Port
 
 };
 //Container for accessing port items
-typedef Nova::HashMap<std::string, Port, std::tr1::hash<std::string>, eqstr > PortTable;
+typedef Nova::HashMap<std::string, Port, std::hash<std::string>, eqstr > PortTable;
 
 //used to keep track of subnet gui items and allow for easy access
 struct Subnet
@@ -274,7 +274,7 @@ struct NodeProfile
 };
 
 //Container for accessing profile items
-typedef Nova::HashMap<std::string, NodeProfile, std::tr1::hash<std::string>, eqstr > ProfileTable;
+typedef Nova::HashMap<std::string, NodeProfile, std::hash<std::string>, eqstr > ProfileTable;
 
 //used to keep track of haystack node gui items and allow for easy access
 struct Node
@@ -300,7 +300,7 @@ struct Node
 };
 
 //Container for accessing node items
-typedef Nova::HashMap<std::string, Node, std::tr1::hash<std::string>, eqstr > NodeTable;
+typedef Nova::HashMap<std::string, Node, std::hash<std::string>, eqstr > NodeTable;
 
 }
 

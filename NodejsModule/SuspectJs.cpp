@@ -30,7 +30,6 @@ Handle<Object> SuspectJs::WrapSuspect(Suspect* suspect)
 		proto->Set("GetClassification", FunctionTemplate::New(InvokeMethod<double, Suspect, &Suspect::GetClassification>) );
 		proto->Set("GetLastPacketTime", FunctionTemplate::New(InvokeMethod<long int, Suspect, &Suspect::GetLastPacketTime>) );
 		proto->Set("GetIsHostile", 		FunctionTemplate::New(InvokeMethod<bool, Suspect, &Suspect::GetIsHostile>) );
-		proto->Set("GetFlaggedByAlarm", FunctionTemplate::New(InvokeMethod<bool, Suspect, &Suspect::GetFlaggedByAlarm>) );
 		
 		
 		proto->Set("GetRstCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetRstCount>) );

@@ -26,6 +26,7 @@
 #include <math.h>
 #include <sstream>
 #include <string.h>
+#include <algorithm>
 
 using namespace std;
 using namespace Nova;

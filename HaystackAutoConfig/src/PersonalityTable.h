@@ -34,7 +34,7 @@
  */
 
 //HashMap of Personality objects; Key is personality specific name (i.e. Linux 2.6.35-2.6.38), Value is ptr to Personality object
-typedef Nova::HashMap<std::string, class Nova::Personality *, std::tr1::hash<std::string>, eqstr > Personality_Table;
+typedef Nova::HashMap<std::string, class Nova::Personality *, std::hash<std::string>, eqstr > Personality_Table;
 
 namespace Nova
 {

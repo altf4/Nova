@@ -114,16 +114,6 @@ public:
 	//Sets the hostility bool of the suspect
 	void SetIsHostile(bool b);
 
-	//Returns the flagged by silent alarm bool
-	bool GetFlaggedByAlarm();
-	//Sets the flagged by silent alarm bool
-	void SetFlaggedByAlarm(bool b);
-
-	//Returns the 'from live capture' bool
-	bool GetIsLive();
-	//Sets the 'from live capture' bool
-	void SetIsLive(bool b);
-
 	//Returns a copy of the suspects FeatureSet
 	FeatureSet GetFeatureSet(FeatureMode whichFeatures = MAIN_FEATURES);
 	//Sets or overwrites the suspects FeatureSet
@@ -190,12 +180,6 @@ private:
 	bool m_isHostile;
 
 	long int m_lastPacketTime;
-
-	// Has this suspect been the subject of an alarm from another Nova instance?
-	bool m_flaggedByAlarm;
-	// Is this a live capture or is NOVA reading from a pcap file?
-	bool m_isLive;
-
 };
 
 }
