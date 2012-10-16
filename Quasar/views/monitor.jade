@@ -19,6 +19,10 @@ block content
     div#tcpPiChart(style="display: inline-block; margin: 20px")
   br
 
+  div(style="display: inline-block; margin: 8px; float: left")
+    h3 Classification
+    canvas(id = "classificationChart", width="200px", height="200px", style="border: 1px solid black")
+    p(id = "classificationChartP")     
   - for (var i = 0; i < 14; i++) {
     div(style="display: inline-block; margin: 8px")
       h3 #{String(featureNames).split(",")[i]}
@@ -31,8 +35,10 @@ block headerAdditions
   script
     var init = true;
     var data = new Array();
+    var classificationData = new Array();
     var tcpChart = new NovaPiChart("tcpPiChart", 200);
     var protocolChart = new NovaPiChart("ProtocolPiChart", 200);
+    var classificationPieChart = new NovaPiChart("classificationPieChart", 200);
     
     function Init() {
         now.sendSuspect("#{suspectIp}", "#{suspectInterface}", OnNewSuspect)
@@ -60,13 +66,25 @@ block headerAdditions
         if (suspect.GetIpString == "#{suspectIp}" && suspect.GetInterface == "#{suspectInterface}") {
             data.push(suspect.GetFeatures);
 
+            var classificationArrayWrapper = new Array();
+            classificationArrayWrapper.push(suspect.GetClassification);
+            classificationData.push(classificationArrayWrapper);
+
             // TODO Don't hard code
             if (data.length > 100) {
                 data.shift();
             }
-            for (var i = 0; i < 14; i++) {
-                drawGraph("chart" + i, data, i);
+
+            if (classificationData.length > 100) {
+                classificationData.shift();
             }
+
+            for (var i = 0; i < 14; i++) {
+                drawGraph("chart" + i, "p" + i, data, i);
+            }
+        
+            
+            drawGraph("classificationChart", "classificationChartP", classificationData, 0);
 
             arr = new Array();
             arr.push({name: "SYN Packets", value: suspect.GetSynCount});
@@ -86,11 +104,13 @@ block headerAdditions
             arr.push({name: "Other", value: suspect.GetOtherPacketCount});
             arr = arr.sort(function(a,b) {return b.value - a.value});
             protocolChart.Render(arr);
+
+
         }
 
     };
 
-    function drawGraph(canvas, data, index) {
+    function drawGraph(canvas, pID, data, index) {
         // TODO Don't hard code
         var m_width = 200;
         var m_height = 200;
@@ -100,7 +120,7 @@ block headerAdditions
         var height = m_height - border*2;
         
         var c = document.getElementById(canvas);
-        var p = document.getElementById("p" + index);
+        var p = document.getElementById(pID);
         var ctx = c.getContext("2d");
         ctx.clearRect (0, 0,m_width ,m_height);
        
