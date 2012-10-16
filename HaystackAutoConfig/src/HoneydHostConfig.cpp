@@ -269,7 +269,7 @@ int main(int argc, char ** argv)
 	}
 }
 
-HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
+void Nova::ParseHost(boost::property_tree::ptree propTree)
 {
 	using boost::property_tree::ptree;
 
@@ -284,7 +284,7 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 	personalities.m_num_of_hosts++;
 	personalities.m_numAddrsAvail--;
 
-	int i = 0;
+	int portCount = 0;
 
 	BOOST_FOREACH(ptree::value_type &value, propTree.get_child(""))
 	{
@@ -406,7 +406,7 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 						ss.str("");
 						string port_service = portValue.second.get<string>("service.<xmlattr>.name");
 						persObject->AddPort(port_key, port_service);
-						i++;
+						portCount++;
 					}
 					catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 					{
@@ -493,32 +493,33 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 
 	// Assign the number of ports found to the m_port_count member variable,
 	// for use
-	persObject->m_port_count = i;
+	persObject->m_port_count = portCount;
 
-	// If personalityClass vector is empty, nmap wasn't able to generate
-	// a personality for a host, and therefore we don't want to include it
-	// into any structure that would use the Personality object populated above.
-	// Just return and let the scoping take care of deallocating the object.
+	// If personalityClass vector is empty, assign this profile to the NULL fake profile
 	if(persObject->m_personalityClass.empty())
 	{
-		return HHC_CODE_NO_MATCHED_PERSONALITY;
+		persObject->m_personalityClass.push_back("NULL");
+		persObject->m_personalityClass.push_back("NULL");
+		persObject->m_personalityClass.push_back("NULL");
+		persObject->m_personalityClass.push_back("NULL");
+		persObject->m_osclass = "NULL | NULL | NULL | NULL";
 	}
-
-	// Generate OS Class strings for use later down the line; used primarily
-	// for matching open ports to scripts in the script table. So, say 22_TCP is open
-	// on a host, we'll use the m_personalityClass string to match the OS and open port
-	// to a script and then assign that script automatically.
-	for(uint i = 0; i < persObject->m_personalityClass.size() - 1; i++)
+	else
 	{
-		persObject->m_osclass += persObject->m_personalityClass[i] + " | ";
-	}
+		// Generate OS Class strings for use later down the line; used primarily
+		// for matching open ports to scripts in the script table. So, say 22_TCP is open
+		// on a host, we'll use the m_personalityClass string to match the OS and open port
+		// to a script and then assign that script automatically.
+		for(uint i = 0; i < persObject->m_personalityClass.size() - 1; i++)
+		{
+			persObject->m_osclass += persObject->m_personalityClass[i] + " | ";
+		}
 
-	persObject->m_osclass += persObject->m_personalityClass[persObject->m_personalityClass.size() - 1];
+		persObject->m_osclass += persObject->m_personalityClass[persObject->m_personalityClass.size() - 1];
+	}
 
 	// Call AddHost() on the Personality object created at the beginning of this method
 	personalities.AddHost(persObject);
-
-	return HHC_CODE_OKAY;
 }
 
 bool Nova::LoadNmapXML(const string &filename)
@@ -544,30 +545,7 @@ bool Nova::LoadNmapXML(const string &filename)
 				ptree tempPropTree = host.second;
 
 				// Call ParseHost on the <host> subtree within the xml file.
-				switch(ParseHost(tempPropTree))
-				{
-					// Output for alerting user that a found host had incomplete
-					// personality data, and thus was not added to the PersonalityTable.
-					case HHC_CODE_NO_MATCHED_PERSONALITY:
-					{
-						LOG(WARNING, "Unable to obtain personality data for host "
-							+ tempPropTree.get<std::string>("address.<xmlattr>.addr") + ".", "");
-						break;
-					}
-					// Everything parsed fine, don't output anything.
-					case HHC_CODE_OKAY:
-					{
-						break;
-					}
-					// Execution should never get here; if you're adding ErrCodes
-					// that could occur in ParseHost, add a case for it
-					// with an appropriate output detailing what went wrong.
-					default:
-					{
-						LOG(ERROR, "Unknown return value.", "");
-						break;
-					}
-				}
+				ParseHost(tempPropTree);
 			}
 		}
 	}
