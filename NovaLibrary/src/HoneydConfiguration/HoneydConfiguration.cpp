@@ -2123,47 +2123,22 @@ bool HoneydConfiguration::DeleteNode(string nodeName)
 		return false;
 	}
 
-	// Make sure the node exists
-	Node *nodePtr = NULL;
-	try
-	{
-		nodePtr = &m_nodes[nodeName];
-	}
-	catch(hashMapException &e)
-	{
-		LOG(WARNING, "Unable to locate expected node '" + nodeName + "'.","");
-		return false;
-	}
-	if(nodePtr == NULL)
+	if (!m_nodes.keyExists(nodeName))
 	{
 		LOG(WARNING, "Unable to locate expected node '" + nodeName + "'.","");
 		return false;
 	}
 
-	// Make sure the profile exists
-	NodeProfile *profPtr = NULL;
-	try
+	if (!m_profiles.keyExists(m_nodes[nodeName].m_pfile))
 	{
-		profPtr = &m_profiles[nodePtr->m_pfile];
-	}
-	catch(hashMapException &e)
-	{
-		LOG(ERROR, "Unable to locate expected profile '" + nodePtr->m_pfile + "'.","");
-		return false;
-	}
-	if(profPtr == NULL)
-	{
-		LOG(ERROR, "Unable to locate expected profile '" + nodePtr->m_pfile + "'.","");
+		LOG(ERROR, "Unable to locate expected profile '" + m_nodes[nodeName].m_pfile + "'.","");
 		return false;
 	}
 
-	for(uint i = 0; i < profPtr->m_nodeKeys.size(); i++)
-	{
-		if(!profPtr->m_nodeKeys[i].compare(nodeName))
-		{
-			profPtr->m_nodeKeys.erase(profPtr->m_nodeKeys.begin() + i);
-		}
-	}
+	vector<string> v = m_profiles[m_nodes[nodeName].m_pfile].m_nodeKeys;
+	v.erase(remove( v.begin(), v.end(), nodeName), v.end());
+	m_profiles[m_nodes[nodeName].m_pfile].m_nodeKeys = v;
+
 	//Delete the node
 	m_nodes.erase(nodeName);
 	return true;
@@ -2247,45 +2222,37 @@ bool HoneydConfiguration::DeleteProfile(string profileName, bool originalCall)
 		LOG(DEBUG, "Attempted to delete profile that does not exist", "");
 		return false;
 	}
-	//Recursive descent to find and call delete on any children of the profile
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+
+	vector<string> profilesToDelete;
+	GetProfilesToDelete(profileName, profilesToDelete);
+
+	for (int i = profilesToDelete.size() - 1; i >= 0; i--)
 	{
-		//If the profile at the iterator is a child of this profile
-		if(!it->second.m_parentProfile.compare(profileName))
+		string pfile = profilesToDelete.at(i);
+		cout << "Attempting to delete profile " << pfile << endl;
+
+		NodeProfile p = m_profiles[pfile];
+
+		//Delete any nodes using the profile
+		vector<string> delList;
+		for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 		{
-			if(!DeleteProfile(it->first, false))
+			if(!it->second.m_pfile.compare(p.m_name))
 			{
-				return false;
+				delList.push_back(it->second.m_name);
 			}
 		}
-	}
 
-	NodeProfile p = m_profiles[profileName];
-
-	//Delete any nodes using the profile
-	vector<string> delList;
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		if(!it->second.m_pfile.compare(p.m_name))
+		while(!delList.empty())
 		{
-			delList.push_back(it->second.m_name);
+			if(!DeleteNode(delList.back()))
+			{
+				LOG(DEBUG, "Failed to delete profile because child node deletion failed", "");
+				return false;
+			}
+			delList.pop_back();
 		}
-	}
-	while(!delList.empty())
-	{
-		if(!DeleteNode(delList.back()))
-		{
-			LOG(DEBUG, "Failed to delete profile because child node deletion failed", "");
-			return false;
-		}
-		delList.pop_back();
-	}
 
-	m_profiles.erase(profileName);
-
-	//If it is not the original profile to be deleted skip this part
-	if(originalCall)
-	{
 		//If this profile has a parent
 		if(m_profiles.keyExists(p.m_parentProfile))
 		{
@@ -2322,10 +2289,28 @@ bool HoneydConfiguration::DeleteProfile(string profileName, bool originalCall)
 		{
 			LOG(ERROR, string("Parent profile with name: ") + p.m_parentProfile + string(" doesn't exist"), "");
 		}
+
+		m_profiles.erase(pfile);
 	}
 
-	LOG(DEBUG, "Deleted profile " + profileName, "");
+
 	return true;
+}
+
+
+void HoneydConfiguration::GetProfilesToDelete(string profileName, vector<string> &profilesToDelete)
+{
+	profilesToDelete.push_back(profileName);
+	//Recursive descent to find and call delete on any children of the profile
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		//If the profile at the iterator is a child of this profile
+		if(!it->second.m_parentProfile.compare(profileName))
+		{
+			profilesToDelete.push_back(it->first);
+			GetProfilesToDelete(it->first, profilesToDelete);
+		}
+	}
 }
 
 //Recreates the profile tree of ancestors, children or both

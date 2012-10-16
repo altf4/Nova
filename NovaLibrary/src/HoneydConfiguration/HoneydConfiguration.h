@@ -356,6 +356,8 @@ private:
     // 	Returns: (true) if successful and (false) if the profile could not be found
     bool DeleteProfile(std::string profileName, bool originalCall);
 
+    void GetProfilesToDelete(std::string profileName, std::vector<std::string> &profilesToDelete);
+
 	//Recreates the profile tree of ancestors, children or both
     //	Note: This needs to be called after making changes to a profile to update the hierarchy
     //	Returns (true) if successful and (false) if no profile with name 'profileName' exists
