@@ -8,65 +8,6 @@ function updateConfiguration()
   console.log('Sending configuration update requests to targets: ' + message.id);
   now.UpdateConfiguration();
 }
-
-function setTarget(source, target, group)
-{
-  if(group == 'true' || group == true)
-  {
-    if(document.getElementById(source).checked)
-    {
-      message.id = target + ':';
-      var targets = target.split(':');
-
-      for(var i in document.getElementById('groupsList').childNodes)
-      {
-        if(document.getElementById('groupcheck' + i) != undefined && document.getElementById('groupcheck' + i).id.indexOf(source) == -1)
-        {
-          document.getElementById('groupcheck' + i).setAttribute('disabled', true);
-        }
-      }
-      for(var i in document.getElementById('clientsList').childNodes)
-      {
-        if(document.getElementById('check' + i) != undefined)
-        {
-          document.getElementById('check' + i).checked = false;
-          document.getElementById('check' + i).setAttribute('disabled', true);
-        } 
-      }
-    }
-    else
-    {
-      message.id = '';
-      for(var i in document.getElementById('groupsList').childNodes)
-      {
-        if(document.getElementById('groupcheck' + i) != undefined && document.getElementById('groupcheck' + i).id.indexOf(source) == -1)
-        {
-          document.getElementById('groupcheck' + i).removeAttribute('disabled');
-        }
-      }
-      for(var i in document.getElementById('clientsList').childNodes)
-      {
-        if(document.getElementById('check' + i) != undefined)
-        {
-          document.getElementById('check' + i).removeAttribute('disabled');
-        } 
-      }
-    }
-  }
-  else
-  {
-    if(document.getElementById(source).checked)
-    {
-      message.id += target + ':';
-    }
-    else
-    {
-      var regex = new RegExp(target + ':', 'i');
-      message.id = message.id.replace(regex, '');
-    }
-  }
-  document.getElementById('showtargets').value = message.id.replace(new RegExp(':', 'g'), ',').substr(0, message.id.length - 1);
-}
  
 now.UpdateConfiguration = function()
 {

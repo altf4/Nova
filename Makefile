@@ -75,8 +75,8 @@ nodejsmodule:
 	cd NodejsModule;npm --unsafe-perm install	
 
 #Mothership
-mothership:
-	cd Mothership;npm --unsafe-perm install
+pulsar:
+	cd Pulsar;npm --unsafe-perm install
 
 #Honeyd AutoConfig
 hhconfig-release:
@@ -186,8 +186,8 @@ clean-quasar: clean-nodejsmodule
 clean-quasar-modules:
 	-rm -rf Quasar/node_modules
 
-clean-mothership-modules:
-	-rm -rf Mothership/node_modules
+clean-pulsar-modules:
+	-rm -rf Pulsar/node_modules
 
 clean-hhconfig: clean-hhconfig-debug clean-hhconfig-release
 	
@@ -264,10 +264,10 @@ install-quasar:
 	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Quasar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
 	-install Quasar/quasar "$(DESTDIR)/usr/bin/quasar"
 
-install-mothership:
-	cp -frup Mothership "$(DESTDIR)/usr/share/nova/sharedFiles"
-	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Mothership/www" -xf Quasar/dojo-release-1.7.0.tar.gz
-	-install Mothership/mothership "$(DESTDIR)/usr/bin/mothership"	
+install-pulsar:
+	cp -frup Pulsar"$(DESTDIR)/usr/share/nova/sharedFiles"
+	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Pulsar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
+	-install Pulsar/pulsar "$(DESTDIR)/usr/bin/pulsar"	
 
 install-hhconfig:
 	-install HaystackAutoConfig/haystackautoconfig "$(DESTDIR)/usr/bin/haystackautoconfig"
