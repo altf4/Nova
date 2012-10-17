@@ -265,7 +265,7 @@ install-quasar:
 	-install Quasar/quasar "$(DESTDIR)/usr/bin/quasar"
 
 install-pulsar:
-	cp -frup Pulsar"$(DESTDIR)/usr/share/nova/sharedFiles"
+	cp -frup Pulsar "$(DESTDIR)/usr/share/nova/sharedFiles"
 	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Pulsar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
 	-install Pulsar/pulsar "$(DESTDIR)/usr/bin/pulsar"	
 
