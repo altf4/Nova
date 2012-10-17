@@ -42,21 +42,32 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	m_hdconfig->SaveAllTemplates();
 	m_hdconfig->LoadAllTemplates();
 
+	vector<string> nodesToDelete;
 	for(NodeTable::iterator it = m_hdconfig->m_nodes.begin(); it != m_hdconfig->m_nodes.end(); it++)
 	{
 		if(it->first.compare("Doppelganger"))
 		{
-			m_hdconfig->DeleteNode(it->first);
+			nodesToDelete.push_back(it->first);
 		}
 	}
+	for (vector<string>::iterator it = nodesToDelete.begin(); it != nodesToDelete.end(); it++)
+	{
+		m_hdconfig->DeleteNode(*it);
+	}
 
+	vector<string> profilesToDelete;
 	for(ProfileTable::iterator it = m_hdconfig->m_profiles.begin(); it != m_hdconfig->m_profiles.end(); it++)
 	{
 		if(it->second.m_generated)
 		{
-			m_hdconfig->DeleteProfile(it->first);
+			profilesToDelete.push_back(it->first);
 		}
 	}
+	for (vector<string>::iterator it = profilesToDelete.begin(); it != profilesToDelete.end(); it++)
+	{
+		m_hdconfig->DeleteProfile(*it);
+	}
+
 
 
 	m_hdconfig->SaveAllTemplates();
