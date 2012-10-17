@@ -2382,13 +2382,21 @@ function pad(num) {
 
 function getRsyslogIp()
 {
-  var read = fs.readFileSync('/etc/rsyslog.d/40-nova.conf', 'utf8');
-  var idx = read.indexOf('if $programname');
+  try
+  {
+    var read = fs.readFileSync('/etc/rsyslog.d/41-nova.conf', 'utf8');
+    read = read.replace(/\n/,' ');
+  }
+  catch(err)
+  {
+    return 'None set'; 
+  }
+  var idx = parseInt(read.indexOf('@@')) + 2;
   var ret = '';
-  
+   
   if(idx != -1)
   {
-    ret = read.substr(idx);
+    ret = read.substring(parseInt(idx), parseInt(read.indexOf(':programname', idx)));
   }  
   
   return ret;

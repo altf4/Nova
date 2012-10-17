@@ -309,6 +309,7 @@ uninstall-files:
 	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_nova_debug"
 	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_HHConfig"
 	rm -f "$(DESTDIR)/etc/rsyslog.d/40-nova.conf"
+	rm -f "$(DESTDIR)/etc/rsyslog.d/41-nova.conf"
 	rm -f "$(DESTDIR)/etc/sysctl.d/30-novactl.conf"
 
 uninstall-permissions:
