@@ -13,8 +13,10 @@ block content
         td
           div(id='groupsList')
 
-  h1 Haystack Autoconfiguration Options
-  div(id='autoconfElements')
+  h1 Haystack Autoconfiguration Options 
+  table(style="border: solid 2px;")
+    tbody(id='autoconfElements')
+  br
   button(disabled=true, id='sendAutoconfig', onclick='processAutoconfigElements()') Configure Selected Haystacks
 
 block headerAdditions
