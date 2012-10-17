@@ -81,6 +81,11 @@ int main(int argc, const char *argv[])
 		MonitorCallback();
 	}
 
+	else if (!strcmp(argv[1], "reclassify"))
+	{
+		ReclassifySuspects();
+	}
+
 	// Checking status of components
 	else if(!strcmp(argv[1], "status"))
 	{
@@ -665,6 +670,19 @@ void Connect()
 	{
 		cout << "ERROR: Unable to connect to Nova" << endl;
 		exit(EXIT_FAILURE);
+	}
+}
+
+void ReclassifySuspects()
+{
+	Connect();
+	if (ReclassifyAllSuspects())
+	{
+		cout << "All suspects were reclassified" << endl;
+	}
+	else
+	{
+		cout << "Unable to reclassify suspects" << endl;
 	}
 }
 

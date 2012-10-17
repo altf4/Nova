@@ -55,6 +55,8 @@ void PrintUptime();
 void PrintUsage();
 
 void MonitorCallback();
+void ReclassifySuspects();
+
 }
 
 

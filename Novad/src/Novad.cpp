@@ -458,8 +458,7 @@ void Reload()
 	// Reload the configuration file
 	Config::Inst()->LoadConfig();
 	engine->LoadConfiguration();
-
-	suspects.UpdateAllSuspects();
+	suspects.SetEveryoneNeedsClassificationUpdate();
 }
 
 void StartCapture()

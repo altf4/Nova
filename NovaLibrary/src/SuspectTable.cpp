@@ -86,7 +86,17 @@ SuspectTable::~SuspectTable()
 //Sets the needs classification bool
 void SuspectTable::SetNeedsClassificationUpdate(SuspectIdentifier key)
 {
+	Lock updateLock(&m_needsUpdateLock);
 	SetNeedsClassificationUpdate_noLocking(key);
+}
+
+void SuspectTable::SetEveryoneNeedsClassificationUpdate()
+{
+	Lock updateLock(&m_needsUpdateLock);
+	for(uint i = 0; i < m_keys.size(); i++)
+	{
+		SetNeedsClassificationUpdate_noLocking(m_keys[i]);
+	}
 }
 
 //Sets the needs classification bool
@@ -173,7 +183,6 @@ void SuspectTable::UpdateAllSuspects()
 			Suspect *suspect = m_suspectTable[m_keys[i]];
 			suspect->CalculateFeatures();
 			engine->Classify(suspect);
-
 		}
 	}
 }
@@ -849,6 +858,7 @@ bool SuspectTable::UnlockSuspect(SuspectIdentifier key)
 void SuspectTable::SetHaystackNodes(std::vector<uint32_t> nodes)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
+	Lock updateLock(&m_needsUpdateLock);
 
 	m_haystackNodesCached = nodes;
 

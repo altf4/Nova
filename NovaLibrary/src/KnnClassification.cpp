@@ -417,6 +417,10 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 		}
 		m_nPts = i;
 
+		stringstream ss;
+		ss << "Loaded " << m_nPts << " data points into KNN tree" << endl;
+		LOG(DEBUG, ss.str(), "");
+
 		for(int j = 0; j < DIM; j++)
 			m_meanFeatureValues[j] /= m_nPts;
 	}
