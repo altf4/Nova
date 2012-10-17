@@ -253,7 +253,7 @@ Tips for debugging problems
 	  manually running it as a foreground process with the commands,
 
 		forever stopall
-		quasal --debug
+		quasar --debug
 
 	  This should provide more verbose output and show if it is crashing rather than running it
 	  as a background daemon process.
@@ -296,7 +296,7 @@ Tips for debugging problems
 
 		gdb novad
 		run
-		backtrack
+		backtrace
 
 
 ===============================
