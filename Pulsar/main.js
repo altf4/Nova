@@ -32,7 +32,7 @@ app.configure(function()
 
 var LOG = require('../NodejsModule/Javascript/Logger').LOG;
 
-LOG('ALERT', 'Starting MOTHERSHIP version ' + config.GetVersionString());
+LOG('ALERT', 'Starting PULSAR version ' + config.GetVersionString());
 
 process.chdir(NovaHomePath);
 
