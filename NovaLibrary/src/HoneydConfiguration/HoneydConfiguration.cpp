@@ -2223,10 +2223,11 @@ bool HoneydConfiguration::DeleteProfile(string profileName, bool originalCall)
 		return false;
 	}
 
+	NodeProfile originalProfile = m_profiles[profileName];
 	vector<string> profilesToDelete;
 	GetProfilesToDelete(profileName, profilesToDelete);
 
-	for (int i = profilesToDelete.size() - 1; i >= 0; i--)
+	for (int i = 0; i < static_cast<int>(profilesToDelete.size()); i++)
 	{
 		string pfile = profilesToDelete.at(i);
 		cout << "Attempting to delete profile " << pfile << endl;
@@ -2253,46 +2254,46 @@ bool HoneydConfiguration::DeleteProfile(string profileName, bool originalCall)
 			delList.pop_back();
 		}
 
-		//If this profile has a parent
-		if(m_profiles.keyExists(p.m_parentProfile))
-		{
-			//save a copy of the parent
-			NodeProfile parent = m_profiles[p.m_parentProfile];
-
-			//point to the profiles subtree of parent-copy ptree and clear it
-			ptree *pt = &parent.m_tree.get_child("profiles");
-			pt->clear();
-
-			//Find all profiles still in the table that are siblings of deleted profile
-			// We should be using an iterator to find the original profile and erase it
-			// but boost's iterator implementation doesn't seem to be able to access data
-			// correctly and are frequently invalidated.
-
-			for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-			{
-				if(!it->second.m_parentProfile.compare(parent.m_name))
-				{
-					//Put sibling profiles into the tree
-					pt->add_child("profile", it->second.m_tree);
-				}
-			}	//parent-copy now has the ptree of all children except deleted profile
-
-			//point to the original parent's profiles subtree and replace it with our new ptree
-			ptree *treePtr = &m_profiles[p.m_parentProfile].m_tree.get_child("profiles");
-			treePtr->clear();
-			*treePtr = *pt;
-
-			//Updates all ancestors with the deletion
-			UpdateProfileTree(p.m_parentProfile, ALL);
-		}
-		else
-		{
-			LOG(ERROR, string("Parent profile with name: ") + p.m_parentProfile + string(" doesn't exist"), "");
-		}
-
 		m_profiles.erase(pfile);
 	}
 
+	//If this profile has a parent
+	if(m_profiles.keyExists(originalProfile.m_parentProfile))
+	{
+		//save a copy of the parent
+		NodeProfile parent = m_profiles[originalProfile.m_parentProfile];
+
+		//point to the profiles subtree of parent-copy ptree and clear it
+		ptree *pt = &parent.m_tree.get_child("profiles");
+		pt->clear();
+
+		//Find all profiles still in the table that are siblings of deleted profile
+		// We should be using an iterator to find the original profile and erase it
+		// but boost's iterator implementation doesn't seem to be able to access data
+		// correctly and are frequently invalidated.
+
+		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+		{
+			if(!it->second.m_parentProfile.compare(parent.m_name))
+			{
+				//Put sibling profiles into the tree
+				pt->add_child("profile", it->second.m_tree);
+			}
+		}	//parent-copy now has the ptree of all children except deleted profile
+
+
+		//point to the original parent's profiles subtree and replace it with our new ptree
+		ptree *treePtr = &m_profiles[originalProfile.m_parentProfile].m_tree.get_child("profiles");
+		treePtr->clear();
+		*treePtr = *pt;
+
+		//Updates all ancestors with the deletion
+		UpdateProfileTree(originalProfile.m_parentProfile, ALL);
+	}
+	else
+	{
+		LOG(ERROR, string("Parent profile with name: ") + originalProfile.m_parentProfile + string(" doesn't exist"), "");
+	}
 
 	return true;
 }
