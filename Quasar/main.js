@@ -40,7 +40,6 @@ var hhconfig = new novaconfig.HoneydAutoConfigBinding();
 // Modules from NodejsModule/Javascript
 var LOG = require("../NodejsModule/Javascript/Logger").LOG;
 
-
 if (!honeydConfig.LoadAllTemplates()) {
 	LOG("ERROR", "Call to initial LoadAllTemplates failed!");
 }

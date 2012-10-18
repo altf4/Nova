@@ -328,8 +328,10 @@ form(method="post", action="/configureNovaSave")
   input(name="SERVICE_PREFERENCES", value=SERVICE_PREFERENCES)
   br
   
+  p(style="font-style: italic; float: left;") Note: To disable remote logging for Nova, use string NULL or empty the input field
+  br
+  
   label Remote Log Server IP
-  p(style="font-style: italic; float: left;") Note: To disable, use string NULL or empty the input field
   input(name="RSYSLOG_IP", value=RSYSLOG_IP, id='RSYSLOG_IP', onfocus='watermark("RSYSLOG_IP", "NULL")', onblur='watermark("RSYSLOG_IP", "NULL")')
   br
 
