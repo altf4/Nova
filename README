@@ -318,12 +318,13 @@ messages exposed within the Advanced Options page of the Quasar Web UI. Some sug
 
  -Within /etc/rsyslog.d/ lie the configuration files; in one of these files, a rule MUST be 
   created similar to the following:
-  
-	if $programname == "novad" or $programname == "Nova" or $programname == "honeyd" then YOUR_ACTION_CHOICE
+
+	:programname,isequal,"Nova" YOUR_ACTION_CHOICE  
 
   where YOUR_ACTION_CHOICE represents the action (most likely a write to a destination) to take upon 
   receipt of messages from a client server that have those program names. This is to help organize the logs,
   as Nova can potentially send many log messages that would otherwise pollute the normal syslog file.
+  Note that there will be three rules like this total, one each for the strings "Nova", "novad" and "honeyd"
 
 Testing that these changes worked is a good idea as well. Simply start and stop novad on the client with the novacli 
 command line interface and check that the log messages sent at startup arrived at the right place
