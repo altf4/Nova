@@ -25,6 +25,7 @@
 #include "Config.h"
 #include "Lock.h"
 
+#include <unistd.h>
 #include <string>
 #include <cerrno>
 #include <sys/un.h>
