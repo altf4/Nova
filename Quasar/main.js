@@ -2252,6 +2252,37 @@ everyone.now.reverseDNS = function(ip, callback) {
 	dns.reverse(ip, callback);
 }
 
+everyone.now.addTrainingPoint = function(ip, interface, features, hostility, callback) {
+	if (hostility != '0' && hostility != '1') {
+		callback("Error: Invalid hostility. Should be 0 or 1");
+		return;
+	}
+
+	var point = features.toString() + " " + hostility + "\n";
+	fs.appendFile(NovaHomePath + "/config/training/data.txt", point, function(err) {
+		if (err) {
+			console.log("Error: " + err);
+			callback(err);
+			return;
+		}
+
+		var d = new Date();
+		var trainingDbString = "";
+		trainingDbString += hostility + ' "User customized training point for suspect ' + ip + " added on " + d.toString() + '"\n';
+		trainingDbString += "\t" + features.toString();
+		trainingDbString += "\n\n";
+
+		fs.appendFile(NovaHomePath + "/config/training/training.db", trainingDbString, function(err) {
+			if (!nova.ReclassifyAllSuspects()) {
+				callback("Error: Unable to reclassify suspects with new training data");
+				return;
+			}
+			callback();
+		});
+
+	});	
+}
+
 
 var distributeSuspect = function (suspect) {
 	var s = new Object();

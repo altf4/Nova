@@ -14,6 +14,9 @@ block content
       td Reverse DNS: 
       td
         b#domain Waiting for reply...
+
+  a(class="button", href="#", onclick="markClassificationAs(1)") Mark as Hostile
+  a(class="button", href="#", onclick="markClassificationAs(0)") Mark as Benign
   div
     div#ProtocolPiChart(style="display: inline-block;float: left; margin: 10px;")
     div#tcpPiChart(style="display: inline-block; margin: 20px")
@@ -33,12 +36,49 @@ block content
 block headerAdditions
   script(type="text/javascript", src="scripts/NovaPiChart.js")
   script
+    var lastSuspectObject = null;
     var init = true;
     var data = new Array();
     var classificationData = new Array();
     var tcpChart = new NovaPiChart("tcpPiChart", 200);
     var protocolChart = new NovaPiChart("ProtocolPiChart", 200);
     var classificationPieChart = new NovaPiChart("classificationPieChart", 200);
+
+    function markClassificationAs(hostility) {
+        "use strict";
+        var hostilityString;
+        if (hostility == "0") {
+            hostilityString = "hostile";
+        } else {    
+            hostilityString = "benign";
+        }
+            
+
+        if (!confirm("This will train the classifiaction engine to match all suspects looking like this one's current state as " + hostilityString + ". Are you sure you want to do this?")) {
+            return;
+        }
+        if (lastSuspectObject == null) {
+            alert("No data recieved for suspect yet");
+            return;
+        }
+
+        var features = String(lastSuspectObject.GetFeatures).split(',').join(' ');
+ 
+        try {
+           now.addTrainingPoint(lastSuspectObject.GetIpString, lastSuspectObject.GetInterface, features, hostility, addedCb);
+        } catch (err) {
+            console.log("Error was: " + err);
+            alert("Unable to contact server. Try refreshing the page");
+        }
+    }
+
+    function addedCb(err) {
+        if (err) {
+            alert("There was and error adding the new training point: " + err);
+        } else {
+            alert("Added suspect point to training data");
+        }
+    }
     
     function Init() {
         now.sendSuspect("#{suspectIp}", "#{suspectInterface}", OnNewSuspect)
@@ -64,6 +104,7 @@ block headerAdditions
         }
         
         if (suspect.GetIpString == "#{suspectIp}" && suspect.GetInterface == "#{suspectInterface}") {
+            lastSuspectObject = suspect;
             data.push(suspect.GetFeatures);
 
             var classificationArrayWrapper = new Array();
