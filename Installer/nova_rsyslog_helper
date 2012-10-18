@@ -4,14 +4,10 @@ TARGET=$1
 FILE=/usr/share/nova/sharedFiles/41-nova.conf
 NOT_IP=^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5}$
 
-sudo cp $FILE /etc/rsyslog.d/
-
-FILE=/etc/rsyslog.d/41-nova.conf
-
 if [[ -z $TARGET ]]
 then
 {
-  echo 'Usage: nova_rsyslog_helper TARGET_IP:TARGET_PORT'
+  echo 'Usage: nova_rsyslog_helper (TARGET_IP:TARGET_PORT|remove)'
   exit 1
 }
 fi
@@ -22,10 +18,26 @@ then
 }
 else
 {
-  echo "Invalid IP, aborting..."
-  exit 1
+  if [[ "$TARGET" -eq "remove"  ]]
+  then
+  {
+     echo 'in rm call'
+     rm -f '/etc/rsyslog.d/41-nova.conf'
+     sudo restart rsyslog
+     exit 1
+  }
+  else
+  {
+     echo 'Usage: nova_rsyslog_helper (TARGET_IP:TARGET_PORT|remove)'
+     exit 1
+  }
+  fi
 }
 fi
+
+sudo cp $FILE /etc/rsyslog.d/
+
+FILE=/etc/rsyslog.d/41-nova.conf
 
 if grep -qs $TARGET $FILE
 then
