@@ -72,7 +72,7 @@ var honeydLogPath = "/var/log/nova/Honeyd.log";
 var honeydLog = new Tail(honeydLogPath);
 
 var benignRequest = false;
-var mothership;
+var pulsar;
 
 var RenderError = function (res, err, link) {
 	// Redirect them to the main page if no link was set
@@ -259,12 +259,12 @@ initLogWatch();
 if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
 {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // SOCKET STUFF FOR MOTHERSHIP 
+  // SOCKET STUFF FOR PULSAR 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Thoughts: Probably going to need a global variable for the websocket connection to
-  // the mothership; an emit needs to be made to the mothership in certain circumstances,
+  // Pulsar; an emit needs to be made to Pulsar in certain circumstances,
   // such as recieving a hostile suspect, so having that be accessible to the nowjs methods
-  // is ideal. Also need to find a way to maintain IP address of Mothership and any needed
+  // is ideal. Also need to find a way to maintain IP address of Pulsar and any needed
   // credentials for reboots, etc. 
   
   // TODO: Make configurable
@@ -281,7 +281,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   // If the connection fails, print an error message
   client.on('connectFailed', function(error)
   {
-    console.log('Connect to Mothership error: ' + error.toString());
+    console.log('Connect to Pulsar error: ' + error.toString());
     if(!reconnecting)
     {
       console.log('No current attempts to reconnect, starting reconnect attempts every ', (reconnectTimer / 1000) ,' seconds.');
@@ -291,17 +291,17 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
     }
   });
   
-  // If we successfully connect to the mothership, perform event-based actions here.
+  // If we successfully connect to pulsar, perform event-based actions here.
   // The interface for websockets is a little less nice than socket.io, simply because
   // you cannot name your own events, everything has to be done within the message
   // directive; it's only one more level of indirection, however, so no big deal
   client.on('connect', function(connection){
     // When the connection is established, we save the connection variable
-    // to the mothership global so that actions can be taken on the connection
+    // to p global so that actions can be taken on the connection
     // outside of this callback if needed (hostile suspect, etc.)
     reconnecting = false;
     clearInterval(clearReconnect);
-    mothership = connection;
+    pulsar = connection;
     var quick = {};
     quick.type = 'addId';
     quick.id = clientId;
@@ -311,26 +311,26 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
     // I don't know that we HAVE to use UTF8 here, there's a send() method as 
     // well as a 'data' member inside the message objects instead of utf8Data.
     // But, as it was in the Websockets tutorial Pherric found, we'll use it for now
-    mothership.sendUTF(JSON.stringify(quick));
-    console.log('Registering client Id with mothership');
+    pulsar.sendUTF(JSON.stringify(quick));
+    console.log('Registering client Id with pulsar');
     
     var configSend = {};
     configSend.type = 'registerConfig';
     configSend.id = clientId;
     configSend.filename = 'NOVAConfig@' + clientId + '.txt';
     configSend.file = fs.readFileSync(NovaHomePath + '/config/NOVAConfig.txt', 'utf8');
-    mothership.sendUTF(JSON.stringify(configSend));
-    console.log('Registering NOVAConfig with mothership');
+    pulsar.sendUTF(JSON.stringify(configSend));
+    console.log('Registering NOVAConfig with pulsar');
   
     var interfaceSend = {};
     interfaceSend.type = 'registerClientInterfaces';
     interfaceSend.id = clientId;
     interfaceSend.filename = 'iflist@' + clientId + '.txt';
     interfaceSend.file = config.ListInterfaces().sort().join();
-    mothership.sendUTF(JSON.stringify(interfaceSend));
-    console.log('Registering interfaces with mothership');
+    pulsar.sendUTF(JSON.stringify(interfaceSend));
+    console.log('Registering interfaces with pulsar');
   
-    console.log('successfully connected to mothership');
+    console.log('successfully connected to pulsar');
   
     connection.on('message', function(message)
     {
@@ -350,7 +350,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'response';
               response.response_message = 'Novad is being started on ' + clientId;
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'stopNovad':
               nova.StopNovad();
@@ -359,7 +359,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'response';
               response.response_message = 'Novad is being stopped on ' + clientId;
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'startHaystack':
               if(!nova.IsHaystackUp())
@@ -369,7 +369,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                 response.id = clientId;
                 response.type = 'response';
                 response.response_message = 'Haystack is being started on ' + clientId;
-                mothership.sendUTF(JSON.stringify(response));
+                pulsar.sendUTF(JSON.stringify(response));
               }
               else
               {
@@ -377,7 +377,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                 response.id = clientId;
                 response.type = 'response';
                 response.response_message = 'Haystack is already up, doing nothing';
-                mothership.sendUTF(JSON.stringify(response));
+                pulsar.sendUTF(JSON.stringify(response));
               }
               break;
             case 'stopHaystack':
@@ -386,7 +386,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'response';
               response.response_message = 'Haystack is being stopped on ' + clientId;
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'writeSetting':
               // The nice thing about using JSON for the message passing is we
@@ -399,7 +399,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'response';
               response.response_message = setting + ' is now ' + value;
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'getHostileSuspects':
               nova.sendSuspectList(distributeSuspect);
@@ -423,9 +423,9 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'response';
               response.response_message = 'Configuration for ' + clientId + ' has been updated. Registering new config...';
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               configSend.file = fs.readFileSync(NovaHomePath + '/config/NOVAConfig.txt', 'utf8');
-              mothership.sendUTF(JSON.stringify(configSend));
+              pulsar.sendUTF(JSON.stringify(configSend));
               break;
             case 'haystackConfig':
               var executionString = 'haystackautoconfig';
@@ -473,7 +473,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                   response.id = clientId;
                   response.type = 'response';
                   response.response_message = message;
-                  mothership.sendUTF(JSON.stringify(response));
+                  pulsar.sendUTF(JSON.stringify(response));
                 }
               });
             
@@ -484,14 +484,14 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                 response.id = clientId;
                 response.type = 'response';
                 response.response_message = message;
-                mothership.sendUTF(JSON.stringify(response));
+                pulsar.sendUTF(JSON.stringify(response));
               });
 
               var response = {};
               response.id = clientId;
               response.type = 'response';
               response.response_message = 'Haystack Autoconfiguration commencing';
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'suspectDetails':
               var suspectString = nova.GetSuspectDetailsString(json_args.ip, json_args.iface);
@@ -499,7 +499,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'detailsReceived';
               response.data = suspectString;
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'clearSuspects':
               everyone.now.ClearAllSuspects(function(){
@@ -507,7 +507,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                 response.id = clientId;
                 response.type = 'response';
                 response.response_message = 'Suspects cleared on ' + json_args.id;
-                mothership.sendUTF(JSON.stringify(response));
+                pulsar.sendUTF(JSON.stringify(response));
               });
               break;
             default:
@@ -519,8 +519,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
     });
     connection.on('close', function(){
       // If the connection gets closed, we want to try to reconnect; we will use
-      // the stored IP of the Mothership to make the reconnect attempts
-      mothership = undefined;
+      // the stored IP of Pulsar to make the reconnect attempts
+      pulsar = undefined;
       if(!reconnecting)
       {
         console.log('closed, beginning reconnect attempts every ', (reconnectTimer / 1000) ,' seconds');
@@ -536,7 +536,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   client.connect('wss://' + connected, null);
   
   setInterval(function() {
-    if(mothership != undefined && mothership != null)
+    if(pulsar != undefined && pulsar != null)
     {
       var message1 = {};
       message1.id = clientId;
@@ -548,8 +548,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
       message2.type = 'statusChange';
       message2.component = 'haystack';
       message2.status = nova.IsHaystackUp().toString();
-      mothership.sendUTF(JSON.stringify(message1));
-      mothership.sendUTF(JSON.stringify(message2));
+      pulsar.sendUTF(JSON.stringify(message1));
+      pulsar.sendUTF(JSON.stringify(message2));
     }
   }, 10000);
   //
@@ -738,8 +738,7 @@ app.get('/advancedOptions', passport.authenticate('basic', {session: false}), fu
 			, CLASSIFICATION_ENGINE: config.ReadSetting("CLASSIFICATION_ENGINE")
 			, THRESHOLD_HOSTILE_TRIGGERS: config.ReadSetting("THRESHOLD_HOSTILE_TRIGGERS")
 			, ONLY_CLASSIFY_HONEYPOT_TRAFFIC: config.ReadSetting("ONLY_CLASSIFY_HONEYPOT_TRAFFIC")
-
-
+      , RSYSLOG_IP: getRsyslogIp()
 			, supportedEngines: nova.GetSupportedEngines()
 		}
 	});
@@ -1441,7 +1440,15 @@ everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macTyp
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", "THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC"];
+	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
+	"TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
+	"K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", 
+	"DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", 
+	"DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", 
+	"SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", 
+	"CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", 
+	"MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", 
+	"THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC"];
 
 	Validator.prototype.error = function (msg) {
 		this._errors.push(msg);
@@ -1468,13 +1475,13 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 
   if(clientId != undefined && req.body["MASTER_UI_CLIENT_ID"] != clientId)
   {
-    if(mothership != undefined)
+    if(pulsar != undefined)
     {
       var renameMessage = {};
       renameMessage.type = 'renameRequest';
       renameMessage.id = clientId;
       renameMessage.newId = req.body["MASTER_UI_CLIENT_ID"];
-      mothership.sendUTF(JSON.stringify(renameMessage));
+      pulsar.sendUTF(JSON.stringify(renameMessage));
       clientId = req.body["MASTER_UI_CLIENT_ID"];
     }
   }
@@ -1535,7 +1542,11 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 		case "THINNING_DISTANCE":
 			validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
 			break;
-
+			
+    case "RSYSLOG_IP":
+      validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$');
+      break;
+      
 		case "DOPPELGANGER_IP":
 			validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
 			var split = req.body[configItems[item]].split('.');
@@ -1591,12 +1602,40 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 		}
 	}
 
-
 	var errors = validator.getErrors();
+
+  var writeIP = req.body["RSYSLOG_IP"];
+
+  if(writeIP != undefined && writeIP != getRsyslogIp())
+  {
+    var util = require('util');
+    var spawn = require('sudo');
+    var options = {
+      cachePassword: true
+      , prompt: 'You have requested to change the target server for Rsyslog. This requires superuser permissions'
+    };
+  
+    var execution = ['nova_rsyslog_helper', writeIP.toString()];
+  
+    var rsyslogHelper = spawn(execution, options);
+
+    rsyslogHelper.on('exit', function(code){
+      if(code.toString() != '0')
+      {
+        console.log('nova_rsyslog_helper could not complete update of rsyslog configuration, exited with code ' + code);
+      }
+      else
+      {
+        console.log('nova_rsyslog_helper updated rsyslog configuration');
+      }
+    });
+  }
 
 	if (errors.length > 0) {
 		RenderError(res, errors, "/suspects");
-	} else {
+	} 
+	else 
+	{
 		if (req.body["INTERFACE"] !== undefined && req.body["DEFAULT"] === undefined) {
 			req.body["DEFAULT"] = false;
 			config.UseAllInterfaces(false);
@@ -1618,7 +1657,7 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 		}
 
 		//if no errors, send the validated form data to the WriteSetting method
-		for (var item = 4; item < configItems.length; item++) {
+		for (var item = 5; item < configItems.length; item++) {
 			if (req.body[configItems[item]] != undefined) {
 				config.WriteSetting(configItems[item], req.body[configItems[item]]);
 			}
@@ -1701,13 +1740,8 @@ everyone.now.IsNovadUp = function (callback) {
 }
 
 everyone.now.StartNovad = function () {
-	console.log("Calling StartNovad(false)");
 	var result = nova.StartNovad(false);
-	console.log("Got " + result);
-
-	console.log("Calling CheckConnection");
-	var result = nova.CheckConnection();
-	console.log("Done! Got " + result + ".Calling IsNovadup to check status");
+	result = nova.CheckConnection();
 	try {
 		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
 	} catch (err) {};
@@ -2202,25 +2236,25 @@ everyone.now.ClearHostileEvent = function (id, callback) {
 	});
 }
 
-var SendHostileEventToMothership  = function(suspect) {
+var SendHostileEventToPulsar  = function(suspect) {
   suspect.client = clientId;
   suspect.type = 'hostileSuspect';
-  if(mothership != undefined)
+  if(pulsar != undefined)
   {
-    mothership.sendUTF(JSON.stringify(suspect));
+    pulsar.sendUTF(JSON.stringify(suspect));
   }
 };
-everyone.now.SendHostileEventToMothership = SendHostileEventToMothership;
+everyone.now.SendHostileEventToPulsar = SendHostileEventToPulsar;
 
-var SendBenignSuspectToMothership = function(suspect) {
+var SendBenignSuspectToPulsar = function(suspect) {
   suspect.client = clientId;
   suspect.type = 'benignSuspect';
-  if(mothership != undefined)
+  if(pulsar != undefined)
   {
-    mothership.sendUTF(JSON.stringify(suspect));
+    pulsar.sendUTF(JSON.stringify(suspect));
   }
 };
-everyone.now.SendBenignSuspectToMothership = SendBenignSuspectToMothership;
+everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
 
 
@@ -2301,7 +2335,7 @@ var distributeSuspect = function (suspect) {
     send.ishostile = String(suspect.GetIsHostile());
     send.interface = String(suspect.GetInterface());
     
-    SendHostileEventToMothership(send);
+    SendHostileEventToPulsar(send);
   }
   else if(suspect.GetIsHostile() == false && benignRequest && parseInt(suspect.GetClassification()) != -2)
   {
@@ -2314,7 +2348,7 @@ var distributeSuspect = function (suspect) {
     send.ishostile = String(suspect.GetIsHostile());
     send.interface = String(suspect.GetInterface());
     
-    SendBenignSuspectToMothership(send);
+    SendBenignSuspectToPulsar(send);
   }
   else
   {
@@ -2374,7 +2408,29 @@ function switcher(err, user, success, done) {
 }
 
 function pad(num) {
-    return ("0" + num.toString()).slice(-2);
+  return ("0" + num.toString()).slice(-2);
+}
+
+function getRsyslogIp()
+{
+  try
+  {
+    var read = fs.readFileSync('/etc/rsyslog.d/41-nova.conf', 'utf8');
+    read = read.replace(/\n/,' ');
+  }
+  catch(err)
+  {
+    return 'None set'; 
+  }
+  var idx = parseInt(read.indexOf('@@')) + 2;
+  var ret = '';
+   
+  if(idx != -1)
+  {
+    ret = read.substring(parseInt(idx), parseInt(read.indexOf(':programname', idx)));
+  }  
+  
+  return ret;
 }
 
 app.get('/*', passport.authenticate('basic', {session: false}));

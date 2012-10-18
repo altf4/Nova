@@ -298,12 +298,56 @@ Tips for debugging problems
 		run
 		backtrace
 
+===============================
+RSyslog Support
+===============================
+
+There is an option for designating a target Rsyslog instance electing to receive
+messages exposed within the Advanced Options page of the Quasar Web UI. Some suggestions:
+
+ -Make sure that whatever IP is pointed is given in the format IP_ADDRESS:PORT. 
+
+ -Make sure the designated port is both open and listening on the receiving machine. The
+  easiest way to do this is to uncomment the InputTCPServer lines in /etc/rsyslog.conf
+  and change the port number away from 514 (because rsyslog now drops permissions, using
+  port 514 is no longer an option, as it's < 1024). To test that rsyslog is listening, run
+  
+	netstat -tlnup | grep 514
+ 
+  as root and check that the PID/Name combination for rsyslogd is listed under the results.
+
+ -Within /etc/rsyslog.d/ lie the configuration files; in one of these files, a rule MUST be 
+  created similar to the following:
+  
+	if $programname == "novad" or $programname == "Nova" or $programname == "honeyd" then YOUR_ACTION_CHOICE
+
+  where YOUR_ACTION_CHOICE represents the action (most likely a write to a destination) to take upon 
+  receipt of messages from a client server that have those program names. This is to help organize the logs,
+  as Nova can potentially send many log messages that would otherwise pollute the normal syslog file.
+
+Testing that these changes worked is a good idea as well. Simply start and stop novad on the client with the novacli 
+command line interface and check that the log messages sent at startup arrived at the right place
+
+===============================
+Pulsar
+===============================
+
+	Pulsar does not install with the standard Nova ./configure, make,
+make install process. Instead, the user must change directory into the Nova directory
+(most commonly located in the /home/$USER/Code/ directory) and run make install-
+pulsar with superuser permissions. This will place the Mothership files within the
+proper directories and allow for the user to use the alias 'pulsar' on the command
+line to start the forever process for Mothership. To access the Mothership interface, 
+the user must first have configured Nova such that it has the MASTER_UI_ENABLED 
+configuration variable set to 1, as well as properly configuring the MASTER_UI_IP
+and MASTER_UI_CLIENT_ID variables to match the location and naming requirements for
+the user's network. 
 
 ===============================
 Contact us
 ===============================
 
-feel free to contact the authors with issues and suggestions. 
+Feel free to contact the authors with issues and suggestions. 
 
 Found a bug? Had an install problem? Tell us about it on our issue tracker:
     https://github.com/DataSoft/Nova/issues

@@ -1,21 +1,8 @@
 extends layout
                
 block content
-  label(style='font-weight: bold') Message Targets:
-  input(readonly=true, id='showtargets')
-  table
-    thead
-      tr
-        th Connected Clients
-        th Groups
-    tbody
-      tr
-        td
-          div(id='clientsList')
-        td
-          div(id='groupsList')
-
   h1 Configuration Options
+  p(style='font-style: italic') Note: Configuration changes are reflected amongst all connected clients
   h2 TCP Timeout
   label TCP Timeout
   br
@@ -128,19 +115,18 @@ block content
   br
   br
   //Aesthetic note: Probably want to have a spinner or something here
-  //to show that the clients are updating. Once the mothership has received the 
+  //to show that the clients are updating. Once Pulsar has received the 
   //appropriate response from all of the clients that were targeted, notify
   //the user and redirect to main page
   button(id='updateButton', onclick='updateConfiguration();') Submit Configuration
   
 block headerAdditions
-  script(type='text/javascript', src='scripts/ConnectionManagement.js')
   script(type='text/javascript', src='scripts/Config.js')
   script
     var clients = '#{CLIENTS}'.split(':');
     var groups = !{GROUPS};
     var message = {};
-    message.id = '';
+    message.id = '#{CLIENTS}';
     var replace = '#{SERVICE_PREFERENCES}';
   
     now.ready(function(){
@@ -156,6 +142,4 @@ block headerAdditions
           } 
         }
       });
-      setUpSelect('clientsList');
-      setUpGrouplist('groupsList');
     });

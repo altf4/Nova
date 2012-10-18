@@ -105,12 +105,10 @@ function changeLabel(type, index)
 {
   if(type == 'ratio')
   {
-    document.getElementById('autohook' + index).style.width = '80%';
     document.getElementById('change' + index).innerHTML = ' times the amount of real nodes found on ';
   }
   else
   {
-    document.getElementById('autohook' + index).style.width = '55%';
     document.getElementById('change' + index).innerHTML = ' nodes on '; 
   }
 }
@@ -118,9 +116,10 @@ function changeLabel(type, index)
 function createAutoconfigElement(clientName, group)
 {
   selectedClients.push(clientName);
-  var div = document.createElement('div');
-  div.id = 'autohook' + elementCount;
-  div.setAttribute('style', 'border: 2px solid; border-radius: 12px; background: #E8A02F; width: 55%;');
+  var tr = document.createElement('tr');
+  tr.id = 'autohook' + clientName;
+  tr.setAttribute('style', 'background: #E8A02F;');
+  var td0 = document.createElement('td');
   var label = document.createElement('label');
   label.value = clientName;
   label.innerHTML = clientName + ': Create ';
@@ -157,59 +156,69 @@ function createAutoconfigElement(clientName, group)
       dropDown.appendChild(option);
     }
   });
-  div.appendChild(label);
-  div.appendChild(inputType);
-  div.appendChild(input);
-  div.appendChild(label1);
-  div.appendChild(dropDown);
+  td0.appendChild(label);
+  td0.appendChild(inputType);
+  td0.appendChild(input);
+  td0.appendChild(label1);
+  td0.appendChild(dropDown);
+  tr.appendChild(td0);
   if(group != '')
   {
-    document.getElementById('autoconfElements').appendChild(div);
+    document.getElementById('autoconfElements').appendChild(tr);
   }
   else
   {
-    document.getElementById('autoconfElements').appendChild(div);
+    document.getElementById('autoconfElements').appendChild(tr);
   }
   document.getElementById('sendAutoconfig').removeAttribute('disabled');
-  elementCount++;
 }
 
 function removeAutoconfigElement(target)
 {
-  for(var i = elementCount; i >= 0; i--)
+  var loopIter = document.getElementById('autoconfElements');
+  do 
   {
-    if(document.getElementById('autohook' + i) != undefined && document.getElementById('autohook' + i).childNodes[0].value == target)
+    if(document.getElementById('autohook' + target) != undefined)
     {
-      document.getElementById('autoconfElements').removeChild(document.getElementById('autohook' + i));
+      loopIter.removeChild(document.getElementById('autohook' + target));
       var regex = new RegExp(target + ':', 'i');
       message.id = message.id.replace(regex, '');
+      break;
     }
-  }
-  for(var i in selectedClients)
+  }while(loopIter.hasChildNodes());
+  
+  for(var j in selectedClients)
   {
-    if(selectedClients[i] == target)
+    if(selectedClients[j] == target)
     {
-      delete selectedClients[i];
+      delete selectedClients[j];
     }
   }
 }
 
 function processAutoconfigElements()
 {
-  for(var i = 0; i < elementCount; i++)
+  var loopIter = document.getElementById('autoconfElements');
+  do 
   {
-    var autoconfMessage = {};
-    autoconfMessage.type = 'haystackConfig';
-    autoconfMessage.id = document.getElementById('autohook' + i).childNodes[0].value;
-    autoconfMessage.numNodesType = document.getElementById('autohook' + i).childNodes[1].value;
-    autoconfMessage.numNodes = document.getElementById('autohook' + i).childNodes[2].value;
-    if(/^[0-9]+$/i.test(autoconfMessage.numNodes))
+    if(loopIter.lastChild != undefined)
     {
-      document.getElementById('autohook' + i).childNodes[2].value = '0';
-      alert('Number of nodes/ratio of nodes to create must be a digit');
-      return;
+      var simple = loopIter.lastChild.childNodes[0];
+      console.log('Constructing message');
+      var autoconfMessage = {};
+      autoconfMessage.type = 'haystackConfig';
+      autoconfMessage.id = simple.childNodes[0].value;
+      autoconfMessage.numNodesType = simple.childNodes[1].value;
+      autoconfMessage.numNodes = simple.childNodes[2].value;
+      if(/^[0-9]+$/i.test(autoconfMessage.numNodes.toString()) == false)
+      {
+        simple.childNodes[2].value = '0';
+        alert('Number of nodes/ratio of nodes to create must be a digit');
+        return;
+      }
+      autoconfMessage.interface = simple.childNodes[4].value;
+      now.MessageSend(autoconfMessage);
     }
-    autoconfMessage.interface = document.getElementById('autohook' + i).childNodes[4].value;
-    now.MessageSend(autoconfMessage);
-  }
+    loopIter.removeChild(loopIter.lastChild);
+  }while(loopIter.hasChildNodes());
 }
