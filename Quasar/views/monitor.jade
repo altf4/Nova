@@ -89,7 +89,13 @@ block headerAdditions
         var prefix = '';
         var suffix = '';
         if (err != null) {
-            document.getElementById("domain").innerHTML = prefix + err.code + suffix;
+            var errorString;
+            if (err.code == "ENOTFOUND") {
+                errorString = "No domain name found";
+            } else {
+                errorString = "Unable to get domain name because of error: " + err.code;
+            }
+            document.getElementById("domain").innerHTML = prefix + errorString + suffix;
         } else {
             document.getElementById("domain").innerHTML = prefix + domains + suffix;
         }
