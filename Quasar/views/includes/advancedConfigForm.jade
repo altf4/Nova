@@ -71,6 +71,18 @@ script
     }
   }
 
+  function watermark(source, text){
+    var ele = document.getElementById(source);
+    if(ele.value == '')
+    {
+      ele.value = text; 
+    } 
+    else
+    {
+       
+    }
+  }
+
   require(["dojo/domReady!"], function(){
     updateFeatureSettingStates();
   });
@@ -310,14 +322,15 @@ form(method="post", action="/configureNovaSave")
   label Data TTL
   input(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
   br
-
+  
   h2 Logger Settings
   label Service Preferences
   input(name="SERVICE_PREFERENCES", value=SERVICE_PREFERENCES)
   br
   
   label Remote Log Server IP
-  input(name="RSYSLOG_IP", value=RSYSLOG_IP)
+  p(style="font-style: italic; float: left;") Note: To disable, use string NULL or empty the input field
+  input(name="RSYSLOG_IP", value=RSYSLOG_IP, id='RSYSLOG_IP', onfocus='watermark("RSYSLOG_IP", "NULL")', onblur='watermark("RSYSLOG_IP", "NULL")')
   br
 
   label Haystack Storage

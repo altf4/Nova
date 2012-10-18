@@ -1542,11 +1542,14 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 		case "THINNING_DISTANCE":
 			validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
 			break;
-			
-	// TODO
-    //case "RSYSLOG_IP":
-    //  validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$');
-      //break;
+
+    case "RSYSLOG_IP":
+      if(/^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$/.test(req.body[configItems[item]]) == false 
+         && req.body[configItems[item]] != 'NULL')
+      {
+        validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP, must be IP:Port or the string "NULL"').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$');
+      }
+      break;
       
 		case "DOPPELGANGER_IP":
 			validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
@@ -1607,13 +1610,13 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 
   var writeIP = req.body["RSYSLOG_IP"];
 
-  if(writeIP != undefined && writeIP != getRsyslogIp())
+  if(writeIP != undefined && writeIP != getRsyslogIp() && writeIP != 'NULL')
   {
     var util = require('util');
     var spawn = require('sudo');
     var options = {
       cachePassword: true
-      , prompt: 'You have requested to change the target server for Rsyslog. This requires superuser permissions'
+      , prompt: 'You have requested to change the target server for Rsyslog. This requires superuser permissions.'
     };
   
     var execution = ['nova_rsyslog_helper', writeIP.toString()];
@@ -1629,6 +1632,21 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
       {
         console.log('nova_rsyslog_helper updated rsyslog configuration');
       }
+    });
+  }
+  else if(writeIP == 'NULL')
+  {
+    var util = require('util');
+    var spawn = require('sudo');
+    var options = {
+      cachePassword: true
+      , prompt: 'You have requested to change the target server for Rsyslog. This requires superuser permissions.'
+    };
+    
+    var execution = ['nova_rsyslog_helper','remove'];
+    var rm = spawn(execution, options); 
+    rm.on('exit', function(code){
+      console.log('41-nova.conf has been removed from /etc/rsyslog.d/');
     });
   }
 
@@ -2421,7 +2439,7 @@ function getRsyslogIp()
   }
   catch(err)
   {
-    return 'None set'; 
+    return 'NULL'; 
   }
   var idx = parseInt(read.indexOf('@@')) + 2;
   var ret = '';
