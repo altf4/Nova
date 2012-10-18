@@ -557,31 +557,11 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
 }
 
 app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
-	fs.readFile(novadLogPath, 'utf8', function (err, data) {
-		if (err) {
-			RenderError(res, "Unable to open NOVA log file for reading due to error: " + err);
-			return;
-		} else {
-			// Hacky solution to make browsers launch a save as dialog
-			res.header('Content-Type', 'application/novaLog');
-			var reply = data.toString();
-			res.send(reply);
-		}
-	});
+	res.download(novadLogPath, 'novadLog.log');
 });
 
 app.get('/downloadHoneydLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
-	fs.readFile(honeydLogPath, 'utf8', function (err, data) {
-		if (err) {
-			RenderError(res, "Unable to open NOVA log file for reading due to error: " + err);
-			return;
-		} else {
-			// Hacky solution to make browsers launch a save as dialog
-			res.header('Content-Type', 'application/honeydLog');
-			var reply = data.toString();
-			res.send(reply);
-		}
-	});
+	res.download(honeydLogPath, 'honeydLog.log');
 });
 
 app.get('/novaState.csv', passport.authenticate('basic', {session: false}), function (req, res) {
