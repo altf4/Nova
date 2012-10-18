@@ -1543,9 +1543,10 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 			validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
 			break;
 			
-    case "RSYSLOG_IP":
-      validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$');
-      break;
+	// TODO
+    //case "RSYSLOG_IP":
+    //  validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$');
+      //break;
       
 		case "DOPPELGANGER_IP":
 			validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
