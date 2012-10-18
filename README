@@ -312,9 +312,11 @@ messages exposed within the Advanced Options page of the Quasar Web UI. Some sug
   and change the port number away from 514 (because rsyslog now drops permissions, using
   port 514 is no longer an option, as it's < 1024). To test that rsyslog is listening, run
   
-	netstat -tlnup | grep 514
+	netstat -tlnup | grep PORT
  
   as root and check that the PID/Name combination for rsyslogd is listed under the results.
+  The port may also need to be registered into the /etc/services file, if changed from the 
+  normal port 514.
 
  -Within /etc/rsyslog.d/ lie the configuration files; in one of these files, a rule MUST be 
   created similar to the following:
