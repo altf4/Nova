@@ -296,6 +296,7 @@ uninstall: uninstall-files uninstall-permissions
 
 uninstall-files:
 	rm -rf ~/.config/nova
+	rm -rf /var/log/nova
 	rm -rf "$(DESTDIR)/usr/share/nova"
 	rm -f "$(DESTDIR)/usr/bin/novacli"
 	rm -f "$(DESTDIR)/usr/bin/novad"

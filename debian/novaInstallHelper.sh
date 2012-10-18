@@ -37,6 +37,7 @@ echo "##########################################################################
 echo "#                              BUILDING HONEYD                               #"
 echo "##############################################################################"
 cd ${BUILDDIR}/Honeyd
+git checkout -f integration
 ./autogen.sh
 check_err
 automake
@@ -50,6 +51,8 @@ check_err
 
 cd ${BUILDDIR}/Nova
 git checkout -f integration
+git submodule init
+git submodule update
 check_err
 
 echo "##############################################################################"
