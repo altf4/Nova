@@ -90,7 +90,7 @@ var HashPassword = function (password) {
 	var shasum = crypto.createHash('sha1');
 	shasum.update(password);
 	return shasum.digest('hex');
-}
+};
 
 LOG("ALERT", "Starting QUASAR version " + config.GetVersionString());
 
@@ -102,7 +102,7 @@ var DATABASE_USER = config.ReadSetting("DATABASE_USER");
 var DATABASE_PASS = config.ReadSetting("DATABASE_PASS");
 
 var databaseOpenResult = function (err) {
-	if (err == null) {
+	if (err === null) {
 		console.log("Opened sqlite3 database file.");
 	} else {
 		LOG(ERROR, "Error opening sqlite3 database file: " + err);
@@ -148,7 +148,7 @@ function (username, password, done) {
 			}
 
 			// If there are no users, add default nova and log in
-			if (rowcount[0].rows == 0) {
+			if (rowcount[0].rows === 0) {
 				console.log("No users in user database. Creating default user.");
 				dbqCredentialsInsertUser.run('nova', HashPassword('toor'), function (err) {
 					if (err) {
@@ -816,22 +816,29 @@ app.get('/basicOptions', passport.authenticate('basic', {session: false}), funct
 
 app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), function (req, res) {
 	if (!honeydConfig.LoadAllTemplates()) {
-		RenderError(res, "Unable to load honeyd configuration XML files")
+		RenderError(res, "Unable to load honeyd configuration XML files");
 		return;
 	}
 
 	var nodeNames = honeydConfig.GetNodeNames();
-	var nodes = new Array();
-
+	var nodeList = [];
+	
 	for (var i = 0; i < nodeNames.length; i++) {
-		nodes.push(honeydConfig.GetNode(nodeNames[i]));
+	  var node = honeydConfig.GetNode(nodeNames[i]);
+	  var push = {};
+	  push.enabled = node.IsEnabled();
+	  push.name = node.GetName();
+	  push.pfile = node.GetProfile();
+	  push.ip = node.GetIP();
+	  push.mac = node.GetMAC();
+		nodeList.push(push);
 	}
-
+	
 	res.render('configHoneyd.jade', {
 		locals: {
 			INTERFACES: config.ListInterfaces().sort(),
 			profiles: honeydConfig.GetProfileNames(),
-			nodes: nodes,
+			nodes: nodeList,
 			groups: honeydConfig.GetGroups(),
 			currentGroup: config.GetGroup()
 		}

@@ -2,9 +2,11 @@ extends layout
 
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
   link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
   script(type="text/javascript", src="scripts/NovaPiChart.js")
+  script(type="text/javascript", src="scripts/NovaGrid.js")
 
   script
     var grid;
@@ -60,7 +62,7 @@ block headerAdditions
       // it's last point nonetheless. I have a question posted in stack overflow
       // about it, if that doesn't bear any fruit than we may have to 
       // move away from a DataGrid and try something else.
-      var items = grid.selection.getSelected();
+      var items = grid.GetSelected();
       var names = [];
       
       dojo.forEach(items, function(selectedItem) {
@@ -192,54 +194,84 @@ block headerAdditions
     function configurationRestored() {
         now.IsHaystackUp(checkIfRestartNeeded); 
     }
+    
+    function onGridRendered() {
+       var gridSize = grid.GetNumberOfPages();
+       var currentPage = grid.GetCurrentPage();
 
+       var temp = document.createElement('a');
+       document.getElementById("tablePages").innerHTML = "";
 
-    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', 'grid.PreviousPage();');
+       var pageLinkText = document.createTextNode(" <-- ");
+       pageLink.appendChild(pageLinkText);
+       document.getElementById("tablePages").appendChild(pageLink);
 
-    function(DataGrid,ObjectStore){
-        var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
-        var gridSize = #{nodes.length};
-        grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:100, autoWidth:true});
-        dojo.byId("gridDiv").appendChild(grid.domNode);
-      now.ready(function() {
-        checkOnlyOne("if0");
-            
-        var nodesPerProfile = new Object();
-        var rows = document.getElementById("nodeTableBody").childNodes;
-        var numberOfNodes = rows.length;
-        for (var i = 0; i < rows.length; i++) {
-          var pfile = rows[i].childNodes[2].innerHTML;
-          if (nodesPerProfile[pfile] === undefined) {
-            nodesPerProfile[pfile] = 1;
-          } else {
-            nodesPerProfile[pfile]++;
-          }
-        }
+       for (var i = 0; i < gridSize; i++) {
+           var pageLink = document.createElement('a');
+           pageLink.setAttribute('href', '#');
+           pageLink.setAttribute('onclick', 'grid.SetCurrentPage( ' + i + ');');
 
-        var arr = new Array();
-        for (var pfile in nodesPerProfile) {
-            var p = new Object();
-            p.name = pfile;
-            p.value = nodesPerProfile[pfile];
-            arr.push(p);
-        }
+           var pageLinkText = document.createTextNode(" " + (i + 1) + " ");
+           pageLink.appendChild(pageLinkText);
 
-        arr = arr.sort(function(a,b) {return b.value - a.value});
-        var piChart = new NovaPiChart("piChart", 200);
-        piChart.Render(arr);
+           if (i == currentPage) 
+           {
+               var boldTag = document.createElement('b');
+               boldTag.appendChild(pageLink);
 
-      });
+               document.getElementById("tablePages").appendChild(boldTag);
+           }
+           else 
+           {
+               document.getElementById("tablePages").appendChild(pageLink);
+           }    
+       }
+
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', 'grid.NextPage();');
+       var pageLinkText = document.createTextNode(" --> ");
+       pageLink.appendChild(pageLinkText);
+       document.getElementById("tablePages").appendChild(pageLink);
+    }
+    
+    function Init()
+    {
+      var gridStructure = [];
+      gridStructure.push({name: "Enabled"});
+      gridStructure.push({name: "Name"});
+      gridStructure.push({name: "Profile"});
+      gridStructure.push({name: "IP"});
+      gridStructure.push({name: "MAC"});
+      
+      grid = new NovaGrid(gridStructure, 1, document.getElementById('nodeTable'), 'grid');
+      
+      grid.SetSortByKey(1);
+      grid.SetRowsPerPage(50);
+      grid.SetRenderCallback(onGridRendered);
+      
+      var nodeList = !{JSON.stringify(nodes)};
+      
+      for(var i in nodeList)
+      {
+        var row = [];
+        row.push(String(nodeList[i].enabled));
+        row.push(String(nodeList[i].name));
+        row.push(String(nodeList[i].pfile));
+        row.push(String(nodeList[i].ip));
+        row.push(String(nodeList[i].mac));
+        grid.PushEntry(row);
+      }
+      
+      grid.Render();
+    }
+    
+    now.ready(function(){
+      Init();
     });
-
-  script(type="text/javascript")
-    /*set up data store*/
-    var layoutNodes = [[
-      { field: "Enabled", name: "Enabled", width: '100px' },
-      { field: "Name", name: "Name", width: '400px' },
-      { field: "Profile", name: "Profile", width: '100px' },
-      { field: "IP", name: "IP", width: '150px' },
-      { field: "MAC", name: "MAC", width: '150px' },
-    ]];
 
 block content
   h1 Current Haytack Node Configuration
@@ -252,27 +284,13 @@ block content
           option(SELECTED) #{g}
         else
           option #{g}
+  div#node_header
+    br
+    div#tablePages
+    br
+  table#nodeTable
   br
-  table#nodeTable(style="display: none")
-    thead
-      tr
-        th Enabled
-        th Name
-        th Profile
-        th IP
-        th MAC
-    tbody#nodeTableBody
-      each node, i in nodes
-        tr
-          td #{node.IsEnabled()}
-          td #{node.GetName()}
-          td #{node.GetProfile()}
-          td #{node.GetIP()}
-          td #{node.GetMAC()}
- 
-  div(style="height: 250px;")
-    div#gridDiv(style="height: 250px")
- 
+  br
 
   button(onClick="deleteSelectedItems()") Delete Selected Nodes 
   button(onClick="editSelectedItem()") Edit Selected Node

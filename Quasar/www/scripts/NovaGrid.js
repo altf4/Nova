@@ -21,18 +21,20 @@
 //     Each should contain a "name" attribute and optionally a "formatter"
 //   keyIndex: index of column used as a UID for a row
 //   tableElement: DOM object of the <table> 
-var NovaGrid = function(columns, keyIndex, tableElement) {
+var NovaGrid = function(columns, keyIndex, tableElement, gridName) {
 	this.m_columns = columns;
 	this.m_keyIndex = keyIndex;
 	this.m_sortByKey = keyIndex;
-    this.m_sortDescending = true;
+  this.m_sortDescending = true;
 	this.m_tableElement = tableElement;
 	this.m_elements = new Object();
 	this.m_renderCallback = function() {};
+	this.m_selected = [];
 	
 	this.m_currentPage = 0;
 	this.m_rowsPerPage = Number.MAX_VALUE;
-
+	this.m_name = gridName;
+	
 	this.GenerateTableHeader();
 }
 
@@ -56,7 +58,7 @@ NovaGrid.prototype = {
 			if (this.m_sortByKey == c) {
 				title = '<div class="sortArrow">' + (this.m_sortDescending ? '&#8744;' : '&#8743;') + '</div>' + title;
 			}
-			this.headerHTML += '<TH><A HREF="javascript:void(0)" style="font-size: 12px;" onclick="suspectGrid.SetSortByKey(' + c + ');">' + title + '</A></TH>';
+			this.headerHTML += '<TH><A HREF="javascript:void(0)" style="font-size: 12px;" onclick="' + this.m_name + '.SetSortByKey(' + c + ');">' + title + '</A></TH>';
 		}
 		this.headerHTML += '</TR>';
 	}
@@ -162,7 +164,9 @@ NovaGrid.prototype = {
 	, Size: function() {
 		return Object.keys(this.m_elements).length;
 	}
-
+  , GetSelected: function() {
+    
+  }
     // Renders the table
 	, Render: function() {
 		// Simple way (slow in Chrome, fine in FF)

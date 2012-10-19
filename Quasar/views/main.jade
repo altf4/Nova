@@ -386,7 +386,7 @@ block headerAdditions
     function Init() {
         theDoc = document;
         var enabledFeatures = "#{enabledFeatures}";
-        var gridStructure = new Array();
+        var gridStructure = [];
         gridStructure.push({name: "Monitor"});
         gridStructure.push({name: "Address"});
         gridStructure.push({name: "Classification", formatter: classificationFormatter});
@@ -399,7 +399,7 @@ block headerAdditions
         }
         gridStructure.push({name: "Clear"});
    
-        suspectGrid = new NovaGrid(gridStructure, 1, document.getElementById('suspectTable'));
+        suspectGrid = new NovaGrid(gridStructure, 1, theDoc.getElementById('suspectTable'), 'suspectGrid');
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(2);
