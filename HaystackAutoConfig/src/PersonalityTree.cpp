@@ -68,8 +68,6 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 		m_hdconfig->DeleteProfile(*it);
 	}
 
-
-
 	m_hdconfig->SaveAllTemplates();
 	m_hdconfig->LoadAllTemplates();
 	m_profiles = &m_hdconfig->m_profiles;
@@ -79,6 +77,8 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	{
 		LoadTable(persTable);
 	}
+
+	AddAllPorts(&m_root);
 }
 
 PersonalityTree::~PersonalityTree()
@@ -86,13 +86,40 @@ PersonalityTree::~PersonalityTree()
 	delete m_hdconfig;
 }
 
-PersonalityNode *PersonalityTree::GetRootNode()
+PersonalityNode *PersonalityTree::GetRandomProfile()
 {
-	return &m_root;
-}
-HoneydConfiguration *PersonalityTree::GetHDConfig()
-{
-	return m_hdconfig;
+	//Start with the root
+	PersonalityNode *personality = &m_root;
+
+	//Keep going until you get to a leaf node
+	while(!personality->m_children.empty())
+	{
+		//Random double between 0 and 100
+		double random = ((double)rand() / (double)RAND_MAX) * 100;
+
+		double runningTotal = 0;
+		bool found = false;
+		//For each child, pick one
+		for(uint i = 0; i < personality->m_children.size(); i++)
+		{
+			runningTotal += personality->m_children[i]->m_distribution;
+			if(random < runningTotal)
+			{
+				//Winner
+				personality = personality->m_children[i];
+				found = true;
+				break;
+			}
+		}
+		if(!found)
+		{
+			//If we've gotten here, then something strange happened, like children distributions not adding to 100
+			//Just pick the last child, to err on the side of caution. (maybe they summed to 99.98, and we rolled 99.99)
+			personality = personality->m_children.back();
+		}
+	}
+
+	return personality;
 }
 
 bool PersonalityTree::LoadTable(PersonalityTable *persTable)
@@ -109,10 +136,10 @@ bool PersonalityTree::LoadTable(PersonalityTable *persTable)
 	{
 		InsertPersonality(it->second);
 	}
-	CalculateDistributions();
+	CalculateDistributions(&m_root);
 	for(uint i = 0; i < m_root.m_children.size(); i++)
 	{
-		if(!GenerateProfiles(m_root.m_children[i].second, &m_root, &m_hdconfig->m_profiles["default"], m_root.m_children[i].first))
+		if(!GenerateProfiles(m_root.m_children[i], &m_root, &m_hdconfig->m_profiles["default"], m_root.m_children[i]->m_key))
 		{
 			LOG(ERROR, "Unable to generate profiles for children of the root node!", "");
 			return false;
@@ -164,7 +191,8 @@ bool PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		{
 			for(uint i = 0; i < node->m_children.size(); i++)
 			{
-				if(!GenerateProfiles(node->m_children[i].second, node, &m_hdconfig->m_profiles[tempProf.m_name], node->m_children[i].first))
+				if(!GenerateProfiles(node->m_children[i], node, &m_hdconfig->m_profiles[tempProf.m_name],
+						node->m_children[i]->m_key))
 				{
 					LOG(ERROR, "Unable to generate profiles for children of node '" + node->m_key + "'.", "");
 					return false;
@@ -187,7 +215,7 @@ bool PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *p
 		}
 		for(uint i = 0; i < node->m_children.size(); i++)
 		{
-			if(!GenerateProfiles(node->m_children[i].second, node, &m_hdconfig->m_profiles[key], node->m_children[i].first))
+			if(!GenerateProfiles(node->m_children[i], node, &m_hdconfig->m_profiles[key], node->m_children[i]->m_key))
 			{
 				LOG(ERROR, "Unable to generate profiles for children of node '" + node->m_key + "'.", "");
 				return false;
@@ -226,49 +254,47 @@ bool PersonalityTree::UpdatePersonality(Personality *targetPersonality, Personal
 	uint i = 0;
 	for(; i < parentPersonalityNode->m_children.size(); i++)
 	{
-		if(!curOSClass.compare(parentPersonalityNode->m_children[i].first))
+		if(!curOSClass.compare(parentPersonalityNode->m_children[i]->m_key))
 		{
 			break;
 		}
 	}
 
-	pair<string, PersonalityNode *> *childPersonalityPair = NULL;
+	PersonalityNode *childPersonality = NULL;
 
 	//If node not found
 	if(i == parentPersonalityNode->m_children.size())
 	{
-		childPersonalityPair = new pair<string, PersonalityNode *>();
-		childPersonalityPair->first = curOSClass;
-		childPersonalityPair->second = new PersonalityNode(curOSClass);
-		childPersonalityPair->second->m_distribution = targetPersonality->m_distribution;
-		childPersonalityPair->second->m_count = targetPersonality->m_count;
-		childPersonalityPair->second->m_osclass = targetPersonality->m_osclass;
-		parentPersonalityNode->m_children.push_back(*childPersonalityPair);
-		delete childPersonalityPair;
+		childPersonality = new PersonalityNode(curOSClass);
+		childPersonality->m_distribution = targetPersonality->m_distribution;
+		childPersonality->m_count = targetPersonality->m_count;
+		childPersonality->m_osclass = targetPersonality->m_osclass;
+		parentPersonalityNode->m_children.push_back(childPersonality);
 	}
 	else
 	{
-		parentPersonalityNode->m_children[i].second->m_count += targetPersonality->m_count;
+		parentPersonalityNode->m_children[i]->m_count += targetPersonality->m_count;
 	}
 
-	childPersonalityPair = &parentPersonalityNode->m_children[i];
+	childPersonality = parentPersonalityNode->m_children[i];
+
 	//Insert or count port occurrences
 	for(PortServiceMap::iterator it = targetPersonality->m_ports.begin(); it != targetPersonality->m_ports.end(); it++)
 	{
-		childPersonalityPair->second->m_ports[it->first].first += it->second.first;
-		childPersonalityPair->second->m_ports[it->first].second = it->second.second;
+		childPersonality->m_ports[it->first].first += it->second.first;
+		childPersonality->m_ports[it->first].second = it->second.second;
 	}
 
 	//Insert or count MAC vendor occurrences
 	for(MACVendorMap::iterator it = targetPersonality->m_vendors.begin(); it != targetPersonality->m_vendors.end(); it++)
 	{
-		childPersonalityPair->second->m_vendors[it->first] += it->second;
+		childPersonality->m_vendors[it->first] += it->second;
 	}
 
 	targetPersonality->m_personalityClass.pop_back();
 	if(!targetPersonality->m_personalityClass.empty())
 	{
-		if(!UpdatePersonality(targetPersonality, childPersonalityPair->second))
+		if(!UpdatePersonality(targetPersonality, childPersonality))
 		{
 			return false;
 		}
@@ -276,85 +302,17 @@ bool PersonalityTree::UpdatePersonality(Personality *targetPersonality, Personal
 	return true;
 }
 
-string PersonalityTree::ToString()
-{
-	stringstream ss;
-	for(uint i = 0; i < m_root.m_children.size(); i++)
-	{
-		ss << RecursiveToString(*m_root.m_children[i].second);
-	}
-	return ss.str();
-}
-
-string PersonalityTree::RecursiveToString(PersonalityNode &persNode)
-{
-	stringstream ss;
-	ss << persNode.ToString();
-	for(uint i = 0; i < persNode.m_children.size(); i++)
-	{
-		ss << RecursiveToString(*persNode.m_children[i].second);
-	}
-	return ss.str();
-}
-
-string PersonalityTree::ToDebugString()
-{
-	stringstream ss;
-	for(ProfileTable::iterator it = m_profiles->begin(); it != m_profiles->end(); it++)
-	{
-		ss << '\n';
-		ss << "Profile: " << it->second.m_name << '\n';
-		ss << "Parent: " << it->second.m_parentProfile << '\n';
-
-		if(!it->second.m_personality.empty())
-		{
-			ss << "Personality: " << it->second.m_personality << '\n';
-		}
-		for(uint i = 0; i < it->second.m_ethernetVendors.size(); i++)
-		{
-			ss << "MAC Vendor:  " << it->second.m_ethernetVendors[i].first << " - " << it->second.m_ethernetVendors[i].second	<< "% \n";
-		}
-		if(!it->second.m_ports.empty())
-		{
-			ss << "Ports for this scope (<NUM>_<PROTOCOL>, inherited):" << '\n';
-			for(uint16_t i = 0; i < it->second.m_ports.size(); i++)
-			{
-				cout << "\t" << it->second.m_ports[i].first << ", " << it->second.m_ports[i].second.first << '\n';
-			}
-		}
-		ss << '\n';
-	}
-	return ss.str();
-}
-
-bool PersonalityTree::ToXmlTemplate()
-{
-	return m_hdconfig->SaveAllTemplates();
-}
-
-bool PersonalityTree::AddAllPorts()
-{
-	for(uint16_t i = 0; i < m_root.m_children.size(); i++)
-	{
-		if(!RecursiveAddAllPorts(m_root.m_children[i].second))
-		{
-			return false;
-		}
-	}
-	return m_hdconfig->SaveAllTemplates();
-}
-
-bool PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
+bool PersonalityTree::AddAllPorts(PersonalityNode *node)
 {
 	if(node == NULL)
 	{
-		LOG(ERROR, "NULL PersonalityNode passed as paremeter!", "");
+		LOG(ERROR, "NULL PersonalityNode passed as parameter!", "");
 		return false;
 	}
 
 	for(unsigned int i = 0; i < node->m_children.size(); i++)
 	{
-		if(!RecursiveAddAllPorts(node->m_children[i].second))
+		if(!AddAllPorts(node->m_children[i]))
 		{
 			return false;
 		}
@@ -509,30 +467,10 @@ bool PersonalityTree::RecursiveAddAllPorts(PersonalityNode *node)
 			}
 		}
 	}
-	return true;
+	return m_hdconfig->SaveAllTemplates();
 }
 
-void PersonalityTree::RecursivePrintTree(PersonalityNode *node)
-{
-	if(node == NULL)
-	{
-		return;
-	}
-
-	LOG(DEBUG, node->m_key, "");
-
-	for(uint i = 0; i < node->m_children.size(); i++)
-	{
-		RecursivePrintTree(node->m_children[i].second);
-	}
-}
-
-bool PersonalityTree::CalculateDistributions()
-{
-	return RecursiveCalculateDistribution(&m_root);
-}
-
-bool PersonalityTree::RecursiveCalculateDistribution(PersonalityNode *targetNode)
+bool PersonalityTree::CalculateDistributions(PersonalityNode *targetNode)
 {
 	if(targetNode == NULL)
 	{
@@ -541,15 +479,16 @@ bool PersonalityTree::RecursiveCalculateDistribution(PersonalityNode *targetNode
 	}
 	for(uint i = 0; i < targetNode->m_children.size(); i++)
 	{
-		if((targetNode->m_children[i].second->m_count > 0) && (targetNode->m_count > 0))
+		if((targetNode->m_children[i]->m_count > 0) && (targetNode->m_count > 0))
 		{
-			targetNode->m_children[i].second->m_distribution = (((double)targetNode->m_children[i].second->m_count)/((double)targetNode->m_count))*100;
+			targetNode->m_children[i]->m_distribution =
+					(((double)targetNode->m_children[i]->m_count)/((double)targetNode->m_count))*100;
 		}
 		else
 		{
-			targetNode->m_children[i].second->m_distribution = 0;
+			targetNode->m_children[i]->m_distribution = 0;
 		}
-		if(!RecursiveCalculateDistribution(targetNode->m_children[i].second))
+		if(!CalculateDistributions(targetNode->m_children[i]))
 		{
 			return false;
 		}

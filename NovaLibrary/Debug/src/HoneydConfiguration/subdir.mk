@@ -5,21 +5,18 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/HoneydConfiguration/HoneydConfiguration.cpp \
-../src/HoneydConfiguration/NodeManager.cpp \
 ../src/HoneydConfiguration/OsPersonalityDb.cpp \
 ../src/HoneydConfiguration/ServiceToScriptMap.cpp \
 ../src/HoneydConfiguration/VendorMacDb.cpp 
 
 OBJS += \
 ./src/HoneydConfiguration/HoneydConfiguration.o \
-./src/HoneydConfiguration/NodeManager.o \
 ./src/HoneydConfiguration/OsPersonalityDb.o \
 ./src/HoneydConfiguration/ServiceToScriptMap.o \
 ./src/HoneydConfiguration/VendorMacDb.o 
 
 CPP_DEPS += \
 ./src/HoneydConfiguration/HoneydConfiguration.d \
-./src/HoneydConfiguration/NodeManager.d \
 ./src/HoneydConfiguration/OsPersonalityDb.d \
 ./src/HoneydConfiguration/ServiceToScriptMap.d \
 ./src/HoneydConfiguration/VendorMacDb.d 

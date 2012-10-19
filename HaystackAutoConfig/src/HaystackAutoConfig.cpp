@@ -20,6 +20,7 @@
 
 // REQUIRES NMAP 6
 
+#include <time.h>
 #include <stdio.h>
 #include <netdb.h>
 #include <sstream>
@@ -31,14 +32,14 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include "HoneydConfiguration/NodeManager.h"
 #include "PersonalityTree.h"
-#include "HoneydHostConfig.h"
+#include "HaystackAutoConfig.h"
 #include "HoneydConfiguration/VendorMacDb.h"
 #include "Logger.h"
 
@@ -54,10 +55,12 @@ string nmapFileName;
 uint numNodes;
 double nodeRatio;
 
-enum NumberOfNodesType {
-	FIXED_NUMBER_OF_NODES
-	, RATIO_BASED_NUMBER_OF_NODES
+enum NumberOfNodesType
+{
+	FIXED_NUMBER_OF_NODES,
+	RATIO_BASED_NUMBER_OF_NODES
 };
+
 NumberOfNodesType numberOfNodesType;
 
 vector<Subnet> subnetsDetected;
@@ -68,6 +71,9 @@ string lockFilePath;
 
 int main(int argc, char ** argv)
 {
+	//Seed any future random values
+	srand(time(NULL));
+
 	namespace po = boost::program_options;
 	po::options_description desc("Command line options");
 	try
@@ -179,7 +185,7 @@ int main(int argc, char ** argv)
 			f_flag_set = true;
 		}
 
-		if(numberOfNodesType == FIXED_NUMBER_OF_NODES && numNodes < 0)
+		if((numberOfNodesType == FIXED_NUMBER_OF_NODES) && (numNodes < 0))
 		{
 			lockFile.close();
 			remove(lockFilePath.c_str());
@@ -187,7 +193,8 @@ int main(int argc, char ** argv)
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 
-		if (numberOfNodesType == FIXED_NUMBER_OF_NODES && nodeRatio < 0) {
+		if((numberOfNodesType == FIXED_NUMBER_OF_NODES) && (nodeRatio < 0))
+		{
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			LOG(ERROR, "num-nodes argument takes an integer greater than or equal to 0. Aborting...", "");
@@ -502,10 +509,10 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 	if(persObject->m_personalityClass.empty())
 	{
 		persObject->m_personalityClass.push_back("NULL");
-		persObject->m_personalityClass.push_back("NULL");
-		persObject->m_personalityClass.push_back("NULL");
-		persObject->m_personalityClass.push_back("NULL");
-		persObject->m_osclass = "NULL | NULL | NULL | NULL";
+//		persObject->m_personalityClass.push_back("NULL");
+//		persObject->m_personalityClass.push_back("NULL");
+//		persObject->m_personalityClass.push_back("NULL");
+		persObject->m_osclass = "NULL";
 	}
 	else
 	{
@@ -927,34 +934,42 @@ void Nova::GenerateConfiguration()
 {
 	personalities.CalculateDistributions();
 	PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
-	persTree.AddAllPorts();
-	NodeManager nodeBuilder = NodeManager(persTree.GetHDConfig());
 
 	uint nodesToCreate = 0;
-	switch (numberOfNodesType)
+	if(numberOfNodesType == FIXED_NUMBER_OF_NODES)
 	{
-		case FIXED_NUMBER_OF_NODES:
-		{
-			nodesToCreate = numNodes;
-			break;
-		}
-
-		case RATIO_BASED_NUMBER_OF_NODES:
-		{
-			nodesToCreate = ((double)personalities.m_num_of_hosts) * nodeRatio;
-			break;
-		}
-
-		default:
-		{}
-	};
+		nodesToCreate = numNodes;
+	}
+	else
+	{
+		nodesToCreate = ((double)personalities.m_num_of_hosts) * nodeRatio;
+	}
 
 	stringstream ss;
-	ss << "Creating " << nodesToCreate << " new nodes" << endl;
+	ss << "Creating " << nodesToCreate << " new nodes";
 	LOG(DEBUG, ss.str(), "");
 
-	nodeBuilder.SetNumNodesOnProfileTree(&persTree.GetHDConfig()->m_profiles["default"], nodesToCreate);
-	persTree.GetHDConfig()->SaveAllTemplates();
+	for(uint i = 0; i < nodesToCreate; i++)
+	{
+		//Pick a (leaf) profile at random
+		PersonalityNode *winningPersonality = persTree.GetRandomProfile();
+		if(winningPersonality == NULL)
+		{
+			continue;
+		}
+
+		//Pick a random MAC vendor from this profile
+		string vendor = winningPersonality->GetRandomVendor();
+
+		//Pick a MAC address for the node:
+		string macAddress = persTree.m_hdconfig->m_macAddresses.GenerateRandomMAC(vendor);
+
+		//Make a node for that profile
+		//TODO: This last argument is unused, remove it
+		persTree.m_hdconfig->AddNewNode(winningPersonality->m_key, "DHCP", macAddress, Config::Inst()->GetInterface(0), "");
+	}
+
+	persTree.m_hdconfig->SaveAllTemplates();
 }
 
 bool Nova::CheckSubnet(vector<string> &hostAddrStrings, string matchStr)

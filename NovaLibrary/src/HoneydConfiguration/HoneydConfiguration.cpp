@@ -825,7 +825,6 @@ bool HoneydConfiguration::AddPreGeneratedNode(Node &newNode)
 }
 
 //This function allows us to add many nodes of the same type easily
-// *Note this function is very limited, for configuring large numbers of nodes you should use the NodeManager
 bool HoneydConfiguration::AddNewNodes(string profileName, string ipAddress, string interface, string subnet, int numberOfNodes)
 {
 	NodeProfile *profPtr = &m_profiles[profileName];

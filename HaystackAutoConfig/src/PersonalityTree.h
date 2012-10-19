@@ -44,6 +44,13 @@ public:
 	PersonalityTree(PersonalityTable *persTable, std::vector<Subnet> &subnetsToUse);
 	~PersonalityTree();
 
+	// Returns a random (leaf) profile, according to the distributions given
+	//	returns - A valid PersonalityNode on success, NULL on error
+	PersonalityNode *GetRandomProfile();
+
+	HoneydConfiguration *m_hdconfig;
+
+private:
 	// LoadTable first iterates over the persTable object and calls InsertPersonality on each
 	// Personality* within the HashMap structure. It then calls GenerateProfiles recursively on
 	// each subtree of the root node. Note that authentically this method is called within
@@ -75,52 +82,10 @@ public:
 	// Returns nothing.
 	bool InsertPersonality(Personality *pers);
 
-	// Prints each child of the root node in the tree as a string
-	// Returns nothing, takes no arguments.
-	std::string ToDebugString();
-
-	// ToXmlTemplate calls m_hdconfig->SaveAllTemplates().
-	// Returns nothing, takes no arguments.
-	bool ToXmlTemplate();
-
-	// Just iterates through m_hdconfig's ProfileTable and prints out the
-	// relevant information. Used for debugging.
-	// Returns nothing, takes no arguments.
-	std::string ToString();
-
-	// AddAllPorts serves as the starting point for RecursiveAddAllPorts.
-	// Returns nothing, takes no arguments.
-	bool AddAllPorts();
-
-	// AddSubnet acts to pass a subnet to m_hdconfig's AddSubnet method for
-	// classes outsides of PersonalityTree that wish to update its m_hdconfig
-	// object, which is private.
-	//  const Subnet &add - const reference to a Subnet struct to be added to
-	// 					    m_hdconfig's SubnetTable.
-	// Returns a bool: true indicates success, and that the subnet was added; false otherwise.
-	bool AddSubnet(const Subnet &add);
-
-	// GetHDConfig provides a way for other classes to interact with PersonalityTree's
-	// m_hdconfig private member variable if there's no other way to perform the actions
-	// they require.
-	// Returns m_hdconfig, takes no arguments.
-	HoneydConfiguration* GetHDConfig();
-
-	// Getter for the root node of the tree. As it is a private member variable,
-	// needs a get method. However, a word of caution: If you use this function and
-	// then delete the node (or otherwise modify it) you could destroy the tree structure.
-	// By this it is meant the deconstructor for the PersonalityNode class will recursively
-	// call the deconstructors for each of its children. So, unless you know what you're doing,
-	// do not touch m_root directly.
-	// Returns m_root, takes no arguments.
-	PersonalityNode* GetRootNode();
-
 	// GetHostCount gets the number of hosts in each of the root node's subtrees and
 	// adds them into m_root's m_count value.
 	// Returns nothing.
-	bool CalculateDistributions();
-
-private:
+	bool CalculateDistributions(PersonalityNode *node);
 
 	// UpdatePersonality will, for each Personality, create a node for the Personality,
 	// add the node to that parent's children if not present (and aggregate the data of the
@@ -134,40 +99,20 @@ private:
 	// Returns nothing.
 	bool UpdatePersonality(Personality *pers, PersonalityNode *parent);
 
-	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
-	PersonalityNode m_root;
-
-	std::vector<PersonalityNode *> m_nodes;
-
-	std::vector<PersonalityNode *> m_to_delete;
-
-	ProfileTable *m_profiles;
-
-	HoneydConfiguration *m_hdconfig;
-
-	ServiceToScriptMap m_serviceMap;
-
-	// Recursively prints out the tree structure.
-	//  PersonalityNode &persNode - the node to call toString on and
-	//                       whose children to recurse to next.
-	// Returns nothing.
-	std::string RecursiveToString(PersonalityNode &persNode);
-
-	// RecursiveAddAllPorts, at each node, will add an open version and a script
+	// At each node, will add an open version and a script
 	// specific version of each found port for the node.
 	//  PersonalityNode *node - the node whose ports to look at, and change if a script
 	//                      is found in the ServiceToScriptMap that matches the services for
 	//                      those ports.
 	// Returns nothing.
-	bool RecursiveAddAllPorts(PersonalityNode *node);
+	bool AddAllPorts(PersonalityNode *node);
 
-	// Prints out the tree from the root node; rather esoteric and not entirely useful
-	// unless you know the expected parent/child relations within the tree. A testing tool.
-	void RecursivePrintTree(PersonalityNode *node);
+	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
+	PersonalityNode m_root;
 
-	bool RecursiveCalculateDistribution(PersonalityNode *node);
+	ProfileTable *m_profiles;
 
-
+	ServiceToScriptMap m_serviceMap;
 };
 
 }

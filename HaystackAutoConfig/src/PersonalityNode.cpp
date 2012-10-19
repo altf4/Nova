@@ -44,40 +44,17 @@ PersonalityNode::PersonalityNode(string key)
 	m_redundant = false;
 }
 
-//Deconstructor
+//Destructor
 PersonalityNode::~PersonalityNode()
 {
 	for(unsigned int i = 0; i < m_children.size(); i++)
 	{
-		if(m_children[i].second != NULL)
+		if(m_children[i] != NULL)
 		{
-			delete m_children[i].second;
+			delete m_children[i];
 		}
 	}
 	m_children.clear();
-}
-
-string PersonalityNode::ToString()
-{
-	// Simple ToString for the personality node for debugging purposes.
-
-	stringstream ss;
-	ss << '\n' << m_key << " has " << m_count << " hosts in it's scope." << '\n' << '\n';
-	ss << "MAC Address Vendors: <Vendor>, <Number of occurrences>" << '\n';
-
-	for(MACVendorMap::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
-	{
-		ss << it->first << ", " << it->second << '\n';
-	}
-
-	ss << '\n' << "Ports : <Number>_<Protocol>, <Number of occurrences>" << '\n';
-
-	for(PortServiceMap::iterator it = m_ports.begin(); it != m_ports.end(); it++)
-	{
-		ss << it->first << ", " << it->second.first << '\n';
-	}
-
-	return ss.str();
 }
 
 void PersonalityNode::GenerateDistributions()
@@ -120,7 +97,7 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 		m_redundant = false;
 	}
 
-	for(uint i = 0; i < (sizeof(profileToReturn.m_inherited)/sizeof(bool)); i++)
+	for(uint i = 0; i < INHERITED_MAX; i++)
 	{
 		profileToReturn.m_inherited[i] = true;
 	}
@@ -184,6 +161,43 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 	}
 
 	return profileToReturn;
+}
+
+std::string PersonalityNode::GetRandomVendor()
+{
+	if(m_vendors.empty())
+	{
+		return "";
+	}
+
+	//First pass, let's find out what the total is for all occurrences
+	uint totalOccurrences = 0;
+	for(MACVendorMap::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
+	{
+		totalOccurrences += it->second;
+	}
+
+	if(totalOccurrences == 0)
+	{
+		return "";
+	}
+
+	//Now we pick a random number between 1 and totalOccurrences
+	// Not technically a proper distribution, but we'll live
+	int random = (rand() % totalOccurrences) + 1;
+
+	//Second pass, let's see who the winning MAC vendor actually is
+	for(MACVendorMap::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
+	{
+		//Iteratively remove values from our total, until we get to zero. Then stop.
+		random -= it->second;
+		if(random <= 0)
+		{
+			//Winner!
+			return it->first;
+		}
+	}
+	return "";
 }
 
 }

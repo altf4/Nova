@@ -62,8 +62,6 @@ class HoneydConfiguration
 
 public:
 
-    //***************** REFACTORED FROM HERE *****************//
-
 	//Basic constructor for the Honeyd Configuration object
 	// Initializes the MAC vendor database and hash tables
 	// *Note: To populate the object from the file system you must call LoadAllTemplates();
@@ -134,7 +132,6 @@ public:
     bool AddPreGeneratedNode(Node &node);
 
     //This function allows us to add many nodes of the same type easily
-    // *Note this function is very limited, for configuring large numbers of nodes you should use the NodeManager
     bool AddNewNodes(std::string profileName, std::string ipAddress, std::string interface, std::string subnet, int numberOfNodes);
 
     //This allows easy access to all children profiles of the parent
@@ -204,8 +201,6 @@ public:
 	// vendor: string name of the MAC vendor from which to choose a MAC range from
 	// Returns a string representation of MAC address or an empty string if the vendor is not valid
 	std::string GenerateUniqueMACAddress(std::string vendor);
-
-    //***************** TO HERE *****************//
 
 	//Inserts the profile into the honeyd configuration
 	//	profile: pointer to the profile you wish to add
@@ -301,7 +296,6 @@ public:
 private:
     uint m_nodeProfileIndex;
 
-
     //Storing these trees allow for easy modification and writing of the XML files
     //Without having to reconstruct the tree from scratch.
     boost::property_tree::ptree m_groupTree;
@@ -312,10 +306,6 @@ private:
     boost::property_tree::ptree m_subnetTree;
 
     ScriptTable m_scripts;
-
-    // ******************* Private Methods **************************
-    //***************** REFACTORED FROM HERE *****************//
-
 
     //Loads Scripts from the xml template located relative to the currently set home path
     // Returns true if successful, false if not.
@@ -336,8 +326,6 @@ private:
     //Iterates of the node table and populates the NodeProfiles with accessor keys to the node objects that use them.
     // Returns true if successful and false if it is unable to assocate a profile with an exisiting node.
     bool LoadNodeKeys();
-
-    //***************** TO HERE *****************//
 
     //set profile configurations
     bool LoadProfileSettings(boost::property_tree::ptree *ptr, NodeProfile *p);
@@ -370,9 +358,6 @@ private:
     //		you must first call UpdateProfileTree(name, ALL);
     //	Returns (true) if successful and (false) if no profile with name 'profileName' exists
     bool CreateProfileTree(std::string profileName);
-
-
-    //***************** REFACTORED BELOW  HERE *****************//
 
     //This internal function recurses upward to determine whether or not the given profile has a personality
     // check: Reference to the profile to check
