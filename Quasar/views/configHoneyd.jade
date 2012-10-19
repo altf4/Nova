@@ -63,18 +63,20 @@ block headerAdditions
       // about it, if that doesn't bear any fruit than we may have to 
       // move away from a DataGrid and try something else.
       var items = grid.GetSelected();
-      var names = [];
-      
-      dojo.forEach(items, function(selectedItem) {
-        names.push(grid.store.getValues(selectedItem, "Name"));
-      });
+     
+      for(var i in items)
+      {
+        console.log('items[' + i + '] == ' + items[i]);
+        grid.DeleteRow(items[i]);
+      }
      
       try {
-        now.deleteNodes(names, errorMessageCallback);
+        now.deleteNodes(items, errorMessageCallback);
       } catch(err) {
         alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
         console.log("err was: " + err);
       }   
+      grid.Render();
     }
 
     function errorMessageCallback(success, message) {
@@ -94,7 +96,6 @@ block headerAdditions
           now.StartHaystack();
         }
       }
-
       location.reload(true);
     }
 

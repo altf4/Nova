@@ -72,6 +72,7 @@ NovaGrid.prototype = {
 	, SetCurrentPage: function(page) {
 		if (page >= 0 && page < this.GetNumberOfPages()) {
 			this.m_currentPage = page;
+			this.m_selected.length = 0;
 			this.Render();
 		}
 	}
@@ -126,7 +127,7 @@ NovaGrid.prototype = {
 		}
 
 		for (var i = this.m_currentPage * this.m_rowsPerPage; (i < arrayRep.length) && (i < (this.m_currentPage + 1)* this.m_rowsPerPage); i++) {
-			innerTableString += '<TR>';
+			innerTableString += '<TR id="' + arrayRep[i][1] + '", onclick="' + this.m_name + '.AddToSelected(\'' + arrayRep[i][1] + '\');">';
 			for (var c = 0; c < this.m_columns.length; c++) {
 				if (this.m_columns[c].formatter !== undefined) {
 				   innerTableString += '<TD>' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
@@ -165,7 +166,42 @@ NovaGrid.prototype = {
 		return Object.keys(this.m_elements).length;
 	}
   , GetSelected: function() {
-    
+    var ret = this.m_selected;
+    return ret;
+  }
+  
+  , AddToSelected: function(key) {
+    var add = true;
+    var idx = 0;
+    for(var i in this.m_selected)
+    {
+      if(this.m_selected[i] === key)
+      {
+        add = false;
+        idx = i;
+      }
+    }
+    if(add)
+    {
+      this.m_selected.push(key);
+      this.ChangeRowColor(key, true);
+    }
+    else
+    {
+      delete this.m_selected[idx];
+      this.ChangeRowColor(key, false);
+    }
+  }
+  
+  , ChangeRowColor: function(elementId, makeBlue) {
+    if(makeBlue == false)
+    {
+      document.getElementById(elementId).style.background = 'white';
+    }
+    else
+    {
+      document.getElementById(elementId).style.background = '#d0e9fc';
+    }
   }
     // Renders the table
 	, Render: function() {

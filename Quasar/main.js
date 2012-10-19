@@ -1810,9 +1810,7 @@ everyone.now.deleteNodes = function (nodeNames, callback) {
 	var nodeName;
 	for (var i = 0; i < nodeNames.length; i++) {
 		nodeName = nodeNames[i];
-
-
-		if (!honeydConfig.DeleteNode(nodeName)) {
+		if (nodeName != null && !honeydConfig.DeleteNode(nodeName)) {
 			callback(false, "Failed to delete node " + nodeName);
 			return;
 		}
