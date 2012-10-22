@@ -1,7 +1,7 @@
 //============================================================================
 // Name        : NovaPiChart.js
 // Copyright   : DataSoft Corporation 2011-2012
-//	Nova is free software: you can redistribute it and/or modify
+//  Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
@@ -23,29 +23,29 @@
 //     name: String name of the item
 //     value: Number of this item present
 var NovaPiChart = function(divId, size, deleteButtonFunction) {
-	this.m_id = divId;
+    this.m_id = divId;
   this.m_deleteFunction = deleteButtonFunction;
-	this.SetSize(size);
+    this.SetSize(size);
 }
 
 NovaPiChart.prototype = {
     SetSize: function(size) {
-		// Used so when we redrow we use the same colors
-		this.m_usedColors = new Object();
+        // Used so when we redrow we use the same colors
+        this.m_usedColors = new Object();
         this.m_size = size;
         this.m_halfSize = parseInt(size/2);
     },
 
-	// Renders the chart
-	Render: function(items) {
-		if (items !== undefined) {
-			this.m_items = items;
-		}
+    // Renders the chart
+    Render: function(items) {
+        if (items !== undefined) {
+            this.m_items = items;
+        }
 
-		this.m_numberOfItems = 0;
-		for (var i = 0; i < items.length; i++) {
-		   this.m_numberOfItems += items[i].value;
-		}
+        this.m_numberOfItems = 0;
+        for (var i = 0; i < items.length; i++) {
+           this.m_numberOfItems += items[i].value;
+        }
         // Reset the div
         document.getElementById(this.m_id).innerHTML = "";
 
@@ -58,10 +58,10 @@ NovaPiChart.prototype = {
         // Draw the pi chart on the canvas
         var ctx = canvas.getContext("2d");
         var lastend = 0;
-		var randomColor;
+        var randomColor;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-		if (this.m_numberOfItems == 0) {
+        if (this.m_numberOfItems == 0) {
             ctx.fillStyle = "#A1A1A1";
             ctx.beginPath();
             ctx.moveTo(this.m_halfSize,this.m_halfSize);
@@ -69,27 +69,27 @@ NovaPiChart.prototype = {
             ctx.lineTo(this.m_halfSize, this.m_halfSize);
             ctx.fill();
 
-			for (var i = 0; i < this.m_items.length; i++) {
+            for (var i = 0; i < this.m_items.length; i++) {
         var text = document.createElement("p");
         text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp 0% " + this.m_items[i].name;
         document.getElementById(this.m_id).appendChild(text);
-			}
-			return;
-		}
+            }
+            return;
+        }
         for (var pfile = 0; pfile < this.m_items.length; pfile++) {
-			if (this.m_usedColors[this.m_items[pfile].name] === undefined) {
-				randomColor = ((1<<24)*Math.random()|0).toString(16);
-				// Pad color with 0's on the left
-				if (randomColor.length != 6) {
-					for (var i = randomColor.length; i < 6; i++) {
-						randomColor = "0" + randomColor;
-					}
-				}
-				randomColor = "#" + randomColor;
-				this.m_usedColors[this.m_items[pfile].name] = randomColor;
-			} else {
-				randomColor = this.m_usedColors[this.m_items[pfile].name];
-			}
+            if (this.m_usedColors[this.m_items[pfile].name] === undefined) {
+                randomColor = ((1<<24)*Math.random()|0).toString(16);
+                // Pad color with 0's on the left
+                if (randomColor.length != 6) {
+                    for (var i = randomColor.length; i < 6; i++) {
+                        randomColor = "0" + randomColor;
+                    }
+                }
+                randomColor = "#" + randomColor;
+                this.m_usedColors[this.m_items[pfile].name] = randomColor;
+            } else {
+                randomColor = this.m_usedColors[this.m_items[pfile].name];
+            }
 
             ctx.fillStyle = randomColor;
             ctx.beginPath();
@@ -100,21 +100,20 @@ NovaPiChart.prototype = {
             lastend += Math.PI*2*(this.m_items[pfile].value/this.m_numberOfItems);
 
             // Draw the legend and values
-          var legend = document.createElement("div");
-          var text = document.createElement("p");
-          text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
-          text.setAttribute('style', 'display: inline-block;');
-          if(this.m_deleteFunction != undefined)
-          {
-            var deleteButton = document.createElement("button");
-	    deleteButton.setAttribute('style', 'display: inline-block;');
-            deleteButton.innerHTML = "Delete All";
-            deleteButton.setAttribute('onclick', this.m_deleteFunction + '("' + this.m_items[pfile].name + '")');
-            legend.appendChild(deleteButton);
-          }
-          legend.appendChild(text);
-          document.getElementById(this.m_id).appendChild(legend);
+            var legend = document.createElement("div");
+            var text = document.createElement("p");
+            text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
+            text.setAttribute('style', 'display: inline-block; margin: 0px');
+            if(this.m_deleteFunction != undefined) {
+                var deleteButton = document.createElement("button");
+                deleteButton.setAttribute('style', 'display: inline-block;');
+                deleteButton.innerHTML = "Delete All";
+                deleteButton.setAttribute('onclick', this.m_deleteFunction + '("' + this.m_items[pfile].name + '")');
+                legend.appendChild(deleteButton);
+            }
+            legend.appendChild(text);
+            document.getElementById(this.m_id).appendChild(legend);
         }
-		
-	}
+        
+    }
 }
