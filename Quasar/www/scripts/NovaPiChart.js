@@ -22,9 +22,9 @@
 // items: Array of objects with each object consisting of,
 //     name: String name of the item
 //     value: Number of this item present
-var NovaPiChart = function(divId, size, items) {
+var NovaPiChart = function(divId, size, deleteButtonFunction) {
 	this.m_id = divId;
-    
+  this.m_deleteFunction = deleteButtonFunction;
 	this.SetSize(size);
 }
 
@@ -70,9 +70,9 @@ NovaPiChart.prototype = {
             ctx.fill();
 
 			for (var i = 0; i < this.m_items.length; i++) {
-        		var text = document.createElement("p");
-            	text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp 0% " + this.m_items[i].name;
-            	document.getElementById(this.m_id).appendChild(text);
+        var text = document.createElement("p");
+        text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp 0% " + this.m_items[i].name;
+        document.getElementById(this.m_id).appendChild(text);
 			}
 			return;
 		}
@@ -100,10 +100,18 @@ NovaPiChart.prototype = {
             lastend += Math.PI*2*(this.m_items[pfile].value/this.m_numberOfItems);
 
             // Draw the legend and values
+          var legend = document.createElement("div");
         	var text = document.createElement("p");
-            text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
-            document.getElementById(this.m_id).appendChild(text);
-
+          text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
+          legend.appendChild(text);
+          if(this.m_deleteFunction != undefined)
+          {
+            var deleteButton = document.createElement("button");
+            deleteButton.innerHTML = "Delete Profile Group";
+            deleteButton.setAttribute('onclick', this.m_deleteFunction + '("' + this.m_items[pfile].name + '")');
+            legend.appendChild(deleteButton);
+          }
+          document.getElementById(this.m_id).appendChild(legend);
         }
 		
 	}

@@ -130,8 +130,30 @@ NovaGrid.prototype = {
 		}
 
 		for (var i = this.m_currentPage * this.m_rowsPerPage; (i < arrayRep.length) && (i < (this.m_currentPage + 1)* this.m_rowsPerPage); i++) {
-		  this.m_pageElements.push(arrayRep[i][1]);
-			innerTableString += '<TR id="' + arrayRep[i][1] + '", onclick="' + this.m_name + '.AddToSelected(\'' + arrayRep[i][1] + '\', event);">';
+		  var sub = '';
+		  var idx = keys[i].indexOf('>');
+		  // All this magic because the grid is keyed to an html
+		  // element and not a string for the main.jade page.
+		  if(idx != -1)
+		  {
+        var put = keys[i].substring(idx + 1, keys[i].indexOf('<', idx));
+        if(put[0] == ' ')
+        {
+          put = put.substring(1);
+        }
+        if(put[put.length] == ' ')
+        {
+          put = put.substring(0, put.length - 2);
+        }
+		    this.m_pageElements.push(put);
+		    sub = put;  
+		  }
+		  else
+		  {
+		    this.m_pageElements.push(arrayRep[i][1]);
+		    sub = arrayRep[i][1];
+		  }
+			innerTableString += '<TR id=\'' + sub + '\', onclick="' + this.m_name + '.AddToSelected(\'' + sub + '\', event);">';
 			for (var c = 0; c < this.m_columns.length; c++) {
 				if (this.m_columns[c].formatter !== undefined) {
 				   innerTableString += '<TD>' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
@@ -267,7 +289,6 @@ NovaGrid.prototype = {
   
   , PushKeyToSelected: function(key)
   {
-    console.log('In PushKeyToSelected with ' + key);
     var add = true;
     for(var i in this.m_selected)
     {
