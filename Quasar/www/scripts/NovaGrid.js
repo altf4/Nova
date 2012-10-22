@@ -129,7 +129,7 @@ NovaGrid.prototype = {
 
 		for (var i = this.m_currentPage * this.m_rowsPerPage; (i < arrayRep.length) && (i < (this.m_currentPage + 1)* this.m_rowsPerPage); i++) {
 		  this.m_pageElements.push(arrayRep[i][1]);
-			innerTableString += '<TR id="' + arrayRep[i][1] + '", index=' + i + ', onclick="' + this.m_name + '.AddToSelected(\'' + arrayRep[i][1] + '\', event);">';
+			innerTableString += '<TR id="' + arrayRep[i][1] + '", onclick="' + this.m_name + '.AddToSelected(\'' + arrayRep[i][1] + '\', event);">';
 			for (var c = 0; c < this.m_columns.length; c++) {
 				if (this.m_columns[c].formatter !== undefined) {
 				   innerTableString += '<TD>' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
@@ -216,21 +216,14 @@ NovaGrid.prototype = {
           }
         }while((idxStart == 0 || idxEnd == 0) && i--);
         
-        console.log('idxStart == ' + idxStart);
-        console.log('idxEnd == ' + idxEnd);
-        
         if(idxEnd < idxStart)
         {
           var temp = idxEnd;
           idxEnd = idxStart;
           idxStart = temp;
-          console.log('INSIDE TEMP SWITCH');
-          console.log('idxStart == ' + idxStart);
-          console.log('idxEnd == ' + idxEnd);
-          console.log('LEAVING TEMP SWITCH');
         }
         
-        for(var i = idxStart + 1; i <= idxEnd; i++)
+        for(var i = idxStart; i <= idxEnd; i++)
         {
           this.m_selected.push(this.m_pageElements[i]);
           this.ChangeRowColor(this.m_pageElements[i], true);
