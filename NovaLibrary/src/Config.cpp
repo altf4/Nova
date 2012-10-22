@@ -174,50 +174,17 @@ void Config::LoadConfig_Internal()
 			// INTERFACE
 			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
-				m_interfaces.clear();
 				line = line.substr(prefix.size() + 1, line.size());
-				while(line.size() > 0)
+				Trim(line, ' ');
+
+				m_interfaces.clear();
+				boost::split(m_interfaces, line, boost::is_any_of("\t "), boost::token_compress_on);
+
+				if (m_interfaces.size())
 				{
-					//Parse out an interface
-					string interface = line.substr(0, line.find_first_of(" "));
-
-					//separate any remaining entries
-					if(line.size() > interface.size())
-					{
-						line = line.substr(interface.size()+1, line.size());
-					}
-					//else assert empty line to break the loop
-					else
-					{
-						line = "";
-					}
-
-					//trim extra whitespaces
-					Nova::Trim(interface);
-
-					//Check for illegal characters
-					if((interface.find("\\") == interface.npos) && (interface.find("/") == interface.npos))
-					{
-						switch(interface.at(0))
-						{
-							default:
-							{
-								if(interface.size())
-								{
-									m_interfaces.push_back(interface);
-									isValid[prefixIndex] = true;
-								}
-								break;
-							}
-							case '.':
-							case '-':
-							case '`':
-							{
-								break;
-							}
-						}
-					}
+					isValid[prefixIndex] = true;
 				}
+
 				continue;
 			}
 
@@ -1248,10 +1215,10 @@ void Config::LoadInterfaces()
 
 	// -- ETHERNET INTERFACES-- //
 	vector<string> interfaces = m_interfaces;
-	m_interfaces.clear();
 	//Use all valid devices
 	if(!interfaces[0].compare("default"))
 	{
+		m_interfaces.clear();
 		m_ifIsDefault = true;
 		for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 		{
@@ -1261,18 +1228,7 @@ void Config::LoadInterfaces()
 			}
 		}
 	}
-	else
-	{
-		m_ifIsDefault = false;
-		//Until every interface is matched
-		while(!interfaces.empty())
-		{
-			//Pop an interface name
-			string temp = interfaces.back();
-			interfaces.pop_back();
-			m_interfaces.push_back(temp);
-		}
-	}
+
 	freeifaddrs(devices);
 }
 
@@ -1412,11 +1368,14 @@ bool Config::SaveConfig()
 					*out << " default" << endl;
 					continue;
 				}
-				vector<string> iFaces = m_interfaces;
-				while(!iFaces.empty())
+
+				if (m_interfaces.size())
 				{
-					*out << " " << iFaces.back();
-					iFaces.pop_back();
+					*out << m_interfaces.at(0);
+					for (uint i = 1; i < m_interfaces.size(); i++)
+					{
+						*out << " " << m_interfaces.at(i);
+					}
 				}
 				*out << endl;
 				continue;
@@ -2255,7 +2214,7 @@ std::vector<std::string> Config::ListInterfaces()
 
 	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 	{
-		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_PACKET))
 		{
 			interfaces.push_back(string(curIf->ifa_name));
 		}
