@@ -30,7 +30,7 @@ var NovaPiChart = function(divId, size, deleteButtonFunction) {
 
 NovaPiChart.prototype = {
     SetSize: function(size) {
-		// Used so when we redrow we use the same colors
+		// Used so when we redraw we use the same colors
 		this.m_usedColors = new Object();
         this.m_size = size;
         this.m_halfSize = parseInt(size/2);
@@ -103,6 +103,7 @@ NovaPiChart.prototype = {
           var legend = document.createElement("div");
         	var text = document.createElement("p");
           text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
+          text.style.float = 'left';
           legend.appendChild(text);
           if(this.m_deleteFunction != undefined)
           {
@@ -112,6 +113,7 @@ NovaPiChart.prototype = {
             legend.appendChild(deleteButton);
           }
           document.getElementById(this.m_id).appendChild(legend);
+          document.getElementById(this.m_id).appendChild(document.createElement('br'));
         }
 		
 	}
