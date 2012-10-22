@@ -1,0 +1,28 @@
+extends layout
+
+block headerAdditions
+  script
+    var scriptList = !{JSON.stringify(scripts)};
+    var scriptBindings = !{JSON.stringify(bindings)};
+
+    for(var i in scriptList)
+    {
+      console.log('scriptList[' + i + '] == ' + scriptList[i]);
+    }
+
+    function setUpScriptTable()
+    {
+      console.log('setUpScriptTable'); 
+    }
+    
+    now.ready(function(){
+      setUpScriptTable();
+    });
+
+block content
+  table
+    thead
+      th Script Name
+      th Profiles Using Script
+      th Script Path
+    tbody#addAnchor

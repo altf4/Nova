@@ -1696,6 +1696,58 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 	}
 });
 
+app.get('/scripts', passport.authenticate('basic', {session: false}), function(req, res){
+  var xml = fs.readFileSync(NovaHomePath + '/config/templates/scripts.xml', 'utf8');
+  
+  var libxml = require('libxmljs');
+  
+  var parser = new libxml.parseXmlString(xml);
+  
+  var nodesToParse = parser.root().childNodes();
+
+  var namesAndPaths = {};
+  
+  for(var i = 1; i < nodesToParse.length; i++)
+  {
+    //...Still some work to be done here. Not sure how libxmljs parse XML, 
+    // investigate further.
+    //namesAndPaths[nodesToParse[i].childNodes()[0].text()] = nodesToParse[i].childNodes()[3].text();
+  }
+  
+  var scriptBindings = {};
+  
+  var profiles = honeydConfig.GetProfileNames();
+  
+  for(var i in profiles)
+  {
+    GetPorts(profiles[i], function(ports, profileName){
+      for(var i in ports)
+      {
+        if(ports[i].scriptName != undefined && ports[i].scriptName != '')
+        {
+          if(scriptBindings[ports[i].scriptName] == undefined)
+          {
+            scriptBindings[ports[i].scriptName] = profileName;
+          }
+          else
+          {
+            scriptBindings[ports[i].scriptName] += ',' + profileName;
+          }
+        }
+      }
+    });
+  }
+  
+  profiles = null;
+  
+  res.render('scripts.jade', {
+    locals: {
+      scripts: namesAndPaths,
+      bindings: scriptBindings
+    }
+  });
+});
+
 everyone.now.ClearAllSuspects = function (callback) {
 	nova.CheckConnection();
 	if (!nova.ClearAllSuspects()) {
@@ -1961,7 +2013,7 @@ everyone.now.GetVendors = function (profileName, callback) {
 	callback(profVendors, profDists);
 }
 
-everyone.now.GetPorts = function (profileName, callback) {
+GetPorts = function (profileName, callback) {
 	var ports = honeydConfig.GetPorts(profileName);
 
 	if ((ports[0] == undefined || ports[0].portNum == "0") && profileName != "default") {
@@ -1980,9 +2032,9 @@ everyone.now.GetPorts = function (profileName, callback) {
 		ports[i].isInherited = ports[i].GetIsInherited();
 	}
 
-	callback(ports);
+	callback(ports, profileName);
 }
-
+everyone.now.GetPorts = GetPorts;
 
 everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, addOrEdit) {
 	// Check input
