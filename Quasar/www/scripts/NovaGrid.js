@@ -216,11 +216,18 @@ NovaGrid.prototype = {
           }
         }while((idxStart == 0 || idxEnd == 0) && i--);
         
+        console.log('idxStart == ' + idxStart);
+        console.log('idxEnd == ' + idxEnd);
+        
         if(idxEnd < idxStart)
         {
           var temp = idxEnd;
           idxEnd = idxStart;
           idxStart = temp;
+          console.log('INSIDE TEMP SWITCH');
+          console.log('idxStart == ' + idxStart);
+          console.log('idxEnd == ' + idxEnd);
+          console.log('LEAVING TEMP SWITCH');
         }
         
         for(var i = idxStart + 1; i <= idxEnd; i++)
