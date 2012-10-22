@@ -835,19 +835,19 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 	}
 	
 	var profiles = honeydConfig.GetProfileNames();
-	var pass = [];
+	/*var pass = [];
 	for(var i in profiles)
 	{
 	  if(profiles[i] != 'default' && profiles[i] != 'Doppelganger')
 	  {
 	    pass.push(profiles[i]);
 	  }
-	}
+	}*/
 	
 	res.render('configHoneyd.jade', {
 		locals: {
 			INTERFACES: config.ListInterfaces().sort(),
-			profiles: pass,
+			profiles: profiles,
 			nodes: nodeList,
 			groups: honeydConfig.GetGroups(),
 			currentGroup: config.GetGroup()

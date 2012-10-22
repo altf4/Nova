@@ -281,6 +281,29 @@ block headerAdditions
        document.getElementById("tablePages").appendChild(pageLink);
     }
     
+    function deleteByProfile(profileName)
+    {
+      var gridElements = grid.GetElements();
+      var passToDeleteNodes = [];
+      for(var i in gridElements)
+      {
+        if(gridElements[i][2] === profileName)
+        {
+          passToDeleteNodes.push(gridElements[i][1]);
+          grid.DeleteRow(gridElements[i][1]);
+        }
+      }
+      try
+      {
+        now.deleteNodes(passToDeleteNodes, errorMessageCallback);
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }
+    }
+    
     function Init()
     {
       var gridStructure = [];
@@ -310,6 +333,35 @@ block headerAdditions
       }
       
       grid.Render();
+      
+      var gridElements = grid.GetElements();
+      
+      var nodesPerProfile = {};
+      var piChartRender = [];
+      
+      for(var i in gridElements)
+      {
+        var pfile = gridElements[i][2];
+        if(nodesPerProfile[pfile] === undefined)
+        {
+          nodesPerProfile[pfile] = 1;
+        }
+        else
+        {
+          nodesPerProfile[pfile]++;
+        }
+      }
+      
+      for(var pfile in nodesPerProfile)
+      {
+        var p = {};
+        p.name = pfile;
+        p.value = nodesPerProfile[pfile];
+        piChartRender.push(p);
+      }
+      
+      var pi = new NovaPiChart('piChart', 200, 'deleteByProfile');
+      pi.Render(piChartRender);
     }
     
     window.onload = function()
