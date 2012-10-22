@@ -53,10 +53,12 @@ NovaGrid.prototype = {
 	, GenerateTableHeader: function() {
 		this.headerHTML = "";
 		this.headerHTML += '<TR>';
-		for (var c = 0; c < this.m_columns.length; c++) {
+		for (var c = 0; c < this.m_columns.length; c++) 
+		{
 			var title = this.m_columns[c].name;
 
-			if (this.m_sortByKey == c) {
+			if (this.m_sortByKey == c) 
+			{
 				title = '<div class="sortArrow">' + (this.m_sortDescending ? '&#8744;' : '&#8743;') + '</div>' + title;
 			}
 			this.headerHTML += '<TH><A HREF="javascript:void(0)" style="font-size: 12px;" onclick="' + this.m_name + '.SetSortByKey(' + c + ');">' + title + '</A></TH>';
@@ -167,8 +169,19 @@ NovaGrid.prototype = {
 	, Size: function() {
 		return Object.keys(this.m_elements).length;
 	}
+	
   , GetSelected: function() {
     var ret = this.m_selected;
+    return ret;
+  }
+  
+  , GetPageElements: function() {
+    var ret = this.m_pageElements;
+    return ret;
+  }
+  
+  , GetElements: function() {
+    var ret = this.m_elements;
     return ret;
   }
   
@@ -249,6 +262,24 @@ NovaGrid.prototype = {
       this.m_selected = [];
       this.m_selected.push(key);
       this.ChangeRowColor(this.m_selected[0], true);
+    }
+  }
+  
+  , PushKeyToSelected: function(key)
+  {
+    console.log('In PushKeyToSelected with ' + key);
+    var add = true;
+    for(var i in this.m_selected)
+    {
+      if(key == this.m_selected[i])
+      {
+        add = false;
+      }
+    } 
+    if(add)
+    {
+      this.m_selected.push(key);
+      this.ChangeRowColor(key, true);
     }
   }
   

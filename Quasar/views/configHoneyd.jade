@@ -69,9 +69,12 @@ block headerAdditions
         grid.DeleteRow(items[i]);
       }
      
-      try {
+      try
+      {
         now.deleteNodes(items, errorMessageCallback);
-      } catch(err) {
+      }
+      catch(err)
+      {
         alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
         console.log("err was: " + err);
       }   
@@ -85,6 +88,44 @@ block headerAdditions
         return;
       }
      now.IsHaystackUp(checkIfRestartNeeded); 
+    }
+
+    function deleteAllNodes() {
+      var gridElements = grid.GetElements();
+      var passToDeleteNodes = [];
+      
+      for(var i in gridElements)
+      {
+        if(gridElements[i][1] !== 'Doppelganger')
+        {
+          passToDeleteNodes.push(gridElements[i][1]);
+          grid.DeleteRow(gridElements[i][1]);
+        }
+      }
+      try
+      {
+        now.deleteNodes(passToDeleteNodes, errorMessageCallback);
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }
+      location.reload(true);
+    }
+
+    function selectAllOnPage() {
+      var pageElements = grid.GetPageElements();
+      
+      console.log('pageElements ' + pageElements);
+      
+      for(var row in pageElements)
+      {
+        if(pageElements[row] !== 'Doppelganger')
+        {
+          grid.PushKeyToSelected(pageElements[row]);
+        }
+      }
     }
 
     function checkIfRestartNeeded(haystackUp) {
@@ -300,8 +341,10 @@ block content
   br
   br
 
-  button(onClick="deleteSelectedItems()") Delete Selected Nodes 
-  button(onClick="editSelectedItem()") Edit Selected Node
+  button(onclick="selectAllOnPage()") Select All Nodes on Page
+  button(onclick="deleteSelectedItems()") Delete Selected Nodes
+  button(onclick="deleteAllNodes()") Delete All Nodes 
+  button(onclick="editSelectedItem()") Edit Selected Node
 
   br
   button(onClick="restoreDefaults()") Restore Default Configuration (will erase all changes!)
