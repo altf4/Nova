@@ -108,7 +108,7 @@ NovaPiChart.prototype = {
           if(this.m_deleteFunction != undefined)
           {
             var deleteButton = document.createElement("button");
-            deleteButton.innerHTML = "Delete Profile Group";
+            deleteButton.innerHTML = "Delete All";
             deleteButton.setAttribute('onclick', this.m_deleteFunction + '("' + this.m_items[pfile].name + '")');
             legend.appendChild(deleteButton);
           }
