@@ -87,7 +87,7 @@ block headerAdditions
         location.reload(true);
         return;
       }
-     now.IsHaystackUp(checkIfRestartNeeded); 
+      now.IsHaystackUp(checkIfRestartNeeded); 
     }
 
     function deleteAllNodes() {
@@ -111,7 +111,6 @@ block headerAdditions
         alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
         console.log("err was: " + err);
       }
-      location.reload(true);
     }
 
     function selectAllOnPage() {
@@ -311,7 +310,7 @@ block headerAdditions
       gridStructure.push({name: "IP"});
       gridStructure.push({name: "MAC"});
       
-      grid = new NovaGrid(gridStructure, 1, document.getElementById('nodeTable'), 'grid');
+      grid = new NovaGrid(gridStructure, 1, document.getElementById('nodeTable'), 'grid', true);
       
       grid.SetSortByKey(1);
       grid.SetRowsPerPage(50);

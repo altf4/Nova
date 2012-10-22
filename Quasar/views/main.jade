@@ -399,7 +399,7 @@ block headerAdditions
         }
         gridStructure.push({name: "Clear"});
    
-        suspectGrid = new NovaGrid(gridStructure, 1, theDoc.getElementById('suspectTable'), 'suspectGrid');
+        suspectGrid = new NovaGrid(gridStructure, 1, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(2);
@@ -423,6 +423,14 @@ block headerAdditions
         },3000);
     }
 
+    window.onload = function()
+    {
+      document.onselectstart = function()
+      {
+        return false;
+      }
+    }
+
     require(["dojo/ready", "dojo/domReady!"], function(ready){
         ready(function() {
             now.ready(function() {
@@ -440,5 +448,4 @@ block headerAdditions
             });
         });
     });
-
 

@@ -21,7 +21,7 @@
 //     Each should contain a "name" attribute and optionally a "formatter"
 //   keyIndex: index of column used as a UID for a row
 //   tableElement: DOM object of the <table> 
-var NovaGrid = function(columns, keyIndex, tableElement, gridName) {
+var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection) {
 	this.m_columns = columns;
 	this.m_keyIndex = keyIndex;
 	this.m_sortByKey = keyIndex;
@@ -31,7 +31,7 @@ var NovaGrid = function(columns, keyIndex, tableElement, gridName) {
 	this.m_pageElements = [];
 	this.m_renderCallback = function() {};
 	this.m_selected = [];
-	
+	this.m_selection = selection;
 	this.m_currentPage = 0;
 	this.m_rowsPerPage = Number.MAX_VALUE;
 	this.m_name = gridName;
@@ -153,7 +153,14 @@ NovaGrid.prototype = {
 		    this.m_pageElements.push(arrayRep[i][1]);
 		    sub = arrayRep[i][1];
 		  }
-			innerTableString += '<TR id=\'' + sub + '\', onclick="' + this.m_name + '.AddToSelected(\'' + sub + '\', event);">';
+		  if(this.m_selection)
+		  {
+			  innerTableString += '<TR id=\'' + sub + '\', onclick="' + this.m_name + '.AddToSelected(\'' + sub + '\', event);">';
+		  }
+		  else
+		  {
+		    innerTableString += '<TR>';
+		  }
 			for (var c = 0; c < this.m_columns.length; c++) {
 				if (this.m_columns[c].formatter !== undefined) {
 				   innerTableString += '<TD>' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
