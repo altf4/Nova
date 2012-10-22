@@ -5,9 +5,9 @@
 		<generated>false</generated>
 		<distribution>100</distribution>
 		<set>
-			<TCP>reset</TCP>
-			<UDP>reset</UDP>
-			<ICMP>open</ICMP>
+			<TCP>block</TCP>
+			<UDP>block</UDP>
+			<ICMP>block</ICMP>
 			<ethernet>
 				<vendor>Dell</vendor>
 				<ethDistribution>100</ethDistribution>
@@ -17,140 +17,154 @@
 		<add/>
 		<profiles>
 			<profile>
-				<name>BSDServer</name>
+				<name>Shared Settings</name>
 				<generated>false</generated>
-				<distribution>25</distribution>
+				<distribution>10</distribution>
 				<set>
 					<TCP>reset</TCP>
-					<personality>FreeBSD 8.2-STABLE</personality>
-					<ethernet>
-						<vendor>Dell</vendor>
-						<ethDistribution>100</ethDistribution>
-					</ethernet>
-					<uptimeMin>1326346</uptimeMin>
-					<uptimeMax>1326346</uptimeMax>
+					<UDP>reset</UDP>
+					<ICMP>open</ICMP>
+					<dropRate>0</dropRate>
 				</set>
-				<add>
-					<port>
-						<portName>22_TCP_Linux SSH</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>23_TCP_Telnet Router</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-				</add>
-				<profiles/>
-			</profile>
-			<profile>
-				<name>LinuxServer</name>
-				<generated>false</generated>
-				<distribution>25</distribution>
-				<set>
-					<TCP>reset</TCP>
-					<personality>Linux 3.0 - 3.1</personality>
-					<ethernet>
-						<vendor>Dell</vendor>
-						<ethDistribution>100</ethDistribution>
-					</ethernet>
-					<uptimeMin>1324350</uptimeMin>
-					<uptimeMax>1324350</uptimeMax>
-				</set>
-				<add>
-					<port>
-						<portName>22_TCP_Linux SSH</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>80_TCP_Linux httpd</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-				</add>
-				<profiles/>
-			</profile>
-			<profile>
-				<name>Doppelganger</name>
-				<generated>false</generated>
-				<distribution>25</distribution>
-				<set>
-					<TCP>reset</TCP>
-					<personality>Microsoft Windows 7</personality>
-					<ethernet>
-						<vendor>Intel</vendor>
-						<ethDistribution>100</ethDistribution>
-					</ethernet>
-					<uptimeMin>1327650</uptimeMin>
-					<uptimeMax>1327650</uptimeMax>
-				</set>
-				<add>
-					<port>
-						<portName>135_UDP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>137_TCP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>137_UDP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>139_TCP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-				</add>
-				<profiles/>
-			</profile>
-			<profile>
-				<name>WinServer</name>
-				<generated>false</generated>
-				<distribution>25</distribution>
-				<set>
-					<TCP>reset</TCP>
-					<personality>Microsoft Windows Server 2003 SP1 or SP2</personality>
-					<ethernet>
-						<vendor>Dell</vendor>
-						<ethDistribution>100</ethDistribution>
-					</ethernet>
-					<uptimeMin>1546550</uptimeMin>
-					<uptimeMax>1546550</uptimeMax>
-				</set>
-				<add>
-					<port>
-						<portName>20_TCP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>21_TCP_Windows FTP</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>23_TCP_Windows Telnet</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>80_TCP_Windows httpd</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>135_UDP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>137_TCP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>137_UDP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-					<port>
-						<portName>139_TCP_open</portName>
-						<portDistribution>100</portDistribution>
-					</port>
-				</add>
-				<profiles/>
+				<add/>
+				<profiles>
+					<profile>
+						<name>WinServer</name>
+						<generated>false</generated>
+						<distribution>25</distribution>
+						<set>
+							<TCP>reset</TCP>
+							<personality>Microsoft Windows Server 2003 SP1 or SP2</personality>
+							<ethernet>
+								<vendor>Dell</vendor>
+								<ethDistribution>100</ethDistribution>
+							</ethernet>
+							<uptimeMin>1546550</uptimeMin>
+							<uptimeMax>1546550</uptimeMax>
+						</set>
+						<add>
+							<port>
+								<portName>20_TCP_open</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>21_TCP_Windows FTP</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>23_TCP_Windows Telnet</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>80_TCP_Windows httpd</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>135_UDP_open</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>137_UDP_open</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>137_TCP_open</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>139_TCP_open</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+						</add>
+						<profiles/>
+					</profile>
+					<profile>
+						<name>Doppelganger</name>
+						<generated>false</generated>
+						<distribution>25</distribution>
+						<set>
+							<TCP>reset</TCP>
+							<personality>Microsoft Windows 7</personality>
+							<ethernet>
+								<vendor>Intel</vendor>
+								<ethDistribution>100</ethDistribution>
+							</ethernet>
+							<uptimeMin>1327650</uptimeMin>
+							<uptimeMax>1327650</uptimeMax>
+						</set>
+						<add>
+							<port>
+								<portName>135_UDP_open</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>137_UDP_open</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>137_TCP_open</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>139_TCP_open</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+						</add>
+						<profiles/>
+					</profile>
+					<profile>
+						<name>BSDServer</name>
+						<generated>false</generated>
+						<distribution>25</distribution>
+						<set>
+							<TCP>reset</TCP>
+							<personality>FreeBSD 8.2-STABLE</personality>
+							<ethernet>
+								<vendor>Dell</vendor>
+								<ethDistribution>100</ethDistribution>
+							</ethernet>
+							<uptimeMin>1326346</uptimeMin>
+							<uptimeMax>1326346</uptimeMax>
+						</set>
+						<add>
+							<port>
+								<portName>22_TCP_Linux SSH</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>23_TCP_Telnet Router</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+						</add>
+						<profiles/>
+					</profile>
+					<profile>
+						<name>LinuxServer</name>
+						<generated>false</generated>
+						<distribution>25</distribution>
+						<set>
+							<TCP>reset</TCP>
+							<personality>Linux 3.0 - 3.1</personality>
+							<ethernet>
+								<vendor>Dell</vendor>
+								<ethDistribution>100</ethDistribution>
+							</ethernet>
+							<uptimeMin>1324350</uptimeMin>
+							<uptimeMax>1324350</uptimeMax>
+						</set>
+						<add>
+							<port>
+								<portName>22_TCP_Linux SSH</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+							<port>
+								<portName>80_TCP_Linux httpd</portName>
+								<portDistribution>100</portDistribution>
+							</port>
+						</add>
+						<profiles/>
+					</profile>
+				</profiles>
 			</profile>
 		</profiles>
 	</profile>
