@@ -1,5 +1,5 @@
 //============================================================================
-// Name        :
+// Name        : PersonalityTreeItem.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,24 +13,27 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description :
+// Description : Represents a single item in the PersonalityTree. A linked list
+//		tree structure representing the hierarchy of profiles discovered
 //============================================================================
 
-#ifndef PERSONALITYNODE_H_
-#define PERSONALITYNODE_H_
+#ifndef PERSONALITYTREEITEM_H_
+#define PERSONALITYTREEITEM_H_
 
 #include "HoneydConfiguration/HoneydConfiguration.h"
 #include "HoneydConfiguration/AutoConfigHashMaps.h"
 
-namespace Nova {
+namespace Nova
+{
 
-class PersonalityNode {
+class PersonalityTreeItem
+{
 
 public:
 
-	PersonalityNode(std::string key = "");
+	PersonalityTreeItem(std::string key = "");
 
-	~PersonalityNode();
+	~PersonalityTreeItem();
 
 	// Number of hosts that have this personality
 	uint32_t m_count;
@@ -39,11 +42,11 @@ public:
 	// Node for the node
 	std::string m_key;
 
-	// Is this something we can compress? If m_redundant == true, then yes
+	// Is this something we can compress?
 	bool m_redundant;
 
 	// Vector of the child nodes to this node
-	std::vector<PersonalityNode*> m_children;
+	std::vector<PersonalityTreeItem*> m_children;
 
 	// Distribution vectors containing the percent occurrences of
 	// each Port.
@@ -79,4 +82,4 @@ private:
 
 }
 
-#endif /* PERSONALITYNODE_H_ */
+#endif /* PERSONALITYTREEITEM_H_ */

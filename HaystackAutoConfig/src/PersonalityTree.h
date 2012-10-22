@@ -21,7 +21,7 @@
 #ifndef PERSONALITYTREE_H_
 #define PERSONALITYTREE_H_
 
-#include "PersonalityNode.h"
+#include "PersonalityTreeItem.h"
 #include "PersonalityTable.h"
 #include "HoneydConfiguration/ServiceToScriptMap.h"
 
@@ -46,7 +46,7 @@ public:
 
 	// Returns a random (leaf) profile, according to the distributions given
 	//	returns - A valid PersonalityNode on success, NULL on error
-	PersonalityNode *GetRandomProfile();
+	PersonalityTreeItem *GetRandomProfile();
 
 	HoneydConfiguration *m_hdconfig;
 
@@ -75,7 +75,7 @@ private:
 	//  NodeProfile *parentProfile - used for renaming
 	//  const std::string &profileName - also used for a different renaming case
 	// Returns nothing.
-	bool GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, const std::string &profileName);
+	bool GenerateProfiles(PersonalityTreeItem *node, PersonalityTreeItem *parent, NodeProfile *parentProfile, const std::string &profileName);
 
 	// InsertPersonality serves as the starting point for UpdatePersonality.
 	//  Personality *pers - the Personality to Insert/Update
@@ -85,7 +85,7 @@ private:
 	// GetHostCount gets the number of hosts in each of the root node's subtrees and
 	// adds them into m_root's m_count value.
 	// Returns nothing.
-	bool CalculateDistributions(PersonalityNode *node);
+	bool CalculateDistributions(PersonalityTreeItem *node);
 
 	// UpdatePersonality will, for each Personality, create a node for the Personality,
 	// add the node to that parent's children if not present (and aggregate the data of the
@@ -97,7 +97,7 @@ private:
 	//  PersonalityNode *parent - the parent node of the current node to be created or
 	//                      modified.
 	// Returns nothing.
-	bool UpdatePersonality(Personality *pers, PersonalityNode *parent);
+	bool UpdatePersonality(Personality *pers, PersonalityTreeItem *parent);
 
 	// At each node, will add an open version and a script
 	// specific version of each found port for the node.
@@ -105,10 +105,10 @@ private:
 	//                      is found in the ServiceToScriptMap that matches the services for
 	//                      those ports.
 	// Returns nothing.
-	bool AddAllPorts(PersonalityNode *node);
+	bool AddAllPorts(PersonalityTreeItem *node);
 
 	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
-	PersonalityNode m_root;
+	PersonalityTreeItem m_root;
 
 	ProfileTable *m_profiles;
 

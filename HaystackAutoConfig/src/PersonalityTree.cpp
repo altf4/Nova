@@ -31,7 +31,7 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 {
 	m_hdconfig = new HoneydConfiguration();
 
-	m_root = PersonalityNode("default");
+	m_root = PersonalityTreeItem("default");
 	m_root.m_count = persTable->m_num_of_hosts;
 	m_root.m_distribution = 100;
 	m_hdconfig->LoadAllTemplates();
@@ -86,10 +86,10 @@ PersonalityTree::~PersonalityTree()
 	delete m_hdconfig;
 }
 
-PersonalityNode *PersonalityTree::GetRandomProfile()
+PersonalityTreeItem *PersonalityTree::GetRandomProfile()
 {
 	//Start with the root
-	PersonalityNode *personality = &m_root;
+	PersonalityTreeItem *personality = &m_root;
 
 	//Keep going until you get to a leaf node
 	while(!personality->m_children.empty())
@@ -148,7 +148,7 @@ bool PersonalityTree::LoadTable(PersonalityTable *persTable)
 	return true;
 }
 
-bool PersonalityTree::GenerateProfiles(PersonalityNode *node, PersonalityNode *parent, NodeProfile *parentProfile, const string &profileName)
+bool PersonalityTree::GenerateProfiles(PersonalityTreeItem *node, PersonalityTreeItem *parent, NodeProfile *parentProfile, const string &profileName)
 {
 	if(node == NULL || parent == NULL || parentProfile == NULL)
 	{
@@ -236,7 +236,7 @@ bool PersonalityTree::InsertPersonality(Personality *pers)
 	return UpdatePersonality(&temp, &m_root);
 }
 
-bool PersonalityTree::UpdatePersonality(Personality *targetPersonality, PersonalityNode *parentPersonalityNode)
+bool PersonalityTree::UpdatePersonality(Personality *targetPersonality, PersonalityTreeItem *parentPersonalityNode)
 {
 	if(targetPersonality == NULL)
 	{
@@ -260,12 +260,12 @@ bool PersonalityTree::UpdatePersonality(Personality *targetPersonality, Personal
 		}
 	}
 
-	PersonalityNode *childPersonality = NULL;
+	PersonalityTreeItem *childPersonality = NULL;
 
 	//If node not found
 	if(i == parentPersonalityNode->m_children.size())
 	{
-		childPersonality = new PersonalityNode(curOSClass);
+		childPersonality = new PersonalityTreeItem(curOSClass);
 		childPersonality->m_distribution = targetPersonality->m_distribution;
 		childPersonality->m_count = targetPersonality->m_count;
 		childPersonality->m_osclass = targetPersonality->m_osclass;
@@ -302,7 +302,7 @@ bool PersonalityTree::UpdatePersonality(Personality *targetPersonality, Personal
 	return true;
 }
 
-bool PersonalityTree::AddAllPorts(PersonalityNode *node)
+bool PersonalityTree::AddAllPorts(PersonalityTreeItem *node)
 {
 	if(node == NULL)
 	{
@@ -470,7 +470,7 @@ bool PersonalityTree::AddAllPorts(PersonalityNode *node)
 	return m_hdconfig->SaveAllTemplates();
 }
 
-bool PersonalityTree::CalculateDistributions(PersonalityNode *targetNode)
+bool PersonalityTree::CalculateDistributions(PersonalityTreeItem *targetNode)
 {
 	if(targetNode == NULL)
 	{

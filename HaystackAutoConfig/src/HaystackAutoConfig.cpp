@@ -937,7 +937,7 @@ void Nova::GenerateConfiguration()
 	for(uint i = 0; i < nodesToCreate; i++)
 	{
 		//Pick a (leaf) profile at random
-		PersonalityNode *winningPersonality = persTree.GetRandomProfile();
+		PersonalityTreeItem *winningPersonality = persTree.GetRandomProfile();
 		if(winningPersonality == NULL)
 		{
 			continue;

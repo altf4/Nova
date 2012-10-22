@@ -6,23 +6,23 @@
 CPP_SRCS += \
 ../src/HaystackAutoConfig.cpp \
 ../src/Personality.cpp \
-../src/PersonalityNode.cpp \
 ../src/PersonalityTable.cpp \
-../src/PersonalityTree.cpp 
+../src/PersonalityTree.cpp \
+../src/PersonalityTreeItem.cpp 
 
 OBJS += \
 ./src/HaystackAutoConfig.o \
 ./src/Personality.o \
-./src/PersonalityNode.o \
 ./src/PersonalityTable.o \
-./src/PersonalityTree.o 
+./src/PersonalityTree.o \
+./src/PersonalityTreeItem.o 
 
 CPP_DEPS += \
 ./src/HaystackAutoConfig.d \
 ./src/Personality.d \
-./src/PersonalityNode.d \
 ./src/PersonalityTable.d \
-./src/PersonalityTree.d 
+./src/PersonalityTree.d \
+./src/PersonalityTreeItem.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

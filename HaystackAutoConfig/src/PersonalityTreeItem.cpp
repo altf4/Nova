@@ -1,5 +1,5 @@
 //============================================================================
-// Name        :
+// Name        : PersonalityTreeItem.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,10 +13,11 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description :
+// Description : Represents a single item in the PersonalityTree. A linked list
+//		tree structure representing the hierarchy of profiles discovered
 //============================================================================
 
-#include "PersonalityNode.h"
+#include "PersonalityTreeItem.h"
 
 #include <sstream>
 
@@ -26,7 +27,7 @@ namespace Nova
 {
 
 //Default constructor
-PersonalityNode::PersonalityNode(string key)
+PersonalityTreeItem::PersonalityTreeItem(string key)
 {
 	// Creates an empty personality node; set the
 	// empty and deleted keys for tables inside the
@@ -45,7 +46,7 @@ PersonalityNode::PersonalityNode(string key)
 }
 
 //Destructor
-PersonalityNode::~PersonalityNode()
+PersonalityTreeItem::~PersonalityTreeItem()
 {
 	for(unsigned int i = 0; i < m_children.size(); i++)
 	{
@@ -57,7 +58,7 @@ PersonalityNode::~PersonalityNode()
 	m_children.clear();
 }
 
-void PersonalityNode::GenerateDistributions()
+void PersonalityTreeItem::GenerateDistributions()
 {
 	uint16_t count = 0;
 
@@ -82,7 +83,7 @@ void PersonalityNode::GenerateDistributions()
 	m_avgPortCount = count / m_count;
 }
 
-NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
+NodeProfile PersonalityTreeItem::GenerateProfile(const NodeProfile &parentProfile)
 {
 	NodeProfile profileToReturn;
 
@@ -163,7 +164,7 @@ NodeProfile PersonalityNode::GenerateProfile(const NodeProfile &parentProfile)
 	return profileToReturn;
 }
 
-std::string PersonalityNode::GetRandomVendor()
+std::string PersonalityTreeItem::GetRandomVendor()
 {
 	if(m_vendors.empty())
 	{
