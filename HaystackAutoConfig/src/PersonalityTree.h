@@ -87,14 +87,14 @@ private:
 	// Returns nothing.
 	bool CalculateDistributions(PersonalityTreeItem *node);
 
-	// UpdatePersonality will, for each Personality, create a node for the Personality,
-	// add the node to that parent's children if not present (and aggregate the data of the
+	// UpdatePersonality will, for each Personality, create an item for the Personality,
+	// add the item to that parent's children if not present (and aggregate the data of the
 	// pre-existing node and the new data in *pers if it is present) and then continue to the
-	// next personality. In this way, there exists one PersonalityNode that represents the data
+	// next personality. In this way, there exists one PersonalityTreeItem that represents the data
 	// (in aggregate) of one or more Personalities for each Personality in the PersonalityTable.
 	//  Personality *pers - Personality object with which to create a new node or whose data
 	//                      to add to a pre-existing node with the same personality.
-	//  PersonalityNode *parent - the parent node of the current node to be created or
+	//  PersonalityTreeItem *parent - the parent node of the current node to be created or
 	//                      modified.
 	// Returns nothing.
 	bool UpdatePersonality(Personality *pers, PersonalityTreeItem *parent);
@@ -108,7 +108,7 @@ private:
 	bool AddAllPorts(PersonalityTreeItem *node);
 
 	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
-	PersonalityTreeItem m_root;
+	PersonalityTreeItem *m_root;
 
 	ProfileTable *m_profiles;
 

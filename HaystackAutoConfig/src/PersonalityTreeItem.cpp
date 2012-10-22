@@ -27,7 +27,7 @@ namespace Nova
 {
 
 //Default constructor
-PersonalityTreeItem::PersonalityTreeItem(string key)
+PersonalityTreeItem::PersonalityTreeItem(PersonalityTreeItem *parent, string key)
 {
 	// Creates an empty personality node; set the
 	// empty and deleted keys for tables inside the
@@ -43,6 +43,7 @@ PersonalityTreeItem::PersonalityTreeItem(string key)
 	m_count = 0;
 	m_avgPortCount = 0;
 	m_redundant = false;
+	m_parent = parent;
 }
 
 //Destructor
@@ -168,7 +169,14 @@ std::string PersonalityTreeItem::GetRandomVendor()
 {
 	if(m_vendors.empty())
 	{
-		return "";
+		if(m_parent == NULL)
+		{
+			return "";
+		}
+		else
+		{
+			return m_parent->GetRandomVendor();
+		}
 	}
 
 	//First pass, let's find out what the total is for all occurrences

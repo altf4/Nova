@@ -31,7 +31,7 @@ class PersonalityTreeItem
 
 public:
 
-	PersonalityTreeItem(std::string key = "");
+	PersonalityTreeItem(PersonalityTreeItem *parent, std::string key = "");
 
 	~PersonalityTreeItem();
 
@@ -47,6 +47,9 @@ public:
 
 	// Vector of the child nodes to this node
 	std::vector<PersonalityTreeItem*> m_children;
+
+	//Parent PersonalityTreeItem
+	PersonalityTreeItem *m_parent;
 
 	// Distribution vectors containing the percent occurrences of
 	// each Port.
@@ -67,6 +70,7 @@ public:
 	NodeProfile GenerateProfile(const NodeProfile &parentProfile);
 
 	//Returns a random vendor from the internal list of MAC vendors, according to the given probabilities
+	// If a profile has no defined ethernet vendors, look to the parent profile
 	//	returns an empty string "" on error
 	std::string GetRandomVendor();
 

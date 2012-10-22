@@ -31,9 +31,9 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 {
 	m_hdconfig = new HoneydConfiguration();
 
-	m_root = PersonalityTreeItem("default");
-	m_root.m_count = persTable->m_num_of_hosts;
-	m_root.m_distribution = 100;
+	m_root = new PersonalityTreeItem(NULL, "default");
+	m_root->m_count = persTable->m_num_of_hosts;
+	m_root->m_distribution = 100;
 	m_hdconfig->LoadAllTemplates();
 
 	m_hdconfig->AddGroup("HaystackAutoConfig");
@@ -78,7 +78,7 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 		LoadTable(persTable);
 	}
 
-	AddAllPorts(&m_root);
+	AddAllPorts(m_root);
 }
 
 PersonalityTree::~PersonalityTree()
@@ -89,7 +89,7 @@ PersonalityTree::~PersonalityTree()
 PersonalityTreeItem *PersonalityTree::GetRandomProfile()
 {
 	//Start with the root
-	PersonalityTreeItem *personality = &m_root;
+	PersonalityTreeItem *personality = m_root;
 
 	//Keep going until you get to a leaf node
 	while(!personality->m_children.empty())
@@ -136,10 +136,10 @@ bool PersonalityTree::LoadTable(PersonalityTable *persTable)
 	{
 		InsertPersonality(it->second);
 	}
-	CalculateDistributions(&m_root);
-	for(uint i = 0; i < m_root.m_children.size(); i++)
+	CalculateDistributions(m_root);
+	for(uint i = 0; i < m_root->m_children.size(); i++)
 	{
-		if(!GenerateProfiles(m_root.m_children[i], &m_root, &m_hdconfig->m_profiles["default"], m_root.m_children[i]->m_key))
+		if(!GenerateProfiles(m_root->m_children[i], m_root, &m_hdconfig->m_profiles["default"], m_root->m_children[i]->m_key))
 		{
 			LOG(ERROR, "Unable to generate profiles for children of the root node!", "");
 			return false;
@@ -180,7 +180,7 @@ bool PersonalityTree::GenerateProfiles(PersonalityTreeItem *node, PersonalityTre
 		tempProf.m_name = key;
 	}
 
-	if(!node->m_redundant || (parent == &m_root) || (parent->m_children.size() != 1))
+	if(!node->m_redundant || (parent == m_root) || (parent->m_children.size() != 1))
 	{
 		if(!m_hdconfig->AddProfile(&tempProf))
 		{
@@ -233,7 +233,7 @@ bool PersonalityTree::InsertPersonality(Personality *pers)
 		return false;
 	}
 	Personality temp = *pers;
-	return UpdatePersonality(&temp, &m_root);
+	return UpdatePersonality(&temp, m_root);
 }
 
 bool PersonalityTree::UpdatePersonality(Personality *targetPersonality, PersonalityTreeItem *parentPersonalityNode)
@@ -265,7 +265,7 @@ bool PersonalityTree::UpdatePersonality(Personality *targetPersonality, Personal
 	//If node not found
 	if(i == parentPersonalityNode->m_children.size())
 	{
-		childPersonality = new PersonalityTreeItem(curOSClass);
+		childPersonality = new PersonalityTreeItem(parentPersonalityNode, curOSClass);
 		childPersonality->m_distribution = targetPersonality->m_distribution;
 		childPersonality->m_count = targetPersonality->m_count;
 		childPersonality->m_osclass = targetPersonality->m_osclass;
