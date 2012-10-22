@@ -13,6 +13,8 @@ block headerAdditions
     var currentInterface;
 
     function createNodes() {
+        document.getElementById("createNewNodes").disables = true;
+        document.getElementById("createNewNodes").value = "Please wait. Creating new nodes...";
         var ipType = document.getElementById("ipType").value;
         var ip1 = document.getElementById("ip1").value;
         var ip2 = document.getElementById("ip2").value;
@@ -399,4 +401,4 @@ block content
   
   br
   br
-  input(type="Submit",value="Create New Nodes", onclick="createNodes()")
+  input#createNewNodes(type="Submit",value="Create New Nodes", onclick="createNodes()")
