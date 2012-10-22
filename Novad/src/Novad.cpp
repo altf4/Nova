@@ -537,7 +537,7 @@ void StartCapture()
 			}
 			catch (Nova::PacketCaptureException &e)
 			{
-				LOG(ERROR, string("Exception when starting packet capture: ") + e.what(), "");
+				LOG(ERROR, string("Exception when starting packet capture on device " + ifList[i] + ": ") + e.what(), "");
 			}
 		}
 	}
