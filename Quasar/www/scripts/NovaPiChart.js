@@ -30,7 +30,7 @@ var NovaPiChart = function(divId, size, deleteButtonFunction) {
 
 NovaPiChart.prototype = {
     SetSize: function(size) {
-		// Used so when we redraw we use the same colors
+		// Used so when we redrow we use the same colors
 		this.m_usedColors = new Object();
         this.m_size = size;
         this.m_halfSize = parseInt(size/2);
@@ -101,19 +101,19 @@ NovaPiChart.prototype = {
 
             // Draw the legend and values
           var legend = document.createElement("div");
-        	var text = document.createElement("p");
+          var text = document.createElement("p");
           text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
-          text.style.float = 'left';
-          legend.appendChild(text);
+          text.setAttribute('style', 'display: inline-block;');
           if(this.m_deleteFunction != undefined)
           {
             var deleteButton = document.createElement("button");
+	    deleteButton.setAttribute('style', 'display: inline-block;');
             deleteButton.innerHTML = "Delete All";
             deleteButton.setAttribute('onclick', this.m_deleteFunction + '("' + this.m_items[pfile].name + '")');
             legend.appendChild(deleteButton);
           }
+          legend.appendChild(text);
           document.getElementById(this.m_id).appendChild(legend);
-          document.getElementById(this.m_id).appendChild(document.createElement('br'));
         }
 		
 	}
