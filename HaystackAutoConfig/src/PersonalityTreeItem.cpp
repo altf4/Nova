@@ -44,6 +44,19 @@ PersonalityTreeItem::PersonalityTreeItem(PersonalityTreeItem *parent, string key
 	m_avgPortCount = 0;
 	m_redundant = false;
 	m_parent = parent;
+
+	PersonalityTreeItem *loopParent = parent;
+	while(loopParent != NULL)
+	{
+		if(!loopParent->m_TCP_behavior.empty() && !loopParent->m_UDP_behavior.empty() && !loopParent->m_ICMP_behavior.empty())
+		{
+			m_TCP_behavior = loopParent->m_TCP_behavior;
+			m_UDP_behavior = loopParent->m_UDP_behavior;
+			m_ICMP_behavior = loopParent->m_ICMP_behavior;
+			break;
+		}
+		loopParent = loopParent->m_parent;
+	}
 }
 
 //Destructor
@@ -91,6 +104,9 @@ NodeProfile PersonalityTreeItem::GenerateProfile(const NodeProfile &parentProfil
 	profileToReturn.m_name = m_key;
 	profileToReturn.m_parentProfile = parentProfile.m_name;
 	profileToReturn.m_generated = true;
+	profileToReturn.m_tcpAction = m_TCP_behavior;
+	profileToReturn.m_udpAction = m_UDP_behavior;
+	profileToReturn.m_icmpAction = m_ICMP_behavior;
 
 	m_redundant = true;
 

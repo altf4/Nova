@@ -55,6 +55,11 @@ public:
 	// each Port.
 	std::vector<std::pair<std::string, double> > m_ports_dist;
 
+	//Default behavior of these respective port types
+	std::string m_TCP_behavior;
+	std::string m_UDP_behavior;
+	std::string m_ICMP_behavior;
+
 	// String representing the osclass. Used for matching ports to
 	// scripts from the script table.
 	std::string m_osclass;
@@ -82,6 +87,7 @@ private:
 	// Distribution vectors containing the percent occurrences of
 	// each MAC Vendor
 	std::vector<std::pair<std::string, double> > m_vendor_dist;
+
 };
 
 }

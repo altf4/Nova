@@ -954,7 +954,14 @@ void Nova::GenerateConfiguration()
 		persTree.m_hdconfig->AddNewNode(winningPersonality->m_key, "DHCP", macAddress, Config::Inst()->GetInterface(0), "");
 	}
 
-	persTree.m_hdconfig->SaveAllTemplates();
+	if(!persTree.m_hdconfig->SaveAllTemplates())
+	{
+		LOG(ERROR, "Unable to save haystack templates", "");
+	}
+	if(!persTree.m_hdconfig->WriteHoneydConfiguration())
+	{
+		LOG(ERROR, "Unable to write haystack configuration", "");
+	}
 }
 
 bool Nova::CheckSubnet(vector<string> &hostAddrStrings, string matchStr)

@@ -236,7 +236,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 			LOG(ERROR, "Invalid path given to Honeyd configuration file!", "");
 			return false;
 		}
-		return WriteHoneydConfiguration(Config::Inst()->GetPathConfigHoneydHS());
+		path = Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathConfigHoneydHS();
 	}
 
 	LOG(DEBUG, "Writing honeyd configuration to " + path, "");
@@ -455,7 +455,7 @@ string HoneydConfiguration::ProfileToString(NodeProfile *p)
 	out << "set " << profName  << " default udp action " << p->m_udpAction << '\n';
 	out << "set " << profName  << " default icmp action " << p->m_icmpAction << '\n';
 
-	if(p->m_personality.compare(""))
+	if(p->m_personality.compare("") && p->m_personality.compare("NULL"))
 	{
 		out << "set " << profName << " personality \"" << p->m_personality << '"' << '\n';
 	}

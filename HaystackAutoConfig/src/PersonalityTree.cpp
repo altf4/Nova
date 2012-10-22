@@ -34,6 +34,10 @@ PersonalityTree::PersonalityTree(PersonalityTable *persTable, vector<Subnet>& su
 	m_root = new PersonalityTreeItem(NULL, "default");
 	m_root->m_count = persTable->m_num_of_hosts;
 	m_root->m_distribution = 100;
+	m_root->m_TCP_behavior = "reset";
+	m_root->m_UDP_behavior = "reset";
+	m_root->m_ICMP_behavior = "open";
+
 	m_hdconfig->LoadAllTemplates();
 
 	m_hdconfig->AddGroup("HaystackAutoConfig");
