@@ -24,7 +24,7 @@
 //     value: Number of this item present
 var NovaPiChart = function(divId, size, deleteButtonFunction) {
     this.m_id = divId;
-  this.m_deleteFunction = deleteButtonFunction;
+    this.m_deleteFunction = deleteButtonFunction;
     this.SetSize(size);
 }
 
@@ -70,9 +70,12 @@ NovaPiChart.prototype = {
             ctx.fill();
 
             for (var i = 0; i < this.m_items.length; i++) {
-        var text = document.createElement("p");
-        text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp 0% " + this.m_items[i].name;
-        document.getElementById(this.m_id).appendChild(text);
+                var legend = document.createElement("div");
+                var text = document.createElement("p");
+                text.setAttribute('style', 'display: inline-block; margin: 0px');
+                text.innerHTML = "<span style='background-color: " + "#A1A1A1" + ";'>&nbsp &nbsp &nbsp</span>&nbsp 0% " + this.m_items[i].name;
+                legend.appendChild(text);
+                document.getElementById(this.m_id).appendChild(legend);
             }
             return;
         }
