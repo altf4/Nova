@@ -509,9 +509,6 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 	if(persObject->m_personalityClass.empty())
 	{
 		persObject->m_personalityClass.push_back("NULL");
-//		persObject->m_personalityClass.push_back("NULL");
-//		persObject->m_personalityClass.push_back("NULL");
-//		persObject->m_personalityClass.push_back("NULL");
 		persObject->m_osclass = "NULL";
 	}
 	else
@@ -740,12 +737,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 			string bitmaskString = string(bitmaskBuffer);
 			string addrString = string(addrBuffer);
 
-			// Spurious debug prints for now. May change them to be used
-			// in UI hooks later.
-			//cout << "Interface: " << curIf->ifa_name << endl;
-			//cout << "Address: " << addrString << endl;
-			//cout << "Netmask: " << bitmaskString << endl;
-
 			// Put the network ordered address values into the
 			// address and bitmaks in_addr structs, and then
 			// convert them to host longs for use in
@@ -861,12 +852,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 			{
 				localMachine = addrString;
 			}
-
-			// Spurious debug prints for now. May change them to be used
-			// in UI hooks later.
-			//cout << "Interface: " << curIf->ifa_name << endl;
-			//cout << "Address: " << addrString << endl;
-			//cout << "Netmask: " << bitmaskString << endl;
 
 			// Put the network ordered address values into the
 			// address and bitmaks in_addr structs, and then
