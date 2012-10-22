@@ -193,20 +193,18 @@ block headerAdditions
     }
 
     function editSelectedItem() {
-      var items = grid.selection.getSelected();
+      var items = grid.GetSelected();
       if (items.length != 1)
       {
-        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 node for editing"});
-        dialog.show();
+        alert('You can only edit one node at a time');
         return;
       }
 
-      var nodeName = grid.store.getValues(items[0], "Name");
+      var nodeName = items[0];
 
       if (nodeName == "Doppelganger") 
       {
-        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "The Doppelganger node can not be edited here"});
-        dialog.show();
+        alert('The Doppelganger node can not be edited here');
         return; 
       }
       window.location.href = "editHoneydNode?node=" + nodeName;
