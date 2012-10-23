@@ -54,6 +54,10 @@ protected:
 	u_char m_index;
 	pcap_t *m_handle;
 
+	volatile bool isCapturing;
+	volatile bool stoppingCapture;
+	pthread_mutex_t stoppingMutex;
+
 	// This is so we can run blocking pcap_loop in it's own thread
 	pthread_t m_thread;
 	char m_errorbuf[PCAP_ERRBUF_SIZE];
@@ -65,6 +69,11 @@ protected:
 	static void * InternalThreadEntryFunc(void * This) {
 		((PacketCapture*)This)->InternalThreadEntry();
 		return NULL;
+	}
+
+	// This is to signal the internal thread to stop sleeping
+	static void SleepStopper(int signum) {
+		return;
 	}
 
 };
