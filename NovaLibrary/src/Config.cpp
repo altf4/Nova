@@ -1949,7 +1949,7 @@ string Config::GetPathTrainingFile()
 string Config::GetPathWhitelistFile()
 {
 	Lock lock(&m_lock, READ_LOCK);
-	return m_pathWhitelistFile;
+	return m_pathHome + "/" + m_pathWhitelistFile;
 }
 
 bool Config::GetReadPcap()
