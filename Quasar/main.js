@@ -1701,7 +1701,7 @@ app.get('/scripts', passport.authenticate('basic', {session: false}), function(r
   
   var libxml = require('libxmljs');
   
-  var parser = new libxml.parseXmlString(xml);
+  var parser = libxml.parseXmlString(xml);
   
   var nodesToParse = parser.root().childNodes();
 
@@ -1709,9 +1709,10 @@ app.get('/scripts', passport.authenticate('basic', {session: false}), function(r
   
   for(var i = 1; i < nodesToParse.length; i++)
   {
-    //...Still some work to be done here. Not sure how libxmljs parse XML, 
-    // investigate further.
-    //namesAndPaths[nodesToParse[i].childNodes()[0].text()] = nodesToParse[i].childNodes()[3].text();
+    if(nodesToParse[i].child(1) != null && nodesToParse[i].child(7) != null)
+    {
+      namesAndPaths[nodesToParse[i].child(1).text()] = nodesToParse[i].child(7).text();
+    }
   }
   
   var scriptBindings = {};

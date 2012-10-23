@@ -5,14 +5,64 @@ block headerAdditions
     var scriptList = !{JSON.stringify(scripts)};
     var scriptBindings = !{JSON.stringify(bindings)};
 
-    for(var i in scriptList)
-    {
-      console.log('scriptList[' + i + '] == ' + scriptList[i]);
-    }
-
     function setUpScriptTable()
     {
-      console.log('setUpScriptTable'); 
+      var append = document.getElementById('addAnchor');
+      for(var i in scriptList)
+      {
+        var disable = false;
+        var tr = document.createElement('tr');
+        tr.id = i;
+        var td0 = document.createElement('td');
+        var label0 = document.createElement('label');
+        label0.innerHTML = i;
+        var td1 = document.createElement('td');
+        var label1 = document.createElement('label');
+        label1.innerHTML = (scriptBindings[i] != undefined ? scriptBindings[i] : 'Not assigned to any profiles');
+        if(label1.innerHTML !== scriptBindings[i])
+        {
+          disable = true;
+        }
+        var td2 = document.createElement('td');
+        var label2 = document.createElement('label');
+        label2.innerHTML = scriptList[i];
+        var td3 = document.createElement('td');
+        var clearButton = document.createElement('button');
+        clearButton.innerHTML = 'Clear Profiles';
+        clearButton.setAttribute('onclick', 'ClearScriptFromProfiles("' + i + '")');
+        clearButton.disabled = disable;
+        
+        td0.appendChild(label0);
+        td1.appendChild(label1);
+        td2.appendChild(label2);
+        td3.appendChild(clearButton);
+        tr.appendChild(td0);
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        append.appendChild(tr);
+      }
+    }
+    
+    function ClearScriptFromProfiles(scriptName)
+    {
+      console.log('ClearScriptFromProfiles with ' + scriptName);
+      console.log('Clearing from profiles ' + scriptBindings[scriptName]);
+      if(scriptBindings[scriptName] == undefined)
+      {
+        console.log('The script ' + scriptName + ' is not linked to any profiles');
+        return;
+      }
+      var profilesIter = scriptBindings[scriptName].split(',');
+      if(profilesIter == '' || profilesIter == undefined || profilesIter == null)
+      {
+        console.log('found onle one profile');
+        profilesIter = scriptBindings[scriptName];
+      }
+      for(var i in profilesIter)
+      {
+        console.log('profilesIter[' + i + '] == ' + profilesIter[i]);
+      }
     }
     
     now.ready(function(){
@@ -20,9 +70,14 @@ block headerAdditions
     });
 
 block content
-  table
+  h1 Honeyd Scripts
+  p Path is relative to /usr/share/honeyd
+  br
+  table(border='1', style='border: solid black 2px;')
     thead
-      th Script Name
-      th Profiles Using Script
-      th Script Path
+      tr
+        th(style='background-color: #d0e9fc;') Name
+        th(style='background-color: #d0e9fc;') Profiles
+        th(style='background-color: #d0e9fc;') Path And Parameters
     tbody#addAnchor
+  br

@@ -1,8 +1,10 @@
-* {
+* 
+{
     outline: none !important;
 }
 
-#suspectTable {
+#suspectTable 
+{
 	table-layout:fixed;
 	border-collapse:collapse;
 	border: 1px solid black;
@@ -26,7 +28,8 @@
 	border: 1px solid black;
 }
 
-body {
+body 
+{
     margin: 0;
     padding: 2em;
     font-family: Lucida Sans,Lucida Grande,Arial !important;
@@ -34,11 +37,14 @@ body {
     background: white;
     color: #333;
 }
-p {
+
+p 
+{
 	font-family:Consolas,Menlo,"Liberation Mono",Courier,monospace;
 }
 
-button {
+button 
+{
     -webkit-transition: background-color 0.2s linear;
     border-radius:4px;
     -moz-border-radius: 4px 4px 4px 4px;
@@ -51,7 +57,8 @@ button {
     font-size:1em;
 }
 
-.button {
+.button 
+{
     border-radius:4px;
     background-color: #E4F2FF;
     background-position: center top;
@@ -70,7 +77,8 @@ button {
 .button:hover {color:green;}
 .button:active {color:green;}
 
-input {
+input 
+{
     -webkit-transition: background-color 0.2s linear;
     border-radius:4px;
     -moz-border-radius: 4px 4px 4px 4px;
@@ -83,48 +91,58 @@ input {
     font-size:1em;
 }
 
-button:hover {
+button:hover 
+{
     background-color: #AFD9FF;
     color: #000000;
 }
 
-h1 {
+h1 
+{
     font-size:1.5em;
 }
 
 
 
-html, body {
+html, body 
+{
     height: 100%;
     margin: 0;
     overflow: hidden;
     padding: 0;
 }
  
-#appLayout {
+#appLayout 
+{
     height: 100%;
 }
-#leftCol {
+
+#leftCol 
+{
     width: 12em;
 }
 
-.claro .demoLayout .edgePanel {
+.claro .demoLayout .edgePanel 
+{
     background-color: #d0e9fc;
 }
 
-#viewsChart {
+#viewsChart 
+{
     width: 550px;
     height: 550px;
 }
 
-#clientsList {
+#clientsList 
+{
     border: 2px solid;
     border-radius: 12px;
     background: #E8A02F;
     width: 250px;
 }
 
-.white_content{
+.white_content
+{
 	display: none;
 	position: absolute;
 	top: 25%;
