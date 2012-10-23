@@ -33,26 +33,23 @@ protected:
 
 };
 
-// Tests go here. Multiple small tests are better than one large test, as each test
-// will get a pass/fail and debugging information associated with it.
-
 TEST_F(WhitelistConfigurationTest, test_CRUD)
 {
 	// Add an IP
-	EXPECT_TRUE(WhitelistConfiguration::AddIp("3.7.11.13"));
-	EXPECT_TRUE(WhitelistConfiguration::AddEntry("192.168.2.0/24"));
+	EXPECT_TRUE(WhitelistConfiguration::AddIp("eth0", "3.7.11.13"));
+	EXPECT_TRUE(WhitelistConfiguration::AddEntry("eth0,192.168.2.0/24"));
 
 	// Make sure it was added
 	vector<string> whitelistedIps = WhitelistConfiguration::GetIps();
-	EXPECT_TRUE(find(whitelistedIps.begin(), whitelistedIps.end(), "3.7.11.13") != whitelistedIps.end());
+	EXPECT_TRUE(find(whitelistedIps.begin(), whitelistedIps.end(), "eth0,3.7.11.13") != whitelistedIps.end());
 
 	vector<string> whitelistedRanges = WhitelistConfiguration::GetIpRanges();
-	EXPECT_TRUE(find(whitelistedRanges.begin(), whitelistedRanges.end(), "192.168.2.0/255.255.255.0") != whitelistedRanges.end());
+	EXPECT_TRUE(find(whitelistedRanges.begin(), whitelistedRanges.end(), "eth0,192.168.2.0/255.255.255.0") != whitelistedRanges.end());
 
 	// Delete and make sure it was deleted
-	EXPECT_TRUE(WhitelistConfiguration::DeleteEntry("3.7.11.13"));
+	EXPECT_TRUE(WhitelistConfiguration::DeleteEntry("eth0,3.7.11.13"));
 	whitelistedIps = WhitelistConfiguration::GetIps();
-	EXPECT_FALSE(find(whitelistedIps.begin(), whitelistedIps.end(), "3.7.11.13") != whitelistedIps.end());
+	EXPECT_FALSE(find(whitelistedIps.begin(), whitelistedIps.end(), "eth0,3.7.11.13") != whitelistedIps.end());
 
 
 

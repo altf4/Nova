@@ -26,6 +26,7 @@ block headerAdditions
     function addNewItem()
     {
         var value = dojo.byId("newEntry").value;
+        var interface = document.getElementById("interfaceDropdown").value;
         console.log("Value is " + value);
 
         var individualIp = new RegExp("^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))$");
@@ -36,38 +37,18 @@ block headerAdditions
         slashSubnetMaskIp.global = false;
         
         // only add the value to the ipWhitelist if value is either an individual IP or a subnet-style ip "range"
-        if(individualIp.test(value))
+        if(individualIp.test(value) || subnetRangeIp.test(value) || slashSubnetMaskIp.test(value))
         {
           try 
           {
-            now.addWhitelistEntry(value, errorMessageCallback);
+            now.addWhitelistEntry(interface, value, errorMessageCallback);
           } 
           catch(err) 
           {
             alert("Action failed! Unable to connect to server. Try refreshing the page.");
             console.log("Caught error was: " + err);
           }
-          document.getElementById("errorLabel").innerHTML = "Valid IP found!";
-        }
-        else if(subnetRangeIp.test(value))
-        {
-          try {
-            now.addWhitelistEntry(value, errorMessageCallback);
-          } catch(err) {
-            alert("Action failed! Unable to connect to server. Try refreshing the page.");
-            console.log("Caught error was: " + err);
-          }
-          document.getElementById("errorLabel").innerHTML = "Valid IP range found!";
-        }
-        else if(slashSubnetMaskIp.test(value))
-        {
-          try {
-            now.addWhitelistEntry(value, errorMessageCallback);
-          } catch(err) {
-            alert("Action failed! Unable to connect to server. Try refreshing the page.");
-            console.log("Caught error was: " + err);
-          }
-          document.getElementById("errorLabel").innerHTML = "Valid IP range found!";
+          document.getElementById("errorLabel").innerHTML = "Valid entry found. Adding to the whitelist.";
         }
         else
         {
@@ -122,9 +103,18 @@ block content
   br
   label(id="errorLabel", style="color:red")
   br
+
+  label Interface
+  select(id='interfaceDropdown', name='interfaceDropdown');
+    each interface, i in INTERFACES
+      option(value="#{interface}") #{interface}
   br
-  input#newEntry(type="text", value ="192.168.10.1")
+
+
+  label IP Address or IP/netmask combination
+  input#newEntry(type="text", value ="x.x.x.x")
   br
-  button(onClick="addNewItem()") Add New Entry (ip address or ip/netmask combination)
+
+  button(onClick="addNewItem()") Add to Whitelist
  
 
