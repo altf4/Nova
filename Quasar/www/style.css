@@ -1,4 +1,5 @@
 * {
+    font-family: Lucida Sans,Lucida Grande,Arial !important;
     outline: none !important;
 }
 
@@ -18,7 +19,7 @@
 
 #suspectTable th 
 {
-	font-size:1.1em;
+	font-size:14px;
 	text-align:center;
 	padding-top:5px;
 	padding-bottom:4px;
@@ -29,64 +30,55 @@
 body {
     margin: 0;
     padding: 2em;
-    font-family: Lucida Sans,Lucida Grande,Arial !important;
     font-size: 13px !important;
     background: white;
     color: #333;
 }
 p {
-	font-family:Consolas,Menlo,"Liberation Mono",Courier,monospace;
 }
 
-button {
-    -webkit-transition: background-color 0.2s linear;
-    border-radius:4px;
-    -moz-border-radius: 4px 4px 4px 4px;
-    -moz-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
-    background-color: #E4F2FF;
-    background-position: center top;
-    background-repeat: repeat-x;
-    border: 1px solid #769DC0;
-    padding: 2px 8px 4px;
-    font-size:1em;
+div.sideBarHeader {
+	dislay: block;
+	text-align: center;
+	font-size: 18px;
+	margin-bottom: 10px;
 }
 
-.button {
-    border-radius:4px;
+input[type=button], input[type=submit], button, .button, .sideBarButton {
+    font-size:13px;
     background-color: #E4F2FF;
-    background-position: center top;
-    background-repeat: repeat-x;
     border: 1px solid #769DC0;
+    border-radius:4px;
     padding: 2px 4px 4px;
-    font-size:1em;
-	width: 135px;
 	text-align: center;
 	text-decoration: none;
-	display:inline-block;
 }
 
-.button:link { color: black;}
-.button:visited {color:black;}
-.button:hover {color:green;}
-.button:active {color:green;}
-
-input {
-    -webkit-transition: background-color 0.2s linear;
-    border-radius:4px;
-    -moz-border-radius: 4px 4px 4px 4px;
-    -moz-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
-    background-color: #E4F2FF;
-    background-position: center top;
-    background-repeat: repeat-x;
-    border: 1px solid #769DC0;
-    padding: 2px 8px 4px;
-    font-size:1em;
+.sideBarButton {
+	width: 135px;
+	display:block;
 }
 
-button:hover {
+.sideBarButton, .button:link { color: black;}
+.sideBarButton, .button:visited {color:black;}
+
+
+
+input[type=button]:hover, input[type=submit]:hover, .sideBarButton:hover, button:hover, .button:hover {
     background-color: #AFD9FF;
     color: #000000;
 }
+
+
+input {
+    border-radius:4px;
+    background-color: #E4F2FF;
+    background-position: center top;
+    background-repeat: repeat-x;
+    border: 1px solid #769DC0;
+    padding: 2px 8px 4px;
+}
+
 
 h1 {
     font-size:1.5em;
