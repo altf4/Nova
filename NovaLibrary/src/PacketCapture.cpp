@@ -21,6 +21,7 @@
 
 #include <pthread.h>
 #include <signal.h>
+#include <sstream>
 
 using namespace Nova;
 using namespace std;
@@ -29,6 +30,8 @@ PacketCapture::PacketCapture()
 {
 	m_handle = NULL;
 	m_packetCb = NULL;
+	isCapturing = false;
+	stoppingCapture = false;
 }
 
 void PacketCapture::SetPacketCb(void (*cb)(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet))
@@ -69,6 +72,11 @@ int PacketCapture::GetDroppedPackets()
 		return 0;
 	}
 
+	if (!isCapturing)
+	{
+		return 0;
+	}
+
 	pcap_stat captureStats;
 	int result = pcap_stats(m_handle, &captureStats);
 
@@ -97,18 +105,55 @@ bool PacketCapture::StartCaptureBlocking()
 void PacketCapture::StopCapture()
 {
 	// Kill and wait for the child thread to exit
+	stoppingCapture = true;
 	pcap_breakloop(m_handle);
+	pthread_kill(m_thread, SIGUSR2);
 	pthread_join(m_thread, NULL);
 
 	pcap_close(m_handle);
 	m_handle = NULL;
+	stoppingCapture = false;
 }
-
 
 void PacketCapture::InternalThreadEntry()
 {
-	pcap_loop(m_handle, -1, m_packetCb, reinterpret_cast<u_char*>(this));
-	LOG(DEBUG, "Dropped out of pcap loop for packet capture: " + m_identifier, "");
+	signal(SIGUSR2, SleepStopper);
+	bool retry = true;
+	while (!stoppingCapture)
+	{
+		int activationReturnValue = pcap_activate(m_handle);
+		if (activationReturnValue == 0 || activationReturnValue == PCAP_ERROR_ACTIVATED)
+		{
+			isCapturing = true;
+			int loopReturn = pcap_loop(m_handle, -1, m_packetCb, reinterpret_cast<u_char*>(this));
+			isCapturing = false;
+
+			if (loopReturn == -1)
+			{
+				LOG(ERROR, "Dropped out of pcap loop because of error for packet capture: " + m_identifier + ". Error was: " + string(pcap_geterr(m_handle)), "");
+				sleep(10);
+
+				// Try to reactivate the interface on the next loop around
+			}
+			else if (loopReturn >= 0 || loopReturn == -2)
+			{
+				// Normal exit case. If a pcap file, it reached the end. If an interface, someone called pcap_breakloop
+				LOG(DEBUG, "Dropped out of pcap loop normally for packet capture: " + m_identifier, "");
+				break;
+			}
+			else
+			{
+				// I've seen pcap_loop return -3... this isn't documented in the manual. Just assume we can't recover from this and break out of the loop
+				LOG(ERROR, "Dropped out of pcap loop because of unexpected error for packet capture: " + m_identifier + ". Error was: " + string(pcap_geterr(m_handle)), "");
+				break;
+			}
+		}
+		else if (activationReturnValue == PCAP_ERROR_IFACE_NOT_UP)
+		{
+				LOG(ERROR, "Can't activate packet capture on: " + m_identifier + ". Error was: " + string(pcap_geterr(m_handle)), "");
+				sleep(10);
+		}
+	}
 }
 
 
