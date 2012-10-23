@@ -2322,10 +2322,31 @@ var SendBenignSuspectToPulsar = function(suspect) {
 };
 everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
-
-
 everyone.now.GetLocalIP = function (interface, callback) {
 	callback(nova.GetLocalIP(interface));
+}
+
+everyone.now.RemoveScriptFromProfiles = function(script, profiles) {
+  console.log('RemoveScriptFromProfiles');
+  for(var i in profiles)
+  {
+    var ports = honeydConfig.GetPorts(profiles[i]);
+    if(ports != undefined)
+    {
+      for(var j in ports)
+      {
+        if(ports[j].scriptName == script)
+        {
+          ports[j].scriptName = '';
+          ports[j].behavior = 'open';
+          ports[j].service = '';
+          honeydConfig.RemoveScriptPort(ports[j].portName, profiles[i]);
+        }
+      }
+    }
+  } 
+  honeydConfig.SaveAllTemplates();
+  honeydConfig.LoadAllTemplates();
 }
 
 everyone.now.GenerateMACForVendor = function(vendor, callback) {

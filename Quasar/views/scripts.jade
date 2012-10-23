@@ -63,6 +63,21 @@ block headerAdditions
       {
         console.log('profilesIter[' + i + '] == ' + profilesIter[i]);
       }
+      if(typeof now.RemoveScriptFromProfiles == 'function')
+      {
+        console.log('calling everyone.now.RemoveScriptFromProfiles');
+        now.RemoveScriptFromProfiles(scriptName, profilesIter);
+      }
+      else
+      {
+        alert('Could not complete action, function RemoveScriptFromProfiles not found');
+        return;
+      }
+    }
+    
+    function addScript()
+    {
+      console.log('addScript');
     }
     
     now.ready(function(){
@@ -81,3 +96,5 @@ block content
         th(style='background-color: #d0e9fc;') Path And Parameters
     tbody#addAnchor
   br
+  h2 Add New Honeyd Script
+  button(id='addScript', onclick='addScript()') Add Script
