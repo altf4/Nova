@@ -38,8 +38,8 @@ void WhitelistConfigurationBinding::Init(Handle<Object> target)
 	// Javascript member methods
 	//
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "AddEntry", (InvokeMethod<bool, string, Nova::WhitelistConfiguration::AddEntry>) );
-	NODE_SET_PROTOTYPE_METHOD(s_ct, "AddIp", (InvokeMethod<bool, string, Nova::WhitelistConfiguration::AddIp>) );
-	NODE_SET_PROTOTYPE_METHOD(s_ct, "AddIpRange", (InvokeMethod<bool, string, string, Nova::WhitelistConfiguration::AddIpRange>) );
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "AddIp", (InvokeMethod<bool, string, string, Nova::WhitelistConfiguration::AddIp>) );
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "AddIpRange", (InvokeMethod<bool, string, string, string, Nova::WhitelistConfiguration::AddIpRange>) );
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "DeleteEntry", (InvokeMethod<bool, string, Nova::WhitelistConfiguration::DeleteEntry>) );
 

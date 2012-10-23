@@ -29,8 +29,8 @@ class WhitelistConfiguration
 {
 public:
 	static bool AddEntry(std::string entry);
-	static bool AddIp(std::string ip);
-	static bool AddIpRange(std::string ip, std::string netmask);
+	static bool AddIp(std::string interface, std::string ip);
+	static bool AddIpRange(std::string interface, std::string ip, std::string netmask);
 
 	static bool DeleteEntry(std::string entry);
 
@@ -38,6 +38,7 @@ public:
 	static std::vector<std::string> GetIpRanges();
 
 	// Some simple abstraction functions to split a IP/subnet line
+	static std::string GetInterface(std::string whitelistEntry);
 	static std::string GetSubnet(std::string whitelistEntry);
 	static std::string GetIp(std::string whitelistEntry);
 

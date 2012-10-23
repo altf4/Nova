@@ -25,7 +25,7 @@ var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection) {
 	this.m_columns = columns;
 	this.m_keyIndex = keyIndex;
 	this.m_sortByKey = keyIndex;
-  this.m_sortDescending = true;
+	this.m_sortDescending = true;
 	this.m_tableElement = tableElement;
 	this.m_elements = new Object();
 	this.m_pageElements = [];
@@ -35,137 +35,137 @@ var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection) {
 	this.m_currentPage = 0;
 	this.m_rowsPerPage = Number.MAX_VALUE;
 	this.m_name = gridName;
-	
+
 	this.GenerateTableHeader();
 }
 
 NovaGrid.prototype = {
-    // Adds a new row to the table (or updates row if it exists with same keyIndex)
-	PushEntry: function (entry) {
-		if (entry.length != this.m_columns.length) {
-			throw "Can't push entry of size " + entry.length + " into table of size " + this.m_columns.length
-		} else {
-			this.m_elements[entry[this.m_keyIndex]] = entry;
-		}
-	}
-    
-    // Used internally to generate the TH tags
-	, GenerateTableHeader: function() {
-		this.headerHTML = "";
-		this.headerHTML += '<TR>';
-		for (var c = 0; c < this.m_columns.length; c++) 
-		{
-			var title = this.m_columns[c].name;
+	// Adds a new row to the table (or updates row if it exists with same keyIndex)
+PushEntry: function (entry) {
+			   if (entry.length != this.m_columns.length) {
+				   throw "Can't push entry of size " + entry.length + " into table of size " + this.m_columns.length
+			   } else {
+				   this.m_elements[entry[this.m_keyIndex]] = entry;
+			   }
+		   }
 
-			if (this.m_sortByKey == c) 
-			{
-				title = '<div class="sortArrow">' + (this.m_sortDescending ? '&#8744;' : '&#8743;') + '</div>' + title;
-			}
-			this.headerHTML += '<TH><A HREF="javascript:void(0)" style="font-size: 12px;" onclick="' + this.m_name + '.SetSortByKey(' + c + ');">' + title + '</A></TH>';
-		}
-		this.headerHTML += '</TR>';
-	}
+		   // Used internally to generate the TH tags
+		   , GenerateTableHeader: function() {
+			   this.headerHTML = "";
+			   this.headerHTML += '<TR class="novaGrid">';
+			   for (var c = 0; c < this.m_columns.length; c++) 
+			   {
+				   var title = this.m_columns[c].name;
 
-	, GetRenderCallback: function() {return this.m_renderCallback;}
-	, SetRenderCallback: function(cb) {this.m_renderCallback = cb;}
-	, GetRowsPerPage: function() {return this.m_rowsPerPage;}
-	, SetRowsPerPage: function(rows) {this.m_rowsPerPage = rows;}
-	, GetCurrentPage: function() {return this.m_currentPage;}
+				   if (this.m_sortByKey == c) 
+				   {
+					   title = '<div class="sortArrow">' + (this.m_sortDescending ? '&#8744;' : '&#8743;') + '</div>' + title;
+				   }
+				   this.headerHTML += '<TH class="novaGrid><A HREF="javascript:void(0)" style="font-size: 12px;" onclick="' + this.m_name + '.SetSortByKey(' + c + ');">' + title + '</A></TH>';
+			   }
+			   this.headerHTML += '</TR>';
+		   }
 
-	, SetCurrentPage: function(page) {
-		if (page >= 0 && page < this.GetNumberOfPages()) {
-			this.m_currentPage = page;
-			this.m_selected.length = 0;
-			this.Render();
-		}
-	}
+		   , GetRenderCallback: function() {return this.m_renderCallback;}
+		   , SetRenderCallback: function(cb) {this.m_renderCallback = cb;}
+		   , GetRowsPerPage: function() {return this.m_rowsPerPage;}
+		   , SetRowsPerPage: function(rows) {this.m_rowsPerPage = rows;}
+		   , GetCurrentPage: function() {return this.m_currentPage;}
 
-	, NextPage: function() {
-		if (this.GetNumberOfPages() == 1) {return};
-		if (this.m_currentPage + 1 >= this.GetNumberOfPages()) {
-			this.SetCurrentPage(0);
-		} else {
-			this.SetCurrentPage(this.m_currentPage + 1);
-		}
-	}
+		   , SetCurrentPage: function(page) {
+			   if (page >= 0 && page < this.GetNumberOfPages()) {
+				   this.m_currentPage = page;
+				   this.m_selected.length = 0;
+				   this.Render();
+			   }
+		   }
 
-	, PreviousPage: function() {
-		if (this.GetNumberOfPages() == 1) {return};
-		if (this.m_currentPage - 1 < 0) {
-			this.SetCurrentPage(this.GetNumberOfPages() - 1);
-		} else {
-			this.SetCurrentPage(this.m_currentPage - 1);
-		}
-	}
+		   , NextPage: function() {
+			   if (this.GetNumberOfPages() == 1) {return};
+			   if (this.m_currentPage + 1 >= this.GetNumberOfPages()) {
+				   this.SetCurrentPage(0);
+			   } else {
+				   this.SetCurrentPage(this.m_currentPage + 1);
+			   }
+		   }
 
-	, GetNumberOfPages: function() {
-		return Math.ceil(Object.keys(this.m_elements).length/this.m_rowsPerPage);
-	}
+		   , PreviousPage: function() {
+			   if (this.GetNumberOfPages() == 1) {return};
+			   if (this.m_currentPage - 1 < 0) {
+				   this.SetCurrentPage(this.GetNumberOfPages() - 1);
+			   } else {
+				   this.SetCurrentPage(this.m_currentPage - 1);
+			   }
+		   }
 
-    // Returns the HTML for the table
-	, GetTable: function() {
-		var innerTableString = this.headerHTML;
-	
-		var keys = Object.keys(this.m_elements);
-		var arrayRep = new Array();
-		for (var i = 0; i < keys.length; i++) {
-			arrayRep.push(this.m_elements[keys[i]]);
-		}
+		   , GetNumberOfPages: function() {
+			   return Math.ceil(Object.keys(this.m_elements).length/this.m_rowsPerPage);
+		   }
 
-		// work around for scoping issues
-		var so = this;
-		
-		arrayRep.sort(function(a, b) {
-			if (a[so.m_sortByKey] > b[so.m_sortByKey]) {
-                return so.m_sortDescending == true ? -1 : 1;
-			} else if (a[so.m_sortByKey] < b[so.m_sortByKey]) {
-                return so.m_sortDescending == true ? 1 : -1;
-			} else {
-				return 0;
-			}
-		});
+		   // Returns the HTML for the table
+		   , GetTable: function() {
+			   var innerTableString = this.headerHTML;
 
-		if (arrayRep.length < this.m_currentPage * this.m_rowsPerPage) {
-			return innerTableString;	
-		}
+			   var keys = Object.keys(this.m_elements);
+			   var arrayRep = new Array();
+			   for (var i = 0; i < keys.length; i++) {
+				   arrayRep.push(this.m_elements[keys[i]]);
+			   }
 
-		for (var i = this.m_currentPage * this.m_rowsPerPage; (i < arrayRep.length) && (i < (this.m_currentPage + 1)* this.m_rowsPerPage); i++) {
-		  var sub = '';
-		  var idx = keys[i].indexOf('>');
-		  // All this magic because the grid is keyed to an html
-		  // element and not a string for the main.jade page.
-		  if(idx != -1)
-		  {
-        var put = keys[i].substring(idx + 1, keys[i].indexOf('<', idx));
-        if(put[0] == ' ')
-        {
-          put = put.substring(1);
-        }
-        if(put[put.length] == ' ')
-        {
-          put = put.substring(0, put.length - 2);
-        }
-		    this.m_pageElements.push(put);
-		    sub = put;  
+			   // work around for scoping issues
+			   var so = this;
+
+			   arrayRep.sort(function(a, b) {
+					   if (a[so.m_sortByKey] > b[so.m_sortByKey]) {
+					   return so.m_sortDescending == true ? -1 : 1;
+					   } else if (a[so.m_sortByKey] < b[so.m_sortByKey]) {
+					   return so.m_sortDescending == true ? 1 : -1;
+					   } else {
+					   return 0;
+					   }
+					   });
+
+			   if (arrayRep.length < this.m_currentPage * this.m_rowsPerPage) {
+				   return innerTableString;	
+			   }
+
+			   for (var i = this.m_currentPage * this.m_rowsPerPage; (i < arrayRep.length) && (i < (this.m_currentPage + 1)* this.m_rowsPerPage); i++) {
+				   var sub = '';
+				   var idx = keys[i].indexOf('>');
+				   // All this magic because the grid is keyed to an html
+				   // element and not a string for the main.jade page.
+				   if(idx != -1)
+				   {
+					   var put = keys[i].substring(idx + 1, keys[i].indexOf('<', idx));
+					   if(put[0] == ' ')
+					   {
+						   put = put.substring(1);
+					   }
+					   if(put[put.length] == ' ')
+					   {
+						   put = put.substring(0, put.length - 2);
+					   }
+					   this.m_pageElements.push(put);
+					   sub = put;  
+				   }
+				   else
+				   {
+					   this.m_pageElements.push(arrayRep[i][1]);
+					   sub = arrayRep[i][1];
+				   }
+				   if(this.m_selection)
+				   {
+					   innerTableString += '<TR class="novaGrid" id=\'' + sub + '\', onclick="' + this.m_name + '.AddToSelected(\'' + sub + '\', event);">';
 		  }
 		  else
 		  {
-		    this.m_pageElements.push(arrayRep[i][1]);
-		    sub = arrayRep[i][1];
-		  }
-		  if(this.m_selection)
-		  {
-			  innerTableString += '<TR id=\'' + sub + '\', onclick="' + this.m_name + '.AddToSelected(\'' + sub + '\', event);">';
-		  }
-		  else
-		  {
-		    innerTableString += '<TR>';
+		    innerTableString += '<TR class="novaGrid">';
 		  }
 			for (var c = 0; c < this.m_columns.length; c++) {
 				if (this.m_columns[c].formatter !== undefined) {
-				   innerTableString += '<TD>' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
+				   innerTableString += '<TD class="novaGrid">' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
 				} else {
-					innerTableString += '<TD>' + arrayRep[i][c] + '</TD>';
+					innerTableString += '<TD class="novaGrid">' + arrayRep[i][c] + '</TD>';
 				}
 			}
 			innerTableString += '</TR>';

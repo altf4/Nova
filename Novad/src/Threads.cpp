@@ -150,7 +150,6 @@ void *UpdateIPFilter(void *ptr)
 				honeydDHCPWatch = inotify_add_watch(honeydDHCPNotifyFd, dhcpListFile.c_str(),
 						IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
 				haystackDhcpAddresses = Config::GetHoneydIpAddresses(dhcpListFile);
-				string captureFilterString = ConstructFilterString();
 
 				UpdateHaystackFeatures();
 
@@ -158,6 +157,7 @@ void *UpdateIPFilter(void *ptr)
 				for(uint i = 0; i < packetCaptures.size(); i++)
 				{
 					try {
+					string captureFilterString = ConstructFilterString(packetCaptures.at(i)->GetIdentifier());
 						packetCaptures.at(i)->SetFilter(captureFilterString);
 					}
 					catch (Nova::PacketCaptureException &e)
@@ -199,12 +199,12 @@ void *UpdateWhitelistIPFilter(void *ptr)
 						IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
 				whitelistIpAddresses = WhitelistConfiguration::GetIps();
 				whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
-				string captureFilterString = ConstructFilterString();
 
 				Lock *lock = new Lock(&packetCapturesLock);
 				for(uint i = 0; i < packetCaptures.size(); i++)
 				{
 					try {
+						string captureFilterString = ConstructFilterString(packetCaptures.at(i)->GetIdentifier());
 						packetCaptures.at(i)->SetFilter(captureFilterString);
 					}
 					catch (Nova::PacketCaptureException &e)

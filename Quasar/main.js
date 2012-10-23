@@ -1055,7 +1055,8 @@ app.get('/configWhitelist', passport.authenticate('basic', {session: false}), fu
 	res.render('configWhitelist.jade', {
 		locals: {
 			whitelistedIps: whitelistConfig.GetIps(),
-			whitelistedRanges: whitelistConfig.GetIpRanges()
+			whitelistedRanges: whitelistConfig.GetIpRanges(),
+			INTERFACES: config.ListInterfaces().sort()
 		}
 	})
 });
@@ -1908,11 +1909,10 @@ everyone.now.deleteProfiles = function (profileNames, callback) {
 	callback(true, "");
 }
 
-everyone.now.addWhitelistEntry = function (entry, callback) {
-
+everyone.now.addWhitelistEntry = function (interface, entry, callback) {
 	// TODO: Input validation. Should be IP address or 'IP/netmask'
 	// Should also be sanitized for newlines/trailing whitespace
-	if (whitelistConfig.AddEntry(entry)) {
+	if (whitelistConfig.AddEntry(interface + "," + entry)) {
 		callback(true, "");
 	} else {
 		callback(true, "Attempt to add whitelist entry failed");

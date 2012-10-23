@@ -63,10 +63,10 @@ HoneydConfiguration::HoneydConfiguration()
 // Returns true if successful, false if loading failed.
 bool HoneydConfiguration::LoadAllTemplates()
 {
-	m_scripts.clear_no_resize();
-	m_ports.clear_no_resize();
-	m_profiles.clear_no_resize();
-	m_nodes.clear_no_resize();
+	m_scripts.clear();
+	m_ports.clear();
+	m_profiles.clear();
+	m_nodes.clear();
 
 	if(!LoadScriptsTemplate())
 	{

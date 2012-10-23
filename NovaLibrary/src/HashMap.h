@@ -58,7 +58,6 @@ public:
 
 	// Expose generic methods we use
 	void clear();
-	void clear_no_resize();
 	void resize(size_t newSize);
 	uint size() const;
 	bool empty() const;
@@ -172,12 +171,6 @@ template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 bool HashMap<KeyType,ValueType,HashFcn,EqualKey>::empty() const
 {
 	return m_map.empty();
-}
-
-template<class KeyType, class ValueType, class HashFcn, class EqualKey>
-void HashMap<KeyType,ValueType,HashFcn,EqualKey>::clear_no_resize()
-{
-	//m_map.clear_no_resize();
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>

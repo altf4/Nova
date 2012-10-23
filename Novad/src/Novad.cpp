@@ -103,9 +103,6 @@ pthread_t ipUpdateThread;
 pthread_t ipWhitelistUpdateThread;
 pthread_t consumer;
 
-typedef HashMap<uint32_t, uint32_t, std::hash<uint32_t>, eqkey> LocalIPTable;
-LocalIPTable localIPs;
-
 namespace Nova
 {
 
@@ -142,8 +139,6 @@ int RunNovaD()
 	signal(SIGINT, SaveAndExit);
 	signal(SIGTERM, SaveAndExit);
 	signal(SIGPIPE, SIG_IGN);
-
-	localIPs.set_empty_key(0);
 
 	lastLoadTime = lastSaveTime = startTime = time(NULL);
 	if(lastLoadTime == ((time_t)-1))
@@ -468,8 +463,6 @@ void StartCapture()
 
 	Reload();
 
-	string captureFilterString = ConstructFilterString();
-
 	//If we're reading from a packet capture file
 	if(Config::Inst()->GetReadPcap())
 	{
@@ -481,15 +474,10 @@ void StartCapture()
 			FilePacketCapture *cap = new FilePacketCapture(pcapFilePath.c_str());
 			cap->Init();
 			cap->SetPacketCb(&Packet_Handler);
+			string captureFilterString = ConstructFilterString(cap->GetIdentifier());
 			cap->SetFilter(captureFilterString);
 			cap->SetIdIndex(packetCaptures.size());
 			packetCaptures.push_back(cap);
-
-			vector<string> ips = Config::GetIpAddresses(ipAddressFile);
-			for (uint i = 0; i < ips.size(); i++)
-			{
-				localIPs[inet_addr(ips.at(i).c_str())] = 0;
-			}
 
 			cap->StartCaptureBlocking();
 
@@ -514,23 +502,13 @@ void StartCapture()
 		for(uint i = 0; i < ifList.size(); i++)
 		{
 			dropCounts.push_back(0);
-			string ipAddr = GetLocalIP(ifList.back().c_str());
-			struct in_addr tempAddr;
-			inet_aton(ipAddr.c_str(), &tempAddr);
-			if (tempAddr.s_addr != 0)
-			{
-				localIPs[tempAddr.s_addr] = 0;
-			}
-			string temp = captureFilterString;
-			temp.append(" || ");
-			temp.append(ipAddr);
-
 			InterfacePacketCapture *cap = new InterfacePacketCapture(ifList[i].c_str());
 
 			try {
 				cap->SetPacketCb(&Packet_Handler);
 				cap->Init();
-				cap->SetFilter(captureFilterString.data());
+				string captureFilterString = ConstructFilterString(cap->GetIdentifier());
+				cap->SetFilter(captureFilterString);
 				cap->StartCapture();
 				cap->SetIdIndex(packetCaptures.size());
 				packetCaptures.push_back(cap);
@@ -610,7 +588,7 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 }
 
 //Convert monitored ip address into a csv string
-string ConstructFilterString()
+string ConstructFilterString(string captureIdentifier)
 {
 	string filterString = "not src net 0.0.0.0";
 	if(Config::Inst()->GetCustomPcapString() != "") {
@@ -646,16 +624,30 @@ string ConstructFilterString()
 		hsAddresses.pop_back();
 	}
 
-	hsAddresses = whitelistIpAddresses;
+	hsAddresses.clear();
+	for (uint i = 0; i < whitelistIpAddresses.size(); i++)
+	{
+		if (WhitelistConfiguration::GetInterface(whitelistIpAddresses.at(i)) == captureIdentifier)
+		{
+			hsAddresses.push_back(whitelistIpAddresses.at(i));
+		}
+	}
 	while(hsAddresses.size())
 	{
 		//Remove and add the haystack host entry
 		filterString += " && not src net ";
-		filterString += hsAddresses.back();
+		filterString += WhitelistConfiguration::GetIp(hsAddresses.back());
 		hsAddresses.pop_back();
 	}
 
-	hsAddresses = whitelistIpRanges;
+	hsAddresses.clear();
+	for (uint i = 0; i < whitelistIpRanges.size(); i++)
+	{
+		if (WhitelistConfiguration::GetInterface(whitelistIpRanges.at(i)) == captureIdentifier)
+		{
+			hsAddresses.push_back(whitelistIpRanges.at(i));
+		}
+	}
 	while(hsAddresses.size())
 	{
 		filterString += " && not src net ";
