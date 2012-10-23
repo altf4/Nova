@@ -18,10 +18,10 @@
 
 #include "PacketCapture.h"
 #include "Logger.h"
+#include "Lock.h"
 
 #include <pthread.h>
 #include <signal.h>
-#include <sstream>
 
 using namespace Nova;
 using namespace std;
@@ -32,6 +32,7 @@ PacketCapture::PacketCapture()
 	m_packetCb = NULL;
 	isCapturing = false;
 	stoppingCapture = false;
+	pthread_mutex_init(&this->stoppingMutex, NULL);
 }
 
 void PacketCapture::SetPacketCb(void (*cb)(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet))
@@ -105,22 +106,34 @@ bool PacketCapture::StartCaptureBlocking()
 void PacketCapture::StopCapture()
 {
 	// Kill and wait for the child thread to exit
-	stoppingCapture = true;
+	{
+		Lock(&this->stoppingMutex);
+		stoppingCapture = true;
+	}
 	pcap_breakloop(m_handle);
 	pthread_kill(m_thread, SIGUSR2);
 	pthread_join(m_thread, NULL);
 
 	pcap_close(m_handle);
 	m_handle = NULL;
-	stoppingCapture = false;
+
+	{
+		Lock(&this->stoppingMutex);
+		stoppingCapture = false;
+	}
 }
 
 void PacketCapture::InternalThreadEntry()
 {
 	signal(SIGUSR2, SleepStopper);
-	bool retry = true;
-	while (!stoppingCapture)
+	while (true)
 	{
+		Lock(&this->stoppingMutex);
+		if (stoppingCapture)
+		{
+			break;
+		}
+
 		int activationReturnValue = pcap_activate(m_handle);
 		if (activationReturnValue == 0 || activationReturnValue == PCAP_ERROR_ACTIVATED)
 		{

@@ -21,7 +21,6 @@
 
 #include <string>
 #include <pcap.h>
-#include <atomic>
 
 namespace Nova
 {
@@ -55,8 +54,9 @@ protected:
 	u_char m_index;
 	pcap_t *m_handle;
 
-	std::atomic_bool isCapturing;
-	std::atomic_bool stoppingCapture;
+	volatile bool isCapturing;
+	volatile bool stoppingCapture;
+	pthread_mutex_t stoppingMutex;
 
 	// This is so we can run blocking pcap_loop in it's own thread
 	pthread_t m_thread;
