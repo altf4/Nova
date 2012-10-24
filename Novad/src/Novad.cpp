@@ -553,7 +553,17 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 
 			//Prepare Packet structure
 			Evidence *evidencePacket = new Evidence(packet + sizeof(struct ether_header), pkthdr);
-			evidencePacket->m_evidencePacket.interface = packetCaptures.at(0)->GetIdentifier();
+			PacketCapture* cap = reinterpret_cast<PacketCapture*>(index);
+
+			if (cap == NULL)
+			{
+				LOG(ERROR, "Packet capture object is NULL. Can't tell what interface this packet came from.", "");
+				evidencePacket->m_evidencePacket.interface = "UNKNOWN";
+			}
+			else
+			{
+				evidencePacket->m_evidencePacket.interface = cap->GetIdentifier();
+			}
 
 			if (!Config::Inst()->GetReadPcap())
 			{
