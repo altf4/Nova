@@ -244,10 +244,11 @@ PushEntry: function (entry) {
       var idxEnd = 0;
       var add = [];
       var i = this.m_pageElements.length - 1;
+
       if(this.m_selected.length == 1)
       {
-        do
-        {
+
+        for (var i = 0; i < this.m_pageElements.length; i++) {
           if(this.m_pageElements[i] == this.m_selected[0])
           {
             idxStart = i;
@@ -256,9 +257,7 @@ PushEntry: function (entry) {
           {
             idxEnd = i;
           }
-
-	  i--;
-        }while((idxStart == 0 || idxEnd == 0) && i >= 0);
+        }
         
         if(idxEnd < idxStart)
         {
@@ -266,8 +265,9 @@ PushEntry: function (entry) {
           idxEnd = idxStart;
           idxStart = temp;
         }
-        
-        for(var i = idxStart + 1; i <= idxEnd; i++)
+       
+        this.m_selected = [];
+        for(var i = idxStart; i <= idxEnd; i++)
         {
           this.m_selected.push(this.m_pageElements[i]);
           this.ChangeRowColor(this.m_pageElements[i], true);
