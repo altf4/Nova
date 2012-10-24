@@ -243,7 +243,7 @@ PushEntry: function (entry) {
       var idxStart = 0;
       var idxEnd = 0;
       var add = [];
-      var i = this.m_pageElements.length;
+      var i = this.m_pageElements.length - 1;
       if(this.m_selected.length == 1)
       {
         do
@@ -256,7 +256,9 @@ PushEntry: function (entry) {
           {
             idxEnd = i;
           }
-        }while((idxStart == 0 || idxEnd == 0) && i--);
+
+	  i--;
+        }while((idxStart == 0 || idxEnd == 0) && i >= 0);
         
         if(idxEnd < idxStart)
         {
@@ -265,7 +267,7 @@ PushEntry: function (entry) {
           idxStart = temp;
         }
         
-        for(var i = idxStart; i <= idxEnd; i++)
+        for(var i = idxStart + 1; i <= idxEnd; i++)
         {
           this.m_selected.push(this.m_pageElements[i]);
           this.ChangeRowColor(this.m_pageElements[i], true);
