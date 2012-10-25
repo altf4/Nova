@@ -217,7 +217,7 @@ block headerAdditions
       var ip = suspect.GetIpString;
     
       var suspectLink = buildLink(ip, suspect.GetInterface);
-      row.push(String(suspect.GetInterface));
+      row.push(String(suspect.interfaceAlias));
       row.push(String(suspectLink));
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));

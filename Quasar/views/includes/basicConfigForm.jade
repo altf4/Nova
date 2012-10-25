@@ -337,21 +337,21 @@ br
     - if(INTERFACES[i].checked == 1)
       div
         input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, disabled=true, onclick="checkAtLeastOne()", checked)
-        #{INTERFACES[i].iface}
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
     - else
       div
         input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", disabled=true)
-        #{INTERFACES[i].iface}
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
 - else
   - for (var i = 0; i < INTERFACES.length; i++)
     - if(INTERFACES[i].checked == 1)
       div
         input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", checked)
-        #{INTERFACES[i].iface}
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
     - else
       div
         input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()")
-        #{INTERFACES[i].iface}
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
 div
   input(type="checkbox", value="default", id="default", onclick="changeDisabled()", width=10)
   "default"  

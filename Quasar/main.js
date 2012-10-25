@@ -74,6 +74,7 @@ var benignRequest = false;
 var pulsar;
 
 var interfaceAliases = new Object();
+ReloadInterfaceAliasFile();
 
 var RenderError = function (res, err, link) {
 	// Redirect them to the main page if no link was set
@@ -788,9 +789,14 @@ function renderBasicOptions(jadefile, res, req) {
 		}
 	}
 
+	var ifaceForConversion = new Array();
+	for (var i = 0; i < pass.length; i++) {
+		ifaceForConversion.push(pass[i].iface);
+	}
 	res.render(jadefile, {
 		locals: {
 			INTERFACES: pass,
+			INTERFACE_ALIASES: ConvertInterfacesToAliases(ifaceForConversion),
 			DEFAULT: config.GetUseAllInterfacesBinding(),
 			DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP"),
 			DOPPELGANGER_INTERFACE: doppelPass,
@@ -846,9 +852,11 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 	  }
 	}*/
 	
+	var interfaces = config.ListInterfaces().sort();
 	res.render('configHoneyd.jade', {
 		locals: {
-			INTERFACES: config.ListInterfaces().sort(),
+			INTERFACES: interfaces,
+			interfaceAliases: ConvertInterfacesToAliases(interfaces),
 			profiles: profiles,
 			nodes: nodeList,
 			groups: honeydConfig.GetGroups(),
@@ -915,10 +923,13 @@ app.get('/editHoneydNode', passport.authenticate('basic', {session: false}), fun
 		RenderError(res, "Unable to fetch node: " + nodeName, "/configHoneydNodes");
 		return;
 	}
+
+	var interfaces = config.ListInterfaces().sort();
 	res.render('editHoneydNode.jade', {
 		locals: {
 			oldName: nodeName,
-			INTERFACES: config.ListInterfaces().sort(),
+			INTERFACES: interfaces,
+			interfaceAliases: ConvertInterfacesToAliases(interfaces),
 			profiles: honeydConfig.GetProfileNames(),
 			profile: node.GetProfile(),
 			interface: node.GetInterface(),
@@ -2430,9 +2441,11 @@ everyone.now.addTrainingPoint = function(ip, interface, features, hostility, cal
 var distributeSuspect = function (suspect) {
 	var s = new Object();
 	objCopy(suspect, s);
+	s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
 	try {
 		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
+  
   if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) != -2)
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
@@ -2560,30 +2573,18 @@ function ReloadInterfaceAliasFile() {
 
 function ConvertInterfacesToAliases(interfaces) {
 	var aliases = new Array();
-	for (var interface in interfaces) {
-		if (interfaceAliases[interface] !== undefined) {
-			aliases.push(interfaceAliases[interface]);
-		} else {
-			aliases.push(interface);	
-		}
+	for (var i in interfaces) {
+		aliases.push(ConvertInterfaceToAlias(interfaces[i]));
 	}
-
 	return aliases;
 }
 
-function ConvertAliasesToInterfaces(aliases) {
-	var interfaces = new Array();
-
-	for (var alias in aliases) {
-		for (interface in interfaceAliases) {
-			if (alias == interfaceAliases[interface]) {
-				interfaces.push(interface);
-				break;
-			}
-		}
+function ConvertInterfaceToAlias(iface) {
+	if (interfaceAliases[iface] !== undefined) {
+		return interfaceAliases[iface];
+	} else {
+		return iface;
 	}
-
-	return interfaces;
 }
 
 app.get('/*', passport.authenticate('basic', {session: false}));

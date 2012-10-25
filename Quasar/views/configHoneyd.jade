@@ -415,23 +415,22 @@ block content
   table
     thead
       tr 
-        th Interfaces
     tbody
     - if(INTERFACES.length == 1)
       tr 
         td
           input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
-          #{INTERFACES[0]}
+          #{INTERFACES[0]} (Alias: #{interfaceAliases[0]})
     - else
       tr 
         td
           input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
-          #{INTERFACES[0]}
+          #{INTERFACES[0]} (Alias: #{interfaceAliases[0]})
       - for (var i = 1; i < INTERFACES.length; i++)
           tr 
             td
               input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne('if#{i}')")
-              #{INTERFACES[i]}
+              #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
   hidden(id="length", value=INTERFACES.length)
   br
   label IP Address Range Type

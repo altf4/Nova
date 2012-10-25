@@ -155,7 +155,6 @@ block content
   table
     thead
       tr 
-        th Interfaces
     tbody
     - if(INTERFACES.length == 1)
       tr 
@@ -168,10 +167,10 @@ block content
             td
               - if (String(interface) == String(INTERFACES[i]))
                 input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", checked, width=10, onclick="checkOnlyOne(if#{i})")
-                #{INTERFACES[i]}
+                #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
               - else
                 input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
-                #{INTERFACES[i]}
+                #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
 
   hidden(id="length", value=INTERFACES.length)
  
