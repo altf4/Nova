@@ -46,8 +46,6 @@ block headerAdditions
     
     function ClearScriptFromProfiles(scriptName)
     {
-      console.log('ClearScriptFromProfiles with ' + scriptName);
-      console.log('Clearing from profiles ' + scriptBindings[scriptName]);
       if(scriptBindings[scriptName] == undefined)
       {
         console.log('The script ' + scriptName + ' is not linked to any profiles');
@@ -59,14 +57,11 @@ block headerAdditions
         console.log('found onle one profile');
         profilesIter = scriptBindings[scriptName];
       }
-      for(var i in profilesIter)
-      {
-        console.log('profilesIter[' + i + '] == ' + profilesIter[i]);
-      }
       if(typeof now.RemoveScriptFromProfiles == 'function')
       {
-        console.log('calling everyone.now.RemoveScriptFromProfiles');
-        now.RemoveScriptFromProfiles(scriptName, profilesIter);
+        now.RemoveScriptFromProfiles(scriptName, profilesIter, function(){
+          location.reload(true);
+        });
       }
       else
       {
