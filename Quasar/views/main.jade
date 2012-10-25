@@ -166,7 +166,7 @@ block headerAdditions
     var SuspectCleared = function(suspect) {
         console.log("Cleared suspect ");
         console.log(suspect);
-        suspectGrid.DeleteRow(buildLink(suspect.ip, suspect.interface, suspect.idString));
+        suspectGrid.DeleteRow(buildLink(suspect.ip, suspect.interface));
         suspectGrid.Render();
         return;
     }
@@ -177,16 +177,16 @@ block headerAdditions
     
     function ClearSuspect(ip, interface, idString) {
         now.ClearSuspect(ip, interface);
-        suspectGrid.DeleteRow(buildLink(ip, interface, idString));
+        suspectGrid.DeleteRow(buildLink(ip, interface));
     }
 
     function MonitorSuspect(ip, interface, idString) {
         window.open("/monitor?ip=" + ip + "&interface=" + interface, 'Monitoring ' + ip);
     }
 
-    function buildLink(ip, interface, idString) {
+    function buildLink(ip, interface) {
       var res = "<a  href='javascript:void(0)' onclick='getSuspectDetails(";
-      res += '"' + ip + '","' + interface + "\\")'> " + idString + "</a>";
+      res += '"' + ip + '","' + interface + "\\")'> " + ip + "</a>";
       return res;
     }
 
@@ -216,7 +216,8 @@ block headerAdditions
         
       var ip = suspect.GetIpString;
     
-      var suspectLink = buildLink(ip, suspect.GetInterface, suspect.GetIdString);
+      var suspectLink = buildLink(ip, suspect.GetInterface);
+      row.push(String(suspect.GetInterface));
       row.push(String(suspectLink));
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));
@@ -388,6 +389,7 @@ block headerAdditions
         var enabledFeatures = "#{enabledFeatures}";
         var gridStructure = [];
         gridStructure.push({name: "Monitor"});
+        gridStructure.push({name: "Interface"});
         gridStructure.push({name: "Address"});
         gridStructure.push({name: "Classification", formatter: classificationFormatter});
         gridStructure.push({name: "Last Seen"});
@@ -399,10 +401,10 @@ block headerAdditions
         }
         gridStructure.push({name: "Clear"});
    
-        suspectGrid = new NovaGrid(gridStructure, 1, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
+        suspectGrid = new NovaGrid(gridStructure, 2, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
 
         // Sort by classification by default
-        suspectGrid.SetSortByKey(2);
+        suspectGrid.SetSortByKey(3);
         suspectGrid.SetRowsPerPage(100);
         suspectGrid.SetRenderCallback(onGridRendered);
 

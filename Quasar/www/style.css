@@ -24,7 +24,6 @@ input[type=button], input[type=submit], button, .button, .sideBarButton {
     font-size:13px;
     background-color: #E4F2FF;
     border: 1px solid #769DC0;
-    border-radius:4px;
     padding: 2px 4px 4px;
 	text-align: center;
 	text-decoration: none;

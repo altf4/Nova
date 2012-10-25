@@ -243,11 +243,12 @@ PushEntry: function (entry) {
       var idxStart = 0;
       var idxEnd = 0;
       var add = [];
-      var i = this.m_pageElements.length;
+      var i = this.m_pageElements.length - 1;
+
       if(this.m_selected.length == 1)
       {
-        do
-        {
+
+        for (var i = 0; i < this.m_pageElements.length; i++) {
           if(this.m_pageElements[i] == this.m_selected[0])
           {
             idxStart = i;
@@ -256,7 +257,7 @@ PushEntry: function (entry) {
           {
             idxEnd = i;
           }
-        }while((idxStart == 0 || idxEnd == 0) && i--);
+        }
         
         if(idxEnd < idxStart)
         {
@@ -264,7 +265,8 @@ PushEntry: function (entry) {
           idxEnd = idxStart;
           idxStart = temp;
         }
-        
+       
+        this.m_selected = [];
         for(var i = idxStart; i <= idxEnd; i++)
         {
           this.m_selected.push(this.m_pageElements[i]);
