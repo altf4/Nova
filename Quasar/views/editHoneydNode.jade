@@ -128,8 +128,8 @@ block headerAdditions
     require(["dojo/domReady!"],
     function(){
         now.ready( function() {
-            checkOnlyOne(if0);
             profileChanged();
+            console.log("Interface is #{interface}");
         });
     });
     
@@ -166,10 +166,10 @@ block content
       - for (var i = 0; i < INTERFACES.length; i++)
           tr 
             td
-	      - if ("#{interface}" == INTERFACES[i]) {
+              - if (String(interface) == String(INTERFACES[i]))
                 input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", checked, width=10, onclick="checkOnlyOne(if#{i})")
                 #{INTERFACES[i]}
-	      -else
+              - else
                 input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
                 #{INTERFACES[i]}
 
