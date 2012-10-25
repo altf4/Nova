@@ -1730,15 +1730,22 @@ app.get('/scripts', passport.authenticate('basic', {session: false}), function(r
   
   var nodesToParse = parser.root().childNodes();
 
-  var namesAndPaths = {};
+  var namesAndPaths = [];
   
   for(var i = 1; i < nodesToParse.length; i++)
   {
     if(nodesToParse[i].child(1) != null && nodesToParse[i].child(7) != null)
     {
-      namesAndPaths[nodesToParse[i].child(1).text()] = nodesToParse[i].child(7).text();
+      namesAndPaths.push({script: nodesToParse[i].child(1).text(), path: nodesToParse[i].child(7).text()});
     }
   }
+  
+  function cmp(a, b)
+  {
+    return a.script.localeCompare(b.script);
+  }
+  
+  namesAndPaths.sort(cmp);
   
   var scriptBindings = {};
   
@@ -2362,9 +2369,6 @@ everyone.now.RemoveScriptFromProfiles = function(script, profiles, callback) {
           {
             if(ports[j].scriptName == script)
             {
-              ports[j].scriptName = '';
-              ports[j].behavior = 'open';
-              ports[j].service = '';
               honeydConfig.RemoveScriptPort(ports[j].portName, profileName);
             }
           }

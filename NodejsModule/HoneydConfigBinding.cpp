@@ -269,7 +269,37 @@ Handle<Value> HoneydConfigBinding::RemoveScriptPort(const Arguments& args)
 	{
 		if(!string(temp[i].first).compare(portName))
 		{
-			obj->m_conf->m_profiles[profileName].m_ports.erase(obj->m_conf->m_profiles[profileName].m_ports.begin() + i);
+			string replacement = temp[i].first;
+			uint numIdx = replacement.find_first_of('_');
+			uint idx = replacement.find_last_of('_');
+			string num = replacement.substr(0, numIdx);
+			string type = replacement.substr(numIdx + 1, idx - 3);
+			replacement.replace(idx + 1, replacement.length(), "open");
+			if(!obj->m_conf->m_ports.keyExists(replacement))
+			{
+				Nova::Port add;
+				add.m_portName = replacement;
+				add.m_portNum = num;
+				add.m_type = type;
+				add.m_service = "";
+				add.m_behavior = "open";
+				add.m_scriptName = "";
+				obj->m_conf->m_ports[add.m_portName] = add;
+				pair<string, pair<bool, double> > pushPair;
+				pushPair.first = replacement;
+				pushPair.second.first = temp[i].second.first;
+				pushPair.second.second = temp[i].second.second;
+				obj->m_conf->m_profiles[profileName].m_ports.erase(obj->m_conf->m_profiles[profileName].m_ports.begin() + i);
+				obj->m_conf->m_profiles[profileName].m_ports.push_back(pushPair);
+				cout << "lastPort == " << obj->m_conf->m_profiles[profileName].m_ports[obj->m_conf->m_profiles[profileName].m_ports.size() - 1].first << endl;
+			}
+			else
+			{
+				pair<string, pair<bool, double> > changePort = obj->m_conf->m_profiles[profileName].m_ports[i];
+				changePort.first = replacement;
+				obj->m_conf->m_profiles[profileName].m_ports.erase(obj->m_conf->m_profiles[profileName].m_ports.begin() + i);
+				obj->m_conf->m_profiles[profileName].m_ports.push_back(changePort);
+			}
 			break;
 		}
 	}

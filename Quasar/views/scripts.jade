@@ -12,24 +12,24 @@ block headerAdditions
       {
         var disable = false;
         var tr = document.createElement('tr');
-        tr.id = i;
+        tr.id = scriptList[i].script;
         var td0 = document.createElement('td');
         var label0 = document.createElement('label');
-        label0.innerHTML = i;
+        label0.innerHTML = scriptList[i].script;
         var td1 = document.createElement('td');
         var label1 = document.createElement('label');
-        label1.innerHTML = (scriptBindings[i] != undefined ? scriptBindings[i] : 'Not assigned to any profiles');
-        if(label1.innerHTML !== scriptBindings[i])
+        label1.innerHTML = (scriptBindings[scriptList[i].script] != undefined ? scriptBindings[scriptList[i].script] : 'Not assigned to any profiles');
+        if(label1.innerHTML !== scriptBindings[scriptList[i].script])
         {
           disable = true;
         }
         var td2 = document.createElement('td');
         var label2 = document.createElement('label');
-        label2.innerHTML = scriptList[i];
+        label2.innerHTML = scriptList[i].path;
         var td3 = document.createElement('td');
         var clearButton = document.createElement('button');
         clearButton.innerHTML = 'Clear Profiles';
-        clearButton.setAttribute('onclick', 'ClearScriptFromProfiles("' + i + '")');
+        clearButton.setAttribute('onclick', 'ClearScriptFromProfiles("' + scriptList[i].script + '")');
         clearButton.disabled = disable;
         
         td0.appendChild(label0);
@@ -54,7 +54,7 @@ block headerAdditions
       var profilesIter = scriptBindings[scriptName].split(',');
       if(profilesIter == '' || profilesIter == undefined || profilesIter == null)
       {
-        console.log('found onle one profile');
+        console.log('found only one profile');
         profilesIter = scriptBindings[scriptName];
       }
       if(typeof now.RemoveScriptFromProfiles == 'function')
@@ -81,8 +81,11 @@ block headerAdditions
 
 block content
   h1 Honeyd Scripts
-  p Path is relative to /usr/share/honeyd
+  
+  button(id='addScript', onclick='addScript()') Add New Honeyd Script
   br
+  br
+  
   table(border='1', style='border: solid black 2px;')
     thead
       tr
@@ -91,5 +94,3 @@ block content
         th(style='background-color: #d0e9fc;') Path And Parameters
     tbody#addAnchor
   br
-  h2 Add New Honeyd Script
-  button(id='addScript', onclick='addScript()') Add Script
