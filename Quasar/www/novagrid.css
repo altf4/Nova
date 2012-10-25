@@ -3,6 +3,10 @@
 	border-collapse:collapse;
 }
 
+table.novaGrid {
+	border: 1px solid black;
+}
+
 td.novaGrid
 {
 	font-size:1em;
