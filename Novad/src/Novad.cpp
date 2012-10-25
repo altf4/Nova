@@ -103,9 +103,6 @@ pthread_t ipUpdateThread;
 pthread_t ipWhitelistUpdateThread;
 pthread_t consumer;
 
-typedef HashMap<uint32_t, uint32_t, std::hash<uint32_t>, eqkey> LocalIPTable;
-LocalIPTable localIPs;
-
 namespace Nova
 {
 
@@ -142,8 +139,6 @@ int RunNovaD()
 	signal(SIGINT, SaveAndExit);
 	signal(SIGTERM, SaveAndExit);
 	signal(SIGPIPE, SIG_IGN);
-
-	localIPs.set_empty_key(0);
 
 	lastLoadTime = lastSaveTime = startTime = time(NULL);
 	if(lastLoadTime == ((time_t)-1))
@@ -484,12 +479,6 @@ void StartCapture()
 			cap->SetIdIndex(packetCaptures.size());
 			packetCaptures.push_back(cap);
 
-			vector<string> ips = Config::GetIpAddresses(ipAddressFile);
-			for (uint i = 0; i < ips.size(); i++)
-			{
-				localIPs[inet_addr(ips.at(i).c_str())] = 0;
-			}
-
 			cap->StartCaptureBlocking();
 
 			LOG(DEBUG, "Done reading PCAP file. Processing...", "");
@@ -513,17 +502,6 @@ void StartCapture()
 		for(uint i = 0; i < ifList.size(); i++)
 		{
 			dropCounts.push_back(0);
-			string ipAddr = GetLocalIP(ifList.back().c_str());
-			struct in_addr tempAddr;
-			inet_aton(ipAddr.c_str(), &tempAddr);
-			if (tempAddr.s_addr != 0)
-			{
-				localIPs[tempAddr.s_addr] = 0;
-			}
-			string temp = captureFilterString;
-			temp.append(" || ");
-			temp.append(ipAddr);
-
 			InterfacePacketCapture *cap = new InterfacePacketCapture(ifList[i].c_str());
 
 			try {
