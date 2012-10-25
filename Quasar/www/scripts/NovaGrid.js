@@ -21,6 +21,7 @@
 //     Each should contain a "name" attribute and optionally a "formatter"
 //   keyIndex: index of column used as a UID for a row
 //   tableElement: DOM object of the <table> 
+//   selection: boolean. Enable or disable the ability to select table rows
 var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection) {
 	this.m_columns = columns;
 	this.m_keyIndex = keyIndex;

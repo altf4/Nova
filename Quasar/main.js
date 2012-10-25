@@ -73,6 +73,8 @@ var honeydLog = new Tail(honeydLogPath);
 var benignRequest = false;
 var pulsar;
 
+var interfaceAliases = new Object();
+
 var RenderError = function (res, err, link) {
 	// Redirect them to the main page if no link was set
 	link = typeof link !== 'undefined' ? link : "/";
@@ -1305,6 +1307,16 @@ app.get("/editTLSCerts", passport.authenticate('basic', {session: false}), funct
 	res.render('editTLSCerts.jade');	
 });
 
+app.get("/interfaceAliases", passport.authenticate('basic', {session: false}), function (reg, res) {
+    ReloadInterfaceAliasFile();
+	res.render('interfaceAliases.jade', {
+        locals: {
+            interfaceAliases: interfaceAliases
+			, INTERFACES: config.ListInterfaces().sort(),
+        }
+    });
+});
+
 app.post("/editTLSCerts", passport.authenticate('basic', {session: false}), function (req, res) {
 	if (req.files["cert"] == undefined || req.files["key"] == undefined) {
 		RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.");
@@ -2528,6 +2540,50 @@ function getRsyslogIp()
   }  
   
   return ret;
+}
+
+everyone.now.AddInterfaceAlias = function(iface, alias, callback) {
+    if (alias != "") {
+        interfaceAliases[iface] = alias;
+    } else {
+        delete interfaceAliases[iface];
+    }
+
+    var fileString = JSON.stringify(interfaceAliases);
+    fs.writeFile(NovaHomePath + "/config/interface_aliases.txt", fileString, callback);
+}
+
+function ReloadInterfaceAliasFile() {
+	var aliasFileData = fs.readFileSync(NovaHomePath + "/config/interface_aliases.txt");
+	interfaceAliases = JSON.parse(aliasFileData);
+}
+
+function ConvertInterfacesToAliases(interfaces) {
+	var aliases = new Array();
+	for (var interface in interfaces) {
+		if (interfaceAliases[interface] !== undefined) {
+			aliases.push(interfaceAliases[interface]);
+		} else {
+			aliases.push(interface);	
+		}
+	}
+
+	return aliases;
+}
+
+function ConvertAliasesToInterfaces(aliases) {
+	var interfaces = new Array();
+
+	for (var alias in aliases) {
+		for (interface in interfaceAliases) {
+			if (alias == interfaceAliases[interface]) {
+				interfaces.push(interface);
+				break;
+			}
+		}
+	}
+
+	return interfaces;
 }
 
 app.get('/*', passport.authenticate('basic', {session: false}));
