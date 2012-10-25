@@ -42,19 +42,26 @@ using boost::property_tree::xml_parser::trim_whitespace;
 namespace Nova
 {
 
+HoneydConfiguration *HoneydConfiguration::m_instance = NULL;
+
+HoneydConfiguration *HoneydConfiguration::Inst()
+{
+	if(m_instance == NULL)
+	{
+		m_instance = new HoneydConfiguration();
+	}
+	return m_instance;
+}
+
 //Basic constructor for the Honeyd Configuration object
 // Initializes the MAC vendor database and hash tables
 // *Note: To populate the object from the file system you must call LoadAllTemplates();
 HoneydConfiguration::HoneydConfiguration()
 {
 	m_macAddresses.LoadPrefixFile();
-	m_ports.set_empty_key("");
 	m_nodes.set_empty_key("");
-	m_profiles.set_empty_key("");
 	m_scripts.set_empty_key("");
 	m_nodes.set_deleted_key("Deleted");
-	m_profiles.set_deleted_key("Deleted");
-	m_ports.set_deleted_key("Deleted");
 	m_scripts.set_deleted_key("Deleted");
 }
 
@@ -64,8 +71,6 @@ HoneydConfiguration::HoneydConfiguration()
 bool HoneydConfiguration::LoadAllTemplates()
 {
 	m_scripts.clear_no_resize();
-	m_ports.clear_no_resize();
-	m_profiles.clear_no_resize();
 	m_nodes.clear_no_resize();
 
 	if(!LoadScriptsTemplate())
@@ -99,6 +104,55 @@ bool HoneydConfiguration::LoadAllTemplates()
 /************************************************
   Save Honeyd XML Configuration Functions
  ************************************************/
+
+bool HoneydConfiguration::WritePortsToXML(PersonalityTreeItem *root)
+{
+	if(root == NULL)
+	{
+		return false;
+	}
+
+	//Depth first traversal of the tree
+	for(uint i = 0; i < root->m_children.size(); i++)
+	{
+		WritePortsToXML(root->m_children[i]);
+	}
+
+	//For each PortSet
+	for(uint i = 0; i < root->m_portSets.size(); i++)
+	{
+		//Make a sub-tree for the PortSet
+		ptree portSetptree;
+
+		portSetptree.put<string>("name", root->m_portSets[i]->m_name);
+
+		//Default port behaviors
+		portSetptree.put<string>("defaultTCPBehavior", root->m_portSets[i]->m_defaultTCPBehavior);
+		portSetptree.put<string>("defaultUDPBehavior", root->m_portSets[i]->m_defaultUDPBehavior);
+		portSetptree.put<string>("defaultICMPBehavior", root->m_portSets[i]->m_defaultICMPBehavior);
+
+		//Foreach TCP exception
+		for(uint j = 0; j < root->m_portSets[i]->m_TCPexceptions.size(); j++)
+		{
+			//Make a sub-tree for this Port
+			ptree portPtree;
+
+		}
+
+		//Foreach UDP exception
+		for(uint j = 0; j < root->m_portSets[i]->m_UDPexceptions.size(); j++)
+		{
+			//Make a sub-tree for this Port
+			ptree portPtree;
+		}
+
+
+		portSetptree.put<string>("service", root->m_portSets[i]);
+		portSetptree.put<string>("osclass", it->second.m_osclass);
+		propTree.put<string>("path", it->second.m_path);
+		m_portTree.add_child("ports.portset", propTree);
+	}
+}
 
 //This function takes the current values in the HoneydConfiguration and Config objects
 // 		and translates them into an xml format for persistent storage that can be
@@ -142,13 +196,6 @@ bool HoneydConfiguration::SaveAllTemplates()
 		if(!it->second.m_behavior.compare("script") || !it->second.m_behavior.compare("tarpit script") || !it->second.m_behavior.compare("internal"))
 		{
 			propTree.put<string>("script", it->second.m_scriptName);
-		}
-
-		//If the port works as a proxy, save destination
-		else if(!it->second.m_behavior.compare("proxy"))
-		{
-			propTree.put<string>("IP", it->second.m_proxyIP);
-			propTree.put<string>("Port", it->second.m_proxyPort);
 		}
 		//Add the child to the tree
 		m_portTree.add_child("ports.port", propTree);
@@ -328,7 +375,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 				//Only write out ports that aren't inherited from parent profiles
 				if(!it->second.m_isPortInherited[i])
 				{
-					Port prt = m_ports[it->second.m_ports[i]];
+					PortStruct prt = m_ports[it->second.m_ports[i]];
 					//Skip past invalid port objects
 					if(!(prt.m_type.compare("")) || !(prt.m_portNum.compare("")) || !(prt.m_behavior.compare("")))
 					{
@@ -425,6 +472,199 @@ int HoneydConfiguration::GetMaskBits(in_addr_t mask)
 	return i;
 }
 
+bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, string macAddress,
+		string interface, PortSet *portSet)
+{
+	Node newNode;
+	uint macPrefix = m_macAddresses.AtoMACPrefix(macAddress);
+	string vendor = m_macAddresses.LookupVendor(macPrefix);
+
+	//Finish populating the node
+	newNode.m_interface = interface;
+	newNode.m_pfile = profileName;
+	newNode.m_enabled = true;
+
+	//Check the IP  and MAC address
+	if(ipAddress.compare("DHCP"))
+	{
+		//Lookup the mac vendor to assert a valid mac
+		if(!m_macAddresses.IsVendorValid(vendor))
+		{
+			LOG(WARNING, "Invalid MAC string '" + macAddress + "' given!", "");
+		}
+
+		uint retVal = inet_addr(ipAddress.c_str());
+		if(retVal == INADDR_NONE)
+		{
+			LOG(ERROR, "Invalid node IP address '" + ipAddress + "' given!", "");
+			return false;
+		}
+		newNode.m_realIP = htonl(retVal);
+	}
+
+	//Get the name after assigning the values
+	newNode.m_MAC = macAddress;
+	newNode.m_IP = ipAddress;
+	newNode.m_name = newNode.m_IP + " - " + newNode.m_MAC;
+
+	//Make sure we have a unique identifier
+	uint j = ~0;
+	stringstream ss;
+	if(!newNode.m_name.compare("DHCP - RANDOM"))
+	{
+		uint i = 1;
+		while((m_nodes.keyExists(newNode.m_name)) && (i < j))
+		{
+			i++;
+			ss.str("");
+			ss << "DHCP - RANDOM(" << i << ")";
+			newNode.m_name = ss.str();
+		}
+	}
+	if(m_nodes.keyExists(newNode.m_name))
+	{
+		LOG(ERROR, "Unable to generate valid identifier for new node!", "");
+		return false;
+	}
+
+	//Check for a valid interface
+	vector<string> interfaces = Config::Inst()->GetInterfaces();
+	if(interfaces.empty())
+	{
+		LOG(ERROR, "No interfaces specified for node creation!", "");
+		return false;
+	}
+	//Iterate over the interface list and try to find one.
+	for(uint i = 0; i < interfaces.size(); i++)
+	{
+		if(!interfaces[i].compare(newNode.m_interface))
+		{
+			break;
+		}
+		else if((i + 1) == interfaces.size())
+		{
+			LOG(WARNING, "No interface '" + newNode.m_interface + "' detected! Using interface '" + interfaces[0] + "' instead.", "");
+			newNode.m_interface = interfaces[0];
+		}
+	}
+
+	//Check validity of NodeProfile
+	NodeProfile *p = &m_profiles[profileName];
+	if(p == NULL)
+	{
+		LOG(ERROR, "Unable to find expected NodeProfile '" + profileName + "'.", "");
+		return false;
+	}
+
+	//Add ports to the NodeProfile
+	if(portSet != NULL)
+	{
+		for(uint i = 0; i < portSet->m_TCPexceptions.size(); i++)
+		{
+			newNode.m_ports.push_back(portSet->m_TCPexceptions[i].m_name);
+			newNode.m_isPortInherited.push_back(false);
+		}
+		for(uint i = 0; i < portSet->m_UDPexceptions.size(); i++)
+		{
+			newNode.m_ports.push_back(p->m_ports[i].first);
+			newNode.m_isPortInherited.push_back(false);
+		}
+	}
+
+	//Assign all the values
+	p->m_nodeKeys.push_back(newNode.m_name);
+	m_nodes[newNode.m_name] = newNode;
+
+	LOG(DEBUG, "Added new node '" + newNode.m_name + "'.", "");
+
+	return true;
+}
+
+//This function allows easy access to all profiles
+// Returns a vector of strings containing the names of all profiles
+vector<string> HoneydConfiguration::GetProfileNames()
+{
+	vector<string> childProfiles;
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		childProfiles.push_back(it->first);
+	}
+	return childProfiles;
+}
+
+//This function allows easy access to all nodes
+// Returns a vector of strings containing the names of all nodes
+vector<string> HoneydConfiguration::GetNodeNames()
+{
+	vector<string> nodeNames;
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		nodeNames.push_back(it->second.m_name);
+	}
+	return nodeNames;
+}
+
+//This function allows easy access to all scripts
+// Returns a vector of strings containing the names of all scripts
+vector<string> HoneydConfiguration::GetScriptNames()
+{
+	vector<string> scriptNames;
+	for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
+	{
+		scriptNames.push_back(it->first);
+	}
+	return scriptNames;
+}
+
+//This function allows easy access to all generated profiles
+// Returns a vector of strings containing the names of all generated profiles
+// *Note: Used by auto configuration? may not be needed.
+vector<string> HoneydConfiguration::GetGeneratedProfileNames()//XXX Needed?
+{
+	vector<string> childProfiles;
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		if(it->second.m_generated && !it->second.m_personality.empty() && !it->second.m_ethernetVendors.empty())
+		{
+			childProfiles.push_back(it->first);
+		}
+	}
+	return childProfiles;
+}
+
+//This function allows easy access to debug strings of all generated profiles
+// Returns a vector of strings containing debug outputs of all generated profiles
+vector<string> HoneydConfiguration::GeneratedProfilesStrings()//XXX Needed?
+{
+	vector<string> returnVector;
+	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	{
+		if(it->second.m_generated)
+		{
+			stringstream currentProfileStream;
+			currentProfileStream << "Name: " << it->second.m_name << "\n";
+			currentProfileStream << "Personality: " << it->second.m_personality << "\n";
+			for(uint i = 0; i < it->second.m_ethernetVendors.size(); i++)
+			{
+				currentProfileStream << "MAC Vendor:  " << it->second.m_ethernetVendors[i].first << " - " << it->second.m_ethernetVendors[i].second <<"% \n";
+			}
+			currentProfileStream << "Associated Nodes:\n";
+			for(uint i = 0; i < it->second.m_nodeKeys.size(); i++)
+			{
+				currentProfileStream << "\t" << it->second.m_nodeKeys[i] << "\n";
+
+				for(uint j = 0; j < m_nodes[it->second.m_nodeKeys[i]].m_ports.size(); j++)
+				{
+					currentProfileStream << "\t\t" << m_nodes[it->second.m_nodeKeys[i]].m_ports[j];
+				}
+			}
+			returnVector.push_back(currentProfileStream.str());
+		}
+	}
+	return returnVector;
+}
+
+
 //Outputs the NodeProfile in a string formate suitable for use in the Honeyd configuration file.
 // p: pointer to the profile you wish to create a Honeyd template for
 // Returns a string for direct inserting into a honeyd configuration file or an empty string if it fails.
@@ -519,7 +759,7 @@ string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
 		// Only include non-inherited ports
 		if(!p->m_ports[i].second.first)
 		{
-			Port *portPtr = &m_ports[p->m_ports[i].first];
+			PortStruct *portPtr = &m_ports[p->m_ports[i].first];
 			if(portPtr == NULL)
 			{
 				LOG(ERROR, "Unable to retrieve expected port '" + p->m_ports[i].first + "'!", "");
@@ -556,448 +796,32 @@ string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
 	return out.str();
 }
 
-//Adds a port with the specified configuration into the port table
-//	portNum: Must be a valid port number (1-65535)
-//	isTCP: if true the port uses TCP, if false it uses UDP
-//	behavior: how this port treats incoming connections
-//	scriptName: this parameter is only used if behavior == SCRIPT, in which case it designates
-//		the key of the script it can lookup and execute for incoming connections on the port
-//	Note(s): If CleanPorts is called before using this port in a profile, it will be deleted
-//			If using a script it must exist in the script table before calling this function
-//Returns: the port name if successful and an empty string if unsuccessful
-string HoneydConfiguration::AddPort(uint16_t portNum, portProtocol isTCP, portBehavior behavior, string scriptName, string service)
+//Makes the profile named child inherit the profile named parent
+// child: the name of the child profile
+// parent: the name of the parent profile
+// Returns: (true) if successful, (false) if either name could not be found
+bool HoneydConfiguration::InheritProfile(string child, string parent)
 {
-	Port pr;
-
-	//Check the validity and assign the port number
-	if(!portNum)
+	//If the child can be found
+	if(m_profiles.keyExists(child))
 	{
-		LOG(ERROR, "Cannot create port: Port Number of 0 is Invalid.", "");
-		return string("");
-	}
-
-	stringstream ss;
-	ss << portNum;
-	pr.m_portNum = ss.str();
-
-	//Assign the port type (UDP or TCP)
-	if(isTCP)
-	{
-		pr.m_type = "TCP";
-	}
-	else
-	{
-		pr.m_type = "UDP";
-	}
-
-	//Check and assign the port behavior
-	switch(behavior)
-	{
-		case BLOCK:
+		//If the new parent can be found
+		if(m_profiles.keyExists(parent))
 		{
-			pr.m_behavior = "block";
-			break;
-		}
-		case OPEN:
-		{
-			pr.m_behavior = "open";
-			break;
-		}
-		case RESET:
-		{
-			pr.m_behavior = "reset";
-			break;
-		}
-		case SCRIPT:
-		{
-			//If the script does not exist
-			if(m_scripts.find(scriptName) == m_scripts.end())
+			string oldParent = m_profiles[child].m_parentProfile;
+			m_profiles[child].m_parentProfile = parent;
+			//If the child has an old parent
+			if((oldParent.compare("")) && (m_profiles.keyExists(oldParent)))
 			{
-				LOG(ERROR, "Cannot create port: specified script " + scriptName + " does not exist.", "");
-				return "";
+				UpdateProfileTree(oldParent, ALL);
 			}
-			pr.m_behavior = "script";
-			pr.m_scriptName = scriptName;
-			break;
-		}
-		case TARPIT_OPEN:
-		{
-			pr.m_behavior = "tarpit open";
-			break;
-		}
-		case TARPIT_SCRIPT:
-		{
-			//If the script does not exist
-			if(m_scripts.find(scriptName) == m_scripts.end())
-			{
-				LOG(ERROR, "Cannot create port: specified script " + scriptName + " does not exist.", "");
-				return "";
-			}
-			pr.m_behavior = "tarpit script";
-			pr.m_scriptName = scriptName;
-			break;
-		}
-		default:
-		{
-			LOG(ERROR, "Cannot create port: Attempting to use unknown port behavior", "");
-			return string("");
+			//Updates the child with the new inheritance and any modified values since last update
+			CreateProfileTree(child);
+			UpdateProfileTree(child, ALL);
+			return true;
 		}
 	}
-
-	pr.m_service = service;
-
-	//	Creates the ports unique identifier these names won't collide unless the port is the same
-	if(!pr.m_behavior.compare("script"))
-	{
-		pr.m_portName = pr.m_portNum + "_" + pr.m_type + "_" + pr.m_behavior + "_" + pr.m_scriptName;
-	}
-	else
-	{
-		pr.m_portName = pr.m_portNum + "_" + pr.m_type + "_" + pr.m_behavior;
-	}
-
-	//Checks if the port already exists
-	if(m_ports.find(pr.m_portName) != m_ports.end())
-	{
-		LOG(WARNING, "Cannot create port: Specified port " + pr.m_portName + " already exists.", "");
-		return pr.m_portName;
-	}
-
-	//Adds the port into the table
-	m_ports[pr.m_portName] = pr;
-	return pr.m_portName;
-}
-
-//This function inserts a pre-created port into the HoneydConfiguration object
-//	pr: Port object you wish to add into the table
-//	Returns a string containing the name of the port or an empty string if it fails
-string HoneydConfiguration::AddPort(Port pr)
-{
-	if (!pr.m_portName.compare(""))
-	{
-		LOG(ERROR, "Unable to add port with empty port name!", "");
-		return "";
-	}
-
-	if (!pr.m_portNum.compare(""))
-	{
-		LOG(ERROR, "Unable to add port with empty port number!", "");
-		return "";
-	}
-
-	if(m_ports.find(pr.m_portName) != m_ports.end())
-	{
-		return pr.m_portName;
-	}
-	m_ports[pr.m_portName] = pr;
-	return pr.m_portName;
-}
-
-//This function creates a new Honeyd node based on the parameters given
-//	profileName: name of the existing NodeProfile the node should use
-//	ipAddress: string form of the IP address or the string "DHCP" if it should acquire an address using DHCP
-//	macAddress: string form of a MAC address or the string "RANDOM" if one should be generated each time Honeyd is run
-//	interface: the name of the physical or virtual interface the Honeyd node should be deployed on.
-//	subnet: the name of the subnet object the node is associated with for organizational reasons.
-//	Returns true if successful and false if not
-bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, string macAddress, string interface, string subnet)
-{
-	Node newNode;
-	uint macPrefix = m_macAddresses.AtoMACPrefix(macAddress);
-	string vendor = m_macAddresses.LookupVendor(macPrefix);
-
-	//Finish populating the node
-	newNode.m_interface = interface;
-	newNode.m_pfile = profileName;
-	newNode.m_enabled = true;
-
-	//Check the IP  and MAC address
-	if(ipAddress.compare("DHCP"))
-	{
-		//Lookup the mac vendor to assert a valid mac
-		if(!m_macAddresses.IsVendorValid(vendor))
-		{
-			LOG(WARNING, "Invalid MAC string '" + macAddress + "' given!", "");
-		}
-
-		uint retVal = inet_addr(ipAddress.c_str());
-		if(retVal == INADDR_NONE)
-		{
-			LOG(ERROR, "Invalid node IP address '" + ipAddress + "' given!", "");
-			return false;
-		}
-		newNode.m_realIP = htonl(retVal);
-	}
-
-	//Get the name after assigning the values
-	newNode.m_MAC = macAddress;
-	newNode.m_IP = ipAddress;
-	newNode.m_name = newNode.m_IP + " - " + newNode.m_MAC;
-
-	//Make sure we have a unique identifier
-	uint j = ~0;
-	stringstream ss;
-	if(!newNode.m_name.compare("DHCP - RANDOM"))
-	{
-		uint i = 1;
-		while((m_nodes.keyExists(newNode.m_name)) && (i < j))
-		{
-			i++;
-			ss.str("");
-			ss << "DHCP - RANDOM(" << i << ")";
-			newNode.m_name = ss.str();
-		}
-	}
-	if(m_nodes.keyExists(newNode.m_name))
-	{
-		LOG(ERROR, "Unable to generate valid identifier for new node!", "");
-		return false;
-	}
-
-	//Check for a valid interface
-	vector<string> interfaces = Config::Inst()->GetInterfaces();
-	if(interfaces.empty())
-	{
-		LOG(ERROR, "No interfaces specified for node creation!", "");
-		return false;
-	}
-	//Iterate over the interface list and try to find one.
-	for(uint i = 0; i < interfaces.size(); i++)
-	{
-		if(!interfaces[i].compare(newNode.m_interface))
-		{
-			break;
-		}
-		else if((i + 1) == interfaces.size())
-		{
-			LOG(WARNING, "No interface '" + newNode.m_interface + "' detected! Using interface '" + interfaces[0] + "' instead.", "");
-			newNode.m_interface = interfaces[0];
-		}
-	}
-
-	//Check validity of NodeProfile
-	NodeProfile *p = &m_profiles[profileName];
-	if(p == NULL)
-	{
-		LOG(ERROR, "Unable to find expected NodeProfile '" + profileName + "'.", "");
-		return false;
-	}
-
-	//Assign Ports
-	for(uint i = 0; i < p->m_ports.size(); i++)
-	{
-		newNode.m_ports.push_back(p->m_ports[i].first);
-		newNode.m_isPortInherited.push_back(false);
-	}
-
-	//Assign all the values
-	p->m_nodeKeys.push_back(newNode.m_name);
-	m_nodes[newNode.m_name] = newNode;
-
-	LOG(DEBUG, "Added new node '" + newNode.m_name + "'.", "");
-
-	return true;
-}
-
-//This function adds a new node to the configuration based on the existing node.
-// Note* this function does not perform robust validation and is used primarily by the NodeManager,
-//	avoid using this otherwise
-bool HoneydConfiguration::AddPreGeneratedNode(Node &newNode)
-{
-	if(m_nodes.keyExists(newNode.m_name))
-	{
-		LOG(WARNING, "Node with name '" + newNode.m_name + "' already exists!", "");
-		return true;
-	}
-
-	NodeProfile *profPtr = &m_profiles[newNode.m_pfile];
-	if(profPtr == NULL)
-	{
-		LOG(ERROR, "Unable to locate expected profile '" + newNode.m_pfile + "'.", "");
-		return false;
-	}
-
-	profPtr->m_nodeKeys.push_back(newNode.m_name);
-	m_nodes[newNode.m_name] = newNode;
-
-	LOG(DEBUG, "Added new node '" + newNode.m_name + "'.", "");
-	return true;
-}
-
-//This function allows us to add many nodes of the same type easily
-bool HoneydConfiguration::AddNewNodes(string profileName, string ipAddress, string interface, string subnet, int numberOfNodes)
-{
-	NodeProfile *profPtr = &m_profiles[profileName];
-	if(profPtr == NULL)
-	{
-		LOG(ERROR, "Unable to find valid profile named '" + profileName + "' during node creation!", "");
-		return false;
-	}
-
-	if(numberOfNodes <= 0)
-	{
-		LOG(ERROR, "Must create 1 or more nodes", "");
-		return false;
-	}
-
-	//Choose most highly distributed mac vendor or RANDOM
-	uint max = 0;
-	string macAddressPass = "RANDOM";
-	string macVendor = "";
-	for(unsigned int i = 0; i < profPtr->m_ethernetVendors.size(); i++)
-	{
-		if(profPtr->m_ethernetVendors[i].second > max)
-		{
-			max = profPtr->m_ethernetVendors[i].second;
-			macVendor = profPtr->m_ethernetVendors[i].first;
-			macAddressPass = m_macAddresses.GenerateRandomMAC(macVendor);
-		}
-	}
-	if(macVendor.compare("RANDOM") && !m_macAddresses.IsVendorValid(macVendor))
-	{
-		LOG(WARNING, "Unable to resolve profile MAC vendor '" + macVendor + "', using RANDOM instead.", "");
-		macVendor = "RANDOM";
-		macAddressPass = "RANDOM";
-	}
-
-	//Add nodes in the DHCP case
-	if(!ipAddress.compare("DHCP"))
-	{
-		for(int i = 0; i < numberOfNodes; i++)
-		{
-			macAddressPass = m_macAddresses.GenerateRandomMAC(macVendor);
-			if(!AddNewNode(profileName, ipAddress, macAddressPass, interface, subnet))
-			{
-				LOG(ERROR, "Adding new nodes failed during node creation!", "");
-				return false;
-			}
-		}
-		return true;
-	}
-
-	//Check the starting ipaddress
-	in_addr_t sAddr = inet_addr(ipAddress.c_str());
-	if(sAddr == INADDR_NONE)
-	{
-		LOG(ERROR,"Invalid IP Address given!", "");
-	}
-
-	//Add nodes in the statically addressed case
-	sAddr = ntohl(sAddr);
-	//Removes un-init compiler warning given for in_addr currentAddr;
-	in_addr currentAddr = *(in_addr *)&sAddr;
-
-	for(int i = 0; i < numberOfNodes; i++)
-	{
-		currentAddr.s_addr = htonl(sAddr);
-		macAddressPass = m_macAddresses.GenerateRandomMAC(macVendor);
-		if(!AddNewNode(profileName, string(inet_ntoa(currentAddr)), macAddressPass, interface, subnet))
-		{
-			LOG(ERROR, "Adding new nodes failed during node creation!", "");
-			return false;
-		}
-		sAddr++;
-	}
-	return true;
-}
-
-//This function allows easy access to all children profiles of the parent
-// Returns a vector of strings containing the names of the children profile
-vector<string> HoneydConfiguration::GetProfileChildren(string parent)
-{
-	vector<string> childProfiles;
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-	{
-		if(!it->second.m_parentProfile.compare(parent))
-		{
-			childProfiles.push_back(it->second.m_name);
-		}
-	}
-	return childProfiles;
-}
-
-//This function allows easy access to all profiles
-// Returns a vector of strings containing the names of all profiles
-vector<string> HoneydConfiguration::GetProfileNames()
-{
-	vector<string> childProfiles;
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-	{
-		childProfiles.push_back(it->first);
-	}
-	return childProfiles;
-}
-
-//This function allows easy access to all nodes
-// Returns a vector of strings containing the names of all nodes
-vector<string> HoneydConfiguration::GetNodeNames()
-{
-	vector<string> nodeNames;
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		nodeNames.push_back(it->second.m_name);
-	}
-	return nodeNames;
-}
-
-//This function allows easy access to all scripts
-// Returns a vector of strings containing the names of all scripts
-vector<string> HoneydConfiguration::GetScriptNames()
-{
-	vector<string> scriptNames;
-	for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
-	{
-		scriptNames.push_back(it->first);
-	}
-	return scriptNames;
-}
-
-//This function allows easy access to all generated profiles
-// Returns a vector of strings containing the names of all generated profiles
-// *Note: Used by auto configuration? may not be needed.
-vector<string> HoneydConfiguration::GetGeneratedProfileNames()//XXX Needed?
-{
-	vector<string> childProfiles;
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-	{
-		if(it->second.m_generated && !it->second.m_personality.empty() && !it->second.m_ethernetVendors.empty())
-		{
-			childProfiles.push_back(it->first);
-		}
-	}
-	return childProfiles;
-}
-
-//This function allows easy access to debug strings of all generated profiles
-// Returns a vector of strings containing debug outputs of all generated profiles
-vector<string> HoneydConfiguration::GeneratedProfilesStrings()//XXX Needed?
-{
-	vector<string> returnVector;
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-	{
-		if(it->second.m_generated)
-		{
-			stringstream currentProfileStream;
-			currentProfileStream << "Name: " << it->second.m_name << "\n";
-			currentProfileStream << "Personality: " << it->second.m_personality << "\n";
-			for(uint i = 0; i < it->second.m_ethernetVendors.size(); i++)
-			{
-				currentProfileStream << "MAC Vendor:  " << it->second.m_ethernetVendors[i].first << " - " << it->second.m_ethernetVendors[i].second <<"% \n";
-			}
-			currentProfileStream << "Associated Nodes:\n";
-			for(uint i = 0; i < it->second.m_nodeKeys.size(); i++)
-			{
-				currentProfileStream << "\t" << it->second.m_nodeKeys[i] << "\n";
-
-				for(uint j = 0; j < m_nodes[it->second.m_nodeKeys[i]].m_ports.size(); j++)
-				{
-					currentProfileStream << "\t\t" << m_nodes[it->second.m_nodeKeys[i]].m_ports[j];
-				}
-			}
-			returnVector.push_back(currentProfileStream.str());
-		}
-	}
-	return returnVector;
+	return false;
 }
 
 //This function determines whether or not the given profile is empty
@@ -1045,20 +869,6 @@ NodeProfile *HoneydConfiguration::GetProfile(string profileName)
 	return NULL;
 }
 
-//This function allows access to Port objects by their name
-// portName: the name or key of the Port
-// Returns a pointer to the Port object or NULL if the key doesn't exist
-Port HoneydConfiguration::GetPort(string portName)
-{
-	if(m_ports.keyExists(portName))
-	{
-		return m_ports[portName];
-	}
-
-	Port p;
-	return p;
-}
-
 //This function allows the caller to find out if the given MAC string is taken by a node
 // mac: the string representation of the MAC address
 // Returns true if the MAC is in use and false if it is not.
@@ -1072,154 +882,6 @@ bool HoneydConfiguration::IsMACUsed(string mac)
 			return true;
 		}
 	}
-	return false;
-}
-
-//This function allows the caller to find out if the given IP string is taken by a node
-// ip: the string representation of the IP address
-// Returns true if the IP is in use and false if it is not.
-// *Note this function may have poor performance when there are a large number of nodes
-bool HoneydConfiguration::IsIPUsed(string ip)
-{
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		if(!it->second.m_IP.compare(ip) && it->second.m_name.compare(ip))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-//This function allows the caller to find out if the given profile is being used by a node
-// profileName: the name or key of the profile
-// Returns true if the profile is in use and false if it is not.
-// *Note this function may have poor performance when there are a large number of nodes
-// TODO - change this to check the m_nodeKeys vector in the NodeProfile objects to avoid table iteration
-bool HoneydConfiguration::IsProfileUsed(string profileName)
-{
-	//Find out if any nodes use this profile
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		//if we find a node using this profile
-		if(!it->second.m_pfile.compare(profileName))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-//This function generates a MAC address that is currently not in use by any other node
-// vendor: string name of the MAC vendor from which to choose a MAC range from
-// Returns a string representation of MAC address or an empty string if the vendor is not valid
-string HoneydConfiguration::GenerateUniqueMACAddress(string vendor)
-{
-	if(!m_macAddresses.IsVendorValid(vendor))
-	{
-		LOG(ERROR, "Unable to generate MAC address because vendor '" + vendor + "' is not a valid key.", "");
-		return "";
-	}
-	string macAddress = m_macAddresses.GenerateRandomMAC(vendor);
-	while(IsMACUsed(macAddress))
-	{
-		macAddress = m_macAddresses.GenerateRandomMAC(vendor);
-	}
-	return macAddress;
-}
-
-//This is used when a profile is cloned, it allows us to copy a ptree and extract all children from it
-// it is exactly the same as novagui's xml extraction functions except that it gets the ptree from the
-// cloned profile and it asserts a profile's name is unique and changes the name if it isn't
-bool HoneydConfiguration::LoadProfilesFromTree(string parent)
-{
-	using boost::property_tree::ptree;
-	ptree *ptr, pt = m_profiles[parent].m_tree;
-	try
-	{
-		BOOST_FOREACH(ptree::value_type &value, pt.get_child("profiles"))
-		{
-			//Generic profile, essentially a honeyd template
-			if(!string(value.first.data()).compare("profile"))
-			{
-				NodeProfile prof = m_profiles[parent];
-				//Root profile has no parent
-				prof.m_parentProfile = parent;
-				prof.m_tree = value.second;
-
-				for(uint i = 0; i < INHERITED_MAX; i++)
-				{
-					prof.m_inherited[i] = true;
-				}
-
-				//Asserts the name is unique, if it is not it finds a unique name
-				// up to the range of 2^32
-				string profileStr = prof.m_name;
-				stringstream ss;
-				uint i = 0, j = 0;
-				j = ~j; //2^32-1
-
-				while((m_profiles.keyExists(prof.m_name)) && (i < j))
-				{
-					ss.str("");
-					i++;
-					ss << profileStr << "-" << i;
-					prof.m_name = ss.str();
-				}
-				prof.m_tree.put<string>("name", prof.m_name);
-
-				prof.m_ports.clear();
-
-				try //Conditional: has "set" values
-				{
-					ptr = &value.second.get_child("set");
-					//pass 'set' subset and pointer to this profile
-					LoadProfileSettings(ptr, &prof);
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-
-				try //Conditional: has "add" values
-				{
-					ptr = &value.second.get_child("add");
-					//pass 'add' subset and pointer to this profile
-					LoadProfileServices(ptr, &prof);
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-
-				//Save the profile
-				m_profiles[prof.m_name] = prof;
-				UpdateProfile(prof.m_name);
-
-				try //Conditional: has children profiles
-				{
-					ptr = &value.second.get_child("profiles");
-
-					//start recurisive descent down profile tree with this profile as the root
-					//pass subtree and pointer to parent
-					LoadProfileChildren(prof.m_name);
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-			}
-
-			//Honeyd's implementation of switching templates based on conditions
-			else if(!string(value.first.data()).compare("dynamic"))
-			{
-				//TODO
-			}
-			else
-			{
-				LOG(ERROR, "Invalid XML Path "+string(value.first.data()), "");
-				return false;
-			}
-		}
-		return true;
-	}
-	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-	{
-		LOG(ERROR, "Problem loading Profiles: "+string(e.what()), "");
-		return false;
-	}
-
 	return false;
 }
 
@@ -1311,7 +973,7 @@ bool HoneydConfiguration::LoadProfileSettings(ptree *propTree, NodeProfile *node
 bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *nodeProf)
 {
 	string valueKey;
-	Port *port;
+	PortStruct *port;
 
 	try
 	{
@@ -1365,7 +1027,7 @@ bool HoneydConfiguration::LoadProfileServices(ptree *propTree, NodeProfile *node
 					uint i = 0;
 					for(i = 0; i < nodeProf->m_ports.size(); i++)
 					{
-						Port *tempPort = &m_ports[nodeProf->m_ports[i].first];
+						PortStruct *tempPort = &m_ports[nodeProf->m_ports[i].first];
 						if((atoi(tempPort->m_portNum.c_str())) < (atoi(port->m_portNum.c_str())))
 						{
 							continue;
@@ -1557,7 +1219,7 @@ bool HoneydConfiguration::LoadPortsTemplate()
 
 		BOOST_FOREACH(ptree::value_type &value, m_portTree.get_child("ports"))
 		{
-			Port port;
+			PortStruct port;
 			port.m_tree = value.second;
 			//Required xml entries
 			port.m_portName = value.second.get<string>("name");
@@ -1871,10 +1533,10 @@ bool HoneydConfiguration::LoadNodes(ptree *propTree)
 						for(uint i = 0; i < profilePorts.size(); i++)
 						{
 							bool conflict = false;
-							Port curPort = m_ports[profilePorts[i].first];
+							PortStruct curPort = m_ports[profilePorts[i].first];
 							for(uint j = 0; j < node.m_ports.size(); j++)
 							{
-								Port nodePort = m_ports[node.m_ports[j]];
+								PortStruct nodePort = m_ports[node.m_ports[j]];
 								if(!(curPort.m_portNum.compare(nodePort.m_portNum))
 									&& !(curPort.m_type.compare(nodePort.m_type)))
 								{
@@ -2043,34 +1705,6 @@ bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 	return false;
 }
 
-//Makes the profile named child inherit the profile named parent
-// child: the name of the child profile
-// parent: the name of the parent profile
-// Returns: (true) if successful, (false) if either name could not be found
-bool HoneydConfiguration::InheritProfile(string child, string parent)
-{
-	//If the child can be found
-	if(m_profiles.keyExists(child))
-	{
-		//If the new parent can be found
-		if(m_profiles.keyExists(parent))
-		{
-			string oldParent = m_profiles[child].m_parentProfile;
-			m_profiles[child].m_parentProfile = parent;
-			//If the child has an old parent
-			if((oldParent.compare("")) && (m_profiles.keyExists(oldParent)))
-			{
-				UpdateProfileTree(oldParent, ALL);
-			}
-			//Updates the child with the new inheritance and any modified values since last update
-			CreateProfileTree(child);
-			UpdateProfileTree(child, ALL);
-			return true;
-		}
-	}
-	return false;
-}
-
 //Iterates over the profiles, recreating the entire property tree structure
 void HoneydConfiguration::UpdateAllProfiles()
 {
@@ -2083,34 +1717,6 @@ void HoneydConfiguration::UpdateAllProfiles()
 			UpdateProfileTree(it->first, DOWN);
 		}
 	}
-}
-
-bool HoneydConfiguration::EnableNode(string nodeName)
-{
-	// Make sure the node exists
-	if(!m_nodes.keyExists(nodeName))
-	{
-		LOG(ERROR, "There was an attempt to delete a honeyd node (name = " + nodeName + ") that doesn't exist", "");
-		return false;
-	}
-
-	m_nodes[nodeName].m_enabled = true;
-
-	return true;
-}
-
-bool HoneydConfiguration::DisableNode(string nodeName)
-{
-	// Make sure the node exists
-	if(!m_nodes.keyExists(nodeName))
-	{
-		LOG(ERROR, string("There was an attempt to disable a honeyd node (name = ")
-			+ nodeName + string(") that doesn't exist"), "");
-		return false;
-	}
-
-	m_nodes[nodeName].m_enabled = false;
-	return true;
 }
 
 bool HoneydConfiguration::DeleteNode(string nodeName)
@@ -2153,55 +1759,9 @@ Node *HoneydConfiguration::GetNode(string nodeName)
 	return NULL;
 }
 
-void HoneydConfiguration::DisableProfileNodes(string profileName)
+std::vector<PortSet*> GetPortSets(std::string profileName);
 {
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		if(!it->second.m_pfile.compare(profileName))
-		{
-			DisableNode(it->first);
-		}
-	}
-}
-
-//Checks for ports that aren't used and removes them from the table if so
-void HoneydConfiguration::CleanPorts()
-{
-	vector<string> delList;
-	bool found;
-	for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
-	{
-		found = false;
-		for(ProfileTable::iterator jt = m_profiles.begin(); (jt != m_profiles.end()) && !found; jt++)
-		{
-			for(uint i = 0; (i < jt->second.m_ports.size()) && !found; i++)
-			{
-				if(!jt->second.m_ports[i].first.compare(it->first))
-				{
-					found = true;
-				}
-			}
-		}
-		for(NodeTable::iterator jt = m_nodes.begin(); (jt != m_nodes.end()) && !found; jt++)
-		{
-			for(uint i = 0; (i < jt->second.m_ports.size()) && !found; i++)
-			{
-				if(!jt->second.m_ports[i].compare(it->first))
-				{
-					found = true;
-				}
-			}
-		}
-		if(!found)
-		{
-			delList.push_back(it->first);
-		}
-	}
-	while(!delList.empty())
-	{
-		m_ports.erase(delList.back());
-		delList.pop_back();
-	}
+//TODO
 }
 
 ScriptTable &HoneydConfiguration::GetScriptTable()
@@ -2209,12 +1769,7 @@ ScriptTable &HoneydConfiguration::GetScriptTable()
 	return m_scripts;
 }
 
-//Removes a profile and all associated nodes from the Honeyd configuration
-//	profileName: name of the profile you wish to delete
-//	originalCall: used internally to designate the recursion's base condition, can old be set with
-//		private access. Behavior is undefined if the first DeleteProfile call has originalCall == false
-// 	Returns: (true) if successful and (false) if the profile could not be found
-bool HoneydConfiguration::DeleteProfile(string profileName, bool originalCall)
+bool HoneydConfiguration::DeleteProfile(string profileName)
 {
 	if(!m_profiles.keyExists(profileName))
 	{
@@ -2316,7 +1871,7 @@ void HoneydConfiguration::GetProfilesToDelete(string profileName, vector<string>
 //Recreates the profile tree of ancestors, children or both
 //	Note: This needs to be called after making changes to a profile to update the hierarchy
 //	Returns (true) if successful and (false) if no profile with name 'profileName' exists
-bool HoneydConfiguration::UpdateProfileTree(string profileName, recursiveDirection direction)
+bool HoneydConfiguration::UpdateProfileTree(string profileName, RecursiveDirection direction)
 {
 	if(!m_profiles.keyExists(profileName))
 	{
@@ -2575,30 +2130,4 @@ bool HoneydConfiguration::UpdateNodeMacs(std::string profileName)
 	return true;
 }
 
-//This internal function recurses upward to determine whether or not the given profile has a personality
-// check: Reference to the profile to check
-// Returns true if there is a personality defined, false if not
-// *Note: Used by auto configuration? shouldn't be needed.
-bool HoneydConfiguration::RecursiveCheckNotInheritingEmptyProfile(const NodeProfile& check)
-{
-	if(!check.m_parentProfile.compare("default"))
-	{
-		if(!check.m_personality.empty())
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else if(m_profiles.keyExists(check.m_parentProfile) && check.m_personality.empty() && check.m_inherited[PERSONALITY])
-	{
-		return RecursiveCheckNotInheritingEmptyProfile(m_profiles[check.m_parentProfile]);
-	}
-	else
-	{
-		return false;
-	}
-}
 }

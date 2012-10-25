@@ -20,8 +20,8 @@
 #ifndef PERSONALITYTREEITEM_H_
 #define PERSONALITYTREEITEM_H_
 
-#include "HoneydConfiguration/HoneydConfiguration.h"
-#include "HoneydConfiguration/AutoConfigHashMaps.h"
+#include "AutoConfigHashMaps.h"
+#include "PortSet.h"
 
 namespace Nova
 {
@@ -67,12 +67,10 @@ public:
 	//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
 	MACVendorMap m_vendors;
 
-	//HashMap of ports; Key is port (format: <NUM>_<PROTOCOL>), Value is a uint16_t count
-	PortServiceMap m_ports;
+	//A collection of PortSets, representing each group of ports found
+	std::vector<PortSet *> m_portSets;
 
 	void GenerateDistributions();
-
-	NodeProfile GenerateProfile(const NodeProfile &parentProfile);
 
 	//Returns a random vendor from the internal list of MAC vendors, according to the given probabilities
 	// If a profile has no defined ethernet vendors, look to the parent profile

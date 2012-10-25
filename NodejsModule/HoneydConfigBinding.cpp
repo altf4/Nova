@@ -217,7 +217,8 @@ Handle<Value> HoneydConfigBinding::GetPorts(const Arguments& args)
 
 	string name = cvv8::CastFromJS<string>(args[0]);
 
-    vector<Nova::Port> ports = obj->m_conf->GetPorts(name);
+	//TODO Fix
+    vector<Nova::Port> ports = obj->m_conf->GetPortSet(name);
     v8::Local<v8::Array> portArray = v8::Array::New();
     if(ports.empty() && name.compare("default"))
     {

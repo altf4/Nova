@@ -34,6 +34,35 @@
 namespace Nova
 {
 
+enum HoneydConfigReturn
+{
+	INHERITED
+	, NOT_INHERITED
+	, NO_SUCH_KEY
+};
+
+enum PortBehavior
+{
+	PORT_FILTERED = 0
+	, PORT_CLOSED
+	, PORT_OPEN
+	, PORT_SCRIPT
+	, PORT_TARPIT_OPEN
+	, PORT_TARPIT_SCRIPT
+};
+enum RecursiveDirection
+{
+	ALL = 0
+	, UP
+	, DOWN
+};
+
+enum PortProtocol
+{
+	PROTOCOL_UDP = 0
+	, PROTOCOL_TCP
+	, PROTOCOL_ICMP
+};
 
 enum profileIndex {
 	TYPE
@@ -67,7 +96,8 @@ struct Script
 typedef Nova::HashMap<std::string, Script, std::hash<std::string>, eqstr > ScriptTable;
 
 //used to maintain information about a port, it's type and behavior
-struct Port
+//	Useful as a compatibility layer into Quasar
+struct PortStruct
 {
 	std::string m_portName;
 	std::string m_portNum;
@@ -96,7 +126,7 @@ struct Port
 
 };
 //Container for accessing port items
-typedef Nova::HashMap<std::string, Port, std::hash<std::string>, eqstr > PortTable;
+typedef Nova::HashMap<std::string, PortStruct, std::hash<std::string>, eqstr > PortTable;
 
 //used to keep track of subnet gui items and allow for easy access
 struct Subnet
@@ -273,7 +303,6 @@ struct NodeProfile
 	}
 };
 
-//Container for accessing profile items
 typedef Nova::HashMap<std::string, NodeProfile, std::hash<std::string>, eqstr > ProfileTable;
 
 //used to keep track of haystack node gui items and allow for easy access

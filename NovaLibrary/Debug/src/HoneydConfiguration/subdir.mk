@@ -6,18 +6,36 @@
 CPP_SRCS += \
 ../src/HoneydConfiguration/HoneydConfiguration.cpp \
 ../src/HoneydConfiguration/OsPersonalityDb.cpp \
+../src/HoneydConfiguration/PersonalityTree.cpp \
+../src/HoneydConfiguration/PersonalityTreeItem.cpp \
+../src/HoneydConfiguration/Port.cpp \
+../src/HoneydConfiguration/PortSet.cpp \
+../src/HoneydConfiguration/ScannedHost.cpp \
+../src/HoneydConfiguration/ScannedHostTable.cpp \
 ../src/HoneydConfiguration/ServiceToScriptMap.cpp \
 ../src/HoneydConfiguration/VendorMacDb.cpp 
 
 OBJS += \
 ./src/HoneydConfiguration/HoneydConfiguration.o \
 ./src/HoneydConfiguration/OsPersonalityDb.o \
+./src/HoneydConfiguration/PersonalityTree.o \
+./src/HoneydConfiguration/PersonalityTreeItem.o \
+./src/HoneydConfiguration/Port.o \
+./src/HoneydConfiguration/PortSet.o \
+./src/HoneydConfiguration/ScannedHost.o \
+./src/HoneydConfiguration/ScannedHostTable.o \
 ./src/HoneydConfiguration/ServiceToScriptMap.o \
 ./src/HoneydConfiguration/VendorMacDb.o 
 
 CPP_DEPS += \
 ./src/HoneydConfiguration/HoneydConfiguration.d \
 ./src/HoneydConfiguration/OsPersonalityDb.d \
+./src/HoneydConfiguration/PersonalityTree.d \
+./src/HoneydConfiguration/PersonalityTreeItem.d \
+./src/HoneydConfiguration/Port.d \
+./src/HoneydConfiguration/PortSet.d \
+./src/HoneydConfiguration/ScannedHost.d \
+./src/HoneydConfiguration/ScannedHostTable.d \
 ./src/HoneydConfiguration/ServiceToScriptMap.d \
 ./src/HoneydConfiguration/VendorMacDb.d 
 

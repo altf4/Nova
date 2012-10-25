@@ -22,8 +22,8 @@
 #define PERSONALITYTREE_H_
 
 #include "PersonalityTreeItem.h"
-#include "PersonalityTable.h"
-#include "HoneydConfiguration/ServiceToScriptMap.h"
+#include "ScannedHostTable.h"
+#include "ServiceToScriptMap.h"
 
 namespace Nova
 {
@@ -41,14 +41,14 @@ public:
 	//  std::vector<Subnet> &subnetsToUse - a vector of subnet objects that were found in
 	//                           the main HoneydHostConfig class. Used to add the subnets
 	//                           to the HoneydConfiguration object.
-	PersonalityTree(PersonalityTable *persTable, std::vector<Subnet> &subnetsToUse);
+	PersonalityTree(ScannedHostTable *persTable, std::vector<Subnet> &subnetsToUse);
+	PersonalityTree();
+
 	~PersonalityTree();
 
 	// Returns a random (leaf) profile, according to the distributions given
 	//	returns - A valid PersonalityNode on success, NULL on error
 	PersonalityTreeItem *GetRandomProfile();
-
-	HoneydConfiguration *m_hdconfig;
 
 private:
 	// LoadTable first iterates over the persTable object and calls InsertPersonality on each
@@ -60,44 +60,23 @@ private:
 	//  PersonalityTable *persTable - personalityTable to use for populating the ProfileTable
 	//                           in the m_hdconfig object's m_profiles HashMap.
 	// Returns nothing.
-	bool LoadTable(PersonalityTable *persTable);
+	bool LoadTable(ScannedHostTable *persTable);
 
-	// GenerateProfiles will recurse through the tree structure and create NodeProfile objects
-	// from each PersonalityNode in the tree. Also performs compression in the profile table;
-	// if node's parent has no other children than node, then rename the parentProfile struct
-	// to parentProfile's name + " " + the profileName, which is a concatenation of previous
-	// compressions.
-	//  PersonalityNode *node - the node that GenerateProfiles is currently at within the tree
-	//							structure. Used to generate a NodeProfile struct, as well as
-	//							calculate distributions.
-	//  PersonalityNode *parent - used for context for node. there is a special case for when
-	//                          node has siblings that must be taken into account.
-	//  NodeProfile *parentProfile - used for renaming
-	//  const std::string &profileName - also used for a different renaming case
-	// Returns nothing.
-	bool GenerateProfiles(PersonalityTreeItem *node, PersonalityTreeItem *parent, NodeProfile *parentProfile, const std::string &profileName);
-
-	// InsertPersonality serves as the starting point for UpdatePersonality.
-	//  Personality *pers - the Personality to Insert/Update
-	// Returns nothing.
-	bool InsertPersonality(Personality *pers);
+	// InsertHost will create an item for the Personality,
+	// add the item to that parent's children if not present (and aggregate the data of the
+	// pre-existing node and the new data in *pers if it is present) and then continue to the
+	// next PersonalityTreeItem. In this way, there exists one PersonalityTreeItem that represents the data
+	// (in aggregate) of one or more ScannedHosts for each ScannedHosts in the ScannedHostsTable.
+	//  ScannedHost *targetHost - ScannedHost object with which to create a new item or whose data
+	//                      to add to a pre-existing node with the same ScannedHost.
+	//	root - The root item of the PersonalityTree
+	// Returns true on success, false on failure
+	bool InsertHost(ScannedHost *targetHost, PersonalityTreeItem *root);
 
 	// GetHostCount gets the number of hosts in each of the root node's subtrees and
 	// adds them into m_root's m_count value.
 	// Returns nothing.
 	bool CalculateDistributions(PersonalityTreeItem *node);
-
-	// UpdatePersonality will, for each Personality, create an item for the Personality,
-	// add the item to that parent's children if not present (and aggregate the data of the
-	// pre-existing node and the new data in *pers if it is present) and then continue to the
-	// next personality. In this way, there exists one PersonalityTreeItem that represents the data
-	// (in aggregate) of one or more Personalities for each Personality in the PersonalityTable.
-	//  Personality *pers - Personality object with which to create a new node or whose data
-	//                      to add to a pre-existing node with the same personality.
-	//  PersonalityTreeItem *parent - the parent node of the current node to be created or
-	//                      modified.
-	// Returns nothing.
-	bool UpdatePersonality(Personality *pers, PersonalityTreeItem *parent);
 
 	// At each node, will add an open version and a script
 	// specific version of each found port for the node.
@@ -109,8 +88,6 @@ private:
 
 	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
 	PersonalityTreeItem *m_root;
-
-	ProfileTable *m_profiles;
 
 	ServiceToScriptMap m_serviceMap;
 };

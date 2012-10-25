@@ -67,44 +67,6 @@ TEST_F(HoneydConfigurationTest, test_getMaskBits)
 	EXPECT_EQ(-1, m_config->GetMaskBits(240));
 }
 
-TEST_F(HoneydConfigurationTest, test_Port)
-{
-	stringstream ss;
-	vector<string> expectedPorts;
-	ss.str("");
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(0, TCP, OPEN, ""))));
-	ss.str("1_TCP_open");
-	expectedPorts.push_back(ss.str());
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(1, TCP, OPEN, ""))));
-	ss.str("65535_UDP_block");
-	expectedPorts.push_back(ss.str());
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, UDP, BLOCK, ""))));
-	ss.str("65535_TCP_reset");
-	expectedPorts.push_back(ss.str());
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, TCP, RESET, ""))));
-	ss.str("65534_TCP_block");
-	expectedPorts.push_back(ss.str());
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(65534, TCP, BLOCK, ""))));
-
-	std::vector<std::string> scriptNames;
-	EXPECT_NO_FATAL_FAILURE(scriptNames = m_config->GetScriptNames());
-	uint i = 2;
-	while(!scriptNames.empty())
-	{
-		ss.str("");
-		ss << i << "_TCP_script_" << scriptNames.back();
-		EXPECT_EQ(ss.str(), m_config->AddPort(i, TCP, SCRIPT, scriptNames.back()));
-		expectedPorts.push_back(ss.str());
-		scriptNames.pop_back();
-		i++;
-	}
-	while(!expectedPorts.empty())
-	{
-		EXPECT_EQ(m_config->GetPort(expectedPorts.back()).m_portName, expectedPorts.back());
-		expectedPorts.pop_back();
-	}
-}
-
 TEST_F(HoneydConfigurationTest, test_RenameProfile)
 {
 	//Create dummy profile
@@ -196,13 +158,6 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 	EXPECT_TRUE(m_config->m_profiles.find("TestProfile2") == m_config->m_profiles.end());
 	EXPECT_TRUE(m_config->m_profiles.find("TestProfile-2") != m_config->m_profiles.end());
 
-	//Test Inheriting of a profile
-	EXPECT_TRUE((m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("default")));
-	EXPECT_TRUE(!(m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("TestProfile")));
-	EXPECT_TRUE(m_config->InheritProfile("TestProfile-2", "default"));
-	EXPECT_TRUE(!(m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("default")));
-	EXPECT_TRUE((m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("TestProfile")));
-
 	//Test deleting a profile
 	EXPECT_TRUE(m_config->DeleteProfile("TestProfile"));
 	EXPECT_TRUE(m_config->m_profiles.find("TestProfile") == m_config->m_profiles.end());
@@ -213,9 +168,9 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 
 TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
 {
-	EXPECT_TRUE(m_config->AddPort(1, (portProtocol)1, (portBehavior)0, "NA") == "1_TCP_block");
-	EXPECT_TRUE(m_config->AddPort(2, (portProtocol)1, (portBehavior)1, "NA") == "2_TCP_reset");
-	EXPECT_TRUE(m_config->AddPort(3, (portProtocol)1, (portBehavior)2, "NA") == "3_TCP_open");
+	EXPECT_TRUE(m_config->AddPort(1, (PortProtocol)1, (PortBehavior)0, "NA") == "1_TCP_block");
+	EXPECT_TRUE(m_config->AddPort(2, (PortProtocol)1, (PortBehavior)1, "NA") == "2_TCP_reset");
+	EXPECT_TRUE(m_config->AddPort(3, (PortProtocol)1, (PortBehavior)2, "NA") == "3_TCP_open");
 
 	NodeProfile * p = new NodeProfile();
 	for (int i = 0; i < INHERITED_MAX; i++)

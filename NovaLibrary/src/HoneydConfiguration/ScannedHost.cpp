@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : Personality.cpp
+// Name        : ScannedHost.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,34 +13,31 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Source file that contains the definition of a Personality object;
-//               This object aggregates all the information for a given nmap personality
-//               across the subnet(s). The source file adds the object to Nova namespace
-//               as well as defines different functions for interacting with the object.
+// Description : Represents one or more hosts that have been scanned by Nmap and
+//	identified as the same OS.
 //============================================================================
 
-#include "Personality.h"
+#include "ScannedHost.h"
 
 using namespace std;
 
 namespace Nova
 {
-Personality::Personality()
+ScannedHost::ScannedHost()
 {
 	m_count = 1;
 	m_distribution = 100;
 	m_port_count = 0;
 	m_osclass = "";
 	m_vendors.set_empty_key("");
-	m_ports.set_empty_key("");
 }
 
-Personality::~Personality()
+ScannedHost::~ScannedHost()
 {
 
 }
 
-void Personality::AddVendor(const string &vendor)
+void ScannedHost::AddVendor(const string &vendor)
 {
 	// If the vendor does not exist in MAC_Table,
 	// then use the bracket operator to make a new
@@ -56,20 +53,4 @@ void Personality::AddVendor(const string &vendor)
 	}
 }
 
-void Personality::AddPort(const string &port_string, const string &port_service)
-{
-	// If the vendor does not exist in Port_Table,
-	// then use the bracket operator to make a new
-	// entry and set its count to 1
-	if(m_ports.find(port_string) == m_ports.end())
-	{
-		m_ports[port_string].first = 1;
-		m_ports[port_string].second = port_service;
-	}
-	// Otherwise just increase the count at that key
-	else
-	{
-		m_ports[port_string].first++;
-	}
-}
 }

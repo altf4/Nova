@@ -38,8 +38,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include "PersonalityTree.h"
 #include "HaystackAutoConfig.h"
+#include "HoneydConfiguration/PersonalityTree.h"
 #include "HoneydConfiguration/VendorMacDb.h"
 #include "Logger.h"
 
@@ -65,7 +65,7 @@ NumberOfNodesType numberOfNodesType;
 
 vector<Subnet> subnetsDetected;
 
-PersonalityTable personalities;
+ScannedHostTable scannedHosts;
 
 string lockFilePath;
 
@@ -284,17 +284,17 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 	using boost::property_tree::ptree;
 
 	// Instantiate Personality object here, populate it from the code below
-	Personality *persObject = new Personality();
+	ScannedHost *newHost = new ScannedHost();
+	PortSet *newPortSet = new PortSet();
+	newHost->m_portSets.push_back(newPortSet);
 
 	// For the personality table, increment the number of hosts found
 	// and decrement the number of hosts available, so at the end
 	// of the configuration process we don't over-allocate space
 	// in the hostspace for the subnets, clobbering existing DHCP
 	// allocations.
-	personalities.m_num_of_hosts++;
-	personalities.m_numAddrsAvail--;
-
-	int portCount = 0;
+	scannedHosts.m_num_of_hosts++;
+	scannedHosts.m_numAddrsAvail--;
 
 	BOOST_FOREACH(ptree::value_type &value, propTree.get_child(""))
 	{
@@ -311,7 +311,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 					// <addr> tag
 					if(localMachine.compare(value.second.get<string>("<xmlattr>.addr")))
 					{
-						persObject->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
+						newHost->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
 					}
 					// If, however, we're parsing ourself, we need to do some extra work.
 					// The IP address will be in the nmap XML structure, but the MAC will not.
@@ -321,7 +321,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 					// of Nova proper.
 					else
 					{
-						persObject->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
+						newHost->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
 
 						string vendorString = "";
 						string macString = "";
@@ -369,7 +369,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 							ss.str("");
 						}
 
-						persObject->m_macs.push_back(macString);
+						newHost->m_macs.push_back(macString);
 
 						VendorMacDb *macVendorDB = new VendorMacDb();
 						macVendorDB->LoadPrefixFile();
@@ -380,7 +380,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 						{
 							try
 							{
-								persObject->AddVendor(vendorString);
+								newHost->AddVendor(vendorString);
 							}
 							catch(emptyKeyException &e)
 							{
@@ -394,8 +394,8 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 				// the MAC_Table inside the object as well.
 				else if(!value.second.get<string>("<xmlattr>.addrtype").compare("mac"))
 				{
-					persObject->m_macs.push_back(value.second.get<string>("<xmlattr>.addr"));
-					persObject->AddVendor(value.second.get<string>("<xmlattr>.vendor"));
+					newHost->m_macs.push_back(value.second.get<string>("<xmlattr>.addr"));
+					newHost->AddVendor(value.second.get<string>("<xmlattr>.vendor"));
 				}
 			}
 			// If we've found the <ports> tag within the <host> xml node
@@ -405,18 +405,67 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 				{
 					try
 					{
-						// try, for every <port> tag in <ports>, to get the
+						// try, for every tag in <ports>, to get the
 						// port number, the protocol (tcp, udp, sctp, etc...)
 						// and the name of the <service> running on the port
-						// and add the port to the Port_Table in the Personality
-						// object.
+
+						if(!portValue.first.compare("extraports"))
+						{
+							//XXX: Assume TCP for now, because there is no tag for protocol from Nmap here
+							string defaultBehavior = portValue.second.get<string>("<xmlattr>.state");
+							if(!defaultBehavior.empty())
+							{
+								if(!newPortSet->SetTCPBehavior(defaultBehavior))
+								{
+									//TODO: ERROR
+								}
+								continue;
+							}
+						}
+
 						stringstream ss;
-						ss << portValue.second.get<int>("<xmlattr>.portid");
-						string port_key = ss.str() + "_" + boost::to_upper_copy(portValue.second.get<string>("<xmlattr>.protocol"));
-						ss.str("");
-						string port_service = portValue.second.get<string>("service.<xmlattr>.name");
-						persObject->AddPort(port_key, port_service);
-						portCount++;
+						uint portNumber = portValue.second.get<uint>("<xmlattr>.portid");
+						enum PortProtocol protocol;
+
+						string protocolString = boost::to_upper_copy(portValue.second.get<string>("<xmlattr>.protocol"));
+						if(!protocolString.compare("TCP"))
+						{
+							protocol = PROTOCOL_TCP;
+						}
+						else if(!protocolString.compare("UDP"))
+						{
+							protocol = PROTOCOL_UDP;
+						}
+						else
+						{
+							//ERROR
+							continue;
+						}
+
+						string serviceName = portValue.second.get<string>("service.<xmlattr>.name");
+
+						string portState = portValue.second.get<string>("state.<xmlattr>.state");
+						enum PortBehavior behavior;
+						if(!portState.compare("open"))
+						{
+							behavior = PORT_OPEN;
+						}
+						else if(!portState.compare("closed"))
+						{
+							behavior = PORT_CLOSED;
+						}
+						else if(!portState.compare("filtered"))
+						{
+							behavior = PORT_FILTERED;
+						}
+						else
+						{
+							//ERROR
+							continue;
+						}
+
+						//Add this port into the running port set
+						newPortSet->AddPort(Port(serviceName, protocol, portNumber, behavior));
 					}
 					catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 					{
@@ -425,7 +474,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 				}
 			}
 			// If we've found the <os> tags in the <host> xml node
-			else if(!value.first.compare("os") && persObject->m_personalityClass.empty())
+			else if(!value.first.compare("os") && newHost->m_personalityClass.empty())
 			{
 				// try to get the name, type, osgen, osfamily and vendor for the most
 				// accurate guess by nmap. This will (provided the xml is structured correctly)
@@ -434,13 +483,13 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 				// This order must be properly maintained for use in the PersonalityTree class.
 				BOOST_FOREACH(ptree::value_type &osValue, value.second.get_child(""))
 				{
-					if(!osValue.first.compare("osmatch") && persObject->m_personalityClass.empty())
+					if(!osValue.first.compare("osmatch") && newHost->m_personalityClass.empty())
 					{
 						try
 						{
 							if(osValue.second.get<string>("<xmlattr>.name").compare(""))
 							{
-								persObject->m_personalityClass.push_back(osValue.second.get<string>("<xmlattr>.name"));
+								newHost->m_personalityClass.push_back(osValue.second.get<string>("<xmlattr>.name"));
 							}
 						}
 						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
@@ -462,7 +511,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 						{
 							if(osValue.second.get<string>("osclass.<xmlattr>.osgen").compare(""))
 							{
-								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osgen"));
+								newHost->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osgen"));
 							}
 						}
 						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
@@ -473,7 +522,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 						{
 							if(osValue.second.get<string>("osclass.<xmlattr>.osfamily").compare(""))
 							{
-								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osfamily"));
+								newHost->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osfamily"));
 							}
 						}
 						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
@@ -484,7 +533,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 						{
 							if(osValue.second.get<string>("osclass.<xmlattr>.vendor").compare(""))
 							{
-								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.vendor"));
+								newHost->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.vendor"));
 							}
 						}
 						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
@@ -501,15 +550,11 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 		}
 	}
 
-	// Assign the number of ports found to the m_port_count member variable,
-	// for use
-	persObject->m_port_count = portCount;
-
 	// If personalityClass vector is empty, assign this profile to the NULL fake profile
-	if(persObject->m_personalityClass.empty())
+	if(newHost->m_personalityClass.empty())
 	{
-		persObject->m_personalityClass.push_back("NULL");
-		persObject->m_osclass = "NULL";
+		newHost->m_personalityClass.push_back("NULL");
+		newHost->m_osclass = "NULL";
 	}
 	else
 	{
@@ -517,16 +562,16 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 		// for matching open ports to scripts in the script table. So, say 22_TCP is open
 		// on a host, we'll use the m_personalityClass string to match the OS and open port
 		// to a script and then assign that script automatically.
-		for(uint i = 0; i < persObject->m_personalityClass.size() - 1; i++)
+		for(uint i = 0; i < newHost->m_personalityClass.size() - 1; i++)
 		{
-			persObject->m_osclass += persObject->m_personalityClass[i] + " | ";
+			newHost->m_osclass += newHost->m_personalityClass[i] + " | ";
 		}
 
-		persObject->m_osclass += persObject->m_personalityClass[persObject->m_personalityClass.size() - 1];
+		newHost->m_osclass += newHost->m_personalityClass[newHost->m_personalityClass.size() - 1];
 	}
 
 	// Call AddHost() on the Personality object created at the beginning of this method
-	personalities.AddHost(persObject);
+	scannedHosts.AddHost(newHost);
 }
 
 bool Nova::LoadNmapXML(const string &filename)
@@ -759,7 +804,7 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 			// host, the .0 address, and the .255 address)
 			// into the PersonalityTable's aggregate coutn of
 			// available host address space.
-			personalities.m_numAddrsAvail += hostOrderMaxAddrInRange - hostOrderMinAddrInRange - 3;
+			scannedHosts.m_numAddrsAvail += hostOrderMaxAddrInRange - hostOrderMinAddrInRange - 3;
 
 			// Find out how many bits there are to work with in
 			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
@@ -875,7 +920,7 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 			// host, the .0 address, and the .255 address)
 			// into the PersonalityTable's aggregate coutn of
 			// available host address space.
-			personalities.m_numAddrsAvail += hostOrderMaxAddrInRange - hostOrderMinAddrInRange - 3;
+			scannedHosts.m_numAddrsAvail += hostOrderMaxAddrInRange - hostOrderMinAddrInRange - 3;
 
 			// Find out how many bits there are to work with in
 			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
@@ -917,8 +962,8 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 
 void Nova::GenerateConfiguration()
 {
-	personalities.CalculateDistributions();
-	PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
+	scannedHosts.CalculateDistributions();
+	PersonalityTree persTree = PersonalityTree(&scannedHosts, subnetsDetected);
 
 	uint nodesToCreate = 0;
 	if(numberOfNodesType == FIXED_NUMBER_OF_NODES)
@@ -927,7 +972,7 @@ void Nova::GenerateConfiguration()
 	}
 	else
 	{
-		nodesToCreate = ((double)personalities.m_num_of_hosts) * nodeRatio;
+		nodesToCreate = ((double)scannedHosts.m_num_of_hosts) * nodeRatio;
 	}
 
 	stringstream ss;
@@ -950,7 +995,6 @@ void Nova::GenerateConfiguration()
 		string macAddress = persTree.m_hdconfig->m_macAddresses.GenerateRandomMAC(vendor);
 
 		//Make a node for that profile
-		//TODO: This last argument is unused, remove it
 		persTree.m_hdconfig->AddNewNode(winningPersonality->m_key, "DHCP", macAddress, Config::Inst()->GetInterface(0), "");
 	}
 
