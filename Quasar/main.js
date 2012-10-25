@@ -1698,6 +1698,59 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 	}
 });
 
+app.get('/scripts', passport.authenticate('basic', {session: false}), function(req, res){
+  var xml = fs.readFileSync(NovaHomePath + '/config/templates/scripts.xml', 'utf8');
+  
+  var libxml = require('libxmljs');
+  
+  var parser = libxml.parseXmlString(xml);
+  
+  var nodesToParse = parser.root().childNodes();
+
+  var namesAndPaths = {};
+  
+  for(var i = 1; i < nodesToParse.length; i++)
+  {
+    if(nodesToParse[i].child(1) != null && nodesToParse[i].child(7) != null)
+    {
+      namesAndPaths[nodesToParse[i].child(1).text()] = nodesToParse[i].child(7).text();
+    }
+  }
+  
+  var scriptBindings = {};
+  
+  var profiles = honeydConfig.GetProfileNames();
+  
+  for(var i in profiles)
+  {
+    GetPorts(profiles[i], function(ports, profileName){
+      for(var i in ports)
+      {
+        if(ports[i].scriptName != undefined && ports[i].scriptName != '')
+        {
+          if(scriptBindings[ports[i].scriptName] == undefined)
+          {
+            scriptBindings[ports[i].scriptName] = profileName;
+          }
+          else
+          {
+            scriptBindings[ports[i].scriptName] += ',' + profileName;
+          }
+        }
+      }
+    });
+  }
+  
+  profiles = null;
+  
+  res.render('scripts.jade', {
+    locals: {
+      scripts: namesAndPaths,
+      bindings: scriptBindings
+    }
+  });
+});
+
 everyone.now.ClearAllSuspects = function (callback) {
 	nova.CheckConnection();
 	if (!nova.ClearAllSuspects()) {
@@ -1962,7 +2015,7 @@ everyone.now.GetVendors = function (profileName, callback) {
 	callback(profVendors, profDists);
 }
 
-everyone.now.GetPorts = function (profileName, callback) {
+GetPorts = function (profileName, callback) {
 	var ports = honeydConfig.GetPorts(profileName);
 
 	if ((ports[0] == undefined || ports[0].portNum == "0") && profileName != "default") {
@@ -1981,9 +2034,9 @@ everyone.now.GetPorts = function (profileName, callback) {
 		ports[i].isInherited = ports[i].GetIsInherited();
 	}
 
-	callback(ports);
+	callback(ports, profileName);
 }
-
+everyone.now.GetPorts = GetPorts;
 
 everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, addOrEdit) {
 	// Check input
@@ -2270,10 +2323,40 @@ var SendBenignSuspectToPulsar = function(suspect) {
 };
 everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
-
-
 everyone.now.GetLocalIP = function (interface, callback) {
 	callback(nova.GetLocalIP(interface));
+}
+
+everyone.now.RemoveScriptFromProfiles = function(script, profiles, callback) {
+  for(var i in profiles)
+  {
+    GetPorts(profiles[i], function(ports, profileName){
+      if(ports != undefined)
+      {
+        for(var j in ports)
+        {
+          if(ports[j].portName != undefined)
+          {
+            if(ports[j].scriptName == script)
+            {
+              ports[j].scriptName = '';
+              ports[j].behavior = 'open';
+              ports[j].service = '';
+              honeydConfig.RemoveScriptPort(ports[j].portName, profileName);
+            }
+          }
+        }
+      }
+    });
+  } 
+  
+  honeydConfig.SaveAllTemplates();
+  honeydConfig.LoadAllTemplates();
+  
+  if(typeof callback == 'function')
+  {
+    callback();
+  }
 }
 
 everyone.now.GenerateMACForVendor = function(vendor, callback) {

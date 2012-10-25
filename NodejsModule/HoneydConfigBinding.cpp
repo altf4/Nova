@@ -54,6 +54,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNode"),FunctionTemplate::New(AddNewNode)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfile"),FunctionTemplate::New(GetProfile)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPorts"),FunctionTemplate::New(GetPorts)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveScriptPort"),FunctionTemplate::New(RemoveScriptPort)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAll"),FunctionTemplate::New(SaveAll)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(DeleteProfile)->GetFunction());
@@ -233,6 +234,49 @@ Handle<Value> HoneydConfigBinding::GetPorts(const Arguments& args)
     }
 
 	return scope.Close(portArray);
+}
+
+Handle<Value> HoneydConfigBinding::RemoveScriptPort(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 2)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 2 parameters")));
+	}
+
+	string portName = cvv8::CastFromJS<string>(args[0]);
+	// For later, if we want to do more complex things
+	// for script removal, like make this a SetPort method
+	// or something.
+	/*string newPortNumber = cvv8::CastFromJS<string>(args[1]);
+	string newPortType = cvv8::CastFromJS<string>(args[2]);
+	string newPortBehavior = cvv8::CastFromJS<string>(args[3]);
+	string newPortService = cvv8::CastFromJS<string>(args[4]);
+	string newPortScriptName = cvv8::CastFromJS<string>(args[5]);*/
+	string profileName = cvv8::CastFromJS<string>(args[1]);
+
+	if(!obj->m_conf->m_profiles.keyExists(profileName))
+	{
+		cout << "Profile " << profileName << " does not exist in the m_profiles NodeProfile table." << endl;
+		return scope.Close(Boolean::New(false));
+	}
+
+	vector<pair<string, pair<bool, double> > > temp = obj->m_conf->m_profiles[profileName].m_ports;
+
+	for(uint i = 0; i < temp.size(); i++)
+	{
+		if(!string(temp[i].first).compare(portName))
+		{
+			obj->m_conf->m_profiles[profileName].m_ports.erase(obj->m_conf->m_profiles[profileName].m_ports.begin() + i);
+			break;
+		}
+	}
+
+	obj->m_conf->UpdateProfile(profileName);
+
+	return scope.Close(Boolean::New(true));
 }
 
 Handle<Value> HoneydConfigBinding::SaveAll(const Arguments& args)
