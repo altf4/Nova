@@ -63,24 +63,19 @@ html(lang="en")
           a.sideBarButton(href= "basicOptions") Basic Options
           a.sideBarButton(href= "advancedOptions") Advanced Options
        
-        a.sideBarButton(href= "configHoneydProfiles") Haystack Profiles
-        a.sideBarButton(href= "configHoneydNodes") Haystack Nodes
-        a.sideBarButton(href= "autoConfig") Haystack Autoconfiguration
-        a.sideBarButton(href= "configWhitelist") IP Whitelist
+        div.sideBarHeader
+          a.sideBarButton(href= "configHoneydProfiles") Haystack Profiles
+          a.sideBarButton(href= "configHoneydNodes") Haystack Nodes
+          a.sideBarButton(href= "autoConfig") Haystack Autoconfiguration
+          a.sideBarButton(href= "configWhitelist") IP Whitelist
         
         div.sideBarHeader Training
-        //a.sideBarButton(href= "/captureTrainingData") Capture Training Data
-        //br
-        
-        a.sideBarButton(href= "customizeTraining") Choose Training Data
-        br
+          a.sideBarButton(href= "customizeTraining") Choose Training Data
         
         div.sideBarHeader Users
-        a.sideBarButton(href= "createNewUser") New User
-        a.sideBarButton(href= "editUsers") Edit Users
-        br
+          a.sideBarButton(href= "createNewUser") New User
+          a.sideBarButton(href= "editUsers") Edit Users
         
         div.sideBarHeader Documentation
-        a.sideBarButton(href='/about') About Nova
-        br
+          a.sideBarButton(href='/about') About Nova
         

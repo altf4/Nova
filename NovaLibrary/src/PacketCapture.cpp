@@ -22,6 +22,7 @@
 
 #include <pthread.h>
 #include <signal.h>
+#include <unistd.h>
 
 using namespace Nova;
 using namespace std;

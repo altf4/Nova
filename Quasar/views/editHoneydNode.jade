@@ -128,8 +128,8 @@ block headerAdditions
     require(["dojo/domReady!"],
     function(){
         now.ready( function() {
-            checkOnlyOne(if0);
             profileChanged();
+            console.log("Interface is #{interface}");
         });
     });
     
@@ -152,7 +152,6 @@ block content
   br
 
   label Network Interface
-  // TODO: Somehow show the user valid interface options
   table
     thead
       tr 
@@ -164,15 +163,16 @@ block content
           input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
           #{INTERFACES[0]}
     - else
-      tr 
-        td
-          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
-          #{INTERFACES[0]}
-      - for (var i = 1; i < INTERFACES.length; i++)
+      - for (var i = 0; i < INTERFACES.length; i++)
           tr 
             td
-              input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
-              #{INTERFACES[i]}
+              - if (String(interface) == String(INTERFACES[i]))
+                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", checked, width=10, onclick="checkOnlyOne(if#{i})")
+                #{INTERFACES[i]}
+              - else
+                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
+                #{INTERFACES[i]}
+
   hidden(id="length", value=INTERFACES.length)
  
   br

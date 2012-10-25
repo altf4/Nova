@@ -919,6 +919,7 @@ app.get('/editHoneydNode', passport.authenticate('basic', {session: false}), fun
 			INTERFACES: config.ListInterfaces().sort(),
 			profiles: honeydConfig.GetProfileNames(),
 			profile: node.GetProfile(),
+			interface: node.GetInterface(),
 			ip: node.GetIP(),
 			mac: node.GetMAC()
 		}
