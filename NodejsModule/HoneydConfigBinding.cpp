@@ -54,7 +54,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNode"),FunctionTemplate::New(AddNewNode)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfile"),FunctionTemplate::New(GetProfile)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPorts"),FunctionTemplate::New(GetPorts)->GetFunction());
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("SetPorts"),FunctionTemplate::New(GetPorts)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveScriptPort"),FunctionTemplate::New(RemoveScriptPort)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAll"),FunctionTemplate::New(SaveAll)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(DeleteProfile)->GetFunction());
@@ -211,6 +211,8 @@ Handle<Value> HoneydConfigBinding::GetPorts(const Arguments& args)
 	HandleScope scope;
 	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
 
+	cout << "args.Length() gp == " << args.Length() << endl;
+
 	if (args.Length() != 1)
 	{
 		return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
@@ -241,9 +243,11 @@ Handle<Value> HoneydConfigBinding::RemoveScriptPort(const Arguments& args)
 	HandleScope scope;
 	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
 
-	if(args.Length() != 6)
+	cout << "args.Length() rmp == " << args.Length() << endl;
+
+	if(args.Length() != 2)
 	{
-		return ThrowException(Exception::TypeError(String::New("Must be invoked with seven parameters (one for each Nova::Port member, as well as one for name of the profile)")));
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 2 parameters")));
 	}
 
 	string portName = cvv8::CastFromJS<string>(args[0]);
@@ -257,6 +261,8 @@ Handle<Value> HoneydConfigBinding::RemoveScriptPort(const Arguments& args)
 	string newPortScriptName = cvv8::CastFromJS<string>(args[5]);*/
 	string profileName = cvv8::CastFromJS<string>(args[1]);
 
+	cout << "Port name is " << portName << " and profile name is " << profileName << "\n";
+
 	if(!obj->m_conf->m_profiles.keyExists(profileName))
 	{
 		cout << "Profile " << profileName << " does not exist in the m_profiles NodeProfile table." << endl;
@@ -267,11 +273,15 @@ Handle<Value> HoneydConfigBinding::RemoveScriptPort(const Arguments& args)
 
 	for(uint i = 0; i < temp.size(); i++)
 	{
+		cout << profileName << " port " << i << " is " << temp[i].first << "\n";
+		cout << "Matching against " << portName << "\n";
 		if(!string(temp[i].first).compare(portName))
 		{
+			cout << "Found matching port, erasing from m_ports" << endl;
 			obj->m_conf->m_profiles[profileName].m_ports.erase(temp.begin() + i);
 		}
 	}
+	obj->m_conf->UpdateAllProfiles();
 
 	return scope.Close(Boolean::New(true));
 }

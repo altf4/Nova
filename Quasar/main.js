@@ -2327,24 +2327,35 @@ everyone.now.GetLocalIP = function (interface, callback) {
 }
 
 everyone.now.RemoveScriptFromProfiles = function(script, profiles) {
-  console.log('RemoveScriptFromProfiles');
+  console.log('script ' + script);
+  console.log('profiles ' + profiles);
   for(var i in profiles)
   {
-    var ports = honeydConfig.GetPorts(profiles[i]);
-    if(ports != undefined)
-    {
-      for(var j in ports)
+    console.log('looking at profile ' + profiles[i]);
+    GetPorts(profiles[i], function(ports, profileName){
+      if(ports != undefined)
       {
-        if(ports[j].scriptName == script)
+        console.log('found ports for ' + profileName);
+        for(var j in ports)
         {
-          ports[j].scriptName = '';
-          ports[j].behavior = 'open';
-          ports[j].service = '';
-          honeydConfig.RemoveScriptPort(ports[j].portName, profiles[i]);
+          if(ports[j].portName != undefined)
+          {
+            console.log('looking at port ' + ports[j].portName);
+            if(ports[j].scriptName == script)
+            {
+              console.log('found port to remove');
+              ports[j].scriptName = '';
+              ports[j].behavior = 'open';
+              ports[j].service = '';
+              console.log('calling RemoveScriptPort with args ' + ports[j].portName + ' and ' + profileName);
+              honeydConfig.RemoveScriptPort(ports[j].portName, profileName);
+            }
+          }
         }
       }
-    }
+    });
   } 
+  console.log('Saving and loading templates');
   honeydConfig.SaveAllTemplates();
   honeydConfig.LoadAllTemplates();
 }
