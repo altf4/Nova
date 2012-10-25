@@ -641,6 +641,10 @@ string ConstructFilterString(string captureIdentifier)
 		{
 			hsAddresses.push_back(whitelistIpAddresses.at(i));
 		}
+		else if (WhitelistConfiguration::GetInterface(whitelistIpAddresses.at(i)) == "All Interfaces")
+		{
+			hsAddresses.push_back(whitelistIpAddresses.at(i));
+		}
 	}
 	while(hsAddresses.size())
 	{
@@ -656,6 +660,10 @@ string ConstructFilterString(string captureIdentifier)
 		if (WhitelistConfiguration::GetInterface(whitelistIpRanges.at(i)) == captureIdentifier)
 		{
 			hsAddresses.push_back(whitelistIpRanges.at(i));
+		}
+		else if (WhitelistConfiguration::GetInterface(whitelistIpAddresses.at(i)) == "All Interfaces")
+		{
+			hsAddresses.push_back(whitelistIpAddresses.at(i));
 		}
 	}
 	while(hsAddresses.size())
