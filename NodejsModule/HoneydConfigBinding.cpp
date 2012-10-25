@@ -291,7 +291,6 @@ Handle<Value> HoneydConfigBinding::RemoveScriptPort(const Arguments& args)
 				pushPair.second.second = temp[i].second.second;
 				obj->m_conf->m_profiles[profileName].m_ports.erase(obj->m_conf->m_profiles[profileName].m_ports.begin() + i);
 				obj->m_conf->m_profiles[profileName].m_ports.push_back(pushPair);
-				cout << "lastPort == " << obj->m_conf->m_profiles[profileName].m_ports[obj->m_conf->m_profiles[profileName].m_ports.size() - 1].first << endl;
 			}
 			else
 			{
