@@ -1415,19 +1415,8 @@ app.post('/scripts', passport.authenticate('basic', {session: false}), function(
     var temp = '';
     for(var i in string)
     {
-      console.log('string[i] == ' + string[i]);
-      if(string[i] == string[i].toUpperCase() && /[a-zA-Z0-9\.]/.test(string[i]) == true)
+      if(/[a-zA-Z0-9\.]/.test(string[i]) == true)
       {
-        console.log('in test uppercase');
-        temp += string[i].toLowerCase();
-      }
-      else if(/[a-zA-Z0-9\.]/.test(string[i]) == false)
-      {
-        console.log('illegal character');
-      }
-      else
-      {
-        console.log('nothing wrong with this character');
         temp += string[i].toLowerCase();
       }
     }
@@ -1437,21 +1426,30 @@ app.post('/scripts', passport.authenticate('basic', {session: false}), function(
     
   var filename = req.files['script'].name;
   
-  console.log('filename before cleansing ' + filename);
-  
   filename = 'userscript_' + clean(filename);
-  
-  console.log('filename after cleansing ' + filename);
   
   // should create a 'user' folder within the honeyd script
   // path for user uploaded scripts, maybe add a way for the
   // the user to choose where the script goes within the current
   // file structure later.
-  var pathToSave = '/usr/share/honeyd/scripts/misc/';
+  var pathToSave = '/usr/share/honeyd/scripts/misc/' + filename;
   
-  //fs.readFile(req.files['script'].path, function(readErr, data){
-  //  
-  //});
+  fs.readFile(req.files['script'].path, function(readErr, data){
+    if(readErr != null)
+    {
+      RenderError(res, 'Failed to read designated script file');
+      return;
+    }
+    
+    fs.writeFileSync(pathToSave, data);
+    
+    pathToSave = req.body['shell'] + ' ' + pathToSave + ' ' + req.body['args'];
+  
+    honeydConfig.AddScript(req.body['name'], pathToSave);
+  
+    honeydConfig.SaveAllTemplates();
+    honeydConfig.LoadAllTemplates();
+  });
   
   res.redirect('scripts.jade');
 });

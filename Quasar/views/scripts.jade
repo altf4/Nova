@@ -87,8 +87,7 @@ block headerAdditions
     {
       var sName = theDoc.getElementById('scriptFile').value;
       var sFile = theDoc.getElementById('scriptName').value;
-      console.log('sName ' + sName);
-      console.log('sFile ' + sFile);
+      
       if(sName == '' || sFile == '' || sName == undefined || sFile == undefined)
       {
         alert('Must select both a file and supply a name for the new script');
@@ -125,12 +124,29 @@ block content
   
   div(id='lightbox', class='white_content')
     form(id='submitMe', method='post', enctype="multipart/form-data")
-      label Script to Upload
-      input(type='file', name='script', id='scriptFile')
-      br
-      label Name of Script
-      input(name='name', id='scriptName')
-      br
+      table
+        tbody
+          tr
+            td 
+              label Script to Upload
+            td 
+              input(type='file', name='script', id='scriptFile')
+          tr
+            td
+              label Shell Type
+            td
+              input(name='shell', id='scriptShell')
+          tr 
+            td
+              label Args
+            td
+              input(name='args', id='args')
+          tr
+            td
+              label Name of Script
+            td
+              input(name='name', id='scriptName')
     button(onclick='checkParams(function(){document.getElementById("submitMe").submit();})') Add Script
+    
     br
     button(onclick='closeLightbox()') Close
