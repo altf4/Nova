@@ -37,8 +37,7 @@ block headerAdditions
       if (haystackUp) {
         var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
         if (restartHaystack) {
-          now.StopHaystack();
-          now.StartHaystack();
+          now.RestartHaystack();
         }
       }
       location.reload(true);
@@ -125,17 +124,6 @@ block headerAdditions
           grid.PushKeyToSelected(pageElements[row]);
         }
       }
-    }
-
-    function checkIfRestartNeeded(haystackUp) {
-      if (haystackUp) {
-        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
-        if (restartHaystack) {
-          now.StopHaystack();
-          now.StartHaystack();
-        }
-      }
-      location.reload(true);
     }
 
     function checkOnlyOne(checkedBox)
