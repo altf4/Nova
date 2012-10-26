@@ -1397,6 +1397,64 @@ app.post('/scanning', passport.authenticate('basic', {session: false}), function
 	}
 });
 
+app.post('/scripts', passport.authenticate('basic', {session: false}), function(req, res){
+  if(req.files['script'] == undefined || req.body['name'] == undefined)
+  {
+    RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.");
+    return;
+  }
+  if(req.files['script'] == '' || req.body['name'] == '')
+  {
+    RenderError(res, "Must select both a file and a name for the script to add");
+    return;
+  }
+  
+  function clean(string)
+  {
+    var temp = '';
+    for(var i in string)
+    {
+      console.log('string[i] == ' + string[i]);
+      if(string[i] == string[i].toUpperCase() && /[a-zA-Z0-9\.]/.test(string[i]) == true)
+      {
+        console.log('in test uppercase');
+        temp += string[i].toLowerCase();
+      }
+      else if(/[a-zA-Z0-9\.]/.test(string[i]) == false)
+      {
+        console.log('illegal character');
+      }
+      else
+      {
+        console.log('nothing wrong with this character');
+        temp += string[i].toLowerCase();
+      }
+    }
+    
+    return temp;
+  }
+    
+  var filename = req.files['script'].name;
+  
+  console.log('filename before cleansing ' + filename);
+  
+  filename = 'userscript_' + clean(filename);
+  
+  console.log('filename after cleansing ' + filename);
+  
+  // should create a 'user' folder within the honeyd script
+  // path for user uploaded scripts, maybe add a way for the
+  // the user to choose where the script goes within the current
+  // file structure later.
+  var pathToSave = '/usr/share/honeyd/scripts/misc/';
+  
+  //fs.readFile(req.files['script'].path, function(readErr, data){
+  //  
+  //});
+  
+  res.redirect('scripts.jade');
+});
+
 app.post('/customizeTrainingSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	for (var uid in req.body) {
 		trainingDb.SetIncluded(uid, true);
