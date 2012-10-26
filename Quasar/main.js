@@ -839,6 +839,7 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 	  push.pfile = node.GetProfile();
 	  push.ip = node.GetIP();
 	  push.mac = node.GetMAC();
+	  push.interface = node.GetInterface();
 		nodeList.push(push);
 	}
 	

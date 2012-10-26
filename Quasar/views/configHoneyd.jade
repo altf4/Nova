@@ -315,14 +315,32 @@ block headerAdditions
       grid.SetRenderCallback(onGridRendered);
       
       var nodeList = !{JSON.stringify(nodes)};
-      
+      var interfaces = !{JSON.stringify(INTERFACES)};
+      var interfaceAliases = !{JSON.stringify(interfaceAliases)}
+
       for(var i in nodeList)
       {
         var row = [];
         row.push(String(nodeList[i].enabled));
         row.push(String(nodeList[i].name));
         row.push(String(nodeList[i].pfile));
-        row.push(String(nodeList[i].ip));
+
+        if (nodeList[i].ip != "DHCP") {
+          row.push(String(nodeList[i].ip));
+        } else {
+          var alias = "";
+          for (var j = 0; j < interfaces.length; j++) {
+            if (interfaces[j] == nodeList[i].interface) {
+              alias = interfaceAliases[j];
+             }
+          }
+
+          if (alias != "" && alias != nodeList[i].interface) {
+            row.push("DHCP on " + nodeList[i].interface + " (alias: " + alias + ")"); 
+          } else {
+            row.push("DHCP on " + nodeList[i].interface); 
+          }
+        }
         row.push(String(nodeList[i].mac));
         grid.PushEntry(row);
       }
