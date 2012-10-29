@@ -293,6 +293,7 @@ public:
 	PortTable m_ports;
 	ProfileTable m_profiles;
     NodeTable m_nodes;
+    ScriptTable m_scripts;
 
     std::vector<std::string> m_groups;
 
@@ -310,8 +311,6 @@ private:
     boost::property_tree::ptree m_scriptTree;
     boost::property_tree::ptree m_nodesTree;
     boost::property_tree::ptree m_subnetTree;
-
-    ScriptTable m_scripts;
 
     // ******************* Private Methods **************************
     //***************** REFACTORED FROM HERE *****************//

@@ -54,6 +54,8 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNode"),FunctionTemplate::New(AddNewNode)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfile"),FunctionTemplate::New(GetProfile)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPorts"),FunctionTemplate::New(GetPorts)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddScript"),FunctionTemplate::New(AddScript)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveScript"),FunctionTemplate::New(RemoveScript)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveScriptPort"),FunctionTemplate::New(RemoveScriptPort)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAll"),FunctionTemplate::New(SaveAll)->GetFunction());
@@ -304,6 +306,73 @@ Handle<Value> HoneydConfigBinding::RemoveScriptPort(const Arguments& args)
 	}
 
 	obj->m_conf->UpdateProfile(profileName);
+
+	return scope.Close(Boolean::New(true));
+}
+
+Handle<Value> HoneydConfigBinding::AddScript(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() > 4 || args.Length() < 2)
+	{
+		// The service should be found dynamically, but unfortunately
+		// within the nmap services file the services are linked to ports,
+		// whereas our scripts have no such discrete affiliation.
+		// I'm thinking of adding a searchable dropdown (akin to the
+		// dojo select within the edit profiles page) that contains
+		// all the services, and allow the user to associate the
+		// uploaded script with one of these services.
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 2 to 4 parameters (3rd parameter is optional service, 4th parameter is optional osclass")));
+	}
+
+	Nova::Script script;
+	script.m_name = cvv8::CastFromJS<string>(args[0]);
+	script.m_path = cvv8::CastFromJS<string>(args[1]);
+
+	if(args.Length() == 4)
+	{
+		script.m_service = cvv8::CastFromJS<string>(args[2]);
+		script.m_osclass = cvv8::CastFromJS<string>(args[3]);
+	}
+	else
+	{
+		script.m_service = "";
+		script.m_osclass = "";
+	}
+
+	if(!obj->m_conf->m_scripts.keyExists(script.m_name))
+	{
+		obj->m_conf->m_scripts[script.m_name] = script;
+	}
+	else
+	{
+		cout << "Script already present, doing nothing" << endl;
+	}
+
+	return scope.Close(Boolean::New(true));
+}
+
+Handle<Value> HoneydConfigBinding::RemoveScript(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 1)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 1 parameter")));
+	}
+
+	string scriptToRemove = cvv8::CastFromJS<string>(args[0]);
+
+	if(!obj->m_conf->m_scripts.keyExists(scriptToRemove))
+	{
+		cout << "No registered script with name " << scriptToRemove << endl;
+		return scope.Close(Boolean::New(false));
+	}
+
+	obj->m_conf->m_scripts.erase(scriptToRemove);
 
 	return scope.Close(Boolean::New(true));
 }
