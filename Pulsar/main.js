@@ -4,7 +4,6 @@ var novaconfig = require('novaconfig.node');
 // doesn't/can't accept websocket connections (for whatever reason)
 // Problem not a problem now, but definitely will be later
 var express = require('express');
-var app = require('express').createServer();
 var nowjs = require('now');
 var fs = require('fs');
 var crypto = require('crypto');
@@ -18,6 +17,25 @@ var BasicStrategy = require('passport-http').BasicStrategy;
 
 var NovaHomePath = config.GetPathHome();
 var NovaSharedPath = config.GetPathShared();
+
+
+// Setup TLS
+var app;
+if (config.ReadSetting("PULSAR_WEBUI_TLS_ENABLED") == "1") {
+	var keyPath = config.ReadSetting("PULSAR_WEBUI_TLS_KEY");
+	var certPath = config.ReadSetting("PULSAR_WEBUI_TLS_CERT");
+	var passPhrase = config.ReadSetting("PULSAR_WEBUI_TLS_PASSPHRASE");
+	express_options = {
+		key: fs.readFileSync(NovaHomePath + keyPath),
+		cert: fs.readFileSync(NovaHomePath + certPath),
+		passphrase: passPhrase
+	};
+ 
+	app = express.createServer(express_options);
+} else {
+	app = express.createServer();
+}
+
 
 // Configure the express server to use the 
 // bodyParser so that we can view and use the 
@@ -848,13 +866,24 @@ var https = require('https');
 // trusted certs, and the other options do what they say
 // TODO: These paths will need to be relative to the NovaPath
 // or something Pulsar specific
-var options = {
-  key: fs.readFileSync(NovaHomePath + '/config/keys/quasarKey.pem'),
-  cert: fs.readFileSync(NovaHomePath + '/config/keys/quasarCert.pem')
-	/*ca: fs.readFileSync(''),
-	requestCert:		true,
-	rejectUnauthorized:	false*/
-};
+
+var options;
+if (config.ReadSetting("PULSAR_TETHER_TLS_ENABLED") == "1") {
+	options = {
+	  key: fs.readFileSync(NovaHomePath + config.ReadSetting("PULSAR_TETHER_TLS_KEY")),
+	  cert: fs.readFileSync(NovaHomePath + config.ReadSetting("PULSAR_TETHER_TLS_CERT")),
+	  passphrase: config.ReadSetting("PULSAR_TETHER_TLS_PASSPHRASE"),
+	  ca: fs.readFileSync(NovaHomePath + config.ReadSetting("PULSAR_TETHER_TLS_CA")),
+	  requestCert:		true,
+	  rejectUnauthorized:	true
+	};
+} else {
+	options = {
+	  key: fs.readFileSync(NovaHomePath + config.ReadSetting("PULSAR_TETHER_TLS_KEY")),
+	  cert: fs.readFileSync(NovaHomePath + config.ReadSetting("PULSAR_TETHER_TLS_CERT")),
+	  passphrase: config.ReadSetting("PULSAR_TETHER_TLS_PASSPHRASE"),
+	 };
+}
 
 // Create the httpsServer, and make it so that any requests for urls over http
 // to the server are met with 404s; after the initial handshake, we shouldn't be 

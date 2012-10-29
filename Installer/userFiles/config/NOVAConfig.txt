@@ -474,3 +474,36 @@ THRESHOLD_HOSTILE_TRIGGERS - - - - >6 >20 >20 - - - - - - >0.5
 ############################################
 ONLY_CLASSIFY_HONEYPOT_TRAFFIC 0
 
+
+
+############################################
+# TLS Options
+############################################
+# This will enable TLS between Pulsar and the client web browser
+PULSAR_WEBUI_TLS_ENABLED 1
+PULSAR_WEBUI_TLS_CERT /config/keys/ui.crt
+PULSAR_WEBUI_TLS_KEY /config/keys/ui.key
+PULSAR_WEBUI_TLS_PASSPHRASE toor
+
+# This will enable TLS between Quasar and the client web browser
+QUASAR_WEBUI_TLS_ENABLED 1
+QUASAR_WEBUI_TLS_CERT /config/keys/ui.crt
+QUASAR_WEBUI_TLS_KEY /config/keys/ui.key
+QUASAR_WEBUI_TLS_PASSPHRASE toor
+ 
+# This will set up the TLS settings on the Pulsar side for the Quasar/Pulsar connection
+PULSAR_TETHER_TLS_ENABLED 1
+PULSAR_TETHER_TLS_CA /config/keys/ca.crt
+PULSAR_TETHER_TLS_CERT /config/keys/pulsarTether.crt
+PULSAR_TETHER_TLS_KEY /config/keys/pulsarTether.key
+PULSAR_TETHER_TLS_PASSPHRASE toor
+
+# This will cause Quasar to provide a certificate when connecting to Pulsar
+# Note: This certificate must be signed by the Pulsar CA
+QUASAR_TETHER_TLS_ENABLED 1
+QUASAR_TETHER_TLS_CERT /config/keys/quasarTether.crt
+QUASAR_TETHER_TLS_KEY /config/keys/quasarTether.key
+QUASAR_TETHER_TLS_PASSPHRASE toor
+
+
+
