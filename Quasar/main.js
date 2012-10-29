@@ -558,6 +558,14 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
+app.get('/honeydConfigManage', passport.authenticate('basic', {session: false}), function(req, res){
+  res.render('honeydConfigManage.jade', {
+    locals: {
+      configurations: ['default']
+    }
+  });
+});
+
 app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
 	res.download(novadLogPath, 'novadLog.log');
 });
@@ -2527,6 +2535,16 @@ everyone.now.RemoveScript = function(scriptName, callback)
   if(typeof callback == 'function')
   {
     callback();
+  }
+}
+
+everyone.now.GetConfigSummary = function(configName, callback)
+{
+  console.log('in GetConfigSummary with arg ' + configName);
+  
+  if(typeof callback == 'function')
+  {
+    callback('');
   }
 }
 

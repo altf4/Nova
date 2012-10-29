@@ -211,6 +211,8 @@ public:
 	int GetWebUIPort();
 	void SetWebUIPort(int port);
 
+	std::string GetCurrentConfig();
+
 	version GetVersion();
 	std::string GetVersionString();
 
@@ -334,6 +336,8 @@ private:
 	std::string m_masterUIClientID;
 
 	bool m_onlyClassifyHoneypotTraffic;
+
+	std::string m_currentConfig;
 
 	std::vector<double> m_featureWeights;
 

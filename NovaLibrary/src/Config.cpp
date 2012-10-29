@@ -90,7 +90,8 @@ string Config::m_prefixes[] =
 	"FEATURE_WEIGHTS",
 	"CLASSIFICATION_ENGINE",
 	"THRESHOLD_HOSTILE_TRIGGERS",
-	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC"
+	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC",
+	"CURRENT_CONFIG"
 };
 
 Config *Config::m_instance = NULL;
@@ -948,6 +949,19 @@ void Config::LoadConfig_Internal()
 				}
 			}
 
+			// CURRENT_CONFIG
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_currentConfig = string(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+			}
+
 		}
 	}
 	else
@@ -1269,6 +1283,11 @@ bool Config::LoadVersionFile()
 version Config::GetVersion()
 {
 	return m_version;
+}
+
+string Config::GetCurrentConfig()
+{
+	return m_currentConfig;
 }
 
 string Config::GetVersionString()

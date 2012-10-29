@@ -474,3 +474,7 @@ THRESHOLD_HOSTILE_TRIGGERS - - - - >6 >20 >20 - - - - - - >0.5
 ############################################
 ONLY_CLASSIFY_HONEYPOT_TRAFFIC 0
 
+############################################
+# CURRENT_CONFIG
+############################################
+CURRENT_CONFIG default

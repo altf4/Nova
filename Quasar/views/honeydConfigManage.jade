@@ -1,0 +1,92 @@
+extends layout
+
+block headerAdditions
+  script
+    var configurationList = !{JSON.stringify(configurations)};
+    var theDoc = document;
+    
+    console.log('configurationList = ' + configurationList);
+    
+    function newConfiguration(configName, cloneInfo)
+    {
+      var cloneConfig = cloneInfo;
+      if(cloneInfo == undefined)
+      {
+        console.log('Creating empty configuration ' + configName);
+      }
+      else 
+      {
+        console.log('Creating clone configuration ' + configName + ' based on ' + cloneInfo);
+      }
+    }
+    
+    function populateConfigSelect(configs)
+    {
+      console.log('populateConfigSelect()');
+      if(configs == undefined || configs == '')
+      {
+        console.log('no configs sent');
+        var option = theDoc.createElement('option');
+        option.value = 'None';
+        option.innerHTML = 'None';
+        theDoc.getElementById('configurations').appendChild(option);
+      }
+      else
+      {
+        console.log('got configs');
+        var selected = false;
+        for(var i in configs)
+        {
+          console.log('configs[' + i + '] == ' + configs[i]);
+          var option = theDoc.createElement('option');
+          if(!selected)
+          {
+            option.selected = 'selected';
+            selected = true;
+          }
+          option.value = configs[i];
+          option.innerHTML = configs[i];
+          theDoc.getElementById('configurations').appendChild(option);
+        }
+        GetConfigurationSummary();
+      }
+    }
+    
+    function GetConfigurationSummary(configArg)
+    {
+      var config;
+      if(configArg == undefined)
+      {
+        config = theDoc.getElementById('configurations').value;
+      }
+      else
+      {
+        config = configArg;
+      }
+      console.log('In GetConfigurationSummary with config ' + config);
+      if(typeof now.GetConfigSummary == 'function')
+      {
+        console.log('now.GetConfigSummary is a function, calling with arg ' + config);
+        now.GetConfigSummary(config, function(parseMe){
+          // manipulate elements here (i.e. pi charts, text, tables, etc.)
+          // Will all be contained in the object parseMe that will use the 
+          // object literal notation of javascript to allow the server side
+          // to do the calculations, and then send exactly the data required to
+          // the browser.
+          console.log('in callback with parseMe == ' + parseMe);
+        })
+      }
+      else
+      {
+        console.log('now.GetConfigSummary is not a function');
+      }
+    }
+    
+    now.ready(function(){
+      populateConfigSelect(configurationList);
+    });
+  
+block content
+  h1 Configuration Summary
+  select#configurations(onchange='GetConfigurationSummary()')
+  div#summary(style='border: 2px solid black')
