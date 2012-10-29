@@ -2433,21 +2433,24 @@ everyone.now.GetLocalIP = function (interface, callback) {
 everyone.now.RemoveScriptFromProfiles = function(script, profiles, callback) {
   for(var i in profiles)
   {
-    GetPorts(profiles[i], function(ports, profileName){
-      if(ports != undefined)
-      {
-        for(var j in ports)
+    if(profiles[i] != null && profiles[i] != undefined && profiles[i] != '')
+    {
+      GetPorts(profiles[i], function(ports, profileName){
+        if(ports != undefined)
         {
-          if(ports[j].portName != undefined)
+          for(var j in ports)
           {
-            if(ports[j].scriptName == script)
+            if(ports[j].portName != undefined)
             {
-              honeydConfig.RemoveScriptPort(ports[j].portName, profileName);
+              if(ports[j].scriptName == script)
+              {
+                honeydConfig.RemoveScriptPort(ports[j].portName, profileName);
+              }
             }
           }
         }
-      }
-    });
+      });
+    }
   } 
   
   honeydConfig.SaveAllTemplates();
