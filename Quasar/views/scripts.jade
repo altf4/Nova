@@ -29,7 +29,7 @@ block headerAdditions
         label0.innerHTML = scriptList[i].script;
         var td1 = theDoc.createElement('td');
         var label1 = theDoc.createElement('label');
-        label1.innerHTML = (scriptBindings[scriptList[i].script] != undefined ? scriptBindings[scriptList[i].script] : 'Not assigned to any profiles');
+        label1.innerHTML = (scriptBindings[scriptList[i].script] != undefined ? scriptBindings[scriptList[i].script] : '');
         if(label1.innerHTML !== scriptBindings[scriptList[i].script])
         {
           disable = true;
