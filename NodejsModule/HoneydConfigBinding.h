@@ -23,6 +23,7 @@ private:
 	static v8::Handle<v8::Value> AddNewNodes(const v8::Arguments& args);
 	static v8::Handle<v8::Value> AddNewNode(const v8::Arguments& args);
 	static v8::Handle<v8::Value> AddScript(const v8::Arguments& args);
+	static v8::Handle<v8::Value> RemoveScript(const v8::Arguments& args);
 
 
 	static v8::Handle<v8::Value> GetNode(const v8::Arguments& args);

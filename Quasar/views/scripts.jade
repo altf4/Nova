@@ -38,20 +38,38 @@ block headerAdditions
         clearButton.innerHTML = 'Clear Profiles';
         clearButton.setAttribute('onclick', 'ClearScriptFromProfiles("' + scriptList[i].script + '")');
         clearButton.disabled = disable;
+        var td4 = theDoc.createElement('td');
+        var removeButton = theDoc.createElement('button');
+        removeButton.innerHTML = 'Remove Script';
+        removeButton.setAttribute('onclick', 'RemoveScriptFromMap("' + scriptList[i].script + '")');
         
         td0.appendChild(label0);
         td1.appendChild(label1);
         td2.appendChild(label2);
         td3.appendChild(clearButton);
+        td4.appendChild(removeButton);
         tr.appendChild(td0);
         tr.appendChild(td1);
         tr.appendChild(td2);
         tr.appendChild(td3);
+        tr.appendChild(td4);
         append.appendChild(tr);
       }
     }
     
-    function ClearScriptFromProfiles(scriptName)
+    function RemoveScriptFromMap(scriptName)
+    {
+      ClearScriptFromProfiles(scriptName);
+      
+      if(typeof now.RemoveScript == 'function')
+      {
+        now.RemoveScript(scriptName, function(){
+          location.reload(true);
+        });
+      }
+    }
+    
+    function ClearScriptFromProfiles(scriptName, reload)
     {
       if(scriptBindings[scriptName] == undefined)
       {

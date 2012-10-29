@@ -55,6 +55,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfile"),FunctionTemplate::New(GetProfile)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPorts"),FunctionTemplate::New(GetPorts)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddScript"),FunctionTemplate::New(AddScript)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveScript"),FunctionTemplate::New(RemoveScript)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveScriptPort"),FunctionTemplate::New(RemoveScriptPort)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAll"),FunctionTemplate::New(SaveAll)->GetFunction());
@@ -349,6 +350,29 @@ Handle<Value> HoneydConfigBinding::AddScript(const Arguments& args)
 	{
 		cout << "Script already present, doing nothing" << endl;
 	}
+
+	return scope.Close(Boolean::New(true));
+}
+
+Handle<Value> HoneydConfigBinding::RemoveScript(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 1)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 1 parameter")));
+	}
+
+	string scriptToRemove = cvv8::CastFromJS<string>(args[0]);
+
+	if(!obj->m_conf->m_scripts.keyExists(scriptToRemove))
+	{
+		cout << "No registered script with name " << scriptToRemove << endl;
+		return scope.Close(Boolean::New(false));
+	}
+
+	obj->m_conf->m_scripts.erase(scriptToRemove);
 
 	return scope.Close(Boolean::New(true));
 }

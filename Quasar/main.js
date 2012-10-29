@@ -1451,7 +1451,11 @@ app.post('/scripts', passport.authenticate('basic', {session: false}), function(
     honeydConfig.LoadAllTemplates();
   });
   
-  res.redirect('scripts.jade');
+  res.render('saveRedirect.jade', {
+    locals: {
+      redirectLink: '/scripts'
+    }
+  })
 });
 
 app.post('/customizeTrainingSave', passport.authenticate('basic', {session: false}), function (req, res) {
@@ -2510,6 +2514,18 @@ everyone.now.addTrainingPoint = function(ip, interface, features, hostility, cal
 	});	
 }
 
+everyone.now.RemoveScript = function(scriptName, callback)
+{
+  honeydConfig.RemoveScript(scriptName);
+  
+  honeydConfig.SaveAllTemplates();
+  honeydConfig.LoadAllTemplates();
+  
+  if(typeof callback == 'function')
+  {
+    callback();
+  }
+}
 
 var distributeSuspect = function (suspect) {
 	var s = new Object();
