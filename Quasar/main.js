@@ -286,9 +286,9 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   if (config.ReadSetting("QUASAR_TETHER_TLS_ENABLED")) {
     client = new WebSocketClient({
       tlsOptions: {
-        cert: fs.readFileSync(NovaHomePath + Config.ReadSetting("QUASAR_TETHER_TLS_CERT")),
-        key: fs.readFileSync(NovaHomePath + Config.ReadSetting("QUASAR_TETHER_TLS_KEY")),
-        passphrase: fs.readFileSync(NovaHomePath + Config.ReadSetting("QUASAR_TETHER_TLS_PASSPHRASE")),
+        cert: fs.readFileSync(NovaHomePath + config.ReadSetting("QUASAR_TETHER_TLS_CERT")),
+        key: fs.readFileSync(NovaHomePath + config.ReadSetting("QUASAR_TETHER_TLS_KEY")),
+        passphrase: config.ReadSetting("QUASAR_TETHER_TLS_PASSPHRASE")
       }
     });
   } else {
