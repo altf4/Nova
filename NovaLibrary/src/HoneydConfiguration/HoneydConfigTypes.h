@@ -49,7 +49,79 @@ enum PortBehavior
 	, PORT_SCRIPT
 	, PORT_TARPIT_OPEN
 	, PORT_TARPIT_SCRIPT
+	, PORT_ERROR
 };
+//Returns a string representation of the given PortBehavior
+//	Returns one of: "closed" "open" "filtered" "script" "tarpit-open" "tarpit-script" or "" for error
+static std::string PortBehaviorToString(enum PortBehavior behavior)
+{
+	switch(behavior)
+	{
+		case PORT_OPEN:
+		{
+			return "open";
+		}
+		case PORT_CLOSED:
+		{
+			return "closed";
+		}
+		case PORT_FILTERED:
+		{
+			return "filtered";
+		}
+		case PORT_SCRIPT:
+		{
+			return "script";
+		}
+		case PORT_TARPIT_OPEN:
+		{
+			return "tarpit-open";
+		}
+		case PORT_TARPIT_SCRIPT:
+		{
+			return "tarpit-script";
+		}
+		default:
+		{
+			return "";
+		}
+	}
+}
+
+//Returns a PortBehavior enum which is represented by the given string
+//	returns PORT_ERROR on error
+static enum PortBehavior StringToPortBehavior(std::string behavior)
+{
+	if(!behavior.compare("open"))
+	{
+		return PORT_OPEN;
+	}
+	else if(!behavior.compare("closed"))
+	{
+		return PORT_CLOSED;
+	}
+	else if(!behavior.compare("filtered"))
+	{
+		return PORT_FILTERED;
+	}
+	else if(!behavior.compare("script"))
+	{
+		return PORT_SCRIPT;
+	}
+	else if(!behavior.compare("tarpit-open"))
+	{
+		return PORT_TARPIT_OPEN;
+	}
+	else if(!behavior.compare("tarpit-script"))
+	{
+		return PORT_TARPIT_SCRIPT;
+	}
+	else
+	{
+		return PORT_ERROR;
+	}
+}
+
 enum RecursiveDirection
 {
 	ALL = 0
@@ -62,7 +134,54 @@ enum PortProtocol
 	PROTOCOL_UDP = 0
 	, PROTOCOL_TCP
 	, PROTOCOL_ICMP
+	, PROTOCOL_ERROR
 };
+//Returns a string representation of the given PortProtocol
+//	Returns one of: "udp" "tcp" "icmp" or "" for error
+static std::string PortProtocolToString(enum PortProtocol protocol)
+{
+	switch(protocol)
+	{
+		case PROTOCOL_UDP:
+		{
+			return "udp";
+		}
+		case PROTOCOL_TCP:
+		{
+			return "tcp";
+		}
+		case PROTOCOL_ICMP:
+		{
+			return "icmp";
+		}
+		default:
+		{
+			return "";
+		}
+	}
+}
+
+//Returns a PortProtocol enum which is represented by the given string
+//	returns PROTOCOL_ERROR on error
+static enum PortProtocol StringToPortProtocol(std::string protocol)
+{
+	if(!protocol.compare("tcp"))
+	{
+		return PROTOCOL_TCP;
+	}
+	else if(!protocol.compare("udp"))
+	{
+		return PROTOCOL_UDP;
+	}
+	else if(!protocol.compare("icmp"))
+	{
+		return PROTOCOL_ICMP;
+	}
+	else
+	{
+		return PROTOCOL_ERROR;
+	}
+}
 
 enum profileIndex {
 	TYPE
@@ -308,19 +427,16 @@ typedef Nova::HashMap<std::string, NodeProfile, std::hash<std::string>, eqstr > 
 //used to keep track of haystack node gui items and allow for easy access
 struct Node
 {
-	std::string m_name;
 	std::string m_interface;
 	std::string m_pfile;
-	std::vector<std::string> m_ports;
+	std::string m_portSetName;
 	std::vector<bool> m_isPortInherited;
 	std::string m_IP;
 	std::string m_MAC;
 	in_addr_t m_realIP;
 	bool m_enabled;
-	boost::property_tree::ptree m_tree;
 
-	// This is for the Javascript bindings in the web m_interface
-	inline std::string GetName() {return m_name;}
+	// This is for the Javascript bindings in the web interface
 	inline std::string GetInterface() {return m_interface;}
 	inline std::string GetProfile() {return m_pfile;}
 	inline std::string GetIP() {return m_IP;}
@@ -329,6 +445,8 @@ struct Node
 };
 
 //Container for accessing node items
+//Key - String representation of the MAC address used for the node
+//value - The Node object itself
 typedef Nova::HashMap<std::string, Node, std::hash<std::string>, eqstr > NodeTable;
 
 }

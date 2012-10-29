@@ -33,17 +33,25 @@ public:
 
 	PersonalityTreeItem(PersonalityTreeItem *parent, std::string key = "");
 
+	PersonalityTreeItem(){};
+
 	~PersonalityTreeItem();
+
+	//Returns a string suitable for inserting into the honeyd configuration file
+	std::string ToString();
 
 	// Number of hosts that have this personality
 	uint32_t m_count;
 	double m_distribution;
 
-	// Node for the node
+	// Name for the node
 	std::string m_key;
 
 	// Is this something we can compress?
 	bool m_redundant;
+
+	//Is this an autoconfig generated node? (or manually created)
+	bool m_isGenerated;
 
 	// Vector of the child nodes to this node
 	std::vector<PersonalityTreeItem*> m_children;
@@ -51,40 +59,38 @@ public:
 	//Parent PersonalityTreeItem
 	PersonalityTreeItem *m_parent;
 
-	// Distribution vectors containing the percent occurrences of
-	// each Port.
-	std::vector<std::pair<std::string, double> > m_ports_dist;
-
 	//Default behavior of these respective port types
 	std::string m_TCP_behavior;
 	std::string m_UDP_behavior;
 	std::string m_ICMP_behavior;
 
+	//Upper and lower bound for set uptime
+	uint m_uptimeMin;
+	uint m_uptimeMax;
+
 	// String representing the osclass. Used for matching ports to
 	// scripts from the script table.
 	std::string m_osclass;
 
+	std::string m_dropRate;
+
 	//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
-	MACVendorMap m_vendors;
+	std::vector<std::pair<std::string, double> > m_vendors;
 
 	//A collection of PortSets, representing each group of ports found
 	std::vector<PortSet *> m_portSets;
-
-	void GenerateDistributions();
 
 	//Returns a random vendor from the internal list of MAC vendors, according to the given probabilities
 	// If a profile has no defined ethernet vendors, look to the parent profile
 	//	returns an empty string "" on error
 	std::string GetRandomVendor();
 
+	double GetVendorDistribution(std::string vendorName);
+
 private:
 
 	// The average number of ports that this personality has
 	uint16_t m_avgPortCount;
-
-	// Distribution vectors containing the percent occurrences of
-	// each MAC Vendor
-	std::vector<std::pair<std::string, double> > m_vendor_dist;
 
 };
 

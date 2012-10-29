@@ -38,29 +38,12 @@ PersonalityTree::PersonalityTree(ScannedHostTable *persTable, vector<Subnet>& su
 	m_root->m_UDP_behavior = "reset";
 	m_root->m_ICMP_behavior = "open";
 
-	HoneydConfiguration::Inst()->LoadAllTemplates();
+	HoneydConfiguration::Inst()->ReadAllTemplatesXML();
 
 	HoneydConfiguration::Inst()->AddGroup("HaystackAutoConfig");
 	Config::Inst()->SetGroup("HaystackAutoConfig");
 	Config::Inst()->SaveUserConfig();
-	HoneydConfiguration::Inst()->SaveAllTemplates();
-	HoneydConfiguration::Inst()->LoadAllTemplates();
 
-	vector<string> nodesToDelete;
-	for(NodeTable::iterator it = HoneydConfiguration::Inst()->m_nodes.begin(); it != HoneydConfiguration::Inst()->m_nodes.end(); it++)
-	{
-		if(it->first.compare("Doppelganger"))
-		{
-			nodesToDelete.push_back(it->first);
-		}
-	}
-	for (vector<string>::iterator it = nodesToDelete.begin(); it != nodesToDelete.end(); it++)
-	{
-		HoneydConfiguration::Inst()->DeleteNode(*it);
-	}
-
-	HoneydConfiguration::Inst()->SaveAllTemplates();
-	HoneydConfiguration::Inst()->LoadAllTemplates();
 	m_serviceMap = ServiceToScriptMap(&HoneydConfiguration::Inst()->GetScriptTable());
 
 	if(persTable != NULL)
@@ -111,6 +94,36 @@ PersonalityTreeItem *PersonalityTree::GetRandomProfile()
 
 	return personality;
 }
+
+string PersonalityTree::ToString()
+{
+	return ToString_helper(m_root);
+}
+
+string PersonalityTree::ToString_helper(PersonalityTreeItem *item)
+{
+	string runningTotal;
+
+	if(item == NULL)
+	{
+		return "";
+	}
+
+	if(item->m_children.size() == 0)
+	{
+		runningTotal = item->ToString();
+	}
+
+	//Depth first recurse down
+	for(uint i = 0; i < item->m_children.size(); i++)
+	{
+		runningTotal += ToString_helper(item->m_children[i]);
+	}
+
+	return runningTotal;
+}
+
+
 
 bool PersonalityTree::LoadTable(ScannedHostTable *persTable)
 {
@@ -183,7 +196,13 @@ bool PersonalityTree::InsertHost(ScannedHost *targetHost, PersonalityTreeItem *p
 	//Insert or count MAC vendor occurrences
 	for(MACVendorMap::iterator it = targetHost->m_vendors.begin(); it != targetHost->m_vendors.end(); it++)
 	{
-		childPersonality->m_vendors[it->first] += it->second;
+		for(uint i = 0; i < childPersonality->m_vendors.size(); i++)
+		{
+			if(!childPersonality->m_vendors[i].first.compare(it->first))
+			{
+				childPersonality->m_vendors[i].second += it->second;
+			}
+		}
 	}
 
 	targetHost->m_personalityClass.pop_back();
@@ -195,176 +214,6 @@ bool PersonalityTree::InsertHost(ScannedHost *targetHost, PersonalityTreeItem *p
 		}
 	}
 	return true;
-}
-
-bool PersonalityTree::AddAllPorts(PersonalityTreeItem *personalityItem)
-{
-//	if(personalityItem == NULL)
-//	{
-//		LOG(ERROR, "NULL PersonalityNode passed as parameter!", "");
-//		return false;
-//	}
-//
-//	//Depth first search through the tree
-//	for(unsigned int i = 0; i < personalityItem->m_children.size(); i++)
-//	{
-//		if(!AddAllPorts(personalityItem->m_children[i]))
-//		{
-//			return false;
-//		}
-//	}
-//
-//	for(unsigned int  i = 0; i < personalityItem->m_ports_dist.size(); i++)
-//	{
-//		PortStruct scriptedPort;
-//		PortStruct openPort;
-//
-//		vector<string> portTokens;
-//
-//		boost::split(portTokens, personalityItem->m_ports_dist[i].first, boost::is_any_of("_"));
-//
-//		openPort.m_portName = portTokens[0] + "_" + portTokens[1] + "_reset";
-//		openPort.m_portNum = portTokens[0];
-//		openPort.m_type = portTokens[1];
-//		openPort.m_behavior = "reset";
-//		m_hdconfig->AddPort(openPort);
-//
-//		scriptedPort.m_portNum = portTokens[0];
-//		scriptedPort.m_type = portTokens[1];
-//		scriptedPort.m_portName = scriptedPort.m_portNum + "_" + scriptedPort.m_type + "_open";
-//		scriptedPort.m_behavior = "open";
-//		m_hdconfig->AddPort(scriptedPort);
-//
-//		scriptedPort.m_portName = portTokens[0] + "_" + portTokens[1];
-//		scriptedPort.m_behavior = "script";
-//
-//		vector<pair<string, uint> > potentialMatches;
-//
-//		for(PortServiceMap::iterator it = personalityItem->m_portSets.begin(); it != personalityItem->m_portSets.end(); it++)
-//		{
-//			if(!m_serviceMap.GetScripts(it->second.second).empty() && !(it->first + "_open").compare(personalityItem->m_ports_dist[i].first))
-//			{
-//				scriptedPort.m_service = it->second.second;
-//
-//				vector<string> nodeOSClasses;
-//				vector<string> scriptOSClasses;
-//
-//				vector<Script> potentialScripts = m_serviceMap.GetScripts(it->second.second);
-//				for(uint j = 0; j < potentialScripts.size(); j++)
-//				{
-//					uint depthOfMatch = 0;
-//
-//					boost::split(nodeOSClasses, personalityItem->m_osclass, boost::is_any_of("|"));
-//					boost::split(scriptOSClasses, potentialScripts[j].m_osclass, boost::is_any_of("|"));
-//
-//					for(uint k = 0; k < nodeOSClasses.size(); k++)
-//					{
-//						nodeOSClasses[k] = boost::trim_left_copy(nodeOSClasses[k]);
-//						nodeOSClasses[k] = boost::trim_right_copy(nodeOSClasses[k]);
-//					}
-//					for(uint k = 0; k < scriptOSClasses.size(); k++)
-//					{
-//						scriptOSClasses[k] = boost::trim_left_copy(scriptOSClasses[k]);
-//						scriptOSClasses[k] = boost::trim_right_copy(scriptOSClasses[k]);
-//					}
-//
-//					if(nodeOSClasses.size() < scriptOSClasses.size())
-//					{
-//						for(int k = (int)nodeOSClasses.size() - 1; k >= 0; k--)
-//						{
-//							if(!nodeOSClasses[k].compare(scriptOSClasses[k]))
-//							{
-//								depthOfMatch++;
-//							}
-//						}
-//
-//						pair<string, uint> potentialMatch;
-//						potentialMatch.first = potentialScripts[j].m_name;
-//						potentialMatch.second = depthOfMatch;
-//						potentialMatches.push_back(potentialMatch);
-//					}
-//					else
-//					{
-//						for(uint k = 0; k < scriptOSClasses.size(); k++)
-//						{
-//							if(!nodeOSClasses[nodeOSClasses.size() - 1 - k].compare(scriptOSClasses[k]))
-//							{
-//								depthOfMatch++;
-//							}
-//						}
-//
-//						pair<string, uint> potentialMatch;
-//						potentialMatch.first = potentialScripts[j].m_name;
-//						potentialMatch.second = depthOfMatch;
-//						potentialMatches.push_back(potentialMatch);
-//					}
-//				}
-//
-//				string closestMatch = potentialMatches[0].first;
-//				uint highestMatchDepth = potentialMatches[0].second;
-//
-//				for(uint k = 1; k < potentialMatches.size(); k++)
-//				{
-//					if(potentialMatches[k].second > highestMatchDepth)
-//					{
-//						highestMatchDepth = potentialMatches[k].second;
-//						closestMatch = potentialMatches[k].first;
-//					}
-//				}
-//
-//				scriptedPort.m_scriptName = closestMatch;
-//				scriptedPort.m_portName = scriptedPort.m_portNum + "_" + scriptedPort.m_type + "_" + scriptedPort.m_scriptName;
-//
-//				vector<string> nodeOSClassesCopy = nodeOSClasses;
-//				string profileName = "";
-//
-//				if(!personalityItem->m_key.compare(nodeOSClassesCopy[0]))
-//				{
-//					for(uint k = 0; k < m_hdconfig->GetProfile(personalityItem->m_key)->m_ports.size(); k++)
-//					{
-//						if(!(it->first + "_open").compare(m_hdconfig->GetProfile(personalityItem->m_key)->m_ports[k].first))
-//						{
-//							m_hdconfig->GetProfile(personalityItem->m_key)->m_ports[k].first = scriptedPort.m_portName;
-//							personalityItem->m_ports_dist[i].first = scriptedPort.m_portName;
-//						}
-//					}
-//
-//					m_hdconfig->UpdateProfile(personalityItem->m_key);
-//				}
-//				else
-//				{
-//					while(nodeOSClassesCopy.size())
-//					{
-//						profileName.append(nodeOSClassesCopy.back());
-//						//Here we've matched the profile corresponding to the compressed osclass tokens in name
-//						if(m_hdconfig->GetProfile(profileName) != NULL)
-//						{
-//							//modify profile's ports and stuff here
-//							for(uint k = 0; k < m_hdconfig->GetProfile(profileName)->m_ports.size(); k++)
-//							{
-//								if(!(it->first + "_open").compare(m_hdconfig->GetProfile(profileName)->m_ports[k].first))
-//								{
-//									m_hdconfig->GetProfile(profileName)->m_ports[k].first = scriptedPort.m_portName;
-//									personalityItem->m_ports_dist[i].first = scriptedPort.m_portName;
-//								}
-//							}
-//							m_hdconfig->UpdateProfile(profileName);
-//							profileName = "";
-//						}
-//						else
-//						{
-//							profileName.append(" ");
-//						}
-//						nodeOSClassesCopy.pop_back();
-//					}
-//				}
-//				m_hdconfig->AddPort(scriptedPort);
-//				continue;
-//			}
-//		}
-//	}
-//	return m_hdconfig->SaveAllTemplates();
-	return false;
 }
 
 bool PersonalityTree::CalculateDistributions(PersonalityTreeItem *targetNode)

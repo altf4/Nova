@@ -59,108 +59,275 @@ HoneydConfiguration *HoneydConfiguration::Inst()
 HoneydConfiguration::HoneydConfiguration()
 {
 	m_macAddresses.LoadPrefixFile();
-	m_nodes.set_empty_key("");
 	m_scripts.set_empty_key("");
-	m_nodes.set_deleted_key("Deleted");
 	m_scripts.set_deleted_key("Deleted");
 }
 
-//Attempts to populate the HoneydConfiguration object with the xml templates.
-// The configuration is saved and loaded relative to the homepath specificed by the Nova Configuration
-// Returns true if successful, false if loading failed.
-bool HoneydConfiguration::LoadAllTemplates()
+bool HoneydConfiguration::ReadAllTemplatesXML()
 {
-	m_scripts.clear_no_resize();
-	m_nodes.clear_no_resize();
+	bool totalSuccess = true;
 
-	if(!LoadScriptsTemplate())
+	if(!ReadScriptsXML())
 	{
-		LOG(ERROR, "Unable to load Script templates!", "");
+		totalSuccess = false;
+	}
+	if(!ReadNodesXML())
+	{
+		totalSuccess = false;
+	}
+	if(!ReadProfilesXML())
+	{
+		totalSuccess = false;
+	}
+
+	return totalSuccess;
+}
+
+//Loads NodeProfiles from the xml template located relative to the currently set home path
+// Returns true if successful, false if not.
+bool HoneydConfiguration::ReadProfilesXML()
+{
+	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
+	m_profileTree.clear();
+	try
+	{
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
+
+		m_profiles.m_root = ReadProfilesXML_helper(m_profileTree, NULL);
+
+		return true;
+	}
+	catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading profiles: " + string(e.what()) + ".", "");
 		return false;
 	}
-	if(!LoadPortsTemplate())
+	catch (boost::property_tree::ptree_error &e)
 	{
-		LOG(ERROR, "Unable to load Port templates!", "");
+		LOG(ERROR, "Problem loading profiles: " + string(e.what()) + ".", "");
 		return false;
 	}
-	if(!LoadProfilesTemplate())
+	return false;
+}
+
+PersonalityTreeItem *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, PersonalityTreeItem *parent)
+{
+	PersonalityTreeItem *personality = NULL;
+
+	BOOST_FOREACH(ptree::value_type &profilePtree, ptree.get_child("profiles"))
 	{
-		LOG(ERROR, "Unable to load NodeProfile templates!", "");
+		//Must be a "profile" tag, or else error
+		if(!string(profilePtree.first.data()).compare("profile"))
+		{
+			personality = new PersonalityTreeItem();
+			try
+			{
+				personality->m_parent = parent;
+				personality->m_isGenerated = profilePtree.second.get<bool>("generated");
+				personality->m_distribution = profilePtree.second.get<double>("distribution");
+				personality->m_key = profilePtree.second.get<string>("name");
+				personality->m_osclass = profilePtree.second.get<string>("personality");
+				personality->m_uptimeMin = profilePtree.second.get<uint>("uptimeMin");
+				personality->m_uptimeMax = profilePtree.second.get<uint>("uptimeMax");
+
+				//Ethernet Settings
+				BOOST_FOREACH(ptree::value_type &ethernetVendors, profilePtree.second.get_child("ethernet"))
+				{
+					try
+					{
+						string vendorName = ethernetVendors.second.get<string>("vendor");
+						double distribution = ethernetVendors.second.get<double>("distribution");
+
+						personality->m_vendors.push_back(pair<string, double>(vendorName, distribution));
+					}
+					catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+					{
+						LOG(ERROR, "Unable to parse required values for the NodeProfiles!", "");
+					};
+				}
+
+				//Others
+				//TODO
+
+				//Port Sets
+				BOOST_FOREACH(ptree::value_type &portsets, profilePtree.second.get_child("portsets"))
+				{
+					if(!string(portsets.first.data()).compare("portset"))
+					{
+						PortSet *portSet = new PortSet();
+						portSet->m_name = portsets.second.get<string>("name");
+
+						portSet->m_defaultTCPBehavior = StringToPortBehavior(portsets.second.get<string>("defaultTCPBehavior"));
+						portSet->m_defaultUDPBehavior = StringToPortBehavior(portsets.second.get<string>("defaultUDPBehavior"));
+						portSet->m_defaultICMPBehavior = StringToPortBehavior(portsets.second.get<string>("defaultICMPBehavior"));
+
+						//Exceptions
+						BOOST_FOREACH(ptree::value_type &ports, portsets.second.get_child("ports"))
+						{
+							Port port;
+
+							port.m_name = ports.second.get<string>("name");
+							port.m_service = ports.second.get<string>("service");
+							port.m_scriptName = ports.second.get<string>("script");
+							port.m_portNumber = ports.second.get<uint>("number");
+							port.m_behavior = StringToPortBehavior(ports.second.get<string>("behavior"));
+							port.m_protocol = StringToPortProtocol(ports.second.get<string>("protocol"));
+
+							portSet->AddPort(port);
+						}
+
+						personality->m_portSets.push_back(portSet);
+					}
+				}
+
+				//Recursively add children
+				BOOST_FOREACH(ptree::value_type &children, profilePtree.second.get_child("profiles"))
+				{
+					PersonalityTreeItem *child = ReadProfilesXML_helper(children.second, personality);
+					if(child != NULL)
+					{
+						personality->m_children.push_back(child);
+					}
+				}
+
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				LOG(ERROR, "Unable to parse required values for the NodeProfiles!", "");
+				delete personality;
+				return NULL;
+			};
+
+		}
+		else
+		{
+			LOG(ERROR, "Invalid XML Path " + string(profilePtree.first.data()) + ".", "");
+		}
+	}
+
+	return personality;
+}
+
+//Loads Nodes from the xml template located relative to the currently set home path
+// Returns true if successful, false if not.
+bool HoneydConfiguration::ReadNodesXML()
+{
+	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
+
+	m_groupTree.clear();
+	ptree propTree;
+
+	try
+	{
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
+
+		BOOST_FOREACH(ptree::value_type &groupsPtree, m_groupTree.get_child("groups"))
+		{
+			string groupName = groupsPtree.second.get<string>("name");
+			NodeTable table;
+
+			//For each node tag
+			BOOST_FOREACH(ptree::value_type &nodesPtree, m_groupTree.get_child("nodes"))
+			{
+				if(!nodesPtree.first.compare("node"))
+				{
+					Node node;
+					node.m_interface = nodesPtree.second.get<string>("interface");
+					node.m_IP = nodesPtree.second.get<string>("IP");
+					node.m_enabled = nodesPtree.second.get<bool>("enabled");
+					node.m_MAC = nodesPtree.second.get<string>("MAC");
+
+					node.m_pfile = nodesPtree.second.get<string>("profile.name");
+					node.m_portSetName = nodesPtree.second.get<string>("profile.portset");
+
+					table[node.m_MAC] = node;
+				}
+			}
+
+			m_nodes.push_back(pair<string, NodeTable>(groupName, table));
+		}
+	}
+	catch(Nova::hashMapException &e)
+	{
+		LOG(ERROR, "Problem loading node group: " + Config::Inst()->GetGroup() + " - " + string(e.what()) + ".", "");
 		return false;
 	}
-	if(!LoadNodesTemplate())
-	{
-		LOG(ERROR, "Unable to load Nodes templates!", "");
+	catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
 		return false;
 	}
-	if(!LoadNodeKeys())
+	catch (boost::property_tree::ptree_error &e)
 	{
-		LOG(ERROR, "Unable to load Node Keys!", "");
+		LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
 		return false;
 	}
 	return true;
 }
 
-/************************************************
-  Save Honeyd XML Configuration Functions
- ************************************************/
-
-bool HoneydConfiguration::WritePortsToXML(PersonalityTreeItem *root)
-{
-	if(root == NULL)
-	{
-		return false;
-	}
-
-	//Depth first traversal of the tree
-	for(uint i = 0; i < root->m_children.size(); i++)
-	{
-		WritePortsToXML(root->m_children[i]);
-	}
-
-	//For each PortSet
-	for(uint i = 0; i < root->m_portSets.size(); i++)
-	{
-		//Make a sub-tree for the PortSet
-		ptree portSetptree;
-
-		portSetptree.put<string>("name", root->m_portSets[i]->m_name);
-
-		//Default port behaviors
-		portSetptree.put<string>("defaultTCPBehavior", root->m_portSets[i]->m_defaultTCPBehavior);
-		portSetptree.put<string>("defaultUDPBehavior", root->m_portSets[i]->m_defaultUDPBehavior);
-		portSetptree.put<string>("defaultICMPBehavior", root->m_portSets[i]->m_defaultICMPBehavior);
-
-		//Foreach TCP exception
-		for(uint j = 0; j < root->m_portSets[i]->m_TCPexceptions.size(); j++)
-		{
-			//Make a sub-tree for this Port
-			ptree portPtree;
-
-		}
-
-		//Foreach UDP exception
-		for(uint j = 0; j < root->m_portSets[i]->m_UDPexceptions.size(); j++)
-		{
-			//Make a sub-tree for this Port
-			ptree portPtree;
-		}
-
-
-		portSetptree.put<string>("service", root->m_portSets[i]);
-		portSetptree.put<string>("osclass", it->second.m_osclass);
-		propTree.put<string>("path", it->second.m_path);
-		m_portTree.add_child("ports.portset", propTree);
-	}
-}
-
-//This function takes the current values in the HoneydConfiguration and Config objects
-// 		and translates them into an xml format for persistent storage that can be
-// 		loaded at a later time by any HoneydConfiguration object
-// Returns true if successful and false if the save fails
-bool HoneydConfiguration::SaveAllTemplates()
+//Loads scripts from the xml template located relative to the currently set home path
+// Returns true if successful, false if not.
+bool HoneydConfiguration::ReadScriptsXML()
 {
 	using boost::property_tree::ptree;
+	using boost::property_tree::xml_parser::trim_whitespace;
+	m_scriptTree.clear();
+	try
+	{
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
+
+		BOOST_FOREACH(ptree::value_type &value, m_scriptTree.get_child("scripts"))
+		{
+			Script script;
+			script.m_tree = value.second;
+			//Each script consists of a name and path to that script
+			script.m_name = value.second.get<string>("name");
+
+			if(!script.m_name.compare(""))
+			{
+				LOG(ERROR, "Unable to a valid script from the templates!", "");
+				return false;
+			}
+
+			try
+			{
+				script.m_osclass = value.second.get<string>("osclass");
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				LOG(DEBUG, "No OS class found for script '" + script.m_name + "'.", "");
+			};
+			try
+			{
+				script.m_service = value.second.get<string>("service");
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				LOG(DEBUG, "No service found for script '" + script.m_name + "'.", "");
+			};
+			script.m_path = value.second.get<string>("path");
+			m_scripts[script.m_name] = script;
+		}
+	}
+	catch(Nova::hashMapException &e)
+	{
+		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
+		return false;
+	}
+	catch (boost::property_tree::xml_parser_error &e) {
+		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
+		return false;
+	}
+	catch (boost::property_tree::ptree_error &e)
+	{
+		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
+		return false;
+	}
+	return true;
+}
+
+bool HoneydConfiguration::WriteScriptsToXML()
+{
 	ptree propTree;
 
 	//Scripts
@@ -175,106 +342,205 @@ bool HoneydConfiguration::SaveAllTemplates()
 		m_scriptTree.add_child("scripts.script", propTree);
 	}
 
-	//Ports
-	m_portTree.clear();
-	for(PortTable::iterator it = m_ports.begin(); it != m_ports.end(); it++)
-	{
-		if (!it->second.m_portName.compare(""))
-		{
-			LOG(ERROR, "Empty port in the ptree. Not being written out: " + it->first, "");
-			continue;
-		}
-		//Put in required values
-		propTree = it->second.m_tree;
-		propTree.put<string>("name", it->second.m_portName);
-		propTree.put<string>("number", it->second.m_portNum);
-		propTree.put<string>("type", it->second.m_type);
-		propTree.put<string>("service", it->second.m_service);
-		propTree.put<string>("behavior", it->second.m_behavior);
-
-		//If this port uses a script, save it.
-		if(!it->second.m_behavior.compare("script") || !it->second.m_behavior.compare("tarpit script") || !it->second.m_behavior.compare("internal"))
-		{
-			propTree.put<string>("script", it->second.m_scriptName);
-		}
-		//Add the child to the tree
-		m_portTree.add_child("ports.port", propTree);
-	}
-
-	//Nodes
-	m_nodesTree.clear();
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		propTree = it->second.m_tree;
-
-		// No need to save names besides the doppel, we can derive them
-		if(!it->second.m_name.compare("Doppelganger"))
-		{
-			// Make sure the IP reflects whatever is being used right now
-			it->second.m_IP = Config::Inst()->GetDoppelIp();
-			propTree.put<string>("name", it->second.m_name);
-		}
-
-		//Required xml entires
-		propTree.put<string>("interface", it->second.m_interface);
-		propTree.put<string>("IP", it->second.m_IP);
-		propTree.put<bool>("enabled", it->second.m_enabled);
-		propTree.put<string>("MAC", it->second.m_MAC);
-		propTree.put<string>("profile.name", it->second.m_pfile);
-		ptree newPortTree;
-		newPortTree.clear();
-		for(uint i = 0; i < it->second.m_ports.size(); i++)
-		{
-			if(!it->second.m_isPortInherited[i])
-			{
-				newPortTree.add<string>("port", it->second.m_ports[i]);
-			}
-		}
-		propTree.put_child("profile.add.ports", newPortTree);
-		m_nodesTree.add_child("node",propTree);
-	}
-
-	BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
-	{
-		//Find the specified group
-		if(!value.second.get<string>("name").compare(Config::Inst()->GetGroup()))
-		{
-			//Load Subnets first, they are needed before we can load nodes
-			value.second.put_child("nodes",m_nodesTree);
-		}
-	}
-	m_profileTree.clear();
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-	{
-		if(!it->second.m_parentProfile.compare(""))
-		{
-			propTree = it->second.m_tree;
-			m_profileTree.add_child("profiles.profile", propTree);
-		}
-	}
 	try
 	{
 		boost::property_tree::xml_writer_settings<char> settings('\t', 1);
 		string homePath = Config::Inst()->GetPathHome();
 		write_xml(homePath + "/config/templates/scripts.xml", m_scriptTree, locale(), settings);
-		write_xml(homePath + "/config/templates/ports.xml", m_portTree, locale(), settings);
-		write_xml(homePath + "/config/templates/nodes.xml", m_groupTree, locale(), settings);
-		write_xml(homePath + "/config/templates/profiles.xml", m_profileTree, locale(), settings);
 	}
 	catch(boost::property_tree::xml_parser_error &e)
 	{
-		LOG(ERROR, "Unable to right to xml files, caught except " + string(e.what()), "");
+		LOG(ERROR, "Unable to write to xml files, caught exception " + string(e.what()), "");
 		return false;
 	}
-
-	LOG(DEBUG, "Honeyd templates have been saved" ,"");
 	return true;
 }
 
-//Writes out the current HoneydConfiguration object to the Honeyd configuration file in the expected format
-// path: path in the file system to the desired HoneydConfiguration file
-// Returns true if successful and false if not
-bool HoneydConfiguration::WriteHoneydConfiguration(string path)
+bool HoneydConfiguration::WriteNodesToXML()
+{
+	//Nodes
+	m_nodesTree.clear();
+
+	ptree groups;
+
+	for(uint i = 0; i < m_nodes.size(); i++)
+	{
+		for(NodeTable::iterator it = m_nodes[i].second.begin(); it != m_nodes[i].second.end(); it++)
+		{
+			ptree nodePtree;
+
+			nodePtree.put<string>("interface", it->second.m_interface);
+			nodePtree.put<string>("IP", it->second.m_IP);
+			nodePtree.put<bool>("enabled", it->second.m_enabled);
+			nodePtree.put<string>("MAC", it->second.m_MAC);
+
+			nodePtree.put<string>("profile.name", it->second.m_pfile);
+			nodePtree.put<string>("profile.portset", it->second.m_portSetName);
+
+			groups.add_child("node", nodePtree);
+		}
+	}
+
+	m_nodesTree.add_child("groups.group", groups);
+
+	//Actually write out to file
+	try
+	{
+		boost::property_tree::xml_writer_settings<char> settings('\t', 1);
+		string homePath = Config::Inst()->GetPathHome();
+		write_xml(homePath + "/config/templates/nodes.xml", m_nodesTree, locale(), settings);
+	}
+	catch(boost::property_tree::xml_parser_error &e)
+	{
+		LOG(ERROR, "Unable to write to xml files, caught exception " + string(e.what()), "");
+		return false;
+	}
+	return true;
+}
+
+bool HoneydConfiguration::WriteProfilesToXML()
+{
+	m_profileTree.clear();
+
+	if(WriteProfilesToXML_helper(m_profiles.m_root))
+	{
+		try
+		{
+			boost::property_tree::xml_writer_settings<char> settings('\t', 1);
+			string homePath = Config::Inst()->GetPathHome();
+			write_xml(homePath + "/config/templates/profiles.xml", m_profileTree, locale(), settings);
+		}
+		catch(boost::property_tree::xml_parser_error &e)
+		{
+			LOG(ERROR, "Unable to write to xml files, caught exception " + string(e.what()), "");
+			return false;
+		}
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//TODO: keep an eye on this, maybe it works?
+bool HoneydConfiguration::WriteProfilesToXML_helper(PersonalityTreeItem *root)
+{
+	if(root == NULL)
+	{
+		return false;
+	}
+
+	ptree propTree;
+	m_profileTree.clear();
+
+	//Write the current item into the tree
+	propTree.put<string>("name", root->m_key);
+	propTree.put<bool>("generated", root->m_isGenerated);
+	propTree.put<double>("distribution", root->m_distribution);
+	propTree.put<string>("personality", root->m_osclass);
+	propTree.put<uint>("uptimeMin", root->m_uptimeMin);
+	propTree.put<uint>("uptimeMax", root->m_uptimeMax);
+
+	//Ethernet settings
+	for(uint i = 0; i < root->m_vendors.size(); i++)
+	{
+		ptree ethVendors;
+
+		ethVendors.put<string>("vendor", root->m_vendors[i].first);
+		ethVendors.put<double>("distribution", root->m_vendors[i].second);
+
+
+		propTree.add_child("profile.ethernet", ethVendors);
+
+	}
+
+	//Describe what port sets are available for this profile
+	{
+		ptree portSets;
+
+		for(uint i = 0; i < root->m_portSets.size(); i++)
+		{
+			ptree portSet;
+
+			portSet.put<string>("name", root->m_portSets[i]->m_name);
+
+			portSet.put<string>("defaultTCPBehavior", PortBehaviorToString(root->m_portSets[i]->m_defaultTCPBehavior));
+			portSet.put<string>("defaultUDPBehavior", PortBehaviorToString(root->m_portSets[i]->m_defaultUDPBehavior));
+			portSet.put<string>("defaultICMPBehavior", PortBehaviorToString(root->m_portSets[i]->m_defaultICMPBehavior));
+
+			//Foreach TCP exception
+			for(uint j = 0; j < root->m_portSets[i]->m_TCPexceptions.size(); j++)
+			{
+				//Make a sub-tree for this Port
+				ptree port;
+
+				port.put<string>("name", root->m_portSets[i]->m_TCPexceptions[j].m_name);
+				port.put<string>("service", root->m_portSets[i]->m_TCPexceptions[j].m_service);
+				port.put<string>("script", root->m_portSets[i]->m_TCPexceptions[j].m_scriptName);
+				port.put<uint>("number", root->m_portSets[i]->m_TCPexceptions[j].m_portNumber);
+				port.put<string>("behavior", PortBehaviorToString(root->m_portSets[i]->m_TCPexceptions[j].m_behavior));
+				port.put<string>("protocol", PortProtocolToString(root->m_portSets[i]->m_TCPexceptions[j].m_protocol));
+
+				portSet.add_child("portsets.portset.port", port);
+			}
+
+			//Foreach UDP exception
+			for(uint j = 0; j < root->m_portSets[i]->m_UDPexceptions.size(); j++)
+			{
+				//Make a sub-tree for this Port
+				ptree port;
+
+				port.put<string>("name", root->m_portSets[i]->m_UDPexceptions[j].m_name);
+				port.put<string>("service", root->m_portSets[i]->m_UDPexceptions[j].m_service);
+				port.put<string>("script", root->m_portSets[i]->m_UDPexceptions[j].m_scriptName);
+				port.put<uint>("number", root->m_portSets[i]->m_UDPexceptions[j].m_portNumber);
+				port.put<string>("behavior", PortBehaviorToString(root->m_portSets[i]->m_UDPexceptions[j].m_behavior));
+				port.put<string>("protocol", PortProtocolToString(root->m_portSets[i]->m_UDPexceptions[j].m_protocol));
+
+				portSet.add_child("portsets.portset.port", port);
+			}
+
+			portSets.add_child("ports.portset", portSet);
+		}
+
+		propTree.add_child("profile.portsets",portSets);
+	}
+
+
+	//Then write all of its children
+	for(uint i = 0; i < root->m_children.size(); i++)
+	{
+		WriteProfilesToXML_helper(root->m_children[i]);
+	}
+
+	m_profileTree.add_child("profiles.profile",propTree);
+
+
+	return true;
+}
+
+bool HoneydConfiguration::WriteAllTemplatesToXML()
+{
+	bool totalSuccess = true;
+
+	if(!WriteScriptsToXML())
+	{
+		totalSuccess = false;
+	}
+	if(!WriteNodesToXML())
+	{
+		totalSuccess = false;
+	}
+	if(!WriteProfilesToXML())
+	{
+		totalSuccess = false;
+	}
+
+	return totalSuccess;
+}
+
+bool HoneydConfiguration::WriteHoneydConfiguration(string groupName, string path)
 {
 	if(!path.compare(""))
 	{
@@ -289,59 +555,21 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 	LOG(DEBUG, "Writing honeyd configuration to " + path, "");
 
 	stringstream out;
-	vector<string> profilesParsed;
 
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
+	for(uint i = 0; i < m_nodes.size(); i++)
 	{
-		if(!it->second.m_parentProfile.compare(""))
+		for(NodeTable::iterator it = m_nodes[i].second.begin(); it != m_nodes.end(); it++)
 		{
-			string pString = ProfileToString(&it->second);
-			if(!pString.compare(""))
+			//Only write out nodes for the intended group
+			if(!groupName.compare(m_nodes[i].first))
 			{
-				LOG(ERROR, "Unable to convert expected profile '" + it->first + "' into a valid Honeyd configuration string!", "");
-				return false;
+
 			}
-			out << pString;
-			profilesParsed.push_back(it->first);
 		}
 	}
 
-	while(profilesParsed.size() < m_profiles.size())
-	{
-		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-		{
-			bool selfMatched = false;
-			bool parentFound = false;
-			for(uint i = 0; i < profilesParsed.size(); i++)
-			{
-				if(!it->second.m_parentProfile.compare(profilesParsed[i]))
-				{
-					parentFound = true;
-					continue;
-				}
-				if(!it->first.compare(profilesParsed[i]))
-				{
-					selfMatched = true;
-					break;
-				}
-			}
-
-			if(!selfMatched && parentFound)
-			{
-				string pString = ProfileToString(&it->second);
-				if(!pString.compare(""))
-				{
-					LOG(ERROR, "Unable to convert expected profile '" + it->first + "' into a valid Honeyd configuration string!", "");
-					return false;
-				}
-				out << pString;
-				profilesParsed.push_back(it->first);
-			}
-		}
-	}
 
 	// Start node section
-	m_nodeProfileIndex = 0;
 	for(NodeTable::iterator it = m_nodes.begin(); (it != m_nodes.end()) && (m_nodeProfileIndex < (uint)(~0)); it++)
 	{
 		m_nodeProfileIndex++;
@@ -664,166 +892,6 @@ vector<string> HoneydConfiguration::GeneratedProfilesStrings()//XXX Needed?
 	return returnVector;
 }
 
-
-//Outputs the NodeProfile in a string formate suitable for use in the Honeyd configuration file.
-// p: pointer to the profile you wish to create a Honeyd template for
-// Returns a string for direct inserting into a honeyd configuration file or an empty string if it fails.
-string HoneydConfiguration::ProfileToString(NodeProfile *p)
-{
-	if(p == NULL)
-	{
-		LOG(ERROR, "NULL NodeProfile passed as parameter!", "");
-		return "";
-	}
-
-	stringstream out;
-
-	//XXX This is just a temporary band-aid on a larger wound, we cannot allow whitespaces in profile names.
-	string profName = HoneydConfiguration::SanitizeProfileName(p->m_name);
-	string parentProfName = HoneydConfiguration::SanitizeProfileName(p->m_parentProfile);
-
-	if(!parentProfName.compare("default") || !parentProfName.compare(""))
-	{
-		out << "create " << profName << '\n';
-	}
-	else
-	{
-		out << "clone " << profName << " " << parentProfName << '\n';
-	}
-
-	out << "set " << profName  << " default tcp action " << p->m_tcpAction << '\n';
-	out << "set " << profName  << " default udp action " << p->m_udpAction << '\n';
-	out << "set " << profName  << " default icmp action " << p->m_icmpAction << '\n';
-
-	if(p->m_personality.compare("") && p->m_personality.compare("NULL"))
-	{
-		out << "set " << profName << " personality \"" << p->m_personality << '"' << '\n';
-	}
-
-	string vendor = "";
-	double maxDist = 0;
-	for(uint i = 0; i < p->m_ethernetVendors.size(); i++)
-	{
-		if(p->m_ethernetVendors[i].second > maxDist)
-		{
-			maxDist = p->m_ethernetVendors[i].second;
-			vendor = p->m_ethernetVendors[i].first;
-		}
-	}
-	if(vendor.compare(""))
-	{
-		out << "set " << profName << " ethernet \"" << vendor << '"' << '\n';
-	}
-
-	if(p->m_dropRate.compare(""))
-	{
-		out << "set " << profName << " droprate in " << p->m_dropRate << '\n';
-	}
-
-	out << '\n';
-	return out.str();
-}
-
-//Outputs the NodeProfile in a string formate suitable for use in the Honeyd configuration file.
-// p: pointer to the profile you wish to create a Honeyd template for
-// Returns a string for direct inserting into a honeyd configuration file or an empty string if it fails.
-// *Note: This function differs from ProfileToString in that it omits values incompatible with the loopback
-//  interface and is used strictly for the Doppelganger node
-string HoneydConfiguration::DoppProfileToString(NodeProfile *p)
-{
-	if(p == NULL)
-	{
-		LOG(ERROR, "NULL NodeProfile passed as parameter!", "");
-		return "";
-	}
-
-	stringstream out;
-	out << "create DoppelgangerReservedTemplate" << '\n';
-
-	out << "set DoppelgangerReservedTemplate default tcp action " << p->m_tcpAction << '\n';
-	out << "set DoppelgangerReservedTemplate default udp action " << p->m_udpAction << '\n';
-	out << "set DoppelgangerReservedTemplate default icmp action " << p->m_icmpAction << '\n';
-
-	if(p->m_personality.compare(""))
-	{
-		out << "set DoppelgangerReservedTemplate" << " personality \"" << p->m_personality << '"' << '\n';
-	}
-
-	if(p->m_dropRate.compare(""))
-	{
-		out << "set DoppelgangerReservedTemplate" << " droprate in " << p->m_dropRate << '\n';
-	}
-
-	for (uint i = 0; i < p->m_ports.size(); i++)
-	{
-		// Only include non-inherited ports
-		if(!p->m_ports[i].second.first)
-		{
-			PortStruct *portPtr = &m_ports[p->m_ports[i].first];
-			if(portPtr == NULL)
-			{
-				LOG(ERROR, "Unable to retrieve expected port '" + p->m_ports[i].first + "'!", "");
-				return "";
-			}
-			out << "add DoppelgangerReservedTemplate";
-			if(!portPtr->m_type.compare("TCP"))
-			{
-				out << " tcp port ";
-			}
-			else
-			{
-				out << " udp port ";
-			}
-			out << portPtr->m_portNum << " ";
-			if(!portPtr->m_behavior.compare("script") || !portPtr->m_behavior.compare("tarpit script"))
-			{
-				string scriptName = m_ports[p->m_ports[i].first].m_scriptName;
-				Script *scriptPtr = &m_scripts[scriptName];
-				if(scriptPtr == NULL)
-				{
-					LOG(ERROR, "Unable to lookup script with name '" + scriptName + "'!", "");
-					return "";
-				}
-				out << '"' << scriptPtr->m_path << '"'<< '\n';
-			}
-			else
-			{
-				out << portPtr->m_behavior << '\n';
-			}
-		}
-	}
-	out << '\n';
-	return out.str();
-}
-
-//Makes the profile named child inherit the profile named parent
-// child: the name of the child profile
-// parent: the name of the parent profile
-// Returns: (true) if successful, (false) if either name could not be found
-bool HoneydConfiguration::InheritProfile(string child, string parent)
-{
-	//If the child can be found
-	if(m_profiles.keyExists(child))
-	{
-		//If the new parent can be found
-		if(m_profiles.keyExists(parent))
-		{
-			string oldParent = m_profiles[child].m_parentProfile;
-			m_profiles[child].m_parentProfile = parent;
-			//If the child has an old parent
-			if((oldParent.compare("")) && (m_profiles.keyExists(oldParent)))
-			{
-				UpdateProfileTree(oldParent, ALL);
-			}
-			//Updates the child with the new inheritance and any modified values since last update
-			CreateProfileTree(child);
-			UpdateProfileTree(child, ALL);
-			return true;
-		}
-	}
-	return false;
-}
-
 //This function determines whether or not the given profile is empty
 // targetProfileKey: The name of the profile being inherited
 // Returns true, if valid parent and false if not
@@ -846,7 +914,7 @@ vector<string> HoneydConfiguration::GetGeneratedNodeNames()//XXX Needed?
 {
 	vector<string> childnodes;
 	Config::Inst()->SetGroup("HaystackAutoConfig");
-	LoadNodesTemplate();
+	ReadNodesXML();
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		if(m_profiles[it->second.m_pfile].m_generated)
@@ -1142,474 +1210,6 @@ bool HoneydConfiguration::LoadProfileChildren(string parentKey)
 	return true;
 }
 
-// ******************* Private Methods **************************
-
-//Loads scripts from the xml template located relative to the currently set home path
-// Returns true if successful, false if not.
-bool HoneydConfiguration::LoadScriptsTemplate()
-{
-	using boost::property_tree::ptree;
-	using boost::property_tree::xml_parser::trim_whitespace;
-	m_scriptTree.clear();
-	try
-	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
-
-		BOOST_FOREACH(ptree::value_type &value, m_scriptTree.get_child("scripts"))
-		{
-			Script script;
-			script.m_tree = value.second;
-			//Each script consists of a name and path to that script
-			script.m_name = value.second.get<string>("name");
-
-			if(!script.m_name.compare(""))
-			{
-				LOG(ERROR, "Unable to a valid script from the templates!", "");
-				return false;
-			}
-
-			try
-			{
-				script.m_osclass = value.second.get<string>("osclass");
-			}
-			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-			{
-				LOG(DEBUG, "No OS class found for script '" + script.m_name + "'.", "");
-			};
-			try
-			{
-				script.m_service = value.second.get<string>("service");
-			}
-			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-			{
-				LOG(DEBUG, "No service found for script '" + script.m_name + "'.", "");
-			};
-			script.m_path = value.second.get<string>("path");
-			m_scripts[script.m_name] = script;
-		}
-	}
-	catch(Nova::hashMapException &e)
-	{
-		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
-		return false;
-	}
-	catch (boost::property_tree::xml_parser_error &e) {
-		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
-		return false;
-	}
-	catch (boost::property_tree::ptree_error &e)
-	{
-		LOG(ERROR, "Problem loading scripts: " + string(e.what()) + ".", "");
-		return false;
-	}
-	return true;
-}
-
-//Loads Ports from the xml template located relative to the currently set home path
-// Returns true if successful, false if not.
-bool HoneydConfiguration::LoadPortsTemplate()
-{
-	using boost::property_tree::ptree;
-	using boost::property_tree::xml_parser::trim_whitespace;
-
-	m_portTree.clear();
-	try
-	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
-
-		BOOST_FOREACH(ptree::value_type &value, m_portTree.get_child("ports"))
-		{
-			PortStruct port;
-			port.m_tree = value.second;
-			//Required xml entries
-			port.m_portName = value.second.get<string>("name");
-
-			if(!port.m_portName.compare(""))
-			{
-				LOG(ERROR, "Unable to parse valid port name from xml file!", "");
-				return false;
-			}
-
-			port.m_portNum = value.second.get<string>("number");
-			if(!port.m_portNum.compare(""))
-			{
-				LOG(ERROR, "Unable to parse valid port number from xml file!", "");
-				return false;
-			}
-
-			port.m_type = value.second.get<string>("type");
-			if(!port.m_type.compare(""))
-			{
-				LOG(ERROR, "Unable to parse valid port type from xml file!", "");
-				return false;
-			}
-
-			port.m_service = value.second.get<string>("service");
-
-			port.m_behavior = value.second.get<string>("behavior");
-			if(!port.m_behavior.compare(""))
-			{
-				LOG(ERROR, "Unable to parse valid port behavior from xml file!", "");
-				return false;
-			}
-
-			//If this port uses a script, find and assign it.
-			if(!port.m_behavior.compare("script") || !port.m_behavior.compare("tarpit script") || !port.m_behavior.compare("internal"))
-			{
-				port.m_scriptName = value.second.get<string>("script");
-			}
-			//If the port works as a proxy, find destination
-			else if(!port.m_behavior.compare("proxy"))
-			{
-				port.m_proxyIP = value.second.get<string>("IP");
-				port.m_proxyPort = value.second.get<string>("Port");
-			}
-			m_ports[port.m_portName] = port;
-		}
-	}
-	catch(Nova::hashMapException &e)
-	{
-		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
-		return false;
-	}
-	catch (boost::property_tree::xml_parser_error &e) {
-		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
-		return false;
-	}
-	catch (boost::property_tree::ptree_error &e)
-	{
-		LOG(ERROR, "Problem loading ports: " + string(e.what()) + ".", "");
-		return false;
-	}
-
-	return true;
-}
-
-//Loads NodeProfiles from the xml template located relative to the currently set home path
-// Returns true if successful, false if not.
-bool HoneydConfiguration::LoadProfilesTemplate()
-{
-	using boost::property_tree::ptree;
-	using boost::property_tree::xml_parser::trim_whitespace;
-	ptree *propTree;
-	m_profileTree.clear();
-	try
-	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
-
-		BOOST_FOREACH(ptree::value_type &value, m_profileTree.get_child("profiles"))
-		{
-			//Generic profile, essentially a honeyd template
-			if(!string(value.first.data()).compare("profile"))
-			{
-				NodeProfile nodeProf;
-				try
-				{
-					//Root profile has no parent
-					nodeProf.m_parentProfile = "";
-					nodeProf.m_tree = value.second;
-					nodeProf.m_generated = value.second.get<bool>("generated");
-					nodeProf.m_distribution = value.second.get<double>("distribution");
-					nodeProf.m_name = value.second.get<string>("name");
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-				{
-					LOG(ERROR, "Unable to parse required values for the NodeProfiles!", "");
-					return false;
-				};
-
-				if(!nodeProf.m_name.compare(""))
-				{
-					LOG(ERROR, "Profile XML file contained invalid profile name!", "");
-					return false;
-				}
-
-				nodeProf.m_ports.clear();
-				for(uint i = 0; i < INHERITED_MAX; i++)
-				{
-					nodeProf.m_inherited[i] = false;
-				}
-
-				//Conditional: if has "set" values
-				try
-				{
-					propTree = &value.second.get_child("set");
-					if(!LoadProfileSettings(propTree, &nodeProf))
-					{
-						LOG(ERROR, "Unable to load profile settings subtree from xml template!", "");
-						return false;
-					}
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-				{
-					LOG(DEBUG, "No profile settings found for NodeProfile '" + nodeProf.m_name + "'.", "");
-				};
-
-				//Conditional: if has "add" values
-				try
-				{
-					propTree = &value.second.get_child("add");
-					if(!LoadProfileServices(propTree, &nodeProf))
-					{
-						LOG(ERROR, "Unable to load profile settings subtree from xml template!", "");
-						return false;
-					}
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-				{
-					LOG(DEBUG, "No profile ports or services found for NodeProfile '" + nodeProf.m_name + "'.", "");
-				};
-
-				//Save the profile
-				m_profiles[nodeProf.m_name] = nodeProf;
-
-				if(!LoadProfileChildren(nodeProf.m_name))
-				{
-					LOG(DEBUG, "Unable to load any children for the NodeProfile '" + nodeProf.m_name + "'.", "");
-				}
-			}
-			else
-			{
-				LOG(ERROR, "Invalid XML Path " + string(value.first.data()) + ".", "");
-			}
-		}
-	}
-	catch(Nova::hashMapException &e)
-	{
-		LOG(ERROR, "Problem loading profiles: " + string(e.what()) + ".", "");
-		return false;
-	}
-	catch (boost::property_tree::xml_parser_error &e) {
-		LOG(ERROR, "Problem loading profiles: " + string(e.what()) + ".", "");
-		return false;
-	}
-	catch (boost::property_tree::ptree_error &e)
-	{
-		LOG(ERROR, "Problem loading profiles: " + string(e.what()) + ".", "");
-		return false;
-	}
-	return true;
-}
-
-//Loads Nodes from the xml template located relative to the currently set home path
-// Returns true if successful, false if not.
-bool HoneydConfiguration::LoadNodesTemplate()
-{
-	using boost::property_tree::ptree;
-	using boost::property_tree::xml_parser::trim_whitespace;
-
-	m_groupTree.clear();
-	ptree propTree;
-
-	try
-	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
-		m_groups.clear();
-		BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
-		{
-			m_groups.push_back(value.second.get<string>("name"));
-
-			//Find the specified group
-			if(!value.second.get<string>("name").compare(Config::Inst()->GetGroup()))
-			{
-				try
-				{
-					try
-					{
-						//If subnets are loaded successfully, load nodes
-						m_nodesTree = value.second.get_child("nodes");
-						if(!LoadNodes(&m_nodesTree))
-						{
-							LOG(ERROR, "Unable to load nodes from xml templates!", "");
-							return false;
-						}
-					}
-					catch(Nova::hashMapException &e)
-					{
-						LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
-						return false;
-					}
-				}
-				catch(Nova::hashMapException &e)
-				{
-					LOG(ERROR, "Problem loading subnets: " + string(e.what()) + ".", "");
-					return false;
-				}
-			}
-		}
-	}
-	catch(Nova::hashMapException &e)
-	{
-		LOG(ERROR, "Problem loading node group: " + Config::Inst()->GetGroup() + " - " + string(e.what()) + ".", "");
-		return false;
-	}
-	catch (boost::property_tree::xml_parser_error &e) {
-		LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
-		return false;
-	}
-	catch (boost::property_tree::ptree_error &e)
-	{
-		LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
-		return false;
-	}
-	return true;
-}
-
-//Iterates of the node table and populates the NodeProfiles with accessor keys to the node objects that use them.
-// Returns true if successful and false if it is unable to assocate a profile with an exisiting node.
-bool HoneydConfiguration::LoadNodeKeys()
-{
-	if(m_nodes.begin() == m_nodes.end())
-	{
-		LOG(WARNING, "Unable to locate any nodes in the configuration object.", "");
-	}
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
-	{
-		NodeProfile *p = &m_profiles[it->second.m_pfile];
-		if(p == NULL)
-		{
-			LOG(ERROR, "Unable to locate node profile '" + it->second.m_pfile + "'!", "");
-			return false;
-		}
-		p->m_nodeKeys.push_back(it->first);
-	}
-	return true;
-}
-
-//loads haystack nodes from file for current group
-bool HoneydConfiguration::LoadNodes(ptree *propTree)
-{
-	NodeProfile nodeProf;
-	try
-	{
-		BOOST_FOREACH(ptree::value_type &value, propTree->get_child(""))
-		{
-			if(!string(value.first.data()).compare("node"))
-			{
-				Node node;
-				stringstream ss;
-				uint j = 0;
-				j = ~j; // 2^32-1
-
-				node.m_tree = value.second;
-				//Required xml entires
-				node.m_interface = value.second.get<string>("interface");
-				node.m_IP = value.second.get<string>("IP");
-				node.m_enabled = value.second.get<bool>("enabled");
-				node.m_pfile = value.second.get<string>("profile.name");
-
-				if(!node.m_pfile.compare(""))
-				{
-					LOG(ERROR, "Problem loading honeyd XML files.", "");
-					continue;
-				}
-
-				nodeProf = m_profiles[node.m_pfile];
-
-				//Get mac if present									nodeProf->m_ports.erase(nodeProf->m_ports.begin() + i);
-
-				try //Conditional: has "set" values
-				{
-					node.m_MAC = value.second.get<string>("MAC");
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-				{
-
-				};
-
-				try //Conditional: has "set" values
-				{
-					ptree nodePorts = value.second.get_child("profile.add");
-					LoadProfileServices(&nodePorts, &nodeProf);
-					for(uint i = 0; i < nodeProf.m_ports.size(); i++)
-					{
-						node.m_ports.push_back(nodeProf.m_ports[i].first);
-						node.m_isPortInherited.push_back(false);
-					}
-					//Loads inherited ports and checks for inheritance conflicts
-					if(m_profiles.keyExists(node.m_pfile))
-					{
-						vector <pair <string, pair <bool, double> > > profilePorts = m_profiles[node.m_pfile].m_ports;
-						for(uint i = 0; i < profilePorts.size(); i++)
-						{
-							bool conflict = false;
-							PortStruct curPort = m_ports[profilePorts[i].first];
-							for(uint j = 0; j < node.m_ports.size(); j++)
-							{
-								PortStruct nodePort = m_ports[node.m_ports[j]];
-								if(!(curPort.m_portNum.compare(nodePort.m_portNum))
-									&& !(curPort.m_type.compare(nodePort.m_type)))
-								{
-									conflict = true;
-									break;
-								}
-							}
-							if(!conflict)
-							{
-								node.m_ports.push_back(profilePorts[i].first);
-								node.m_isPortInherited.push_back(true);
-							}
-						}
-					}
-				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e) {};
-
-				if(!node.m_IP.compare(Config::Inst()->GetDoppelIp()))
-				{
-					node.m_name = "Doppelganger";
-					node.m_realIP = htonl(inet_addr(node.m_IP.c_str())); //convert ip to uint32
-					//save the node in the table
-					m_nodes[node.m_name] = node;
-				}
-				else
-				{
-					node.m_name = node.m_IP + " - " + node.m_MAC;
-
-					if(!node.m_name.compare("DHCP - RANDOM"))
-					{
-						//Finds a unique identifier
-						uint i = 1;
-						while((m_nodes.keyExists(node.m_name)) && (i < j))
-						{
-							i++;
-							ss.str("");
-							ss << "DHCP - RANDOM(" << i << ")";
-							node.m_name = ss.str();
-						}
-					}
-
-					if(node.m_IP != "DHCP")
-					{
-						node.m_realIP = htonl(inet_addr(node.m_IP.c_str())); //convert ip to uint32
-					}
-				}
-
-				if(!node.m_name.compare(""))
-				{
-					LOG(ERROR, "Problem loading honeyd XML files.", "");
-					continue;
-				}
-				else
-				{
-					//save the node in the table
-					m_nodes[node.m_name] = node;
-				}
-			}
-			else
-			{
-				LOG(ERROR, "Unexpected Entry in file: " + string(value.first.data()), "");
-			}
-		}
-	}
-	catch(Nova::hashMapException &e)
-	{
-		LOG(ERROR, "Problem loading nodes: " + string(e.what()), "");
-		return false;
-	}
-
-	return true;
-}
-
 //Inserts the profile into the honeyd configuration
 //	profile: pointer to the profile you wish to add
 //	Returns (true) if the profile could be created, (false) if it cannot.
@@ -1703,20 +1303,6 @@ bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 		return true;
 	}
 	return false;
-}
-
-//Iterates over the profiles, recreating the entire property tree structure
-void HoneydConfiguration::UpdateAllProfiles()
-{
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-	{
-		//If this is a root node
-		if(!it->second.m_parentProfile.compare(""))
-		{
-			CreateProfileTree(it->first);
-			UpdateProfileTree(it->first, DOWN);
-		}
-	}
 }
 
 bool HoneydConfiguration::DeleteNode(string nodeName)
@@ -1852,228 +1438,6 @@ bool HoneydConfiguration::DeleteProfile(string profileName)
 	return true;
 }
 
-
-void HoneydConfiguration::GetProfilesToDelete(string profileName, vector<string> &profilesToDelete)
-{
-	profilesToDelete.push_back(profileName);
-	//Recursive descent to find and call delete on any children of the profile
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-	{
-		//If the profile at the iterator is a child of this profile
-		if(!it->second.m_parentProfile.compare(profileName))
-		{
-			profilesToDelete.push_back(it->first);
-			GetProfilesToDelete(it->first, profilesToDelete);
-		}
-	}
-}
-
-//Recreates the profile tree of ancestors, children or both
-//	Note: This needs to be called after making changes to a profile to update the hierarchy
-//	Returns (true) if successful and (false) if no profile with name 'profileName' exists
-bool HoneydConfiguration::UpdateProfileTree(string profileName, RecursiveDirection direction)
-{
-	if(!m_profiles.keyExists(profileName))
-	{
-		return false;
-	}
-	else if(m_profiles[profileName].m_name.compare(profileName))
-	{
-		LOG(DEBUG, "Profile key: " + profileName + " does not match profile name of: "
-			+ m_profiles[profileName].m_name + ". Setting profile name to the value of profile key.", "");
-			m_profiles[profileName].m_name = profileName;
-	}
-	//Copy the profile
-	NodeProfile p = m_profiles[profileName];
-	bool up = false, down = false;
-	switch(direction)
-	{
-		case UP:
-		{
-			up = true;
-			break;
-		}
-		case DOWN:
-		{
-			down = true;
-			break;
-		}
-		case ALL:
-		default:
-		{
-			up = true;
-			down = true;
-			break;
-		}
-	}
-	if(down)
-	{
-		ptree pt;
-		pt.clear();
-		p.m_tree.put_child("profiles", pt);
-		//Find all children
-		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-		{
-			//If child is found
-			if(!it->second.m_parentProfile.compare(p.m_name))
-			{
-				CreateProfileTree(it->second.m_name);
-				//Update the child
-				UpdateProfileTree(it->second.m_name, DOWN);
-				//Put the child in the parent's ptree
-				p.m_tree.add_child("profiles.profile", it->second.m_tree);
-			}
-		}
-		m_profiles[profileName] = p;
-	}
-	//If the original calling profile has a parent to update
-	if(p.m_parentProfile.compare("") && up)
-	{
-		//Get the parents name and create an empty ptree
-		NodeProfile parent = m_profiles[p.m_parentProfile];
-		ptree pt;
-		pt.clear();
-
-		//Find all children of the parent and put them in the empty ptree
-		// Ideally we could just replace the individual child but the data structure doesn't seem
-		// to support this very well when all keys in the ptree (ie. profiles.profile) are the same
-		// because the ptree iterators just don't seem to work correctly and documentation is very poor
-		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-		{
-			if(!it->second.m_parentProfile.compare(parent.m_name))
-			{
-				pt.add_child("profile", it->second.m_tree);
-			}
-		}
-		//Replace the parent's profiles subtree (stores all children) with the new one
-		parent.m_tree.put_child("profiles", pt);
-		m_profiles[parent.m_name] = parent;
-		//Recursively ascend to update all ancestors
-		CreateProfileTree(parent.m_name);
-		UpdateProfileTree(parent.m_name, UP);
-	}
-	else if(!p.m_name.compare("default"))
-	{
-		NodeProfile defaultProfile = m_profiles[p.m_name];
-		ptree pt;
-		pt.clear();
-
-		for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-		{
-			if(!it->second.m_parentProfile.compare(p.m_name))
-			{
-				pt.add_child("profile", it->second.m_tree);
-			}
-		}
-
-		p.m_tree.put_child("profiles", pt);
-		m_profiles[p.m_name] = defaultProfile;
-		CreateProfileTree(p.m_name);
-	}
-	return true;
-}
-
-//Creates a ptree for a profile from scratch using the values found in the table
-//	name: the name of the profile you wish to create a new tree for
-//	Note: this only creates a leaf-node profile tree, after this call it will have no children.
-//		to put the children back into the tree and place the this new tree into the parent's hierarchy
-//		you must first call UpdateProfileTree(name, ALL);
-//	Returns (true) if successful and (false) if no profile with name 'profileName' exists
-bool HoneydConfiguration::CreateProfileTree(string profileName)
-{
-	ptree temp;
-	if(!m_profiles.keyExists(profileName))
-	{
-		return false;
-	}
-	NodeProfile p = m_profiles[profileName];
-	if(p.m_name.compare(""))
-	{
-		temp.put<string>("name", p.m_name);
-	}
-
-	temp.put<bool>("generated", p.m_generated);
-	temp.put<double>("distribution", p.m_distribution);
-
-	if(p.m_tcpAction.compare("") && !p.m_inherited[TCP_ACTION])
-	{
-		temp.put<string>("set.TCP", p.m_tcpAction);
-	}
-	if(p.m_udpAction.compare("") && !p.m_inherited[UDP_ACTION])
-	{
-		temp.put<string>("set.UDP", p.m_udpAction);
-	}
-	if(p.m_icmpAction.compare("") && !p.m_inherited[ICMP_ACTION])
-	{
-		temp.put<string>("set.ICMP", p.m_icmpAction);
-	}
-	if(p.m_personality.compare("") && !p.m_inherited[PERSONALITY])
-	{
-		temp.put<string>("set.personality", p.m_personality);
-	}
-	if(!p.m_inherited[ETHERNET])
-	{
-		for(uint i = 0; i < p.m_ethernetVendors.size(); i++)
-		{
-			ptree ethTemp;
-			ethTemp.put<string>("vendor", p.m_ethernetVendors[i].first);
-			ethTemp.put<double>("ethDistribution", p.m_ethernetVendors[i].second);
-			temp.add_child("set.ethernet", ethTemp);
-		}
-	}
-	if(p.m_uptimeMin.compare("") && !p.m_inherited[UPTIME])
-	{
-		temp.put<string>("set.uptimeMin", p.m_uptimeMin);
-	}
-	if(p.m_uptimeMax.compare("") && !p.m_inherited[UPTIME])
-	{
-		temp.put<string>("set.uptimeMax", p.m_uptimeMax);
-	}
-	if(p.m_dropRate.compare("") && !p.m_inherited[DROP_RATE])
-	{
-		temp.put<string>("set.dropRate", p.m_dropRate);
-	}
-
-	ptree pt;
-	pt.clear();
-	//Populates the ports, if none are found create an empty field because it is expected.
-	if(p.m_ports.size())
-	{
-		for(uint i = 0; i < p.m_ports.size(); i++)
-		{
-			//If the port isn't inherited
-			if(!p.m_ports[i].second.first)
-			{
-				ptree ptemp;
-				ptemp.clear();
-				ptemp.add<string>("portName", p.m_ports[i].first);
-				ptemp.add<double>("portDistribution", p.m_ports[i].second.second);
-				temp.add_child("add.port", ptemp);
-			}
-		}
-	}
-	else
-	{
-		temp.put_child("add",pt);
-	}
-	//put empty ptree in profiles as well because it is expected, does not matter that it is the same
-	// as the one in add.m_ports if profile has no ports, since both are empty.
-	temp.put_child("profiles", pt);
-
-	for(ProfileTable::iterator it = m_profiles.begin(); it != m_profiles.end(); it++)
-	{
-		if(!it->second.m_parentProfile.compare(profileName))
-		{
-			temp.add_child("profiles.profile", it->second.m_tree);
-		}
-	}
-
-	//copy the tree over and update ancestors
-	p.m_tree = temp;
-	m_profiles[profileName] = p;
-	return true;
-}
-
 string HoneydConfiguration::SanitizeProfileName(std::string oldName)
 {
 	if (!oldName.compare("default") || !oldName.compare(""))
@@ -2087,47 +1451,6 @@ string HoneydConfiguration::SanitizeProfileName(std::string oldName)
 	ReplaceString(newname, ";", "COLON");
 	ReplaceString(newname, "@", "AT");
 	return newname;
-}
-
-bool HoneydConfiguration::UpdateNodeMacs(std::string profileName)
-{
-	if(!m_profiles.keyExists(profileName) || !profileName.compare("") || !profileName.compare("default"))
-	{
-		LOG(WARNING, "Profile '" + profileName + "' is not a valid profile for updating node MACs.", "");
-		return false;
-	}
-
-	NodeProfile updateNodes = m_profiles[profileName];
-
-	vector<string> nodesToUpdate = updateNodes.m_nodeKeys;
-
-	for(uint i = 0; i < nodesToUpdate.size(); i++)
-	{
-		if(m_nodes.keyExists(nodesToUpdate[i]))
-		{
-			Node update = m_nodes[nodesToUpdate[i]];
-			update.m_MAC = m_macAddresses.GenerateRandomMAC(updateNodes.GetRandomVendor());
-			update.m_name = update.m_IP + " - " + update.m_MAC;
-
-			if(!m_nodes.keyExists(update.m_name))
-			{
-				m_nodes.erase(nodesToUpdate[i]);
-				m_nodes[update.m_name] = update;
-				nodesToUpdate.erase(nodesToUpdate.begin() + i);
-				nodesToUpdate.insert(nodesToUpdate.begin() + i, update.m_name);
-			}
-			else
-			{
-				// need to just make it try again.
-				LOG(ERROR, "A node with the name " + update.m_name + " already exists.", "");
-				return false;
-			}
-		}
-	}
-
-	updateNodes.m_nodeKeys = nodesToUpdate;
-
-	return true;
 }
 
 }

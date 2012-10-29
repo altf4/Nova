@@ -36,27 +36,43 @@ public:
 	// This is a singleton class, use this to access it
 	static HoneydConfiguration *Inst();
 
-    //Attempts to populate the HoneydConfiguration object with the xml templates.
-    // The configuration is saved and loaded relative to the homepath specificed by the Nova Configuration
-    // Returns true if successful, false if loading failed.
-    bool LoadAllTemplates();
+
+	//**********************
+	//* File IO Operations *
+	//**********************
+
+    //Writes out the current HoneydConfiguration object to the Honeyd configuration file in the expected format
+    // path: path in the file system to the desired HoneydConfiguration file
+    // Returns true if successful and false if not
+    bool WriteHoneydConfiguration(std::string groupName, std::string path = "");
 
     //This function takes the current values in the HoneydConfiguration and Config objects
     // 		and translates them into an xml format for persistent storage that can be
     // 		loaded at a later time by any HoneydConfiguration object
     // Returns true if successful and false if the save fails
-    bool SaveAllTemplates();
+    bool WriteAllTemplatesToXML();
 
-    //Writes out the current HoneydConfiguration object to the Honeyd configuration file in the expected format
-    // path: path in the file system to the desired HoneydConfiguration file
-    // Returns true if successful and false if not
-    bool WriteHoneydConfiguration(std::string path = "");
+	//Write the current respective lists out to <template>.xml
+    //	If you want to write all of them conventiently, run WriteAllTemplatesToXML()
+	//	returns - True on success, false on error
+	bool WriteScriptsToXML();
+	bool WriteNodesToXML();
+	bool WriteProfilesToXML();
 
-    // This function takes in the raw byte form of a network mask and converts it to the number of bits
-    // 	used when specifiying a subnet in the dots and slash notation. ie. 192.168.1.1/24
-    // 	mask: The raw numerical form of the netmask ie. 255.255.255.0 -> 0xFFFFFF00
-    // Returns an int equal to the number of bits that are 1 in the netmask, ie the example value for mask returns 24
-    static int GetMaskBits(in_addr_t mask);
+    //Populates the HoneydConfiguration object with the xml templates.
+    // The configuration is saved and loaded relative to the homepath specificed by the Nova Configuration
+    // Returns true if successful, false if loading failed.
+    bool ReadAllTemplatesXML();
+
+    //Loads respective template from the xml template file located relative to the currently set home path
+	// Returns true if successful, false on error
+    bool ReadScriptsXML();
+    bool ReadNodesXML();
+    bool ReadProfilesXML();
+
+	//*****************************
+	//* Editing of Configurations *
+	//*****************************
 
     //This function creates a new Honeyd node based on the parameters given
     //	profileName: name of the existing NodeProfile the node should use
@@ -67,6 +83,33 @@ public:
     //	Returns true if successful and false if not
     bool AddNewNode(std::string profileName, std::string ipAddress, std::string macAddress,
     		std::string interface, PortSet *portSet);
+
+	//This function allows access to NodeProfile objects by their name
+	// profileName: the name or key of the NodeProfile
+	// Returns a pointer to the NodeProfile object or NULL if the key doesn't
+	NodeProfile *GetProfile(std::string profileName);
+
+	//Inserts the profile into the honeyd configuration
+	//	profile: pointer to the profile you wish to add
+	//	Returns (true) if the profile could be created, (false) if it cannot.
+	bool AddProfile(NodeProfile * profile);
+
+	bool AddGroup(std::string groupName);
+
+	std::vector<std::string> GetGroups();
+
+
+	//Removes a profile and all associated nodes from the Honeyd configuration
+	//	profileName: name of the profile you wish to delete
+	// 	Returns: (true) if successful and (false) if the profile could not be found
+	bool DeleteProfile(std::string profileName);
+
+    //Deletes a single node, called from deleteNodes();
+    bool DeleteNode(std::string nodeName);
+
+    //TODO: Unsafe pointer access into table
+    Node *GetNode(std::string nodeName);
+
 
 	//This function allows easy access to all profiles
 	// Returns a vector of strings containing the names of all profiles
@@ -98,28 +141,11 @@ public:
     // Returns a vector of node names for each node on a generated profile.
 	std::vector<std::string> GetGeneratedNodeNames();
 
-	//This function allows access to NodeProfile objects by their name
-	// profileName: the name or key of the NodeProfile
-	// Returns a pointer to the NodeProfile object or NULL if the key doesn't
-	NodeProfile *GetProfile(std::string profileName);
-
-	//Outputs the NodeProfile in a string format suitable for use in the Honeyd configuration file.
-	// p: pointer to the profile you wish to create a Honeyd template for
-	// Returns a string for direct inserting into a honeyd configuration file or an empty string if it fails.
-	std::string ProfileToString(NodeProfile *p);
-
-	//Outputs the NodeProfile in a string format suitable for use in the Honeyd configuration file.
-	// p: pointer to the profile you wish to create a Honeyd template for
-	// Returns a string for direct inserting into a honeyd configuration file or an empty string if it fails.
-	// *Note: This function differs from ProfileToString in that it omits values incompatible with the loopback
-	//  interface and is used strictly for the Doppelganger node
-	std::string DoppProfileToString(NodeProfile *p);
-
-	//Makes the profile named child inherit the profile named parent
-	// child: the name of the child profile
-	// parent: the name of the parent profile
-	// Returns: (true) if successful, (false) if either name could not be found
-	bool InheritProfile(std::string child, std::string parent);
+    // This function takes in the raw byte form of a network mask and converts it to the number of bits
+    // 	used when specifiying a subnet in the dots and slash notation. ie. 192.168.1.1/24
+    // 	mask: The raw numerical form of the netmask ie. 255.255.255.0 -> 0xFFFFFF00
+    // Returns an int equal to the number of bits that are 1 in the netmask, ie the example value for mask returns 24
+    static int GetMaskBits(in_addr_t mask);
 
 	//This function allows the caller to find out if the given MAC string is taken by a node
 	// mac: the string representation of the MAC address
@@ -127,39 +153,7 @@ public:
 	// *Note this function may have poor performance when there are a large number of nodes
 	bool IsMACUsed(std::string mac);
 
-	//Inserts the profile into the honeyd configuration
-	//	profile: pointer to the profile you wish to add
-	//	Returns (true) if the profile could be created, (false) if it cannot.
-	bool AddProfile(NodeProfile * profile);
-
-	bool AddGroup(std::string groupName);
-
-	std::vector<std::string> GetGroups();
-
-	//Updates the profile with any modified information
-	//	Note: to modify inheritance use InheritProfile, just changing the parentProfile value and calling
-	//		this function may leave a copy of the profile as a child of the old parent next load
-	bool UpdateProfile(std::string profileName)
-	{
-		CreateProfileTree(profileName);
-		return UpdateProfileTree(profileName, ALL);
-	}
-
     bool RenameProfile(std::string oldName, std::string newName);
-
-    //Iterates over the profiles, recreating the entire property tree structure
-    void UpdateAllProfiles();
-
-	//Removes a profile and all associated nodes from the Honeyd configuration
-	//	profileName: name of the profile you wish to delete
-	// 	Returns: (true) if successful and (false) if the profile could not be found
-	bool DeleteProfile(std::string profileName);
-
-    //Deletes a single node, called from deleteNodes();
-    bool DeleteNode(std::string nodeName);
-
-    //TODO: Unsafe pointer access into table
-    Node *GetNode(std::string nodeName);
 
     //Get a vector of PortSets associated with a particular profile
 	std::vector<PortSet*> GetPortSets(std::string profileName);
@@ -168,34 +162,25 @@ public:
 
     static std::string SanitizeProfileName(std::string pfilename);
 
-    // When a profile's ethernet vendor is changed, we need to update the MAC addresses
-    // for any node that uses that profile to reflect the change. This method will take
-    // in a profile's name, find it in the hashmap and then look at all of the nodes that
-    // it spawned and update the MAC address fields.
-    //	  profileName: name of the profile whose nodes need updating.
-    // Returns a bool indicating whether the update was successful or not.
-    bool UpdateNodeMacs(std::string profileName);
-
 	PersonalityTree m_profiles;
-    NodeTable m_nodes;
 
-    std::vector<std::string> m_groups;
+	//A vector of groups (the pair)
+	// Each pair is a group, with the first string representing the group name, and the second Table being a table of nodes
+	std::vector< std::pair<std::string, NodeTable> > m_nodes;
 
     VendorMacDb m_macAddresses;
 
 private:
 
+	static HoneydConfiguration *m_instance;
+
     //Basic constructor for the Honeyd Configuration object
 	// Initializes the MAC vendor database and hash tables
-	// *Note: To populate the object from the file system you must call LoadAllTemplates();
+	// *Note: To populate the object from the file system you must call ReadAllTemplates();
 	HoneydConfiguration();
 
-	//Write the current list of Port Sets out to ports.xml
-	//	root - The root node of the (sub)tree that you wish to write for
-	//	returns - True on success, false on error
-	bool WritePortsToXML(PersonalityTreeItem *root);
-
-	static HoneydConfiguration *m_instance;
+	//Helper function called by WriteProfilesToXML - Writes the profiles out to m_profileTree
+	bool WriteProfilesToXML_helper(PersonalityTreeItem *root);
 
     uint m_nodeProfileIndex;
 
@@ -210,50 +195,13 @@ private:
 
     ScriptTable m_scripts;
 
-    //Loads Scripts from the xml template located relative to the currently set home path
-    // Returns true if successful, false if not.
-    bool LoadScriptsTemplate();
-
-    //Loads Ports from the xml template located relative to the currently set home path
-    // Returns true if successful, false if not.
-    bool LoadPortsTemplate();
-
-    //Loads NodeProfiles from the xml template located relative to the currently set home path
-    // Returns true if successful, false if not.
-    bool LoadProfilesTemplate();
-
-    //Loads Nodes from the xml template located relative to the currently set home path
-    // Returns true if successful, false if not.
-    bool LoadNodesTemplate();
-
-    //Iterates of the node table and populates the NodeProfiles with accessor keys to the node objects that use them.
-    // Returns true if successful and false if it is unable to assocate a profile with an exisiting node.
-    bool LoadNodeKeys();
-
     //set profile configurations
     bool LoadProfileSettings(boost::property_tree::ptree *ptr, NodeProfile *p);
     //add ports or subsystems
     bool LoadProfileServices(boost::property_tree::ptree *ptr, NodeProfile *p);
-    //recursive descent down profile tree
-    bool LoadProfileChildren(std::string parent);
 
-    //Load stored honeyd nodes ptr
-    bool LoadNodes(boost::property_tree::ptree *ptr);
-
-    void GetProfilesToDelete(std::string profileName, std::vector<std::string> &profilesToDelete);
-
-	//Recreates the profile tree of ancestors, children or both
-    //	Note: This needs to be called after making changes to a profile to update the hierarchy
-    //	Returns (true) if successful and (false) if no profile with name 'profileName' exists
-    bool UpdateProfileTree(std::string profileName, RecursiveDirection direction);
-
-    //Creates a ptree for a profile from scratch using the values found in the table
-    //	name: the name of the profile you wish to create a new tree for
-    //	Note: this only creates a leaf-node profile tree, after this call it will have no children.
-    //		to put the children back into the tree and place the this new tree into the parent's hierarchy
-    //		you must first call UpdateProfileTree(name, ALL);
-    //	Returns (true) if successful and (false) if no profile with name 'profileName' exists
-    bool CreateProfileTree(std::string profileName);
+    //Depth first traversal through ptree to read profiles
+    PersonalityTreeItem *ReadProfilesXML_helper(boost::property_tree::ptree &ptree, PersonalityTreeItem *parent);
 
 };
 

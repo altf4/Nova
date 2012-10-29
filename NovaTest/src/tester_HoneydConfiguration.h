@@ -45,7 +45,7 @@ protected:
 	void SetUp()
 	{
 		EXPECT_TRUE(m_config != NULL);
-		EXPECT_TRUE(m_config->LoadAllTemplates());
+		EXPECT_TRUE(m_config->ReadAllTemplates());
 	}
 
 	void TearDown()
@@ -94,20 +94,20 @@ TEST_F(HoneydConfigurationTest, test_RenameProfile)
 	m_config->UpdateAllProfiles();
 
 	// Save and delete object
-	EXPECT_TRUE(m_config->SaveAllTemplates());
+	EXPECT_TRUE(m_config->WriteAllTemplatesToXML());
 	delete m_config;
 
 	// Reload from the config file
 	m_config = new HoneydConfiguration();
 	EXPECT_TRUE(m_config != NULL);
-	EXPECT_TRUE(m_config->LoadAllTemplates());
+	EXPECT_TRUE(m_config->ReadAllTemplates());
 
 	EXPECT_TRUE(m_config->m_profiles.find("TestProfile-renamed") != m_config->m_profiles.end());
 	EXPECT_TRUE(m_config->m_profiles.find("TestProfile") == m_config->m_profiles.end());
 
 
 	EXPECT_TRUE(m_config->DeleteProfile("TestProfile-renamed"));
-	EXPECT_TRUE(m_config->SaveAllTemplates());
+	EXPECT_TRUE(m_config->WriteAllTemplatesToXML());
 }
 
 TEST_F(HoneydConfigurationTest, test_errorCases)
@@ -202,18 +202,18 @@ TEST_F(HoneydConfigurationTest, test_profileDeletion)
 	EXPECT_TRUE(m_config->AddProfile(child));
 
 	// Save, reload
-	EXPECT_TRUE(m_config->SaveAllTemplates());
-	EXPECT_TRUE(m_config->LoadAllTemplates());
+	EXPECT_TRUE(m_config->WriteAllTemplatesToXML());
+	EXPECT_TRUE(m_config->ReadAllTemplates());
 
 	// Delete the child and make sure it worked after a reload
 	EXPECT_TRUE(m_config->DeleteProfile("child"));
-	EXPECT_TRUE(m_config->SaveAllTemplates());
-	EXPECT_TRUE(m_config->LoadAllTemplates());
+	EXPECT_TRUE(m_config->WriteAllTemplatesToXML());
+	EXPECT_TRUE(m_config->ReadAllTemplates());
 	EXPECT_TRUE(m_config->m_profiles.find("child") == m_config->m_profiles.end());
 
 	// Delete the parent and make sure it worked after a reload
 	EXPECT_TRUE(m_config->DeleteProfile("parent"));
-	EXPECT_TRUE(m_config->SaveAllTemplates());
-	EXPECT_TRUE(m_config->LoadAllTemplates());
+	EXPECT_TRUE(m_config->WriteAllTemplatesToXML());
+	EXPECT_TRUE(m_config->ReadAllTemplates());
 	EXPECT_TRUE(m_config->m_profiles.find("parent") == m_config->m_profiles.end());
 }

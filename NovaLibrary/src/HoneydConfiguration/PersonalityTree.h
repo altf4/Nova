@@ -50,7 +50,22 @@ public:
 	//	returns - A valid PersonalityNode on success, NULL on error
 	PersonalityTreeItem *GetRandomProfile();
 
+	//Returns a pointer to the profile with the given name
+	//	returns - NULL on error
+	PersonalityTreeItem *GetProfile(std::string name);
+
+	//Returns a string suitable to writing to the honeyd configuration file which represents all of the leaf nodes
+	std::string ToString();
+
+	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
+	PersonalityTreeItem *m_root;
+
 private:
+
+	//Depth first traversal of the tree, starting at item
+	//	returns - a string representing and all of item's leaf children (leaf nodes only)
+	std::string ToString_helper(PersonalityTreeItem *item);
+
 	// LoadTable first iterates over the persTable object and calls InsertPersonality on each
 	// Personality* within the HashMap structure. It then calls GenerateProfiles recursively on
 	// each subtree of the root node. Note that authentically this method is called within
@@ -77,17 +92,6 @@ private:
 	// adds them into m_root's m_count value.
 	// Returns nothing.
 	bool CalculateDistributions(PersonalityTreeItem *node);
-
-	// At each node, will add an open version and a script
-	// specific version of each found port for the node.
-	//  PersonalityNode *node - the node whose ports to look at, and change if a script
-	//                      is found in the ServiceToScriptMap that matches the services for
-	//                      those ports.
-	// Returns nothing.
-	bool AddAllPorts(PersonalityTreeItem *node);
-
-	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
-	PersonalityTreeItem *m_root;
 
 	ServiceToScriptMap m_serviceMap;
 };

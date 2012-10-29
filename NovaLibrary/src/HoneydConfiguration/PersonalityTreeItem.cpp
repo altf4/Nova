@@ -18,6 +18,7 @@
 //============================================================================
 
 #include "PersonalityTreeItem.h"
+#include "HoneydConfiguration.h"
 
 #include <sstream>
 
@@ -36,8 +37,6 @@ PersonalityTreeItem::PersonalityTreeItem(PersonalityTreeItem *parent, string key
 	m_children.clear();
 	m_key = key;
 	m_osclass = "";
-	m_vendors.set_empty_key("EMPTY");
-	m_vendors.set_deleted_key("DELETED");
 	m_count = 0;
 	m_avgPortCount = 0;
 	m_redundant = false;
@@ -75,21 +74,68 @@ PersonalityTreeItem::~PersonalityTreeItem()
 	}
 }
 
-void PersonalityTreeItem::GenerateDistributions()
+string PersonalityTreeItem::ToString()
 {
-	uint16_t count = 0;
+	stringstream out;
 
-	m_vendor_dist.clear();
-	for(MACVendorMap::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
+	//XXX This is just a temporary band-aid on a larger wound, we cannot allow whitespaces in profile names.
+	string profName = HoneydConfiguration::SanitizeProfileName(m_key);
+	string parentProfName = "";
+	if(m_parent != NULL)
 	{
-		pair<string, double> push_vendor;
-		push_vendor.first = it->first;
-		push_vendor.second = (100 * (((double)it->second)/((double)m_count)));
-		m_vendor_dist.push_back(push_vendor);
+		string parentProfName = HoneydConfiguration::SanitizeProfileName(m_parent->m_key);
 	}
 
-	//TODO: remove?
-	m_avgPortCount = count / m_count;
+	if(!parentProfName.compare("default") || !parentProfName.compare(""))
+	{
+		out << "create " << profName << '\n';
+	}
+	else
+	{
+		out << "clone " << profName << " " << parentProfName << '\n';
+	}
+
+	//Ports
+	out << "set " << profName << " default tcp action " << m_TCP_behavior << '\n';
+	out << "set " << profName << " default udp action " << m_UDP_behavior << '\n';
+	out << "set " << profName << " default icmp action " << m_ICMP_behavior << '\n';
+
+	for(uint i = 0; i < m_portSets.size(); i++)
+	{
+		//TODO
+	}
+
+	if(m_key.compare("") && m_key.compare("NULL"))
+	{
+		out << "set " << profName << " personality \"" << m_osclass << '"' << '\n';
+	}
+
+	//TODO: This always uses the vendor with the highest likelihood. Should get changed?
+	string vendor = "";
+	double maxDist = 0;
+	for(uint i = 0; i < m_vendors.size(); i++)
+	{
+		if(m_vendors[i].second > maxDist)
+		{
+			maxDist = m_vendors[i].second;
+			vendor = m_vendors[i].first;
+		}
+	}
+	if(vendor.compare(""))
+	{
+		out << "set " << profName << " ethernet \"" << vendor << '"' << '\n';
+	}
+
+	if(m_dropRate.compare(""))
+	{
+		out << "set " << profName << " droprate in " << m_dropRate << '\n';
+	}
+
+
+
+
+	out << '\n';
+	return out.str();
 }
 
 std::string PersonalityTreeItem::GetRandomVendor()
@@ -108,9 +154,9 @@ std::string PersonalityTreeItem::GetRandomVendor()
 
 	//First pass, let's find out what the total is for all occurrences
 	uint totalOccurrences = 0;
-	for(MACVendorMap::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
+	for(uint i = 0; i < m_vendors.size(); i++)
 	{
-		totalOccurrences += it->second;
+		totalOccurrences += m_vendors[i].second;
 	}
 
 	if(totalOccurrences == 0)
@@ -123,17 +169,29 @@ std::string PersonalityTreeItem::GetRandomVendor()
 	int random = (rand() % totalOccurrences) + 1;
 
 	//Second pass, let's see who the winning MAC vendor actually is
-	for(MACVendorMap::iterator it = m_vendors.begin(); it != m_vendors.end(); it++)
+	for(uint i = 0; i < m_vendors.size(); i++)
 	{
 		//Iteratively remove values from our total, until we get to zero. Then stop.
-		random -= it->second;
+		random -= m_vendors[i].second;
 		if(random <= 0)
 		{
 			//Winner!
-			return it->first;
+			return m_vendors[i].first;
 		}
 	}
 	return "";
+}
+
+double PersonalityTreeItem::GetVendorDistribution(std::string vendorName)
+{
+	for(uint i = 0; i < m_vendors.size(); i++)
+	{
+		if(!m_vendors[i].first.compare(vendorName))
+		{
+			return m_vendors[i].second;
+		}
+	}
+	return 0;
 }
 
 }
