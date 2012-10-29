@@ -1872,6 +1872,18 @@ everyone.now.GetInheritedEthernetList = function (parent, callback) {
 
 }
 
+everyone.now.RestartHaystack = function(cb) {
+	nova.StopHaystack();
+
+	// Note: the other honeyd may be shutting down still,
+	// but the slight overlap doesn't cause problems
+	nova.StartHaystack(false);
+
+	if(typeof callback == 'function') {
+		cb();
+	}
+}
+
 everyone.now.StartHaystack = function () {
 	if (!nova.IsHaystackUp()) {
 		nova.StartHaystack(false);
