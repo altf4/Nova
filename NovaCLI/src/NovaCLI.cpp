@@ -102,6 +102,10 @@ int main(int argc, const char *argv[])
 		{
 			StatusHaystackWrapper();
 		}
+		else if(!strcmp(argv[2], "quasar"))
+		{
+			StatusQuasar();
+		}
 		else
 		{
 			PrintUsage();
@@ -153,6 +157,25 @@ int main(int argc, const char *argv[])
 			}
 
 		}
+		else if(!strcmp(argv[2], "quasar"))
+		{
+			if (argc > 3)
+			{
+				if (!strcmp(argv[3], "debug"))
+				{
+					StartQuasarWrapper(true);
+				}
+				else
+				{
+					PrintUsage();
+				}
+			}
+			else
+			{
+				StartQuasarWrapper(false);
+			}
+
+		}
 		else if (!strcmp(argv[2], "capture"))
 		{
 			StartCaptureWrapper();
@@ -178,6 +201,10 @@ int main(int argc, const char *argv[])
 		else if(!strcmp(argv[2], "haystack"))
 		{
 			StopHaystackWrapper();
+		}
+		else if(!strcmp(argv[2], "quasar"))
+		{
+			StopQuasarWrapper();
 		}
 		else if (!strcmp(argv[2], "capture"))
 		{
@@ -353,13 +380,13 @@ namespace NovaCLI
 void PrintUsage()
 {
 	cout << "Usage:" << endl;
-	cout << "  " << EXECUTABLE_NAME << " status nova|haystack" << endl;
+	cout << "  " << EXECUTABLE_NAME << " status nova|haystack|quasar" << endl;
 	cout << "    Outputs if the nova or haystack process is running and responding" << endl;
 	cout << endl;
-	cout << "  " << EXECUTABLE_NAME << " start nova|capture|haystack [debug]" << endl;
+	cout << "  " << EXECUTABLE_NAME << " start nova|capture|haystack|quasar [debug]" << endl;
 	cout << "    Starts the nova or haystack process, or starts capture on existing process. 'debug' will run in a blocking and verbose mode." << endl;
 	cout << endl;
-	cout << "  " << EXECUTABLE_NAME << " stop nova|capture|haystack" << endl;
+	cout << "  " << EXECUTABLE_NAME << " stop nova|capture|haystack|quasar" << endl;
 	cout << "    Stops the nova, haystack process, or live packet capture" << endl;
 	cout << endl;
 	cout << "  " << EXECUTABLE_NAME << " list all|hostile|benign" << endl;
@@ -426,6 +453,11 @@ void StatusHaystackWrapper()
 	{
 		cout << "Haystack Status: Not running" << endl;
 	}
+}
+
+bool StatusQuasar()
+{
+	return system("forever list");
 }
 
 void StartNovaWrapper(bool debug)
@@ -504,6 +536,25 @@ void StopCaptureWrapper()
 	Connect();
 	StopPacketCapture();
 }
+
+bool StartQuasarWrapper(bool debug)
+{
+	StopQuasarWrapper();
+	if (debug)
+	{
+		return system("quasar --debug");
+	}
+	else
+	{
+		return system("quasar");
+	}
+}
+
+bool StopQuasarWrapper()
+{
+	return system("forever stop /usr/share/nova/sharedFiles/Quasar/main.js");
+}
+
 
 void PrintSuspect(in_addr_t address, string interface)
 {

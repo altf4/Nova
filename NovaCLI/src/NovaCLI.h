@@ -36,10 +36,14 @@ void StartCaptureWrapper();
 
 void StatusNovaWrapper();
 void StatusHaystackWrapper();
+bool StatusQuasar();
 
 void StopNovaWrapper();
 void StopHaystackWrapper();
 void StopCaptureWrapper();
+
+bool StartQuasarWrapper(bool debug);
+bool StopQuasarWrapper();
 
 void PrintSuspect(in_addr_t address, std::string interface);
 void PrintSuspectData(in_addr_t address, std::string interface);

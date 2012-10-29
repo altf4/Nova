@@ -9,7 +9,7 @@ _novacli()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
     opts="status start stop list get uptime readsetting writesetting listsettings monitor"
-    components="nova haystack"
+    components="nova haystack quasar capture"
     listtypes="all hostile benign"
 	settings=$(novacli listsettings)
 
