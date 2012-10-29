@@ -69,7 +69,7 @@ var databaseOpenResult = function (err) {
   }
 }
 
-var db = new sql.Database(NovaHomePath + '/data/database.db', sql.OPEN_READWRITE, databaseOpenResult);
+var db = new sql.Database(NovaHomePath + '/data/quasarDatabase.db', sql.OPEN_READWRITE, databaseOpenResult);
 
 var dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
 var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');

@@ -1,17 +1,7 @@
 #!/bin/bash
 
-QUERY="
-
+QUERY1="
 PRAGMA journal_mode = WAL;
-
-CREATE TABLE firstrun(
-	run TIMESTAMP PRIMARY KEY
-);
-
-CREATE TABLE credentials(
-	user VARCHAR(100),
-	pass VARCHAR(100)
-);
 
 CREATE TABLE suspect_alerts (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,19 +30,31 @@ CREATE TABLE statistics (
 		haystack_percent_contacted DOUBLE
 );"
 
-dbFilePath="$DESTDIR/usr/share/nova/userFiles/data/database.db"
-
-if [[ $1 == "reset" ]]; then
-	echo "You chose the reset option. This will clear all database data!"
-	rm -fr "$dbFilePath"
-fi
-
+novadDbFilePath="$DESTDIR/usr/share/nova/userFiles/data/novadDatabase.db"
+rm -fr "$novadDbFilePath"
+sqlite3 "$novadDbFilePath" <<< $QUERY1
+chgrp nova "$novadDbFilePath"
+chmod g+rw "$novadDbFilePath"
 
 
-sqlite3 "$dbFilePath" <<< $QUERY
-#sqlite3 "/usr/share/nova/database.db" <<< "INSERT INTO credentials VALUES('nova', '\$4\$nova\$h36yyW3noGPSWnx5JCalQCPoo74\$');"
 
-chgrp nova "$dbFilePath"
-chmod g+rw "$dbFilePath"
+QUERY2="
+PRAGMA journal_mode = WAL;
+
+CREATE TABLE firstrun(
+	run TIMESTAMP PRIMARY KEY
+);
+
+CREATE TABLE credentials(
+	user VARCHAR(100),
+	pass VARCHAR(100)
+);"
+
+
+quasarDbFilePath="$DESTDIR/usr/share/nova/userFiles/data/quasarDatabase.db"
+rm -fr "$quasarDbFilePath"
+sqlite3 "$quasarDbFilePath" <<< $QUERY2
+chgrp nova "$quasarDbFilePath"
+chmod g+rw "$quasarDbFilePath"
 
 echo "SQL schema has been set up for nova."
