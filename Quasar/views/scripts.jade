@@ -86,12 +86,32 @@ block headerAdditions
     function checkParams(callback)
     {
       var sName = theDoc.getElementById('scriptFile').value;
+      // I'm wondering if we shouldn't enforce some sort of regulation regarding
+      // what file extensions people can submit with the file dialog; I can't seem
+      // to find any documentation regarding limiting what types of files an input
+      // can take to a smaller subset outside of back-end magickry.
       var sFile = theDoc.getElementById('scriptName').value;
+      var sShell = theDoc.getElementById('scriptShell').value;
+      var sArgs = theDoc.getElementById('scriptArgs').value;
       
       if(sName == '' || sFile == '' || sName == undefined || sFile == undefined)
       {
         alert('Must select both a file and supply a name for the new script');
       }
+      if(sShell == '' || sShell == undefined)
+      {
+        alert('A shell type (i.e. "bash" or "perl") must be identified');
+      }
+      // For now this is not necessarily required. When we have an actual mechanism
+      // for standardizing the submittal and format of scripts (i.e. what arguments
+      // to take from Honeyd, entries in the example.conf file/any other file within the
+      // /usr/share/honeyd/scripts/strings/ folder) this will be come important. As I 
+      // understand it, the strings folder holds version strings, etc. and we still have
+      // more desired work to do on it.
+      /*if(sArgs == '' || sArgs == undefined)
+      {
+        alert('Arguments for the script must be included (read Script guidelines for more details)');
+      }*/
       else
       {
         if(typeof callback == 'function')
@@ -140,7 +160,7 @@ block content
             td
               label Args
             td
-              input(name='args', id='args')
+              input(name='args', id='scriptArgs')
           tr
             td
               label Name of Script
