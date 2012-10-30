@@ -415,10 +415,6 @@ Handle<Value> HoneydConfigBinding::AddConfiguration(const Arguments& args)
 	string cloneConfigName = cvv8::CastFromJS<string>(args[2]);
 	bool cloneBool = false;
 
-	cout << "newConfigName " << newConfigName << endl;
-	cout << "clone " << clone << endl;
-	cout << "cloneConfigName " << cloneConfigName << endl;
-
 	if(!clone.compare("true"))
 	{
 		cloneBool = true;

@@ -1502,6 +1502,8 @@ app.post('/honeydConfigManage', passport.authenticate('basic', {session: false})
   
   honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
   
+  honeydConfig.LoadAllTemplates();
+  
   res.render('saveRedirect.jade', {
     locals: {
       redirectLink: '/honeydConfigManage'

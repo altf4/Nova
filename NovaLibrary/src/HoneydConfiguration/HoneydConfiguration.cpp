@@ -2636,8 +2636,13 @@ bool HoneydConfiguration::SwitchToConfiguration(const string& configName)
 
 bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clone, const string& cloneConfig)
 {
-	cout << "configName " << configName << endl;
 	bool found = false;
+
+	if(configName.empty())
+	{
+		cout << "Empty string is not acceptable configuration name, exiting" << endl;
+		return false;
+	}
 
 	for(uint i = 0; i < m_configs.size(); i++)
 	{
@@ -2659,14 +2664,43 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 	}
 
 	m_configs.push_back(configName);
+	string directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName;
+	system(string("mkdir " + directoryPath).c_str());
 
 	if(!clone)
 	{
-		cout << "Would be creating new directory structure at " << Config::Inst()->GetPathHome() << "/config/templates/" << configName << "/" << endl;
+		// Add configName to configurations.txt within the templates/ folder,
+		// create the templates/configName/ directory, and fill with
+		// empty (but still parseable) xml files
+		Config::Inst()->SetCurrentConfig(configName);
+		NodeTable replace = m_nodes;
+		for(NodeTable::iterator it = replace.begin(); it != replace.end(); it++)
+		{
+			if(it->first.compare("Doppelganger"))
+			{
+				DeleteNode(it->first);
+			}
+		}
+		ProfileTable onlyDefault = m_profiles;
+		for(ProfileTable::iterator it = onlyDefault.begin(); it != onlyDefault.end(); it++)
+		{
+			// Kitchy, but necessary. We should probably have Doppelganger as a direct descendant of default,
+			// or we're going to have to start making special exceptions for 'Shared Settings' as well
+			if(it->first.compare("default") && it->first.compare("Doppelganger") && it->first.compare("Shared Settings"))
+			{
+				DeleteProfile(it->first);
+			}
+		}
+		SaveAllTemplates();
 	}
 	else if(clone && found)
 	{
-		cout << "Would be copying " << cloneConfig << " into " << Config::Inst()->GetPathHome() << "/config/templates/" << configName  << "/" << endl;
+		// Add configName to configurations.txt within the templates/ folder,
+		// create the templates/configName/ directory, and cp the
+		// stuff from templates/cloneConfig/ into it.
+		string cloneString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/" + cloneConfig + "/* ";
+		cloneString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		system(cloneString.c_str());
 	}
 	return false;
 }
