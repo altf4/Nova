@@ -28,6 +28,7 @@ bool StartHaystack(bool blocking)
 {
 	stringstream ss;
 	ss << "sudo honeyd ";
+	Config::Inst()->LoadInterfaces();
 	vector<string> ifList = Config::Inst()->GetInterfaces();
 	while(!ifList.empty())
 	{

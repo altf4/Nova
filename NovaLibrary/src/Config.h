@@ -234,6 +234,9 @@ public:
 	std::vector<HostileThreshold> GetHostileThresholds();
 	bool GetOnlyClassifyHoneypotTraffic();
 
+	//Attempts to detect and use intefaces returned by pcap_lookupdev
+	void LoadInterfaces();
+
 protected:
 	Config();
 
@@ -244,9 +247,15 @@ private:
 
 	std::string m_doppelIp;
 	std::string m_loopbackIF;
+	std::string m_loopbackIFString;
 	bool m_loIsDefault;
 	bool m_ifIsDefault;
+
+	// List of currently used interfaces
 	std::vector<std::string> m_interfaces;
+
+	// What the actual config file contains
+	std::string m_interfaceLine;
 
 	// Enabled feature stuff, we provide a few formats and helpers
 	std::string m_enabledFeatureMask;
@@ -358,9 +367,6 @@ private:
 
     // Set with a CSV std::string from the config file
     void SetSMTPEmailRecipients_noLocking(std::string SMTPEmailRecipients);
-
-	//Attempts to detect and use intefaces returned by pcap_lookupdev
-	void LoadInterfaces();
 
 	// Loads the PATH file (usually in /etc)
 	bool LoadPaths();

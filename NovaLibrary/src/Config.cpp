@@ -177,9 +177,10 @@ void Config::LoadConfig_Internal()
 			{
 				line = line.substr(prefix.size() + 1, line.size());
 				Trim(line, ' ');
+				m_interfaceLine = line;
 
 				m_interfaces.clear();
-				boost::split(m_interfaces, line, boost::is_any_of("\t "), boost::token_compress_on);
+				boost::split(m_interfaces, m_interfaceLine, boost::is_any_of("\t "), boost::token_compress_on);
 
 				if (m_interfaces.size())
 				{
@@ -381,6 +382,7 @@ void Config::LoadConfig_Internal()
 				line = line.substr(prefix.size() + 1, line.size());
 				if(line.size() > 0)
 				{
+					m_loopbackIFString = line;
 					m_loopbackIF = line;
 					isValid[prefixIndex] = true;
 				}
@@ -1183,10 +1185,8 @@ void Config::LoadInterfaces()
 		LOG(ERROR, string("Ethernet Interface Auto-Detection failed: ") + string(strerror(errno)), "");
 	}
 
-	// --LOOPBACK ADAPTER-- //
-	//XXX need to implement qt toggling of default
 	//Choose the first loopback adapter in the default case
-	if(!m_loopbackIF.compare("default"))
+	if(!m_loopbackIFString.compare("default"))
 	{
 		m_loIsDefault = true;
 		for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
@@ -1202,30 +1202,10 @@ void Config::LoadInterfaces()
 	else
 	{
 		m_loIsDefault = false;
-		for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
-		{
-			//If we match the interface exit the loop early (curIf != NULL)
-			if((curIf->ifa_flags & IFF_LOOPBACK) && (!m_loopbackIF.compare(string(curIf->ifa_name)))
-				&& ((int)curIf->ifa_addr->sa_family == AF_INET))
-			{
-				break;
-			}
-		}
 	}
 
-	//If we couldn't match a loopback interface notify the user
-	if(curIf == NULL)
-	{
-		ss.str("");
-		ss << "ERROR File: " << __FILE__ << "at line: " << __LINE__
-			<< "Configuration option 'DOPPELGANGER_INTERFACE' is invalid.";
-		::openlog("Nova", OPEN_SYSL, LOG_AUTHPRIV);
-		syslog(ERROR, "%s %s", "ERROR", ss.str().c_str());
-		closelog();
-	}
-	// -------------------------------------------- //
-
-	// -- ETHERNET INTERFACES-- //
+	m_interfaces.clear();
+	boost::split(m_interfaces, m_interfaceLine, boost::is_any_of("\t "), boost::token_compress_on);
 	vector<string> interfaces = m_interfaces;
 	//Use all valid devices
 	if(!interfaces[0].compare("default"))
@@ -1239,6 +1219,10 @@ void Config::LoadInterfaces()
 				m_interfaces.push_back(string(curIf->ifa_name));
 			}
 		}
+	}
+	else
+	{
+		m_ifIsDefault = false;
 	}
 
 	freeifaddrs(devices);

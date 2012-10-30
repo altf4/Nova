@@ -147,14 +147,14 @@ High Level Nova Components
 Haystack: Active honeypots
 	- The Haystack is the collection of honeypots which emulate machines on the network.
 	The haystack is created using the Honeyd daemon and runs in it's own executable. Configuration
-	for Honeyd is auto generated at /usr/share/nova/nova/Config/haystack_honeyd.config.
+	for Honeyd is auto generated at ~/.config/nova/Config/haystack_honeyd.config.
 
 Novad: Classification tool
 	- The Novad executable is the daemon that monitors and classifies network traffic to 
 	identify hostile looking traffic. Novad will listen promiscuously on the configured 
 	network interfaces and keep track of various statistics such as IPs contacted, ports contacted,
 	honeypots contacted, and other details. Novad is can be configured manually via the
-	configuration file /usr/share/nova/nova/Config/NOVAConfig.txt, but it is recommended that
+	configuration file ~/.config/nova/config/NOVAConfig.txt, but it is recommended that
 	you use the GUI (Quasar) unless you know what you're doing.
 
 NovaCLI: Nova Command line Interface
@@ -175,10 +175,6 @@ Quasar: Nova Web Interface
 	The command "forever list" can be useful for seeing the current status, and it can be stopped 
 	with "forever stop index (usually 0)". See the forever documentation for more information.
 	
-	- Note that the internal web interface uses SSL. If you want to generate or use your own
-	SSL certificate and private key, put them in /usr/share/nova/Quasar/servercert.pem and
-	/usr/share/nova/Quasar/serverkey.pem after installation.
-
 Haystack Auto Configuration Tool: Generates honeyd configurations based off of nmap scans
 
 	- This tool can scan your network with nmap and then generate honeypot configurations
@@ -189,6 +185,49 @@ NovaTest: Unit Tests
 - If you're a developer interested in using the unit tests in NovaTest, you can find instructions at,
 
 https://github.com/DataSoft/Nova/wiki/Unit-Testing
+
+
+===============================
+TLS Keys
+===============================
+A set of example TLS keys are provided, but because of their public nature provide no real security.
+Paths to the TLS keys are in the Nova configuration file at ~/.config/nova/config/NOVAConfig.txt
+
+To generate a self signed certificate and key for the Quasar or Pulsar https interfaces,
+
+# Generate a private key
+openssl genrsa -des3 -out ui.key 1024
+
+# Create a request for a certificate
+openssl req -new -key ui.key -out ui.csr
+
+# Generate a self signed certificate
+openssl x509 -req -days 365 -in ui.csr -signkey ui.key -out ui.crt
+
+
+
+# Creating keys for the Pulsar/Quasar connection is a bit more complicated. Pulsar authenticates clients by
+# using TLS client certificates signed by a certificate authority. 
+
+# Create a new certificate athority
+# openssl genrsa -des3 -out ca.key 1024
+# openssl req -new -key ca.key -out ca.csr	
+# openssl x509 -req -days 365 -in ca.csr -out ca.crt -signkey ca.key
+
+# Create and sign the Pulsar key
+# openssl genrsa -des3 -out pulsarTether.key 1024
+# openssl req -new -key server.key -out pulsarTether.csr
+# openssl x509 -req -in pulsarTether.csr -out pulsarTether.crt -CA ca.crt -CAkey ca.key -CAcreateserial -days 365
+
+# Create and sign the Quasar keys. For each quasar instance,
+# openssl genrsa -des3 -out quasarTether.key 1024
+# openssl req -new -key server.key -out quasarTether.csr
+# openssl x509 -req -in quasarTether.csr -out quasarTether.crt -CA ca.crt -CAkey ca.key -CAcreateserial -days 365
+# Transfer this key to the Quasar instance
+
+
+Remember to make sure that all paths and passphrases are updated correctly in 
+~/.config/nova/config/NOVAConfig.txt to use the new keys you created.
 
 ===============================
 Debian Packages
@@ -233,7 +272,7 @@ Tips for debugging problems
 		novacli writesetting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
 
 	  If the above fails for some reason, you can also change the logging settings manually
-	  in the /usr/share/nova/nova/Config/NOVAConfig.txt file under the SERVICE_PREFERENCES setting.
+	  in the ~/.config/nova/config/NOVAConfig.txt file under the SERVICE_PREFERENCES setting.
 
 	=================== Permission Problems ===================
 

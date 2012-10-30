@@ -49,7 +49,6 @@ var path = require('path');
 var jade = require('jade');
 var express = require('express');
 var util = require('util');
-var https = require('https');
 var passport = require('passport');
 var BasicStrategy = require('passport-http').BasicStrategy;
 var sql = require('sqlite3');
@@ -108,11 +107,12 @@ var databaseOpenResult = function (err) {
 	if (err === null) {
 		console.log("Opened sqlite3 database file.");
 	} else {
-		LOG(ERROR, "Error opening sqlite3 database file: " + err);
+		LOG("ERROR", "Error opening sqlite3 database file: " + err);
 	}
 }
 
-var db = new sql.Database(NovaHomePath + "/data/database.db", sql.OPEN_READWRITE, databaseOpenResult);
+var novaDb = new sql.Database(NovaHomePath + "/data/novadDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
+var db = new sql.Database(NovaHomePath + "/data/quasarDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
 
 
 // Prepare query statements
@@ -127,9 +127,9 @@ var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = 
 var dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
 var dbqFirstrunInsert = db.prepare("INSERT INTO firstrun values(datetime('now'))");
 
-var dbqSuspectAlertsGet = db.prepare('SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_tcp_ports,distinct_udp_ports,avg_tcp_ports_per_host,avg_udp_ports_per_host,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
-var dbqSuspectAlertsDeleteAll = db.prepare('DELETE FROM suspect_alerts');
-var dbqSuspectAlertsDeleteAlert = db.prepare('DELETE FROM suspect_alerts where id = ?');
+var dbqSuspectAlertsGet = novaDb.prepare('SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_tcp_ports,distinct_udp_ports,avg_tcp_ports_per_host,avg_udp_ports_per_host,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
+var dbqSuspectAlertsDeleteAll = novaDb.prepare('DELETE FROM suspect_alerts');
+var dbqSuspectAlertsDeleteAlert = novaDb.prepare('DELETE FROM suspect_alerts where id = ?');
 
 passport.serializeUser(function (user, done) {
 	done(null, user);
@@ -183,12 +183,21 @@ function (username, password, done) {
 }));
 
 // Setup TLS
-var express_options = {
-	key: fs.readFileSync(NovaHomePath + '/config/keys/quasarKey.pem'),
-	cert: fs.readFileSync(NovaHomePath + '/config/keys/quasarCert.pem')
-};
-
-var app = express.createServer(express_options);
+var app;
+if (config.ReadSetting("QUASAR_WEBUI_TLS_ENABLED") == "1") {
+	var keyPath = config.ReadSetting("QUASAR_WEBUI_TLS_KEY");
+	var certPath = config.ReadSetting("QUASAR_WEBUI_TLS_CERT");
+	var passPhrase = config.ReadSetting("QUASAR_WEBUI_TLS_PASSPHRASE");
+	express_options = {
+		key: fs.readFileSync(NovaHomePath + keyPath),
+		cert: fs.readFileSync(NovaHomePath + certPath),
+		passphrase: passPhrase
+	};
+ 
+	app = express.createServer(express_options);
+} else {
+	app = express.createServer();
+}
 
 app.configure(function () {
 	app.use(passport.initialize());
@@ -206,9 +215,9 @@ app.set('view options', {
 });
 
 // Do the following for logging
-//console.info("Logging to ./serverLog.log");
-//var logFile = fs.createWriteStream('./serverLog.log', {flags: 'a'});
-//app.use(express.logger({stream: logFile}));
+console.info("Logging to ./serverLog.log");
+var logFile = fs.createWriteStream('./serverLog.log', {flags: 'a'});
+app.use(express.logger({stream: logFile}));
 
 var WEB_UI_PORT = config.ReadSetting("WEB_UI_PORT");
 console.info("Listening on port " + WEB_UI_PORT);
@@ -273,7 +282,19 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   var connected = config.ReadSetting('MASTER_UI_IP') + ':8081';
   
   var WebSocketClient = require('websocket').client;
-  var client = new WebSocketClient();
+  var client;
+  
+  if (config.ReadSetting("QUASAR_TETHER_TLS_ENABLED")) {
+    client = new WebSocketClient({
+      tlsOptions: {
+        cert: fs.readFileSync(NovaHomePath + config.ReadSetting("QUASAR_TETHER_TLS_CERT")),
+        key: fs.readFileSync(NovaHomePath + config.ReadSetting("QUASAR_TETHER_TLS_KEY")),
+        passphrase: config.ReadSetting("QUASAR_TETHER_TLS_PASSPHRASE")
+      }
+    });
+  } else {
+    client = new WebSocketClient();
+  }
   // TODO: Make configurable
   var clientId = config.ReadSetting('MASTER_UI_CLIENT_ID');
   var reconnecting = false;
