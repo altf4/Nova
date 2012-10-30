@@ -93,6 +93,11 @@ bool HoneydConfiguration::LoadAllTemplates()
 		LOG(ERROR, "Unable to load Node Keys!", "");
 		return false;
 	}
+	if(!LoadConfigurations())
+	{
+		LOG(ERROR, "Unable to load Configuration Names!", "");
+		return false;
+	}
 	return true;
 }
 
@@ -209,7 +214,7 @@ bool HoneydConfiguration::SaveAllTemplates()
 	{
 		boost::property_tree::xml_writer_settings<char> settings('\t', 1);
 		string homePath = Config::Inst()->GetPathHome();
-		write_xml(homePath + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/scripts.xml", m_scriptTree, locale(), settings);
+		write_xml(homePath + "/config/templates/scripts.xml", m_scriptTree, locale(), settings);
 		write_xml(homePath + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/ports.xml", m_portTree, locale(), settings);
 		write_xml(homePath + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/nodes.xml", m_groupTree, locale(), settings);
 		write_xml(homePath + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/profiles.xml", m_profileTree, locale(), settings);
@@ -1492,7 +1497,7 @@ bool HoneydConfiguration::LoadScriptsTemplate()
 	m_scriptTree.clear();
 	try
 	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_scriptTree.get_child("scripts"))
 		{
@@ -2602,4 +2607,111 @@ bool HoneydConfiguration::RecursiveCheckNotInheritingEmptyProfile(const NodeProf
 		return false;
 	}
 }
+
+bool HoneydConfiguration::SwitchToConfiguration(const string& configName)
+{
+	cout << "switch to configName " << configName << endl;
+	bool found = false;
+
+	for(uint i = 0; i < m_configs.size(); i++)
+	{
+		if(!m_configs[i].compare(configName))
+		{
+			found = true;
+		}
+	}
+
+	if(found)
+	{
+		cout << "Found config, switching to " << configName << endl;
+		Config::Inst()->SetCurrentConfig(configName);
+		return true;
+	}
+	else
+	{
+		cout << "No configuration with name " << configName << " found, doing nothing" << endl;
+		return false;
+	}
+}
+
+bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clone, const string& cloneConfig)
+{
+	cout << "configName " << configName << endl;
+	bool found = false;
+
+	for(uint i = 0; i < m_configs.size(); i++)
+	{
+		if(!m_configs[i].compare(configName))
+		{
+			cout << "Cannot add configuration with the same name as existing configuration" << endl;
+			return false;
+		}
+		if(clone && !m_configs[i].compare(cloneConfig))
+		{
+			found = true;
+		}
+	}
+
+	if(clone && !found)
+	{
+		cout << "Cannot find configuration " << cloneConfig << " to clone, exiting" << endl;
+		return false;
+	}
+
+	m_configs.push_back(configName);
+
+	if(!clone)
+	{
+		cout << "Would be creating new directory structure at " << Config::Inst()->GetPathHome() << "/config/templates/" << configName << "/" << endl;
+	}
+	else if(clone && found)
+	{
+		cout << "Would be copying " << cloneConfig << " into " << Config::Inst()->GetPathHome() << "/config/templates/" << configName  << "/" << endl;
+	}
+	return false;
+}
+
+bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
+{
+	cout << "remove configName " << configName << endl;
+	bool found = false;
+
+	for(uint i = 0; i < m_configs.size(); i++)
+	{
+		if(!m_configs[i].compare(configName))
+		{
+			found = true;
+		}
+	}
+
+	if(found)
+	{
+		string pathToDelete = Config::Inst()->GetPathHome() + "/config/templates/" + configName;
+		cout << "Would be removing files at " << pathToDelete << endl;
+		return true;
+	}
+	else
+	{
+		cout << "No configuration with name " << configName << ", exiting" << endl;
+		return false;
+	}
+}
+
+bool HoneydConfiguration::LoadConfigurations()
+{
+	string configurationPath = Config::Inst()->GetPathHome() + "/config/templates/configurations.txt";
+
+	ifstream configList(configurationPath);
+
+	while(configList.good())
+	{
+		char buffer[256];
+		configList.getline(buffer, 256, '\n');
+		string pushback = string(buffer);
+		m_configs.push_back(pushback);
+	}
+
+	return true;
+}
+
 }

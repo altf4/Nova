@@ -7,6 +7,16 @@ block headerAdditions
     
     console.log('configurationList = ' + configurationList);
     
+    function closeLightbox()
+    {
+      theDoc.getElementById('lightbox').style.display = 'none';
+      theDoc.getElementById('hideme').style.opacity = '1.0'; 
+      while(theDoc.getElementById('cloneMe').hasChildNodes())
+      {
+        theDoc.getElementById('cloneMe').removeChild(theDoc.getElementById('cloneMe').lastChild);
+      }
+    }
+    
     function newConfiguration(configName, cloneInfo)
     {
       var cloneConfig = cloneInfo;
@@ -82,11 +92,81 @@ block headerAdditions
       }
     }
     
+    function showLightBox(divIndex)
+    {
+      theDoc.getElementById('hideme').style.opacity='0.5';
+      theDoc.getElementById('lightbox').style.display='block';
+      if(divIndex == '0')
+      {
+        theDoc.getElementById('addConfigForm').style.display='block';
+        theDoc.getElementById('cloneConfigForm').style.display='none';
+      }
+      else if(divIndex == '1')
+      {
+        theDoc.getElementById('addConfigForm').style.display='none';
+        theDoc.getElementById('cloneConfigForm').style.display='block';
+        for(var i in configurationList)
+        {
+          var option = theDoc.createElement('option');
+          option.value = configurationList[i];
+          option.innerHTML = configurationList[i];
+          theDoc.getElementById('cloneMe').appendChild(option);
+        }
+      }
+    }
+    
+    function checkParametersAdd()
+    {
+      if(theDoc.getElementById('newName').value == '')
+      {
+        alert('Must give a new name for New Configurations');
+        return;
+      }
+      else
+      {
+        theDoc.getElementById('addConfig').submit();
+      }
+    }
+    
+    function checkParametersClone()
+    { 
+      if(theDoc.getElementById('newNameClone').value == '')
+      {
+        alert('Must give a new name for Cloned Configurations');
+        return;
+      }
+      else
+      {
+        theDoc.getElementById('cloneConfig').submit();
+      }      
+    }
+    
     now.ready(function(){
       populateConfigSelect(configurationList);
     });
   
 block content
-  h1 Configuration Summary
-  select#configurations(onchange='GetConfigurationSummary()')
-  div#summary(style='border: 2px solid black')
+  div#hideme
+    h1 Configuration Summary
+    select#configurations(onchange='GetConfigurationSummary()') Configuration
+    div#addNewConfig
+      button#addConfig(onclick='showLightBox("0")') Add Configuration
+      button#cloneConfig(onclick='showLightBox("1")') Clone Configuration
+    div#summary(style='border: 2px solid black')
+  div#lightbox(class='white_content')
+    div#addConfigForm
+      form(method='post', id='addConfig')
+        label Name For New Configuration 
+        input#newName(name='newName')
+        br
+        button#submitAdd(onclick='checkParametersAdd(); return false;') Submit
+    div#cloneConfigForm
+      form(method='post', id='cloneConfig')
+        label Name For Cloned Configuration
+        input#newNameClone(name='newNameClone')
+        br
+        label Select Configuration to Clone:
+        select#cloneMe(name='cloneSelect')
+        br
+        button#submitClone(onclick='checkParametersClone(); return false;') Submit
+    button#closeLB(onclick='closeLightbox()') Close

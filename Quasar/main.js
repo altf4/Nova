@@ -1463,7 +1463,29 @@ app.post('/scripts', passport.authenticate('basic', {session: false}), function(
     locals: {
       redirectLink: '/scripts'
     }
-  })
+  });
+});
+
+app.post('/honeydConfigManage', passport.authenticate('basic', {session: false}), function (req, res){
+  var newName = (req.body['newName'] != undefined ? req.body['newName'] : req.body['newNameClone']);
+  var configToClone = (req.body['cloneSelect'] != undefined ? req.body['cloneSelect'] : '');
+  var cloneBool = false;
+  if(configToClone != '')
+  {
+    cloneBool = true;
+  }
+  
+  console.log('newName ' + newName);
+  console.log('cloneBool ' + cloneBool);
+  console.log('configToClone "' + configToClone + '"');
+  
+  honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
+  
+  res.render('saveRedirect.jade', {
+    locals: {
+      redirectLink: '/honeydConfigManage'
+    }
+  });
 });
 
 app.post('/customizeTrainingSave', passport.authenticate('basic', {session: false}), function (req, res) {

@@ -61,6 +61,8 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAll"),FunctionTemplate::New(SaveAll)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(DeleteProfile)->GetFunction());
 
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddConfiguration"),FunctionTemplate::New(AddConfiguration)->GetFunction());
+
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
 	target->Set(String::NewSymbol("HoneydConfigBinding"), constructor);
 }
@@ -384,7 +386,6 @@ Handle<Value> HoneydConfigBinding::SaveAll(const Arguments& args)
 
 	bool success = true;
 
-
 	if (!obj->m_conf->SaveAllTemplates())
 	{
 		cout << "ERROR saving honeyd templates " << endl;
@@ -397,4 +398,31 @@ Handle<Value> HoneydConfigBinding::SaveAll(const Arguments& args)
 	}
 
 	return scope.Close(Boolean::New(success));
+}
+
+Handle<Value> HoneydConfigBinding::AddConfiguration(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 3)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 3 parameters")));
+	}
+
+	string newConfigName = cvv8::CastFromJS<string>(args[0]);
+	string clone = cvv8::CastFromJS<string>(args[1]);
+	string cloneConfigName = cvv8::CastFromJS<string>(args[2]);
+	bool cloneBool = false;
+
+	cout << "newConfigName " << newConfigName << endl;
+	cout << "clone " << clone << endl;
+	cout << "cloneConfigName " << cloneConfigName << endl;
+
+	if(!clone.compare("true"))
+	{
+		cloneBool = true;
+	}
+
+	return scope.Close(Boolean::New(obj->m_conf->AddNewConfiguration(newConfigName, cloneBool, cloneConfigName)));
 }
