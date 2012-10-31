@@ -42,7 +42,7 @@ public:
 	//                           the main HoneydHostConfig class. Used to add the subnets
 	//                           to the HoneydConfiguration object.
 	PersonalityTree(ScannedHostTable *persTable, std::vector<Subnet> &subnetsToUse);
-	PersonalityTree();
+	PersonalityTree(){};
 
 	~PersonalityTree();
 

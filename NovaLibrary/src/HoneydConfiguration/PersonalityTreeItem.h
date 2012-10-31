@@ -38,6 +38,17 @@ public:
 	//Returns a string suitable for inserting into the honeyd configuration file
 	std::string ToString(const std::string &portSetName = "");
 
+	//Returns a random vendor from the internal list of MAC vendors, according to the given probabilities
+	// If a profile has no defined ethernet vendors, look to the parent profile
+	//	returns an empty string "" on error
+	std::string GetRandomVendor();
+
+	//Returns a random PortSet from the internal list
+	//	returns - NULL if no port sets present
+	PortSet *GetRandomPortSet();
+
+	double GetVendorDistribution(std::string vendorName);
+
 	// Number of hosts that have this personality
 	uint32_t m_count;
 	double m_distribution;
@@ -72,13 +83,6 @@ public:
 
 	//A collection of PortSets, representing each group of ports found
 	std::vector<PortSet *> m_portSets;
-
-	//Returns a random vendor from the internal list of MAC vendors, according to the given probabilities
-	// If a profile has no defined ethernet vendors, look to the parent profile
-	//	returns an empty string "" on error
-	std::string GetRandomVendor();
-
-	double GetVendorDistribution(std::string vendorName);
 
 private:
 

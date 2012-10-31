@@ -195,6 +195,20 @@ std::string PersonalityTreeItem::GetRandomVendor()
 	return "";
 }
 
+PortSet *PersonalityTreeItem::GetRandomPortSet()
+{
+	if(m_portSets.empty())
+	{
+		return NULL;
+	}
+
+	//Now we pick a random number between 1 and totalOccurrences
+	// Not technically a proper distribution, but we'll live
+	int random = rand() % m_portSets.size();
+
+	return m_portSets[random];
+}
+
 double PersonalityTreeItem::GetVendorDistribution(std::string vendorName)
 {
 	for(uint i = 0; i < m_vendors.size(); i++)

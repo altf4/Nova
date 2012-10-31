@@ -39,6 +39,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 
 #include "HaystackAutoConfig.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
 #include "HoneydConfiguration/PersonalityTree.h"
 #include "HoneydConfiguration/VendorMacDb.h"
 #include "Logger.h"
@@ -992,17 +993,20 @@ void Nova::GenerateConfiguration()
 		string vendor = winningPersonality->GetRandomVendor();
 
 		//Pick a MAC address for the node:
-		string macAddress = persTree.m_hdconfig->m_macAddresses.GenerateRandomMAC(vendor);
+		string macAddress = HoneydConfiguration::Inst()->m_macAddresses.GenerateRandomMAC(vendor);
+
+		HoneydConfiguration::Inst()->AddGroup("Autoconfig");
 
 		//Make a node for that profile
-		persTree.m_hdconfig->AddNewNode(winningPersonality->m_key, "DHCP", macAddress, Config::Inst()->GetInterface(0), "");
+		HoneydConfiguration::Inst()->AddNewNode(winningPersonality->m_key, "DHCP", macAddress, Config::Inst()->GetInterface(0),
+				winningPersonality->GetRandomPortSet(), "Autoconfig");
 	}
 
-	if(!persTree.m_hdconfig->SaveAllTemplates())
+	if(!HoneydConfiguration::Inst()->WriteAllTemplatesToXML())
 	{
 		LOG(ERROR, "Unable to save haystack templates", "");
 	}
-	if(!persTree.m_hdconfig->WriteHoneydConfiguration())
+	if(!HoneydConfiguration::Inst()->WriteHoneydConfiguration("Autoconfig"))
 	{
 		LOG(ERROR, "Unable to write haystack configuration", "");
 	}
