@@ -75,11 +75,11 @@ static std::string PortBehaviorToString(enum PortBehavior behavior)
 		}
 		case PORT_TARPIT_OPEN:
 		{
-			return "tarpit-open";
+			return "tarpit open";
 		}
 		case PORT_TARPIT_SCRIPT:
 		{
-			return "tarpit-script";
+			return "tarpit script";
 		}
 		default:
 		{
@@ -108,11 +108,11 @@ static enum PortBehavior StringToPortBehavior(std::string behavior)
 	{
 		return PORT_SCRIPT;
 	}
-	else if(!behavior.compare("tarpit-open"))
+	else if(!behavior.compare("tarpit open"))
 	{
 		return PORT_TARPIT_OPEN;
 	}
-	else if(!behavior.compare("tarpit-script"))
+	else if(!behavior.compare("tarpit script"))
 	{
 		return PORT_TARPIT_SCRIPT;
 	}
@@ -262,168 +262,6 @@ struct Subnet
 	boost::property_tree::ptree m_tree;
 };
 
-
-//used to keep track of haystack profile gui items and allow for easy access
-struct NodeProfile
-{
-	std::string m_name;
-	std::string m_tcpAction;
-	std::string m_udpAction;
-	std::string m_icmpAction;
-	std::string m_personality;
-	std::vector<std::pair<std::string, double>> m_ethernetVendors;
-	std::string m_uptimeMin;
-	std::string m_uptimeMax;
-	std::string m_dropRate;
-	bool m_inherited[INHERITED_MAX];
-	bool m_generated;
-	double m_distribution;
-	std::vector<std::pair<std::string, std::pair<bool, double> > > m_ports;
-	std::vector<std::string> m_nodeKeys;
-	std::string m_parentProfile;
-	boost::property_tree::ptree m_tree;
-
-	// This is for the Javascript bindings in the web m_interface
-	// They return bool because the templates can't handle void return types
-	inline bool SetName(std::string name) {this->m_name = name; return true;}
-	inline bool SetTcpAction(std::string tcpAction) {this->m_tcpAction = tcpAction; return true;}
-	inline bool SetUdpAction(std::string udpAction) {this->m_udpAction = udpAction; return true;}
-	inline bool SetIcmpAction(std::string icmpAction) {this->m_icmpAction = icmpAction; return true;}
-	inline bool SetPersonality(std::string personality) {this->m_personality = personality; return true;}
-	inline bool SetGenerated(bool generated) {this->m_generated = generated; return true;}
-	inline bool SetDistribution(double distribution) {this->m_distribution = distribution; return true;}
-	inline bool SetEthernet(std::string ethernet)
-	{
-		if(!this->m_ethernetVendors.empty())
-		{
-			this->m_ethernetVendors[0].first = ethernet;
-			return true;
-		}
-		else
-		{
-			this->m_ethernetVendors.push_back(std::pair<std::string, double>(ethernet, 0));
-			return true;
-		}
-	}
-	inline bool SetVendors(std::vector<std::pair<std::string, double> > vendors)
-	{
-		m_ethernetVendors = vendors;
-		return true;
-	}
-	inline bool SetUptimeMin(std::string uptimeMin) {this->m_uptimeMin = uptimeMin; return true;}
-	inline bool SetUptimeMax(std::string uptimeMax) {this->m_uptimeMax = uptimeMax; return true;}
-	inline bool SetDropRate(std::string dropRate) {this->m_dropRate = dropRate; return true;}
-	inline bool SetParentProfile(std::string parentProfile) {this->m_parentProfile = parentProfile; return true;}
-	inline bool AddPort(std::string portName, bool inherited, double distribution) {m_ports.push_back(std::pair<std::string, std::pair<bool, double> >(portName, std::pair<bool, double>(inherited, distribution))); return true;}
-
-	inline bool setTcpActionInherited(bool inherit) {m_inherited[TCP_ACTION] = inherit; return true;}
-	inline bool setUdpActionInherited(bool inherit) {m_inherited[UDP_ACTION] = inherit; return true;}
-	inline bool setIcmpActionInherited(bool inherit) {m_inherited[ICMP_ACTION] = inherit; return true;}
-	inline bool setPersonalityInherited(bool inherit) {m_inherited[PERSONALITY] = inherit; return true;}
-	inline bool setEthernetInherited(bool inherit) {m_inherited[ETHERNET] = inherit; return true;}
-	inline bool setUptimeInherited(bool inherit) {m_inherited[UPTIME] = inherit; return true;}
-	inline bool setDropRateInherited(bool inherit) {m_inherited[DROP_RATE] = inherit; return true;}
-
-	inline std::string GetRandomVendor()
-	{
-		srand(time(NULL));
-		int randDist = rand() % 100;
-		int breakEven = (rand() % m_ethernetVendors.size()) + 1;
-		double max = 0;
-		std::string ret = m_ethernetVendors[0].first;
-
-		for(uint i = 0; i < m_ethernetVendors.size() && breakEven > 0; i++)
-		{
-			if(m_ethernetVendors[i].second > max && m_ethernetVendors[i].second < randDist)
-			{
-				max = m_ethernetVendors[i].second;
-				ret = m_ethernetVendors[i].first;
-				breakEven--;
-			}
-		}
-
-		return ret;
-	}
-
-	// This is for the Javascript bindings in the web interface
-	inline std::string GetName() {return m_name;}
-	inline std::string GetTcpAction() {return m_tcpAction;}
-	inline std::string GetUdpAction() {return m_udpAction;}
-	inline std::string GetIcmpAction() {return m_icmpAction;}
-	inline std::string GetPersonality() {return m_personality;}
-	inline std::string GetEthernet() {return m_ethernetVendors[0].first;}
-
-	inline std::vector<std::string> GetVendors()
-	{
-		std::vector<std::string> ret;
-		for(uint i = 0; i < m_ethernetVendors.size(); i++)
-		{
-			ret.push_back(m_ethernetVendors[i].first);
-		}
-		return ret;
-	}
-
-
-	inline std::vector<double> GetVendorDistributions()
-	{
-		std::vector<double> ret;
-		for(uint i = 0; i < m_ethernetVendors.size(); i++)
-		{
-			ret.push_back(m_ethernetVendors[i].second);
-		}
-		return ret;
-	}
-	inline std::string GetUptimeMin() {return m_uptimeMin;}
-	inline std::string GetUptimeMax() {return m_uptimeMax;}
-	inline std::string GetDropRate() {return m_dropRate;}
-	inline std::string GetParentProfile() {return m_parentProfile;}
-
-	inline bool GetGenerated() {return m_generated;}
-	inline double GetDistribution() {return m_distribution;}
-
-	inline std::vector<bool> GetInheritance()
-	{
-		std::vector<bool> ret;
-		for(int i = 0; i < INHERITED_MAX; i++)
-		{
-			ret.push_back(m_inherited[i]);
-		}
-		return ret;
-	}
-
-	inline bool isTcpActionInherited() {return m_inherited[TCP_ACTION];}
-	inline bool isUdpActionInherited() {return m_inherited[UDP_ACTION];}
-	inline bool isIcmpActionInherited() {return m_inherited[ICMP_ACTION];}
-	inline bool isPersonalityInherited() {return m_inherited[PERSONALITY];}
-	inline bool isEthernetInherited() {return m_inherited[ETHERNET];}
-	inline bool isUptimeInherited() {return m_inherited[UPTIME];}
-	inline bool isDropRateInherited() {return m_inherited[DROP_RATE];}
-
-	// Work around for inability to get the std::pair to javascript
-	inline std::vector<std::string> GetPortNames()
-	{
-		std::vector<std::string> ret;
-		for(std::vector<std::pair<std::string, std::pair<bool, double> > >::iterator it = m_ports.begin(); it != m_ports.end(); it++)
-		{
-			ret.push_back(it->first);
-		}
-		return ret;
-	}
-
-	// Work around for inability to get the std::pair to javascript
-	inline std::vector<bool> GetPortInheritance()
-	{
-		std::vector<bool> ret;
-		for(std::vector<std::pair<std::string, std::pair<bool, double> > >::iterator it = m_ports.begin(); it != m_ports.end(); it++)
-		{
-			ret.push_back(it->second.first);
-		}
-		return ret;
-	}
-};
-
-typedef Nova::HashMap<std::string, NodeProfile, std::hash<std::string>, eqstr > ProfileTable;
-
 //used to keep track of haystack node gui items and allow for easy access
 struct Node
 {
@@ -450,6 +288,5 @@ struct Node
 typedef Nova::HashMap<std::string, Node, std::hash<std::string>, eqstr > NodeTable;
 
 }
-
 
 #endif /* NOVAGUITYPES_H_ */

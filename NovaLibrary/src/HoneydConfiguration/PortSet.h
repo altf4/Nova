@@ -42,6 +42,9 @@ public:
 	//	returns - True on success, false on error
 	bool SetTCPBehavior(const std::string &behavior);
 
+	//Returns a string representation of the PortSet suitable for insertion into the Honeyd Config file
+	std::string ToString(const std::string &profileName);
+
 	//A unique identifier
 	std::string m_name;
 

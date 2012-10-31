@@ -45,12 +45,14 @@ PersonalityTreeItem::PersonalityTreeItem(PersonalityTreeItem *parent, string key
 	PersonalityTreeItem *loopParent = parent;
 	while(loopParent != NULL)
 	{
-		if(!loopParent->m_TCP_behavior.empty() && !loopParent->m_UDP_behavior.empty() && !loopParent->m_ICMP_behavior.empty())
+		//XXX: just takes the first portset. but is that right? How to inherit properly?
+		if(loopParent->m_portSets.size() > 0)
 		{
-			m_TCP_behavior = loopParent->m_TCP_behavior;
-			m_UDP_behavior = loopParent->m_UDP_behavior;
-			m_ICMP_behavior = loopParent->m_ICMP_behavior;
-			break;
+			PortSet *portset = new PortSet();
+			portset->m_defaultICMPBehavior = loopParent->m_portSets[0]->m_defaultICMPBehavior;
+			portset->m_defaultTCPBehavior = loopParent->m_portSets[0]->m_defaultTCPBehavior;
+			portset->m_defaultUDPBehavior = loopParent->m_portSets[0]->m_defaultUDPBehavior;
+			m_portSets.push_back(portset);
 		}
 		loopParent = loopParent->m_parent;
 	}
@@ -74,7 +76,7 @@ PersonalityTreeItem::~PersonalityTreeItem()
 	}
 }
 
-string PersonalityTreeItem::ToString()
+string PersonalityTreeItem::ToString(const std::string &portSetName)
 {
 	stringstream out;
 
@@ -86,24 +88,38 @@ string PersonalityTreeItem::ToString()
 		string parentProfName = HoneydConfiguration::SanitizeProfileName(m_parent->m_key);
 	}
 
-	if(!parentProfName.compare("default") || !parentProfName.compare(""))
+	if(!profName.compare("default") || !profName.compare(""))
 	{
 		out << "create " << profName << '\n';
 	}
 	else
 	{
-		out << "clone " << profName << " " << parentProfName << '\n';
+		out << "clone " << profName << " default\n";
 	}
 
-	//Ports
-	out << "set " << profName << " default tcp action " << m_TCP_behavior << '\n';
-	out << "set " << profName << " default udp action " << m_UDP_behavior << '\n';
-	out << "set " << profName << " default icmp action " << m_ICMP_behavior << '\n';
-
-	for(uint i = 0; i < m_portSets.size(); i++)
+	//If the portset name is empty, just use the first port set in the list
+	if(portSetName.empty())
 	{
-		//TODO
+		if(!m_portSets.empty())
+		{
+			out << "set " << profName << " default tcp action " << PortBehaviorToString(m_portSets[0]->m_defaultTCPBehavior) << '\n';
+			out << "set " << profName << " default udp action " << PortBehaviorToString(m_portSets[0]->m_defaultUDPBehavior) << '\n';
+			out << "set " << profName << " default icmp action " << PortBehaviorToString(m_portSets[0]->m_defaultICMPBehavior) << '\n';
+		}
 	}
+	else
+	{
+		//Ports
+		for(uint i = 0; i < m_portSets.size(); i++)
+		{
+			//If we get a match for the port set
+			if(!portSetName.compare(m_portSets[i]->m_name))
+			{
+				cout << m_portSets[i]->ToString(profName);
+			}
+		}
+	}
+
 
 	if(m_key.compare("") && m_key.compare("NULL"))
 	{
@@ -131,10 +147,7 @@ string PersonalityTreeItem::ToString()
 		out << "set " << profName << " droprate in " << m_dropRate << '\n';
 	}
 
-
-
-
-	out << '\n';
+	out << "\n\n";
 	return out.str();
 }
 

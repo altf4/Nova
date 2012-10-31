@@ -52,19 +52,12 @@ public:
 
 	//Returns a pointer to the profile with the given name
 	//	returns - NULL on error
-	PersonalityTreeItem *GetProfile(std::string name);
-
-	//Returns a string suitable to writing to the honeyd configuration file which represents all of the leaf nodes
-	std::string ToString();
+	PersonalityTreeItem *GetProfile(const std::string &name);
 
 	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
 	PersonalityTreeItem *m_root;
 
 private:
-
-	//Depth first traversal of the tree, starting at item
-	//	returns - a string representing and all of item's leaf children (leaf nodes only)
-	std::string ToString_helper(PersonalityTreeItem *item);
 
 	// LoadTable first iterates over the persTable object and calls InsertPersonality on each
 	// Personality* within the HashMap structure. It then calls GenerateProfiles recursively on

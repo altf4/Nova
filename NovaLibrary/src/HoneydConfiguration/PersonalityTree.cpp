@@ -34,9 +34,12 @@ PersonalityTree::PersonalityTree(ScannedHostTable *persTable, vector<Subnet>& su
 	m_root = new PersonalityTreeItem(NULL, "default");
 	m_root->m_count = persTable->m_num_of_hosts;
 	m_root->m_distribution = 100;
-	m_root->m_TCP_behavior = "reset";
-	m_root->m_UDP_behavior = "reset";
-	m_root->m_ICMP_behavior = "open";
+
+	PortSet *portset = new PortSet();
+	portset->m_defaultICMPBehavior = PORT_OPEN;
+	portset->m_defaultTCPBehavior = PORT_CLOSED;
+	portset->m_defaultUDPBehavior = PORT_CLOSED;
+	m_root->m_portSets.push_back(portset);
 
 	HoneydConfiguration::Inst()->ReadAllTemplatesXML();
 
@@ -50,8 +53,6 @@ PersonalityTree::PersonalityTree(ScannedHostTable *persTable, vector<Subnet>& su
 	{
 		LoadTable(persTable);
 	}
-
-	//AddAllPorts(m_root);
 }
 
 PersonalityTree::~PersonalityTree()
@@ -95,35 +96,36 @@ PersonalityTreeItem *PersonalityTree::GetRandomProfile()
 	return personality;
 }
 
-string PersonalityTree::ToString()
+//TODO: Search could be improved by a heuristic, such as by using string similarity in chosing which children to pursue
+PersonalityTreeItem *GetProfile_helper(PersonalityTreeItem *item, const std::string &name)
 {
-	return ToString_helper(m_root);
-}
-
-string PersonalityTree::ToString_helper(PersonalityTreeItem *item)
-{
-	string runningTotal;
-
 	if(item == NULL)
 	{
-		return "";
+		return NULL;
 	}
 
-	if(item->m_children.size() == 0)
+	if(!item->m_key.compare(name))
 	{
-		runningTotal = item->ToString();
+		return item;
 	}
 
-	//Depth first recurse down
+	//Depth first traversal of the tree
 	for(uint i = 0; i < item->m_children.size(); i++)
 	{
-		runningTotal += ToString_helper(item->m_children[i]);
+		PersonalityTreeItem *foundItem = GetProfile_helper(item->m_children[i], name);
+		if(foundItem != NULL)
+		{
+			return foundItem;
+		}
 	}
 
-	return runningTotal;
+	return NULL;
 }
 
-
+PersonalityTreeItem *PersonalityTree::GetProfile(const std::string &name)
+{
+	return GetProfile_helper(m_root, name);
+}
 
 bool PersonalityTree::LoadTable(ScannedHostTable *persTable)
 {

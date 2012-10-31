@@ -33,12 +33,10 @@ public:
 
 	PersonalityTreeItem(PersonalityTreeItem *parent, std::string key = "");
 
-	PersonalityTreeItem(){};
-
 	~PersonalityTreeItem();
 
 	//Returns a string suitable for inserting into the honeyd configuration file
-	std::string ToString();
+	std::string ToString(const std::string &portSetName = "");
 
 	// Number of hosts that have this personality
 	uint32_t m_count;
@@ -58,11 +56,6 @@ public:
 
 	//Parent PersonalityTreeItem
 	PersonalityTreeItem *m_parent;
-
-	//Default behavior of these respective port types
-	std::string m_TCP_behavior;
-	std::string m_UDP_behavior;
-	std::string m_ICMP_behavior;
 
 	//Upper and lower bound for set uptime
 	uint m_uptimeMin;
