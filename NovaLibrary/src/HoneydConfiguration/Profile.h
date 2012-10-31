@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : PersonalityTreeItem.h
+// Name        : Profile.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@
 //		tree structure representing the hierarchy of profiles discovered
 //============================================================================
 
-#ifndef PERSONALITYTREEITEM_H_
-#define PERSONALITYTREEITEM_H_
+#ifndef PROFILE_H_
+#define PROFILE_H_
 
 #include "AutoConfigHashMaps.h"
 #include "PortSet.h"
@@ -26,14 +26,14 @@
 namespace Nova
 {
 
-class PersonalityTreeItem
+class Profile
 {
 
 public:
 
-	PersonalityTreeItem(PersonalityTreeItem *parent, std::string key = "");
+	Profile(Profile *parent, std::string key = "");
 
-	~PersonalityTreeItem();
+	~Profile();
 
 	//Returns a string suitable for inserting into the honeyd configuration file
 	std::string ToString(const std::string &portSetName = "");
@@ -63,10 +63,10 @@ public:
 	bool m_isGenerated;
 
 	// Vector of the child nodes to this node
-	std::vector<PersonalityTreeItem*> m_children;
+	std::vector<Profile*> m_children;
 
 	//Parent PersonalityTreeItem
-	PersonalityTreeItem *m_parent;
+	Profile *m_parent;
 
 	//Upper and lower bound for set uptime
 	uint m_uptimeMin;
@@ -93,4 +93,4 @@ private:
 
 }
 
-#endif /* PERSONALITYTREEITEM_H_ */
+#endif /* PROFILE_H_ */

@@ -6,10 +6,10 @@
 CPP_SRCS += \
 ../src/HoneydConfiguration/HoneydConfiguration.cpp \
 ../src/HoneydConfiguration/OsPersonalityDb.cpp \
-../src/HoneydConfiguration/PersonalityTree.cpp \
-../src/HoneydConfiguration/PersonalityTreeItem.cpp \
 ../src/HoneydConfiguration/Port.cpp \
 ../src/HoneydConfiguration/PortSet.cpp \
+../src/HoneydConfiguration/Profile.cpp \
+../src/HoneydConfiguration/ProfileTree.cpp \
 ../src/HoneydConfiguration/ScannedHost.cpp \
 ../src/HoneydConfiguration/ScannedHostTable.cpp \
 ../src/HoneydConfiguration/ServiceToScriptMap.cpp \
@@ -18,10 +18,10 @@ CPP_SRCS += \
 OBJS += \
 ./src/HoneydConfiguration/HoneydConfiguration.o \
 ./src/HoneydConfiguration/OsPersonalityDb.o \
-./src/HoneydConfiguration/PersonalityTree.o \
-./src/HoneydConfiguration/PersonalityTreeItem.o \
 ./src/HoneydConfiguration/Port.o \
 ./src/HoneydConfiguration/PortSet.o \
+./src/HoneydConfiguration/Profile.o \
+./src/HoneydConfiguration/ProfileTree.o \
 ./src/HoneydConfiguration/ScannedHost.o \
 ./src/HoneydConfiguration/ScannedHostTable.o \
 ./src/HoneydConfiguration/ServiceToScriptMap.o \
@@ -30,10 +30,10 @@ OBJS += \
 CPP_DEPS += \
 ./src/HoneydConfiguration/HoneydConfiguration.d \
 ./src/HoneydConfiguration/OsPersonalityDb.d \
-./src/HoneydConfiguration/PersonalityTree.d \
-./src/HoneydConfiguration/PersonalityTreeItem.d \
 ./src/HoneydConfiguration/Port.d \
 ./src/HoneydConfiguration/PortSet.d \
+./src/HoneydConfiguration/Profile.d \
+./src/HoneydConfiguration/ProfileTree.d \
 ./src/HoneydConfiguration/ScannedHost.d \
 ./src/HoneydConfiguration/ScannedHostTable.d \
 ./src/HoneydConfiguration/ServiceToScriptMap.d \

@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : PersonalityTree.cpp
+// Name        : ProfileTree.cpp
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,12 +13,12 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Source file for the PersonalityTree object. Contains a tree
-//               representation of the relationships between different personalities.
+// Description : Contains a tree of profiles in their respective hierarchy,
+//		along with useful helper functions
 //============================================================================
 
 #include "../Config.h"
-#include "PersonalityTree.h"
+#include "ProfileTree.h"
 #include "../Logger.h"
 #include "HoneydConfiguration.h"
 
@@ -29,9 +29,9 @@ using namespace std;
 namespace Nova
 {
 
-PersonalityTree::PersonalityTree(ScannedHostTable *persTable, vector<Subnet>& subnetsToUse)
+ProfileTree::ProfileTree(ScannedHostTable *persTable, vector<Subnet>& subnetsToUse)
 {
-	m_root = new PersonalityTreeItem(NULL, "default");
+	m_root = new Profile(NULL, "default");
 	m_root->m_count = persTable->m_num_of_hosts;
 	m_root->m_distribution = 100;
 
@@ -55,15 +55,15 @@ PersonalityTree::PersonalityTree(ScannedHostTable *persTable, vector<Subnet>& su
 	}
 }
 
-PersonalityTree::~PersonalityTree()
+ProfileTree::~ProfileTree()
 {
 	delete m_root;
 }
 
-PersonalityTreeItem *PersonalityTree::GetRandomProfile()
+Profile *ProfileTree::GetRandomProfile()
 {
 	//Start with the root
-	PersonalityTreeItem *personality = m_root;
+	Profile *personality = m_root;
 
 	//Keep going until you get to a leaf node
 	while(!personality->m_children.empty())
@@ -97,7 +97,7 @@ PersonalityTreeItem *PersonalityTree::GetRandomProfile()
 }
 
 //TODO: Search could be improved by a heuristic, such as by using string similarity in chosing which children to pursue
-PersonalityTreeItem *GetProfile_helper(PersonalityTreeItem *item, const std::string &name)
+Profile *GetProfile_helper(Profile *item, const std::string &name)
 {
 	if(item == NULL)
 	{
@@ -112,7 +112,7 @@ PersonalityTreeItem *GetProfile_helper(PersonalityTreeItem *item, const std::str
 	//Depth first traversal of the tree
 	for(uint i = 0; i < item->m_children.size(); i++)
 	{
-		PersonalityTreeItem *foundItem = GetProfile_helper(item->m_children[i], name);
+		Profile *foundItem = GetProfile_helper(item->m_children[i], name);
 		if(foundItem != NULL)
 		{
 			return foundItem;
@@ -122,12 +122,12 @@ PersonalityTreeItem *GetProfile_helper(PersonalityTreeItem *item, const std::str
 	return NULL;
 }
 
-PersonalityTreeItem *PersonalityTree::GetProfile(const std::string &name)
+Profile *ProfileTree::GetProfile(const std::string &name)
 {
 	return GetProfile_helper(m_root, name);
 }
 
-bool PersonalityTree::LoadTable(ScannedHostTable *persTable)
+bool ProfileTree::LoadTable(ScannedHostTable *persTable)
 {
 	if(persTable == NULL)
 	{
@@ -146,7 +146,7 @@ bool PersonalityTree::LoadTable(ScannedHostTable *persTable)
 	return true;
 }
 
-bool PersonalityTree::InsertHost(ScannedHost *targetHost, PersonalityTreeItem *parentItem)
+bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 {
 	if(targetHost == NULL)
 	{
@@ -171,12 +171,12 @@ bool PersonalityTree::InsertHost(ScannedHost *targetHost, PersonalityTreeItem *p
 		}
 	}
 
-	PersonalityTreeItem *childPersonality = NULL;
+	Profile *childPersonality = NULL;
 
 	//If node not found
 	if(i == parentItem->m_children.size())
 	{
-		childPersonality = new PersonalityTreeItem(parentItem, curOSClass);
+		childPersonality = new Profile(parentItem, curOSClass);
 		childPersonality->m_distribution = targetHost->m_distribution;
 		childPersonality->m_count = targetHost->m_count;
 		childPersonality->m_osclass = targetHost->m_osclass;
@@ -218,7 +218,7 @@ bool PersonalityTree::InsertHost(ScannedHost *targetHost, PersonalityTreeItem *p
 	return true;
 }
 
-bool PersonalityTree::CalculateDistributions(PersonalityTreeItem *targetNode)
+bool ProfileTree::CalculateDistributions(Profile *targetNode)
 {
 	if(targetNode == NULL)
 	{

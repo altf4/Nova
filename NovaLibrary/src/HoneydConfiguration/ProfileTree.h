@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : PersonalityTree.h
+// Name        : ProfileTree.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,22 +13,21 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Header for the PersonalityTree class; contains the function
-//               contracts and declarations for the PersonalityTree cpp file,
-//               as well as the member variables for the class.
+// Description : Contains a tree of profiles in their respective hierarchy,
+//		along with useful helper functions
 //============================================================================
 
 #ifndef PERSONALITYTREE_H_
 #define PERSONALITYTREE_H_
 
-#include "PersonalityTreeItem.h"
+#include "Profile.h"
 #include "ScannedHostTable.h"
 #include "ServiceToScriptMap.h"
 
 namespace Nova
 {
 
-class PersonalityTree
+class ProfileTree
 {
 
 public:
@@ -41,21 +40,21 @@ public:
 	//  std::vector<Subnet> &subnetsToUse - a vector of subnet objects that were found in
 	//                           the main HoneydHostConfig class. Used to add the subnets
 	//                           to the HoneydConfiguration object.
-	PersonalityTree(ScannedHostTable *persTable, std::vector<Subnet> &subnetsToUse);
-	PersonalityTree(){};
+	ProfileTree(ScannedHostTable *persTable, std::vector<Subnet> &subnetsToUse);
+	ProfileTree(){};
 
-	~PersonalityTree();
+	~ProfileTree();
 
 	// Returns a random (leaf) profile, according to the distributions given
 	//	returns - A valid PersonalityNode on success, NULL on error
-	PersonalityTreeItem *GetRandomProfile();
+	Profile *GetRandomProfile();
 
 	//Returns a pointer to the profile with the given name
 	//	returns - NULL on error
-	PersonalityTreeItem *GetProfile(const std::string &name);
+	Profile *GetProfile(const std::string &name);
 
 	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
-	PersonalityTreeItem *m_root;
+	Profile *m_root;
 
 private:
 
@@ -79,12 +78,12 @@ private:
 	//                      to add to a pre-existing node with the same ScannedHost.
 	//	root - The root item of the PersonalityTree
 	// Returns true on success, false on failure
-	bool InsertHost(ScannedHost *targetHost, PersonalityTreeItem *root);
+	bool InsertHost(ScannedHost *targetHost, Profile *root);
 
 	// GetHostCount gets the number of hosts in each of the root node's subtrees and
 	// adds them into m_root's m_count value.
 	// Returns nothing.
-	bool CalculateDistributions(PersonalityTreeItem *node);
+	bool CalculateDistributions(Profile *node);
 
 	ServiceToScriptMap m_serviceMap;
 };

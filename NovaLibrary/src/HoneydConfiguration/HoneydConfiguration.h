@@ -23,7 +23,7 @@
 #include "HoneydConfigTypes.h"
 #include "VendorMacDb.h"
 #include "PortSet.h"
-#include "PersonalityTree.h"
+#include "ProfileTree.h"
 
 namespace Nova
 {
@@ -88,12 +88,12 @@ public:
 	//This function allows access to NodeProfile objects by their name
 	// profileName: the name or key of the NodeProfile
 	// Returns a pointer to the NodeProfile object or NULL if the key doesn't
-    PersonalityTreeItem *GetProfile(std::string profileName);
+    Profile *GetProfile(std::string profileName);
 
 	//Inserts the profile into the honeyd configuration
 	//	profile: pointer to the profile you wish to add
 	//	Returns (true) if the profile could be created, (false) if it cannot.
-	bool AddProfile(PersonalityTreeItem *profile);
+	bool AddProfile(Profile *profile);
 
 	bool AddGroup(std::string groupName);
 
@@ -147,7 +147,7 @@ public:
 
     static std::string SanitizeProfileName(std::string pfilename);
 
-	PersonalityTree m_profiles;
+	ProfileTree m_profiles;
 
 	//A vector of groups (the pair)
 	// Each pair is a group, with the first string representing the group name, and the second Table being a table of nodes
@@ -165,7 +165,7 @@ private:
 	HoneydConfiguration();
 
 	//Helper function called by WriteProfilesToXML - Writes the profiles out to m_profileTree
-	bool WriteProfilesToXML_helper(PersonalityTreeItem *root);
+	bool WriteProfilesToXML_helper(Profile *root);
 
     //Storing these trees allow for easy modification and writing of the XML files
     //Without having to reconstruct the tree from scratch.
@@ -179,7 +179,7 @@ private:
     ScriptTable m_scripts;
 
     //Depth first traversal through ptree to read profiles
-    PersonalityTreeItem *ReadProfilesXML_helper(boost::property_tree::ptree &ptree, PersonalityTreeItem *parent);
+    Profile *ReadProfilesXML_helper(boost::property_tree::ptree &ptree, Profile *parent);
 
 };
 

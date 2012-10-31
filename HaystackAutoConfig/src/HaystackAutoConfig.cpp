@@ -40,7 +40,7 @@
 
 #include "HaystackAutoConfig.h"
 #include "HoneydConfiguration/HoneydConfiguration.h"
-#include "HoneydConfiguration/PersonalityTree.h"
+#include "HoneydConfiguration/ProfileTree.h"
 #include "HoneydConfiguration/VendorMacDb.h"
 #include "Logger.h"
 
@@ -964,7 +964,7 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 void Nova::GenerateConfiguration()
 {
 	scannedHosts.CalculateDistributions();
-	PersonalityTree persTree = PersonalityTree(&scannedHosts, subnetsDetected);
+	ProfileTree persTree = ProfileTree(&scannedHosts, subnetsDetected);
 
 	uint nodesToCreate = 0;
 	if(numberOfNodesType == FIXED_NUMBER_OF_NODES)
@@ -983,7 +983,7 @@ void Nova::GenerateConfiguration()
 	for(uint i = 0; i < nodesToCreate; i++)
 	{
 		//Pick a (leaf) profile at random
-		PersonalityTreeItem *winningPersonality = persTree.GetRandomProfile();
+		Profile *winningPersonality = persTree.GetRandomProfile();
 		if(winningPersonality == NULL)
 		{
 			continue;

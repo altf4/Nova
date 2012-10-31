@@ -110,9 +110,9 @@ bool HoneydConfiguration::ReadProfilesXML()
 	return false;
 }
 
-PersonalityTreeItem *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, PersonalityTreeItem *parent)
+Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *parent)
 {
-	PersonalityTreeItem *personality = NULL;
+	Profile *personality = NULL;
 
 	BOOST_FOREACH(ptree::value_type &profilePtree, ptree.get_child("profiles"))
 	{
@@ -121,7 +121,7 @@ PersonalityTreeItem *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, P
 		{
 			try
 			{
-				personality = new PersonalityTreeItem(parent, profilePtree.second.get<string>("name"));
+				personality = new Profile(parent, profilePtree.second.get<string>("name"));
 				personality->m_isGenerated = profilePtree.second.get<bool>("generated");
 				personality->m_distribution = profilePtree.second.get<double>("distribution");
 				personality->m_osclass = profilePtree.second.get<string>("personality");
@@ -181,7 +181,7 @@ PersonalityTreeItem *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, P
 				//Recursively add children
 				BOOST_FOREACH(ptree::value_type &children, profilePtree.second.get_child("profiles"))
 				{
-					PersonalityTreeItem *child = ReadProfilesXML_helper(children.second, personality);
+					Profile *child = ReadProfilesXML_helper(children.second, personality);
 					if(child != NULL)
 					{
 						personality->m_children.push_back(child);
@@ -422,7 +422,7 @@ bool HoneydConfiguration::WriteProfilesToXML()
 }
 
 //TODO: keep an eye on this, maybe it works?
-bool HoneydConfiguration::WriteProfilesToXML_helper(PersonalityTreeItem *root)
+bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root)
 {
 	if(root == NULL)
 	{
@@ -574,7 +574,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string groupName, string path
 			//Only write out nodes for the intended group
 			if(!groupName.compare(m_nodes[i].first))
 			{
-				PersonalityTreeItem *item = m_profiles.GetProfile(it->second.m_pfile);
+				Profile *item = m_profiles.GetProfile(it->second.m_pfile);
 				if(item != NULL)
 				{
 					//Print the profile
@@ -724,7 +724,7 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 }
 
 //Recursive helper function to GetProfileNames() and GetGeneratedProfileNames()
-vector<string> GetProfileNames_helper(PersonalityTreeItem *item, bool lookForGeneratedOnly)
+vector<string> GetProfileNames_helper(Profile *item, bool lookForGeneratedOnly)
 {
 	if(item == NULL)
 	{
@@ -774,7 +774,7 @@ vector<string> HoneydConfiguration::GetScriptNames()
 	return scriptNames;
 }
 
-PersonalityTreeItem *GetProfile_helper(string profileName, PersonalityTreeItem *item)
+Profile *GetProfile_helper(string profileName, Profile *item)
 {
 	if(item == NULL)
 	{
@@ -788,7 +788,7 @@ PersonalityTreeItem *GetProfile_helper(string profileName, PersonalityTreeItem *
 
 	for(uint i = 0; i < item->m_children.size(); i++)
 	{
-		PersonalityTreeItem *profile =  GetProfile_helper(profileName, item->m_children[i]);
+		Profile *profile =  GetProfile_helper(profileName, item->m_children[i]);
 		if(profile != NULL)
 		{
 			return item->m_children[i];
@@ -798,7 +798,7 @@ PersonalityTreeItem *GetProfile_helper(string profileName, PersonalityTreeItem *
 	return NULL;
 }
 
-PersonalityTreeItem *HoneydConfiguration::GetProfile(string profileName)
+Profile *HoneydConfiguration::GetProfile(string profileName)
 {
 	return GetProfile_helper(profileName, m_profiles.m_root);
 }
@@ -829,7 +829,7 @@ bool HoneydConfiguration::IsMACUsed(string mac, string groupName)
 //Inserts the profile into the honeyd configuration
 //	profile: pointer to the profile you wish to add
 //	Returns (true) if the profile could be created, (false) if it cannot.
-bool HoneydConfiguration::AddProfile(PersonalityTreeItem *profile)
+bool HoneydConfiguration::AddProfile(Profile *profile)
 {
 
 	return false;
@@ -871,7 +871,7 @@ bool HoneydConfiguration::AddGroup(string groupName)
 
 bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 {
-	PersonalityTreeItem *profile = GetProfile(oldName);
+	Profile *profile = GetProfile(oldName);
 	if(profile == NULL)
 	{
 		return false;
@@ -913,7 +913,7 @@ std::vector<PortSet*> HoneydConfiguration::GetPortSets(std::string profileName)
 {
 	vector<PortSet*> portSets;
 
-	PersonalityTreeItem *profile = GetProfile(profileName);
+	Profile *profile = GetProfile(profileName);
 	if(profile == NULL)
 	{
 		return portSets;
@@ -929,7 +929,7 @@ ScriptTable &HoneydConfiguration::GetScriptTable()
 
 bool HoneydConfiguration::DeleteProfile(string profileName)
 {
-	PersonalityTreeItem *profile = GetProfile(profileName);
+	Profile *profile = GetProfile(profileName);
 	if(profile == NULL)
 	{
 		return false;

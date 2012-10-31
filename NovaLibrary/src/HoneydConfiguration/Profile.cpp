@@ -17,7 +17,7 @@
 //		tree structure representing the hierarchy of profiles discovered
 //============================================================================
 
-#include "PersonalityTreeItem.h"
+#include "Profile.h"
 #include "HoneydConfiguration.h"
 
 #include <sstream>
@@ -28,7 +28,7 @@ namespace Nova
 {
 
 //Default constructor
-PersonalityTreeItem::PersonalityTreeItem(PersonalityTreeItem *parent, string key)
+Profile::Profile(Profile *parent, string key)
 {
 	// Creates an empty personality node; set the
 	// empty and deleted keys for tables inside the
@@ -42,7 +42,7 @@ PersonalityTreeItem::PersonalityTreeItem(PersonalityTreeItem *parent, string key
 	m_redundant = false;
 	m_parent = parent;
 
-	PersonalityTreeItem *loopParent = parent;
+	Profile *loopParent = parent;
 	while(loopParent != NULL)
 	{
 		//XXX: just takes the first portset. but is that right? How to inherit properly?
@@ -59,7 +59,7 @@ PersonalityTreeItem::PersonalityTreeItem(PersonalityTreeItem *parent, string key
 }
 
 //Destructor
-PersonalityTreeItem::~PersonalityTreeItem()
+Profile::~Profile()
 {
 	for(uint i = 0; i < m_children.size(); i++)
 	{
@@ -76,7 +76,7 @@ PersonalityTreeItem::~PersonalityTreeItem()
 	}
 }
 
-string PersonalityTreeItem::ToString(const std::string &portSetName)
+string Profile::ToString(const std::string &portSetName)
 {
 	stringstream out;
 
@@ -151,7 +151,7 @@ string PersonalityTreeItem::ToString(const std::string &portSetName)
 	return out.str();
 }
 
-std::string PersonalityTreeItem::GetRandomVendor()
+std::string Profile::GetRandomVendor()
 {
 	if(m_vendors.empty())
 	{
@@ -195,7 +195,7 @@ std::string PersonalityTreeItem::GetRandomVendor()
 	return "";
 }
 
-PortSet *PersonalityTreeItem::GetRandomPortSet()
+PortSet *Profile::GetRandomPortSet()
 {
 	if(m_portSets.empty())
 	{
@@ -209,7 +209,7 @@ PortSet *PersonalityTreeItem::GetRandomPortSet()
 	return m_portSets[random];
 }
 
-double PersonalityTreeItem::GetVendorDistribution(std::string vendorName)
+double Profile::GetVendorDistribution(std::string vendorName)
 {
 	for(uint i = 0; i < m_vendors.size(); i++)
 	{
