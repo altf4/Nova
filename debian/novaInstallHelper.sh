@@ -64,7 +64,7 @@ npm install -g forever
 check_err
 
 cd ${BUILDDIR}/Nova
-make debug
+make -j2 debug
 check_err
 make uninstall-files
 make install
