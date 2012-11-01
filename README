@@ -2,113 +2,126 @@
 What is Nova?
 ===============================
 
-- Nova is a software application for preventing and detecting hostile Network Reconnaissance. 
-It does this by first creating the Haystack: a large array of thin virtual machines on the target 
-network. These VMs are created using an updated Honeyd to be extremely lightweight. They're not 
-your typical VMs that you might see from VirtualBox or VMWare. They just appear to be real from the
-perspective of the network, and run network "services", which are just shell scripts.
+- Nova is a software application for preventing and detecting hostile Network
+  Reconnaissance.  It does this by first creating the Haystack: a large array of
+  thin virtual machines on the target network. These VMs are created using an
+  updated Honeyd to be extremely lightweight. They're not your typical VMs that
+  you might see from VirtualBox or VMWare. They just appear to be real from the
+  perspective of the network, and run network "services", which are just shell
+  scripts.
 
-- Second, Nova uses machine learning algorithms to automatically detect and classify attempts at 
-hostile reconnaissance, so there's no need to go searching manually through your honeypot's log 
-files.
+- Second, Nova uses machine learning algorithms to automatically detect and
+  classify attempts at hostile reconnaissance, so there's no need to go
+  searching manually through your honeypot's log files.
 
-===============================
+=============================== 
 The Installation Guide
 ===============================
 
 - The first thing to note is that Nova is currently only compatible with Linux.
-All of our development is done on Ubuntu 12.04, so we suggest using that
-to make installation easiest. We provide a helper script which should get all dependencies 
-and download, build, and install Nova and Honeyd. 
+  All of our development is done on Ubuntu 12.04, so we suggest using that to
+  make installation easiest. We provide a helper script which should get all
+  dependencies and download, build, and install Nova and Honeyd. 
 
-	sudo bash debian/novaInstallHelper.sh
+        sudo bash debian/novaInstallHelper.sh
 
 - This script has only been tested on the most recent stable version of Ubuntu.
-Any other distributions or versions should manually compile using the instructions below.
+  Any other distributions or versions should manually compile using the
+  instructions below.
 
 
-===============================
+=============================== 
 Getting Dependencies on Ubuntu
 ===============================
 
 - Install required dependencies with the following command:
 
-    sudo apt-get install git build-essential libcap2-bin libann-dev libpcap0.8-dev libboost-program-options-dev libboost-serialization-dev libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libxml2-dev
+    sudo apt-get install git build-essential libcap2-bin libann-dev
+    libpcap0.8-dev libboost-program-options-dev libboost-serialization-dev
+    libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables
+    libxml2-dev
 
-- Now, we'll have to take a quick detour to get another integral component
-of Nova: Honeyd. We will have to download some extra libraries for Honeyd as
-well; you can get them using this command:
+- Now, we'll have to take a quick detour to get another integral component of
+  Nova: Honeyd. We will have to download some extra libraries for Honeyd as
+  well; you can get them using this command:
 
-    sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake 
+    sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev
+    libedit-dev bison flex libtool automake 
 
-- For the Honeyd Autoconfiguration tool, we require Nmap 6.00 or higher. The current version in 
-the apt repository is 5.21, so you'll have to go to the Nmap website and get 6.00. 
-It can be found here: 
+- For the Honeyd Autoconfiguration tool, we require Nmap 6.00 or higher. The
+  current version in the apt repository is 5.21, so you'll have to go to the
+  Nmap website and get 6.00.  It can be found here: 
 
     http://nmap.org/download.html
 
-	OR
+        OR
 
     wget http://nmap.org/dist/nmap-6.01.tar.bz2
 
 
 
-- To get the dependencies for the Quasar web UI (nodejs 0.8.5, npm's forever, and cvv8) you can either 
-install them manually or get them by running the following script,
+- To get the dependencies for the Quasar web UI (nodejs 0.8.5, npm's forever,
+  and cvv8) you can either install them manually or get them by running the
+  following script,
 
     sudo bash Quasar/getDependencies.sh
 
-- There are instructions for manual install on the same page (but are just the standard ./configure,
-make, and sudo make install commands).
+- There are instructions for manual install on the same page (but are just the
+  standard ./configure, make, and sudo make install commands).
 
 
-- NOTE: Honeyd requires libevent version 2.x. If you are running Ubuntu 10.10 or lower, the 
-version of libevent available in the repos is only 1.x. So you will need to either find a 
-backport or build libevent 2.x from source.
+- NOTE: Honeyd requires libevent version 2.x. If you are running Ubuntu 10.10 or
+  lower, the version of libevent available in the repos is only 1.x. So you will
+  need to either find a backport or build libevent 2.x from source.
 
-- If you wish to optionally generate Debian packages for Nova, you will also require dpkg-dev:
+- If you wish to optionally generate Debian packages for Nova, you will also
+  require dpkg-dev:
 
     sudo apt-get install dpkg-dev
 
-===============================
+=============================== 
 Getting the newest code
 ===============================
 
-- Nova and Honeyd are stored as seperate Git repositories on github. Go to the directory you wish 
-to download the code to and run the following commands,
+- Nova and Honeyd are stored as seperate Git repositories on github. Go to the
+  directory you wish to download the code to and run the following commands,
 
-    git clone git://github.com/DataSoft/Honeyd.git
+    git clone git://github.com/DataSoft/Honeyd.git    
+    git clone git://github.com/DataSoft/Nova.git Nova
     
-	git clone git://github.com/DataSoft/Nova.git Nova
+    # You also need to get the git submodules where training data is stored
+    # in it's own repo
+   
+    cd Nova 
+    git submodule init
+    git submodule update
 
-	# You also need to get the git submodules where training data is stored in it's own repo
-	cd Nova
-	git submodule init
-	git submodule update
+- This will create a "honeyd" and "Nova" folder with the source located inside.
+  From this point on they will be referred to as $HONEYD_SOURCE and
+  $NOVA_SOURCE. 
 
-- This will create a "honeyd" and "Nova" folder with the source located inside. From this point on 
-they will be referred to as $HONEYD_SOURCE and $NOVA_SOURCE. 
+- This will default to the "master" branch, which is the latest stable release.
+  If you want to use the latest unstable version, cd to the $NOVA_SOURCE and
+  $HONEYD_SOURCE and run the following,
 
-- This will default to the "master" branch, which is the latest stable release. If you want to use
-the latest unstable version, cd to the $NOVA_SOURCE and $HONEYD_SOURCE and run the following,
+        git checkout integration
 
-	git checkout integration
+- Beware that the integration branch changes on a daily basis and may be
+  unstable.
 
-- Beware that the integration branch changes on a daily basis and may be unstable.
-
-===============================
+=============================== 
 Building Honeyd
 ===============================
 
-- Change directories to the $HONEYD_SOURCE folder where all of the Honeyd source code should 
-be on your machine. When inside the source directory, follow the next steps to build and install.
+- Change directories to the $HONEYD_SOURCE folder where all of the Honeyd source
+  code should be on your machine. When inside the source directory, follow the
+  next steps to build and install.
 
     Step 1: ./autogen.sh
     Step 2: automake
     Step 3: ./configure
     Step 4: make
     Step 5: sudo make install
-
 
 ===============================
 Building Nova
@@ -123,77 +136,90 @@ To build and install Nova run the commands,
     Step 3: make
     Step 4: sudo make install
 
-- Note: If building fails for some reason, make sure you run 'make clean' before trying again.
+- Note: If building fails for some reason, make sure you run 'make clean' before
+  trying again.
 
-- Finally, while logged in as the user you plan to run Novad with, 
-run the following command to add your user to the 'nova' permission group
-and to set up database tables for the web interface.
+- Finally, while logged in as the user you plan to run Novad with, run the
+  following command to add your user to the 'nova' permission group and to set
+  up database tables for the web interface.
 
     Step 5: sudo nova_init
 
 - Your user will have to be in the "nova" group in order for nova and Honeyd to
-run properly. The nova_init script will do this, but you must log in and
-back out for the change to take effect.
+  run properly. The nova_init script will do this, but you must log in and back
+  out for the change to take effect.
 
     Step 6: Log out and log back in
 
 Refer to the Nova wiki on github for more information.
 
 
-===============================
+=============================== 
 High Level Nova Components
 ===============================
 
 Haystack: Active honeypots
-	- The Haystack is the collection of honeypots which emulate machines on the network.
-	The haystack is created using the Honeyd daemon and runs in it's own executable. Configuration
-	for Honeyd is auto generated at ~/.config/nova/Config/haystack_honeyd.config.
+        - The Haystack is the collection of honeypots which emulate machines on
+          the network.  The haystack is created using the Honeyd daemon and runs
+          in it's own executable. Configuration for Honeyd is auto generated at
+          ~/.config/nova/Config/haystack_honeyd.config.
 
 Novad: Classification tool
-	- The Novad executable is the daemon that monitors and classifies network traffic to 
-	identify hostile looking traffic. Novad will listen promiscuously on the configured 
-	network interfaces and keep track of various statistics such as IPs contacted, ports contacted,
-	honeypots contacted, and other details. Novad is can be configured manually via the
-	configuration file ~/.config/nova/config/NOVAConfig.txt, but it is recommended that
-	you use the GUI (Quasar) unless you know what you're doing.
+        - The Novad executable is the daemon that monitors and classifies
+          network traffic to identify hostile looking traffic. Novad will listen
+          promiscuously on the configured network interfaces and keep track of
+          various statistics such as IPs contacted, ports contacted, honeypots
+          contacted, and other details. Novad is can be configured manually via
+          the configuration file ~/.config/nova/config/NOVAConfig.txt, but it is
+          recommended that you use the GUI (Quasar) unless you know what you're
+          doing.
 
 NovaCLI: Nova Command line Interface
-	- NovaCLI provides a simple interface for accessing some of the Novad functionality. 
-	Usage for the tool can be gotten by running "novacli --help".
+        - NovaCLI provides a simple interface for accessing some of the Novad
+          functionality.  Usage for the tool can be gotten by running "novacli
+          --help".
 
 Quasar: Nova Web Interface
-	- Nova's main GUI, Quasar, is a web interface run with a nodejs web server.
-	
-	- To start the web interface, run the command "quasar" and go to https://localhost:8080 in
-	a web browser.
+        - Nova's main GUI, Quasar, is a web interface run with a nodejs web
+          server.
+        
+        - To start the web interface, run the command "quasar" and go to
+          https://localhost:8080 in a web browser.
 
-	Default username: nova
-	Default password: toor
-	
-	- "quasar --debug" may provide more information if there are problems. Quasar
-	launches the nodejs server with the "forever" daemon so it will be restarted if it crashes. 
-	The command "forever list" can be useful for seeing the current status, and it can be stopped 
-	with "forever stop index (usually 0)". See the forever documentation for more information.
-	
-Haystack Auto Configuration Tool: Generates honeyd configurations based off of nmap scans
+        Default username: nova
+        Default password: toor
+        
+        - "quasar --debug" may provide more information if there are problems.
+          Quasar launches the nodejs server with the "forever" daemon so it will
+          be restarted if it crashes.  The command "forever list" can be useful
+          for seeing the current status, and it can be stopped with "forever
+          stop index (usually 0)". See the forever documentation for more
+          information.
+        
+Haystack Auto Configuration Tool: Generates honeyd configurations based off of
+nmap scans
 
-	- This tool can scan your network with nmap and then generate honeypot configurations
-	that are based on the operating systems and ethernet vendors that it finds.
+        - This tool can scan your network with nmap and then generate honeypot
+          configurations that are based on the operating systems and ethernet
+          vendors that it finds.
 
 NovaTest: Unit Tests
 
-- If you're a developer interested in using the unit tests in NovaTest, you can find instructions at,
+- If you're a developer interested in using the unit tests in NovaTest, you can
+  find instructions at,
 
 https://github.com/DataSoft/Nova/wiki/Unit-Testing
 
 
 ===============================
 TLS Keys
-===============================
-A set of example TLS keys are provided, but because of their public nature provide no real security.
-Paths to the TLS keys are in the Nova configuration file at ~/.config/nova/config/NOVAConfig.txt
+=============================== 
+A set of example TLS keys are provided, but because of their public nature 
+provide no real security.  Paths to the TLS keys are in the Nova configuration 
+file at ~/.config/nova/config/NOVAConfig.txt
 
-To generate a self signed certificate and key for the Quasar or Pulsar https interfaces,
+To generate a self signed certificate and key for the Quasar or Pulsar https
+interfaces,
 
 # Generate a private key
 openssl genrsa -des3 -out ui.key 1024
@@ -206,204 +232,226 @@ openssl x509 -req -days 365 -in ui.csr -signkey ui.key -out ui.crt
 
 
 
-# Creating keys for the Pulsar/Quasar connection is a bit more complicated. Pulsar authenticates clients by
-# using TLS client certificates signed by a certificate authority. 
+# Creating keys for the Pulsar/Quasar connection is a bit more complicated.
+# Pulsar authenticates clients by using TLS client certificates signed by a
+# certificate authority. 
 
-# Create a new certificate athority
-# openssl genrsa -des3 -out ca.key 1024
-# openssl req -new -key ca.key -out ca.csr	
-# openssl x509 -req -days 365 -in ca.csr -out ca.crt -signkey ca.key
+# Create a new certificate athority openssl genrsa -des3 -out ca.key 1024
+# openssl req -new -key ca.key -out ca.csr      openssl x509 -req -days 365 -in
+# ca.csr -out ca.crt -signkey ca.key
 
-# Create and sign the Pulsar key
-# openssl genrsa -des3 -out pulsarTether.key 1024
-# openssl req -new -key server.key -out pulsarTether.csr
-# openssl x509 -req -in pulsarTether.csr -out pulsarTether.crt -CA ca.crt -CAkey ca.key -CAcreateserial -days 365
+# Create and sign the Pulsar key openssl genrsa -des3 -out pulsarTether.key 1024
+# openssl req -new -key server.key -out pulsarTether.csr openssl x509 -req -in
+# pulsarTether.csr -out pulsarTether.crt -CA ca.crt -CAkey ca.key
+# -CAcreateserial -days 365
 
-# Create and sign the Quasar keys. For each quasar instance,
-# openssl genrsa -des3 -out quasarTether.key 1024
-# openssl req -new -key server.key -out quasarTether.csr
-# openssl x509 -req -in quasarTether.csr -out quasarTether.crt -CA ca.crt -CAkey ca.key -CAcreateserial -days 365
-# Transfer this key to the Quasar instance
+# Create and sign the Quasar keys. For each quasar instance, openssl genrsa
+# -des3 -out quasarTether.key 1024 openssl req -new -key server.key -out
+# quasarTether.csr openssl x509 -req -in quasarTether.csr -out quasarTether.crt
+# -CA ca.crt -CAkey ca.key -CAcreateserial -days 365 Transfer this key to the
+# Quasar instance
 
 
-Remember to make sure that all paths and passphrases are updated correctly in 
+Remember to make sure that all paths and passphrases are updated correctly in
 ~/.config/nova/config/NOVAConfig.txt to use the new keys you created.
 
 ===============================
 Debian Packages
 ===============================
 
-- To generate a Debian package, simply checkout what version of the software you like (or make 
-what changes to it that you want) and run the generateDebs script (as a normal user). 
+- To generate a Debian package, simply checkout what version of the software you
+  like (or make what changes to it that you want) and run the generateDebs
+  script (as a normal user). 
 
-	./generateDebs <version number>
+        ./generateDebs <version number>
 
 ===============================
 Common Problems and solutions
 ===============================
-	
-	================== Haystack Autoconfig nmap fails on large networks ==================
-	  
-	  Nmap will often fail when scanning networks of size greater than 1024 IPs with the error
-	  "nexthost: failed to determine route" or "Strange connect error(105): No buffer space available".
-	  This is usually caused by the kernel ARP table running out of space and not being garbaged collected
-	  fast enough to handle all of the ARP requests nmap is doing. The solution is to increase the size
-	  by adding the following lines to /etc/sysctl.conf,
+        
+        ==================
+        Haystack Autoconfig nmap fails on large networks
+        ==================
+          
+          Nmap will often fail when scanning networks of size greater than 1024
+          IPs with the error "nexthost: failed to determine route" or "Strange
+          connect error(105): No buffer space available".  This is usually
+          caused by the kernel ARP table running out of space and not being
+          garbaged collected fast enough to handle all of the ARP requests nmap
+          is doing. The solution is to increase the size by adding the following
+          lines to /etc/sysctl.conf,
 
-		net.ipv4.neigh.default.gc_thresh1 = 1024
-		net.ipv4.neigh.default.gc_thresh2 = 4096
-		net.ipv4.neigh.default.gc_thresh3 = 65536
+                net.ipv4.neigh.default.gc_thresh1 = 1024
+                net.ipv4.neigh.default.gc_thresh2 = 4096
+                net.ipv4.neigh.default.gc_thresh3 = 65536
 
-	  Then run the command,
+          Then run the command,
 
-		sysctl -p
-	
-	  And try running the Haystack autoconfig tool again.
+                sysctl -p
+        
+          And try running the Haystack autoconfig tool again.
 
 
-===============================
+=============================== 
 Tips for debugging problems
 ===============================
 
-	================== General problems ==================
-	 
-	  To enable verbose debug log messages, run the command,
+        ================== 
+        General problems 
+        ==================
+         
+          To enable verbose debug log messages, run the command,
 
-		novacli writesetting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
+                novacli writesetting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
 
-	  If the above fails for some reason, you can also change the logging settings manually
-	  in the ~/.config/nova/config/NOVAConfig.txt file under the SERVICE_PREFERENCES setting.
+          If the above fails for some reason, you can also change the logging
+          settings manually in the ~/.config/nova/config/NOVAConfig.txt file
+          under the SERVICE_PREFERENCES setting.
 
-	=================== Permission Problems ===================
+        =================== 
+        Permission Problems 
+        ===================
 
-	  You should be able to run quasar/novad/honeyd without needing explicit root permissions. One
-	  requirement for this is that the user you're running with is in the "nova" group and has
-	  run the nova_init script located in Installer/. This script adds the user to the group
-	  and also configures sudo (via adding a file to /etc/sudoers.d). Logging out and back in
-	  is required for the group addition to work.
+          You should be able to run quasar/novad/honeyd without needing explicit
+          root permissions. One requirement for this is that the user you're
+          running with is in the "nova" group and has run the nova_init script
+          located in Installer/. This script adds the user to the group and also
+          configures sudo (via adding a file to /etc/sudoers.d). Logging out and
+          back in is required for the group addition to work.
 
-	  If you're seeing permission related errors, you can try the following commands,
+          If you're seeing permission related errors, you can try the following
+          commands,
 
-		sudo chmod -R g+rw /usr/share/nova 
-		sudo chgrp -R nova /usr/share/nova
+                sudo chmod -R g+rw /usr/share/nova
+                sudo chgrp -R nova /usr/share/nova
 
-	=================== Web interface problems ===================
-	  
-	  If you can't access the web interface, try stopping it if it's running in 'forever' and 
-	  manually running it as a foreground process with the commands,
+        =================== 
+        Web interface problems 
+        ===================
+          
+          If you can't access the web interface, try stopping it if it's running
+          in 'forever' and manually running it as a foreground process with the
+          commands,
 
-		forever stopall
-		quasar --debug
+                forever stopall
+                quasar --debug
 
-	  This should provide more verbose output and show if it is crashing rather than running it
-	  as a background daemon process.
-
-
-	  =================== Novad Problems ===================
-
-	  If Novad appears to be having problems, try to start it manually instead of as a background
-	  process with the command
-		
-		novacli start nova debug
+          This should provide more verbose output and show if it is crashing
+          rather than running it as a background daemon process.
 
 
-	  =================== Haystack Problems ===================
+          =================== 
+          Novad Problems 
+          ===================
 
-	    If the Haystack appears to be having problems, try to start it manually instead of as a
-	    background process with the command,
+          If Novad appears to be having problems, try to start it manually
+          instead of as a background process with the command
+                
+                novacli start nova debug
 
-		novacli start haystack debug
-	
-	  =================== Reinstalling ===================
 
-	    If something gets messed up to the point you want to start over, you can do so with the
-	    commands,
+          =================== 
+          Haystack Problems 
+          ===================
 
-		cd $NOVA_SOURCE
-		sudo make reinstall
+            If the Haystack appears to be having problems, try to start it
+            manually instead of as a background process with the command,
 
-	    Note that this will remove any configuration changes that you made.
+                novacli start haystack debug
+        
+          =================== 
+          Reinstalling 
+          ===================
 
-	  =================== Building with debugging symbols ===================
+            If something gets messed up to the point you want to start over, you
+            can do so with the commands,
 
-	    If you're seeing novad crash, it might be helpful to compile with debugging symbols and 
-	    get a stack trace. 
+                cd $NOVA_SOURCE sudo make reinstall
 
-		cd $NOVA_SOURCE
-		make clean
-		make debug
-		make reinstall
+            Note that this will remove any configuration changes that you made.
 
-		gdb novad
-		run
-		backtrace
+          =================== 
+          Building with debugging symbols
+          ===================
 
-===============================
-RSyslog Support
+            If you're seeing novad crash, it might be helpful to compile with
+            debugging symbols and get a stack trace. 
+
+                cd $NOVA_SOURCE make clean make debug make reinstall
+
+                gdb novad run backtrace
+
+=============================== 
+RSyslog Support 
 ===============================
 
 There is an option for designating a target Rsyslog instance electing to receive
-messages exposed within the Advanced Options page of the Quasar Web UI. Some suggestions:
+messages exposed within the Advanced Options page of the Quasar Web UI. Some
+suggestions:
 
  -Make sure that whatever IP is pointed is given in the format IP_ADDRESS:PORT. 
 
- -Make sure the designated port is both open and listening on the receiving machine. The
-  easiest way to do this is to uncomment the InputTCPServer lines in /etc/rsyslog.conf
-  and change the port number away from 514 (because rsyslog now drops permissions, using
-  port 514 is no longer an option, as it's < 1024). To test that rsyslog is listening, run
+ -Make sure the designated port is both open and listening on the receiving
+ machine. The easiest way to do this is to uncomment the InputTCPServer lines in
+ /etc/rsyslog.conf and change the port number away from 514 (because rsyslog now
+ drops permissions, using port 514 is no longer an option, as it's < 1024). To
+ test that rsyslog is listening, run
   
-	netstat -tlnup | grep PORT
+        netstat -tlnup | grep PORT
  
-  as root and check that the PID/Name combination for rsyslogd is listed under the results.
-  The port may also need to be registered into the /etc/services file, if changed from the 
-  normal port 514.
+  as root and check that the PID/Name combination for rsyslogd is listed under
+  the results.  The port may also need to be registered into the /etc/services
+  file, if changed from the normal port 514.
 
- -Within /etc/rsyslog.d/ lie the configuration files; in one of these files, a rule MUST be 
-  created similar to the following:
+ -Within /etc/rsyslog.d/ lie the configuration files; in one of these files, a
+ rule MUST be created similar to the following:
 
-	:programname,isequal,"Nova" YOUR_ACTION_CHOICE  
+        :programname,isequal,"Nova" YOUR_ACTION_CHOICE  
 
-  where YOUR_ACTION_CHOICE represents the action (most likely a write to a destination) to take upon 
-  receipt of messages from a client server that have those program names. This is to help organize the logs,
-  as Nova can potentially send many log messages that would otherwise pollute the normal syslog file.
-  Note that there will be three rules like this total, one each for the strings "Nova", "novad" and "honeyd"
+  where YOUR_ACTION_CHOICE represents the action (most likely a write to a
+  destination) to take upon receipt of messages from a client server that have
+  those program names. This is to help organize the logs, as Nova can
+  potentially send many log messages that would otherwise pollute the normal
+  syslog file.  Note that there will be three rules like this total, one each
+  for the strings "Nova", "novad" and "honeyd"
 
-Testing that these changes worked is a good idea as well. Simply start and stop novad on the client with the novacli 
-command line interface and check that the log messages sent at startup arrived at the right place
+Testing that these changes worked is a good idea as well. Simply start and stop
+novad on the client with the novacli command line interface and check that the
+log messages sent at startup arrived at the right place
 
 ===============================
 Pulsar
 ===============================
 
-	Pulsar does not install with the standard Nova ./configure, make,
-make install process. Instead, the user must change directory into the Nova directory
-(most commonly located in the /home/$USER/Code/ directory) and run make install-
-pulsar with superuser permissions. This will place the Mothership files within the
-proper directories and allow for the user to use the alias 'pulsar' on the command
-line to start the forever process for Mothership. To access the Mothership interface, 
-the user must first have configured Nova such that it has the MASTER_UI_ENABLED 
-configuration variable set to 1, as well as properly configuring the MASTER_UI_IP
-and MASTER_UI_CLIENT_ID variables to match the location and naming requirements for
-the user's network. 
+    Pulsar does not install with the standard Nova ./configure, make, make
+install process. Instead, the user must change directory into the Nova
+directory (most commonly located in the /home/$USER/Code/ directory) and
+run make install- pulsar with superuser permissions. This will place the
+Mothership files within the proper directories and allow for the user to
+use the alias 'pulsar' on the command line to start the forever process
+for Mothership. To access the Mothership interface, the user must first
+have configured Nova such that it has the MASTER_UI_ENABLED
+configuration variable set to 1, as well as properly configuring the
+MASTER_UI_IP and MASTER_UI_CLIENT_ID variables to match the location and
+naming requirements for the user's network. 
 
-===============================
-Contact us
+=============================== 
+Contact us 
 ===============================
 
 Feel free to contact the authors with issues and suggestions. 
 
 Found a bug? Had an install problem? Tell us about it on our issue tracker:
-    https://github.com/DataSoft/Nova/issues
+  https://github.com/DataSoft/Nova/issues
 
 Want to chat with us? Hop on IRC: 
-    Server: irc.oftc.net
-    Channel: #nova
+  Server: irc.oftc.net
+  Channel: #nova
 
-Email the team lead:
-    dan.petro@datasoft.com
+Email the team lead: dan.petro@datasoft.com
 
-And additional contact information should be available on the Datasoft github 
+And additional contact information should be available on the Datasoft github
 account located at,
 
-https://github.com/DataSoft
+  https://github.com/DataSoft
 
