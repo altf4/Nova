@@ -985,6 +985,7 @@ void Nova::GenerateConfiguration()
 
 	nodeBuilder.SetNumNodesOnProfileTree(&persTree.GetHDConfig()->m_profiles["default"], nodesToCreate);
 	persTree.GetHDConfig()->SaveAllTemplates();
+	persTree.GetHDConfig()->WriteHoneydConfiguration();
 }
 
 bool Nova::CheckSubnet(vector<string> &hostAddrStrings, string matchStr)
