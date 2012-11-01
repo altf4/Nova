@@ -8,13 +8,22 @@
 #unzip v0.6.12
 #cd joyent-node-346a3a8
 
-wget http://nodejs.org/dist/v0.8.5/node-v0.8.5.tar.gz
-tar -xf node-v0.8.5.tar.gz
-cd node-v0.8.5
 
-./configure
-make
-make install
+version=$(node --version)
+if [[ $version != "v0.8.5" ]];
+then
+
+	wget http://nodejs.org/dist/v0.8.5/node-v0.8.5.tar.gz
+	tar -xf node-v0.8.5.tar.gz
+	cd node-v0.8.5
+
+	./configure
+	make
+	make install
+
+else
+	echo "Already found correct nodejs version. Skipping."
+fi
 
 # Install the forever daemon
 npm install -g forever
