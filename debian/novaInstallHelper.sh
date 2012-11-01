@@ -66,6 +66,7 @@ check_err
 cd ${BUILDDIR}/Nova
 make debug
 check_err
+make uninstall-files
 make install
 check_err
 
