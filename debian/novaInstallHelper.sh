@@ -28,8 +28,10 @@ echo "##########################################################################
 echo "#                         DOWNLOADING NOVA FROM GIT                          #"
 echo "##############################################################################"
 cd ${BUILDDIR}
+rm -fr Honeyd
 git clone git://github.com/DataSoft/Honeyd.git
 check_err
+rm -fr Nova
 git clone git://github.com/DataSoft/Nova.git
 check_err
 
