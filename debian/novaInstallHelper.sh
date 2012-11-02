@@ -28,8 +28,10 @@ echo "##########################################################################
 echo "#                         DOWNLOADING NOVA FROM GIT                          #"
 echo "##############################################################################"
 cd ${BUILDDIR}
+rm -fr Honeyd
 git clone git://github.com/DataSoft/Honeyd.git
 check_err
+rm -fr Nova
 git clone git://github.com/DataSoft/Nova.git
 check_err
 
@@ -64,8 +66,9 @@ npm install -g forever
 check_err
 
 cd ${BUILDDIR}/Nova
-make debug
+make -j2 debug
 check_err
+make uninstall-files
 make install
 check_err
 
@@ -74,18 +77,23 @@ bash ${BUILDDIR}/Nova/Installer/nova_init
 echo "##############################################################################"
 echo "#                             FETCHING NMAP 6                                #"
 echo "##############################################################################"
-cd ${BUILDDIR}
-wget http://nmap.org/dist/nmap-6.01.tar.bz2
-check_err
-tar -xf nmap-6.01.tar.bz2
-check_err
-cd nmap-6.01
-./configure
-check_err
-make -j2
-check_err
-make install
-check_err
+version=$(nmap --version | sed -n '2p')
+if [ "$version" != "Nmap version 6.01 ( http://nmap.org )" ]; then
+	cd ${BUILDDIR}
+	wget http://nmap.org/dist/nmap-6.01.tar.bz2
+	check_err
+	tar -xf nmap-6.01.tar.bz2
+	check_err
+	cd nmap-6.01
+	./configure
+	check_err
+	make -j2
+	check_err
+	make install
+	check_err
+else
+  echo "Nmap version already matches required version. Skipping step."
+fi
 
 echo "##############################################################################"
 echo "#                                    DONE                                    #"
