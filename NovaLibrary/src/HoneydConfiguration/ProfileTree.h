@@ -32,16 +32,7 @@ class ProfileTree
 
 public:
 
-	// Default constructor that initializes the relevant member variables and
-	// calls different functions both within this class and others to generate
-	// the actual tree structure.
-	//  PersonalityTable *persTable - the personality table containing the personalities
-	//                           with which to create the tree structure.
-	//  std::vector<Subnet> &subnetsToUse - a vector of subnet objects that were found in
-	//                           the main HoneydHostConfig class. Used to add the subnets
-	//                           to the HoneydConfiguration object.
-	ProfileTree(ScannedHostTable *persTable, std::vector<Subnet> &subnetsToUse);
-	ProfileTree(){};
+	ProfileTree();
 
 	~ProfileTree();
 
@@ -53,12 +44,7 @@ public:
 	//	returns - NULL on error
 	Profile *GetProfile(const std::string &name);
 
-	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
-	Profile *m_root;
-
-private:
-
-	// LoadTable first iterates over the persTable object and calls InsertPersonality on each
+	// LoadTable first iterates over the persTable object and calls InsertHost on each
 	// Personality* within the HashMap structure. It then calls GenerateProfiles recursively on
 	// each subtree of the root node. Note that authentically this method is called within
 	// the constructor, and thus persTable is passed down from the constructor's arguements;
@@ -69,6 +55,12 @@ private:
 	// Returns nothing.
 	bool LoadTable(ScannedHostTable *persTable);
 
+	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
+	Profile *m_root;
+
+	ServiceToScriptMap m_serviceMap;
+
+private:
 	// InsertHost will create an item for the Personality,
 	// add the item to that parent's children if not present (and aggregate the data of the
 	// pre-existing node and the new data in *pers if it is present) and then continue to the
@@ -85,7 +77,6 @@ private:
 	// Returns nothing.
 	bool CalculateDistributions(Profile *node);
 
-	ServiceToScriptMap m_serviceMap;
 };
 
 }

@@ -25,11 +25,12 @@ using namespace std;
 namespace Nova
 {
 
-PortSet::PortSet()
+PortSet::PortSet(string name)
 {
 	m_defaultTCPBehavior = PORT_CLOSED;
 	m_defaultUDPBehavior = PORT_CLOSED;
 	m_defaultICMPBehavior = PORT_OPEN;
+	m_name = name;
 }
 
 bool PortSet::AddPort(Port port)

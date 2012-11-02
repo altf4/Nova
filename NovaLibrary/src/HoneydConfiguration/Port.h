@@ -36,7 +36,7 @@ public:
 
 	struct PortStruct GetCompatStruct();
 
-	std::string m_name;
+	std::string m_service;
 
 	enum PortProtocol m_protocol;
 
@@ -44,7 +44,6 @@ public:
 
 	enum PortBehavior m_behavior;
 
-	std::string m_service;
 	std::string m_scriptName;
 
 };

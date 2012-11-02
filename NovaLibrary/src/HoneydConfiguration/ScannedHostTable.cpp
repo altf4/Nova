@@ -31,7 +31,6 @@ ScannedHostTable::ScannedHostTable()
 	m_personalities.set_empty_key("");
 	m_num_of_hosts = 0;
 	m_num_used_hosts = 0;
-	m_numAddrsAvail = 0;
 }
 
 ScannedHostTable::~ScannedHostTable()
@@ -95,7 +94,7 @@ void ScannedHostTable::AddHost(ScannedHost *add)
 	}
 }
 
-void ScannedHostTable::CalculateDistributions()
+void ScannedHostTable::CalculateProfileDistributions()
 {
 	for(ScannedHost_Table::iterator it = m_personalities.begin(); it != m_personalities.end(); it++)
 	{

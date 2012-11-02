@@ -135,7 +135,7 @@ string VendorMacDb::GenerateRandomMAC(string vendor)
 		}
 		return tempStr.str();
 	}
-	LOG(ERROR, "Random MAC Generation failed!", "");
+	LOG(DEBUG, "Random MAC Generation failed!", "");
 	return "";
 }
 

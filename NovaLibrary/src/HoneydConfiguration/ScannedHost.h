@@ -41,13 +41,16 @@ public:
 	void AddVendor(const std::string &);
 
 	// count of the number of instances of this host on the scanned subnets
-	unsigned int m_count;
+	uint m_count;
 
 	// the percentage (0-100) of total hosts seen using this OS
 	double m_distribution;
 
 	// total number of ports found for this host on the scanned subnets
-	unsigned long long int m_port_count;
+	uint m_port_count;
+
+	//uptime in seconds
+	uint m_uptime;
 
 	// pushed in this order: name, type, osgen, osfamily, vendor
 	// pops in this order: vendor, osfamily, osgen, type, name

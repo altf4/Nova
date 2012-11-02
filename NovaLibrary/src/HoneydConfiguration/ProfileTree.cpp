@@ -29,30 +29,18 @@ using namespace std;
 namespace Nova
 {
 
-ProfileTree::ProfileTree(ScannedHostTable *persTable, vector<Subnet>& subnetsToUse)
+ProfileTree::ProfileTree()
 {
 	m_root = new Profile(NULL, "default");
-	m_root->m_count = persTable->m_num_of_hosts;
+	m_root->m_count = 1;
 	m_root->m_distribution = 100;
+	m_root->m_vendors.push_back(pair<string, double>("Dell", 1));
 
-	PortSet *portset = new PortSet();
+	PortSet *portset = new PortSet("default");
 	portset->m_defaultICMPBehavior = PORT_OPEN;
 	portset->m_defaultTCPBehavior = PORT_CLOSED;
 	portset->m_defaultUDPBehavior = PORT_CLOSED;
 	m_root->m_portSets.push_back(portset);
-
-	HoneydConfiguration::Inst()->ReadAllTemplatesXML();
-
-	HoneydConfiguration::Inst()->AddGroup("HaystackAutoConfig");
-	Config::Inst()->SetGroup("HaystackAutoConfig");
-	Config::Inst()->SaveUserConfig();
-
-	m_serviceMap = ServiceToScriptMap(&HoneydConfiguration::Inst()->GetScriptTable());
-
-	if(persTable != NULL)
-	{
-		LoadTable(persTable);
-	}
 }
 
 ProfileTree::~ProfileTree()
@@ -189,6 +177,17 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 
 	childPersonality = parentItem->m_children[i];
 
+	//Set the uptimes
+	if(targetHost->m_uptime > childPersonality->m_uptimeMax)
+	{
+		childPersonality->m_uptimeMax = targetHost->m_uptime;
+	}
+	if(targetHost->m_uptime < childPersonality->m_uptimeMin)
+	{
+		childPersonality->m_uptimeMin = targetHost->m_uptime;
+	}
+
+	//TODO: Is this what we really want? Maybe we should just have the portset at the leaf node?
 	//Add every PortSet from the target host into the childPersonality
 	for(uint j = 0; j < targetHost->m_portSets.size(); j++)
 	{

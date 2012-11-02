@@ -30,6 +30,7 @@ ScannedHost::ScannedHost()
 	m_port_count = 0;
 	m_osclass = "";
 	m_vendors.set_empty_key("");
+	m_uptime = 0;
 }
 
 ScannedHost::~ScannedHost()

@@ -207,7 +207,7 @@ int main(int argc, char ** argv)
 		// Arg parsing done, moving onto execution items
 		if(f_flag_set)
 		{
-			LOG(ALERT, "Launching Honeyd Host Configuration Tool", "");
+			LOG(ALERT, "Launching Haystack Auto-configuration Tool", "");
 			if(!LoadNmapXML(nmapFileName))
 			{
 				LOG(ERROR, "LoadNmapXML failed. Aborting...", "");
@@ -286,8 +286,6 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 
 	// Instantiate Personality object here, populate it from the code below
 	ScannedHost *newHost = new ScannedHost();
-	PortSet *newPortSet = new PortSet();
-	newHost->m_portSets.push_back(newPortSet);
 
 	// For the personality table, increment the number of hosts found
 	// and decrement the number of hosts available, so at the end
@@ -295,7 +293,6 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 	// in the hostspace for the subnets, clobbering existing DHCP
 	// allocations.
 	scannedHosts.m_num_of_hosts++;
-	scannedHosts.m_numAddrsAvail--;
 
 	BOOST_FOREACH(ptree::value_type &value, propTree.get_child(""))
 	{
@@ -402,6 +399,22 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 			// If we've found the <ports> tag within the <host> xml node
 			else if(!value.first.compare("ports"))
 			{
+				string portName;
+				if(!newHost->m_addresses.empty())
+				{
+					portName = "Autoconfig-PortSet-" + newHost->m_addresses[0];
+				}
+				else
+				{
+					stringstream ss;
+					static uint portSetCount = 0;
+					ss << "Autoconfig-PortSet-" << portSetCount++;
+					portName = ss.str();
+				}
+
+				PortSet *newPortSet = new PortSet(portName);
+				newHost->m_portSets.push_back(newPortSet);
+
 				BOOST_FOREACH(ptree::value_type &portValue, value.second.get_child(""))
 				{
 					try
@@ -497,17 +510,6 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 						{
 							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
 						}
-						/*try
-						{
-							if(osValue.second.get<string>("osclass.<xmlattr>.type").compare(""))
-							{
-								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.type"));
-							}
-						}
-						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-						{
-							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
-						}*/
 						try
 						{
 							if(osValue.second.get<string>("osclass.<xmlattr>.osgen").compare(""))
@@ -542,6 +544,17 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
 						}
 					}
+				}
+			}
+			else if(!value.first.compare("uptime"))
+			{
+				try
+				{
+					newHost->m_uptime = value.second.get<uint>("<xmlattr>.seconds");
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+				{
+					LOG(DEBUG, "Error parsing nmap XML uptime attribute: " + string(e.what()), "");
 				}
 			}
 		}
@@ -801,12 +814,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 			uint32_t hostOrderMaxAddrInRange = ~(hostOrderBitmask) + hostOrderMinAddrInRange;
 			maxAddrInRange.s_addr = htonl(hostOrderMaxAddrInRange);
 
-			// and then add max - base (minus three, for the current
-			// host, the .0 address, and the .255 address)
-			// into the PersonalityTable's aggregate coutn of
-			// available host address space.
-			scannedHosts.m_numAddrsAvail += hostOrderMaxAddrInRange - hostOrderMinAddrInRange - 3;
-
 			// Find out how many bits there are to work with in
 			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
 			uint32_t tempRawMask = ~hostOrderBitmask;
@@ -917,12 +924,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 			uint32_t hostOrderMaxAddrInRange = ~(hostOrderBitmask) + hostOrderMinAddrInRange;
 			maxAddrInRange.s_addr = htonl(hostOrderMaxAddrInRange);
 
-			// and then add max - base (minus three, for the current
-			// host, the .0 address, and the .255 address)
-			// into the PersonalityTable's aggregate coutn of
-			// available host address space.
-			scannedHosts.m_numAddrsAvail += hostOrderMaxAddrInRange - hostOrderMinAddrInRange - 3;
-
 			// Find out how many bits there are to work with in
 			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
 			uint32_t mask = ~hostOrderBitmask;
@@ -963,8 +964,26 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 
 void Nova::GenerateConfiguration()
 {
-	scannedHosts.CalculateDistributions();
-	ProfileTree persTree = ProfileTree(&scannedHosts, subnetsDetected);
+	scannedHosts.CalculateProfileDistributions();
+
+	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
+
+	//XXX Only here for debug
+	HoneydConfiguration::Inst()->WriteAllTemplatesToXML();
+
+	if(!HoneydConfiguration::Inst()->ReadAllTemplatesXML())
+	{
+		LOG(WARNING, "Problem reading template XMLs from file", "");
+	}
+
+	//Remake the "Autoconfig" group of nodes
+	HoneydConfiguration::Inst()->DeleteGroup("Autoconfig");
+	HoneydConfiguration::Inst()->AddGroup("Autoconfig");
+
+	Config::Inst()->SetGroup("Autoconfig");
+	Config::Inst()->SaveUserConfig();
+
+	HoneydConfiguration::Inst()->m_profiles.m_serviceMap = ServiceToScriptMap(&HoneydConfiguration::Inst()->GetScriptTable());
 
 	uint nodesToCreate = 0;
 	if(numberOfNodesType == FIXED_NUMBER_OF_NODES)
@@ -983,7 +1002,7 @@ void Nova::GenerateConfiguration()
 	for(uint i = 0; i < nodesToCreate; i++)
 	{
 		//Pick a (leaf) profile at random
-		Profile *winningPersonality = persTree.GetRandomProfile();
+		Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
 		if(winningPersonality == NULL)
 		{
 			continue;

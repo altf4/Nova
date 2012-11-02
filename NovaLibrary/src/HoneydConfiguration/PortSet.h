@@ -32,7 +32,7 @@ class PortSet
 
 public:
 
-	PortSet();
+	PortSet(std::string name);
 
 	//Add a port into the set.
 	bool AddPort(Port port);

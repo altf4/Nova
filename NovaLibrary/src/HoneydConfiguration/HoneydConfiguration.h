@@ -97,6 +97,10 @@ public:
 
 	bool AddGroup(std::string groupName);
 
+	//Deletes the group of nodes with the given name
+	//	returns - True if successfully deleted, or if no group existed. False only on error.
+	bool DeleteGroup(std::string groupName);
+
 	std::vector<std::string> GetGroups();
 
 
@@ -165,7 +169,7 @@ private:
 	HoneydConfiguration();
 
 	//Helper function called by WriteProfilesToXML - Writes the profiles out to m_profileTree
-	bool WriteProfilesToXML_helper(Profile *root);
+	bool WriteProfilesToXML_helper(Profile *root, boost::property_tree::ptree &propTree);
 
     //Storing these trees allow for easy modification and writing of the XML files
     //Without having to reconstruct the tree from scratch.

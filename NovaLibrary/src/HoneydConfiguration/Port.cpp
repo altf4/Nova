@@ -27,7 +27,7 @@ namespace Nova
 Port::Port(string name, enum PortProtocol protocol, uint portNumber, enum PortBehavior behavior)
 {
 
-	m_name = name;
+	m_service = name;
 	m_protocol = protocol;
 	m_portNumber = portNumber;
 	m_behavior = behavior;

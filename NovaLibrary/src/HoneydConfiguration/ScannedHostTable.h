@@ -67,7 +67,7 @@ public:
 	ScannedHost_Table m_personalities;
 
 	//This function takes the count seen for a personality and assigns m_distribution to m_count/m_num_of_hosts
-	void CalculateDistributions();
+	void CalculateProfileDistributions();
 };
 
 }
