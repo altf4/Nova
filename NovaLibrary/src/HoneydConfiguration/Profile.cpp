@@ -79,25 +79,18 @@ Profile::~Profile()
 	}
 }
 
-string Profile::ToString(const std::string &portSetName)
+string Profile::ToString(const std::string &portSetName, const std::string &nodeName)
 {
 	stringstream out;
 
-	//XXX This is just a temporary band-aid on a larger wound, we cannot allow whitespaces in profile names.
-	string profName = HoneydConfiguration::SanitizeProfileName(m_key);
-	string parentProfName = "";
-	if(m_parent != NULL)
-	{
-		string parentProfName = HoneydConfiguration::SanitizeProfileName(m_parent->m_key);
-	}
 
-	if(!profName.compare("default") || !profName.compare(""))
+	if(!nodeName.compare("default"))
 	{
-		out << "create " << profName << '\n';
+		out << "create " << nodeName << '\n';
 	}
 	else
 	{
-		out << "clone " << profName << " default\n";
+		out << "clone " << nodeName << " default\n";
 	}
 
 	//If the portset name is empty, just use the first port set in the list
@@ -105,9 +98,9 @@ string Profile::ToString(const std::string &portSetName)
 	{
 		if(!m_portSets.empty())
 		{
-			out << "set " << profName << " default tcp action " << PortBehaviorToString(m_portSets[0]->m_defaultTCPBehavior) << '\n';
-			out << "set " << profName << " default udp action " << PortBehaviorToString(m_portSets[0]->m_defaultUDPBehavior) << '\n';
-			out << "set " << profName << " default icmp action " << PortBehaviorToString(m_portSets[0]->m_defaultICMPBehavior) << '\n';
+			out << "set " << nodeName << " default tcp action " << PortBehaviorToString(m_portSets[0]->m_defaultTCPBehavior) << '\n';
+			out << "set " << nodeName << " default udp action " << PortBehaviorToString(m_portSets[0]->m_defaultUDPBehavior) << '\n';
+			out << "set " << nodeName << " default icmp action " << PortBehaviorToString(m_portSets[0]->m_defaultICMPBehavior) << '\n';
 		}
 	}
 	else
@@ -118,7 +111,7 @@ string Profile::ToString(const std::string &portSetName)
 			//If we get a match for the port set
 			if(!portSetName.compare(m_portSets[i]->m_name))
 			{
-				cout << m_portSets[i]->ToString(profName);
+				out << m_portSets[i]->ToString(nodeName);
 			}
 		}
 	}
@@ -126,7 +119,7 @@ string Profile::ToString(const std::string &portSetName)
 
 	if(m_key.compare("") && m_key.compare("NULL"))
 	{
-		out << "set " << profName << " personality \"" << m_osclass << '"' << '\n';
+		out << "set " << nodeName << " personality \"" << m_osclass << '"' << '\n';
 	}
 
 	//TODO: This always uses the vendor with the highest likelihood. Should get changed?
@@ -142,15 +135,14 @@ string Profile::ToString(const std::string &portSetName)
 	}
 	if(vendor.compare(""))
 	{
-		out << "set " << profName << " ethernet \"" << vendor << '"' << '\n';
+		out << "set " << nodeName << " ethernet \"" << vendor << '"' << '\n';
 	}
 
 	if(m_dropRate.compare(""))
 	{
-		out << "set " << profName << " droprate in " << m_dropRate << '\n';
+		out << "set " << nodeName << " droprate in " << m_dropRate << '\n';
 	}
 
-	out << "\n\n";
 	return out.str();
 }
 

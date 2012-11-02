@@ -585,7 +585,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string groupName, string path
 	stringstream out;
 
 	//Print the "default" profile
-	cout << m_profiles.m_root->ToString();
+	out << m_profiles.m_root->ToString() << "\n";
 
 	//Print all the nodes
 	for(uint i = 0; i < m_nodes.size(); i++)
@@ -600,7 +600,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string groupName, string path
 
 			stringstream ss;
 			ss << "CustomNodeProfile-" << j;
-			string nodeName = ss.str();;
+			string nodeName = ss.str();
 
 			//Only write out nodes for the intended group
 			if(!groupName.compare(m_nodes[i].first))
@@ -609,7 +609,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string groupName, string path
 				if(item != NULL)
 				{
 					//Print the profile
-					cout << item->ToString(it->second.m_portSetName);
+					out << item->ToString(it->second.m_portSetName, nodeName);
 					//Then we need to add node-specific information to the profile's output
 					if(!it->second.m_IP.compare("DHCP"))
 					{
@@ -619,7 +619,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string groupName, string path
 						{
 							out << " ethernet \"" << it->second.m_MAC << "\"";
 						}
-						out << '\n';
+						out << "\n\n";
 					}
 					else
 					{
@@ -630,7 +630,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string groupName, string path
 							out << "set " << nodeName << " ethernet \"" << it->second.m_MAC << "\"" << '\n';
 						}
 						//bind the node to the IP address
-						out << "bind " << it->second.m_IP << " " << nodeName << '\n';
+						out << "bind " << it->second.m_IP << " " << nodeName << "\n\n";
 					}
 				}
 			}

@@ -86,11 +86,12 @@ string PortSet::ToString(const string &profileName)
 		//If it's a script then we need to print the script path, not "script"
 		if((m_TCPexceptions[i].m_behavior == PORT_SCRIPT) || (m_TCPexceptions[i].m_behavior == PORT_TARPIT_SCRIPT))
 		{
-			out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << "\"" << m_TCPexceptions[i].m_scriptName << "\"";
+			out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << " \"" << m_TCPexceptions[i].m_scriptName << "\"\n";
 		}
 		else
 		{
-			out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << PortBehaviorToString(m_TCPexceptions[i].m_behavior);
+			out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << " " <<
+					PortBehaviorToString(m_TCPexceptions[i].m_behavior) << "\n";
 		}
 	}
 
@@ -100,11 +101,12 @@ string PortSet::ToString(const string &profileName)
 		//If it's a script then we need to print the script path, not "script"
 		if((m_UDPexceptions[i].m_behavior == PORT_SCRIPT) || (m_UDPexceptions[i].m_behavior == PORT_TARPIT_SCRIPT))
 		{
-			out << "add " << profileName << " udp port " << m_UDPexceptions[i].m_portNumber << "\"" << m_UDPexceptions[i].m_scriptName << "\"";
+			out << "add " << profileName << " udp port " << m_UDPexceptions[i].m_portNumber << " \"" << m_UDPexceptions[i].m_scriptName << "\"\n";
 		}
 		else
 		{
-			out << "add " << profileName << " udp port " << m_UDPexceptions[i].m_portNumber << PortBehaviorToString(m_UDPexceptions[i].m_behavior);
+			out << "add " << profileName << " udp port " << m_UDPexceptions[i].m_portNumber << " " <<
+					PortBehaviorToString(m_UDPexceptions[i].m_behavior) << "\n";
 		}
 	}
 
