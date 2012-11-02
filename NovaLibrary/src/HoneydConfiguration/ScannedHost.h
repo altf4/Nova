@@ -57,6 +57,8 @@ public:
 	std::vector<std::string> m_personalityClass;
 	std::string m_osclass;
 
+	std::string m_personality;
+
 	// vector of MAC addresses
 	std::vector<std::string> m_macs;
 

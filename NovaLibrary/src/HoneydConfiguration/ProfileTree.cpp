@@ -168,6 +168,7 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 		childPersonality->m_distribution = targetHost->m_distribution;
 		childPersonality->m_count = targetHost->m_count;
 		childPersonality->m_osclass = targetHost->m_osclass;
+		childPersonality->m_personality = targetHost->m_personality;
 		parentItem->m_children.push_back(childPersonality);
 	}
 	else
@@ -189,19 +190,19 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 
 	//TODO: Is this what we really want? Maybe we should just have the portset at the leaf node?
 	//Add every PortSet from the target host into the childPersonality
-	for(uint j = 0; j < targetHost->m_portSets.size(); j++)
-	{
-		childPersonality->m_portSets.push_back(targetHost->m_portSets[i]);
-	}
+//	for(uint j = 0; j < targetHost->m_portSets.size(); j++)
+//	{
+		childPersonality->m_portSets = targetHost->m_portSets;
+//	}
 
 	//Insert or count MAC vendor occurrences
 	for(MACVendorMap::iterator it = targetHost->m_vendors.begin(); it != targetHost->m_vendors.end(); it++)
 	{
-		for(uint i = 0; i < childPersonality->m_vendors.size(); i++)
+		for(uint j = 0; j < childPersonality->m_vendors.size(); j++)
 		{
-			if(!childPersonality->m_vendors[i].first.compare(it->first))
+			if(!childPersonality->m_vendors[j].first.compare(it->first))
 			{
-				childPersonality->m_vendors[i].second += it->second;
+				childPersonality->m_vendors[j].second += it->second;
 			}
 		}
 	}

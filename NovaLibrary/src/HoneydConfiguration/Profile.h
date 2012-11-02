@@ -76,6 +76,9 @@ public:
 	// scripts from the script table.
 	std::string m_osclass;
 
+	//The personality (usually Operating System) this profile will impersonate. This value is a direct line from the nmap-os-db
+	std::string m_personality;
+
 	std::string m_dropRate;
 
 	//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type

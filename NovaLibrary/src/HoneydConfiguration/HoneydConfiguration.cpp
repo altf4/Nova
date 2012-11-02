@@ -122,7 +122,7 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 		profile = new Profile(parent, ptree.get<string>("name"));
 		profile->m_isGenerated = ptree.get<bool>("generated");
 		profile->m_distribution = ptree.get<double>("distribution");
-		profile->m_osclass = ptree.get<string>("personality");
+		profile->m_personality = ptree.get<string>("personality");
 		profile->m_uptimeMin = ptree.get<uint>("uptimeMin");
 		profile->m_uptimeMax = ptree.get<uint>("uptimeMax");
 
@@ -459,7 +459,7 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 	propTree.put<string>("name", root->m_key);
 	propTree.put<bool>("generated", root->m_isGenerated);
 	propTree.put<double>("distribution", root->m_distribution);
-	propTree.put<string>("personality", root->m_osclass);
+	propTree.put<string>("personality", root->m_personality);
 	propTree.put<uint>("uptimeMin", root->m_uptimeMin);
 	propTree.put<uint>("uptimeMax", root->m_uptimeMax);
 

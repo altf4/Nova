@@ -503,6 +503,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 						{
 							if(osValue.second.get<string>("<xmlattr>.name").compare(""))
 							{
+								newHost->m_personality = osValue.second.get<string>("<xmlattr>.name");
 								newHost->m_personalityClass.push_back(osValue.second.get<string>("<xmlattr>.name"));
 							}
 						}

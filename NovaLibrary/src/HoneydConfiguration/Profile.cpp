@@ -44,21 +44,6 @@ Profile::Profile(Profile *parent, string key)
 	m_isGenerated = false;	//Manually set this to true in Autoconfig
 	m_uptimeMin = ~0;	//TODO: What if we don't see any uptimes? We need to have a sane default
 	m_uptimeMax = 0;	//TODO: Let;'s have a more reasonable "maximum" here. We don't want to be setting random uptimes this high
-
-//	Profile *loopParent = parent;
-//	while(loopParent != NULL)
-//	{
-//		//XXX: just takes the first portset. but is that right? How to inherit properly?
-//		if(loopParent->m_portSets.size() > 0)
-//		{
-//			PortSet *portset = new PortSet();
-//			portset->m_defaultICMPBehavior = loopParent->m_portSets[0]->m_defaultICMPBehavior;
-//			portset->m_defaultTCPBehavior = loopParent->m_portSets[0]->m_defaultTCPBehavior;
-//			portset->m_defaultUDPBehavior = loopParent->m_portSets[0]->m_defaultUDPBehavior;
-//			m_portSets.push_back(portset);
-//		}
-//		loopParent = loopParent->m_parent;
-//	}
 }
 
 //Destructor
@@ -119,7 +104,7 @@ string Profile::ToString(const std::string &portSetName, const std::string &node
 
 	if(m_key.compare("") && m_key.compare("NULL"))
 	{
-		out << "set " << nodeName << " personality \"" << m_osclass << '"' << '\n';
+		out << "set " << nodeName << " personality \"" << m_personality << '"' << '\n';
 	}
 
 	//TODO: This always uses the vendor with the highest likelihood. Should get changed?
