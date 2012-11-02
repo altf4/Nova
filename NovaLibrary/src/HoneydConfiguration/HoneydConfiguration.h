@@ -298,6 +298,8 @@ public:
 
     bool LoadConfigurations();
 
+    std::vector<std::string> GetConfigurationsList();
+
 	PortTable m_ports;
 	ProfileTable m_profiles;
     NodeTable m_nodes;

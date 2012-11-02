@@ -5,8 +5,6 @@ block headerAdditions
     var configurationList = !{JSON.stringify(configurations)};
     var theDoc = document;
     
-    console.log('configurationList = ' + configurationList);
-    
     function closeLightbox()
     {
       theDoc.getElementById('lightbox').style.display = 'none';
@@ -32,6 +30,13 @@ block headerAdditions
     
     function populateConfigSelect(configs)
     {
+      if(theDoc.getElementById('configurations').hasChildNodes())
+      {
+        while(theDoc.getElementById('configurations').hasChildNodes())
+        {
+          theDoc.getElementById('configurations').removeChild(theDoc.getElementById('configurations').lastChild);
+        }
+      }
       console.log('populateConfigSelect()');
       if(configs == undefined || configs == '')
       {
@@ -39,6 +44,7 @@ block headerAdditions
         var option = theDoc.createElement('option');
         option.value = 'None';
         option.innerHTML = 'None';
+        option.id = 'None';
         theDoc.getElementById('configurations').appendChild(option);
       }
       else
@@ -47,16 +53,20 @@ block headerAdditions
         var selected = false;
         for(var i in configs)
         {
-          console.log('configs[' + i + '] == ' + configs[i]);
-          var option = theDoc.createElement('option');
-          if(!selected)
+          if(configs[i] != '' && configs[i] != undefined)
           {
-            option.selected = 'selected';
-            selected = true;
+            console.log('configs[' + i + '] == ' + configs[i]);
+            var option = theDoc.createElement('option');
+            if(!selected)
+            {
+              option.selected = 'selected';
+              selected = true;
+            }
+            option.value = configs[i];
+            option.innerHTML = configs[i];
+            option.id = configs[i];
+            theDoc.getElementById('configurations').appendChild(option);
           }
-          option.value = configs[i];
-          option.innerHTML = configs[i];
-          theDoc.getElementById('configurations').appendChild(option);
         }
         GetConfigurationSummary();
       }
@@ -64,6 +74,10 @@ block headerAdditions
     
     function GetConfigurationSummary(configArg)
     {
+      while(theDoc.getElementById('appendHook').hasChildNodes())
+      {
+        theDoc.getElementById('appendHook').removeChild(theDoc.getElementById('appendHook').lastChild);
+      }
       var config;
       if(configArg == undefined)
       {
@@ -74,21 +88,47 @@ block headerAdditions
         config = configArg;
       }
       console.log('In GetConfigurationSummary with config ' + config);
+      if(typeof now.SwitchConfigurationTo == 'function')
+      {
+        now.SwitchConfigurationTo(config); 
+      }
+      else
+      {
+        console.log('now.SwitchConfigurationTo(configName) is not defined, doing nothing');
+        return;
+      }
       if(typeof now.GetConfigSummary == 'function')
       {
         console.log('now.GetConfigSummary is a function, calling with arg ' + config);
-        now.GetConfigSummary(config, function(parseMe){
+        now.GetConfigSummary(config, function(scriptProfileBindings){
           // manipulate elements here (i.e. pi charts, text, tables, etc.)
           // Will all be contained in the object parseMe that will use the 
           // object literal notation of javascript to allow the server side
           // to do the calculations, and then send exactly the data required to
           // the browser.
-          console.log('in callback with parseMe == ' + parseMe);
+          console.log('in GetConfigSummaryCallback');
+          for(var i in scriptProfileBindings)
+          {
+            console.log('scriptProfileBindings[' + i + '] == ' + scriptProfileBindings[i]);
+            var tr = theDoc.createElement('tr');
+            var td0 = theDoc.createElement('td');
+            var td1 = theDoc.createElement('td');
+            var scriptName = theDoc.createElement('label');
+            scriptName.innerHTML = i;
+            var profilesPorts = theDoc.createElement('label');
+            profilesPorts.innerHTML = scriptProfileBindings[i];
+            td0.appendChild(scriptName);
+            td1.appendChild(profilesPorts);
+            tr.appendChild(td0);
+            tr.appendChild(td1);
+            theDoc.getElementById('appendHook').appendChild(tr);
+          }
         })
       }
       else
       {
-        console.log('now.GetConfigSummary is not a function');
+        console.log('now.GetConfigSummary(configName, callback) is not defined, doing nothing');
+        return;
       }
     }
     
@@ -99,12 +139,14 @@ block headerAdditions
       if(divIndex == '0')
       {
         theDoc.getElementById('addConfigForm').style.display='block';
+        theDoc.getElementById('newName').value = '';
         theDoc.getElementById('cloneConfigForm').style.display='none';
       }
       else if(divIndex == '1')
       {
         theDoc.getElementById('addConfigForm').style.display='none';
         theDoc.getElementById('cloneConfigForm').style.display='block';
+        theDoc.getElementById('newNameClone').value = '';
         for(var i in configurationList)
         {
           var option = theDoc.createElement('option');
@@ -115,16 +157,34 @@ block headerAdditions
       }
     }
     
+    function checkExistingName(configName)
+    {
+      for(var i in configurationList)
+      {
+        if(configurationList[i] == configName)
+        {
+          return true;
+        }
+      }
+      
+      return false;
+    }
+    
     function checkParametersAdd()
     {
       if(theDoc.getElementById('newName').value == '')
       {
         alert('Must give a new name for New Configurations');
-        return;
+        return false;
+      }
+      else if(checkExistingName(theDoc.getElementById('newName').value) == true)
+      {
+        alert('Cannot add cloned configuration that has the same name as a present configuration');
+        return false;
       }
       else
       {
-        theDoc.getElementById('addConfig').submit();
+        return true;
       }
     }
     
@@ -133,12 +193,46 @@ block headerAdditions
       if(theDoc.getElementById('newNameClone').value == '')
       {
         alert('Must give a new name for Cloned Configurations');
-        return;
+        return false;
+      }
+      else if(checkExistingName(theDoc.getElementById('newNameClone').value) == true)
+      {
+        alert('Cannot add cloned configuration that has the same name as a present configuration');
+        return false;
       }
       else
       {
-        theDoc.getElementById('cloneConfig').submit();
+        return true;
       }      
+    }
+    
+    function removeConfig()
+    {
+      var configToRemove = theDoc.getElementById('configurations').value;
+      if(configToRemove == 'default')
+      {
+        alert('Cannot remove default configuration');
+        return;
+      }
+      else if(confirm('Are you sure you want to remove configuration ' + configToRemove + '?'))
+      {
+        if(typeof now.RemoveConfiguration == 'function')
+        {
+          now.RemoveConfiguration(configToRemove, function(name){
+            theDoc.getElementById('default').selected = true;
+            theDoc.getElementById('configurations').removeChild(theDoc.getElementById(name));
+            GetConfigurationSummary();
+          });
+        }
+        else
+        {
+          alert('Could not remove configuration, now.RemoveConfiguration not found');
+        }
+      }
+      else
+      {
+        return;
+      }
     }
     
     now.ready(function(){
@@ -152,21 +246,28 @@ block content
     div#addNewConfig
       button#addConfig(onclick='showLightBox("0")') Add Configuration
       button#cloneConfig(onclick='showLightBox("1")') Clone Configuration
-    div#summary(style='border: 2px solid black')
+      button#removeConfig(onclick='removeConfig()') Remove Configuration
+    div#summary
+      table(border='1', style='border: solid black 2px;')
+        thead
+          tr
+            th(style='background-color: #d0e9fc;') Scripts
+            th(style='background-color: #d0e9fc;') Profile:Port
+        tbody#appendHook
   div#lightbox(class='white_content')
     div#addConfigForm
-      form(method='post', id='addConfig')
+      form(method='post', id='addConfig', onsubmit='return checkParametersAdd();')
         label Name For New Configuration 
         input#newName(name='newName')
         br
-        button#submitAdd(onclick='checkParametersAdd(); return false;') Submit
+        button#submitAdd Submit
     div#cloneConfigForm
-      form(method='post', id='cloneConfig')
+      form(method='post', id='cloneConfig', onsubmit='return checkParametersClone();')
         label Name For Cloned Configuration
         input#newNameClone(name='newNameClone')
         br
         label Select Configuration to Clone:
         select#cloneMe(name='cloneSelect')
         br
-        button#submitClone(onclick='checkParametersClone(); return false;') Submit
+        button#submitClone Submit
     button#closeLB(onclick='closeLightbox()') Close

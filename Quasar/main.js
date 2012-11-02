@@ -580,9 +580,12 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
 }
 
 app.get('/honeydConfigManage', passport.authenticate('basic', {session: false}), function(req, res){
+  
+  console.log('honeydConfig.GetConfigurationsList() == ' + honeydConfig.GetConfigurationsList());
+  
   res.render('honeydConfigManage.jade', {
     locals: {
-      configurations: ['default']
+      configurations: honeydConfig.GetConfigurationsList()
     }
   });
 });
@@ -2588,31 +2591,16 @@ everyone.now.GetConfigSummary = function(configName, callback)
 {
   console.log('in GetConfigSummary with arg ' + configName);
   
+  honeydConfig.LoadAllTemplates();
+  
   // Scripts are kept at a higher level of the directory structure, to denote
   // that regardless of configuration selected, all scripts are selectable; that is,
   // scripts are configuration-agnostic.
   var xml = fs.readFileSync(NovaHomePath + '/config/templates/scripts.xml', 'utf8');
   var libxml = require('libxmljs');
   var parser = libxml.parseXmlString(xml);
-  var nodesToParse = parser.root().childNodes();
-  var namesAndPaths = [];
   
-  for(var i = 1; i < nodesToParse.length; i++)
-  {
-    if(nodesToParse[i].child(1) != null && nodesToParse[i].child(7) != null)
-    {
-      namesAndPaths.push({script: nodesToParse[i].child(1).text(), path: nodesToParse[i].child(7).text()});
-    }
-  }
-  
-  function cmp(a, b)
-  {
-    return a.script.localeCompare(b.script);
-  }
-  
-  namesAndPaths.sort(cmp);
-  
-  var scriptBindings = {};
+  var scriptProfileBindings = {};
   var profiles = honeydConfig.GetProfileNames();
   
   for(var i in profiles)
@@ -2622,13 +2610,13 @@ everyone.now.GetConfigSummary = function(configName, callback)
       {
         if(ports[i].scriptName != undefined && ports[i].scriptName != '')
         {
-          if(scriptBindings[ports[i].scriptName] == undefined)
+          if(scriptProfileBindings[ports[i].scriptName] == undefined)
           {
-            scriptBindings[ports[i].scriptName] = profileName + ':' + ports[i].portNum;
+            scriptProfileBindings[ports[i].scriptName] = profileName + ':' + ports[i].portNum;
           }
           else
           {
-            scriptBindings[ports[i].scriptName] += ',' + profileName + ':' + ports[i].portNum;
+            scriptProfileBindings[ports[i].scriptName] += ',' + profileName + ':' + ports[i].portNum;
           }
         }
       }
@@ -2637,11 +2625,28 @@ everyone.now.GetConfigSummary = function(configName, callback)
   
   profiles = null;
   
-  
+  if(typeof callback == 'function')
+  {
+    callback(scriptProfileBindings);
+  }
+}
+
+everyone.now.SwitchConfigurationTo = function(configName)
+{
+  honeydConfig.SwitchConfiguration(configName);
+}
+
+everyone.now.RemoveConfiguration = function(configName, callback)
+{
+  if(configName == 'default')
+  {
+    console.log('Cannot delete default configuration');
+  }
+  console.log('in RemoveConfiguration with ' + configName);
   
   if(typeof callback == 'function')
   {
-    callback('');
+    callback(configName);
   }
 }
 

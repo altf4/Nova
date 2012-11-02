@@ -67,6 +67,7 @@ bool HoneydConfiguration::LoadAllTemplates()
 	m_ports.clear();
 	m_profiles.clear();
 	m_nodes.clear();
+	m_configs.clear();
 
 	if(!LoadScriptsTemplate())
 	{
@@ -2664,8 +2665,16 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 	}
 
 	m_configs.push_back(configName);
+
+	for(uint i = 0; i < m_configs.size(); i++)
+	{
+		cout << "m_configs[" << i << "] = " << m_configs[i] << endl;
+	}
+
 	string directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName;
 	system(string("mkdir " + directoryPath).c_str());
+
+	ofstream addfile(Config::Inst()->GetPathHome() + "/config/templates/configurations.txt", ios_base::app);
 
 	if(!clone)
 	{
@@ -2691,6 +2700,8 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 				DeleteProfile(it->first);
 			}
 		}
+		addfile << configName << '\n';
+		addfile.close();
 		SaveAllTemplates();
 	}
 	else if(clone && found)
@@ -2701,20 +2712,30 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		string cloneString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/" + cloneConfig + "/* ";
 		cloneString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
 		system(cloneString.c_str());
+		addfile << configName << '\n';
+		addfile.close();
 	}
 	return false;
 }
 
 bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
 {
+	if(!configName.compare("default"))
+	{
+		cout << "Cannot delete default configuration" << endl;
+		return false;
+	}
 	cout << "remove configName " << configName << endl;
 	bool found = false;
+
+	uint eraseIdx = 0;
 
 	for(uint i = 0; i < m_configs.size(); i++)
 	{
 		if(!m_configs[i].compare(configName))
 		{
 			found = true;
+			eraseIdx = i;
 		}
 	}
 
@@ -2722,6 +2743,7 @@ bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
 	{
 		string pathToDelete = Config::Inst()->GetPathHome() + "/config/templates/" + configName;
 		cout << "Would be removing files at " << pathToDelete << endl;
+		m_configs.erase(m_configs.begin() + eraseIdx);
 		return true;
 	}
 	else
@@ -2746,6 +2768,11 @@ bool HoneydConfiguration::LoadConfigurations()
 	}
 
 	return true;
+}
+
+vector<string> HoneydConfiguration::GetConfigurationsList()
+{
+	return m_configs;
 }
 
 }
