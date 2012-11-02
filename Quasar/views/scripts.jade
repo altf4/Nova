@@ -146,7 +146,7 @@ block headerAdditions
         {
           for(var j in exceptions)
           {
-            if(profilesIter[i] == exceptions[j])
+            if(profilesIter[i].substring(0, profilesIter[i].indexOf(':')) == exceptions[j])
             {
               profilesIter[i] = null;
             }

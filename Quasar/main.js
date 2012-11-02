@@ -1874,11 +1874,11 @@ app.get('/scripts', passport.authenticate('basic', {session: false}), function(r
         {
           if(scriptBindings[ports[i].scriptName] == undefined)
           {
-            scriptBindings[ports[i].scriptName] = profileName;
+            scriptBindings[ports[i].scriptName] = profileName + ':' + ports[i].portNum;
           }
           else
           {
-            scriptBindings[ports[i].scriptName] += ',' + profileName;
+            scriptBindings[ports[i].scriptName] += ',' + profileName + ':' + ports[i].portNum;
           }
         }
       }
@@ -2488,7 +2488,8 @@ everyone.now.RemoveScriptFromProfiles = function(script, profiles, callback) {
   {
     if(profiles[i] != null && profiles[i] != undefined && profiles[i] != '')
     {
-      GetPorts(profiles[i], function(ports, profileName){
+      var pass = profiles[i].substring(0, profiles[i].indexOf(':'));
+      GetPorts(pass, function(ports, profileName){
         if(ports != undefined)
         {
           for(var j in ports)
@@ -2586,6 +2587,57 @@ everyone.now.RemoveScript = function(scriptName, callback)
 everyone.now.GetConfigSummary = function(configName, callback)
 {
   console.log('in GetConfigSummary with arg ' + configName);
+  
+  // Scripts are kept at a higher level of the directory structure, to denote
+  // that regardless of configuration selected, all scripts are selectable; that is,
+  // scripts are configuration-agnostic.
+  var xml = fs.readFileSync(NovaHomePath + '/config/templates/scripts.xml', 'utf8');
+  var libxml = require('libxmljs');
+  var parser = libxml.parseXmlString(xml);
+  var nodesToParse = parser.root().childNodes();
+  var namesAndPaths = [];
+  
+  for(var i = 1; i < nodesToParse.length; i++)
+  {
+    if(nodesToParse[i].child(1) != null && nodesToParse[i].child(7) != null)
+    {
+      namesAndPaths.push({script: nodesToParse[i].child(1).text(), path: nodesToParse[i].child(7).text()});
+    }
+  }
+  
+  function cmp(a, b)
+  {
+    return a.script.localeCompare(b.script);
+  }
+  
+  namesAndPaths.sort(cmp);
+  
+  var scriptBindings = {};
+  var profiles = honeydConfig.GetProfileNames();
+  
+  for(var i in profiles)
+  {
+    GetPorts(profiles[i], function(ports, profileName){
+      for(var i in ports)
+      {
+        if(ports[i].scriptName != undefined && ports[i].scriptName != '')
+        {
+          if(scriptBindings[ports[i].scriptName] == undefined)
+          {
+            scriptBindings[ports[i].scriptName] = profileName + ':' + ports[i].portNum;
+          }
+          else
+          {
+            scriptBindings[ports[i].scriptName] += ',' + profileName + ':' + ports[i].portNum;
+          }
+        }
+      }
+    });
+  }
+  
+  profiles = null;
+  
+  
   
   if(typeof callback == 'function')
   {
