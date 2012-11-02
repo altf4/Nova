@@ -4,23 +4,41 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/HoneydConfiguration/HoneydConfigTypes.cpp \
 ../src/HoneydConfiguration/HoneydConfiguration.cpp \
-../src/HoneydConfiguration/NodeManager.cpp \
 ../src/HoneydConfiguration/OsPersonalityDb.cpp \
+../src/HoneydConfiguration/Port.cpp \
+../src/HoneydConfiguration/PortSet.cpp \
+../src/HoneydConfiguration/Profile.cpp \
+../src/HoneydConfiguration/ProfileTree.cpp \
+../src/HoneydConfiguration/ScannedHost.cpp \
+../src/HoneydConfiguration/ScannedHostTable.cpp \
 ../src/HoneydConfiguration/ServiceToScriptMap.cpp \
 ../src/HoneydConfiguration/VendorMacDb.cpp 
 
 OBJS += \
+./src/HoneydConfiguration/HoneydConfigTypes.o \
 ./src/HoneydConfiguration/HoneydConfiguration.o \
-./src/HoneydConfiguration/NodeManager.o \
 ./src/HoneydConfiguration/OsPersonalityDb.o \
+./src/HoneydConfiguration/Port.o \
+./src/HoneydConfiguration/PortSet.o \
+./src/HoneydConfiguration/Profile.o \
+./src/HoneydConfiguration/ProfileTree.o \
+./src/HoneydConfiguration/ScannedHost.o \
+./src/HoneydConfiguration/ScannedHostTable.o \
 ./src/HoneydConfiguration/ServiceToScriptMap.o \
 ./src/HoneydConfiguration/VendorMacDb.o 
 
 CPP_DEPS += \
+./src/HoneydConfiguration/HoneydConfigTypes.d \
 ./src/HoneydConfiguration/HoneydConfiguration.d \
-./src/HoneydConfiguration/NodeManager.d \
 ./src/HoneydConfiguration/OsPersonalityDb.d \
+./src/HoneydConfiguration/Port.d \
+./src/HoneydConfiguration/PortSet.d \
+./src/HoneydConfiguration/Profile.d \
+./src/HoneydConfiguration/ProfileTree.d \
+./src/HoneydConfiguration/ScannedHost.d \
+./src/HoneydConfiguration/ScannedHostTable.d \
 ./src/HoneydConfiguration/ServiceToScriptMap.d \
 ./src/HoneydConfiguration/VendorMacDb.d 
 

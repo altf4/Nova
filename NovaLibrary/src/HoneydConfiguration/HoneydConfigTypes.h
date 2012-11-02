@@ -14,7 +14,7 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Common structs and typedefs for NovaGUI
-//============================================================================/*
+//============================================================================
 
 #ifndef NOVAGUITYPES_H_
 #define NOVAGUITYPES_H_
@@ -53,74 +53,11 @@ enum PortBehavior
 };
 //Returns a string representation of the given PortBehavior
 //	Returns one of: "closed" "open" "filtered" "script" "tarpit-open" "tarpit-script" or "" for error
-static std::string PortBehaviorToString(enum PortBehavior behavior)
-{
-	switch(behavior)
-	{
-		case PORT_OPEN:
-		{
-			return "open";
-		}
-		case PORT_CLOSED:
-		{
-			return "closed";
-		}
-		case PORT_FILTERED:
-		{
-			return "filtered";
-		}
-		case PORT_SCRIPT:
-		{
-			return "script";
-		}
-		case PORT_TARPIT_OPEN:
-		{
-			return "tarpit open";
-		}
-		case PORT_TARPIT_SCRIPT:
-		{
-			return "tarpit script";
-		}
-		default:
-		{
-			return "";
-		}
-	}
-}
+std::string PortBehaviorToString(enum PortBehavior behavior);
 
 //Returns a PortBehavior enum which is represented by the given string
 //	returns PORT_ERROR on error
-static enum PortBehavior StringToPortBehavior(std::string behavior)
-{
-	if(!behavior.compare("open"))
-	{
-		return PORT_OPEN;
-	}
-	else if(!behavior.compare("closed"))
-	{
-		return PORT_CLOSED;
-	}
-	else if(!behavior.compare("filtered"))
-	{
-		return PORT_FILTERED;
-	}
-	else if(!behavior.compare("script"))
-	{
-		return PORT_SCRIPT;
-	}
-	else if(!behavior.compare("tarpit open"))
-	{
-		return PORT_TARPIT_OPEN;
-	}
-	else if(!behavior.compare("tarpit script"))
-	{
-		return PORT_TARPIT_SCRIPT;
-	}
-	else
-	{
-		return PORT_ERROR;
-	}
-}
+enum PortBehavior StringToPortBehavior(std::string behavior);
 
 enum RecursiveDirection
 {
@@ -138,50 +75,11 @@ enum PortProtocol
 };
 //Returns a string representation of the given PortProtocol
 //	Returns one of: "udp" "tcp" "icmp" or "" for error
-static std::string PortProtocolToString(enum PortProtocol protocol)
-{
-	switch(protocol)
-	{
-		case PROTOCOL_UDP:
-		{
-			return "udp";
-		}
-		case PROTOCOL_TCP:
-		{
-			return "tcp";
-		}
-		case PROTOCOL_ICMP:
-		{
-			return "icmp";
-		}
-		default:
-		{
-			return "";
-		}
-	}
-}
+std::string PortProtocolToString(enum PortProtocol protocol);
 
 //Returns a PortProtocol enum which is represented by the given string
 //	returns PROTOCOL_ERROR on error
-static enum PortProtocol StringToPortProtocol(std::string protocol)
-{
-	if(!protocol.compare("tcp"))
-	{
-		return PROTOCOL_TCP;
-	}
-	else if(!protocol.compare("udp"))
-	{
-		return PROTOCOL_UDP;
-	}
-	else if(!protocol.compare("icmp"))
-	{
-		return PROTOCOL_ICMP;
-	}
-	else
-	{
-		return PROTOCOL_ERROR;
-	}
-}
+enum PortProtocol StringToPortProtocol(std::string protocol);
 
 enum profileIndex {
 	TYPE
