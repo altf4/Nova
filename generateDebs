@@ -27,7 +27,7 @@ echo -e "Remember to update debian/changelog with current version and notes."
 
 if [ -z $1 ]; then
 	echo -e "Using default version number in version.txt..."
-	VERSION=$(cat Installer/Write/nova/nova/version.txt)
+	VERSION=$(cat Installer/userFiles/config/version.txt)
 else
 	VERSION=$1
 fi
@@ -37,7 +37,6 @@ PACKAGE="nova_$VERSION"
 echo $PACKAGE
 
 make clean
-make clean-web
 
 #cd into the directory where the script is
 cd "$(dirname "$PACKAGE")"
