@@ -14,7 +14,7 @@ What is Nova?
   classify attempts at hostile reconnaissance, so there's no need to go
   searching manually through your honeypot's log files.
 
-===============================
+=============================== 
 The Installation Guide
 ===============================
 
@@ -30,7 +30,7 @@ The Installation Guide
   instructions below.
 
 
-===============================
+=============================== 
 Getting Dependencies on Ubuntu
 ===============================
 
@@ -109,7 +109,7 @@ Getting the newest code
 - Beware that the integration branch changes on a daily basis and may be
   unstable.
 
-===============================
+=============================== 
 Building Honeyd
 ===============================
 
@@ -154,7 +154,7 @@ To build and install Nova run the commands,
 Refer to the Nova wiki on github for more information.
 
 
-===============================
+=============================== 
 High Level Nova Components
 ===============================
 

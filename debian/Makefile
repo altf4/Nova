@@ -1,22 +1,26 @@
 
 #The default build should be a release build
 all: release
-	
+
+all-the-things: release 
+
 #Release Target
 release:
 	$(MAKE) novalib-release
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
+	$(MAKE) quasar
 
-release-helper: novad-release novacli-release
+release-helper: novad-release novacli-release novatrainer-release hhconfig-release
 
 #Debug target
 debug:
 	$(MAKE) novalib-debug
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
+	$(MAKE) quasar
 
-debug-helper: novad-debug novacli-debug
+debug-helper: novad-debug novacli-debug novatrainer-debug hhconfig-debug
 
 #Nova Library
 novalib-release:
@@ -54,10 +58,39 @@ novacli-debug:
 	$(MAKE) -C NovaCLI/Debug
 	cp NovaCLI/Debug/novacli NovaCLI/
 
+# Nova trainer
+novatrainer-debug:
+	$(MAKE) -C NovaTrainer/Debug
+	cp NovaTrainer/Debug/novatrainer NovaTrainer/novatrainer
+
+novatrainer-release:
+	$(MAKE) -C NovaTrainer/Release
+	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
+
 #Web UI
-quasar:
+quasar: nodejsmodule
 	cd Quasar;npm --unsafe-perm install
-	cd Quasar/NodeNovaConfig;npm --unsafe-perm install
+
+nodejsmodule:
+	cd NodejsModule;npm --unsafe-perm install	
+
+#Mothership
+pulsar:
+	cd Pulsar;npm --unsafe-perm install
+
+#Honeyd AutoConfig
+hhconfig-release:
+	$(MAKE) -C HaystackAutoConfig/Release
+	cp HaystackAutoConfig/Release/haystackautoconfig HaystackAutoConfig/
+
+hhconfig-debug:
+	$(MAKE) -C HaystackAutoConfig/Debug
+	cp HaystackAutoConfig/Debug/haystackautoconfig HaystackAutoConfig/
+
+coverageTests: test-prepare
+	$(MAKE) -C NovaLibrary/Coverage
+	$(MAKE) -C Nova_UI_Core/Coverage
+	$(MAKE) -C NovaTest/Coverage
 
 #Unit tests
 test: debug test-prepare
@@ -75,33 +108,69 @@ test-prepare:
 	# Delete the link to Main so we don't have multiple def of main()
 	rm -f NovaTest/NovadSource/Main.cpp
 
-# Make debug + test
-all-test: test
+clean: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-quasar clean-novatrainer clean-staging clean-cli
 
-#Cleans both Release and Debug
-clean: clean-debug clean-release clean-test
-	rm -f Installer/Read/manpages/*.gz
-	#remove binaries from staging area
+
+#remove binaries from staging area
+clean-staging:
 	rm -f NovaCLI/novacli
 	rm -f Novad/novad
 	rm -f Nova_UI_Core/libNova_UI_Core.so
 	rm -f NovaLibrary/libNovaLibrary.a
 
-clean-debug:
-	$(MAKE) -C NovaLibrary/Debug clean
-	$(MAKE) -C Nova_UI_Core/Debug clean
+#Removes created man pages
+clean-man:
+	rm -f Installer/miscFiles/manpages/*.gz
+
+clean-novad: clean-novad-debug clean-novad-release
+
+clean-novad-debug:
 	$(MAKE) -C Novad/Debug clean
-	$(MAKE) -C NovaCLI/Debug clean
+
+clean-novad-release:
+	$(MAKE) -C Novad/Release clean
+
+clean-ui-core: clean-ui-core-debug clean-ui-core-release clean-ui-core-coverage
+
+clean-ui-core-debug:
+	$(MAKE) -C Nova_UI_Core/Debug clean
 	rm -f Nova_UI_Core/Debug/Nova_UI_Core
 
-clean-release:
-	$(MAKE) -C NovaLibrary/Release clean
+clean-ui-core-release:
 	$(MAKE) -C Nova_UI_Core/Release clean
-	$(MAKE) -C Novad/Release clean
-	$(MAKE) -C NovaCLI/Release clean
 	rm -f Nova_UI_Core/Release/Nova_UI_Core
 
+clean-ui-core-coverage:
+	$(MAKE) -C Nova_UI_Core/Coverage clean
+	rm -f Nova_UI_Core/Coverage/Nova_UI_Core
+
+clean-lib: clean-lib-debug clean-lib-release clean-lib-coverage
+	
+clean-lib-debug:
+	$(MAKE) -C NovaLibrary/Debug clean
+
+clean-lib-release:
+	$(MAKE) -C NovaLibrary/Release clean
+
+clean-lib-coverage:
+	$(MAKE) -C NovaLibrary/Coverage clean
+
+clean-cli: clean-cli-debug clean-cli-release
+
+clean-cli-debug:
+	$(MAKE) -C NovaCLI/Debug clean
+
+clean-cli-release:
+	$(MAKE) -C NovaCLI/Release clean
+
 clean-test:
+	rm -fr NovaTest/NovadSource/*
+	rm -f NovaTest/Coverage/NovadSource/*.d
+	rm -f NovaTest/Coverage/NovadSource/*.o
+	rm -f NovaTest/Coverage/src/NovadSource/*.d
+	rm -f NovaTest/Coverage/src/NovadSource/*.o
+	$(MAKE) -C NovaTest/Coverage clean
+
 	rm -fr NovaTest/NovadSource/*
 	rm -f NovaTest/Debug/NovadSource/*.d
 	rm -f NovaTest/Debug/NovadSource/*.o
@@ -109,84 +178,143 @@ clean-test:
 	rm -f NovaTest/Debug/src/NovadSource/*.o
 	$(MAKE) -C NovaTest/Debug clean
 
-clean-quasar:
-	cd Quasar/NodeNovaConfig; node-waf clean
-	rm -rf Quasar/node_modules/forever/node_modules/utile/node_modules/.bin/
-	rm -rf Quasar/node_modules/forever/node_modules/.bin
-	rm -rf Quasar/node_modules/socket.io/node_modules/socket.io-client/node_modules/.bin/
-	rm -rf Quasar/node_modules/.bin/
+clean-nodejsmodule:
+	-cd NodejsModule; node-waf clean
 
+clean-quasar: clean-nodejsmodule
+
+clean-quasar-modules:
+	-rm -rf Quasar/node_modules
+
+clean-pulsar-modules:
+	-rm -rf Pulsar/node_modules
+
+clean-hhconfig: clean-hhconfig-debug clean-hhconfig-release
+	
+clean-hhconfig-debug:
+	$(MAKE) -C HaystackAutoConfig/Debug clean
+
+clean-hhconfig-release:
+	$(MAKE) -C HaystackAutoConfig/Release clean
+
+
+clean-novatrainer: clean-novatrainer-debug clean-novatrainer-release
+
+clean-novatrainer-debug:
+	$(MAKE) -C NovaTrainer/Debug clean
+
+clean-novatrainer-release:
+	$(MAKE) -C NovaTrainer/Release clean
 
 #Installation (requires root)
-install: install-data install-docs
-	mkdir -p $(DESTDIR)/usr/bin
-	mkdir -p $(DESTDIR)/usr/lib
-	install NovaCLI/novacli $(DESTDIR)/usr/bin
-	install Novad/novad $(DESTDIR)/usr/bin
-	install Nova_UI_Core/libNova_UI_Core.so $(DESTDIR)/usr/lib
-	#sh debian/postinst
+install: install-data
+	$(MAKE) install-helper
+	# Give read/write permissions to the nova group
+	-chmod -R g+rw "$(DESTDIR)/usr/share/nova"
+	-chmod -R g+rw "$(DESTDIR)/var/log/honeyd"
+	-chmod g+rwx "$(DESTDIR)/var/log/nova"
+
+install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novatrainer install-quasar install-nodejsmodule
+	-sh debian/postinst
+	-bash Installer/createDatabase.sh
 
 install-data:
 	#make folder in etc with path locations to nova files
-	mkdir -p $(DESTDIR)/etc/nova
-	install Installer/Read/paths $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-os-db $(DESTDIR)/etc/nova
-	install Installer/Read/nmap-mac-prefixes $(DESTDIR)/etc/nova
-	mkdir -p $(DESTDIR)/usr/share/applications
-	#Copy the hidden directories and files
-	cp -frup Installer/Write/nova/nova $(DESTDIR)/etc/nova
+	mkdir -p "$(DESTDIR)/usr/bin"
+	mkdir -p "$(DESTDIR)/usr/lib"
+	mkdir -p "$(DESTDIR)/usr/share/applications"
+	mkdir -p "$(DESTDIR)/usr/share/nova"
+	mkdir -p "$(DESTDIR)/usr/share/man/man1"
+	mkdir -p "$(DESTDIR)/var/log/honeyd"
+	mkdir -p "$(DESTDIR)/etc/rsyslog.d/"
+	mkdir -p "$(DESTDIR)/etc/sysctl.d/"
+	mkdir -p "$(DESTDIR)/etc/bash_completion.d/"
+	mkdir -p "$(DESTDIR)/etc/sudoers.d/"
+	mkdir -p "$(DESTDIR)/var/log/nova"
+	
+	
+	cp -frup Installer/sharedFiles "$(DESTDIR)/usr/share/nova/sharedFiles"
+	cp -frup Installer/userFiles "$(DESTDIR)/usr/share/nova/userFiles"
+	cp -frup Installer/nova_init "$(DESTDIR)/usr/share/nova"
+	cp -frup Installer/createDatabase.sh "$(DESTDIR)/usr/share/nova"
+
 	#Copy the scripts and logs
-	mkdir -p $(DESTDIR)/usr/share/nova
-	mkdir -p $(DESTDIR)/usr/bin
-	cp -frup Installer/Write/nova $(DESTDIR)/usr/share/
-	cp -frup Installer/Read/icons $(DESTDIR)/usr/share/nova
-	install Installer/nova_init $(DESTDIR)/usr/bin
-	mkdir -p $(DESTDIR)/var/log/honeyd
-	mkdir -p $(DESTDIR)/etc/rsyslog.d/
-	mkdir -p $(DESTDIR)/etc/sysctl.d/
-	mkdir -p $(DESTDIR)/etc/bash_completion.d/
+	install Installer/nova_init "$(DESTDIR)/usr/bin"
+	install Installer/nova_rsyslog_helper "$(DESTDIR)/usr/bin"
 	#Install permissions
-	mkdir -p $(DESTDIR)/etc/sudoers.d/
-	install Installer/Read/sudoers_nova $(DESTDIR)/etc/sudoers.d/ --mode=0440
-	install Installer/Read/40-nova.conf $(DESTDIR)/etc/rsyslog.d/ --mode=664
-	install Installer/Read/30-novactl.conf $(DESTDIR)/etc/sysctl.d/ --mode=0440
-	mkdir -p $(DESTDIR)/usr/share/man/man1
+	install Installer/miscFiles/sudoers_nova "$(DESTDIR)/etc/sudoers.d/" --mode=0440
+	install Installer/miscFiles/40-nova.conf "$(DESTDIR)/etc/rsyslog.d/" --mode=664
+	install Installer/miscFiles/30-novactl.conf "$(DESTDIR)/etc/sysctl.d/" --mode=0440
 	# Copy the bash completion files
-	install Installer/Read/novacli $(DESTDIR)/etc/bash_completion.d/ --mode=755
+	install Installer/miscFiles/novacli "$(DESTDIR)/etc/bash_completion.d/" --mode=755
 
 install-pcap-debug:
 	#debug sudoers file that allows sudo gdb to pcap without password prompt
-	mkdir -p $(DESTDIR)/etc/sudoers.d/
-	install Installer/Read/sudoers_nova_debug $(DESTDIR)/etc/sudoers.d/ --mode=0440
+	install Installer/miscFiles/sudoers_nova_debug "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 
 install-docs:
 	# TODO: Combine man pages
-	gzip -c Installer/Read/manpages/novad.1 > Installer/Read/manpages/novad.1.gz
-	gzip -c Installer/Read/manpages/novacli.1 > Installer/Read/manpages/novacli.1.gz
-	install Installer/Read/manpages/*.1.gz $(DESTDIR)/usr/share/man/man1
+	gzip -c Installer/miscFiles/manpages/novad.1 > Installer/miscFiles/manpages/novad.1.gz
+	gzip -c Installer/miscFiles/manpages/novacli.1 > Installer/miscFiles/manpages/novacli.1.gz
+	gzip -c Installer/miscFiles/manpages/quasar.1 > Installer/miscFiles/manpages/quasar.1.gz
+	install Installer/miscFiles/manpages/*.1.gz "$(DESTDIR)/usr/share/man/man1"
 
 install-quasar:
-	cp -frup Quasar $(DESTDIR)/usr/share/nova
-	mkdir -p $(DESTDIR)/usr/bin
-	install Quasar/quasar $(DESTDIR)/usr/bin/quasar
+	cp -frup Quasar "$(DESTDIR)/usr/share/nova/sharedFiles"
+	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Quasar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
+	-install Quasar/quasar "$(DESTDIR)/usr/bin/quasar"
+
+install-pulsar:
+	cp -frup Pulsar "$(DESTDIR)/usr/share/nova/sharedFiles"
+	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Pulsar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
+	-install Pulsar/pulsar "$(DESTDIR)/usr/bin/pulsar"	
+
+install-hhconfig:
+	-install HaystackAutoConfig/haystackautoconfig "$(DESTDIR)/usr/bin/haystackautoconfig"
+	-install Installer/miscFiles/sudoers_HHConfig "$(DESTDIR)/etc/sudoers.d/" --mode=0440
+
+install-novad:
+	-install Novad/novad "$(DESTDIR)/usr/bin"
+
+install-ui-core:
+	-install Nova_UI_Core/libNova_UI_Core.so "$(DESTDIR)/usr/lib"
+
+install-cli:
+	-install NovaCLI/novacli "$(DESTDIR)/usr/bin"
+
+install-novatrainer:
+	-install NovaTrainer/novatrainer "$(DESTDIR)/usr/bin"
+
+install-nodejsmodule:
+	mkdir -p "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule"
+	-install NodejsModule/build/Release/novaconfig.node "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule/"
+	-cp -frup NodejsModule/Javascript "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule/Javascript"
+
 
 #Uninstall
 uninstall: uninstall-files uninstall-permissions
 
 uninstall-files:
-	rm -rf $(DESTDIR)/etc/nova
-	rm -rf $(DESTDIR)/usr/share/nova
-	rm -f $(DESTDIR)/usr/bin/novacli
-	rm -f $(DESTDIR)/usr/bin/novad
-	rm -f $(DESTDIR)/usr/bin/nova_mailer
-	rm -f $(DESTDIR)/usr/lib/libNova_UI_Core.so
-	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova
-	rm -f $(DESTDIR)/etc/sudoers.d/sudoers_nova_debug
-	rm -f $(DESTDIR)/etc/rsyslog.d/40-nova.conf
-	rm -f $(DESTDIR)/etc/sysctl.d/30-novactl.conf
+	rm -rf ~/.config/nova
+	rm -rf /var/log/nova
+	rm -rf "$(DESTDIR)/usr/share/nova"
+	rm -f "$(DESTDIR)/usr/bin/novacli"
+	rm -f "$(DESTDIR)/usr/bin/novad"
+	rm -f "$(DESTDIR)/usr/bin/haystackautoconfig"
+	rm -f "$(DESTDIR)/usr/bin/nova_rsyslog_helper"
+	rm -f "$(DESTDIR)/usr/bin/nova_init"
+	rm -f "$(DESTDIR)/usr/bin/quasar"
+	rm -f "$(DESTDIR)/usr/bin/novatrainer"
+	rm -f "$(DESTDIR)/usr/lib/libNova_UI_Core.so"
+	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_nova"
+	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_nova_debug"
+	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_HHConfig"
+	rm -f "$(DESTDIR)/etc/rsyslog.d/40-nova.conf"
+	rm -f "$(DESTDIR)/etc/rsyslog.d/41-nova.conf"
+	rm -f "$(DESTDIR)/etc/sysctl.d/30-novactl.conf"
 
 uninstall-permissions:
-	#sh Installer/postrm
+	sh debian/postrm
 
 # Reinstall nova without messing up the permissions
 reinstall: uninstall-files
@@ -194,6 +322,7 @@ reinstall: uninstall-files
 
 reinstall-debug: uninstall-files
 	$(MAKE) install
+	novacli writesetting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
 
 # Does a fresh uninstall, clean, build, and install
 reset: uninstall-files
@@ -202,9 +331,8 @@ reset: uninstall-files
 	$(MAKE) test 
 	$(MAKE) install
 
-reset-debug: uninstall-files
+reset-debug: 
 	$(MAKE) clean
-	$(MAKE) debug
 	$(MAKE) test
-	$(MAKE) install
+	$(MAKE) reinstall-debug
 
