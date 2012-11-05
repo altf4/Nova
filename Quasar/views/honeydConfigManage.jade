@@ -1,9 +1,53 @@
 extends layout
 
 block headerAdditions
+  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  style(type="text/css")
+    a.selectedProfile, a.unselectedProfile {
+        display: block;
+        font-size: 12px;
+        font-weight: bold;
+        border: 1px solid black;
+        padding: 2px;
+        margin: 5px;
+        height: 100%;
+    }
+
+    a.unselectedProfile:hover {
+        background-color: rgba(255,0,0,0.2);
+        clear: both;
+    }
+
+    a.selectedProfile {
+        background-color: rgba(255,0,0,0.8);
+    }
+
+    a.unselectedProfile {
+        background-color: rgba(255,0,0,0,0.8);
+    }
+
+    ul {
+        margin-bottom: 20px;
+        display: block; 
+        list-style-type:disc;
+    }
+
+    #treeDiv {
+        display: inline-block;
+        padding: 2px;
+        border-style: solid;
+        border-color: black;
+    }
+
+    li {
+        -moz-user-select: none;
+        -webkit-user-select: none;
+    }
+    
   script
     var configurationList = !{JSON.stringify(configurations)};
     var theDoc = document;
+    var profilesArray = {};
     
     function closeLightbox()
     {
@@ -96,7 +140,7 @@ block headerAdditions
       }
       if(typeof now.GetConfigSummary == 'function')
       {
-        now.GetConfigSummary(config, function(scriptProfileBindings){
+        now.GetConfigSummary(config, function(scriptProfileBindings, profileObj, profiles){
           // manipulate elements here (i.e. pi charts, text, tables, etc.)
           // Will all be contained in the object parseMe that will use the 
           // object literal notation of javascript to allow the server side
@@ -117,6 +161,56 @@ block headerAdditions
             tr.appendChild(td1);
             theDoc.getElementById('appendHook').appendChild(tr);
           }
+          
+          for(var i in profileObj)
+          {
+            var profile = {};
+            profile.name = profileObj[i].name;
+            profile.parent = profileObj[i].parent;
+            profile.children = [];
+            profile.isSelected = false;
+            profile.listElement = null;
+            profilesArray[profile.name] = profile;
+          }
+          
+          for(var i in profilesArray)
+          {
+            for(var j in profilesArray)
+            {
+              if(profilesArray[j].parent == profilesArray[i].name)
+              {
+                profilesArray[i].children.push(profilesArray[j].name);
+              }
+            }
+          }
+          
+          var treeDiv = theDoc.getElementById('treeDiv');
+          
+          var drawNode = function(profile, parentDOMNode){
+            var li = theDoc.createElement('li');
+            var a = theDoc.createElement('a');
+            profilesArray[profile].listElement = a;
+            a.innerHTML = profile;
+            a.className = 'unselectedProfile';
+            a.setAttribute('onclick', 'onProfileClicked("' + profile + '")');
+            
+            li.appendChild(a);
+            parentDOMNode.appendChild(li);
+            
+            if(profilesArray[profile].children.length)
+            {
+              var ul = theDoc.createElement('ul');
+              li.appendChild(ul);  
+            }
+            
+            for(var i = 0; i < profilesArray[profile].children.length; i++)
+            {
+              drawNode(profilesArray[profilesArray[profile].children[i]].name, ul);
+            }
+          }
+          
+          drawNode("default", treeDiv);
+          
         })
       }
       else
@@ -251,6 +345,12 @@ block content
             th(style='background-color: #d0e9fc;') Scripts
             th(style='background-color: #d0e9fc;') Profile:Port
         tbody#appendHook
+      br
+      br
+      div#treeAndPiContainer
+        div#treeDiv
+      br
+      br
   div#lightbox(class='white_content')
     div#addConfigForm
       form(method='post', id='addConfig', onsubmit='return checkParametersAdd();')

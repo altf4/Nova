@@ -580,9 +580,6 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
 }
 
 app.get('/honeydConfigManage', passport.authenticate('basic', {session: false}), function(req, res){
-  
-  console.log('honeydConfig.GetConfigurationsList() == ' + honeydConfig.GetConfigurationsList());
-  
   res.render('honeydConfigManage.jade', {
     locals: {
       configurations: honeydConfig.GetConfigurationsList()
@@ -2623,11 +2620,21 @@ everyone.now.GetConfigSummary = function(configName, callback)
     });
   }
   
-  profiles = null;
+  var profileObj = {};
+  for (var i = 0; i < profiles.length; i++) {
+    if(profiles[i] != undefined && profiles[i] != '')
+    {
+      var prof = honeydConfig.GetProfile(profiles[i]);
+      var obj = {};
+      obj.name = prof.GetName();
+      obj.parent = prof.GetParentProfile();
+      profileObj[profiles[i]] = obj;
+    }
+  }
   
   if(typeof callback == 'function')
   {
-    callback(scriptProfileBindings);
+    callback(scriptProfileBindings, profileObj, profiles);
   }
 }
 
