@@ -6,7 +6,7 @@
 		"express" 		: 	"2.5.x"
 		, "now"			:	"0.8.x"
 		, "jade"		:	"0.25.x"
-		, "socket.io"	:	"0.9.x"
+		, "socket.io"	:	"0.9.10"
 		, "passport"	:	"0.1.x"
 		, "passport-http"	:	""
 		, "sqlite3" : ""
