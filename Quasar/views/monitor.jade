@@ -20,8 +20,10 @@ block content
   div
     div#ProtocolPiChart(style="display: inline-block;float: left; margin: 10px;")
     div#tcpPiChart(style="display: inline-block; margin: 20px")
+  input#enableGridLines(type="checkbox", onclick="toggleGridLines()")
+  span Enable Graph Point Lines
   br
-
+  
   div(style="display: inline-block; margin: 8px; float: left")
     h3 Classification
     canvas(id = "classificationChart", width="200px", height="200px", style="border: 1px solid black")
@@ -43,6 +45,17 @@ block headerAdditions
     var tcpChart = new NovaPiChart("tcpPiChart", 200);
     var protocolChart = new NovaPiChart("ProtocolPiChart", 200);
     var classificationPieChart = new NovaPiChart("classificationPieChart", 200);
+    var gridLinesEnabled = false;
+
+    function toggleGridLines() {
+        gridLinesEnabled = document.getElementById("enableGridLines").checked;
+
+        for (var i = 0; i < 14; i++) {
+            drawGraph("chart" + i, "p" + i, data, i);
+        }
+    
+        drawGraph("classificationChart", "classificationChartP", classificationData, 0);
+    }
 
     function markClassificationAs(hostility) {
         "use strict";
@@ -207,25 +220,27 @@ block headerAdditions
         }
        
         // Draw grid lines
-        ctx.strokeStyle="#A1A1A1";
-        ctx.beginPath();
-        ctx.moveTo(0, border);
-        ctx.lineTo(width, border);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, height+border);
-        ctx.lineTo(width, height+border);
-        ctx.stroke();
-        for (var i = 0; i < points.length; i++) {
+        if (gridLinesEnabled) {
+            ctx.strokeStyle="#A1A1A1";
             ctx.beginPath();
-            ctx.moveTo(points[i].x,border);
-            ctx.lineTo(points[i].x,height+border);
+            ctx.moveTo(0, border);
+            ctx.lineTo(width, border);
             ctx.stroke();
-            
             ctx.beginPath();
-            ctx.moveTo(0, points[i].y);
-            ctx.lineTo(width, points[i].y);
+            ctx.moveTo(0, height+border);
+            ctx.lineTo(width, height+border);
             ctx.stroke();
+            for (var i = 0; i < points.length; i++) {
+                ctx.beginPath();
+                ctx.moveTo(points[i].x,border);
+                ctx.lineTo(points[i].x,height+border);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, points[i].y);
+                ctx.lineTo(width, points[i].y);
+                ctx.stroke();
+            }
         }
         
         ctx.fillStyle = "blue";
