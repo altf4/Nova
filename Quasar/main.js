@@ -2642,7 +2642,8 @@ everyone.now.RemoveConfiguration = function(configName, callback)
   {
     console.log('Cannot delete default configuration');
   }
-  console.log('in RemoveConfiguration with ' + configName);
+  
+  honeydConfig.RemoveConfiguration(configName);
   
   if(typeof callback == 'function')
   {

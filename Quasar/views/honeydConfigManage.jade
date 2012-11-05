@@ -37,7 +37,7 @@ block headerAdditions
           theDoc.getElementById('configurations').removeChild(theDoc.getElementById('configurations').lastChild);
         }
       }
-      console.log('populateConfigSelect()');
+      
       if(configs == undefined || configs == '')
       {
         console.log('no configs sent');
@@ -49,13 +49,11 @@ block headerAdditions
       }
       else
       {
-        console.log('got configs');
         var selected = false;
         for(var i in configs)
         {
           if(configs[i] != '' && configs[i] != undefined)
           {
-            console.log('configs[' + i + '] == ' + configs[i]);
             var option = theDoc.createElement('option');
             if(!selected)
             {
@@ -87,7 +85,6 @@ block headerAdditions
       {
         config = configArg;
       }
-      console.log('In GetConfigurationSummary with config ' + config);
       if(typeof now.SwitchConfigurationTo == 'function')
       {
         now.SwitchConfigurationTo(config); 
@@ -99,17 +96,14 @@ block headerAdditions
       }
       if(typeof now.GetConfigSummary == 'function')
       {
-        console.log('now.GetConfigSummary is a function, calling with arg ' + config);
         now.GetConfigSummary(config, function(scriptProfileBindings){
           // manipulate elements here (i.e. pi charts, text, tables, etc.)
           // Will all be contained in the object parseMe that will use the 
           // object literal notation of javascript to allow the server side
           // to do the calculations, and then send exactly the data required to
           // the browser.
-          console.log('in GetConfigSummaryCallback');
           for(var i in scriptProfileBindings)
           {
-            console.log('scriptProfileBindings[' + i + '] == ' + scriptProfileBindings[i]);
             var tr = theDoc.createElement('tr');
             var td0 = theDoc.createElement('td');
             var td1 = theDoc.createElement('td');
@@ -214,7 +208,7 @@ block headerAdditions
         alert('Cannot remove default configuration');
         return;
       }
-      else if(confirm('Are you sure you want to remove configuration ' + configToRemove + '?'))
+      else if(confirm('Are you sure you want to remove configuration ' + configToRemove + '? This cannot be undone.'))
       {
         if(typeof now.RemoveConfiguration == 'function')
         {
@@ -243,10 +237,13 @@ block content
   div#hideme
     h1 Configuration Summary
     select#configurations(onchange='GetConfigurationSummary()') Configuration
+    br
+    br
     div#addNewConfig
       button#addConfig(onclick='showLightBox("0")') Add Configuration
       button#cloneConfig(onclick='showLightBox("1")') Clone Configuration
       button#removeConfig(onclick='removeConfig()') Remove Configuration
+    br
     div#summary
       table(border='1', style='border: solid black 2px;')
         thead

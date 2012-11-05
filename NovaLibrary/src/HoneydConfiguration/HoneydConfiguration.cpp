@@ -2703,6 +2703,9 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		addfile << configName << '\n';
 		addfile.close();
 		SaveAllTemplates();
+		string routeString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/default/routes.xml ";
+		routeString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		system(routeString.c_str());
 	}
 	else if(clone && found)
 	{
@@ -2741,8 +2744,9 @@ bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
 
 	if(found)
 	{
-		string pathToDelete = Config::Inst()->GetPathHome() + "/config/templates/" + configName;
+		string pathToDelete = "rm -r " + Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
 		cout << "Would be removing files at " << pathToDelete << endl;
+		system(pathToDelete.c_str());
 		m_configs.erase(m_configs.begin() + eraseIdx);
 		return true;
 	}
