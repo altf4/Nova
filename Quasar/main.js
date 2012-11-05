@@ -2617,6 +2617,10 @@ process.on('SIGINT', function () {
 	process.exit();
 });
 
+process.on('exit', function () {
+	LOG("ALERT", "Quasar is exiting cleanly.");
+});
+
 function objCopy(src, dst) {
 	for (var member in src) {
 		if (typeof src[member] == 'function') {
