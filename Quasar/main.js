@@ -1951,6 +1951,7 @@ everyone.now.StopNovad = function () {
 
 
 everyone.now.sendAllSuspects = function (callback) {
+	nova.CheckConnection();
 	nova.sendSuspectList(callback);
 }
 
