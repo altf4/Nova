@@ -93,6 +93,7 @@ NovaLibrary/libNovaLibrary.a
 /Quasar/.lock-wscript
 
 # Quasar
+/Quasar/node-v0.8.5/
 /Quasar/www/dojo
 /Quasar/build/*
 /NodejsModule/build/*

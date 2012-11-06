@@ -453,29 +453,39 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 					}
 				}
 			}
+
+			m_IPTable[evidence->m_evidencePacket.ip_dst]++;
 			break;
 		}
 		//If TCP
 		case 6:
 		{
 			m_tcpPacketCount++;
-			if(evidence->m_evidencePacket.dst_port != 0)
-			{
-				m_PortTCPTable[evidence->m_evidencePacket.dst_port]++;
 
-				IpPortCombination t;
-				t.m_ip = evidence->m_evidencePacket.ip_dst;
-				t.m_port = evidence->m_evidencePacket.dst_port;
-				if (!m_hasTcpPortIpBeenContacted.keyExists(t))
+			// Only count as an IP/port contacted if it looks like a scan (SYN or NULL packet)
+			if ((evidence->m_evidencePacket.tcp_hdr.syn && !evidence->m_evidencePacket.tcp_hdr.ack)
+					|| (!evidence->m_evidencePacket.tcp_hdr.syn && !evidence->m_evidencePacket.tcp_hdr.ack && !evidence->m_evidencePacket.tcp_hdr.rst))
+			{
+				m_IPTable[evidence->m_evidencePacket.ip_dst]++;
+
+				if(evidence->m_evidencePacket.dst_port != 0)
 				{
-					m_hasTcpPortIpBeenContacted[t] = true;
-					if (m_tcpPortsContactedForIP.keyExists(t.m_ip))
+					m_PortTCPTable[evidence->m_evidencePacket.dst_port]++;
+
+					IpPortCombination t;
+					t.m_ip = evidence->m_evidencePacket.ip_dst;
+					t.m_port = evidence->m_evidencePacket.dst_port;
+					if (!m_hasTcpPortIpBeenContacted.keyExists(t))
 					{
-						m_tcpPortsContactedForIP[t.m_ip]++;
-					}
-					else
-					{
-						m_tcpPortsContactedForIP[t.m_ip] = 1;
+						m_hasTcpPortIpBeenContacted[t] = true;
+						if (m_tcpPortsContactedForIP.keyExists(t.m_ip))
+						{
+							m_tcpPortsContactedForIP[t.m_ip]++;
+						}
+						else
+						{
+							m_tcpPortsContactedForIP[t.m_ip] = 1;
+						}
 					}
 				}
 			}
@@ -503,25 +513,27 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 				m_finCount++;
 			}
 
+
 			break;
 		}
 		//If ICMP
 		case 1:
 		{
 			m_icmpPacketCount++;
+			m_IPTable[evidence->m_evidencePacket.ip_dst]++;
 			break;
 		}
 		//If untracked IP protocol or error case ignore it
 		default:
 		{
 			m_otherPacketCount++;
+			m_IPTable[evidence->m_evidencePacket.ip_dst]++;
 			break;
 		}
 	}
 
 	m_packetCount++;
 	m_bytesTotal += evidence->m_evidencePacket.ip_len;
-	m_IPTable[evidence->m_evidencePacket.ip_dst]++;
 
 	if(m_HaystackIPTable.keyExists(evidence->m_evidencePacket.ip_dst))
 	{

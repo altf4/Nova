@@ -153,6 +153,15 @@ To build and install Nova run the commands,
 
 Refer to the Nova wiki on github for more information.
 
+=============================== 
+Daemonizing with Upstart
+===============================
+
+- If you want to start Quasar, novad, and the haystack when the machine boots
+and have them restart if they crash, you can use the upstart service by copying
+the files in $NOVAD_SOURCE/Installer/miscFiles/upstart/* to /etc/init. This is
+assuming that upstart is already installed and configured on your system (it
+comes by default on newer versions of Ubuntu).
 
 =============================== 
 High Level Nova Components

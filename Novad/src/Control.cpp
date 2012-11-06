@@ -46,7 +46,7 @@ void SaveAndExit(int param)
 	{
 		// TODO Logging
 	}
-	LOG(NOTICE, "Novad is now exiting.", "");
+	LOG(ALERT, "Novad is exiting cleanly.", "");
 	exit(EXIT_SUCCESS);
 }
 }

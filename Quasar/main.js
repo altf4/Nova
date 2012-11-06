@@ -1983,6 +1983,7 @@ everyone.now.StopNovad = function () {
 
 
 everyone.now.sendAllSuspects = function (callback) {
+	nova.CheckConnection();
 	nova.sendSuspectList(callback);
 }
 
@@ -2722,6 +2723,10 @@ nova.registerOnNewSuspect(distributeSuspect);
 process.on('SIGINT', function () {
 	nova.Shutdown();
 	process.exit();
+});
+
+process.on('exit', function () {
+	LOG("ALERT", "Quasar is exiting cleanly.");
 });
 
 function objCopy(src, dst) {
