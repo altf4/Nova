@@ -158,58 +158,55 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 		}
 	}
 
-	Profile *childPersonality = NULL;
+	Profile *childProfile = NULL;
 
 	//If node not found
 	if(i == parentItem->m_children.size())
 	{
-		childPersonality = new Profile(parentItem, curOSClass);
-		childPersonality->m_count = targetHost->m_count;
-		childPersonality->m_osclass = targetHost->m_osclass;
-		childPersonality->m_personality = targetHost->m_personality;
-		parentItem->m_children.push_back(childPersonality);
+		childProfile = new Profile(parentItem, curOSClass);
+		childProfile->m_osclass = targetHost->m_osclass;
+		childProfile->m_personality = targetHost->m_personality;
+		parentItem->m_children.push_back(childProfile);
 	}
 	else
 	{
-		childPersonality = parentItem->m_children[i];
-
-		//Increment not only this profile, but all of its ancestors
-		Profile *loopProfile = childPersonality;
-		while(loopProfile != NULL)
-		{
-			loopProfile->m_count += targetHost->m_count;
-			loopProfile = loopProfile->m_parent;
-		}
+		childProfile = parentItem->m_children[i];
 	}
 
-	//Recalculate the distributions of this personality and all of its siblings
-	parentItem->RecalculateChildDistributions();
+	//Increment not only this profile, but all of its ancestors
+	Profile *loopProfile = childProfile;
+	while(loopProfile != NULL)
+	{
+		loopProfile->m_count += targetHost->m_count;
+		loopProfile->RecalculateChildDistributions();
+		loopProfile = loopProfile->m_parent;
+	}
 
 	//Set the uptimes
-	if(targetHost->m_uptime > childPersonality->m_uptimeMax)
+	if(targetHost->m_uptime > childProfile->m_uptimeMax)
 	{
-		childPersonality->m_uptimeMax = targetHost->m_uptime;
+		childProfile->m_uptimeMax = targetHost->m_uptime;
 	}
-	if(targetHost->m_uptime < childPersonality->m_uptimeMin)
+	if(targetHost->m_uptime < childProfile->m_uptimeMin)
 	{
-		childPersonality->m_uptimeMin = targetHost->m_uptime;
+		childProfile->m_uptimeMin = targetHost->m_uptime;
 	}
 
 	//TODO: Is this what we really want? Maybe we should just have the portset at the leaf node?
 	//Add every PortSet from the target host into the childPersonality
 //	for(uint j = 0; j < targetHost->m_portSets.size(); j++)
 //	{
-		childPersonality->m_portSets = targetHost->m_portSets;
+		childProfile->m_portSets = targetHost->m_portSets;
 //	}
 
 	//Insert or count MAC vendor occurrences
 	for(MACVendorMap::iterator it = targetHost->m_vendors.begin(); it != targetHost->m_vendors.end(); it++)
 	{
-		for(uint j = 0; j < childPersonality->m_vendors.size(); j++)
+		for(uint j = 0; j < childProfile->m_vendors.size(); j++)
 		{
-			if(!childPersonality->m_vendors[j].first.compare(it->first))
+			if(!childProfile->m_vendors[j].first.compare(it->first))
 			{
-				childPersonality->m_vendors[j].second += it->second;
+				childProfile->m_vendors[j].second += it->second;
 			}
 		}
 	}
@@ -217,7 +214,7 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 	targetHost->m_personalityClass.pop_back();
 	if(!targetHost->m_personalityClass.empty())
 	{
-		if(!InsertHost(targetHost, childPersonality))
+		if(!InsertHost(targetHost, childProfile))
 		{
 			return false;
 		}

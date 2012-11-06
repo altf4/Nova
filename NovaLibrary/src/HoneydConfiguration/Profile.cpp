@@ -203,17 +203,9 @@ double Profile::GetVendorDistribution(std::string vendorName)
 
 void Profile::RecalculateChildDistributions()
 {
-	double countTotal = 0;
-	//First pass to get a total of instance counts
 	for(uint i = 0; i < m_children.size(); i++)
 	{
-		countTotal += m_children[i]->m_count;
-	}
-
-	//Second pass to set the distributions
-	for(uint i = 0; i < m_children.size(); i++)
-	{
-		m_children[i]->m_distribution = ((double)m_children[i]->m_count) / countTotal;
+		m_children[i]->m_distribution = (((double)m_children[i]->m_count) / (double)m_count) * 100;
 	}
 }
 
