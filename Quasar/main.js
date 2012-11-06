@@ -1496,10 +1496,6 @@ app.post('/honeydConfigManage', passport.authenticate('basic', {session: false})
     cloneBool = true;
   }
   
-  console.log('newName ' + newName);
-  console.log('cloneBool ' + cloneBool);
-  console.log('configToClone "' + configToClone + '"');
-  
   honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
   
   honeydConfig.LoadAllTemplates();
@@ -2586,9 +2582,7 @@ everyone.now.RemoveScript = function(scriptName, callback)
 }
 
 everyone.now.GetConfigSummary = function(configName, callback)
-{
-  console.log('in GetConfigSummary with arg ' + configName);
-  
+{ 
   honeydConfig.LoadAllTemplates();
   
   // Scripts are kept at a higher level of the directory structure, to denote
@@ -2633,9 +2627,26 @@ everyone.now.GetConfigSummary = function(configName, callback)
     }
   }
   
+  var nodeNames = honeydConfig.GetNodeNames();
+  var nodeList = [];
+  
+  for (var i = 0; i < nodeNames.length; i++) {
+    var node = honeydConfig.GetNode(nodeNames[i]);
+    var push = {};
+    //push.enabled = node.IsEnabled();
+    //push.name = node.GetName();
+    push.pfile = node.GetProfile();
+    //push.ip = node.GetIP();
+    //push.mac = node.GetMAC();
+    //push.interface = node.GetInterface();
+    nodeList.push(push);
+  }
+  
+  nodeNames = null;
+  
   if(typeof callback == 'function')
   {
-    callback(scriptProfileBindings, profileObj, profiles);
+    callback(scriptProfileBindings, profileObj, profiles, nodeList);
   }
 }
 

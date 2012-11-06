@@ -44,6 +44,7 @@ block headerAdditions
         -webkit-user-select: none;
     }
     
+  script(type="text/javascript", src="scripts/NovaPiChart.js")
   script
     var configurationList = !{JSON.stringify(configurations)};
     var theDoc = document;
@@ -116,11 +117,18 @@ block headerAdditions
     
     function GetConfigurationSummary(configArg)
     {
+      var config;
+      profilesArray = {};
+      
       while(theDoc.getElementById('appendHook').hasChildNodes())
       {
         theDoc.getElementById('appendHook').removeChild(theDoc.getElementById('appendHook').lastChild);
       }
-      var config;
+      while(theDoc.getElementById('treeDiv').hasChildNodes())
+      {
+        theDoc.getElementById('treeDiv').removeChild(theDoc.getElementById('treeDiv').lastChild);
+      }
+      
       if(configArg == undefined)
       {
         config = theDoc.getElementById('configurations').value;
@@ -129,6 +137,7 @@ block headerAdditions
       {
         config = configArg;
       }
+      
       if(typeof now.SwitchConfigurationTo == 'function')
       {
         now.SwitchConfigurationTo(config); 
@@ -138,9 +147,10 @@ block headerAdditions
         console.log('now.SwitchConfigurationTo(configName) is not defined, doing nothing');
         return;
       }
+      
       if(typeof now.GetConfigSummary == 'function')
       {
-        now.GetConfigSummary(config, function(scriptProfileBindings, profileObj, profiles){
+        now.GetConfigSummary(config, function(scriptProfileBindings, profileObj, profiles, nodes){
           // manipulate elements here (i.e. pi charts, text, tables, etc.)
           // Will all be contained in the object parseMe that will use the 
           // object literal notation of javascript to allow the server side
@@ -211,6 +221,31 @@ block headerAdditions
           
           drawNode("default", treeDiv);
           
+          var nodesPerProfile = {};
+          var piChartRender = [];
+          
+          for(var i in nodes)
+          {
+            if(nodesPerProfile[nodes[i].pfile] === undefined)
+            {
+              nodesPerProfile[nodes[i].pfile] = 1;
+            }
+            else
+            {
+              nodesPerProfile[nodes[i].pfile]++;
+            }
+          }
+          
+          for(var pfile in nodesPerProfile)
+          {
+            var p = {};
+            p.name = pfile;
+            p.value = nodesPerProfile[pfile];
+            piChartRender.push(p);
+          }
+          
+          var pi = new NovaPiChart('piChart', 200, 'deleteByProfile');
+          pi.Render(piChartRender);
         })
       }
       else
@@ -222,26 +257,47 @@ block headerAdditions
     
     function showLightBox(divIndex)
     {
-      theDoc.getElementById('hideme').style.opacity='0.5';
-      theDoc.getElementById('lightbox').style.display='block';
+      theDoc.getElementById('hideme').style.opacity = '0.5';
+      theDoc.getElementById('lightbox').style.display = 'block';
+      
       if(divIndex == '0')
       {
-        theDoc.getElementById('addConfigForm').style.display='block';
+        theDoc.getElementById('addConfigForm').style.display = 'block';
         theDoc.getElementById('newName').value = '';
-        theDoc.getElementById('cloneConfigForm').style.display='none';
+        theDoc.getElementById('cloneConfigForm').style.display = 'none';
+        theDoc.getElementById('profileInfo').style.display = 'none';
       }
       else if(divIndex == '1')
       {
-        theDoc.getElementById('addConfigForm').style.display='none';
-        theDoc.getElementById('cloneConfigForm').style.display='block';
+        theDoc.getElementById('addConfigForm').style.display = 'none';
+        theDoc.getElementById('cloneConfigForm').style.display = 'block';
         theDoc.getElementById('newNameClone').value = '';
+        theDoc.getElementById('profileInfo').style.display = 'none';
+        
         for(var i in configurationList)
         {
-          var option = theDoc.createElement('option');
-          option.value = configurationList[i];
-          option.innerHTML = configurationList[i];
-          theDoc.getElementById('cloneMe').appendChild(option);
+          if(configurationList[i] != '' && configurationList[i] != undefined)
+          {
+            var option = theDoc.createElement('option');
+            option.value = configurationList[i];
+            option.innerHTML = configurationList[i];
+            option.id = configurationList[i];
+            theDoc.getElementById('cloneMe').appendChild(option);
+          }
         }
+      }
+      else if(divIndex == '2')
+      {
+        theDoc.getElementById('addConfigForm').style.display = 'none';
+        theDoc.getElementById('cloneConfigForm').style.display = 'none';
+        theDoc.getElementById('newNameClone').value = '';
+        theDoc.getElementById('newName').value = '';
+        theDoc.getElementById('profileInfo').style.display = 'block';
+      }
+      else
+      {
+        console.log('Unknown divIndex, doing nothing');
+        closeLightbox();
       }
     }
     
@@ -309,6 +365,13 @@ block headerAdditions
           now.RemoveConfiguration(configToRemove, function(name){
             theDoc.getElementById('default').selected = true;
             theDoc.getElementById('configurations').removeChild(theDoc.getElementById(name));
+            for(var i in configurationList)
+            {
+              if(configurationList[i] == name)
+              {
+                configurationList[i] = undefined;
+              }
+            }
             GetConfigurationSummary();
           });
         }
@@ -326,6 +389,7 @@ block headerAdditions
     function onProfileClicked(profile)
     {
       console.log('in onProfileClicked with arg ' + profile);
+      showLightBox('2');
     }
     
     now.ready(function(){
@@ -343,17 +407,18 @@ block content
       button#cloneConfig(onclick='showLightBox("1")') Clone Configuration
       button#removeConfig(onclick='removeConfig()') Remove Configuration
     br
+    div#treeAndPiContainer
+      div#piChart(style='float: left')
+      div#treeDiv(style='float: left')
+    br
+    br
     div#summary
       table(border='1', style='border: solid black 2px;')
         thead
           tr
             th(style='background-color: #d0e9fc;') Scripts
             th(style='background-color: #d0e9fc;') Profile:Port
-        tbody#appendHook
-      br
-      br
-      div#treeAndPiContainer
-        div#treeDiv
+        tbody#appendHook      
       br
       br
   div#lightbox(class='white_content')
@@ -372,4 +437,5 @@ block content
         select#cloneMe(name='cloneSelect')
         br
         button#submitClone Submit
+    div#profileInfo
     button#closeLB(onclick='closeLightbox()') Close

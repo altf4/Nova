@@ -2611,7 +2611,6 @@ bool HoneydConfiguration::RecursiveCheckNotInheritingEmptyProfile(const NodeProf
 
 bool HoneydConfiguration::SwitchToConfiguration(const string& configName)
 {
-	cout << "switch to configName " << configName << endl;
 	bool found = false;
 
 	for(uint i = 0; i < m_configs.size(); i++)
@@ -2624,7 +2623,6 @@ bool HoneydConfiguration::SwitchToConfiguration(const string& configName)
 
 	if(found)
 	{
-		cout << "Found config, switching to " << configName << endl;
 		Config::Inst()->SetCurrentConfig(configName);
 		return true;
 	}
@@ -2665,11 +2663,6 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 	}
 
 	m_configs.push_back(configName);
-
-	for(uint i = 0; i < m_configs.size(); i++)
-	{
-		cout << "m_configs[" << i << "] = " << m_configs[i] << endl;
-	}
 
 	string directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName;
 	system(string("mkdir " + directoryPath).c_str());
@@ -2728,7 +2721,7 @@ bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
 		cout << "Cannot delete default configuration" << endl;
 		return false;
 	}
-	cout << "remove configName " << configName << endl;
+
 	bool found = false;
 
 	uint eraseIdx = 0;
@@ -2745,9 +2738,16 @@ bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
 	if(found)
 	{
 		string pathToDelete = "rm -r " + Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
-		cout << "Would be removing files at " << pathToDelete << endl;
 		system(pathToDelete.c_str());
 		m_configs.erase(m_configs.begin() + eraseIdx);
+		ofstream configurationsFile(Config::Inst()->GetPathHome() + "/config/templates/configurations.txt");
+		string writeString = "";
+		for(uint i = 0; i < m_configs.size(); i++)
+		{
+			writeString += m_configs[i] + '\n';
+		}
+		configurationsFile << writeString;
+		configurationsFile.close();
 		return true;
 	}
 	else
