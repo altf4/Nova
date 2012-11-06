@@ -129,7 +129,6 @@ bool ProfileTree::LoadTable(ScannedHostTable *persTable)
 	{
 		InsertHost(it->second, m_root);
 	}
-	CalculateDistributions(m_root);
 
 	return true;
 }
@@ -165,7 +164,6 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 	if(i == parentItem->m_children.size())
 	{
 		childPersonality = new Profile(parentItem, curOSClass);
-		childPersonality->m_distribution = targetHost->m_distribution;
 		childPersonality->m_count = targetHost->m_count;
 		childPersonality->m_osclass = targetHost->m_osclass;
 		childPersonality->m_personality = targetHost->m_personality;
@@ -173,10 +171,19 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 	}
 	else
 	{
-		parentItem->m_children[i]->m_count += targetHost->m_count;
+		childPersonality = parentItem->m_children[i];
+
+		//Increment not only this profile, but all of its ancestors
+		Profile *loopProfile = childPersonality;
+		while(loopProfile != NULL)
+		{
+			loopProfile->m_count += targetHost->m_count;
+			loopProfile = loopProfile->m_parent;
+		}
 	}
 
-	childPersonality = parentItem->m_children[i];
+	//Recalculate the distributions of this personality and all of its siblings
+	parentItem->RecalculateChildDistributions();
 
 	//Set the uptimes
 	if(targetHost->m_uptime > childPersonality->m_uptimeMax)
@@ -218,29 +225,4 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 	return true;
 }
 
-bool ProfileTree::CalculateDistributions(Profile *targetNode)
-{
-	if(targetNode == NULL)
-	{
-		LOG(ERROR, "Unable to calculate the distribution for a NULL node!", "");
-		return false;
-	}
-	for(uint i = 0; i < targetNode->m_children.size(); i++)
-	{
-		if((targetNode->m_children[i]->m_count > 0) && (targetNode->m_count > 0))
-		{
-			targetNode->m_children[i]->m_distribution =
-					(((double)targetNode->m_children[i]->m_count)/((double)targetNode->m_count))*100;
-		}
-		else
-		{
-			targetNode->m_children[i]->m_distribution = 0;
-		}
-		if(!CalculateDistributions(targetNode->m_children[i]))
-		{
-			return false;
-		}
-	}
-	return true;
-}
 }

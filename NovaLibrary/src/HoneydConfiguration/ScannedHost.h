@@ -43,9 +43,6 @@ public:
 	// count of the number of instances of this host on the scanned subnets
 	uint m_count;
 
-	// the percentage (0-100) of total hosts seen using this OS
-	double m_distribution;
-
 	// total number of ports found for this host on the scanned subnets
 	uint m_port_count;
 

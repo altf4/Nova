@@ -47,10 +47,8 @@
 using namespace std;
 using namespace Nova;
 
-vector<uint16_t> leftoverHostspace;
 vector<string> interfacesToMatch;
 vector<string> subnetsToAdd;
-uint16_t tempHostspace;
 string localMachine;
 string nmapFileName;
 uint numNodes;
@@ -965,8 +963,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 
 void Nova::GenerateConfiguration()
 {
-	scannedHosts.CalculateProfileDistributions();
-
 	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
 
 	//XXX Only here for debug

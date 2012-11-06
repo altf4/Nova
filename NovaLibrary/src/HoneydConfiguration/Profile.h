@@ -49,6 +49,10 @@ public:
 
 	double GetVendorDistribution(std::string vendorName);
 
+	//Calculates the distributions of direct children of the given profile
+	//	NOTE: Not recursive. Only calculates the given node's direct children.
+	void RecalculateChildDistributions();
+
 	// Number of hosts that have this personality
 	uint32_t m_count;
 	double m_distribution;

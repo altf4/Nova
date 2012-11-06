@@ -121,7 +121,7 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 		//TODO: possible memory leak here if an exception is thrown after this is made
 		profile = new Profile(parent, ptree.get<string>("name"));
 		profile->m_isGenerated = ptree.get<bool>("generated");
-		profile->m_distribution = ptree.get<double>("distribution");
+		profile->m_count = ptree.get<double>("count");
 		profile->m_personality = ptree.get<string>("personality");
 		profile->m_uptimeMin = ptree.get<uint>("uptimeMin");
 		profile->m_uptimeMax = ptree.get<uint>("uptimeMax");
@@ -192,6 +192,9 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 					profile->m_children.push_back(child);
 				}
 			}
+			//Calculate the distributions for the children nodes
+			profile->RecalculateChildDistributions();
+
 		}
 		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
@@ -447,7 +450,6 @@ bool HoneydConfiguration::WriteProfilesToXML()
 	}
 }
 
-//TODO: keep an eye on this, maybe it works?
 bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTree)
 {
 	if(root == NULL)
@@ -458,7 +460,7 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 	//Write the current item into the tree
 	propTree.put<string>("name", root->m_key);
 	propTree.put<bool>("generated", root->m_isGenerated);
-	propTree.put<double>("distribution", root->m_distribution);
+	propTree.put<double>("count", root->m_count);
 	propTree.put<string>("personality", root->m_personality);
 	propTree.put<uint>("uptimeMin", root->m_uptimeMin);
 	propTree.put<uint>("uptimeMax", root->m_uptimeMax);

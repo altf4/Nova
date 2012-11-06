@@ -72,11 +72,6 @@ private:
 	// Returns true on success, false on failure
 	bool InsertHost(ScannedHost *targetHost, Profile *root);
 
-	// GetHostCount gets the number of hosts in each of the root node's subtrees and
-	// adds them into m_root's m_count value.
-	// Returns nothing.
-	bool CalculateDistributions(Profile *node);
-
 };
 
 }
