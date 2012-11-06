@@ -23,6 +23,9 @@ block content
   input#enableGridLines(type="checkbox", onclick="toggleGridLines()")
   span Enable Graph Point Lines
   br
+  input#enableAutoScale(type="checkbox", onclick="toggleAutoscale()")
+  span Enable Auto Scaling
+  br
   
   div(style="display: inline-block; margin: 8px; float: left")
     h3 Classification
@@ -45,16 +48,26 @@ block headerAdditions
     var tcpChart = new NovaPiChart("tcpPiChart", 200);
     var protocolChart = new NovaPiChart("ProtocolPiChart", 200);
     var classificationPieChart = new NovaPiChart("classificationPieChart", 200);
+
     var gridLinesEnabled = false;
+    var autoscale = false;
 
-    function toggleGridLines() {
-        gridLinesEnabled = document.getElementById("enableGridLines").checked;
-
+    function redrawGraphs() {
         for (var i = 0; i < 14; i++) {
             drawGraph("chart" + i, "p" + i, data, i);
         }
     
-        drawGraph("classificationChart", "classificationChartP", classificationData, 0);
+        drawGraph("classificationChart", "classificationChartP", classificationData, 0); 
+    }
+
+    function toggleGridLines() {
+        gridLinesEnabled = document.getElementById("enableGridLines").checked;
+        redrawGraphs();
+    }
+
+    function toggleAutoscale() {
+        autoscale = document.getElementById("enableAutoScale").checked;
+        redrawGraphs();
     }
 
     function markClassificationAs(hostility) {
@@ -139,12 +152,7 @@ block headerAdditions
                 classificationData.shift();
             }
 
-            for (var i = 0; i < 14; i++) {
-                drawGraph("chart" + i, "p" + i, data, i);
-            }
-        
-            
-            drawGraph("classificationChart", "classificationChartP", classificationData, 0);
+            redrawGraphs();
 
             arr = new Array();
             arr.push({name: "SYN Packets", value: suspect.GetSynCount});
@@ -186,11 +194,33 @@ block headerAdditions
        
         ctx.fillSTyle="#0000FF";
 
-        var minY = data[0][index];
-        var maxY = data[0][index];
+        var minY;
+        var maxY;
+        if (autoscale) {
+            minY = data[0][index];
+            maxY = data[0][index];
+        } else {
+            // Hard coded fixed scale charts between 0 and 1
+            if (canvas == "classificationChart"
+            || canvas == "chart0"
+            || canvas == "chart1"
+            || canvas == "chart0"
+            || canvas == "chart9"
+            || canvas == "chart10"
+            || canvas == "chart11"
+            || canvas == "chart12"
+            || canvas == "chart13") {
+                minY = 0;
+                maxY = 1;
+            } else {
+                minY = data[0][index];
+                maxY = data[0][index];
+            }
+                
+        }
         
         if (data.length == 1) {
-            p.innerHTML = "<br> Current: " + data[data.length-1][index].toFixed(12);
+            p.innerHTML = "<br> Current: " + data[0][index].toFixed(12);
             return;
         }
 
