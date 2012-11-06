@@ -323,6 +323,11 @@ block headerAdditions
       }
     }
     
+    function onProfileClicked(profile)
+    {
+      console.log('in onProfileClicked with arg ' + profile);
+    }
+    
     now.ready(function(){
       populateConfigSelect(configurationList);
     });
