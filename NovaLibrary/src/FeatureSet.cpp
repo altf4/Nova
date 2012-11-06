@@ -247,7 +247,16 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 			{
 				m_features[IP_TRAFFIC_DISTRIBUTION] += ((double)it->second / (double)IPMax);
 			}
-			m_features[IP_TRAFFIC_DISTRIBUTION] = m_features[IP_TRAFFIC_DISTRIBUTION] / (double)m_IPTable.size();
+
+			if (m_IPTable.size() == 0)
+			{
+				m_features[IP_TRAFFIC_DISTRIBUTION] = 0;
+			}
+			else
+			{
+				m_features[IP_TRAFFIC_DISTRIBUTION] = m_features[IP_TRAFFIC_DISTRIBUTION] / (double)m_IPTable.size();
+			}
+
 			break;
 		}
 		///The traffic distribution across ports contacted
@@ -288,7 +297,15 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 				{
 					temp += it->second;
 				}
-				m_features[PORT_TRAFFIC_DISTRIBUTION] = ((double)temp)/portDivisor;
+
+				if (portDivisor == 0)
+				{
+					m_features[PORT_TRAFFIC_DISTRIBUTION] = 0;
+				}
+				else
+				{
+					m_features[PORT_TRAFFIC_DISTRIBUTION] = ((double)temp)/portDivisor;
+				}
 			}
 			break;
 		}
