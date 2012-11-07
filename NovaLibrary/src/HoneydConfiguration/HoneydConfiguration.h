@@ -20,12 +20,13 @@
 #define _HONEYDCONFIGURATION
 
 #include "../Defines.h"
-#include "HoneydConfigTypes.h"
 #include "VendorMacDb.h"
 #include "PortSet.h"
 #include "ProfileTree.h"
 #include "Script.h"
 #include "Node.h"
+
+#include <boost/property_tree/ptree.hpp>
 
 namespace Nova
 {

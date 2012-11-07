@@ -83,9 +83,9 @@ string Profile::ToString(const std::string &portSetName, const std::string &node
 	{
 		if(!m_portSets.empty())
 		{
-			out << "set " << nodeName << " default tcp action " << PortBehaviorToString(m_portSets[0]->m_defaultTCPBehavior) << '\n';
-			out << "set " << nodeName << " default udp action " << PortBehaviorToString(m_portSets[0]->m_defaultUDPBehavior) << '\n';
-			out << "set " << nodeName << " default icmp action " << PortBehaviorToString(m_portSets[0]->m_defaultICMPBehavior) << '\n';
+			out << "set " << nodeName << " default tcp action " << Port::PortBehaviorToString(m_portSets[0]->m_defaultTCPBehavior) << '\n';
+			out << "set " << nodeName << " default udp action " << Port::PortBehaviorToString(m_portSets[0]->m_defaultUDPBehavior) << '\n';
+			out << "set " << nodeName << " default icmp action " << Port::PortBehaviorToString(m_portSets[0]->m_defaultICMPBehavior) << '\n';
 		}
 	}
 	else

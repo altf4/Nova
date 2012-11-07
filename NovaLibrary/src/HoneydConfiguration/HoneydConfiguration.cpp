@@ -154,9 +154,9 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 				{
 					PortSet *portSet = new PortSet(portsets.second.get<string>("name"));
 
-					portSet->m_defaultTCPBehavior = StringToPortBehavior(portsets.second.get<string>("defaultTCPBehavior"));
-					portSet->m_defaultUDPBehavior = StringToPortBehavior(portsets.second.get<string>("defaultUDPBehavior"));
-					portSet->m_defaultICMPBehavior = StringToPortBehavior(portsets.second.get<string>("defaultICMPBehavior"));
+					portSet->m_defaultTCPBehavior = Port::StringToPortBehavior(portsets.second.get<string>("defaultTCPBehavior"));
+					portSet->m_defaultUDPBehavior = Port::StringToPortBehavior(portsets.second.get<string>("defaultUDPBehavior"));
+					portSet->m_defaultICMPBehavior = Port::StringToPortBehavior(portsets.second.get<string>("defaultICMPBehavior"));
 
 					//Exceptions
 					BOOST_FOREACH(ptree::value_type &ports, portsets.second.get_child("exceptions"))
@@ -166,8 +166,8 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 						port.m_service = ports.second.get<string>("service");
 						port.m_scriptName = ports.second.get<string>("script");
 						port.m_portNumber = ports.second.get<uint>("number");
-						port.m_behavior = StringToPortBehavior(ports.second.get<string>("behavior"));
-						port.m_protocol = StringToPortProtocol(ports.second.get<string>("protocol"));
+						port.m_behavior = Port::StringToPortBehavior(ports.second.get<string>("behavior"));
+						port.m_protocol = Port::StringToPortProtocol(ports.second.get<string>("protocol"));
 
 						portSet->AddPort(port);
 					}
@@ -480,9 +480,9 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 
 			portSet.put<string>("name", root->m_portSets[i]->m_name);
 
-			portSet.put<string>("defaultTCPBehavior", PortBehaviorToString(root->m_portSets[i]->m_defaultTCPBehavior));
-			portSet.put<string>("defaultUDPBehavior", PortBehaviorToString(root->m_portSets[i]->m_defaultUDPBehavior));
-			portSet.put<string>("defaultICMPBehavior", PortBehaviorToString(root->m_portSets[i]->m_defaultICMPBehavior));
+			portSet.put<string>("defaultTCPBehavior", Port::PortBehaviorToString(root->m_portSets[i]->m_defaultTCPBehavior));
+			portSet.put<string>("defaultUDPBehavior", Port::PortBehaviorToString(root->m_portSets[i]->m_defaultUDPBehavior));
+			portSet.put<string>("defaultICMPBehavior", Port::PortBehaviorToString(root->m_portSets[i]->m_defaultICMPBehavior));
 
 			//A new subtree for the exceptions
 			ptree exceptions;
@@ -495,8 +495,8 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 				port.put<string>("service", root->m_portSets[i]->m_TCPexceptions[j].m_service);
 				port.put<string>("script", root->m_portSets[i]->m_TCPexceptions[j].m_scriptName);
 				port.put<uint>("number", root->m_portSets[i]->m_TCPexceptions[j].m_portNumber);
-				port.put<string>("behavior", PortBehaviorToString(root->m_portSets[i]->m_TCPexceptions[j].m_behavior));
-				port.put<string>("protocol", PortProtocolToString(root->m_portSets[i]->m_TCPexceptions[j].m_protocol));
+				port.put<string>("behavior", Port::PortBehaviorToString(root->m_portSets[i]->m_TCPexceptions[j].m_behavior));
+				port.put<string>("protocol", Port::PortProtocolToString(root->m_portSets[i]->m_TCPexceptions[j].m_protocol));
 
 				exceptions.add_child("port", port);
 			}
@@ -510,8 +510,8 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 				port.put<string>("service", root->m_portSets[i]->m_UDPexceptions[j].m_service);
 				port.put<string>("script", root->m_portSets[i]->m_UDPexceptions[j].m_scriptName);
 				port.put<uint>("number", root->m_portSets[i]->m_UDPexceptions[j].m_portNumber);
-				port.put<string>("behavior", PortBehaviorToString(root->m_portSets[i]->m_UDPexceptions[j].m_behavior));
-				port.put<string>("protocol", PortProtocolToString(root->m_portSets[i]->m_UDPexceptions[j].m_protocol));
+				port.put<string>("behavior", Port::PortBehaviorToString(root->m_portSets[i]->m_UDPexceptions[j].m_behavior));
+				port.put<string>("protocol", Port::PortProtocolToString(root->m_portSets[i]->m_UDPexceptions[j].m_protocol));
 
 				exceptions.add_child("port", port);
 			}

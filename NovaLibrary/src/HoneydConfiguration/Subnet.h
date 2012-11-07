@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : Script.h
+// Name        : Subnet.h
 // Copyright   : DataSoft Corporation 2011-2012
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,34 +13,32 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Represents a single honeyd script that can be bound to a port
-//		to emulate a network service.
+// Description : Represents a single subnet that honeyd can be expected to operate on
 //============================================================================
-
-#ifndef SCRIPT_H_
-#define SCRIPT_H_
-
-#include "../HashMapStructs.h"
+#ifndef SUBNET_H_
+#define SUBNET_H_
 
 namespace Nova
 {
 
-class Script
+class Subnet
 {
 
 public:
 
 	std::string m_name;
-	std::string m_service;
-	std::string m_osclass;
-	std::string m_path;
-
+	std::string m_address;
+	std::string m_mask;
+	int m_maskBits;
+	in_addr_t m_base;
+	in_addr_t m_max;
+	bool m_enabled;
+	bool m_isRealDevice;
+	std::vector<std::string> m_nodes;
+	boost::property_tree::ptree m_tree;
 };
-
-//Container for accessing script items
-typedef Nova::HashMap<std::string, Script, std::hash<std::string>, eqstr > ScriptTable;
 
 }
 
 
-#endif /* SCRIPT_H_ */
+#endif /* SUBNET_H_ */

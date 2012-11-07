@@ -33,4 +33,114 @@ Port::Port(string name, enum PortProtocol protocol, uint portNumber, enum PortBe
 	m_behavior = behavior;
 }
 
+string Port::PortBehaviorToString(enum PortBehavior behavior)
+{
+	switch(behavior)
+	{
+		case PORT_OPEN:
+		{
+			return "open";
+		}
+		case PORT_CLOSED:
+		{
+			return "closed";
+		}
+		case PORT_FILTERED:
+		{
+			return "filtered";
+		}
+		case PORT_SCRIPT:
+		{
+			return "script";
+		}
+		case PORT_TARPIT_OPEN:
+		{
+			return "tarpit open";
+		}
+		case PORT_TARPIT_SCRIPT:
+		{
+			return "tarpit script";
+		}
+		default:
+		{
+			return "";
+		}
+	}
+}
+
+enum PortBehavior Port::StringToPortBehavior(string behavior)
+{
+	if(!behavior.compare("open"))
+	{
+		return PORT_OPEN;
+	}
+	else if(!behavior.compare("closed"))
+	{
+		return PORT_CLOSED;
+	}
+	else if(!behavior.compare("filtered"))
+	{
+		return PORT_FILTERED;
+	}
+	else if(!behavior.compare("script"))
+	{
+		return PORT_SCRIPT;
+	}
+	else if(!behavior.compare("tarpit open"))
+	{
+		return PORT_TARPIT_OPEN;
+	}
+	else if(!behavior.compare("tarpit script"))
+	{
+		return PORT_TARPIT_SCRIPT;
+	}
+	else
+	{
+		return PORT_ERROR;
+	}
+}
+
+string Port::PortProtocolToString(enum PortProtocol protocol)
+{
+	switch(protocol)
+	{
+		case PROTOCOL_UDP:
+		{
+			return "udp";
+		}
+		case PROTOCOL_TCP:
+		{
+			return "tcp";
+		}
+		case PROTOCOL_ICMP:
+		{
+			return "icmp";
+		}
+		default:
+		{
+			return "";
+		}
+	}
+}
+
+enum PortProtocol Port::StringToPortProtocol(string protocol)
+{
+	if(!protocol.compare("tcp"))
+	{
+		return PROTOCOL_TCP;
+	}
+	else if(!protocol.compare("udp"))
+	{
+		return PROTOCOL_UDP;
+	}
+	else if(!protocol.compare("icmp"))
+	{
+		return PROTOCOL_ICMP;
+	}
+	else
+	{
+		return PROTOCOL_ERROR;
+	}
+}
+
 }

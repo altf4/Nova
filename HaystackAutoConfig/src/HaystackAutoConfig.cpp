@@ -42,6 +42,7 @@
 #include "HoneydConfiguration/HoneydConfiguration.h"
 #include "HoneydConfiguration/ProfileTree.h"
 #include "HoneydConfiguration/VendorMacDb.h"
+#include "HoneydConfiguration/Subnet.h"
 #include "Logger.h"
 
 using namespace std;

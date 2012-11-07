@@ -21,8 +21,9 @@
 #ifndef PORTSET_H_
 #define PORTSET_H_
 
-#include "HoneydConfigTypes.h"
 #include "Port.h"
+
+#include <vector>
 
 namespace Nova
 {
