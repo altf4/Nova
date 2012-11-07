@@ -324,23 +324,22 @@ block headerAdditions
     }
 
     function classificationFormatter(d) {
-        var num = 100 * d;
-        if (num >= 0) {
-            // Minor performance boost, don't bother with coloring those < than 5% hostile, barely shows anyway
+        if (d === null) {
+            return "NULL";
+        } else if (d == -1) {
+            return "Invalid";
+        } else if (d == -2) {
+            return "Not Enough Data";
+        } else if (d >= 0 && d <= 1) {
+            var num = 100 * d;
+            // Minor performance boost, don not bother with coloring those < than 5% hostile, barely shows anyway
             if (num > 5) {
                 return '<div style="background: rgba(255, 0, 0, ' + d.toFixed(2) + ');">' + num.toFixed(2) + "%</div>";
             } else {
                 return num.toFixed(2) + "%";
             }
         } else {
-            if (num == -100) {
-                return "Invalid";
-            } else if (num == -200) {
-                return "Not Enough Data";
-            } else {
-                return "Error";
-            }
-
+             return "Error";
         }
     }
 
