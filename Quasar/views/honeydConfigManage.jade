@@ -175,6 +175,22 @@ block headerAdditions
             theDoc.getElementById('appendHook').appendChild(tr);
           }
           
+          if(scriptProfileBindings.length == 0)
+          {
+            var tr = theDoc.createElement('tr');
+            var td0 = theDoc.createElement('td0');
+            var td1 = theDoc.createElement('td1');
+            var label0 = theDoc.createElement('label');
+            var label1 = theDoc.createElement('label');
+            label0.innerHTML = 'N/A';
+            label1.innerHTML = 'N/A';
+            td0.appendChild(label0);
+            td1.appendChild(label1);
+            tr.appendChild(td0);
+            tr.appendChild(td1);
+            theDoc.getElementById('appendHook').appendChild(tr);
+          }
+          
           for(var i in profileObj)
           {
             var profile = {};
@@ -247,9 +263,11 @@ block headerAdditions
             piChartRender.push(p);
           }
           
-          var pi = new NovaPiChart('piChart', 200, 'deleteByProfile');
+          var pi = new NovaPiChart('piChart', 200);
           pi.Render(piChartRender);
-        })
+        });
+
+        theDoc.getElementById('treeAndPiContainer').setAttribute('style', 'width: ' + theDoc.getElementById('sizeAnchor').style.width);
       }
       else
       {
@@ -436,6 +454,13 @@ block headerAdditions
         theDoc.getElementById('vendors').appendChild(br);
       }
       
+      now.GetPorts(profile, function(ports){
+        for(var i in ports)
+        {
+          console.log('ports ' + ports);
+        }
+      });
+      
       if(saveProfileObjs[profile].fixedOrRange == 'fixed')
       {
         if(saveProfileObjs[profile].uptimeValue != '')
@@ -480,11 +505,11 @@ block content
     br
     div#treeAndPiContainer
       div#piChart(style='float: left')
-      div#treeDiv(style='float: left')
+      div#treeDiv(style='float: right')
     br
     br
     div#summary
-      table(border='1', style='border: solid black 2px;')
+      table(border='1', style='border: solid black 2px; width: 600px', id='sizeAnchor')
         thead
           tr
             th(style='background-color: #d0e9fc;') Scripts
