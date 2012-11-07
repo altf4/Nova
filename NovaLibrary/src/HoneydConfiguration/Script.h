@@ -30,7 +30,9 @@ class Script
 
 public:
 
+	//Unique identifer of the script
 	std::string m_name;
+
 	std::string m_service;
 	std::string m_osclass;
 	std::string m_path;
@@ -38,6 +40,7 @@ public:
 };
 
 //Container for accessing script items
+//	key = m_name of the given script
 typedef Nova::HashMap<std::string, Script, std::hash<std::string>, eqstr > ScriptTable;
 
 }
