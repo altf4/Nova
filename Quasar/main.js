@@ -2616,13 +2616,44 @@ everyone.now.GetConfigSummary = function(configName, callback)
   }
   
   var profileObj = {};
-  for (var i = 0; i < profiles.length; i++) {
+  for (var i = 0; i < profiles.length; i++) 
+  {
     if(profiles[i] != undefined && profiles[i] != '')
     {
       var prof = honeydConfig.GetProfile(profiles[i]);
       var obj = {};
+      var vendorNames = prof.GetVendors();
+      var vendorDist = prof.GetVendorDistributions();
+      
       obj.name = prof.GetName();
       obj.parent = prof.GetParentProfile();
+      obj.os = prof.GetPersonality();
+      obj.packetDrop = prof.GetDropRate();
+      obj.vendors = [];
+      
+      for(var j = 0; j < vendorNames.length; j++)
+      {
+        var push = {};
+        push.name = vendorNames[j];
+        push.dist = vendorDist[j];
+        obj.vendors.push(push);
+      }
+      
+      if(prof.GetUptimeMin() == prof.GetUptimeMax())
+      {
+        obj.fixedOrRange = 'fixed';
+        obj.uptimeValue = prof.GetUptimeMin();
+      }
+      else
+      {
+        obj.fixedOrRange = 'range';
+        obj.uptimeValueMin = prof.GetUptimeMin();
+        obj.uptimeValueMax = prof.GetUptimeMax();        
+      }
+      
+      obj.defaultTCP = prof.GetTcpAction();
+      obj.defaultUDP = prof.GetUdpAction();
+      obj.defaultICMP = prof.GetIcmpAction();
       profileObj[profiles[i]] = obj;
     }
   }

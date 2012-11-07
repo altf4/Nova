@@ -49,6 +49,7 @@ block headerAdditions
     var configurationList = !{JSON.stringify(configurations)};
     var theDoc = document;
     var profilesArray = {};
+    var saveProfileObjs = {};
     
     function closeLightbox()
     {
@@ -67,7 +68,7 @@ block headerAdditions
       {
         console.log('Creating empty configuration ' + configName);
       }
-      else 
+      else
       {
         console.log('Creating clone configuration ' + configName + ' based on ' + cloneInfo);
       }
@@ -156,6 +157,8 @@ block headerAdditions
           // object literal notation of javascript to allow the server side
           // to do the calculations, and then send exactly the data required to
           // the browser.
+          saveProfileObjs = profileObj;
+          
           for(var i in scriptProfileBindings)
           {
             var tr = theDoc.createElement('tr');
@@ -365,6 +368,7 @@ block headerAdditions
           now.RemoveConfiguration(configToRemove, function(name){
             theDoc.getElementById('default').selected = true;
             theDoc.getElementById('configurations').removeChild(theDoc.getElementById(name));
+            
             for(var i in configurationList)
             {
               if(configurationList[i] == name)
@@ -372,6 +376,15 @@ block headerAdditions
                 configurationList[i] = undefined;
               }
             }
+            
+            for(var i in saveProfileObjs)
+            {
+              if(saveProfileObjs[i].name == name)
+              {
+                saveProfileObjs[i] = undefined;
+              }
+            }
+            
             GetConfigurationSummary();
           });
         }
@@ -388,8 +401,66 @@ block headerAdditions
     
     function onProfileClicked(profile)
     {
-      console.log('in onProfileClicked with arg ' + profile);
+      while(theDoc.getElementById('vendors').hasChildNodes())
+      {
+        theDoc.getElementById('vendors').removeChild(theDoc.getElementById('vendors').lastChild);
+      }
+      
       showLightBox('2');
+      theDoc.getElementById('parentName').innerHTML = saveProfileObjs[profile].parent + ' -> ' + saveProfileObjs[profile].name;
+      theDoc.getElementById('dropPercent').innerHTML = 'Packet Drop Percentage: ' + saveProfileObjs[profile].packetDrop;
+      
+      if(saveProfileObjs[profile].os != '')
+      {
+        theDoc.getElementById('os').innerHTML = 'Personality: ' + saveProfileObjs[profile].os;
+      }
+      else
+      {
+        theDoc.getElementById('os').innerHTML = 'Personality: None set';
+      }
+      
+      var toplabel = theDoc.createElement('label');
+      var topbr = theDoc.createElement('br');
+      
+      toplabel.innerHTML = 'Vendors:';
+      
+      theDoc.getElementById('vendors').appendChild(toplabel);
+      theDoc.getElementById('vendors').appendChild(topbr);
+      
+      for(var i in saveProfileObjs[profile].vendors)
+      {
+        var label = theDoc.createElement('label');
+        var br = theDoc.createElement('br');
+        label.innerHTML = saveProfileObjs[profile].vendors[i].name + ': ' + saveProfileObjs[profile].vendors[i].dist + '%';
+        theDoc.getElementById('vendors').appendChild(label);
+        theDoc.getElementById('vendors').appendChild(br);
+      }
+      
+      if(saveProfileObjs[profile].fixedOrRange == 'fixed')
+      {
+        if(saveProfileObjs[profile].uptimeValue != '')
+        {
+          theDoc.getElementById('fixedOrUptime').innerHTML = 'Fixed Uptime Value: ' + saveProfileObjs[profile].uptimeValue;
+        }
+        else
+        {
+          theDoc.getElementById('fixedOrUptime').innerHTML = 'Fixed Uptime Value: None';
+        }
+      }
+      else if(saveProfileObjs[profile].fixedOrRange == 'range')
+      {
+        theDoc.getElementById('fixedOrUptime').innerHTML = 'Uptime Value Range: ' + saveProfileObjs[profile].uptimeValueMin + ' to ' + saveProfileObjs[profile].uptimeValueMax;
+      }
+      else
+      {
+        console.log('fixedOrRange not found');
+        closeLightbox();
+        return;
+      }
+      
+      theDoc.getElementById('defTCP').innerHTML = 'Default TCP Action: ' + saveProfileObjs[profile].defaultTCP;
+      theDoc.getElementById('defUDP').innerHTML = 'Default UDP Action: ' + saveProfileObjs[profile].defaultUDP;
+      theDoc.getElementById('defICMP').innerHTML = 'Default ICMP Action: ' + saveProfileObjs[profile].defaultICMP;
     }
     
     now.ready(function(){
@@ -438,4 +509,23 @@ block content
         br
         button#submitClone Submit
     div#profileInfo
+      h1#parentName(style='font-weight: bold;')
+      br
+      label#os
+      br
+      br
+      div#vendors
+      //div#ports
+      br
+      label#dropPercent
+      br
+      label#fixedOrUptime
+      br
+      label#defTCP
+      br
+      label#defUDP
+      br
+      label#defICMP
+      br
+      br
     button#closeLB(onclick='closeLightbox()') Close
