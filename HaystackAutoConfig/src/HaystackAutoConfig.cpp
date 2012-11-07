@@ -42,6 +42,7 @@
 #include "HoneydConfiguration/HoneydConfiguration.h"
 #include "HoneydConfiguration/ProfileTree.h"
 #include "HoneydConfiguration/VendorMacDb.h"
+#include "HoneydConfiguration/Subnet.h"
 #include "Logger.h"
 
 using namespace std;
@@ -964,9 +965,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 void Nova::GenerateConfiguration()
 {
 	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
-
-	//XXX Only here for debug
-	HoneydConfiguration::Inst()->WriteAllTemplatesToXML();
 
 	if(!HoneydConfiguration::Inst()->ReadAllTemplatesXML())
 	{

@@ -20,6 +20,8 @@
 
 #include "PortSet.h"
 
+#include "sstream"
+
 using namespace std;
 
 namespace Nova
@@ -76,9 +78,9 @@ string PortSet::ToString(const string &profileName)
 	stringstream out;
 
 	//Defaults
-	out << "set " << profileName << " default tcp action " << PortBehaviorToString(m_defaultTCPBehavior) << '\n';
-	out << "set " << profileName << " default udp action " << PortBehaviorToString(m_defaultUDPBehavior) << '\n';
-	out << "set " << profileName << " default icmp action " << PortBehaviorToString(m_defaultICMPBehavior) << '\n';
+	out << "set " << profileName << " default tcp action " << Port::PortBehaviorToString(m_defaultTCPBehavior) << '\n';
+	out << "set " << profileName << " default udp action " << Port::PortBehaviorToString(m_defaultUDPBehavior) << '\n';
+	out << "set " << profileName << " default icmp action " << Port::PortBehaviorToString(m_defaultICMPBehavior) << '\n';
 
 	//TCP Exceptions
 	for(uint i = 0; i < m_TCPexceptions.size(); i++)
@@ -91,7 +93,7 @@ string PortSet::ToString(const string &profileName)
 		else
 		{
 			out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << " " <<
-					PortBehaviorToString(m_TCPexceptions[i].m_behavior) << "\n";
+					Port::PortBehaviorToString(m_TCPexceptions[i].m_behavior) << "\n";
 		}
 	}
 
@@ -106,7 +108,7 @@ string PortSet::ToString(const string &profileName)
 		else
 		{
 			out << "add " << profileName << " udp port " << m_UDPexceptions[i].m_portNumber << " " <<
-					PortBehaviorToString(m_UDPexceptions[i].m_behavior) << "\n";
+					Port::PortBehaviorToString(m_UDPexceptions[i].m_behavior) << "\n";
 		}
 	}
 

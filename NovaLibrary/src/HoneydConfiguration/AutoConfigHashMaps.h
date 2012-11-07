@@ -20,7 +20,7 @@
 #ifndef AUTOCONFIGHASHMAPS_H_
 #define AUTOCONFIGHASHMAPS_H_
 
-#include "HoneydConfigTypes.h"
+#include "Script.h"
 
 //HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
 typedef Nova::HashMap<std::string, uint16_t, std::hash<std::string>, eqstr > MACVendorMap;

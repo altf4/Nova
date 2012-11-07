@@ -21,10 +21,29 @@
 #ifndef PORT_H_
 #define PORT_H_
 
-#include "HoneydConfigTypes.h"
+#include "string"
 
 namespace Nova
 {
+
+enum PortBehavior
+{
+	PORT_FILTERED = 0
+	, PORT_CLOSED
+	, PORT_OPEN
+	, PORT_SCRIPT
+	, PORT_TARPIT_OPEN
+	, PORT_TARPIT_SCRIPT
+	, PORT_ERROR
+};
+
+enum PortProtocol
+{
+	PROTOCOL_UDP = 0
+	, PROTOCOL_TCP
+	, PROTOCOL_ICMP
+	, PROTOCOL_ERROR
+};
 
 class Port
 {
@@ -34,7 +53,21 @@ public:
 	Port(std::string name, enum PortProtocol protocol, uint portNumber, enum PortBehavior behavior);
 	Port(){};
 
-	struct PortStruct GetCompatStruct();
+	//Returns a string representation of the given PortProtocol
+	//	Returns one of: "udp" "tcp" "icmp" or "" for error
+	static std::string PortProtocolToString(enum PortProtocol protocol);
+
+	//Returns a PortProtocol enum which is represented by the given string
+	//	returns PROTOCOL_ERROR on error
+	static enum PortProtocol StringToPortProtocol(std::string protocol);
+
+	//Returns a string representation of the given PortBehavior
+	//	Returns one of: "closed" "open" "filtered" "script" "tarpit-open" "tarpit-script" or "" for error
+	static std::string PortBehaviorToString(enum PortBehavior behavior);
+
+	//Returns a PortBehavior enum which is represented by the given string
+	//	returns PORT_ERROR on error
+	static enum PortBehavior StringToPortBehavior(std::string behavior);
 
 	std::string m_service;
 
