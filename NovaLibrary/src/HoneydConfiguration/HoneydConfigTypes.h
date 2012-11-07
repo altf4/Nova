@@ -34,13 +34,6 @@
 namespace Nova
 {
 
-enum HoneydConfigReturn
-{
-	INHERITED
-	, NOT_INHERITED
-	, NO_SUCH_KEY
-};
-
 enum PortBehavior
 {
 	PORT_FILTERED = 0
@@ -59,13 +52,6 @@ std::string PortBehaviorToString(enum PortBehavior behavior);
 //	returns PORT_ERROR on error
 enum PortBehavior StringToPortBehavior(std::string behavior);
 
-enum RecursiveDirection
-{
-	ALL = 0
-	, UP
-	, DOWN
-};
-
 enum PortProtocol
 {
 	PROTOCOL_UDP = 0
@@ -81,57 +67,6 @@ std::string PortProtocolToString(enum PortProtocol protocol);
 //	returns PROTOCOL_ERROR on error
 enum PortProtocol StringToPortProtocol(std::string protocol);
 
-enum profileIndex {
-	TYPE
-	, TCP_ACTION
-	, UDP_ACTION
-	, ICMP_ACTION
-	, PERSONALITY
-	, ETHERNET
-	, UPTIME
-	, DROP_RATE
-};
-
-enum nodeConflictType : char
-{
-	NO_CONFLICT,
-	IP_CONFLICT,
-	MAC_CONFLICT
-};
-
-//used to maintain information about a port, it's type and behavior
-//	Useful as a compatibility layer into Quasar
-struct PortStruct
-{
-	std::string m_portName;
-	std::string m_portNum;
-	std::string m_type;
-	std::string m_service;
-	std::string m_behavior;
-	std::string m_scriptName;
-	std::string m_proxyIP;
-	std::string m_proxyPort;
-	boost::property_tree::ptree m_tree;
-
-	// This is only for the Javascript web interface, avoid use in C++
-	bool m_isInherited;
-
-	// This is for the Javascript web interface bindings
-	inline std::string GetPortName() {return m_portName;}
-	inline std::string GetPortNum() {return m_portNum;}
-	inline std::string GetType() {return m_type;}
-	inline std::string GetBehavior() {return m_behavior;}
-	inline std::string GetScriptName() {return m_scriptName;}
-	inline std::string GetProxyIP() {return m_proxyIP;}
-	inline std::string GetProxyPort() {return m_proxyPort;}
-	inline bool GetIsInherited() {return m_isInherited;}
-	inline std::string GetService() {return m_service;}
-
-
-};
-//Container for accessing port items
-typedef Nova::HashMap<std::string, PortStruct, std::hash<std::string>, eqstr > PortTable;
-
 //used to keep track of subnet gui items and allow for easy access
 struct Subnet
 {
@@ -146,31 +81,6 @@ struct Subnet
 	std::vector<std::string> m_nodes;
 	boost::property_tree::ptree m_tree;
 };
-
-//used to keep track of haystack node gui items and allow for easy access
-struct Node
-{
-	std::string m_interface;
-	std::string m_pfile;
-	std::string m_portSetName;
-	std::vector<bool> m_isPortInherited;
-	std::string m_IP;
-	std::string m_MAC;
-	in_addr_t m_realIP;
-	bool m_enabled;
-
-	// This is for the Javascript bindings in the web interface
-	inline std::string GetInterface() {return m_interface;}
-	inline std::string GetProfile() {return m_pfile;}
-	inline std::string GetIP() {return m_IP;}
-	inline std::string GetMAC() {return m_MAC;}
-	inline bool IsEnabled() {return m_enabled;}
-};
-
-//Container for accessing node items
-//Key - String representation of the MAC address used for the node
-//value - The Node object itself
-typedef Nova::HashMap<std::string, Node, std::hash<std::string>, eqstr > NodeTable;
 
 }
 

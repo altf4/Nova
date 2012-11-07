@@ -34,8 +34,6 @@ public:
 	Port(std::string name, enum PortProtocol protocol, uint portNumber, enum PortBehavior behavior);
 	Port(){};
 
-	struct PortStruct GetCompatStruct();
-
 	std::string m_service;
 
 	enum PortProtocol m_protocol;

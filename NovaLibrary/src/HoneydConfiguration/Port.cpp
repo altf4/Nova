@@ -33,11 +33,4 @@ Port::Port(string name, enum PortProtocol protocol, uint portNumber, enum PortBe
 	m_behavior = behavior;
 }
 
-struct PortStruct GetCompatStruct()
-{
-	//TODO: Fill this in
-	struct PortStruct retPort;
-	return retPort;
-}
-
 }

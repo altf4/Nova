@@ -25,6 +25,7 @@
 #include "PortSet.h"
 #include "ProfileTree.h"
 #include "Script.h"
+#include "Node.h"
 
 namespace Nova
 {
