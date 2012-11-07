@@ -296,34 +296,27 @@ bool HoneydConfiguration::ReadScriptsXML()
 		BOOST_FOREACH(ptree::value_type &value, m_scriptTree.get_child("scripts"))
 		{
 			Script script;
-			script.m_tree = value.second;
-			//Each script consists of a name and path to that script
-			script.m_name = value.second.get<string>("name");
-
-			if(!script.m_name.compare(""))
-			{
-				LOG(ERROR, "Unable to a valid script from the templates!", "");
-				return false;
-			}
-
 			try
 			{
-				script.m_osclass = value.second.get<string>("osclass");
-			}
-			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-			{
-				LOG(DEBUG, "No OS class found for script '" + script.m_name + "'.", "");
-			};
-			try
-			{
+				//Each script consists of a name and path to that script
+				script.m_name = value.second.get<string>("name");
+
+				if(script.m_name == "")
+				{
+					LOG(DEBUG, "Read a Invalid name for script", "");
+					continue;
+				}
+
 				script.m_service = value.second.get<string>("service");
+				script.m_osclass = value.second.get<string>("osclass");
+				script.m_path = value.second.get<string>("path");
+				m_scripts[script.m_name] = script;
+
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
-				LOG(DEBUG, "No service found for script '" + script.m_name + "'.", "");
+				LOG(DEBUG, "Could not read script: '" + script.m_name + "'.", "");
 			};
-			script.m_path = value.second.get<string>("path");
-			m_scripts[script.m_name] = script;
 		}
 	}
 	catch(Nova::hashMapException &e)
@@ -352,8 +345,7 @@ bool HoneydConfiguration::WriteScriptsToXML()
 	m_scriptTree.clear();
 	for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
 	{
-		propTree = it->second.m_tree;
-		propTree.put<string>("name", it->second.m_service);
+		propTree.put<string>("name", it->second.m_name);
 		propTree.put<string>("service", it->second.m_service);
 		propTree.put<string>("osclass", it->second.m_osclass);
 		propTree.put<string>("path", it->second.m_path);

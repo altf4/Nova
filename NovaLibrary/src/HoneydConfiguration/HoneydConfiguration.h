@@ -24,6 +24,7 @@
 #include "VendorMacDb.h"
 #include "PortSet.h"
 #include "ProfileTree.h"
+#include "Script.h"
 
 namespace Nova
 {

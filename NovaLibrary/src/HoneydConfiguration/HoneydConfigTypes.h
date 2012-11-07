@@ -99,19 +99,6 @@ enum nodeConflictType : char
 	MAC_CONFLICT
 };
 
-//used to maintain information on imported scripts
-struct Script
-{
-	std::string m_name;
-	std::string m_service;
-	std::string m_osclass;
-	std::string m_path;
-	boost::property_tree::ptree m_tree;
-};
-
-//Container for accessing script items
-typedef Nova::HashMap<std::string, Script, std::hash<std::string>, eqstr > ScriptTable;
-
 //used to maintain information about a port, it's type and behavior
 //	Useful as a compatibility layer into Quasar
 struct PortStruct
