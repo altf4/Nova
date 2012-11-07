@@ -965,9 +965,6 @@ void Nova::GenerateConfiguration()
 {
 	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
 
-	//XXX Only here for debug
-	HoneydConfiguration::Inst()->WriteAllTemplatesToXML();
-
 	if(!HoneydConfiguration::Inst()->ReadAllTemplatesXML())
 	{
 		LOG(WARNING, "Problem reading template XMLs from file", "");
