@@ -102,7 +102,7 @@ string Profile::ToString(const std::string &portSetName, const std::string &node
 	}
 
 
-	if(m_key.compare("") && m_key.compare("NULL"))
+	if((m_personality != "") && (m_personality != "NULL"))
 	{
 		out << "set " << nodeName << " personality \"" << m_personality << '"' << '\n';
 	}
