@@ -67,6 +67,7 @@ bool HoneydConfiguration::LoadAllTemplates()
 	m_ports.clear();
 	m_profiles.clear();
 	m_nodes.clear();
+	m_configs.clear();
 
 	if(!LoadScriptsTemplate())
 	{
@@ -91,6 +92,11 @@ bool HoneydConfiguration::LoadAllTemplates()
 	if(!LoadNodeKeys())
 	{
 		LOG(ERROR, "Unable to load Node Keys!", "");
+		return false;
+	}
+	if(!LoadConfigurations())
+	{
+		LOG(ERROR, "Unable to load Configuration Names!", "");
 		return false;
 	}
 	return true;
@@ -210,9 +216,9 @@ bool HoneydConfiguration::SaveAllTemplates()
 		boost::property_tree::xml_writer_settings<char> settings('\t', 1);
 		string homePath = Config::Inst()->GetPathHome();
 		write_xml(homePath + "/config/templates/scripts.xml", m_scriptTree, locale(), settings);
-		write_xml(homePath + "/config/templates/ports.xml", m_portTree, locale(), settings);
-		write_xml(homePath + "/config/templates/nodes.xml", m_groupTree, locale(), settings);
-		write_xml(homePath + "/config/templates/profiles.xml", m_profileTree, locale(), settings);
+		write_xml(homePath + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/ports.xml", m_portTree, locale(), settings);
+		write_xml(homePath + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/nodes.xml", m_groupTree, locale(), settings);
+		write_xml(homePath + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/profiles.xml", m_profileTree, locale(), settings);
 	}
 	catch(boost::property_tree::xml_parser_error &e)
 	{
@@ -1554,7 +1560,7 @@ bool HoneydConfiguration::LoadPortsTemplate()
 	m_portTree.clear();
 	try
 	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/ports.xml", m_portTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_portTree.get_child("ports"))
 		{
@@ -1634,7 +1640,7 @@ bool HoneydConfiguration::LoadProfilesTemplate()
 	m_profileTree.clear();
 	try
 	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		BOOST_FOREACH(ptree::value_type &value, m_profileTree.get_child("profiles"))
 		{
@@ -1742,7 +1748,7 @@ bool HoneydConfiguration::LoadNodesTemplate()
 
 	try
 	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
 		m_groups.clear();
 		BOOST_FOREACH(ptree::value_type &value, m_groupTree.get_child("groups"))
 		{
@@ -2602,4 +2608,175 @@ bool HoneydConfiguration::RecursiveCheckNotInheritingEmptyProfile(const NodeProf
 		return false;
 	}
 }
+
+bool HoneydConfiguration::SwitchToConfiguration(const string& configName)
+{
+	bool found = false;
+
+	for(uint i = 0; i < m_configs.size(); i++)
+	{
+		if(!m_configs[i].compare(configName))
+		{
+			found = true;
+		}
+	}
+
+	if(found)
+	{
+		Config::Inst()->SetCurrentConfig(configName);
+		return true;
+	}
+	else
+	{
+		cout << "No configuration with name " << configName << " found, doing nothing" << endl;
+		return false;
+	}
+}
+
+bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clone, const string& cloneConfig)
+{
+	bool found = false;
+
+	if(configName.empty())
+	{
+		cout << "Empty string is not acceptable configuration name, exiting" << endl;
+		return false;
+	}
+
+	for(uint i = 0; i < m_configs.size(); i++)
+	{
+		if(!m_configs[i].compare(configName))
+		{
+			cout << "Cannot add configuration with the same name as existing configuration" << endl;
+			return false;
+		}
+		if(clone && !m_configs[i].compare(cloneConfig))
+		{
+			found = true;
+		}
+	}
+
+	if(clone && !found)
+	{
+		cout << "Cannot find configuration " << cloneConfig << " to clone, exiting" << endl;
+		return false;
+	}
+
+	m_configs.push_back(configName);
+
+	string directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName;
+	system(string("mkdir " + directoryPath).c_str());
+
+	ofstream addfile(Config::Inst()->GetPathHome() + "/config/templates/configurations.txt", ios_base::app);
+
+	if(!clone)
+	{
+		// Add configName to configurations.txt within the templates/ folder,
+		// create the templates/configName/ directory, and fill with
+		// empty (but still parseable) xml files
+		Config::Inst()->SetCurrentConfig(configName);
+		NodeTable replace = m_nodes;
+		for(NodeTable::iterator it = replace.begin(); it != replace.end(); it++)
+		{
+			if(it->first.compare("Doppelganger"))
+			{
+				DeleteNode(it->first);
+			}
+		}
+		ProfileTable onlyDefault = m_profiles;
+		for(ProfileTable::iterator it = onlyDefault.begin(); it != onlyDefault.end(); it++)
+		{
+			// Kitchy, but necessary. We should probably have Doppelganger as a direct descendant of default,
+			// or we're going to have to start making special exceptions for 'Shared Settings' as well
+			if(it->first.compare("default") && it->first.compare("Doppelganger") && it->first.compare("Shared Settings"))
+			{
+				DeleteProfile(it->first);
+			}
+		}
+		addfile << configName << '\n';
+		addfile.close();
+		SaveAllTemplates();
+		string routeString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/default/routes.xml ";
+		routeString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		system(routeString.c_str());
+	}
+	else if(clone && found)
+	{
+		// Add configName to configurations.txt within the templates/ folder,
+		// create the templates/configName/ directory, and cp the
+		// stuff from templates/cloneConfig/ into it.
+		string cloneString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/" + cloneConfig + "/* ";
+		cloneString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		system(cloneString.c_str());
+		addfile << configName << '\n';
+		addfile.close();
+	}
+	return false;
+}
+
+bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
+{
+	if(!configName.compare("default"))
+	{
+		cout << "Cannot delete default configuration" << endl;
+		return false;
+	}
+
+	bool found = false;
+
+	uint eraseIdx = 0;
+
+	for(uint i = 0; i < m_configs.size(); i++)
+	{
+		if(!m_configs[i].compare(configName))
+		{
+			found = true;
+			eraseIdx = i;
+		}
+	}
+
+	if(found)
+	{
+		string pathToDelete = "rm -r " + Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		system(pathToDelete.c_str());
+		m_configs.erase(m_configs.begin() + eraseIdx);
+		ofstream configurationsFile(Config::Inst()->GetPathHome() + "/config/templates/configurations.txt");
+		string writeString = "";
+		for(uint i = 0; i < m_configs.size(); i++)
+		{
+			writeString += m_configs[i] + '\n';
+		}
+		configurationsFile << writeString;
+		configurationsFile.close();
+		return true;
+	}
+	else
+	{
+		cout << "No configuration with name " << configName << ", exiting" << endl;
+		return false;
+	}
+}
+
+bool HoneydConfiguration::LoadConfigurations()
+{
+	string configurationPath = Config::Inst()->GetPathHome() + "/config/templates/configurations.txt";
+
+	ifstream configList(configurationPath);
+
+	while(configList.good())
+	{
+		char buffer[256];
+		configList.getline(buffer, 256, '\n');
+		string pushback = string(buffer);
+		m_configs.push_back(pushback);
+	}
+
+	return true;
+}
+
+vector<string> HoneydConfiguration::GetConfigurationsList()
+{
+	return m_configs;
+}
+
 }

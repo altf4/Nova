@@ -49,6 +49,7 @@ var path = require('path');
 var jade = require('jade');
 var express = require('express');
 var util = require('util');
+var https = require('https');
 var passport = require('passport');
 var BasicStrategy = require('passport-http').BasicStrategy;
 var sql = require('sqlite3');
@@ -578,6 +579,14 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   //
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
+
+app.get('/honeydConfigManage', passport.authenticate('basic', {session: false}), function(req, res){
+  res.render('honeydConfigManage.jade', {
+    locals: {
+      configurations: honeydConfig.GetConfigurationsList()
+    }
+  });
+});
 
 app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
 	res.download(novadLogPath, 'novadLog.log');
@@ -1476,7 +1485,27 @@ app.post('/scripts', passport.authenticate('basic', {session: false}), function(
     locals: {
       redirectLink: '/scripts'
     }
-  })
+  });
+});
+
+app.post('/honeydConfigManage', passport.authenticate('basic', {session: false}), function (req, res){
+  var newName = (req.body['newName'] != undefined ? req.body['newName'] : req.body['newNameClone']);
+  var configToClone = (req.body['cloneSelect'] != undefined ? req.body['cloneSelect'] : '');
+  var cloneBool = false;
+  if(configToClone != '')
+  {
+    cloneBool = true;
+  }
+  
+  honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
+  
+  honeydConfig.LoadAllTemplates();
+  
+  res.render('saveRedirect.jade', {
+    locals: {
+      redirectLink: '/honeydConfigManage'
+    }
+  });
 });
 
 app.post('/customizeTrainingSave', passport.authenticate('basic', {session: false}), function (req, res) {
@@ -1842,11 +1871,11 @@ app.get('/scripts', passport.authenticate('basic', {session: false}), function(r
         {
           if(scriptBindings[ports[i].scriptName] == undefined)
           {
-            scriptBindings[ports[i].scriptName] = profileName;
+            scriptBindings[ports[i].scriptName] = profileName + ':' + ports[i].portNum;
           }
           else
           {
-            scriptBindings[ports[i].scriptName] += ',' + profileName;
+            scriptBindings[ports[i].scriptName] += ',' + profileName + ':' + ports[i].portNum;
           }
         }
       }
@@ -2167,7 +2196,9 @@ everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, ad
 	// Check input
 	var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
 	var match = profileNameRegexp.exec(profile.name);
-	if (match == null) {
+	
+	if (match == null) 
+	{
 		var err = "ERROR: Attempt to save a profile with an invalid name. Must be alphanumeric and not begin with a number.";
 		callback(err);
 		return;
@@ -2457,7 +2488,8 @@ everyone.now.RemoveScriptFromProfiles = function(script, profiles, callback) {
   {
     if(profiles[i] != null && profiles[i] != undefined && profiles[i] != '')
     {
-      GetPorts(profiles[i], function(ports, profileName){
+      var pass = profiles[i].substring(0, profiles[i].indexOf(':'));
+      GetPorts(pass, function(ports, profileName){
         if(ports != undefined)
         {
           for(var j in ports)
@@ -2552,11 +2584,131 @@ everyone.now.RemoveScript = function(scriptName, callback)
   }
 }
 
+everyone.now.GetConfigSummary = function(configName, callback)
+{ 
+  honeydConfig.LoadAllTemplates();
+  
+  // Scripts are kept at a higher level of the directory structure, to denote
+  // that regardless of configuration selected, all scripts are selectable; that is,
+  // scripts are configuration-agnostic.
+  var xml = fs.readFileSync(NovaHomePath + '/config/templates/scripts.xml', 'utf8');
+  var libxml = require('libxmljs');
+  var parser = libxml.parseXmlString(xml);
+  
+  var scriptProfileBindings = {};
+  var profiles = honeydConfig.GetProfileNames();
+  
+  for(var i in profiles)
+  {
+    GetPorts(profiles[i], function(ports, profileName){
+      for(var i in ports)
+      {
+        if(ports[i].scriptName != undefined && ports[i].scriptName != '')
+        {
+          if(scriptProfileBindings[ports[i].scriptName] == undefined)
+          {
+            scriptProfileBindings[ports[i].scriptName] = profileName + ':' + ports[i].portNum;
+          }
+          else
+          {
+            scriptProfileBindings[ports[i].scriptName] += ',' + profileName + ':' + ports[i].portNum;
+          }
+        }
+      }
+    });
+  }
+  
+  var profileObj = {};
+  
+  for (var i = 0; i < profiles.length; i++) 
+  {
+    if(profiles[i] != undefined && profiles[i] != '')
+    {
+      var prof = honeydConfig.GetProfile(profiles[i]);
+      var obj = {};
+      var vendorNames = prof.GetVendors();
+      var vendorDist = prof.GetVendorDistributions();
+      
+      obj.name = prof.GetName();
+      obj.parent = prof.GetParentProfile();
+      obj.os = prof.GetPersonality();
+      obj.packetDrop = prof.GetDropRate();
+      obj.vendors = [];
+      
+      for(var j = 0; j < vendorNames.length; j++)
+      {
+        var push = {};
+        
+        push.name = vendorNames[j];
+        push.dist = vendorDist[j];
+        obj.vendors.push(push);
+      }
+      
+      if(prof.GetUptimeMin() == prof.GetUptimeMax())
+      {
+        obj.fixedOrRange = 'fixed';
+        obj.uptimeValue = prof.GetUptimeMin();
+      }
+      else
+      {
+        obj.fixedOrRange = 'range';
+        obj.uptimeValueMin = prof.GetUptimeMin();
+        obj.uptimeValueMax = prof.GetUptimeMax();        
+      }
+      
+      obj.defaultTCP = prof.GetTcpAction();
+      obj.defaultUDP = prof.GetUdpAction();
+      obj.defaultICMP = prof.GetIcmpAction();
+      profileObj[profiles[i]] = obj;
+    }
+  }
+  
+  var nodeNames = honeydConfig.GetNodeNames();
+  var nodeList = [];
+  
+  for (var i = 0; i < nodeNames.length; i++) {
+    var node = honeydConfig.GetNode(nodeNames[i]);
+    var push = {};
+    
+    push.pfile = node.GetProfile();
+    nodeList.push(push);
+  }
+  
+  nodeNames = null;
+  
+  if(typeof callback == 'function')
+  {
+    callback(scriptProfileBindings, profileObj, profiles, nodeList);
+  }
+}
+
+everyone.now.SwitchConfigurationTo = function(configName)
+{
+  honeydConfig.SwitchConfiguration(configName);
+}
+
+everyone.now.RemoveConfiguration = function(configName, callback)
+{
+  if(configName == 'default')
+  {
+    console.log('Cannot delete default configuration');
+  }
+  
+  honeydConfig.RemoveConfiguration(configName);
+  
+  if(typeof callback == 'function')
+  {
+    callback(configName);
+  }
+}
+
 var distributeSuspect = function (suspect) {
 	var s = new Object();
 	objCopy(suspect, s);
 	s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
-	try {
+	
+	try 
+	{
 		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
   
@@ -2593,9 +2745,12 @@ var distributeSuspect = function (suspect) {
 };
 
 var distributeAllSuspectsCleared = function () {
-	try {
+	try 
+	{
 		everyone.now.AllSuspectsCleared();
-	} catch (err) {
+	} 
+	catch(err) 
+	{
 		// We can safely ignore this, it's just because no browsers are connected
 	};
 }
@@ -2622,9 +2777,12 @@ process.on('exit', function () {
 	LOG("ALERT", "Quasar is exiting cleanly.");
 });
 
-function objCopy(src, dst) {
-	for (var member in src) {
-		if (typeof src[member] == 'function') {
+function objCopy(src, dst) 
+{
+	for (var member in src) 
+	{
+		if (typeof src[member] == 'function') 
+		{
 			dst[member] = src[member]();
 		}
 		// Need to think about this
@@ -2632,14 +2790,17 @@ function objCopy(src, dst) {
 		//        {
 		//            copyOver(src[member], dst[member]);
 		//        }
-		else {
+		else 
+		{
 			dst[member] = src[member];
 		}
 	}
 }
 
-function switcher(err, user, success, done) {
-	if (!success) {
+function switcher(err, user, success, done) 
+{
+	if (!success) 
+	{
 		return done(null, false, {
 			message: 'Username/password combination is incorrect'
 		});
@@ -2647,7 +2808,8 @@ function switcher(err, user, success, done) {
 	return done(null, user);
 }
 
-function pad(num) {
+function pad(num) 
+{
   return ("0" + num.toString()).slice(-2);
 }
 
@@ -2662,6 +2824,7 @@ function getRsyslogIp()
   {
     return 'NULL'; 
   }
+  
   var idx = parseInt(read.indexOf('@@')) + 2;
   var ret = '';
    
@@ -2674,9 +2837,12 @@ function getRsyslogIp()
 }
 
 everyone.now.AddInterfaceAlias = function(iface, alias, callback) {
-    if (alias != "") {
+    if (alias != "") 
+    {
         interfaceAliases[iface] = alias;
-    } else {
+    } 
+    else 
+    {
         delete interfaceAliases[iface];
     }
 
@@ -2684,23 +2850,30 @@ everyone.now.AddInterfaceAlias = function(iface, alias, callback) {
     fs.writeFile(NovaHomePath + "/config/interface_aliases.txt", fileString, callback);
 }
 
-function ReloadInterfaceAliasFile() {
+function ReloadInterfaceAliasFile() 
+{
 	var aliasFileData = fs.readFileSync(NovaHomePath + "/config/interface_aliases.txt");
 	interfaceAliases = JSON.parse(aliasFileData);
 }
 
-function ConvertInterfacesToAliases(interfaces) {
+function ConvertInterfacesToAliases(interfaces) 
+{
 	var aliases = new Array();
-	for (var i in interfaces) {
+	for (var i in interfaces) 
+	{
 		aliases.push(ConvertInterfaceToAlias(interfaces[i]));
 	}
 	return aliases;
 }
 
-function ConvertInterfaceToAlias(iface) {
-	if (interfaceAliases[iface] !== undefined) {
+function ConvertInterfaceToAlias(iface) 
+{
+	if (interfaceAliases[iface] !== undefined) 
+	{
 		return interfaceAliases[iface];
-	} else {
+	} 
+	else 
+	{
 		return iface;
 	}
 }
@@ -2708,10 +2881,13 @@ function ConvertInterfaceToAlias(iface) {
 app.get('/*', passport.authenticate('basic', {session: false}));
 
 setInterval(function () {
-	try {
+	try 
+	{
 		everyone.now.updateHaystackStatus(nova.IsHaystackUp());
 		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
-	} catch (err) {
+	} 
+	catch(err) 
+	{
 
 	}
 }, 5000);

@@ -474,7 +474,10 @@ THRESHOLD_HOSTILE_TRIGGERS - - - - >6 >20 >20 - - - - - - >0.5
 ############################################
 ONLY_CLASSIFY_HONEYPOT_TRAFFIC 0
 
-
+############################################
+# CURRENT_CONFIG
+############################################
+CURRENT_CONFIG default
 
 ############################################
 # TLS Options
@@ -504,6 +507,3 @@ QUASAR_TETHER_TLS_ENABLED 1
 QUASAR_TETHER_TLS_CERT /config/keys/quasarTether.crt
 QUASAR_TETHER_TLS_KEY /config/keys/quasarTether.key
 QUASAR_TETHER_TLS_PASSPHRASE toor
-
-
-

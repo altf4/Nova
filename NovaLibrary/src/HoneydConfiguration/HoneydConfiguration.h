@@ -290,11 +290,22 @@ public:
     // Returns a bool indicating whether the update was successful or not.
     bool UpdateNodeMacs(std::string profileName);
 
+    bool AddNewConfiguration(const std::string&, bool, const std::string&);
+
+    bool SwitchToConfiguration(const std::string&);
+
+    bool RemoveConfiguration(const std::string&);
+
+    bool LoadConfigurations();
+
+    std::vector<std::string> GetConfigurationsList();
+
 	PortTable m_ports;
 	ProfileTable m_profiles;
     NodeTable m_nodes;
     ScriptTable m_scripts;
 
+    std::vector<std::string> m_configs;
     std::vector<std::string> m_groups;
 
     VendorMacDb m_macAddresses;

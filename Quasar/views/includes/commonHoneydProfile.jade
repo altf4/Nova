@@ -604,10 +604,14 @@ script
                         pfile.dropRate = dojo.byId("dropRate").value;
                         pfile.uptimeMin = dojo.byId("uptimeMin").value;
 
-                        if (dojo.byId("uptimeType").selectedIndex == 0) {
-                        pfile.uptimeMin = dojo.byId("uptimeMin").value;
-                        } else {
-                        pfile.uptimeMin = dojo.byId("uptimeMin").value;
+                        if (dojo.byId("uptimeType").selectedIndex == 0) 
+                        {
+                          pfile.uptimeMin = dojo.byId("uptimeMin").value;
+                        } 
+                        else 
+                        {
+                          pfile.uptimeMin = dojo.byId("uptimeMin").value;
+                          pfile.uptimeMax = dojo.byId("uptimeMax").value;
                         }
 
 

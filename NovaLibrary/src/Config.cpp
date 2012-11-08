@@ -90,7 +90,8 @@ string Config::m_prefixes[] =
 	"FEATURE_WEIGHTS",
 	"CLASSIFICATION_ENGINE",
 	"THRESHOLD_HOSTILE_TRIGGERS",
-	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC"
+	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC",
+	"CURRENT_CONFIG"
 };
 
 Config *Config::m_instance = NULL;
@@ -491,7 +492,6 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
-
 			//SMTP_PORT
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -613,7 +613,6 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
-
 			// WHITELIST_FILE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -704,7 +703,6 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
-
 			// CLEAR_AFTER_HOSTILE_EVENT
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -788,6 +786,7 @@ void Config::LoadConfig_Internal()
 				}
 				continue;
 			}
+
 			// FEATURE_WEIGHTS
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -946,6 +945,19 @@ void Config::LoadConfig_Internal()
 				if(line.size() > 0)
 				{
 					m_onlyClassifyHoneypotTraffic = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+			}
+
+			// CURRENT_CONFIG
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_currentConfig = string(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 			}
@@ -1253,6 +1265,12 @@ bool Config::LoadVersionFile()
 version Config::GetVersion()
 {
 	return m_version;
+}
+
+string Config::GetCurrentConfig()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_currentConfig;
 }
 
 string Config::GetVersionString()
@@ -1623,7 +1641,6 @@ string Config::ToString()
 	return ss.str();
 }
 
-
 std::string Config::ReadSetting(std::string key)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -1821,7 +1838,6 @@ bool Config::GetUseAnyLoopback()
 	Lock lock(&m_lock, READ_LOCK);
 	return m_loIsDefault;
 }
-
 
 string Config::GetInterface(uint i)
 {
@@ -2117,7 +2133,6 @@ void Config::SetEnabledFeatures_noLocking(string enabledFeatureMask)
 	m_enabledFeatureMask = enabledFeatureMask;
 }
 
-
 void Config::SetEnabledFeatures(string enabledFeatureMask)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -2247,7 +2262,6 @@ std::vector<std::string> Config::ListLoopbacks()
 	return ret;
 }
 
-
 void Config::SetIsDmEnabled(bool isDmEnabled)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -2295,7 +2309,6 @@ void Config::SetPathWhitelistFile(string pathWhitelistFile)
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_pathWhitelistFile = pathWhitelistFile;
 }
-
 
 void Config::SetReadPcap(bool readPcap)
 {
@@ -2532,7 +2545,6 @@ void Config::SetCustomPcapString(std::string customPcapString)
 	m_customPcapString = customPcapString;
 }
 
-
 bool Config::GetOverridePcapString()
 {
 	Lock lock(&m_lock, READ_LOCK);
@@ -2602,7 +2614,6 @@ vector <string> Config::GetHoneydIpAddresses(string ipListFile)
 	return whitelistedAddresses;
 }
 
-
 vector <string> Config::GetHaystackAddresses(string honeyDConfigPath)
 {
 	//Path to the main log file
@@ -2651,7 +2662,6 @@ vector <string> Config::GetHaystackAddresses(string honeyDConfigPath)
 	return retAddresses;
 }
 
-
 string Config::GetTrainingSession()
 {
 	Lock lock(&m_lock, READ_LOCK);
@@ -2664,7 +2674,6 @@ string Config::SetTrainingSession(string trainingSession)
 	m_trainingSession = trainingSession;
 	return m_trainingSession;
 }
-
 
 int Config::GetWebUIPort()
 {
@@ -2714,7 +2723,8 @@ bool Config::GetSMTPUseAuth()
 	return m_SMTPUseAuth;
 }
 
-vector<double> Config::GetFeatureWeights() {
+vector<double> Config::GetFeatureWeights()
+{
 	Lock lock(&m_lock, READ_LOCK);
 	return m_featureWeights;
 }
@@ -2735,6 +2745,12 @@ bool Config::GetOnlyClassifyHoneypotTraffic()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_onlyClassifyHoneypotTraffic;
+}
+
+void Config::SetCurrentConfig(string configName)
+{
+	Lock lock(&m_lock, WRITE_LOCK);
+	m_currentConfig = configName;
 }
 
 }

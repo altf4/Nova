@@ -43,6 +43,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGroups"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetGroups>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGeneratedNodeNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetGeneratedNodeNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetScriptNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetScriptNames>));
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetConfigurationsList"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetConfigurationsList>));
 
 	//tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteProfile>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteNode"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteNode>));
@@ -60,6 +61,10 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAll"),FunctionTemplate::New(SaveAll)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(DeleteProfile)->GetFunction());
+
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddConfiguration"),FunctionTemplate::New(AddConfiguration)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveConfiguration"),FunctionTemplate::New(RemoveConfiguration)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("SwitchConfiguration"),FunctionTemplate::New(SwitchConfiguration)->GetFunction());
 
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
 	target->Set(String::NewSymbol("HoneydConfigBinding"), constructor);
@@ -384,7 +389,6 @@ Handle<Value> HoneydConfigBinding::SaveAll(const Arguments& args)
 
 	bool success = true;
 
-
 	if (!obj->m_conf->SaveAllTemplates())
 	{
 		cout << "ERROR saving honeyd templates " << endl;
@@ -397,4 +401,63 @@ Handle<Value> HoneydConfigBinding::SaveAll(const Arguments& args)
 	}
 
 	return scope.Close(Boolean::New(success));
+}
+
+Handle<Value> HoneydConfigBinding::AddConfiguration(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 3)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 3 parameters")));
+	}
+
+	string newConfigName = cvv8::CastFromJS<string>(args[0]);
+	string clone = cvv8::CastFromJS<string>(args[1]);
+	string cloneConfigName = cvv8::CastFromJS<string>(args[2]);
+	bool cloneBool = false;
+
+	if(!clone.compare("true"))
+	{
+		cloneBool = true;
+	}
+
+	return scope.Close(Boolean::New(obj->m_conf->AddNewConfiguration(newConfigName, cloneBool, cloneConfigName)));
+}
+
+Handle<Value> HoneydConfigBinding::RemoveConfiguration(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 1)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 1 parameter1")));
+	}
+
+	string config = cvv8::CastFromJS<string>(args[0]);
+
+	if(!config.compare("default"))
+	{
+		cout << "Cannot remove default configuration" << endl;
+		return scope.Close(Boolean::New(false));
+	}
+
+	return scope.Close(Boolean::New(obj->m_conf->RemoveConfiguration(config)));
+}
+
+Handle<Value> HoneydConfigBinding::SwitchConfiguration(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 1)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 1 parameter1")));
+	}
+
+	string config = cvv8::CastFromJS<string>(args[0]);
+
+	return scope.Close(Boolean::New(obj->m_conf->SwitchToConfiguration(config)));
 }

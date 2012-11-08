@@ -154,6 +154,7 @@ public:
     void SetKey(std::string key);
     void SetNeigbors(std::vector<in_addr_t> neighbors);
     void SetGroup(std::string group);
+    void SetCurrentConfig(std::string configName);
 
     std::string GetLoggerPreferences();
     std::string GetSMTPAddr();
@@ -210,6 +211,8 @@ public:
 	std::string SetTrainingSession(std::string trainingSession);
 	int GetWebUIPort();
 	void SetWebUIPort(int port);
+
+	std::string GetCurrentConfig();
 
 	version GetVersion();
 	std::string GetVersionString();
@@ -343,6 +346,8 @@ private:
 	std::string m_masterUIClientID;
 
 	bool m_onlyClassifyHoneypotTraffic;
+
+	std::string m_currentConfig;
 
 	std::vector<double> m_featureWeights;
 
