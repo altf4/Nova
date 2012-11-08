@@ -2616,6 +2616,7 @@ everyone.now.GetConfigSummary = function(configName, callback)
   }
   
   var profileObj = {};
+  
   for (var i = 0; i < profiles.length; i++) 
   {
     if(profiles[i] != undefined && profiles[i] != '')
@@ -2634,6 +2635,7 @@ everyone.now.GetConfigSummary = function(configName, callback)
       for(var j = 0; j < vendorNames.length; j++)
       {
         var push = {};
+        
         push.name = vendorNames[j];
         push.dist = vendorDist[j];
         obj.vendors.push(push);
@@ -2664,12 +2666,8 @@ everyone.now.GetConfigSummary = function(configName, callback)
   for (var i = 0; i < nodeNames.length; i++) {
     var node = honeydConfig.GetNode(nodeNames[i]);
     var push = {};
-    //push.enabled = node.IsEnabled();
-    //push.name = node.GetName();
+    
     push.pfile = node.GetProfile();
-    //push.ip = node.GetIP();
-    //push.mac = node.GetMAC();
-    //push.interface = node.GetInterface();
     nodeList.push(push);
   }
   
@@ -2703,9 +2701,12 @@ everyone.now.RemoveConfiguration = function(configName, callback)
 
 var distributeSuspect = function (suspect) {
 	var s = new Object();
+	
 	objCopy(suspect, s);
 	s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
-	try {
+	
+	try 
+	{
 		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
   
@@ -2714,6 +2715,7 @@ var distributeSuspect = function (suspect) {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     var send = {};
+    
     send.ip = suspect.GetIpString();
     send.classification = String(suspect.GetClassification());
     send.lastpacket = dString;
@@ -2727,6 +2729,7 @@ var distributeSuspect = function (suspect) {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     var send = {};
+    
     send.ip = suspect.GetIpString();
     send.classification = String(suspect.GetClassification());
     send.lastpacket = dString;
@@ -2742,18 +2745,23 @@ var distributeSuspect = function (suspect) {
 };
 
 var distributeAllSuspectsCleared = function () {
-	try {
+	try 
+	{
 		everyone.now.AllSuspectsCleared();
-	} catch (err) {
+	} 
+	catch(err) 
+	{
 		// We can safely ignore this, it's just because no browsers are connected
 	};
 }
 
 var distributeSuspectCleared = function (suspect) {
 	var s = new Object;
+	
 	s['interface'] = suspect.GetInterface();
 	s['ip'] = suspect.GetIpString();
 	s['idString'] = suspect.GetIdString();
+	
 	everyone.now.SuspectCleared(s);
 }
 
@@ -2771,9 +2779,12 @@ process.on('exit', function () {
 	LOG("ALERT", "Quasar is exiting cleanly.");
 });
 
-function objCopy(src, dst) {
-	for (var member in src) {
-		if (typeof src[member] == 'function') {
+function objCopy(src, dst) 
+{
+	for (var member in src) 
+	{
+		if (typeof src[member] == 'function') 
+		{
 			dst[member] = src[member]();
 		}
 		// Need to think about this
@@ -2781,14 +2792,17 @@ function objCopy(src, dst) {
 		//        {
 		//            copyOver(src[member], dst[member]);
 		//        }
-		else {
+		else 
+		{
 			dst[member] = src[member];
 		}
 	}
 }
 
-function switcher(err, user, success, done) {
-	if (!success) {
+function switcher(err, user, success, done) 
+{
+	if (!success) 
+	{
 		return done(null, false, {
 			message: 'Username/password combination is incorrect'
 		});
@@ -2796,7 +2810,8 @@ function switcher(err, user, success, done) {
 	return done(null, user);
 }
 
-function pad(num) {
+function pad(num) 
+{
   return ("0" + num.toString()).slice(-2);
 }
 
@@ -2811,6 +2826,7 @@ function getRsyslogIp()
   {
     return 'NULL'; 
   }
+  
   var idx = parseInt(read.indexOf('@@')) + 2;
   var ret = '';
    
@@ -2823,9 +2839,12 @@ function getRsyslogIp()
 }
 
 everyone.now.AddInterfaceAlias = function(iface, alias, callback) {
-    if (alias != "") {
+    if (alias != "") 
+    {
         interfaceAliases[iface] = alias;
-    } else {
+    } 
+    else 
+    {
         delete interfaceAliases[iface];
     }
 
@@ -2833,23 +2852,30 @@ everyone.now.AddInterfaceAlias = function(iface, alias, callback) {
     fs.writeFile(NovaHomePath + "/config/interface_aliases.txt", fileString, callback);
 }
 
-function ReloadInterfaceAliasFile() {
+function ReloadInterfaceAliasFile() 
+{
 	var aliasFileData = fs.readFileSync(NovaHomePath + "/config/interface_aliases.txt");
 	interfaceAliases = JSON.parse(aliasFileData);
 }
 
-function ConvertInterfacesToAliases(interfaces) {
+function ConvertInterfacesToAliases(interfaces) 
+{
 	var aliases = new Array();
-	for (var i in interfaces) {
+	for (var i in interfaces) 
+	{
 		aliases.push(ConvertInterfaceToAlias(interfaces[i]));
 	}
 	return aliases;
 }
 
-function ConvertInterfaceToAlias(iface) {
-	if (interfaceAliases[iface] !== undefined) {
+function ConvertInterfaceToAlias(iface) 
+{
+	if (interfaceAliases[iface] !== undefined) 
+	{
 		return interfaceAliases[iface];
-	} else {
+	} 
+	else 
+	{
 		return iface;
 	}
 }
@@ -2857,10 +2883,13 @@ function ConvertInterfaceToAlias(iface) {
 app.get('/*', passport.authenticate('basic', {session: false}));
 
 setInterval(function () {
-	try {
+	try 
+	{
 		everyone.now.updateHaystackStatus(nova.IsHaystackUp());
 		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
-	} catch (err) {
+	} 
+	catch(err) 
+	{
 
 	}
 }, 5000);
