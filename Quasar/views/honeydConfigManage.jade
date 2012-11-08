@@ -471,7 +471,23 @@ block headerAdditions
       now.GetPorts(profile, function(ports){
         for(var i in ports)
         {
-          console.log('ports[i] ' + ports[i]);
+          if(ports[i].portNum != '0')
+          {
+            var tr = theDoc.createElement('tr');
+            var td0 = theDoc.createElement('td');
+            var td1 = theDoc.createElement('td');
+            var td2 = theDoc.createElement('td');
+            
+            td0.innerHTML = ports[i].portNum;
+            td1.innerHTML = ports[i].type;
+            td2.innerHTML = ports[i].behavior;
+            
+            tr.appendChild(td0);
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            
+            theDoc.getElementById('ports').appendChild(tr);
+          }
         }
       });
       
@@ -554,7 +570,13 @@ block content
       br
       br
       div#vendors
-      //div#ports
+      br
+      table
+        thead
+          th(style='background-color: #d0e9fc;') Port Number
+          th(style='background-color: #d0e9fc;') Port Type
+          th(style='background-color: #d0e9fc;') Port Behavior
+        tbody#ports
       br
       label#dropPercent
       br
