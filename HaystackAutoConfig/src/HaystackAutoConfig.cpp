@@ -978,8 +978,6 @@ void Nova::GenerateConfiguration()
 	Config::Inst()->SetGroup("Autoconfig");
 	Config::Inst()->SaveUserConfig();
 
-	HoneydConfiguration::Inst()->m_profiles.m_serviceMap = ServiceToScriptMap(&HoneydConfiguration::Inst()->GetScriptTable());
-
 	uint nodesToCreate = 0;
 	if(numberOfNodesType == FIXED_NUMBER_OF_NODES)
 	{
