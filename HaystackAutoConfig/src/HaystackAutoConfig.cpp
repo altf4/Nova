@@ -207,6 +207,12 @@ int main(int argc, char ** argv)
 		if(f_flag_set)
 		{
 			LOG(ALERT, "Launching Haystack Auto-configuration Tool", "");
+
+			if(!HoneydConfiguration::Inst()->ReadScriptsXML())
+			{
+				LOG(WARNING, "Problem reading script template XML from file", "");
+			}
+
 			if(!LoadNmapXML(nmapFileName))
 			{
 				LOG(ERROR, "LoadNmapXML failed. Aborting...", "");
@@ -293,6 +299,60 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 	// allocations.
 	scannedHosts.m_num_of_hosts++;
 
+	//Parse the OS first, as we need its value for other calculations
+	BOOST_FOREACH(ptree::value_type &value, propTree.get_child("os"))
+	{
+		if(!value.first.compare("osmatch") && newHost->m_personalityClass.empty())
+		{
+			try
+			{
+				if(value.second.get<string>("<xmlattr>.name").compare(""))
+				{
+					newHost->m_personality = value.second.get<string>("<xmlattr>.name");
+					newHost->m_personalityClass.push_back(value.second.get<string>("<xmlattr>.name"));
+				}
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+			}
+			try
+			{
+				if(value.second.get<string>("osclass.<xmlattr>.osgen").compare(""))
+				{
+					newHost->m_personalityClass.push_back(value.second.get<string>("osclass.<xmlattr>.osgen"));
+				}
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+			}
+			try
+			{
+				if(value.second.get<string>("osclass.<xmlattr>.osfamily").compare(""))
+				{
+					newHost->m_personalityClass.push_back(value.second.get<string>("osclass.<xmlattr>.osfamily"));
+				}
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+			}
+			try
+			{
+				if(value.second.get<string>("osclass.<xmlattr>.vendor").compare(""))
+				{
+					newHost->m_personalityClass.push_back(value.second.get<string>("osclass.<xmlattr>.vendor"));
+				}
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+			}
+		}
+	}
+
+	//Parse the rest of the xml tags
 	BOOST_FOREACH(ptree::value_type &value, propTree.get_child(""))
 	{
 		try
@@ -438,111 +498,55 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 
 						stringstream ss;
 						uint portNumber = portValue.second.get<uint>("<xmlattr>.portid");
-						enum PortProtocol protocol;
 
-						string protocolString = boost::to_upper_copy(portValue.second.get<string>("<xmlattr>.protocol"));
-						if(!protocolString.compare("TCP"))
+
+						string protocolString = portValue.second.get<string>("<xmlattr>.protocol");
+						enum PortProtocol protocol = Port::StringToPortProtocol(protocolString);
+						if(protocol == PROTOCOL_ERROR)
 						{
-							protocol = PROTOCOL_TCP;
-						}
-						else if(!protocolString.compare("UDP"))
-						{
-							protocol = PROTOCOL_UDP;
-						}
-						else
-						{
-							//ERROR
 							continue;
 						}
 
 						string serviceName = portValue.second.get<string>("service.<xmlattr>.name");
 
 						string portState = portValue.second.get<string>("state.<xmlattr>.state");
-						enum PortBehavior behavior;
-						if(!portState.compare("open"))
-						{
-							behavior = PORT_OPEN;
-						}
-						else if(!portState.compare("closed"))
-						{
-							behavior = PORT_CLOSED;
-						}
-						else if(!portState.compare("filtered"))
-						{
-							behavior = PORT_FILTERED;
-						}
-						else
+						enum PortBehavior behavior = Port::StringToPortBehavior(portState);
+						if(behavior == PORT_ERROR)
 						{
 							//ERROR
 							continue;
 						}
 
 						//Add this port into the running port set
-						newPortSet->AddPort(Port(serviceName, protocol, portNumber, behavior));
+						Port port(serviceName, protocol, portNumber, behavior);
+
+						if(behavior == PORT_OPEN)
+						{
+							//We need all the OS strings to have been read
+							if(newHost->m_personalityClass.size() > 3)
+							{
+								//Form the correct OS string to do the script lookup: "vendor | family"
+								string osclass = newHost->m_personalityClass[3] + " | " + newHost->m_personalityClass[2];
+
+								//Do a lookup to see if there are scripts for this open port
+								vector<Script> validScripts = HoneydConfiguration::Inst()->GetScripts(
+										serviceName, osclass);
+								if(!validScripts.empty())
+								{
+									//Pick one of the scripts at random
+									uint random = rand() % validScripts.size();
+
+									port.m_scriptName = validScripts[random].m_name;
+									port.m_behavior = PORT_SCRIPT;
+								}
+							}
+						}
+
+						newPortSet->AddPort(port);
 					}
 					catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 					{
 						LOG(DEBUG, "Caught Exception : " + string(e.what()), "");
-					}
-				}
-			}
-			// If we've found the <os> tags in the <host> xml node
-			else if(!value.first.compare("os") && newHost->m_personalityClass.empty())
-			{
-				// try to get the name, type, osgen, osfamily and vendor for the most
-				// accurate guess by nmap. This will (provided the xml is structured correctly)
-				// push back the values in the following form:
-				// personality_name, type, osgen, osfamily, vendor
-				// This order must be properly maintained for use in the PersonalityTree class.
-				BOOST_FOREACH(ptree::value_type &osValue, value.second.get_child(""))
-				{
-					if(!osValue.first.compare("osmatch") && newHost->m_personalityClass.empty())
-					{
-						try
-						{
-							if(osValue.second.get<string>("<xmlattr>.name").compare(""))
-							{
-								newHost->m_personality = osValue.second.get<string>("<xmlattr>.name");
-								newHost->m_personalityClass.push_back(osValue.second.get<string>("<xmlattr>.name"));
-							}
-						}
-						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-						{
-							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
-						}
-						try
-						{
-							if(osValue.second.get<string>("osclass.<xmlattr>.osgen").compare(""))
-							{
-								newHost->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osgen"));
-							}
-						}
-						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-						{
-							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
-						}
-						try
-						{
-							if(osValue.second.get<string>("osclass.<xmlattr>.osfamily").compare(""))
-							{
-								newHost->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osfamily"));
-							}
-						}
-						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-						{
-							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
-						}
-						try
-						{
-							if(osValue.second.get<string>("osclass.<xmlattr>.vendor").compare(""))
-							{
-								newHost->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.vendor"));
-							}
-						}
-						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-						{
-							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
-						}
 					}
 				}
 			}
@@ -964,12 +968,12 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 
 void Nova::GenerateConfiguration()
 {
-	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
-
-	if(!HoneydConfiguration::Inst()->ReadAllTemplatesXML())
+	if(!HoneydConfiguration::Inst()->ReadNodesXML())
 	{
 		LOG(WARNING, "Problem reading template XMLs from file", "");
 	}
+
+	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
 
 	//Remake the "Autoconfig" group of nodes
 	HoneydConfiguration::Inst()->DeleteGroup("Autoconfig");

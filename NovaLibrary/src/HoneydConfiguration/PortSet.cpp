@@ -19,6 +19,8 @@
 //============================================================================
 
 #include "PortSet.h"
+#include "Script.h"
+#include "HoneydConfiguration.h"
 
 #include "sstream"
 
@@ -88,7 +90,8 @@ string PortSet::ToString(const string &profileName)
 		//If it's a script then we need to print the script path, not "script"
 		if((m_TCPexceptions[i].m_behavior == PORT_SCRIPT) || (m_TCPexceptions[i].m_behavior == PORT_TARPIT_SCRIPT))
 		{
-			out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << " \"" << m_TCPexceptions[i].m_scriptName << "\"\n";
+			Script script = HoneydConfiguration::Inst()->GetScript(m_TCPexceptions[i].m_scriptName);
+			out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << " \"" << script.m_path << "\"\n";
 		}
 		else
 		{

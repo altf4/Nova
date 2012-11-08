@@ -84,7 +84,7 @@ Profile *ProfileTree::GetRandomProfile()
 	return personality;
 }
 
-//TODO: Search could be improved by a heuristic, such as by using string similarity in chosing which children to pursue
+//TODO: Search could be improved by a heuristic, such as by using string similarity in choosing which children to pursue
 Profile *GetProfile_helper(Profile *item, const std::string &name)
 {
 	if(item == NULL)
@@ -192,12 +192,7 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 		childProfile->m_uptimeMin = targetHost->m_uptime;
 	}
 
-	//TODO: Is this what we really want? Maybe we should just have the portset at the leaf node?
-	//Add every PortSet from the target host into the childPersonality
-//	for(uint j = 0; j < targetHost->m_portSets.size(); j++)
-//	{
-		childProfile->m_portSets = targetHost->m_portSets;
-//	}
+	childProfile->m_portSets = targetHost->m_portSets;
 
 	//Insert or count MAC vendor occurrences
 	for(MACVendorMap::iterator it = targetHost->m_vendors.begin(); it != targetHost->m_vendors.end(); it++)
