@@ -20,11 +20,14 @@
 #ifndef SCANNEDHOST_H_
 #define SCANNEDHOST_H_
 
-#include "AutoConfigHashMaps.h"
 #include "PortSet.h"
+#include "../HashMapStructs.h"
 
 namespace Nova
 {
+
+//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
+typedef Nova::HashMap<std::string, uint16_t, std::hash<std::string>, eqstr > MACVendorMap;
 
 class ScannedHost
 {

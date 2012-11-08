@@ -12,7 +12,6 @@ CPP_SRCS += \
 ../src/HoneydConfiguration/ProfileTree.cpp \
 ../src/HoneydConfiguration/ScannedHost.cpp \
 ../src/HoneydConfiguration/ScannedHostTable.cpp \
-../src/HoneydConfiguration/ServiceToScriptMap.cpp \
 ../src/HoneydConfiguration/VendorMacDb.cpp 
 
 OBJS += \
@@ -24,7 +23,6 @@ OBJS += \
 ./src/HoneydConfiguration/ProfileTree.o \
 ./src/HoneydConfiguration/ScannedHost.o \
 ./src/HoneydConfiguration/ScannedHostTable.o \
-./src/HoneydConfiguration/ServiceToScriptMap.o \
 ./src/HoneydConfiguration/VendorMacDb.o 
 
 CPP_DEPS += \
@@ -36,7 +34,6 @@ CPP_DEPS += \
 ./src/HoneydConfiguration/ProfileTree.d \
 ./src/HoneydConfiguration/ScannedHost.d \
 ./src/HoneydConfiguration/ScannedHostTable.d \
-./src/HoneydConfiguration/ServiceToScriptMap.d \
 ./src/HoneydConfiguration/VendorMacDb.d 
 
 

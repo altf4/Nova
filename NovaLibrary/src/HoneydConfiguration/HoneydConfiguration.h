@@ -26,6 +26,7 @@
 #include "Script.h"
 #include "Node.h"
 
+#include <map>
 #include <boost/property_tree/ptree.hpp>
 
 namespace Nova
@@ -88,11 +89,6 @@ public:
     bool AddNewNode(std::string profileName, std::string ipAddress, std::string macAddress,
     		std::string interface, PortSet *portSet, std::string groupName);
 
-	//This function allows access to NodeProfile objects by their name
-	// profileName: the name or key of the NodeProfile
-	// Returns a pointer to the NodeProfile object or NULL if the key doesn't
-    Profile *GetProfile(std::string profileName);
-
 	//Inserts the profile into the honeyd configuration
 	//	profile: pointer to the profile you wish to add
 	//	Returns (true) if the profile could be created, (false) if it cannot.
@@ -100,25 +96,21 @@ public:
 
 	bool AddGroup(std::string groupName);
 
-	//Deletes the group of nodes with the given name
-	//	returns - True if successfully deleted, or if no group existed. False only on error.
-	bool DeleteGroup(std::string groupName);
+	bool AddScript(Script script);
+
+
+	//This function allows access to NodeProfile objects by their name
+	// profileName: the name or key of the NodeProfile
+	// Returns a pointer to the NodeProfile object or NULL if the key doesn't
+    Profile *GetProfile(std::string profileName);
 
 	std::vector<std::string> GetGroups();
 
-
-	//Removes a profile and all associated nodes from the Honeyd configuration
-	//	profileName: name of the profile you wish to delete
-	// 	Returns: (true) if successful and (false) if the profile could not be found
-	bool DeleteProfile(std::string profileName);
-
-    //Deletes a single node
-	//	nodeMAC - The MAC address of the node to delete, in string form
-	//	returns - True if successfully found and deleted, false otherwise
-    bool DeleteNode(std::string nodeMAC);
-
     //TODO: Unsafe pointer access into table
     Node *GetNode(std::string nodeMAC);
+
+    //Get a vector of PortSets associated with a particular profile
+	std::vector<PortSet*> GetPortSets(std::string profileName);
 
 	//This function allows easy access to all profiles
 	// Returns a vector of strings containing the names of all profiles
@@ -127,6 +119,9 @@ public:
 	//This function allows easy access to all generated profiles
 	// Returns a vector of strings containing the names of all generated profiles
 	std::vector<std::string> GetGeneratedProfileNames();
+
+	Script GetScript(std::string name);
+	std::vector<Script> GetScripts(std::string service, std::string osclass = "");
 
 	//This function allows easy access to all scripts
 	// Returns a vector of strings containing the names of all scripts
@@ -138,19 +133,32 @@ public:
     // Returns an int equal to the number of bits that are 1 in the netmask, ie the example value for mask returns 24
     static int GetMaskBits(in_addr_t mask);
 
+
+	//Deletes the group of nodes with the given name
+	//	returns - True if successfully deleted, or if no group existed. False only on error.
+	bool DeleteGroup(std::string groupName);
+
+	//Removes a profile and all associated nodes from the Honeyd configuration
+	//	profileName: name of the profile you wish to delete
+	// 	Returns: (true) if successful and (false) if the profile could not be found
+	bool DeleteProfile(std::string profileName);
+
+    //Deletes a single node
+	//	nodeMAC - The MAC address of the node to delete, in string form
+	//	returns - True if successfully found and deleted, false otherwise
+    bool DeleteNode(std::string nodeMAC);
+
+    bool DeleteScript(std::string name);
+
+
+    bool RenameProfile(std::string oldName, std::string newName);
+
 	//Finds out if the given MAC address is in use within the given group of nodes
 	//	mac: the string representation of the MAC address
     //	groupName - The name of the group to search. An empty string will make the function search all groups
 	//	returns - true if the MAC is in use and false if it is not. returns false if the specified group does not exist
 	// *Note this function may have poor performance when there are a large number of nodes
 	bool IsMACUsed(std::string mac, std::string groupName);
-
-    bool RenameProfile(std::string oldName, std::string newName);
-
-    //Get a vector of PortSets associated with a particular profile
-	std::vector<PortSet*> GetPortSets(std::string profileName);
-
-	ScriptTable &GetScriptTable();
 
     static std::string SanitizeProfileName(std::string pfilename);
 
@@ -164,8 +172,6 @@ public:
 
 private:
 
-	static HoneydConfiguration *m_instance;
-
     //Basic constructor for the Honeyd Configuration object
 	// Initializes the MAC vendor database and hash tables
 	// *Note: To populate the object from the file system you must call ReadAllTemplates();
@@ -174,8 +180,11 @@ private:
 	//Helper function called by WriteProfilesToXML - Writes the profiles out to m_profileTree
 	bool WriteProfilesToXML_helper(Profile *root, boost::property_tree::ptree &propTree);
 
-    //Storing these trees allow for easy modification and writing of the XML files
-    //Without having to reconstruct the tree from scratch.
+    //Depth first traversal through ptree to read profiles
+    Profile *ReadProfilesXML_helper(boost::property_tree::ptree &ptree, Profile *parent);
+
+	static HoneydConfiguration *m_instance;
+
     boost::property_tree::ptree m_groupTree;
     boost::property_tree::ptree m_portTree;
     boost::property_tree::ptree m_profileTree;
@@ -183,10 +192,8 @@ private:
     boost::property_tree::ptree m_nodesTree;
     boost::property_tree::ptree m_subnetTree;
 
-    ScriptTable m_scripts;
-
-    //Depth first traversal through ptree to read profiles
-    Profile *ReadProfilesXML_helper(boost::property_tree::ptree &ptree, Profile *parent);
+    //TODO: If we wind up with many scripts, this may not scale well
+    std::vector<Script> m_scripts;
 
 };
 

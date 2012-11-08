@@ -20,7 +20,6 @@
 #ifndef PROFILE_H_
 #define PROFILE_H_
 
-#include "AutoConfigHashMaps.h"
 #include "PortSet.h"
 
 namespace Nova

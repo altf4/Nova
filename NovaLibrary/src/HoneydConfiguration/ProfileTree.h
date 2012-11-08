@@ -22,7 +22,6 @@
 
 #include "Profile.h"
 #include "ScannedHostTable.h"
-#include "ServiceToScriptMap.h"
 
 namespace Nova
 {
@@ -57,8 +56,6 @@ public:
 
 	//Empty 'root' node of the tree, this node can be treated as the 'any' case or all personalities.
 	Profile *m_root;
-
-	ServiceToScriptMap m_serviceMap;
 
 private:
 	// InsertHost will create an item for the Personality,

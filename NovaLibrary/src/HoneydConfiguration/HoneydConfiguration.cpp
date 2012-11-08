@@ -59,8 +59,6 @@ HoneydConfiguration *HoneydConfiguration::Inst()
 HoneydConfiguration::HoneydConfiguration()
 {
 	m_macAddresses.LoadPrefixFile();
-	m_scripts.set_empty_key("");
-	m_scripts.set_deleted_key("Deleted");
 }
 
 bool HoneydConfiguration::ReadAllTemplatesXML()
@@ -310,8 +308,7 @@ bool HoneydConfiguration::ReadScriptsXML()
 				script.m_service = value.second.get<string>("service");
 				script.m_osclass = value.second.get<string>("osclass");
 				script.m_path = value.second.get<string>("path");
-				m_scripts[script.m_name] = script;
-
+				AddScript(script);
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
@@ -343,12 +340,12 @@ bool HoneydConfiguration::WriteScriptsToXML()
 
 	//Scripts
 	m_scriptTree.clear();
-	for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
+	for(uint i = 0; i < m_scripts.size(); i++)
 	{
-		propTree.put<string>("name", it->second.m_name);
-		propTree.put<string>("service", it->second.m_service);
-		propTree.put<string>("osclass", it->second.m_osclass);
-		propTree.put<string>("path", it->second.m_path);
+		propTree.put<string>("name", m_scripts[i].m_name);
+		propTree.put<string>("service", m_scripts[i].m_service);
+		propTree.put<string>("osclass", m_scripts[i].m_osclass);
+		propTree.put<string>("path", m_scripts[i].m_path);
 		m_scriptTree.add_child("scripts.script", propTree);
 	}
 
@@ -797,9 +794,9 @@ vector<string> HoneydConfiguration::GetGeneratedProfileNames()
 vector<string> HoneydConfiguration::GetScriptNames()
 {
 	vector<string> scriptNames;
-	for(ScriptTable::iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
+	for(uint i = 0; i < m_scripts.size(); i++)
 	{
-		scriptNames.push_back(it->first);
+		scriptNames.push_back(m_scripts[i].m_name);
 	}
 	return scriptNames;
 }
@@ -968,11 +965,6 @@ std::vector<PortSet*> HoneydConfiguration::GetPortSets(std::string profileName)
 	return profile->m_portSets;
 }
 
-ScriptTable &HoneydConfiguration::GetScriptTable()
-{
-	return m_scripts;
-}
-
 bool HoneydConfiguration::DeleteProfile(string profileName)
 {
 	Profile *profile = GetProfile(profileName);
@@ -986,6 +978,59 @@ bool HoneydConfiguration::DeleteProfile(string profileName)
 	delete profile;
 
 	return true;
+}
+
+bool HoneydConfiguration::AddScript(Script script)
+{
+	if(GetScript(script.m_name).m_osclass != "")
+	{
+		return false;
+	}
+	m_scripts.push_back(script);
+	return true;
+}
+
+Script HoneydConfiguration::GetScript(string name)
+{
+	for(uint i = 0; i < m_scripts.size(); i++)
+	{
+		if(m_scripts[i].m_name == name)
+		{
+			return m_scripts[i];
+		}
+	}
+
+	//Return empty script
+	return Script();
+}
+
+vector<Script> HoneydConfiguration::GetScripts(std::string service, std::string osclass)
+{
+	vector<Script> ret;
+
+	for(uint i = 0; i < m_scripts.size(); i++)
+	{
+		if((m_scripts[i].m_service == service) && (m_scripts[i].m_osclass == osclass))
+		{
+			ret.push_back(m_scripts[i]);
+		}
+	}
+
+	return ret;
+}
+
+bool HoneydConfiguration::DeleteScript(string name)
+{
+	for(uint i = 0; i < m_scripts.size(); i++)
+	{
+		if(m_scripts[i].m_name == name)
+		{
+			m_scripts.erase(m_scripts.begin()+i);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 string HoneydConfiguration::SanitizeProfileName(std::string oldName)

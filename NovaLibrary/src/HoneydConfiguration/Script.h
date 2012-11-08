@@ -20,7 +20,7 @@
 #ifndef SCRIPT_H_
 #define SCRIPT_H_
 
-#include "../HashMapStructs.h"
+#include "string"
 
 namespace Nova
 {
@@ -30,7 +30,7 @@ class Script
 
 public:
 
-	//Unique identifer of the script
+	//Unique identifier of the script
 	std::string m_name;
 
 	std::string m_service;
@@ -38,10 +38,6 @@ public:
 	std::string m_path;
 
 };
-
-//Container for accessing script items
-//	key = m_name of the given script
-typedef Nova::HashMap<std::string, Script, std::hash<std::string>, eqstr > ScriptTable;
 
 }
 
