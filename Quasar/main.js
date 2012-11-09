@@ -2586,7 +2586,7 @@ everyone.now.RemoveScript = function(scriptName, callback)
 everyone.now.GetConfigSummary = function(configName, callback)
 { 
   honeydConfig.LoadAllTemplates();
-  
+  honeydConfig.WriteHoneydConfiguration(config.GetPathConfigHoneydHS());
   // Scripts are kept at a higher level of the directory structure, to denote
   // that regardless of configuration selected, all scripts are selectable; that is,
   // scripts are configuration-agnostic.

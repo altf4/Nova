@@ -454,7 +454,7 @@ Handle<Value> HoneydConfigBinding::SwitchConfiguration(const Arguments& args)
 
 	if(args.Length() != 1)
 	{
-		return ThrowException(Exception::TypeError(String::New("Must be invoked with 1 parameter1")));
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 1 parameter")));
 	}
 
 	string config = cvv8::CastFromJS<string>(args[0]);

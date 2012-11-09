@@ -435,37 +435,37 @@ block headerAdditions
         theDoc.getElementById('vendors').removeChild(theDoc.getElementById('vendors').lastChild);
       }
       
+      while(theDoc.getElementById('ports').hasChildNodes())
+      {
+        theDoc.getElementById('ports').removeChild(theDoc.getElementById('ports').lastChild);
+      }
+      
       showLightBox('2');
       
-      theDoc.getElementById('parentName').innerHTML = saveProfileObjs[profile].parent + ' -> ' + saveProfileObjs[profile].name;
+      theDoc.getElementById('parentName').innerHTML = saveProfileObjs[profile].name + ' (OS: ' + saveProfileObjs[profile].os + ')';
       theDoc.getElementById('dropPercent').innerHTML = 'Packet Drop Percentage: ' + saveProfileObjs[profile].packetDrop;
       
-      if(saveProfileObjs[profile].os != '')
+      /*if(saveProfileObjs[profile].os != '')
       {
         theDoc.getElementById('os').innerHTML = 'Personality: ' + saveProfileObjs[profile].os;
       }
       else
       {
         theDoc.getElementById('os').innerHTML = 'Personality: None set';
-      }
-      
-      var toplabel = theDoc.createElement('label');
-      var topbr = theDoc.createElement('br');
-      
-      toplabel.innerHTML = 'Vendors:';
-      
-      theDoc.getElementById('vendors').appendChild(toplabel);
-      theDoc.getElementById('vendors').appendChild(topbr);
+      }*/
       
       for(var i in saveProfileObjs[profile].vendors)
       {
-        var label = theDoc.createElement('label');
-        var br = theDoc.createElement('br');
+        var tr = theDoc.createElement('tr');
+        var td0 = theDoc.createElement('td');
+        var td1 = theDoc.createElement('td');
         
-        label.innerHTML = saveProfileObjs[profile].vendors[i].name + ': ' + saveProfileObjs[profile].vendors[i].dist + '%';
+        td0.innerHTML = saveProfileObjs[profile].vendors[i].name;
+        td1.innerHTML = saveProfileObjs[profile].vendors[i].dist + '%';
         
-        theDoc.getElementById('vendors').appendChild(label);
-        theDoc.getElementById('vendors').appendChild(br);
+        tr.appendChild(td0);
+        tr.appendChild(td1);
+        theDoc.getElementById('vendors').appendChild(tr);
       }
       
       now.GetPorts(profile, function(ports){
@@ -525,6 +525,8 @@ block headerAdditions
 block content
   div#hideme
     h1 Configuration Summary
+    label Current Configuration:
+    br
     select#configurations(onchange='GetConfigurationSummary()') Configuration
     br
     br
@@ -533,20 +535,19 @@ block content
       button#cloneConfig(onclick='showLightBox("1")') Clone Configuration
       button#removeConfig(onclick='removeConfig()') Remove Configuration
     br
-    div#treeAndPiContainer
-      div#piChart(style='float: left')
-      div#treeDiv(style='float: right')
-    br
-    br
     div#summary
       table(border='1', style='border: solid black 2px; width: 600px', id='sizeAnchor')
         thead
           tr
             th(style='background-color: #d0e9fc;') Scripts
-            th(style='background-color: #d0e9fc;') Profile:Port
+            th(style='background-color: #d0e9fc;') Profile:Port Binding
         tbody#appendHook      
       br
       br
+    div#treeAndPiContainer
+      div#piChart(style='float: left')
+      div#treeDiv(style='float: right')
+    br
   div#lightbox(class='white_content')
     div#addConfigForm
       form(method='post', id='addConfig', onsubmit='return checkParametersAdd();')
@@ -565,28 +566,32 @@ block content
         button#submitClone Submit
     div#profileInfo
       h1#parentName(style='font-weight: bold;')
+      h2 Misc. Information
+      div(style='border: 2px solid #E8A02F; width: 250px')
+        label#dropPercent
+        br
+        label#fixedOrUptime
+        br
+        label#defTCP
+        br
+        label#defUDP
+        br
+        label#defICMP
+        br
       br
-      label#os
+      h2 Ethernet Info      
+      table(border='1 solid')
+        thead
+          th(style='background-color: #d0e9fc;') Vendor
+          th(style='background-color: #d0e9fc;') Distribution
+        tbody#vendors
       br
-      br
-      div#vendors
-      br
-      table
+      h2 Ports
+      table(border='1 solid')
         thead
           th(style='background-color: #d0e9fc;') Port Number
           th(style='background-color: #d0e9fc;') Port Type
           th(style='background-color: #d0e9fc;') Port Behavior
         tbody#ports
-      br
-      label#dropPercent
-      br
-      label#fixedOrUptime
-      br
-      label#defTCP
-      br
-      label#defUDP
-      br
-      label#defICMP
-      br
       br
     button#closeLB(onclick='closeLightbox()') Close
