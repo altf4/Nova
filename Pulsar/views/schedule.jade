@@ -9,9 +9,11 @@ block content
     tbody
       tr
         td
-          div(id='clientsList')
+          table(style='border: 2px solid; width: 200px;')
+            tbody(id='clientsList')
         td
-          div(id='groupsList')
+          table(style='border: 2px solid; width: 200px;')
+            tbody(id='groupsList')
   br
   br
   div(id='elementHook')
@@ -40,6 +42,6 @@ block headerAdditions
           } 
         }
       });
-      setUpSelect('clientsList');
-      setUpGrouplist('groupsList');
+      setUpClientsList('clientsList');
+      setUpGroupsList('groupsList');
     });

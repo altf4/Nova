@@ -9,9 +9,11 @@ block content
     tbody
       tr
         td
-          div(id='clientsList')
+          table(style='border: 2px solid; width: 200px;')
+            tbody(id='clientsList')
         td
-          div(id='groupsList')
+          table(style='border: 2px solid; width: 200px;')
+            tbody(id='groupsList')
 
   h1 Haystack Autoconfiguration Options 
   table(style="border: solid 2px;")
@@ -43,6 +45,6 @@ block headerAdditions
           } 
         }
       });
-      setUpSelect('clientsList');
-      setUpGrouplist('groupsList');
+      setUpClientsList('clientsList');
+      setUpGroupsList('groupsList');
     });

@@ -197,21 +197,17 @@ process.on('SIGINT', function(){
 
 function cleanUI(callback)
 {
-  if(typeof(everyone.now.UpdateGroupList) == 'function')
+  if(typeof(everyone.now.ClearGroupsList) == 'function')
   {
-    everyone.now.UpdateGroupList('', 'clear');
-  } 
-  else
-  {
-    console.log('ConnectionManagement.js did not load UpdateGroupsList.');  
+    everyone.now.ClearGroupsList();
   }
+  if(typeof(everyone.now.ClearClientList) == 'function')
+  {
+    everyone.now.ClearClientList();
+  } 
   if(typeof(everyone.now.UpdateConnectionsList) == 'function')
   {
     everyone.now.UpdateConnectionsList('', 'clear'); 
-  }
-  if(typeof(everyone.now.UpdateClientsList) == 'function')
-  {
-    everyone.now.UpdateClientsList('', 'clear');
   }
   if(typeof(callback) == 'function')
   {

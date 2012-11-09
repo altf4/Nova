@@ -2,7 +2,8 @@ extends layout
 
 block content
   h1 Connected Clients List
-  div(id='clientsList')
+  table(style='border: 2px solid; width: 200px;')
+    tbody(id='clientsList')
   br
   br
   h1 Add Group
@@ -49,7 +50,7 @@ block headerAdditions
         }
       });
       
-      setUpSelect('clientsList');
+      setUpClientsList('clientsList');
       setUpGroups('appendHook');
       
       var members = '';
