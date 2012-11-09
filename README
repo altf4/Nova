@@ -437,9 +437,9 @@ Pulsar
 install process. Instead, the user must change directory into the Nova
 directory (most commonly located in the /home/$USER/Code/ directory) and
 run make install- pulsar with superuser permissions. This will place the
-Mothership files within the proper directories and allow for the user to
+Pulsar files within the proper directories and allow for the user to
 use the alias 'pulsar' on the command line to start the forever process
-for Mothership. To access the Mothership interface, the user must first
+for Pulsar. To access the Pulsar interface, the user must first
 have configured Nova such that it has the MASTER_UI_ENABLED
 configuration variable set to 1, as well as properly configuring the
 MASTER_UI_IP and MASTER_UI_CLIENT_ID variables to match the location and
