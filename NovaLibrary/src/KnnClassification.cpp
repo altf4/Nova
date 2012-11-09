@@ -129,7 +129,8 @@ double KnnClassification::Classify(Suspect *suspect)
 	for (int i = 0; i < k; i++)
 	{
 		classificationNotes << "k=" << i << ":d=" << dists[i];
-		classificationNotes << ":c " << m_dataPtsWithClass[nnIdx[i]]->m_classification;
+		classificationNotes << ":c=" << m_dataPtsWithClass[nnIdx[i]]->m_classification;
+		classificationNotes << ":i=" << nnIdx[i];
 		classificationNotes << "\n:o ";
 		for (uint j = 0; j < Config::Inst()->GetEnabledFeatureCount(); j++)
 		{
@@ -416,6 +417,10 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 			}
 		}
 		m_nPts = i;
+
+		stringstream ss;
+		ss << "Loaded " << m_nPts << " data points into KNN tree" << endl;
+		LOG(DEBUG, ss.str(), "");
 
 		for(int j = 0; j < DIM; j++)
 			m_meanFeatureValues[j] /= m_nPts;

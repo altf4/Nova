@@ -11,6 +11,7 @@ script
     {
       for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
       {
+        document.getElementById("if" + i).checked = true;
         document.getElementById("if" + i).disabled = true;
         document.getElementById("DEFAULT").value = "true";
       }
@@ -329,86 +330,69 @@ script
 
 h2 Basic Configuration
     
-table
-  thead
-    tr 
-      th Interfaces
-  - if (DEFAULT == "true")
-    tbody 
-      - for (var i = 0; i < INTERFACES.length; i++)
-        - if(INTERFACES[i].checked == 1)
-            tr 
-              td
-                input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, disabled=true, onclick="checkAtLeastOne()", checked)
-                #{INTERFACES[i].iface}
-        - else
-            tr 
-              td
-                input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", disabled=true)
-                #{INTERFACES[i].iface}
-      tr
-        td
-          input(type="checkbox", value="default", id="default", width=10, onclick="changeDisabled()", checked)
-          "default"
-  - else
-    tbody 
-      - for (var i = 0; i < INTERFACES.length; i++)
-        - if(INTERFACES[i].checked == 1)
-            tr 
-              td
-                input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", checked)
-                #{INTERFACES[i].iface}
-        - else
-            tr 
-              td
-                input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()")
-                #{INTERFACES[i].iface}
-      tr
-        td
-          input(type="checkbox", value="default", id="default", onclick="changeDisabled()", width=10)
-          "default"  
-          
-   hidden(id="length", value=INTERFACES.length)
-   
-   input(type="hidden", name="DEFAULT", id="DEFAULT", value=DEFAULT)
+label Interfaces
+br
+- if (DEFAULT == "true")
+  div
+    input(type="checkbox", value="default", id="default", onclick="changeDisabled()", checked, width=10)
+    span Listen on all available interfaces
+  - for (var i = 0; i < INTERFACES.length; i++)
+    - if(INTERFACES[i].checked == 1)
+      div
+        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, disabled=true, onclick="checkAtLeastOne()", checked)
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
+    - else
+      div
+        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", disabled=true)
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
+- else
+  div
+    input(type="checkbox", value="default", id="default", onclick="changeDisabled()", width=10)
+    span Listen on all available interfaces
+  - for (var i = 0; i < INTERFACES.length; i++)
+    - if(INTERFACES[i].checked == 1)
+      div
+        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", checked)
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
+    - else
+      div
+        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()")
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
+        
+ hidden(id="length", value=INTERFACES.length) 
+ input(type="hidden", name="DEFAULT", id="DEFAULT", value=DEFAULT)
 
 br
+Label Doppelganger Interface
 br
-table
-  thead 
-    tr
-      th Doppelganger Interface
-  tbody 
-    - for (var i = 0; i < DOPPELGANGER_INTERFACE.length; i++)
-      - if(DOPPELGANGER_INTERFACE[i].checked == 1)
-        tr 
-          td
-            input(type="checkbox", value=DOPPELGANGER_INTERFACE[i].iface, id="dif#{i}", name="DOPPELGANGER_INTERFACE", width=10, onclick="checkOnlyOne('dif#{i}')", checked) 
-            #{DOPPELGANGER_INTERFACE[i].iface}
-      - else
-        tr 
-          td
-            input(type="checkbox", value=DOPPELGANGER_INTERFACE[i].iface, id="dif#{i}", name="DOPPELGANGER_INTERFACE", width=10, onclick="checkOnlyOne('dif#{i}')") 
-            #{DOPPELGANGER_INTERFACE[i].iface}
+- for (var i = 0; i < DOPPELGANGER_INTERFACE.length; i++)
+  - if(DOPPELGANGER_INTERFACE[i].checked == 1)
+    div    
+      input(type="checkbox", value=DOPPELGANGER_INTERFACE[i].iface, id="dif#{i}", name="DOPPELGANGER_INTERFACE", width=10, onclick="checkOnlyOne('dif#{i}')", checked) 
+      #{DOPPELGANGER_INTERFACE[i].iface}
+  - else
+    div 
+      input(type="checkbox", value=DOPPELGANGER_INTERFACE[i].iface, id="dif#{i}", name="DOPPELGANGER_INTERFACE", width=10, onclick="checkOnlyOne('dif#{i}')") 
+      #{DOPPELGANGER_INTERFACE[i].iface}
           
-   hidden(id="doppel_length", value=DOPPELGANGER_INTERFACE.length)
+hidden(id="doppel_length", value=DOPPELGANGER_INTERFACE.length)
 br
 
 label Doppelganger Enabled?
 br
 if DM_ENABLED != "0"
-  |Yes
   input(type="radio", name="DM_ENABLED", value="1", checked)
+  |Yes
   br
-  |No
   input(type="radio", name="DM_ENABLED", value="0")
+  |No
   br
 else
-  |Yes
   input(type="radio", name="DM_ENABLED", value="1")
+  |Yes
   br
-  |No
   input(type="radio", name="DM_ENABLED", value="0", checked)
+  |No
   br
 br
 
@@ -425,27 +409,27 @@ else
   br
 
 label SMTP Address
-input(name="SMTP_ADDR", value=SMTP_ADDR)
+input.wide(name="SMTP_ADDR", value=SMTP_ADDR)
 br
 
 label SMTP Port
-input(type="number", min="0", max="65536", name="SMTP_PORT", id="SMTP_PORT", value=SMTP_PORT)
+input.wide(type="number", min="0", max="65536", name="SMTP_PORT", id="SMTP_PORT", value=SMTP_PORT)
 br
 
 label SMTP Domain
-input(name="SMTP_DOMAIN", id="SMTP_DOMAIN", value=SMTP_DOMAIN)
+input.wide(name="SMTP_DOMAIN", id="SMTP_DOMAIN", value=SMTP_DOMAIN)
 br
 
 label SMTP Username
-input(name="SMTP_USER",  id="SMTP_USER", value=SMTP_USER)
+input.wide(name="SMTP_USER",  id="SMTP_USER", value=SMTP_USER)
 br
 
 label SMTP Password
-input(type="password", name="SMTP_PASS", id="SMTP_PASS", value=SMTP_PASS)
+input.wide(type="password", name="SMTP_PASS", id="SMTP_PASS", value=SMTP_PASS)
 br
 
 label Email Recipients
-input(name="RECIPIENTS", value=RECIPIENTS)
+input.wide(name="RECIPIENTS", value=RECIPIENTS)
   br
 br
 

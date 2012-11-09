@@ -89,7 +89,7 @@ std::vector <std::string> GetHaystackAddresses(std::string honeyDConfigPath);
 //	returns - vector representation of the IP addresses in the file
 std::vector <std::string> GetIpAddresses(std::string honeyDConfigPath);
 
-std::string ConstructFilterString();
+std::string ConstructFilterString(std::string captureIdentifier);
 
 // Callback function that is passed to pcap_loop(..) and called each time a packet is received
 //		useless - Unused

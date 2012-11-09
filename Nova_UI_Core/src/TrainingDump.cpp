@@ -20,7 +20,6 @@
 #include <sstream>
 #include <ANN/ANN.h>
 
-#include "TrainingData.h"
 #include "TrainingDump.h"
 #include "Defines.h"
 #include "Logger.h"
@@ -144,34 +143,17 @@ bool TrainingDump::SaveToDb(string dbFile)
 {
 	ThinTrainingPoints(Config::Inst()->GetThinningDistance());
 
-	trainingSuspectMap *db = TrainingData::ParseTrainingDb(dbFile);
-
-	if(db == NULL)
-		return false;
-
-	int max = 0, uid = 0;
-	for(trainingSuspectMap::iterator it = db->begin(); it != db->end(); it++)
-	{
-		uid = atoi(it->first.c_str());
-
-		if(uid > max)
-			max = uid;
-	}
-
-	uid = max + 1;
 	ofstream out(dbFile.data(), ios::app);
 	for(trainingFileSuspectMap::iterator header = trainingTable->begin(); header != trainingTable->end(); header++)
 	{
 		if(header->second->isIncluded)
 		{
-			out << uid << " " << header->second->isHostile << " \"" << header->second->description << "\"" << endl;
+			out << header->second->isHostile << " \"" << header->second->description << "\"" << endl;
 			for(vector<string>::iterator i = header->second->points.begin(); i != header->second->points.end(); i++)
 			{
 				out << *i << endl;
 			}
 			out << endl;
-
-			uid++;
 		}
 	}
 

@@ -1,9 +1,13 @@
-#suspectTable {
+.novaGrid {
 	table-layout:fixed;
 	border-collapse:collapse;
 }
 
-#suspectTable td, #suspectTable th 
+table.novaGrid {
+	border: 1px solid black;
+}
+
+td.novaGrid
 {
 	font-size:1em;
 	border:1px solid #d0e9fc;
@@ -12,7 +16,7 @@
 	white-space: nowrap;
 }
 
-#suspectTable th 
+.novaGrid th
 {
 	border: 1px solid black;
 	white-space: normal;
@@ -21,6 +25,10 @@
 	padding-top:4px;
 	padding-bottom:4px;
 	background-color: #d0e9fc;
+}
+
+tr.novaGrid:hover {
+	background-color: #AFD9FF !important;
 }
 
 div.sortArrow

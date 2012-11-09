@@ -71,6 +71,18 @@ script
     }
   }
 
+  function watermark(source, text){
+    var ele = document.getElementById(source);
+    if(ele.value == '')
+    {
+      ele.value = text; 
+    } 
+    else
+    {
+       
+    }
+  }
+
   require(["dojo/domReady!"], function(){
     updateFeatureSettingStates();
   });
@@ -90,24 +102,24 @@ form(method="post", action="/configureNovaSave")
 
   h2 File Paths
   label Path to state save file
-  input(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
+  input.wide(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
   br
   
   label Path to training file
-  input(type="text", name="DATAFILE",  value=DATAFILE)
+  input.wide(type="text", name="DATAFILE",  value=DATAFILE)
   br
    
   label Path to PCAP file
-  input(type="text", name="PCAP_FILE",  value=PCAP_FILE)
+  input.wide(type="text", name="PCAP_FILE",  value=PCAP_FILE)
   br
 
   label Path to User Honeyd Config
-  input(type="text", name="USER_HONEYD_CONFIG",  value=USER_HONEYD_CONFIG)
+  input.wide(type="text", name="USER_HONEYD_CONFIG",  value=USER_HONEYD_CONFIG)
   br
   
   
   label Path to Haystack Honeyd Config File
-  input(type="text", name="HS_HONEYD_CONFIG",  value=HS_HONEYD_CONFIG)
+  input.wide(type="text", name="HS_HONEYD_CONFIG",  value=HS_HONEYD_CONFIG)
   br
 
   h2 TCP Timeout
@@ -123,36 +135,36 @@ form(method="post", action="/configureNovaSave")
   label Read PCAP file?
   br
   if READ_PCAP != "0"
-    |Yes
     input(type="radio", name="READ_PCAP", value="1", checked)
+    |Yes
     br
-    |No
     input(type="radio", name="READ_PCAP", value="0")
+    |No
     br
   else
-    |Yes
     input(type="radio", name="READ_PCAP", value="1")
+    |Yes
     br
-    |No
     input(type="radio", name="READ_PCAP", value="0", checked)
+    |No
     br
   br
 
   label Go to live capture after PCAP?
   br
   if GO_TO_LIVE != "0"
-    |Yes
     input(type="radio", name="GO_TO_LIVE", value="1", checked)
+    |Yes
     br
-    |No
     input(type="radio", name="GO_TO_LIVE", value="0")
+    |No
     br
   else
-    |Yes
     input(type="radio", name="GO_TO_LIVE", value="1")
+    |Yes
     br
-    |No
     input(type="radio", name="GO_TO_LIVE", value="0", checked)
+    |No
     br
   br
   
@@ -221,18 +233,18 @@ form(method="post", action="/configureNovaSave")
   label Only classify packets going to honeypots?
   br
   if ONLY_CLASSIFY_HONEYPOT_TRAFFIC != "0"
-    |Yes
     input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="1", checked)
+    |Yes
     br
-    |No
     input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="0")
+    |No
     br
   else
-    |Yes
     input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="1")
+    |Yes
     br
-    |No
     input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="0", checked)
+    |No
     br
   br
   
@@ -255,40 +267,40 @@ form(method="post", action="/configureNovaSave")
   label Clear data after suspect logged as hostile?
   br
   if CLEAR_AFTER_HOSTILE_EVENT != "0"
-    |Yes
     input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
+    |Yes
     br
-    |No
     input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0")
+    |No
     br
   else
-    |Yes
     input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1")
+    |Yes
     br
-    |No
     input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0", checked)
+    |No
     br
   br
 
   label Custom PCAP Filter String
-  input(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
+  input.wide(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
   br
   
   label Custom PCAP Filter String Mode
   br
   if CUSTOM_PCAP_MODE != "0"
-    |Override
     input(type="radio", name="CUSTOM_PCAP_MODE", value="1", checked)
+    |Override
     br
-    |Append
     input(type="radio", name="CUSTOM_PCAP_MODE", value="0")
+    |Append
     br
   else
-    |Override
     input(type="radio", name="CUSTOM_PCAP_MODE", value="1")
+    |Override
     br
-    |Append
     input(type="radio", name="CUSTOM_PCAP_MODE", value="0", checked)
+    |Append
     br
   br
 
@@ -310,10 +322,17 @@ form(method="post", action="/configureNovaSave")
   label Data TTL
   input(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
   br
-
+  
   h2 Logger Settings
   label Service Preferences
   input(name="SERVICE_PREFERENCES", value=SERVICE_PREFERENCES)
+  br
+  
+  p(style="font-style: italic; float: left;") Note: To disable remote logging for Nova, use string NULL or empty the input field
+  br
+  
+  label Remote Log Server IP
+  input(name="RSYSLOG_IP", value=RSYSLOG_IP, id='RSYSLOG_IP', onfocus='watermark("RSYSLOG_IP", "NULL")', onblur='watermark("RSYSLOG_IP", "NULL")')
   br
 
   label Haystack Storage
@@ -322,18 +341,18 @@ form(method="post", action="/configureNovaSave")
 
   h2 Master Multi-Instance User Interface
   if MASTER_UI_ENABLED != "0"
-    |Yes
     input(type="radio", name="MASTER_UI_ENABLED", value="1", checked)
+    |Yes
     br
-    |No
     input(type="radio", name="MASTER_UI_ENABLED", value="0")
+    |No
     br
   else
-    |Yes
     input(type="radio", name="MASTER_UI_ENABLED", value="1")
+    |Yes
     br
-    |No
     input(type="radio", name="MASTER_UI_ENABLED", value="0", checked)
+    |No
     br
 
 

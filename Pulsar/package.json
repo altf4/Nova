@@ -1,6 +1,6 @@
 {
-	"name": "mothership",
-	"description": "",
+	"name": "pulsar",
+	"description": "Remote management and information interface for Nova.",
 	"version": "0.0.1",
 	"dependencies": {
 		"express": "2.5.x",

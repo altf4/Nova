@@ -4,7 +4,6 @@ var novaconfig = require('novaconfig.node');
 // doesn't/can't accept websocket connections (for whatever reason)
 // Problem not a problem now, but definitely will be later
 var express = require('express');
-var app = require('express').createServer();
 var nowjs = require('now');
 var fs = require('fs');
 var crypto = require('crypto');
@@ -19,6 +18,25 @@ var BasicStrategy = require('passport-http').BasicStrategy;
 var NovaHomePath = config.GetPathHome();
 var NovaSharedPath = config.GetPathShared();
 
+
+// Setup TLS
+var app;
+if (config.ReadSetting("PULSAR_WEBUI_TLS_ENABLED") == "1") {
+	var keyPath = config.ReadSetting("PULSAR_WEBUI_TLS_KEY");
+	var certPath = config.ReadSetting("PULSAR_WEBUI_TLS_CERT");
+	var passPhrase = config.ReadSetting("PULSAR_WEBUI_TLS_PASSPHRASE");
+	express_options = {
+		key: fs.readFileSync(NovaHomePath + keyPath),
+		cert: fs.readFileSync(NovaHomePath + certPath),
+		passphrase: passPhrase
+	};
+ 
+	app = express.createServer(express_options);
+} else {
+	app = express.createServer();
+}
+
+
 // Configure the express server to use the 
 // bodyParser so that we can view and use the 
 // contents of the req variable in the get/post
@@ -32,7 +50,7 @@ app.configure(function()
 
 var LOG = require('../NodejsModule/Javascript/Logger').LOG;
 
-LOG('ALERT', 'Starting MOTHERSHIP version ' + config.GetVersionString());
+LOG('ALERT', 'Starting PULSAR version ' + config.GetVersionString());
 
 process.chdir(NovaHomePath);
 
@@ -51,7 +69,7 @@ var databaseOpenResult = function (err) {
   }
 }
 
-var db = new sql.Database(NovaHomePath + '/data/database.db', sql.OPEN_READWRITE, databaseOpenResult);
+var db = new sql.Database(NovaHomePath + '/data/quasarDatabase.db', sql.OPEN_READWRITE, databaseOpenResult);
 
 var dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
 var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
@@ -136,13 +154,13 @@ app.set('view options', { layout: false });
 app.set('views', __dirname + '/views');
 // TODO: Make port configurable
 app.listen(8080);
-app.use(express.static(NovaSharedPath + '/Mothership/www'));
+app.use(express.static(NovaSharedPath + '/Pulsar/www'));
 
 // Initialize nowjs to listen to our express server
 var everyone = nowjs.initialize(app);
 
 // TODO: For each of the cases below, there will be code to ensure
-// that any relevant state data is saved s.t. upon the Mothership 
+// that any relevant state data is saved s.t. upon Pulsar 
 // coming back up, it's state will be as it was when it died
 // Specifically, we want to save the list of the found suspects, as well
 // as their suspectGrid data. Almost everything else that would need to be
@@ -213,12 +231,12 @@ function saveScheduledEvents(callback)
   // array, and the schedule module for Nodejs
   try
   {
-    fs.unlinkSync(NovaSharedPath + '/Mothership/scheduledEvents.txt');
+    fs.unlinkSync(NovaSharedPath + '/Pulsar/scheduledEvents.txt');
   }
   catch(err)
   {
   }
-  var writer = fs.createWriteStream(NovaSharedPath + '/Mothership/scheduledEvents.txt', {'flags':'a'});
+  var writer = fs.createWriteStream(NovaSharedPath + '/Pulsar/scheduledEvents.txt', {'flags':'a'});
   
   for(var i in scheduledMessages)
   {
@@ -237,7 +255,7 @@ function readScheduledEvents()
 {
   try
   {
-    var fsread = fs.readFileSync(NovaSharedPath + '/Mothership/scheduledEvents.txt', 'utf8');
+    var fsread = fs.readFileSync(NovaSharedPath + '/Pulsar/scheduledEvents.txt', 'utf8');
     var splitUp = fsread.split(/\r\n|\r|\n/);
     if(splitUp != '')
     {
@@ -252,7 +270,7 @@ function readScheduledEvents()
     else
     {
       console.log('No scheduled events saved');
-      fs.unlinkSync(NovaSharedPath + '/Mothership/scheduledEvents.txt'); 
+      fs.unlinkSync(NovaSharedPath + '/Pulsar/scheduledEvents.txt'); 
     }
   }
   catch(err)
@@ -332,7 +350,7 @@ function writeScheduledEventStructure(sEvent, callback)
 // If, for some reason, a call is made to a nowjs call that isn't
 // yet defined (i.e. something like getting a message that forces a 
 // jade-side nowjs call for updating elements, but that jade file isn't
-// loaded), the mothership connections will break and some undefined
+// loaded), the Pulsar connections will break and some undefined
 // behavior begins to occur. To be safe, structure the message cases
 // to update some server side element, and then call any jade-side nowjs
 // magic inside of a conditional checking that the typeof the function
@@ -465,7 +483,7 @@ everyone.now.GetScheduledEvents = GetScheduledEvents;
 
 WriteNotification = function(notify)
 {
-  var append = fs.readFileSync(NovaSharedPath + '/Mothership/notifications.txt', 'utf8');
+  var append = fs.readFileSync(NovaSharedPath + '/Pulsar/notifications.txt', 'utf8');
   var newNotify = '';
   if(append != undefined)
   {
@@ -475,13 +493,13 @@ WriteNotification = function(notify)
   {
     newNotify = notify.toString() + '\n';
   }
-  fs.writeFileSync(NovaSharedPath + '/Mothership/notifications.txt', newNotify);
+  fs.writeFileSync(NovaSharedPath + '/Pulsar/notifications.txt', newNotify);
 }
 everyone.now.WriteNotification = WriteNotification;
 
 GetNotifications = function(callback)
 {
-  var notificationData = fs.readFileSync(NovaSharedPath + '/Mothership/notifications.txt', 'utf8');
+  var notificationData = fs.readFileSync(NovaSharedPath + '/Pulsar/notifications.txt', 'utf8');
   if(typeof callback == 'function')
   {
     callback(notificationData);
@@ -642,12 +660,12 @@ everyone.now.ClearSuspectIPs = ClearSuspectIPs;
 RemoveGroup = function(group)
 {
   console.log('Removing group ' + group + ' from the client groups file');
-  var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
+  var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
   var regex = group + '.*?;';
   var replaceWithNull = new RegExp(regex, 'g');
   groupFile = groupFile.replace(replaceWithNull, '');
   groupFile = trimNewlines(groupFile);
-  fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
+  fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
 };
 everyone.now.RemoveGroup = RemoveGroup;
 
@@ -659,11 +677,11 @@ UpdateGroup = function(group, newMembers)
   {
     console.log('Updating group ' + group + ' to have members ' + newMembers);
   }
-  var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
+  var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
   var regex = group + '.*?;';
   var replaceWithNull = new RegExp(regex, 'g');
   groupFile = groupFile.replace(replaceWithNull, group + ':' + newMembers + ';');
-  fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
+  fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
 }
 everyone.now.UpdateGroup = UpdateGroup;
 
@@ -671,9 +689,9 @@ everyone.now.UpdateGroup = UpdateGroup;
 AddGroup = function(group, members)
 {
   console.log('Adding group ' + group + ' with members ' + members);
-  var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
+  var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
   groupFile += '\n' + group + ':' + members + ';';
-  fs.writeFileSync(NovaSharedPath + '/Mothership/client_groups.txt', groupFile);
+  fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
 }
 everyone.now.AddGroup = AddGroup;
 
@@ -719,7 +737,7 @@ everyone.now.GetClientBenignRequest = GetClientBenignRequest;
 
 GetGroupMembers = function(group, callback)
 {
-  var groupFile = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'utf8');
+  var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
   var start = groupFile.indexOf(group);
   var end = groupFile.indexOf(';', start) - 2;
   if(typeof callback == 'function')
@@ -733,7 +751,7 @@ everyone.now.GetGroupMembers = GetGroupMembers;
 // grab the list of interfaces for that client.
 GetInterfacesOfClient = function(clientId, cb)
 {
-  var interfaceFile = fs.readFileSync(NovaSharedPath + '/Mothership/ClientConfigs/iflist@' + clientId + '.txt', 'utf8');
+  var interfaceFile = fs.readFileSync(NovaSharedPath + '/Pulsar/ClientConfigs/iflist@' + clientId + '.txt', 'utf8');
   var pass = interfaceFile.split(',');
   if(typeof cb == 'function')
   {
@@ -790,7 +808,7 @@ function getClientIds()
 
 function SaveClientIds(callback)
 {
-  fs.writeFileSync(NovaSharedPath + '/Mothership/clientIds.txt', getClientIds());
+  fs.writeFileSync(NovaSharedPath + '/Pulsar/clientIds.txt', getClientIds());
   if(typeof callback == 'function')
   {
     callback; 
@@ -802,7 +820,7 @@ function populateNovaClients()
   try
   {
     var seen = new Array();
-    var clientFileList = fs.readFileSync(NovaSharedPath + '/Mothership/clientIds.txt', 'utf8').split(/\r\n|\r|\n/); 
+    var clientFileList = fs.readFileSync(NovaSharedPath + '/Pulsar/clientIds.txt', 'utf8').split(/\r\n|\r|\n/); 
     console.log('clientFileList: ' + clientFileList.join());
     if(clientFileList == '' || clientFileList == undefined)
     {
@@ -847,14 +865,25 @@ var https = require('https');
 // commented stanzas; the ca option will contain a list of 
 // trusted certs, and the other options do what they say
 // TODO: These paths will need to be relative to the NovaPath
-// or something mothership specific
-var options = {
-  key: fs.readFileSync(NovaHomePath + '/config/keys/quasarKey.pem'),
-  cert: fs.readFileSync(NovaHomePath + '/config/keys/quasarCert.pem')
-	/*ca: fs.readFileSync(''),
-	requestCert:		true,
-	rejectUnauthorized:	false*/
-};
+// or something Pulsar specific
+
+var options;
+if (config.ReadSetting("PULSAR_TETHER_TLS_ENABLED") == "1") {
+	options = {
+	  key: fs.readFileSync(NovaHomePath + config.ReadSetting("PULSAR_TETHER_TLS_KEY")),
+	  cert: fs.readFileSync(NovaHomePath + config.ReadSetting("PULSAR_TETHER_TLS_CERT")),
+	  passphrase: config.ReadSetting("PULSAR_TETHER_TLS_PASSPHRASE"),
+	  ca: fs.readFileSync(NovaHomePath + config.ReadSetting("PULSAR_TETHER_TLS_CA")),
+	  requestCert:		true,
+	  rejectUnauthorized:	true
+	};
+} else {
+	options = {
+	  key: fs.readFileSync(NovaHomePath + config.ReadSetting("PULSAR_TETHER_TLS_KEY")),
+	  cert: fs.readFileSync(NovaHomePath + config.ReadSetting("PULSAR_TETHER_TLS_CERT")),
+	  passphrase: config.ReadSetting("PULSAR_TETHER_TLS_PASSPHRASE"),
+	 };
+}
 
 // Create the httpsServer, and make it so that any requests for urls over http
 // to the server are met with 404s; after the initial handshake, we shouldn't be 
@@ -874,7 +903,7 @@ var httpsServer = https.createServer(options, function(request, response)
 // TODO: Make this port configurable
 httpsServer.listen(8081, function()
 {
-	console.log('Mothership Server is listening on 8081');
+	console.log('Pulsar Server is listening on 8081');
 });
 
 // Initialize the WebSocketServer to use the httpsServer as the 
@@ -912,7 +941,7 @@ wsServer.on('request', function(request)
         // EXACTLY with the case strings
 				switch(json_args.type)
 				{
-          // addId is the first message a client sends to the mothership,
+          // addId is the first message a client sends to the Pulsar,
           // essentially binds their client id to the connection that has
           // has been created for future reference and connection management
 					case 'addId':
@@ -1005,7 +1034,7 @@ wsServer.on('request', function(request)
 						
 						try
 						{
-						  var append = fs.readFileSync(NovaSharedPath + '/Mothership/ClientConfigs/suspects@' + json_args.client + '.txt', 'utf8');
+						  var append = fs.readFileSync(NovaSharedPath + '/Pulsar/ClientConfigs/suspects@' + json_args.client + '.txt', 'utf8');
 						  var start = append.indexOf(suspect.ip + '@' + suspect.client + '_' + suspect.interface);
 						  if(start == -1)
 						  {
@@ -1017,12 +1046,12 @@ wsServer.on('request', function(request)
 						    var newAppend = suspect.ip + '@' + suspect.client + '_' + suspect.interface + ':' + suspect.classification + ' ' + suspect.lastpacket + ';';
 						    append = append.replace(append.substr(start, end), newAppend);
 						  }
-						  fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/suspects@' + json_args.client + '.txt', append);
+						  fs.writeFileSync(NovaSharedPath + '/Pulsar/ClientConfigs/suspects@' + json_args.client + '.txt', append);
 						}
 						catch(err)
 						{
 						  var write = suspect.ip + '@' + suspect.client + '_' + suspect.interface + ':' + suspect.classification + ' ' + suspect.lastpacket + ';\n';
-						  fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/suspects@' + json_args.client + '.txt', write); 
+						  fs.writeFileSync(NovaSharedPath + '/Pulsar/ClientConfigs/suspects@' + json_args.client + '.txt', write); 
 						}
 						
 						if(typeof everyone.now.OnNewSuspect == 'function')
@@ -1052,7 +1081,7 @@ wsServer.on('request', function(request)
 						break;
 				  // This case is reserved for properly receiving and addressing benign requests from 
 				  // a client. Similar to hostile suspect (in fact, exactly the same), but in the future
-				  // I anticipate mothership-side logging differences, so I figured i'd make another
+				  // I anticipate Pulsar-side logging differences, so I figured i'd make another
 				  // case.
 				  case 'benignSuspect':
 				    console.log('Benign Suspect ' + json_args.ip + ' received from ' + json_args.client + ' at ' + json_args.lastpacket);
@@ -1079,7 +1108,7 @@ wsServer.on('request', function(request)
 						//       part of the push object literal
 						var push = {};
 						push.client = json_args.id;
-						push.file = (NovaSharedPath + '/Mothership/ClientConfigs/' + json_args.filename);
+						push.file = (NovaSharedPath + '/Pulsar/ClientConfigs/' + json_args.filename);
 						fileAssociations.push(push);
 						fs.writeFileSync(push.file, json_args.file);
 						console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);
@@ -1089,7 +1118,7 @@ wsServer.on('request', function(request)
 				  // Lightens the load on messaging, and once it's more fleshed out, will be polled to ensure
 				  // that it remains up to date. 
 				  case 'registerClientInterfaces':
-				    fs.writeFileSync(NovaSharedPath + '/Mothership/ClientConfigs/' + json_args.filename, json_args.file);
+				    fs.writeFileSync(NovaSharedPath + '/Pulsar/ClientConfigs/' + json_args.filename, json_args.file);
 				    console.log('Interfaces files for ' + json_args.id + ' can be found at ' + json_args.filename);
 				    break;
 				  // Case reserved for status updates from a given client about the classification and 
@@ -1142,9 +1171,9 @@ wsServer.on('request', function(request)
               everyone.now.UpdateClientsList(json_args.id, 'remove');
               everyone.now.UpdateClientsList(json_args.newId, 'add');
             }
-            var change = fs.readFileSync(NovaSharedPath + '/Mothership/clientIds.txt', 'utf8');
+            var change = fs.readFileSync(NovaSharedPath + '/Pulsar/clientIds.txt', 'utf8');
             change = change.replace(new RegExp(json_args.id), json_args.newId);
-            fs.writeFileSync(NovaSharedPath + '/Mothership/clientIds.txt', change);
+            fs.writeFileSync(NovaSharedPath + '/Pulsar/clientIds.txt', change);
             if(typeof everyone.now.RefreshPageAfterRename == 'function')
             {
               everyone.now.RefreshPageAfterRename();
@@ -1234,7 +1263,7 @@ function getClients()
 // that have an associated list of last-known clientIds. 
 function getGroups()
 {
-  var group = fs.readFileSync(NovaSharedPath + '/Mothership/client_groups.txt', 'ascii');
+  var group = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'ascii');
   if(group == '')
   {
     console.log('client groups file is empty');

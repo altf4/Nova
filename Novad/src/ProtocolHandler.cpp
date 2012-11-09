@@ -356,7 +356,7 @@ void SendSuspectToUIs(Suspect *suspect)
 			continue;
 		}
 		delete suspectCallback;
-		LOG(DEBUG, string("Sent a suspect to the UI: ")+suspect->GetIpString(), "");
+		//LOG(DEBUG, string("Sent a suspect to the UI: ")+suspect->GetIpString(), "");
 	}
 }
 

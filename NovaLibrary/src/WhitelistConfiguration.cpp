@@ -19,6 +19,7 @@
 #include "WhitelistConfiguration.h"
 #include "Logger.h"
 
+#include <boost/algorithm/string.hpp>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -30,14 +31,14 @@ using namespace std;
 namespace Nova
 {
 
-bool WhitelistConfiguration::AddIp(std::string ip)
+bool WhitelistConfiguration::AddIp(std::string interface, std::string ip)
 {
-	return WhitelistConfiguration::AddEntry(ip);
+	return WhitelistConfiguration::AddEntry(interface + "," + ip);
 }
 
-bool WhitelistConfiguration::AddIpRange(std::string ip, std::string netmask)
+bool WhitelistConfiguration::AddIpRange(std::string interface, std::string ip, std::string netmask)
 {
-	return WhitelistConfiguration::AddEntry(ip + "/" + netmask);
+	return WhitelistConfiguration::AddEntry(interface + "," + ip + "/" + netmask);
 }
 
 
@@ -109,16 +110,25 @@ string WhitelistConfiguration::GetSubnet(string whitelistEntry)
 
 string WhitelistConfiguration::GetIp(string whitelistEntry)
 {
-	uint seperator = whitelistEntry.find("/");
+	vector<string> splitOnCommas;
+	boost::split(splitOnCommas, whitelistEntry, boost::is_any_of(","));
+
+	uint seperator = splitOnCommas.at(1).find("/");
 	if(seperator != string::npos)
 	{
-		return (whitelistEntry.substr(0, seperator));
+		return (splitOnCommas.at(1).substr(0, seperator));
 	}
 	else
 	{
-		return whitelistEntry;
+		return splitOnCommas.at(1);
 	}
+}
 
+string WhitelistConfiguration::GetInterface(string whitelistEntry)
+{
+	vector<string> splitOnCommas;
+	boost::split(splitOnCommas, whitelistEntry, boost::is_any_of(","));
+	return splitOnCommas.at(0);
 }
 
 // Private helper functions
@@ -163,8 +173,11 @@ vector<string> WhitelistConfiguration::GetWhitelistedIps(bool getRanges)
 
 bool WhitelistConfiguration::AddEntry(std::string entry)
 {
+	vector<string> splitOnCommas;
+	boost::split(splitOnCommas, entry, boost::is_any_of(","));
+
 	// Convert ip/xx notation if need be
-	uint seperator = entry.find("/");
+	uint seperator = splitOnCommas.at(1).find("/");
 	if(seperator != string::npos)
 	{
 		if(GetSubnet(entry).size() > 0 && GetSubnet(entry).size() <= 2)
@@ -177,7 +190,7 @@ bool WhitelistConfiguration::AddEntry(std::string entry)
 				subnetmask.s_addr |= subnetmask.s_addr | (1 << i);
 			}
 			char *newSubnet = inet_ntoa(subnetmask);
-			entry = GetIp(entry) + "/" + string(newSubnet);
+			entry = GetInterface(entry) + "," + GetIp(entry) + "/" + string(newSubnet);
 		}
 	}
 

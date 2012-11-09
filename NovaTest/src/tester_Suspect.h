@@ -46,6 +46,8 @@ protected:
 		// Note: the byte order gets flipped for this
 		p1.m_evidencePacket.ip_len = (uint16_t)256;
 		p1.m_evidencePacket.ts = 10;
+		p1.m_evidencePacket.tcp_hdr.syn = true;
+		p1.m_evidencePacket.tcp_hdr.ack = false;
 
 
 		// Second test packet
@@ -57,6 +59,8 @@ protected:
 		// Note: the byte order gets flipped for this
 		p2.m_evidencePacket.ip_len = (uint16_t)256;
 		p2.m_evidencePacket.ts = 20;
+		p2.m_evidencePacket.tcp_hdr.syn = true;
+		p2.m_evidencePacket.tcp_hdr.ack = false;
 
 
 		Config::Inst()->EnableAllFeatures();

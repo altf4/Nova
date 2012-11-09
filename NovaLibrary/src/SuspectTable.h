@@ -183,6 +183,9 @@ public:
 	//		this is a specialized function designed only for use by Consumer threads.
 	void ProcessEvidence(Evidence *evidence, bool readOnly = false);
 
+	// Mark all suspects to be reclassified next classification cycle
+	void SetEveryoneNeedsClassificationUpdate();
+
 	Suspect m_emptySuspect;
 
 private:

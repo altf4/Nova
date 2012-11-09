@@ -4,25 +4,25 @@
 		<name>Linux Syslogd</name>
 		<service>syslog</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash scripts/linux/syslogd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/syslogd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
 		<name>Linux Cyrus-Imapd</name>
 		<service>imap</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash scripts/linux/cyrus-imapd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/cyrus-imapd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
 		<name>Windows Telnet</name>
 		<service>telnet</service>
 		<osclass>Microsoft | Windows</osclass>
-		<path>bash scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
 		<name>Linux Telnet</name>
 		<service>telnet</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
 		<name>Windows FTP</name>
@@ -34,31 +34,31 @@
 		<name>Linux Bportmapd</name>
 		<service>bmap</service>
 		<osclass>Linux | Linux</osclass>
-		<path>perl scripts/unix/general/rpc/bportmapd --proto tcp --host scripts/unix/general/rpc/hosts/debian --srcip $ipsrc --dstip $ipdst --srcport $srcport --dstport $dport --logfile /var/log/h oneyd/bportmapd --logall</path>
+		<path>perl /usr/share/honeyd/scripts/unix/general/rpc/bportmapd --proto tcp --host scripts/unix/general/rpc/hosts/debian --srcip $ipsrc --dstip $ipdst --srcport $srcport --dstport $dport --logfile /var/log/h oneyd/bportmapd --logall</path>
 	</script>
 	<script>
 		<name>Linux FTP</name>
 		<service>ftp</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash scripts/linux/ftp.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/ftp.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
 		<name>Linux SSH</name>
 		<service>ssh</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash scripts/linux/ssh.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/ssh.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
 		<name>Linux Qpop</name>
 		<service>pop3</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash scripts/linux/qpop.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/qpop.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
 		<name>Linux lpd</name>
 		<service>lpd</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash scripts/linux/lpd.sh $ipsrc $sport $ipdst $dport</path>
+		<path>bash /usr/share/honeyd/scripts/linux/lpd.sh $ipsrc $sport $ipdst $dport</path>
 	</script>
 	<script>
 		<name>Windows httpd</name>
@@ -70,19 +70,19 @@
 		<name>Linux Finger</name>
 		<service>finger</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash scripts/linux/fingerd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/fingerd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
 		<name>Unix SNMP</name>
 		<service>snmp</service>
 		<osclass>HP | HP-UX</osclass>
-		<path>perl scripts/unix/general/snmp/fake-snmp.pl public private --config=scripts/unix/general</path>
+		<path>perl /usr/share/honeyd/scripts/unix/general/snmp/fake-snmp.pl public private --config=scripts/unix/general</path>
 	</script>
 	<script>
 		<name>Linux httpd</name>
 		<service>http</service>
 		<osclass>Linux | Linux</osclass>
-		<path>tclsh scripts/linux/httpd/httpd.tcl $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>tclsh /usr/share/honeyd/scripts/linux/httpd/httpd.tcl $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
 		<name>Telnet Router</name>
@@ -94,18 +94,18 @@
 		<name>Linux Sendmail</name>
 		<service>smtp</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash scripts/linux/sendmail.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/sendmail.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
 		<name>Linux Squid</name>
 		<service>squid-snmp</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash scripts/linux/squid.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/squid.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 	<script>
 		<name>Linux Echo</name>
 		<service>echo</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash scripts/linux/echo.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/echo.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
 	</script>
 </scripts>

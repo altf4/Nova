@@ -40,7 +40,6 @@ var hhconfig = new novaconfig.HoneydAutoConfigBinding();
 // Modules from NodejsModule/Javascript
 var LOG = require("../NodejsModule/Javascript/Logger").LOG;
 
-
 if (!honeydConfig.LoadAllTemplates()) {
 	LOG("ERROR", "Call to initial LoadAllTemplates failed!");
 }
@@ -50,7 +49,6 @@ var path = require('path');
 var jade = require('jade');
 var express = require('express');
 var util = require('util');
-var https = require('https');
 var passport = require('passport');
 var BasicStrategy = require('passport-http').BasicStrategy;
 var sql = require('sqlite3');
@@ -72,7 +70,10 @@ var honeydLogPath = "/var/log/nova/Honeyd.log";
 var honeydLog = new Tail(honeydLogPath);
 
 var benignRequest = false;
-var mothership;
+var pulsar;
+
+var interfaceAliases = new Object();
+ReloadInterfaceAliasFile();
 
 var RenderError = function (res, err, link) {
 	// Redirect them to the main page if no link was set
@@ -91,7 +92,7 @@ var HashPassword = function (password) {
 	var shasum = crypto.createHash('sha1');
 	shasum.update(password);
 	return shasum.digest('hex');
-}
+};
 
 LOG("ALERT", "Starting QUASAR version " + config.GetVersionString());
 
@@ -103,14 +104,15 @@ var DATABASE_USER = config.ReadSetting("DATABASE_USER");
 var DATABASE_PASS = config.ReadSetting("DATABASE_PASS");
 
 var databaseOpenResult = function (err) {
-	if (err == null) {
+	if (err === null) {
 		console.log("Opened sqlite3 database file.");
 	} else {
-		LOG(ERROR, "Error opening sqlite3 database file: " + err);
+		LOG("ERROR", "Error opening sqlite3 database file: " + err);
 	}
 }
 
-var db = new sql.Database(NovaHomePath + "/data/database.db", sql.OPEN_READWRITE, databaseOpenResult);
+var novaDb = new sql.Database(NovaHomePath + "/data/novadDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
+var db = new sql.Database(NovaHomePath + "/data/quasarDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
 
 
 // Prepare query statements
@@ -125,9 +127,9 @@ var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = 
 var dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
 var dbqFirstrunInsert = db.prepare("INSERT INTO firstrun values(datetime('now'))");
 
-var dbqSuspectAlertsGet = db.prepare('SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_tcp_ports,distinct_udp_ports,avg_tcp_ports_per_host,avg_udp_ports_per_host,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
-var dbqSuspectAlertsDeleteAll = db.prepare('DELETE FROM suspect_alerts');
-var dbqSuspectAlertsDeleteAlert = db.prepare('DELETE FROM suspect_alerts where id = ?');
+var dbqSuspectAlertsGet = novaDb.prepare('SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_tcp_ports,distinct_udp_ports,avg_tcp_ports_per_host,avg_udp_ports_per_host,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
+var dbqSuspectAlertsDeleteAll = novaDb.prepare('DELETE FROM suspect_alerts');
+var dbqSuspectAlertsDeleteAlert = novaDb.prepare('DELETE FROM suspect_alerts where id = ?');
 
 passport.serializeUser(function (user, done) {
 	done(null, user);
@@ -149,7 +151,7 @@ function (username, password, done) {
 			}
 
 			// If there are no users, add default nova and log in
-			if (rowcount[0].rows == 0) {
+			if (rowcount[0].rows === 0) {
 				console.log("No users in user database. Creating default user.");
 				dbqCredentialsInsertUser.run('nova', HashPassword('toor'), function (err) {
 					if (err) {
@@ -181,12 +183,21 @@ function (username, password, done) {
 }));
 
 // Setup TLS
-var express_options = {
-	key: fs.readFileSync(NovaHomePath + '/config/keys/quasarKey.pem'),
-	cert: fs.readFileSync(NovaHomePath + '/config/keys/quasarCert.pem')
-};
-
-var app = express.createServer(express_options);
+var app;
+if (config.ReadSetting("QUASAR_WEBUI_TLS_ENABLED") == "1") {
+	var keyPath = config.ReadSetting("QUASAR_WEBUI_TLS_KEY");
+	var certPath = config.ReadSetting("QUASAR_WEBUI_TLS_CERT");
+	var passPhrase = config.ReadSetting("QUASAR_WEBUI_TLS_PASSPHRASE");
+	express_options = {
+		key: fs.readFileSync(NovaHomePath + keyPath),
+		cert: fs.readFileSync(NovaHomePath + certPath),
+		passphrase: passPhrase
+	};
+ 
+	app = express.createServer(express_options);
+} else {
+	app = express.createServer();
+}
 
 app.configure(function () {
 	app.use(passport.initialize());
@@ -204,9 +215,9 @@ app.set('view options', {
 });
 
 // Do the following for logging
-//console.info("Logging to ./serverLog.log");
-//var logFile = fs.createWriteStream('./serverLog.log', {flags: 'a'});
-//app.use(express.logger({stream: logFile}));
+console.info("Logging to ./serverLog.log");
+var logFile = fs.createWriteStream('./serverLog.log', {flags: 'a'});
+app.use(express.logger({stream: logFile}));
 
 var WEB_UI_PORT = config.ReadSetting("WEB_UI_PORT");
 console.info("Listening on port " + WEB_UI_PORT);
@@ -259,19 +270,31 @@ initLogWatch();
 if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
 {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // SOCKET STUFF FOR MOTHERSHIP 
+  // SOCKET STUFF FOR PULSAR 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Thoughts: Probably going to need a global variable for the websocket connection to
-  // the mothership; an emit needs to be made to the mothership in certain circumstances,
+  // Pulsar; an emit needs to be made to Pulsar in certain circumstances,
   // such as recieving a hostile suspect, so having that be accessible to the nowjs methods
-  // is ideal. Also need to find a way to maintain IP address of Mothership and any needed
+  // is ideal. Also need to find a way to maintain IP address of Pulsar and any needed
   // credentials for reboots, etc. 
   
   // TODO: Make configurable
   var connected = config.ReadSetting('MASTER_UI_IP') + ':8081';
   
   var WebSocketClient = require('websocket').client;
-  var client = new WebSocketClient();
+  var client;
+  
+  if (config.ReadSetting("QUASAR_TETHER_TLS_ENABLED")) {
+    client = new WebSocketClient({
+      tlsOptions: {
+        cert: fs.readFileSync(NovaHomePath + config.ReadSetting("QUASAR_TETHER_TLS_CERT")),
+        key: fs.readFileSync(NovaHomePath + config.ReadSetting("QUASAR_TETHER_TLS_KEY")),
+        passphrase: config.ReadSetting("QUASAR_TETHER_TLS_PASSPHRASE")
+      }
+    });
+  } else {
+    client = new WebSocketClient();
+  }
   // TODO: Make configurable
   var clientId = config.ReadSetting('MASTER_UI_CLIENT_ID');
   var reconnecting = false;
@@ -281,7 +304,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   // If the connection fails, print an error message
   client.on('connectFailed', function(error)
   {
-    console.log('Connect to Mothership error: ' + error.toString());
+    console.log('Connect to Pulsar error: ' + error.toString());
     if(!reconnecting)
     {
       console.log('No current attempts to reconnect, starting reconnect attempts every ', (reconnectTimer / 1000) ,' seconds.');
@@ -291,17 +314,17 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
     }
   });
   
-  // If we successfully connect to the mothership, perform event-based actions here.
+  // If we successfully connect to pulsar, perform event-based actions here.
   // The interface for websockets is a little less nice than socket.io, simply because
   // you cannot name your own events, everything has to be done within the message
   // directive; it's only one more level of indirection, however, so no big deal
   client.on('connect', function(connection){
     // When the connection is established, we save the connection variable
-    // to the mothership global so that actions can be taken on the connection
+    // to p global so that actions can be taken on the connection
     // outside of this callback if needed (hostile suspect, etc.)
     reconnecting = false;
     clearInterval(clearReconnect);
-    mothership = connection;
+    pulsar = connection;
     var quick = {};
     quick.type = 'addId';
     quick.id = clientId;
@@ -311,26 +334,26 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
     // I don't know that we HAVE to use UTF8 here, there's a send() method as 
     // well as a 'data' member inside the message objects instead of utf8Data.
     // But, as it was in the Websockets tutorial Pherric found, we'll use it for now
-    mothership.sendUTF(JSON.stringify(quick));
-    console.log('Registering client Id with mothership');
+    pulsar.sendUTF(JSON.stringify(quick));
+    console.log('Registering client Id with pulsar');
     
     var configSend = {};
     configSend.type = 'registerConfig';
     configSend.id = clientId;
     configSend.filename = 'NOVAConfig@' + clientId + '.txt';
     configSend.file = fs.readFileSync(NovaHomePath + '/config/NOVAConfig.txt', 'utf8');
-    mothership.sendUTF(JSON.stringify(configSend));
-    console.log('Registering NOVAConfig with mothership');
+    pulsar.sendUTF(JSON.stringify(configSend));
+    console.log('Registering NOVAConfig with pulsar');
   
     var interfaceSend = {};
     interfaceSend.type = 'registerClientInterfaces';
     interfaceSend.id = clientId;
     interfaceSend.filename = 'iflist@' + clientId + '.txt';
     interfaceSend.file = config.ListInterfaces().sort().join();
-    mothership.sendUTF(JSON.stringify(interfaceSend));
-    console.log('Registering interfaces with mothership');
+    pulsar.sendUTF(JSON.stringify(interfaceSend));
+    console.log('Registering interfaces with pulsar');
   
-    console.log('successfully connected to mothership');
+    console.log('successfully connected to pulsar');
   
     connection.on('message', function(message)
     {
@@ -350,7 +373,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'response';
               response.response_message = 'Novad is being started on ' + clientId;
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'stopNovad':
               nova.StopNovad();
@@ -359,7 +382,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'response';
               response.response_message = 'Novad is being stopped on ' + clientId;
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'startHaystack':
               if(!nova.IsHaystackUp())
@@ -369,7 +392,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                 response.id = clientId;
                 response.type = 'response';
                 response.response_message = 'Haystack is being started on ' + clientId;
-                mothership.sendUTF(JSON.stringify(response));
+                pulsar.sendUTF(JSON.stringify(response));
               }
               else
               {
@@ -377,7 +400,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                 response.id = clientId;
                 response.type = 'response';
                 response.response_message = 'Haystack is already up, doing nothing';
-                mothership.sendUTF(JSON.stringify(response));
+                pulsar.sendUTF(JSON.stringify(response));
               }
               break;
             case 'stopHaystack':
@@ -386,7 +409,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'response';
               response.response_message = 'Haystack is being stopped on ' + clientId;
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'writeSetting':
               // The nice thing about using JSON for the message passing is we
@@ -399,7 +422,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'response';
               response.response_message = setting + ' is now ' + value;
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'getHostileSuspects':
               nova.sendSuspectList(distributeSuspect);
@@ -423,9 +446,9 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'response';
               response.response_message = 'Configuration for ' + clientId + ' has been updated. Registering new config...';
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               configSend.file = fs.readFileSync(NovaHomePath + '/config/NOVAConfig.txt', 'utf8');
-              mothership.sendUTF(JSON.stringify(configSend));
+              pulsar.sendUTF(JSON.stringify(configSend));
               break;
             case 'haystackConfig':
               var executionString = 'haystackautoconfig';
@@ -473,7 +496,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                   response.id = clientId;
                   response.type = 'response';
                   response.response_message = message;
-                  mothership.sendUTF(JSON.stringify(response));
+                  pulsar.sendUTF(JSON.stringify(response));
                 }
               });
             
@@ -484,14 +507,14 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                 response.id = clientId;
                 response.type = 'response';
                 response.response_message = message;
-                mothership.sendUTF(JSON.stringify(response));
+                pulsar.sendUTF(JSON.stringify(response));
               });
 
               var response = {};
               response.id = clientId;
               response.type = 'response';
               response.response_message = 'Haystack Autoconfiguration commencing';
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'suspectDetails':
               var suspectString = nova.GetSuspectDetailsString(json_args.ip, json_args.iface);
@@ -499,7 +522,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               response.id = clientId;
               response.type = 'detailsReceived';
               response.data = suspectString;
-              mothership.sendUTF(JSON.stringify(response));
+              pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'clearSuspects':
               everyone.now.ClearAllSuspects(function(){
@@ -507,7 +530,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                 response.id = clientId;
                 response.type = 'response';
                 response.response_message = 'Suspects cleared on ' + json_args.id;
-                mothership.sendUTF(JSON.stringify(response));
+                pulsar.sendUTF(JSON.stringify(response));
               });
               break;
             default:
@@ -519,8 +542,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
     });
     connection.on('close', function(){
       // If the connection gets closed, we want to try to reconnect; we will use
-      // the stored IP of the Mothership to make the reconnect attempts
-      mothership = undefined;
+      // the stored IP of Pulsar to make the reconnect attempts
+      pulsar = undefined;
       if(!reconnecting)
       {
         console.log('closed, beginning reconnect attempts every ', (reconnectTimer / 1000) ,' seconds');
@@ -536,7 +559,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   client.connect('wss://' + connected, null);
   
   setInterval(function() {
-    if(mothership != undefined && mothership != null)
+    if(pulsar != undefined && pulsar != null)
     {
       var message1 = {};
       message1.id = clientId;
@@ -548,8 +571,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
       message2.type = 'statusChange';
       message2.component = 'haystack';
       message2.status = nova.IsHaystackUp().toString();
-      mothership.sendUTF(JSON.stringify(message1));
-      mothership.sendUTF(JSON.stringify(message2));
+      pulsar.sendUTF(JSON.stringify(message1));
+      pulsar.sendUTF(JSON.stringify(message2));
     }
   }, 10000);
   //
@@ -557,31 +580,11 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
 }
 
 app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
-	fs.readFile(novadLogPath, 'utf8', function (err, data) {
-		if (err) {
-			RenderError(res, "Unable to open NOVA log file for reading due to error: " + err);
-			return;
-		} else {
-			// Hacky solution to make browsers launch a save as dialog
-			res.header('Content-Type', 'application/novaLog');
-			var reply = data.toString();
-			res.send(reply);
-		}
-	});
+	res.download(novadLogPath, 'novadLog.log');
 });
 
 app.get('/downloadHoneydLog.log', passport.authenticate('basic', {session: false}), function (req, res) {
-	fs.readFile(honeydLogPath, 'utf8', function (err, data) {
-		if (err) {
-			RenderError(res, "Unable to open NOVA log file for reading due to error: " + err);
-			return;
-		} else {
-			// Hacky solution to make browsers launch a save as dialog
-			res.header('Content-Type', 'application/honeydLog');
-			var reply = data.toString();
-			res.send(reply);
-		}
-	});
+	res.download(honeydLogPath, 'honeydLog.log');
 });
 
 app.get('/novaState.csv', passport.authenticate('basic', {session: false}), function (req, res) {
@@ -738,8 +741,7 @@ app.get('/advancedOptions', passport.authenticate('basic', {session: false}), fu
 			, CLASSIFICATION_ENGINE: config.ReadSetting("CLASSIFICATION_ENGINE")
 			, THRESHOLD_HOSTILE_TRIGGERS: config.ReadSetting("THRESHOLD_HOSTILE_TRIGGERS")
 			, ONLY_CLASSIFY_HONEYPOT_TRAFFIC: config.ReadSetting("ONLY_CLASSIFY_HONEYPOT_TRAFFIC")
-
-
+      , RSYSLOG_IP: getRsyslogIp()
 			, supportedEngines: nova.GetSupportedEngines()
 		}
 	});
@@ -808,9 +810,14 @@ function renderBasicOptions(jadefile, res, req) {
 		}
 	}
 
+	var ifaceForConversion = new Array();
+	for (var i = 0; i < pass.length; i++) {
+		ifaceForConversion.push(pass[i].iface);
+	}
 	res.render(jadefile, {
 		locals: {
 			INTERFACES: pass,
+			INTERFACE_ALIASES: ConvertInterfacesToAliases(ifaceForConversion),
 			DEFAULT: config.GetUseAllInterfacesBinding(),
 			DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP"),
 			DOPPELGANGER_INTERFACE: doppelPass,
@@ -838,22 +845,42 @@ app.get('/basicOptions', passport.authenticate('basic', {session: false}), funct
 
 app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), function (req, res) {
 	if (!honeydConfig.LoadAllTemplates()) {
-		RenderError(res, "Unable to load honeyd configuration XML files")
+		RenderError(res, "Unable to load honeyd configuration XML files");
 		return;
 	}
 
 	var nodeNames = honeydConfig.GetNodeNames();
-	var nodes = new Array();
-
+	var nodeList = [];
+	
 	for (var i = 0; i < nodeNames.length; i++) {
-		nodes.push(honeydConfig.GetNode(nodeNames[i]));
+	  var node = honeydConfig.GetNode(nodeNames[i]);
+	  var push = {};
+	  push.enabled = node.IsEnabled();
+	  push.name = node.GetName();
+	  push.pfile = node.GetProfile();
+	  push.ip = node.GetIP();
+	  push.mac = node.GetMAC();
+	  push.interface = node.GetInterface();
+		nodeList.push(push);
 	}
-
+	
+	var profiles = honeydConfig.GetProfileNames();
+	/*var pass = [];
+	for(var i in profiles)
+	{
+	  if(profiles[i] != 'default' && profiles[i] != 'Doppelganger')
+	  {
+	    pass.push(profiles[i]);
+	  }
+	}*/
+	
+	var interfaces = config.ListInterfaces().sort();
 	res.render('configHoneyd.jade', {
 		locals: {
-			INTERFACES: config.ListInterfaces().sort(),
-			profiles: honeydConfig.GetProfileNames(),
-			nodes: nodes,
+			INTERFACES: interfaces,
+			interfaceAliases: ConvertInterfacesToAliases(interfaces),
+			profiles: profiles,
+			nodes: nodeList,
 			groups: honeydConfig.GetGroups(),
 			currentGroup: config.GetGroup()
 		}
@@ -918,12 +945,16 @@ app.get('/editHoneydNode', passport.authenticate('basic', {session: false}), fun
 		RenderError(res, "Unable to fetch node: " + nodeName, "/configHoneydNodes");
 		return;
 	}
+
+	var interfaces = config.ListInterfaces().sort();
 	res.render('editHoneydNode.jade', {
 		locals: {
 			oldName: nodeName,
-			INTERFACES: config.ListInterfaces().sort(),
+			INTERFACES: interfaces,
+			interfaceAliases: ConvertInterfacesToAliases(interfaces),
 			profiles: honeydConfig.GetProfileNames(),
 			profile: node.GetProfile(),
+			interface: node.GetInterface(),
 			ip: node.GetIP(),
 			mac: node.GetMAC()
 		}
@@ -1060,7 +1091,8 @@ app.get('/configWhitelist', passport.authenticate('basic', {session: false}), fu
 	res.render('configWhitelist.jade', {
 		locals: {
 			whitelistedIps: whitelistConfig.GetIps(),
-			whitelistedRanges: whitelistConfig.GetIpRanges()
+			whitelistedRanges: whitelistConfig.GetIpRanges(),
+			INTERFACES: config.ListInterfaces().sort()
 		}
 	})
 });
@@ -1308,6 +1340,16 @@ app.get("/editTLSCerts", passport.authenticate('basic', {session: false}), funct
 	res.render('editTLSCerts.jade');	
 });
 
+app.get("/interfaceAliases", passport.authenticate('basic', {session: false}), function (reg, res) {
+    ReloadInterfaceAliasFile();
+	res.render('interfaceAliases.jade', {
+        locals: {
+            interfaceAliases: interfaceAliases
+			, INTERFACES: config.ListInterfaces().sort(),
+        }
+    });
+});
+
 app.post("/editTLSCerts", passport.authenticate('basic', {session: false}), function (req, res) {
 	if (req.files["cert"] == undefined || req.files["key"] == undefined) {
 		RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.");
@@ -1377,6 +1419,66 @@ app.post('/scanning', passport.authenticate('basic', {session: false}), function
 	}
 });
 
+app.post('/scripts', passport.authenticate('basic', {session: false}), function(req, res){
+  if(req.files['script'] == undefined || req.body['name'] == undefined)
+  {
+    RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.");
+    return;
+  }
+  if(req.files['script'] == '' || req.body['name'] == '')
+  {
+    RenderError(res, "Must select both a file and a name for the script to add");
+    return;
+  }
+  
+  function clean(string)
+  {
+    var temp = '';
+    for(var i in string)
+    {
+      if(/[a-zA-Z0-9\.]/.test(string[i]) == true)
+      {
+        temp += string[i].toLowerCase();
+      }
+    }
+    
+    return temp;
+  }
+    
+  var filename = req.files['script'].name;
+  
+  filename = 'userscript_' + clean(filename);
+  
+  // should create a 'user' folder within the honeyd script
+  // path for user uploaded scripts, maybe add a way for the
+  // the user to choose where the script goes within the current
+  // file structure later.
+  var pathToSave = '/usr/share/honeyd/scripts/misc/' + filename;
+  
+  fs.readFile(req.files['script'].path, function(readErr, data){
+    if(readErr != null)
+    {
+      RenderError(res, 'Failed to read designated script file');
+      return;
+    }
+    
+    fs.writeFileSync(pathToSave, data);
+    
+    pathToSave = req.body['shell'] + ' ' + pathToSave + ' ' + req.body['args'];
+  
+    honeydConfig.AddScript(req.body['name'], pathToSave);
+  
+    honeydConfig.SaveAllTemplates();
+    honeydConfig.LoadAllTemplates();
+  });
+  
+  res.render('saveRedirect.jade', {
+    locals: {
+      redirectLink: '/scripts'
+    }
+  })
+});
+
 app.post('/customizeTrainingSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	for (var uid in req.body) {
 		trainingDb.SetIncluded(uid, true);
@@ -1441,7 +1543,15 @@ everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macTyp
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
 	// TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
-	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "HS_HONEYD_CONFIG", "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", "THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC"];
+	var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
+	"TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
+	"K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", 
+	"DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", 
+	"DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", 
+	"SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", 
+	"CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", 
+	"MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", 
+	"THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC"];
 
 	Validator.prototype.error = function (msg) {
 		this._errors.push(msg);
@@ -1468,13 +1578,13 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 
   if(clientId != undefined && req.body["MASTER_UI_CLIENT_ID"] != clientId)
   {
-    if(mothership != undefined)
+    if(pulsar != undefined)
     {
       var renameMessage = {};
       renameMessage.type = 'renameRequest';
       renameMessage.id = clientId;
       renameMessage.newId = req.body["MASTER_UI_CLIENT_ID"];
-      mothership.sendUTF(JSON.stringify(renameMessage));
+      pulsar.sendUTF(JSON.stringify(renameMessage));
       clientId = req.body["MASTER_UI_CLIENT_ID"];
     }
   }
@@ -1536,6 +1646,14 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 			validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
 			break;
 
+    case "RSYSLOG_IP":
+      if(/^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$/.test(req.body[configItems[item]]) == false 
+         && req.body[configItems[item]] != 'NULL')
+      {
+        validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP, must be IP:Port or the string "NULL"').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$');
+      }
+      break;
+      
 		case "DOPPELGANGER_IP":
 			validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
 			var split = req.body[configItems[item]].split('.');
@@ -1591,12 +1709,55 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 		}
 	}
 
-
 	var errors = validator.getErrors();
+
+  var writeIP = req.body["RSYSLOG_IP"];
+
+  if(writeIP != undefined && writeIP != getRsyslogIp() && writeIP != 'NULL')
+  {
+    var util = require('util');
+    var spawn = require('sudo');
+    var options = {
+      cachePassword: true
+      , prompt: 'You have requested to change the target server for Rsyslog. This requires superuser permissions.'
+    };
+  
+    var execution = ['nova_rsyslog_helper', writeIP.toString()];
+  
+    var rsyslogHelper = spawn(execution, options);
+
+    rsyslogHelper.on('exit', function(code){
+      if(code.toString() != '0')
+      {
+        console.log('nova_rsyslog_helper could not complete update of rsyslog configuration, exited with code ' + code);
+      }
+      else
+      {
+        console.log('nova_rsyslog_helper updated rsyslog configuration');
+      }
+    });
+  }
+  else if(writeIP == 'NULL')
+  {
+    var util = require('util');
+    var spawn = require('sudo');
+    var options = {
+      cachePassword: true
+      , prompt: 'You have requested to change the target server for Rsyslog. This requires superuser permissions.'
+    };
+    
+    var execution = ['nova_rsyslog_helper','remove'];
+    var rm = spawn(execution, options); 
+    rm.on('exit', function(code){
+      console.log('41-nova.conf has been removed from /etc/rsyslog.d/');
+    });
+  }
 
 	if (errors.length > 0) {
 		RenderError(res, errors, "/suspects");
-	} else {
+	} 
+	else 
+	{
 		if (req.body["INTERFACE"] !== undefined && req.body["DEFAULT"] === undefined) {
 			req.body["DEFAULT"] = false;
 			config.UseAllInterfaces(false);
@@ -1618,7 +1779,7 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 		}
 
 		//if no errors, send the validated form data to the WriteSetting method
-		for (var item = 4; item < configItems.length; item++) {
+		for (var item = 5; item < configItems.length; item++) {
 			if (req.body[configItems[item]] != undefined) {
 				config.WriteSetting(configItems[item], req.body[configItems[item]]);
 			}
@@ -1640,6 +1801,66 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 			}
 		})
 	}
+});
+
+app.get('/scripts', passport.authenticate('basic', {session: false}), function(req, res){
+  var xml = fs.readFileSync(NovaHomePath + '/config/templates/scripts.xml', 'utf8');
+  
+  var libxml = require('libxmljs');
+  
+  var parser = libxml.parseXmlString(xml);
+  
+  var nodesToParse = parser.root().childNodes();
+
+  var namesAndPaths = [];
+  
+  for(var i = 1; i < nodesToParse.length; i++)
+  {
+    if(nodesToParse[i].child(1) != null && nodesToParse[i].child(7) != null)
+    {
+      namesAndPaths.push({script: nodesToParse[i].child(1).text(), path: nodesToParse[i].child(7).text()});
+    }
+  }
+  
+  function cmp(a, b)
+  {
+    return a.script.localeCompare(b.script);
+  }
+  
+  namesAndPaths.sort(cmp);
+  
+  var scriptBindings = {};
+  
+  var profiles = honeydConfig.GetProfileNames();
+  
+  for(var i in profiles)
+  {
+    GetPorts(profiles[i], function(ports, profileName){
+      for(var i in ports)
+      {
+        if(ports[i].scriptName != undefined && ports[i].scriptName != '')
+        {
+          if(scriptBindings[ports[i].scriptName] == undefined)
+          {
+            scriptBindings[ports[i].scriptName] = profileName;
+          }
+          else
+          {
+            scriptBindings[ports[i].scriptName] += ',' + profileName;
+          }
+        }
+      }
+    });
+  }
+  
+  profiles = null;
+  
+  res.render('scripts.jade', {
+    locals: {
+      scripts: namesAndPaths,
+      bindings: scriptBindings
+    }
+  });
 });
 
 everyone.now.ClearAllSuspects = function (callback) {
@@ -1676,6 +1897,18 @@ everyone.now.GetInheritedEthernetList = function (parent, callback) {
 
 }
 
+everyone.now.RestartHaystack = function(cb) {
+	nova.StopHaystack();
+
+	// Note: the other honeyd may be shutting down still,
+	// but the slight overlap doesn't cause problems
+	nova.StartHaystack(false);
+
+	if(typeof callback == 'function') {
+		cb();
+	}
+}
+
 everyone.now.StartHaystack = function () {
 	if (!nova.IsHaystackUp()) {
 		nova.StartHaystack(false);
@@ -1701,13 +1934,8 @@ everyone.now.IsNovadUp = function (callback) {
 }
 
 everyone.now.StartNovad = function () {
-	console.log("Calling StartNovad(false)");
 	var result = nova.StartNovad(false);
-	console.log("Got " + result);
-
-	console.log("Calling CheckConnection");
-	var result = nova.CheckConnection();
-	console.log("Done! Got " + result + ".Calling IsNovadup to check status");
+	result = nova.CheckConnection();
 	try {
 		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
 	} catch (err) {};
@@ -1723,6 +1951,7 @@ everyone.now.StopNovad = function () {
 
 
 everyone.now.sendAllSuspects = function (callback) {
+	nova.CheckConnection();
 	nova.sendSuspectList(callback);
 }
 
@@ -1771,9 +2000,7 @@ everyone.now.deleteNodes = function (nodeNames, callback) {
 	var nodeName;
 	for (var i = 0; i < nodeNames.length; i++) {
 		nodeName = nodeNames[i];
-
-
-		if (!honeydConfig.DeleteNode(nodeName)) {
+		if (nodeName != null && !honeydConfig.DeleteNode(nodeName)) {
 			callback(false, "Failed to delete node " + nodeName);
 			return;
 		}
@@ -1808,11 +2035,10 @@ everyone.now.deleteProfiles = function (profileNames, callback) {
 	callback(true, "");
 }
 
-everyone.now.addWhitelistEntry = function (entry, callback) {
-
+everyone.now.addWhitelistEntry = function (interface, entry, callback) {
 	// TODO: Input validation. Should be IP address or 'IP/netmask'
 	// Should also be sanitized for newlines/trailing whitespace
-	if (whitelistConfig.AddEntry(entry)) {
+	if (whitelistConfig.AddEntry(interface + "," + entry)) {
 		callback(true, "");
 	} else {
 		callback(true, "Attempt to add whitelist entry failed");
@@ -1914,7 +2140,7 @@ everyone.now.GetVendors = function (profileName, callback) {
 	callback(profVendors, profDists);
 }
 
-everyone.now.GetPorts = function (profileName, callback) {
+GetPorts = function (profileName, callback) {
 	var ports = honeydConfig.GetPorts(profileName);
 
 	if ((ports[0] == undefined || ports[0].portNum == "0") && profileName != "default") {
@@ -1933,9 +2159,9 @@ everyone.now.GetPorts = function (profileName, callback) {
 		ports[i].isInherited = ports[i].GetIsInherited();
 	}
 
-	callback(ports);
+	callback(ports, profileName);
 }
-
+everyone.now.GetPorts = GetPorts;
 
 everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, addOrEdit) {
 	// Check input
@@ -2202,30 +2428,60 @@ everyone.now.ClearHostileEvent = function (id, callback) {
 	});
 }
 
-var SendHostileEventToMothership  = function(suspect) {
+var SendHostileEventToPulsar  = function(suspect) {
   suspect.client = clientId;
   suspect.type = 'hostileSuspect';
-  if(mothership != undefined)
+  if(pulsar != undefined)
   {
-    mothership.sendUTF(JSON.stringify(suspect));
+    pulsar.sendUTF(JSON.stringify(suspect));
   }
 };
-everyone.now.SendHostileEventToMothership = SendHostileEventToMothership;
+everyone.now.SendHostileEventToPulsar = SendHostileEventToPulsar;
 
-var SendBenignSuspectToMothership = function(suspect) {
+var SendBenignSuspectToPulsar = function(suspect) {
   suspect.client = clientId;
   suspect.type = 'benignSuspect';
-  if(mothership != undefined)
+  if(pulsar != undefined)
   {
-    mothership.sendUTF(JSON.stringify(suspect));
+    pulsar.sendUTF(JSON.stringify(suspect));
   }
 };
-everyone.now.SendBenignSuspectToMothership = SendBenignSuspectToMothership;
-
-
+everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
 everyone.now.GetLocalIP = function (interface, callback) {
 	callback(nova.GetLocalIP(interface));
+}
+
+everyone.now.RemoveScriptFromProfiles = function(script, profiles, callback) {
+  for(var i in profiles)
+  {
+    if(profiles[i] != null && profiles[i] != undefined && profiles[i] != '')
+    {
+      GetPorts(profiles[i], function(ports, profileName){
+        if(ports != undefined)
+        {
+          for(var j in ports)
+          {
+            if(ports[j].portName != undefined)
+            {
+              if(ports[j].scriptName == script)
+              {
+                honeydConfig.RemoveScriptPort(ports[j].portName, profileName);
+              }
+            }
+          }
+        }
+      });
+    }
+  } 
+  
+  honeydConfig.SaveAllTemplates();
+  honeydConfig.LoadAllTemplates();
+  
+  if(typeof callback == 'function')
+  {
+    callback();
+  }
 }
 
 everyone.now.GenerateMACForVendor = function(vendor, callback) {
@@ -2252,13 +2508,58 @@ everyone.now.reverseDNS = function(ip, callback) {
 	dns.reverse(ip, callback);
 }
 
+everyone.now.addTrainingPoint = function(ip, interface, features, hostility, callback) {
+	if (hostility != '0' && hostility != '1') {
+		callback("Error: Invalid hostility. Should be 0 or 1");
+		return;
+	}
+
+	var point = features.toString() + " " + hostility + "\n";
+	fs.appendFile(NovaHomePath + "/config/training/data.txt", point, function(err) {
+		if (err) {
+			console.log("Error: " + err);
+			callback(err);
+			return;
+		}
+
+		var d = new Date();
+		var trainingDbString = "";
+		trainingDbString += hostility + ' "User customized training point for suspect ' + ip + " added on " + d.toString() + '"\n';
+		trainingDbString += "\t" + features.toString();
+		trainingDbString += "\n\n";
+
+		fs.appendFile(NovaHomePath + "/config/training/training.db", trainingDbString, function(err) {
+			if (!nova.ReclassifyAllSuspects()) {
+				callback("Error: Unable to reclassify suspects with new training data");
+				return;
+			}
+			callback();
+		});
+
+	});	
+}
+
+everyone.now.RemoveScript = function(scriptName, callback)
+{
+  honeydConfig.RemoveScript(scriptName);
+  
+  honeydConfig.SaveAllTemplates();
+  honeydConfig.LoadAllTemplates();
+  
+  if(typeof callback == 'function')
+  {
+    callback();
+  }
+}
 
 var distributeSuspect = function (suspect) {
 	var s = new Object();
 	objCopy(suspect, s);
+	s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
 	try {
 		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
+  
   if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) != -2)
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
@@ -2270,7 +2571,7 @@ var distributeSuspect = function (suspect) {
     send.ishostile = String(suspect.GetIsHostile());
     send.interface = String(suspect.GetInterface());
     
-    SendHostileEventToMothership(send);
+    SendHostileEventToPulsar(send);
   }
   else if(suspect.GetIsHostile() == false && benignRequest && parseInt(suspect.GetClassification()) != -2)
   {
@@ -2283,7 +2584,7 @@ var distributeSuspect = function (suspect) {
     send.ishostile = String(suspect.GetIsHostile());
     send.interface = String(suspect.GetInterface());
     
-    SendBenignSuspectToMothership(send);
+    SendBenignSuspectToPulsar(send);
   }
   else
   {
@@ -2317,6 +2618,10 @@ process.on('SIGINT', function () {
 	process.exit();
 });
 
+process.on('exit', function () {
+	LOG("ALERT", "Quasar is exiting cleanly.");
+});
+
 function objCopy(src, dst) {
 	for (var member in src) {
 		if (typeof src[member] == 'function') {
@@ -2343,7 +2648,61 @@ function switcher(err, user, success, done) {
 }
 
 function pad(num) {
-    return ("0" + num.toString()).slice(-2);
+  return ("0" + num.toString()).slice(-2);
+}
+
+function getRsyslogIp()
+{
+  try
+  {
+    var read = fs.readFileSync('/etc/rsyslog.d/41-nova.conf', 'utf8');
+    read = read.replace(/\n/,' ');
+  }
+  catch(err)
+  {
+    return 'NULL'; 
+  }
+  var idx = parseInt(read.indexOf('@@')) + 2;
+  var ret = '';
+   
+  if(idx != -1)
+  {
+    ret = read.substring(parseInt(idx), parseInt(read.indexOf(':programname', idx)));
+  }  
+  
+  return ret;
+}
+
+everyone.now.AddInterfaceAlias = function(iface, alias, callback) {
+    if (alias != "") {
+        interfaceAliases[iface] = alias;
+    } else {
+        delete interfaceAliases[iface];
+    }
+
+    var fileString = JSON.stringify(interfaceAliases);
+    fs.writeFile(NovaHomePath + "/config/interface_aliases.txt", fileString, callback);
+}
+
+function ReloadInterfaceAliasFile() {
+	var aliasFileData = fs.readFileSync(NovaHomePath + "/config/interface_aliases.txt");
+	interfaceAliases = JSON.parse(aliasFileData);
+}
+
+function ConvertInterfacesToAliases(interfaces) {
+	var aliases = new Array();
+	for (var i in interfaces) {
+		aliases.push(ConvertInterfaceToAlias(interfaces[i]));
+	}
+	return aliases;
+}
+
+function ConvertInterfaceToAlias(iface) {
+	if (interfaceAliases[iface] !== undefined) {
+		return interfaceAliases[iface];
+	} else {
+		return iface;
+	}
 }
 
 app.get('/*', passport.authenticate('basic', {session: false}));

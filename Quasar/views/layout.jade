@@ -48,73 +48,36 @@ html(lang="en")
         block buttonPannelAdditions
       
        
-        div(style="text-align:center; font-weight:bold; font-size: 150%;") Status
-        a(class="button", href='/events') Hostile Events
-        br
-        a(class="button", href='/suspects?type=all') Classified Suspects
-        br
-        a(class="button", href="/suspects?type=unclassified") Unclassified Suspects
-        br
-        a(class="button", href= "/suspects?type=hostile") Only Hostile Suspects
-        br
-        a(class="button", href= "/haystackStatus") Haystack Details
-        br
-        br
-
+        div.sideBarHeader Status
+          a.sideBarButton(href='/events') Hostile Events
+          a.sideBarButton(href='/suspects?type=all') Classified Suspects
+          a.sideBarButton(href="/suspects?type=unclassified") Unclassified Suspects
+          a.sideBarButton(href= "/suspects?type=hostile") Only Hostile Suspects
+          a.sideBarButton(href= "/haystackStatus") Haystack Details
         
-        div(style="text-align:center; font-weight:bold; font-size: 150%;") Logs
-        a(class="button", href= "/novadlog") Nova Log
-        br
-        
-        a(class="button", href= "/honeydlog") Haystack Log
-        br
-        br
-        
+        div.sideBarHeader Logs
+          a.sideBarButton(href= "/novadlog") Nova Log
+          a.sideBarButton(href= "/honeydlog") Haystack Log
        
-        div(style="text-align:center; font-weight:bold; font-size: 150%;") Configuration
-        a(class="button", href= "basicOptions") Basic Options
-        br
-        
-        a(class="button", href= "advancedOptions") Advanced Options
-        br
-        br
+        div.sideBarHeader Configuration
+          a.sideBarButton(href= "basicOptions") Basic Options
+          a.sideBarButton(href= "advancedOptions") Advanced Options
+          a.sideBarButton(href= "interfaceAliases") Interface Aliases
+          a.sideBarButton(href= "configWhitelist") IP Whitelist
        
-        a(class="button", href= "configHoneydProfiles") Haystack Profiles
-        br
-         
-        a(class="button", href= "configHoneydNodes") Haystack Nodes
-        br
+        div.sideBarHeader Haystack Settings
+          a.sideBarButton(href= "configHoneydProfiles") Haystack Profiles
+          a.sideBarButton(href= "configHoneydNodes") Haystack Nodes
+          a.sideBarButton(href= "autoConfig") Haystack Autoconfiguration
+          a.sideBarButton(href= "scripts") Honeyd Scripts
         
-        a(class="button", href= "autoConfig") Haystack Autoconfiguration
-        br
+        div.sideBarHeader Training
+          a.sideBarButton(href= "customizeTraining") Choose Training Data
         
-        a(class="button", href= "configWhitelist") IP Whitelist
-        br
-        br
+        div.sideBarHeader Users
+          a.sideBarButton(href= "createNewUser") New User
+          a.sideBarButton(href= "editUsers") Edit Users
         
+        div.sideBarHeader Documentation
+          a.sideBarButton(href='/about') About Nova
         
-        div(style="text-align:center; font-weight:bold; font-size: 150%;") Training
-        //a(class="button", href= "/captureTrainingData") Capture Training Data
-        //br
-        
-        a(class="button", href= "customizeTraining") Choose Training Data
-        br
-        br
-        
-        div(style="text-align:center; font-weight:bold; font-size: 150%;") Users
-        a(class="button", href= "createNewUser") New User
-        br 
-        
-        a(class="button", href= "editUsers") Edit Users
-        br
-        br
-        
-        div(style="text-align:center; font-weight:bold; font-size: 150%;") Documentation
-        a(class="button", href='/about') About Nova
-        br
-        br
-        
-        
-        //a(class="button", href= "logout") Log Out
-        //br
-

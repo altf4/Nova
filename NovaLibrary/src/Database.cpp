@@ -44,7 +44,7 @@ Database::Database(std::string databaseFile)
 {
 	if (databaseFile == "")
 	{
-		databaseFile = Config::Inst()->GetPathHome() + "/data/database.db";
+		databaseFile = Config::Inst()->GetPathHome() + "/data/novadDatabase.db";
 	}
 	m_databaseFile = databaseFile;
 }

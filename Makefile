@@ -67,16 +67,16 @@ novatrainer-release:
 	$(MAKE) -C NovaTrainer/Release
 	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
 
-#Web UI
+#Quasar
 quasar: nodejsmodule
 	cd Quasar;npm --unsafe-perm install
 
 nodejsmodule:
 	cd NodejsModule;npm --unsafe-perm install	
 
-#Mothership
-mothership:
-	cd Mothership;npm --unsafe-perm install
+#Pulsar
+pulsar:
+	cd Pulsar;npm --unsafe-perm install
 
 #Honeyd AutoConfig
 hhconfig-release:
@@ -186,8 +186,8 @@ clean-quasar: clean-nodejsmodule
 clean-quasar-modules:
 	-rm -rf Quasar/node_modules
 
-clean-mothership-modules:
-	-rm -rf Mothership/node_modules
+clean-pulsar-modules:
+	-rm -rf Pulsar/node_modules
 
 clean-hhconfig: clean-hhconfig-debug clean-hhconfig-release
 	
@@ -240,6 +240,7 @@ install-data:
 
 	#Copy the scripts and logs
 	install Installer/nova_init "$(DESTDIR)/usr/bin"
+	install Installer/nova_rsyslog_helper "$(DESTDIR)/usr/bin"
 	#Install permissions
 	install Installer/miscFiles/sudoers_nova "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 	install Installer/miscFiles/40-nova.conf "$(DESTDIR)/etc/rsyslog.d/" --mode=664
@@ -263,10 +264,10 @@ install-quasar:
 	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Quasar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
 	-install Quasar/quasar "$(DESTDIR)/usr/bin/quasar"
 
-install-mothership:
-	cp -frup Mothership "$(DESTDIR)/usr/share/nova/sharedFiles"
-	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Mothership/www" -xf Quasar/dojo-release-1.7.0.tar.gz
-	-install Mothership/mothership "$(DESTDIR)/usr/bin/mothership"	
+install-pulsar:
+	cp -frup Pulsar "$(DESTDIR)/usr/share/nova/sharedFiles"
+	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Pulsar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
+	-install Pulsar/pulsar "$(DESTDIR)/usr/bin/pulsar"	
 
 install-hhconfig:
 	-install HaystackAutoConfig/haystackautoconfig "$(DESTDIR)/usr/bin/haystackautoconfig"
@@ -295,11 +296,12 @@ uninstall: uninstall-files uninstall-permissions
 
 uninstall-files:
 	rm -rf ~/.config/nova
+	rm -rf /var/log/nova
 	rm -rf "$(DESTDIR)/usr/share/nova"
 	rm -f "$(DESTDIR)/usr/bin/novacli"
 	rm -f "$(DESTDIR)/usr/bin/novad"
 	rm -f "$(DESTDIR)/usr/bin/haystackautoconfig"
-	rm -f "$(DESTDIR)/usr/bin/nova_mailer"
+	rm -f "$(DESTDIR)/usr/bin/nova_rsyslog_helper"
 	rm -f "$(DESTDIR)/usr/bin/nova_init"
 	rm -f "$(DESTDIR)/usr/bin/quasar"
 	rm -f "$(DESTDIR)/usr/bin/novatrainer"
@@ -308,6 +310,7 @@ uninstall-files:
 	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_nova_debug"
 	rm -f "$(DESTDIR)/etc/sudoers.d/sudoers_HHConfig"
 	rm -f "$(DESTDIR)/etc/rsyslog.d/40-nova.conf"
+	rm -f "$(DESTDIR)/etc/rsyslog.d/41-nova.conf"
 	rm -f "$(DESTDIR)/etc/sysctl.d/30-novactl.conf"
 
 uninstall-permissions:

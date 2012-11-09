@@ -14,11 +14,23 @@ block content
       td Reverse DNS: 
       td
         b#domain Waiting for reply...
+
+  a(class="button", href="#", onclick="markClassificationAs(1)") Mark as Hostile
+  a(class="button", href="#", onclick="markClassificationAs(0)") Mark as Benign
   div
     div#ProtocolPiChart(style="display: inline-block;float: left; margin: 10px;")
     div#tcpPiChart(style="display: inline-block; margin: 20px")
+  input#enableGridLines(type="checkbox", onclick="toggleGridLines()")
+  span Enable Graph Point Lines
   br
-
+  input#enableAutoScale(type="checkbox", onclick="toggleAutoscale()")
+  span Enable Auto Scaling
+  br
+  
+  div(style="display: inline-block; margin: 8px; float: left")
+    h3 Classification
+    canvas(id = "classificationChart", width="200px", height="200px", style="border: 1px solid black")
+    p(id = "classificationChartP")     
   - for (var i = 0; i < 14; i++) {
     div(style="display: inline-block; margin: 8px")
       h3 #{String(featureNames).split(",")[i]}
@@ -29,10 +41,70 @@ block content
 block headerAdditions
   script(type="text/javascript", src="scripts/NovaPiChart.js")
   script
+    var lastSuspectObject = null;
     var init = true;
     var data = new Array();
+    var classificationData = new Array();
     var tcpChart = new NovaPiChart("tcpPiChart", 200);
     var protocolChart = new NovaPiChart("ProtocolPiChart", 200);
+    var classificationPieChart = new NovaPiChart("classificationPieChart", 200);
+
+    var gridLinesEnabled = false;
+    var autoscale = false;
+
+    function redrawGraphs() {
+        for (var i = 0; i < 14; i++) {
+            drawGraph("chart" + i, "p" + i, data, i);
+        }
+    
+        drawGraph("classificationChart", "classificationChartP", classificationData, 0); 
+    }
+
+    function toggleGridLines() {
+        gridLinesEnabled = document.getElementById("enableGridLines").checked;
+        redrawGraphs();
+    }
+
+    function toggleAutoscale() {
+        autoscale = document.getElementById("enableAutoScale").checked;
+        redrawGraphs();
+    }
+
+    function markClassificationAs(hostility) {
+        "use strict";
+        var hostilityString;
+        if (hostility == "0") {
+            hostilityString = "hostile";
+        } else {    
+            hostilityString = "benign";
+        }
+            
+
+        if (!confirm("This will train the classifiaction engine to match all suspects looking like this one's current state as " + hostilityString + ". Are you sure you want to do this?")) {
+            return;
+        }
+        if (lastSuspectObject == null) {
+            alert("No data recieved for suspect yet");
+            return;
+        }
+
+        var features = String(lastSuspectObject.GetFeatures).split(',').join(' ');
+ 
+        try {
+           now.addTrainingPoint(lastSuspectObject.GetIpString, lastSuspectObject.GetInterface, features, hostility, addedCb);
+        } catch (err) {
+            console.log("Error was: " + err);
+            alert("Unable to contact server. Try refreshing the page");
+        }
+    }
+
+    function addedCb(err) {
+        if (err) {
+            alert("There was and error adding the new training point: " + err);
+        } else {
+            alert("Added suspect point to training data");
+        }
+    }
     
     function Init() {
         now.sendSuspect("#{suspectIp}", "#{suspectInterface}", OnNewSuspect)
@@ -43,7 +115,13 @@ block headerAdditions
         var prefix = '';
         var suffix = '';
         if (err != null) {
-            document.getElementById("domain").innerHTML = prefix + err.code + suffix;
+            var errorString;
+            if (err.code == "ENOTFOUND") {
+                errorString = "No domain name found";
+            } else {
+                errorString = "Unable to get domain name because of error: " + err.code;
+            }
+            document.getElementById("domain").innerHTML = prefix + errorString + suffix;
         } else {
             document.getElementById("domain").innerHTML = prefix + domains + suffix;
         }
@@ -58,15 +136,23 @@ block headerAdditions
         }
         
         if (suspect.GetIpString == "#{suspectIp}" && suspect.GetInterface == "#{suspectInterface}") {
+            lastSuspectObject = suspect;
             data.push(suspect.GetFeatures);
+
+            var classificationArrayWrapper = new Array();
+            classificationArrayWrapper.push(suspect.GetClassification);
+            classificationData.push(classificationArrayWrapper);
 
             // TODO Don't hard code
             if (data.length > 100) {
                 data.shift();
             }
-            for (var i = 0; i < 14; i++) {
-                drawGraph("chart" + i, data, i);
+
+            if (classificationData.length > 100) {
+                classificationData.shift();
             }
+
+            redrawGraphs();
 
             arr = new Array();
             arr.push({name: "SYN Packets", value: suspect.GetSynCount});
@@ -86,11 +172,13 @@ block headerAdditions
             arr.push({name: "Other", value: suspect.GetOtherPacketCount});
             arr = arr.sort(function(a,b) {return b.value - a.value});
             protocolChart.Render(arr);
+
+
         }
 
     };
 
-    function drawGraph(canvas, data, index) {
+    function drawGraph(canvas, pID, data, index) {
         // TODO Don't hard code
         var m_width = 200;
         var m_height = 200;
@@ -100,17 +188,39 @@ block headerAdditions
         var height = m_height - border*2;
         
         var c = document.getElementById(canvas);
-        var p = document.getElementById("p" + index);
+        var p = document.getElementById(pID);
         var ctx = c.getContext("2d");
         ctx.clearRect (0, 0,m_width ,m_height);
        
         ctx.fillSTyle="#0000FF";
 
-        var minY = data[0][index];
-        var maxY = data[0][index];
+        var minY;
+        var maxY;
+        if (autoscale) {
+            minY = data[0][index];
+            maxY = data[0][index];
+        } else {
+            // Hard coded fixed scale charts between 0 and 1
+            if (canvas == "classificationChart"
+            || canvas == "chart0"
+            || canvas == "chart1"
+            || canvas == "chart0"
+            || canvas == "chart9"
+            || canvas == "chart10"
+            || canvas == "chart11"
+            || canvas == "chart12"
+            || canvas == "chart13") {
+                minY = 0;
+                maxY = 1;
+            } else {
+                minY = data[0][index];
+                maxY = data[0][index];
+            }
+                
+        }
         
         if (data.length == 1) {
-            p.innerHTML = "<br> Current: " + data[data.length-1][index].toFixed(12);
+            p.innerHTML = "<br> Current: " + data[0][index].toFixed(12);
             return;
         }
 
@@ -140,25 +250,27 @@ block headerAdditions
         }
        
         // Draw grid lines
-        ctx.strokeStyle="#A1A1A1";
-        ctx.beginPath();
-        ctx.moveTo(0, border);
-        ctx.lineTo(width, border);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, height+border);
-        ctx.lineTo(width, height+border);
-        ctx.stroke();
-        for (var i = 0; i < points.length; i++) {
+        if (gridLinesEnabled) {
+            ctx.strokeStyle="#A1A1A1";
             ctx.beginPath();
-            ctx.moveTo(points[i].x,border);
-            ctx.lineTo(points[i].x,height+border);
+            ctx.moveTo(0, border);
+            ctx.lineTo(width, border);
             ctx.stroke();
-            
             ctx.beginPath();
-            ctx.moveTo(0, points[i].y);
-            ctx.lineTo(width, points[i].y);
+            ctx.moveTo(0, height+border);
+            ctx.lineTo(width, height+border);
             ctx.stroke();
+            for (var i = 0; i < points.length; i++) {
+                ctx.beginPath();
+                ctx.moveTo(points[i].x,border);
+                ctx.lineTo(points[i].x,height+border);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, points[i].y);
+                ctx.lineTo(width, points[i].y);
+                ctx.stroke();
+            }
         }
         
         ctx.fillStyle = "blue";

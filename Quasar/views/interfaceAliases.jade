@@ -1,0 +1,68 @@
+extends layout
+
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
+  script(type="text/javascript", src="scripts/NovaGrid.js")
+  
+  script
+    var grid;
+
+    var AddNewAlias = function() {
+        var iface = document.getElementById("interfaceSelection").value;
+        var alias = document.getElementById("aliasSelection").value;
+
+        now.AddInterfaceAlias(iface, alias, refresh);
+    }
+
+    var DeleteAlias = function(iface) {
+        now.AddInterfaceAlias(iface, "", refresh);
+    }
+
+    var refresh = function() {
+        window.location = window.location;
+    }
+    
+    require(["dojo/domReady!"],
+    function(){
+        var columns = new Array();
+        columns.push({name: "Interface"});
+        columns.push({name: "Alias"});
+        columns.push({name: "Delete"});
+
+        grid = new NovaGrid(columns, 0, aliasTable, 'grid', false);
+
+        var interfaceAliases = !{JSON.stringify(interfaceAliases)};
+        for (i in interfaceAliases) {
+            var row = new Array();
+            row.push(i);
+            row.push(interfaceAliases[i]);
+        
+            row.push("<button onclick='DeleteAlias(\\"" + i + "\\")'>Delete</button>");
+            grid.PushEntry(row);
+            
+            
+        }
+    
+        grid.Render();
+    });
+  
+block content
+  h1 Interface Aliases
+
+  table.novaGrid#aliasTable
+  br
+
+  span(style="width:100px; display: inline-block;") Interface:
+  select#interfaceSelection
+    - each interface, i in INTERFACES
+      option(value=interface) #{interface}
+ 
+  br
+  span(style="width:100px; display: inline-block;") Alias: 
+  input#aliasSelection(type="text")
+
+  br
+  button#addNewAliasButton(onclick="AddNewAlias()") Add/Update Alias
+

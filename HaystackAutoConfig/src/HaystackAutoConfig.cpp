@@ -193,11 +193,10 @@ int main(int argc, char ** argv)
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 
-		if((numberOfNodesType == FIXED_NUMBER_OF_NODES) && (nodeRatio < 0))
-		{
+		if (numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES && nodeRatio < 0) {
 			lockFile.close();
 			remove(lockFilePath.c_str());
-			LOG(ERROR, "num-nodes argument takes an integer greater than or equal to 0. Aborting...", "");
+			LOG(ERROR, "num-nodes ratio argument must be greater than or equal to 0. Aborting...", "");
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 

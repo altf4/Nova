@@ -2,15 +2,17 @@ extends layout
 
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
-  link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
-  link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaPiChart.js")
+  script(type="text/javascript", src="scripts/NovaGrid.js")
 
   script
     var grid;
     var currentInterface;
 
     function createNodes() {
+        document.getElementById("createNewNodes").disables = true;
+        document.getElementById("createNewNodes").value = "Please wait. Creating new nodes...";
         var ipType = document.getElementById("ipType").value;
         var ip1 = document.getElementById("ip1").value;
         var ip2 = document.getElementById("ip2").value;
@@ -35,8 +37,7 @@ block headerAdditions
       if (haystackUp) {
         var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
         if (restartHaystack) {
-          now.StopHaystack();
-          now.StartHaystack();
+          now.RestartHaystack();
         }
       }
       location.reload(true);
@@ -60,19 +61,23 @@ block headerAdditions
       // it's last point nonetheless. I have a question posted in stack overflow
       // about it, if that doesn't bear any fruit than we may have to 
       // move away from a DataGrid and try something else.
-      var items = grid.selection.getSelected();
-      var names = [];
-      
-      dojo.forEach(items, function(selectedItem) {
-        names.push(grid.store.getValues(selectedItem, "Name"));
-      });
+      var items = grid.GetSelected();
      
-      try {
-        now.deleteNodes(names, errorMessageCallback);
-      } catch(err) {
+      for(var i in items)
+      {
+        grid.DeleteRow(items[i]);
+      }
+     
+      try
+      {
+        now.deleteNodes(items, errorMessageCallback);
+      }
+      catch(err)
+      {
         alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
         console.log("err was: " + err);
       }   
+      grid.Render();
     }
 
     function errorMessageCallback(success, message) {
@@ -81,19 +86,44 @@ block headerAdditions
         location.reload(true);
         return;
       }
-     now.IsHaystackUp(checkIfRestartNeeded); 
+      now.IsHaystackUp(checkIfRestartNeeded); 
     }
 
-    function checkIfRestartNeeded(haystackUp) {
-      if (haystackUp) {
-        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
-        if (restartHaystack) {
-          now.StopHaystack();
-          now.StartHaystack();
+    function deleteAllNodes() {
+      var gridElements = grid.GetElements();
+      var passToDeleteNodes = [];
+      
+      for(var i in gridElements)
+      {
+        if(gridElements[i][1] !== 'Doppelganger')
+        {
+          passToDeleteNodes.push(gridElements[i][1]);
+          grid.DeleteRow(gridElements[i][1]);
         }
       }
+      try
+      {
+        now.deleteNodes(passToDeleteNodes, errorMessageCallback);
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }
+    }
 
-      location.reload(true);
+    function selectAllOnPage() {
+      var pageElements = grid.GetPageElements();
+      
+      console.log('pageElements ' + pageElements);
+      
+      for(var row in pageElements)
+      {
+        if(pageElements[row] !== 'Doppelganger')
+        {
+          grid.PushKeyToSelected(pageElements[row]);
+        }
+      }
     }
 
     function checkOnlyOne(checkedBox)
@@ -149,20 +179,18 @@ block headerAdditions
     }
 
     function editSelectedItem() {
-      var items = grid.selection.getSelected();
+      var items = grid.GetSelected();
       if (items.length != 1)
       {
-        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 node for editing"});
-        dialog.show();
+        alert('You can only edit one node at a time');
         return;
       }
 
-      var nodeName = grid.store.getValues(items[0], "Name");
+      var nodeName = items[0];
 
       if (nodeName == "Doppelganger") 
       {
-        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "The Doppelganger node can not be edited here"});
-        dialog.show();
+        alert('The Doppelganger node can not be edited here');
         return; 
       }
       window.location.href = "editHoneydNode?node=" + nodeName;
@@ -192,57 +220,166 @@ block headerAdditions
     function configurationRestored() {
         now.IsHaystackUp(checkIfRestartNeeded); 
     }
+    
+    function onGridRendered() {
+       var gridSize = grid.GetNumberOfPages();
+       var currentPage = grid.GetCurrentPage();
 
+       var temp = document.createElement('a');
+       document.getElementById("tablePages").innerHTML = "";
 
-    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', 'grid.PreviousPage();');
+       var pageLinkText = document.createTextNode(" <-- ");
+       pageLink.appendChild(pageLinkText);
+       document.getElementById("tablePages").appendChild(pageLink);
 
-    function(DataGrid,ObjectStore){
-        var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
-        var gridSize = #{nodes.length};
-        grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:100, autoWidth:true});
-        dojo.byId("gridDiv").appendChild(grid.domNode);
-      now.ready(function() {
-        checkOnlyOne("if0");
-            
-        var nodesPerProfile = new Object();
-        var rows = document.getElementById("nodeTableBody").childNodes;
-        var numberOfNodes = rows.length;
-        for (var i = 0; i < rows.length; i++) {
-          var pfile = rows[i].childNodes[2].innerHTML;
-          if (nodesPerProfile[pfile] === undefined) {
-            nodesPerProfile[pfile] = 1;
+       for (var i = 0; i < gridSize; i++) {
+           var pageLink = document.createElement('a');
+           pageLink.setAttribute('href', '#');
+           pageLink.setAttribute('onclick', 'grid.SetCurrentPage( ' + i + ');');
+
+           var pageLinkText = document.createTextNode(" " + (i + 1) + " ");
+           pageLink.appendChild(pageLinkText);
+
+           if (i == currentPage) 
+           {
+               var boldTag = document.createElement('b');
+               boldTag.appendChild(pageLink);
+
+               document.getElementById("tablePages").appendChild(boldTag);
+           }
+           else 
+           {
+               document.getElementById("tablePages").appendChild(pageLink);
+           }    
+       }
+
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', 'grid.NextPage();');
+       var pageLinkText = document.createTextNode(" --> ");
+       pageLink.appendChild(pageLinkText);
+       document.getElementById("tablePages").appendChild(pageLink);
+    }
+    
+    function deleteByProfile(profileName)
+    {
+      var gridElements = grid.GetElements();
+      var passToDeleteNodes = [];
+      for(var i in gridElements)
+      {
+        if(gridElements[i][2] === profileName)
+        {
+          passToDeleteNodes.push(gridElements[i][1]);
+          grid.DeleteRow(gridElements[i][1]);
+        }
+      }
+      try
+      {
+        now.deleteNodes(passToDeleteNodes, errorMessageCallback);
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }
+    }
+    
+    function Init()
+    {
+      var gridStructure = [];
+      gridStructure.push({name: "Enabled"});
+      gridStructure.push({name: "Name"});
+      gridStructure.push({name: "Profile"});
+      gridStructure.push({name: "IP"});
+      gridStructure.push({name: "MAC"});
+      
+      grid = new NovaGrid(gridStructure, 1, document.getElementById('nodeTable'), 'grid', true);
+      
+      grid.SetSortByKey(1);
+      grid.SetRowsPerPage(50);
+      grid.SetRenderCallback(onGridRendered);
+      
+      var nodeList = !{JSON.stringify(nodes)};
+      var interfaces = !{JSON.stringify(INTERFACES)};
+      var interfaceAliases = !{JSON.stringify(interfaceAliases)}
+
+      for(var i in nodeList)
+      {
+        var row = [];
+        row.push(String(nodeList[i].enabled));
+        row.push(String(nodeList[i].name));
+        row.push(String(nodeList[i].pfile));
+
+        if (nodeList[i].ip != "DHCP") {
+          row.push(String(nodeList[i].ip));
+        } else {
+          var alias = "";
+          for (var j = 0; j < interfaces.length; j++) {
+            if (interfaces[j] == nodeList[i].interface) {
+              alias = interfaceAliases[j];
+             }
+          }
+
+          if (alias != "" && alias != nodeList[i].interface) {
+            row.push("DHCP on " + nodeList[i].interface + " (alias: " + alias + ")"); 
           } else {
-            nodesPerProfile[pfile]++;
+            row.push("DHCP on " + nodeList[i].interface); 
           }
         }
-
-        var arr = new Array();
-        for (var pfile in nodesPerProfile) {
-            var p = new Object();
-            p.name = pfile;
-            p.value = nodesPerProfile[pfile];
-            arr.push(p);
+        row.push(String(nodeList[i].mac));
+        grid.PushEntry(row);
+      }
+      
+      grid.Render();
+      
+      var gridElements = grid.GetElements();
+      
+      var nodesPerProfile = {};
+      var piChartRender = [];
+      
+      for(var i in gridElements)
+      {
+        var pfile = gridElements[i][2];
+        if(nodesPerProfile[pfile] === undefined)
+        {
+          nodesPerProfile[pfile] = 1;
         }
-
-        arr = arr.sort(function(a,b) {return b.value - a.value});
-        var piChart = new NovaPiChart("piChart", 200);
-        piChart.Render(arr);
-
-      });
+        else
+        {
+          nodesPerProfile[pfile]++;
+        }
+      }
+      
+      for(var pfile in nodesPerProfile)
+      {
+        var p = {};
+        p.name = pfile;
+        p.value = nodesPerProfile[pfile];
+        piChartRender.push(p);
+      }
+      
+      var pi = new NovaPiChart('piChart', 200, 'deleteByProfile');
+      pi.Render(piChartRender);
+    }
+    
+    window.onload = function()
+    {
+      document.onselectstart = function()
+      {
+        return false;
+      }
+    }
+    
+    now.ready(function(){
+      Init();
+      checkOnlyOne('if0');
     });
 
-  script(type="text/javascript")
-    /*set up data store*/
-    var layoutNodes = [[
-      { field: "Enabled", name: "Enabled", width: '100px' },
-      { field: "Name", name: "Name", width: '400px' },
-      { field: "Profile", name: "Profile", width: '100px' },
-      { field: "IP", name: "IP", width: '150px' },
-      { field: "MAC", name: "MAC", width: '150px' },
-    ]];
-
 block content
-  h1 Current Haytack Node Configuration
+  h1 Current Haystack Node Configuration
   div#piChart
   br
   label Group
@@ -252,30 +389,18 @@ block content
           option(SELECTED) #{g}
         else
           option #{g}
+  div#node_header
+    br
+    div#tablePages
+    br
+  table.novaGrid#nodeTable
   br
-  table#nodeTable(style="display: none")
-    thead
-      tr
-        th Enabled
-        th Name
-        th Profile
-        th IP
-        th MAC
-    tbody#nodeTableBody
-      each node, i in nodes
-        tr
-          td #{node.IsEnabled()}
-          td #{node.GetName()}
-          td #{node.GetProfile()}
-          td #{node.GetIP()}
-          td #{node.GetMAC()}
- 
-  div(style="height: 250px;")
-    div#gridDiv(style="height: 250px")
- 
+  br
 
-  button(onClick="deleteSelectedItems()") Delete Selected Nodes 
-  button(onClick="editSelectedItem()") Edit Selected Node
+  button(onclick="selectAllOnPage()") Select All Nodes on Page
+  button(onclick="deleteSelectedItems()") Delete Selected Nodes
+  button(onclick="deleteAllNodes()") Delete All Nodes 
+  button(onclick="editSelectedItem()") Edit Selected Node
 
   br
   button(onClick="restoreDefaults()") Restore Default Configuration (will erase all changes!)
@@ -296,23 +421,22 @@ block content
   table
     thead
       tr 
-        th Interfaces
     tbody
     - if(INTERFACES.length == 1)
       tr 
         td
           input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
-          #{INTERFACES[0]}
+          #{INTERFACES[0]} (Alias: #{interfaceAliases[0]})
     - else
       tr 
         td
           input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
-          #{INTERFACES[0]}
+          #{INTERFACES[0]} (Alias: #{interfaceAliases[0]})
       - for (var i = 1; i < INTERFACES.length; i++)
           tr 
             td
               input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne('if#{i}')")
-              #{INTERFACES[i]}
+              #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
   hidden(id="length", value=INTERFACES.length)
   br
   label IP Address Range Type
@@ -329,4 +453,4 @@ block content
   
   br
   br
-  input(type="Submit",value="Create New Nodes", onclick="createNodes()")
+  input#createNewNodes(type="Submit",value="Create New Nodes", onclick="createNodes()")

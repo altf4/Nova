@@ -81,6 +81,7 @@ trainingSuspectMap *TrainingData::ParseTrainingDb(string dbPath)
 	string line;
 	bool getHeader = true;
 	uint delimIndex;
+	uint lastUID = 0;
 
 	trainingSuspect *suspect = new trainingSuspect();
 	suspect->points = new vector<string>();
@@ -102,8 +103,12 @@ trainingSuspectMap *TrainingData::ParseTrainingDb(string dbPath)
 						return NULL;
 					}
 
-					suspect->uid = line.substr(0,delimIndex);
-					suspect->isHostile = atoi(line.substr(delimIndex + 1, 1).c_str());
+					stringstream ss;
+					ss << lastUID;
+					suspect->uid = ss.str();
+					lastUID++;
+
+					suspect->isHostile = atoi(line.substr(0, 1).c_str());
 
 					// TODO: It would be nice to have the suspects used last time to generate the
 					// data file still selected as included. For now we just mark them all.
@@ -193,7 +198,7 @@ string TrainingData::MakaDataFile(trainingSuspectMap& db)
 		{
 			for(uint i = 0; i < it->second->points->size(); i++)
 			{
-				ss << it->second->points->at(i).substr(1, string::npos) << " " << it->second->isHostile << endl;
+				ss << it->second->points->at(i).substr(1, string::npos) << it->second->isHostile << endl;
 			}
 		}
 	}

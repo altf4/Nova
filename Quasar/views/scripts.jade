@@ -1,0 +1,283 @@
+extends layout
+
+block headerAdditions
+  script
+    var scriptList = !{JSON.stringify(scripts)};
+    var scriptBindings = !{JSON.stringify(bindings)};
+    var theDoc = document;
+
+    function closeLightbox()
+    {
+      theDoc.getElementById('lightbox').style.display = 'none';
+      theDoc.getElementById('hideme').style.opacity = '1.0'; 
+      while(theDoc.getElementById('appendHook').hasChildNodes())
+      {
+        theDoc.getElementById('appendHook').removeChild(theDoc.getElementById('appendHook').lastChild); 
+      }
+    }
+
+    function setUpScriptTable()
+    {
+      var append = theDoc.getElementById('addAnchor');
+      for(var i in scriptList)
+      {
+        var disable = false;
+        var tr = theDoc.createElement('tr');
+        tr.id = scriptList[i].script;
+        var td0 = theDoc.createElement('td');
+        var label0 = theDoc.createElement('label');
+        label0.innerHTML = scriptList[i].script;
+        var td1 = theDoc.createElement('td');
+        var label1 = theDoc.createElement('label');
+        label1.innerHTML = (scriptBindings[scriptList[i].script] != undefined ? scriptBindings[scriptList[i].script] : '');
+        if(label1.innerHTML !== scriptBindings[scriptList[i].script])
+        {
+          disable = true;
+        }
+        var td2 = theDoc.createElement('td');
+        var label2 = theDoc.createElement('label');
+        label2.innerHTML = scriptList[i].path;
+        var td3 = theDoc.createElement('td');
+        var clearButton = theDoc.createElement('button');
+        clearButton.innerHTML = 'Clear Profiles';
+        clearButton.setAttribute('onclick', 'ClearScriptWrapper("' + scriptList[i].script + '")');
+        clearButton.disabled = disable;
+        var td4 = theDoc.createElement('td');
+        var removeButton = theDoc.createElement('button');
+        removeButton.innerHTML = 'Remove Script';
+        removeButton.setAttribute('onclick', 'RemoveScriptFromMap("' + scriptList[i].script + '")');
+        
+        td0.appendChild(label0);
+        td1.appendChild(label1);
+        td2.appendChild(label2);
+        td3.appendChild(clearButton);
+        td4.appendChild(removeButton);
+        tr.appendChild(td0);
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        tr.appendChild(td4);
+        append.appendChild(tr);
+      }
+    }
+    
+    function RemoveScriptFromMap(scriptName)
+    {
+      ClearScriptFromProfiles(scriptName, '', false);
+      
+      if(typeof now.RemoveScript == 'function')
+      {
+        now.RemoveScript(scriptName, function(){
+          location.reload(true);
+        });
+      }
+    }
+    
+    function ClearScriptWrapper(scriptName)
+    { 
+      var profilesForScript = scriptBindings[scriptName].split(',');
+      
+      if(profilesForScript.length > 1)
+      {
+        showLightBox('1');
+        for(var i in profilesForScript)
+        {
+          var tr = theDoc.createElement('tr');
+          var td0 = theDoc.createElement('td');
+          var checkbox = theDoc.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.value = profilesForScript[i];
+          checkbox.id = profilesForScript[i];
+          checkbox.checked = true;
+          var td1 = theDoc.createElement('td');
+          var label = theDoc.createElement('label');
+          label.innerHTML = profilesForScript[i];
+          
+          td0.appendChild(checkbox);
+          td1.appendChild(label);
+          tr.appendChild(td0);
+          tr.appendChild(td1);
+          theDoc.getElementById('appendHook').appendChild(tr);
+        }
+        theDoc.getElementById('changeOnclick').setAttribute('onclick', 'ClearScriptFromProfiles("' + scriptName + '", getProfileExceptions("' + profilesForScript.join() + '"), true)');
+      }
+      else
+      {
+        ClearScriptFromProfiles(scriptName, '', true);
+      }
+    }
+    
+    function getProfileExceptions(ids)
+    {
+      var exceptions = ids.split(',');
+      var ret = [];
+      
+      for(var i in exceptions)
+      {
+        if(exceptions[i] != undefined && exceptions[i] != '')
+        {
+          if(theDoc.getElementById(exceptions[i]).checked == false)
+          {
+            ret.push(exceptions[i]);
+          }
+        }
+      }
+      
+      return ret;
+    }
+    
+    function ClearScriptFromProfiles(scriptName, exceptions, reload)
+    {
+      if(scriptBindings[scriptName] == undefined)
+      {
+        console.log('The script ' + scriptName + ' is not linked to any profiles');
+        return;
+      }
+      var profilesIter = scriptBindings[scriptName].split(',');
+      if(profilesIter == '' || profilesIter == undefined || profilesIter == null)
+      {
+        console.log('found only one profile');
+        profilesIter = scriptBindings[scriptName];
+      }
+      
+      if(exceptions != '' && exceptions != undefined)
+      {
+        for(var i in profilesIter)
+        {
+          for(var j in exceptions)
+          {
+            if(profilesIter[i] == exceptions[j])
+            {
+              profilesIter[i] = null;
+            }
+          }
+        }
+      }
+      
+      if(typeof now.RemoveScriptFromProfiles == 'function' && (reload == 'true' || reload == true))
+      {
+        now.RemoveScriptFromProfiles(scriptName, profilesIter, function(){
+          location.reload(true);
+        });
+      }
+      else if(typeof now.RemoveScriptFromProfiles == 'function' && (reload == 'false' || reload == false))
+      {
+        now.RemoveScriptFromProfiles(scriptName, profilesIter); 
+      }
+      else
+      {
+        alert('Could not complete action, function RemoveScriptFromProfiles not found');
+        return;
+      }
+    }
+
+    function showLightBox(divIndex)
+    {
+      theDoc.getElementById('hideme').style.opacity='0.5';
+      theDoc.getElementById('lightbox').style.display='block';
+      if(divIndex == '0')
+      {
+        theDoc.getElementById('addScriptForm').style.display='block';
+        theDoc.getElementById('selectClearProfiles').style.display='none';
+      }
+      else if(divIndex == '1')
+      {
+        theDoc.getElementById('addScriptForm').style.display='none';
+        theDoc.getElementById('selectClearProfiles').style.display='block';
+      }
+    }
+    
+    function checkParams(callback)
+    {
+      var sName = theDoc.getElementById('scriptFile').value;
+      // I'm wondering if we shouldn't enforce some sort of regulation regarding
+      // what file extensions people can submit with the file dialog; I can't seem
+      // to find any documentation regarding limiting what types of files an input
+      // can take to a smaller subset outside of back-end magickry.
+      var sFile = theDoc.getElementById('scriptName').value;
+      var sShell = theDoc.getElementById('scriptShell').value;
+      var sArgs = theDoc.getElementById('scriptArgs').value;
+      
+      if(sName == '' || sFile == '' || sName == undefined || sFile == undefined)
+      {
+        alert('Must select both a file and supply a name for the new script');
+      }
+      if(sShell == '' || sShell == undefined)
+      {
+        alert('A shell type (i.e. "bash" or "perl") must be identified');
+      }
+      // For now this is not necessarily required. When we have an actual mechanism
+      // for standardizing the submittal and format of scripts (i.e. what arguments
+      // to take from Honeyd, entries in the example.conf file/any other file within the
+      // /usr/share/honeyd/scripts/strings/ folder) this will be come important. As I 
+      // understand it, the strings folder holds version strings, etc. and we still have
+      // more desired work to do on it.
+      /*if(sArgs == '' || sArgs == undefined)
+      {
+        alert('Arguments for the script must be included (read Script guidelines for more details)');
+      }*/
+      else
+      {
+        if(typeof callback == 'function')
+        {
+          callback();
+        }
+      }
+    }
+    
+    now.ready(function(){
+      setUpScriptTable();
+    });
+
+block content
+  div#hideme
+    h1 Honeyd Scripts
+  
+    button(onclick='showLightBox("0")') Add New Honeyd Script
+    br
+    br
+  
+    table(border='1', style='border: solid black 2px;')
+      thead
+        tr
+          th(style='background-color: #d0e9fc;') Name
+          th(style='background-color: #d0e9fc;') Profiles
+          th(style='background-color: #d0e9fc;') Path And Parameters
+      tbody#addAnchor
+    br
+  
+  div(id='lightbox', class='white_content')
+    div(id='addScriptForm', style='display: none')
+      form(id='submitMe', method='post', enctype="multipart/form-data")
+        table
+          tbody
+            tr
+              td 
+                label Script to Upload
+              td 
+                input(type='file', name='script', id='scriptFile')
+            tr
+              td
+                label Shell Type
+              td
+                input(name='shell', id='scriptShell')
+            tr 
+              td
+                label Args
+              td
+                input(name='args', id='scriptArgs')
+            tr
+              td
+                label Name of Script
+              td
+                input(name='name', id='scriptName')
+      button(onclick='checkParams(function(){document.getElementById("submitMe").submit();})') Add Script
+    div(id='selectClearProfiles', style='display: none')
+      table
+        thead
+          tr
+            th Profiles To Remove Script From
+        tbody(id='appendHook')
+      button(id='changeOnclick') Clear Scripts From Profile
+    br
+    button(onclick='closeLightbox()') Close
