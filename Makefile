@@ -67,14 +67,14 @@ novatrainer-release:
 	$(MAKE) -C NovaTrainer/Release
 	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
 
-#Web UI
+#Quasar
 quasar: nodejsmodule
 	cd Quasar;npm --unsafe-perm install
 
 nodejsmodule:
 	cd NodejsModule;npm --unsafe-perm install	
 
-#Mothership
+#Pulsar
 pulsar:
 	cd Pulsar;npm --unsafe-perm install
 
