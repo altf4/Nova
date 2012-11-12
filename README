@@ -23,7 +23,8 @@ The Installation Guide
   make installation easiest. We provide a helper script which should get all
   dependencies and download, build, and install Nova and Honeyd. 
 
-        sudo bash debian/novaInstallHelper.sh
+        wget https://raw.github.com/DataSoft/Nova/master/debian/novaInstallHelper.sh
+        sudo bash novaInstallHelper.sh
 
 - This script has only been tested on the most recent stable version of Ubuntu.
   Any other distributions or versions should manually compile using the
