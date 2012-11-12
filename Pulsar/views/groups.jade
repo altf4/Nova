@@ -26,11 +26,13 @@ block headerAdditions
   script
     var clients = '#{CLIENTS}'.split(':');
     var theDoc = document;
+    
     if(clients[0] == '')
     {
       clients.length = 0;
       clients = new Array();
     }
+    
     var clientCount = 0;
     var groups = !{GROUPS};
   
@@ -40,7 +42,7 @@ block headerAdditions
       now.GetClients(now.RenderConnectionsList);
       now.SetUpNotificationsButton();
       now.SetUpHostileEventsButton();
-      now.GetClients(function(list){
+      now.GetClients(function(list) {
         for(var i in list)
         {
           if(list[i] != '')
