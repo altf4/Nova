@@ -2,7 +2,7 @@ extends layout
 
 block content
   h1 Connected Clients List
-  table(style='border: 2px solid; width: 200px;')
+  table(style='border: 2px solid; width: 200px; border-collapse: collapse;')
     tbody(id='clientsList')
   br
   br
@@ -11,7 +11,7 @@ block content
   input(id='groupName', maxlength='10', size='10', value='')
   button(id='addGroup', onclick='addGroup(document.getElementById("groupName").value, getMembers())') Add Group
   h1 Current Groups
-  table(id='groupsList')
+  table(id='groupsList', style='border-collapse: collapse;')
     thead
       tr
         th Group

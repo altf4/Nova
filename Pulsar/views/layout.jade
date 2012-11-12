@@ -84,7 +84,6 @@ html(lang='en')
               }
             });
             
-            novadStatus.setAttribute('style', 'float: left');
             td1.appendChild(novadStatus);
             
             var haystackStatus = document.createElement('img');
@@ -110,7 +109,6 @@ html(lang='en')
               }
             });
             
-            haystackStatus.setAttribute('style', 'float: left');
             td1.appendChild(haystackStatus);
             
             var events = document.createElement('div');
@@ -487,7 +485,7 @@ html(lang='en')
         br
         br
         div(style='text-align:center; font-weight:bold; font-size: 150%;') Connected Clients
-        table(style='border: 2px solid; width: 156px;')
+        table(style='border: 2px solid; width: 156px; border-collapse: collapse;')
           tbody(id='connectionsList')
         //a(class="button", href= "logout") Log Out
         //br
