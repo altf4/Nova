@@ -29,9 +29,11 @@ function setUpClientsList(divName)
   if(clients[0] == '' || clients.length == 0)
   {
     var tr = document.createElement('tr');
-    tr.id = 'deleteMe';
+    tr.id = 'noClients';
+    
     var td0 = document.createElement('td');
     td0.innerHTML = 'There are no clients currently connected';
+    
     tr.appendChild(td0);
           
     document.getElementById(divName).appendChild(tr);
@@ -49,8 +51,11 @@ function setUpClientsList(divName)
     {
       if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
       {
-          var div = document.createElement('div');
-          div.id = clients[i] + 'div';
+          var tr = document.createElement('tr');
+          tr.id = clients[i] + 'div';
+          
+          var td0 = document.createElement('td');
+          var td1 = document.createElement('td');
           
           var check = document.createElement('input');
           check.type = 'checkbox';
@@ -58,16 +63,18 @@ function setUpClientsList(divName)
           check.name = 'check' + i;
           check.value = clients[i];
           check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
+          td0.appendChild(check);
           
           var label = document.createElement('label');
           label.value = clients[i];
           label.innerHTML = clients[i];
           label.setAttribute('style', 'font-weight: bold; padding-left: 25px');
+          td1.appendChild(label);
           
-          div.appendChild(check);
-          div.appendChild(label);
+          tr.appendChild(td0);
+          tr.appendChild(td1);
           
-          document.getElementById(divName).appendChild(div);
+          document.getElementById(divName).appendChild(tr);
           
           clientCount++;
       }
@@ -94,12 +101,15 @@ function setUpGroupsList(divName)
   
   if(groupList[0] == '' || (memberList[0] == '' || memberList[0] == undefined))
   {
-    var label = document.createElement('label');
-    label.id = 'noGroups';
-    label.value = 'noGroups';
-    label.innerHTML = 'There are no groups set';
+    var tr = document.createElement('tr');
+    tr.id = 'noGroups';
     
-    document.getElementById(divName).appendChild(label);
+    var td0 = document.createElement('td');
+    td0.innerHTML = 'There are no groups set';
+    
+    tr.appendChild(td0);
+          
+    document.getElementById(divName).appendChild(tr);
   }
   else
   {
@@ -114,9 +124,10 @@ function setUpGroupsList(divName)
     {
       if(groupList[i] != '' && memberList[i] != '')
       {
-        var div = document.createElement('div');
-        div.id = groupList[i] + 'div';
+        var tr = document.createElement('tr');
+        tr.id = groupList[i] + 'div';
         
+        var td0 = document.createElement('td');
         var check = document.createElement('input');
         check.type = 'checkbox';
         check.id = 'groupcheck' + i;
@@ -124,22 +135,25 @@ function setUpGroupsList(divName)
         check.value = memberList[i];
         check.setAttribute('onchange', 'setTarget(("groupcheck' + i + '"), document.getElementById("groupcheck' + i + '").value.replace(new RegExp("," , "g") , ":"), "true")');
         check.setAttribute('style', 'padding-left: 50px');
+        td0.appendChild(check);
         
+        var td1 = document.createElement('td');
         var label = document.createElement('label');
         label.value = groupList[i];
         label.innerHTML = groupList[i];
         label.title = memberList[i];
         label.setAttribute('style', 'text-align: center; font-weight: bold; padding-left: 25px');
+        td1.appendChild(label);
         
         if(memberList[i].split(',')[1] == '' || memberList[i].split(',')[1] == undefined)
         {
           check.setAttribute('disabled', true);
         }
         
-        div.appendChild(check);
-        div.appendChild(label);
+        tr.appendChild(td0);
+        tr.appendChild(td1);
         
-        document.getElementById(divName).appendChild(div);
+        document.getElementById(divName).appendChild(tr);
       }
     }
   }

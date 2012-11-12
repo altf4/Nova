@@ -39,9 +39,12 @@ html(lang='en')
         {
           var tr = document.createElement('tr');
           tr.id = 'deleteMe';
+          
           var td0 = document.createElement('td');
           td0.innerHTML = 'No clients connected';
+          
           tr.appendChild(td0);
+          
           divConnectionsList.appendChild(tr);
         }
         else
