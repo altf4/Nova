@@ -92,7 +92,17 @@ public:
 	//Inserts the profile into the honeyd configuration
 	//	profile: pointer to the profile you wish to add
 	//	Returns (true) if the profile could be created, (false) if it cannot.
+    //	NOTE: Gives control of the lifecycle of the provided profile to HoneydConfiguration. Maybe deleting it.
+    //			So don't try accessing the profile object after calling this function
 	bool AddProfile(Profile *profile);
+
+	//Inserts the profile into the honeyd configuration, with parent profile at the given string
+	//	profile: pointer to the profile you wish to add
+	//	parentName: The name of the profile which will be the parent of the given profile
+	//	returns - True on success, false on error (including being unable to find the parent at the given name)
+    //	NOTE: Gives control of the lifecycle of the provided profile to HoneydConfiguration. Maybe deleting it.
+    //			So don't try accessing the profile object after calling this function
+	bool AddProfile(Profile *profile, std::string parentName);
 
 	bool AddGroup(std::string groupName);
 

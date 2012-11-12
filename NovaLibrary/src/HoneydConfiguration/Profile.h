@@ -31,6 +31,7 @@ class Profile
 public:
 
 	Profile(Profile *parent, std::string key = "");
+	Profile(std::string parentName, std::string key = "");
 
 	~Profile();
 
@@ -51,6 +52,11 @@ public:
 	//Calculates the distributions of direct children of the given profile
 	//	NOTE: Not recursive. Only calculates the given node's direct children.
 	void RecalculateChildDistributions();
+
+	//Copies the contents of the given profile into our own
+	//	source - Profile to copy contents from
+	//	returns - true on success, false on error
+	bool Copy(Profile *source);
 
 	// Number of hosts that have this personality
 	uint32_t m_count;

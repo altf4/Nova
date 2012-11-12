@@ -2163,7 +2163,7 @@ GetPorts = function (profileName, callback) {
 }
 everyone.now.GetPorts = GetPorts;
 
-everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, addOrEdit) {
+everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList) {
 	// Check input
 	var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
 	var match = profileNameRegexp.exec(profile.name);
@@ -2173,10 +2173,9 @@ everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, ad
 		return;
 	}
 
-	var honeydProfile = new novaconfig.HoneydProfileBinding();
+	var honeydProfile = new novaconfig.HoneydProfileBinding(profile.parentProfile, profile.name);
 
 	// Move the Javascript object values to the C++ object
-	honeydProfile.SetName(profile.name);
 	honeydProfile.SetTcpAction(profile.tcpAction);
 	honeydProfile.SetUdpAction(profile.udpAction);
 	honeydProfile.SetIcmpAction(profile.icmpAction);
@@ -2205,7 +2204,6 @@ everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, ad
 		honeydProfile.SetUptimeMax(profile.uptimeMin);
 	}
 	honeydProfile.SetDropRate(profile.dropRate);
-	honeydProfile.SetParentProfile(profile.parentProfile);
 
 	honeydProfile.setTcpActionInherited(profile.isTcpActionInherited);
 	honeydProfile.setUdpActionInherited(profile.isUdpActionInherited);
@@ -2251,14 +2249,8 @@ everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, ad
 
 	honeydConfig.SaveAll();
 
-	if (addOrEdit == "true") {
-		addOrEdit = true;
-	} else {
-		addOrEdit = false;
-	}
-
 	// Save the profile
-	honeydProfile.Save(profile.oldName, addOrEdit);
+	honeydProfile.Save(profile.oldName);
 
 	callback();
 }

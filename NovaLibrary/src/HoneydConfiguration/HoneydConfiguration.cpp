@@ -853,13 +853,62 @@ bool HoneydConfiguration::IsMACUsed(string mac, string groupName)
 	return false;
 }
 
-//Inserts the profile into the honeyd configuration
-//	profile: pointer to the profile you wish to add
-//	Returns (true) if the profile could be created, (false) if it cannot.
 bool HoneydConfiguration::AddProfile(Profile *profile)
 {
+	if(profile == NULL)
+	{
+		return false;
+	}
 
-	return false;
+	//Check to see if the profile name already exists
+	Profile *duplicate = GetProfile(profile->m_key);
+	if(duplicate == NULL)
+	{
+		//Copy over the contents of this profile, and quit
+		duplicate->Copy(profile);
+		//We don't need this new profile anymore, so get rid of it
+		delete profile;
+		return true;
+	}
+
+	Profile *parent = GetProfile(profile->m_key);
+	if(parent == NULL)
+	{
+		return false;
+	}
+	parent->m_children.push_back(profile);
+	profile->m_parent = parent;
+
+	return true;
+}
+
+bool HoneydConfiguration::AddProfile(Profile *profile, std::string parentName)
+{
+	if(profile == NULL)
+	{
+		return false;
+	}
+
+	//Check to see if the profile name already exists
+	Profile *duplicate = GetProfile(profile->m_key);
+	if(duplicate == NULL)
+	{
+		//Copy over the contents of this profile, and quit
+		duplicate->Copy(profile);
+		//We don't need this new profile anymore, so get rid of it
+		delete profile;
+		return true;
+	}
+
+	Profile *parent = GetProfile(parentName);
+	if(parent == NULL)
+	{
+		return false;
+	}
+	parent->m_children.push_back(profile);
+	profile->m_parent = parent;
+
+	return true;
 }
 
 vector<string> HoneydConfiguration::GetGroups()

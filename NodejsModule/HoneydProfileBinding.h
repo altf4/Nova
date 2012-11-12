@@ -4,13 +4,13 @@
 #include <node.h>
 #include <v8.h>
 #include "v8Helper.h"
-#include "HoneydConfiguration/HoneydConfigTypes.h"
+#include "HoneydConfiguration/Profile.h"
 
 class HoneydProfileBinding : public node::ObjectWrap {
  public:
   static void Init(v8::Handle<v8::Object> target);
   
-  Nova::NodeProfile * GetChild();
+  Nova::Profile *GetChild();
   static v8::Handle<v8::Value> SetVendors(const v8::Arguments& args);
 
 private:
@@ -21,7 +21,7 @@ private:
   static v8::Handle<v8::Value> Save(const v8::Arguments& args);
   static v8::Handle<v8::Value> AddPort(const v8::Arguments& args);
 
-  Nova::NodeProfile *m_pfile;
+  Nova::Profile *m_pfile;
 };
 
 #endif

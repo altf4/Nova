@@ -27,13 +27,8 @@ using namespace std;
 namespace Nova
 {
 
-//Default constructor
 Profile::Profile(Profile *parent, string key)
 {
-	// Creates an empty personality node; set the
-	// empty and deleted keys for tables inside the
-	// node class so that the only exception we will
-	// get is accessing the empty key.
 	m_children.clear();
 	m_key = key;
 	m_osclass = "";
@@ -46,7 +41,20 @@ Profile::Profile(Profile *parent, string key)
 	m_uptimeMax = 0;	//TODO: Let;'s have a more reasonable "maximum" here. We don't want to be setting random uptimes this high
 }
 
-//Destructor
+Profile::Profile(string parentName, std::string key)
+{
+	m_children.clear();
+	m_key = key;
+	m_osclass = "";
+	m_count = 0;
+	m_avgPortCount = 0;
+	m_redundant = false;
+	m_parent = HoneydConfiguration::Inst()->GetProfile(parentName);
+	m_isGenerated = false;	//Manually set this to true in Autoconfig
+	m_uptimeMin = ~0;	//TODO: What if we don't see any uptimes? We need to have a sane default
+	m_uptimeMax = 0;	//TODO: Let;'s have a more reasonable "maximum" here. We don't want to be setting random uptimes this high
+}
+
 Profile::~Profile()
 {
 	for(uint i = 0; i < m_children.size(); i++)
@@ -207,6 +215,11 @@ void Profile::RecalculateChildDistributions()
 	{
 		m_children[i]->m_distribution = (((double)m_children[i]->m_count) / (double)m_count) * 100;
 	}
+}
+
+bool Profile::Copy(Profile *source)
+{
+
 }
 
 }
