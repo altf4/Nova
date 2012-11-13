@@ -756,6 +756,18 @@ GetInterfacesOfClient = function(clientId, cb)
 }
 everyone.now.GetInterfacesOfClient = GetInterfacesOfClient;
 
+function UpdateBaseConfig(configValues)
+{
+  for(var i in configValues)
+  {
+    if(i != 'id' && i != 'type')
+    {
+      config.WriteSetting(i, configValues[i]);
+    }
+  }
+}
+everyone.now.UpdateBaseConfig = UpdateBaseConfig;
+
 // Convenience method for trimming file new-lines, in the case
 // that we eliminate the first group in the client_groups.txt file
 // for example. 
