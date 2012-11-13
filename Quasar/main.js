@@ -1620,30 +1620,39 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 	var interfaces = "";
 	var oneIface = false;
 
-	if (req.body["DOPPELGANGER_INTERFACE"] !== undefined) {
+	if(req.body["DOPPELGANGER_INTERFACE"] !== undefined) 
+	{
 		config.SetDoppelInterface(req.body["DOPPELGANGER_INTERFACE"]);
 	}
 
-	if (req.body["INTERFACE"] !== undefined) {
-		for (item in req.body["INTERFACE"]) {
-			if (req.body["INTERFACE"][item].length > 1) {
+	if(req.body["INTERFACE"] !== undefined) 
+	{
+		for(item in req.body["INTERFACE"]) 
+		{
+			if(req.body["INTERFACE"][item].length > 1) 
+			{
 				interfaces += " " + req.body["INTERFACE"][item];
 				config.AddIface(req.body["INTERFACE"][item]);
-			} else {
+			} 
+			else 
+			{
 				interfaces += req.body["INTERFACE"][item];
 				oneIface = true;
 			}
 		}
 
-		if (oneIface) {
+		if (oneIface) 
+		{
 			config.AddIface(interfaces);
 		}
 
 		req.body["INTERFACE"] = interfaces;
 	}
 
-	for (var item = 0; item < configItems.length; item++) {
-		if (req.body[configItems[item]] == undefined) {
+	for (var item = 0; item < configItems.length; item++) 
+	{
+		if (req.body[configItems[item]] == undefined) 
+		{
 			continue;
 		}
 		switch (configItems[item]) {
@@ -1686,11 +1695,14 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 			validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
 			var split = req.body[configItems[item]].split('.');
 
-			if (split.length == 4) {
-				if (split[3] === "0") {
+			if (split.length == 4) 
+			{
+				if (split[3] === "0") 
+				{
 					validator.check(split[3], 'Can not have last IP octet be 0').equals("255");
 				}
-				if (split[3] === "255") {
+				if (split[3] === "255") 
+				{
 					validator.check(split[3], 'Can not have last IP octet be 255').equals("0");
 				}
 			}
@@ -1699,11 +1711,14 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 			var checkIPZero = 0;
 			var checkIPBroad = 0;
 
-			for (var val = 0; val < split.length; val++) {
-				if (split[val] == "0") {
+			for (var val = 0; val < split.length; val++) 
+			{
+				if (split[val] == "0") 
+				{
 					checkIPZero++;
 				}
-				if (split[val] == "255") {
+				if (split[val] == "255") 
+				{
 					checkIPBroad++;
 				}
 			}
