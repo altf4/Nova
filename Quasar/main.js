@@ -584,7 +584,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
 app.get('/honeydConfigManage', passport.authenticate('basic', {session: false}), function(req, res){
   res.render('honeydConfigManage.jade', {
     locals: {
-      configurations: honeydConfig.GetConfigurationsList()
+      configurations: honeydConfig.GetConfigurationsList(),
+      current: config.GetCurrentConfig()
     }
   });
 });

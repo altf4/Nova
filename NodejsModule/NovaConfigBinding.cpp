@@ -48,6 +48,7 @@ void NovaConfigBinding::Init(Handle<Object> target) {
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPathConfigHoneydHS"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetPathConfigHoneydHS>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPathHome"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetPathHome>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPathShared"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetPathShared>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetCurrentConfig"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetCurrentConfig>));
 
 
   tpl->PrototypeTemplate()->Set(String::NewSymbol("SetSMTPUser"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, std::string, &Config::SetSMTPUser>));

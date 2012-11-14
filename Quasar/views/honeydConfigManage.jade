@@ -50,6 +50,7 @@ block headerAdditions
     var theDoc = document;
     var profilesArray = {};
     var saveProfileObjs = {};
+    var currentConfig = "#{current}";
 
     function closeLightbox()
     {
@@ -105,7 +106,7 @@ block headerAdditions
           {
             var option = theDoc.createElement('option');
             
-            if(!selected)
+            if(!selected && configs[i] == currentConfig)
             {
               option.selected = 'selected';
               selected = true;
@@ -164,7 +165,7 @@ block headerAdditions
           // to do the calculations, and then send exactly the data required to
           // the browser.
           saveProfileObjs = profileObj;
-          
+          current = configArg;
           for(var i in scriptProfileBindings)
           {
             var tr = theDoc.createElement('tr');
