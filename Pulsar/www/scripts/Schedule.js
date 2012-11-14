@@ -174,7 +174,6 @@ function createScheduledEventElement(clientId)
   name.maxlength = '10';
   
   var b0 = document.createElement('br');
-  //var b1 = document.createElement('br');
   var b2 = document.createElement('br');
   var b3 = document.createElement('br');
   var b4 = document.createElement('br');

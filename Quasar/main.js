@@ -574,7 +574,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
       pulsar.sendUTF(JSON.stringify(message1));
       pulsar.sendUTF(JSON.stringify(message2));
     }
-  }, 10000);
+  }, 5000);
   //
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
@@ -2727,7 +2727,7 @@ var distributeSuspect = function (suspect) {
 		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
   
-  if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) != -2)
+  if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) >= 0)
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
@@ -2741,7 +2741,7 @@ var distributeSuspect = function (suspect) {
     
     SendHostileEventToPulsar(send);
   }
-  else if(suspect.GetIsHostile() == false && benignRequest && parseInt(suspect.GetClassification()) != -2)
+  else if(suspect.GetIsHostile() == false && benignRequest && parseInt(suspect.GetClassification()) >= 0)
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());

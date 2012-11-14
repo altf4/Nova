@@ -248,7 +248,7 @@ now.UpdateClientsList = function(clientId, action)
       }
       break;
     default:
-      console.log('UpdateConnectionsList called with invalid action, doing nothing');
+      console.log('UpdateClientsList called with invalid action, doing nothing');
       break;
   }
 }
