@@ -2739,12 +2739,25 @@ bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
 	{
 		string pathToDelete = "rm -r " + Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
 		system(pathToDelete.c_str());
+		int oldSize = 0;
+		for(uint i = 0; i < m_configs.size(); i++)
+		{
+			if(m_configs[i].compare(""))
+			{
+				oldSize++;
+			}
+		}
+		int newSize = oldSize - 1;
 		m_configs.erase(m_configs.begin() + eraseIdx);
+		m_configs.resize(newSize);
 		ofstream configurationsFile(Config::Inst()->GetPathHome() + "/config/templates/configurations.txt");
 		string writeString = "";
 		for(uint i = 0; i < m_configs.size(); i++)
 		{
-			writeString += m_configs[i] + '\n';
+			if(m_configs[i].compare(""))
+			{
+				writeString += m_configs[i] + '\n';
+			}
 		}
 		configurationsFile << writeString;
 		configurationsFile.close();
