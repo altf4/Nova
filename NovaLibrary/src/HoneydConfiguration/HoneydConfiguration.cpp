@@ -862,21 +862,32 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 
 	//Check to see if the profile name already exists
 	Profile *duplicate = GetProfile(profile->m_key);
-	if(duplicate == NULL)
+	if(duplicate != NULL)
 	{
 		//Copy over the contents of this profile, and quit
 		duplicate->Copy(profile);
+
 		//We don't need this new profile anymore, so get rid of it
+		profile->m_children.clear();
 		delete profile;
 		return true;
 	}
 
-	Profile *parent = GetProfile(profile->m_key);
-	if(parent == NULL)
+	if(profile->m_parent == NULL)
 	{
+		//You can't replace the root profile "default"
 		return false;
 	}
+
+	Profile *parent = GetProfile(profile->m_parent->m_key);
+	if(parent == NULL)
+	{
+		//Parent didn't exist
+		return false;
+	}
+	//Add the new profile to its parent's list of children
 	parent->m_children.push_back(profile);
+	//Add the parent as the current profile's parent
 	profile->m_parent = parent;
 
 	return true;

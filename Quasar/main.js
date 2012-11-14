@@ -2163,7 +2163,7 @@ GetPorts = function (profileName, callback) {
 }
 everyone.now.GetPorts = GetPorts;
 
-everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList) {
+everyone.now.SaveProfile = function (profile, portSets, callback, ethVendorList) {
 	// Check input
 	var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
 	var match = profileNameRegexp.exec(profile.name);
@@ -2173,81 +2173,47 @@ everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList) {
 		return;
 	}
 
-	var honeydProfile = new novaconfig.HoneydProfileBinding(profile.parentProfile, profile.name);
+	var honeydProfile = new novaconfig.HoneydProfileBinding(profile.parentProfile, profile.oldname);
 
 	// Move the Javascript object values to the C++ object
-	honeydProfile.SetTcpAction(profile.tcpAction);
-	honeydProfile.SetUdpAction(profile.udpAction);
-	honeydProfile.SetIcmpAction(profile.icmpAction);
+	honeydProfile.SetName(profile.name);
 	honeydProfile.SetPersonality(profile.personality);
-
-	if (ethVendorList == undefined || ethVendorList == null) {
-		honeydProfile.SetEthernet(profile.ethernet);
-	} else if (profile.isEthernetInherited) {
-		honeydProfile.SetVendors([], []);
-	} else if (profile.isEthernetInherited == false) {
-		var ethVendors = [];
-		var ethDists = [];
-
-		for (var i = 0; i < ethVendorList.length; i++) {
-			ethVendors.push(ethVendorList[i].vendor);
-			ethDists.push(parseFloat(ethVendorList[i].dist));
-		}
-
-		honeydProfile.SetVendors(ethVendors, ethDists);
-	}
-
 	honeydProfile.SetUptimeMin(profile.uptimeMin);
-	if (profile.uptimeMax != undefined) {
-		honeydProfile.SetUptimeMax(profile.uptimeMax);
-	} else {
-		honeydProfile.SetUptimeMax(profile.uptimeMin);
-	}
+	honeydProfile.SetUptimeMax(profile.uptimeMax);
 	honeydProfile.SetDropRate(profile.dropRate);
+	honeydProfile.SetCount(profile.count);
 
-	honeydProfile.setTcpActionInherited(profile.isTcpActionInherited);
-	honeydProfile.setUdpActionInherited(profile.isUdpActionInherited);
-	honeydProfile.setIcmpActionInherited(profile.isIcmpActionInherited);
-	honeydProfile.setPersonalityInherited(profile.isPersonalityInherited);
-	honeydProfile.setEthernetInherited(profile.isEthernetInherited);
-	honeydProfile.setUptimeInherited(profile.isUptimeInherited);
-	honeydProfile.setDropRateInherited(profile.isDropRateInherited);
+	//Set Ethernet vendors
+	var ethVendors = [];
+	var ethDists = [];
+
+	for (var i = 0; i < ethVendorList.length; i++)
+	{
+		ethVendors.push(ethVendorList[i].vendor);
+		ethDists.push(parseFloat(ethVendorList[i].dist));
+	}
+	honeydProfile.SetVendors(ethVendors, ethDists);
+	
 	if (profile.generated == "true") {
 		honeydProfile.SetGenerated(true);
 	} else {
 		honeydProfile.SetGenerated(false);
 	}
-	honeydProfile.SetDistribution(parseFloat(profile.distribution));
 
 	// Add new ports
+	honeydProfile.ClearPorts();
 	var portName;
-	for (var i = 0; i < ports.size; i++) {
-		// Convert the string to the proper enum number in HoneydConfiguration.h
-		var behavior = ports[i].behavior;
-		console.log("Port behavior is " + behavior);
-		var behaviorEnumValue = new Number();
-		if (behavior == "block") {
-			behaviorEnumValue = 0;
-		} else if (behavior == "reset") {
-			behaviorEnumValue = 1;
-		} else if (behavior == "open") {
-			behaviorEnumValue = 2;
-		} else if (behavior == "script") {
-			behaviorEnumValue = 3;
-		} else if (behavior == "tarpit open") {
-			behaviorEnumValue = 4;
-		} else if (behavior == "tarpit script") {
-			behaviorEnumValue = 5;
-		}
+	for (var i = 0; i < portSets.size; i++) 
+	{
+		//Make a new port set
+		honeydProfile.AddPortSet(portSets[i].name);
 
-		portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), behaviorEnumValue, ports[i].script);
-
-		if (portName != "") {
-			honeydProfile.AddPort(portName, ports[i].isInherited);
-		}
+		honeydProfile.AddPort(portSets[i].name, 
+					portSets[i].behavior, 
+					portSets[i].protocol
+					Number(portSets[i].portNum
+					portSets[i].script);
 	}
-
-	honeydConfig.SaveAll();
 
 	// Save the profile
 	honeydProfile.Save(profile.oldName);

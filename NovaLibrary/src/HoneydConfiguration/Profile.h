@@ -47,6 +47,10 @@ public:
 	//	returns - NULL if no port sets present
 	PortSet *GetRandomPortSet();
 
+	//Returns the PortSet with the given name
+	//	returns NULL if not found
+	PortSet *GetPortSet(std::string name);
+
 	double GetVendorDistribution(std::string vendorName);
 
 	//Calculates the distributions of direct children of the given profile
@@ -56,6 +60,7 @@ public:
 	//Copies the contents of the given profile into our own
 	//	source - Profile to copy contents from
 	//	returns - true on success, false on error
+	//	NOTE: Works only on leaf profiles. Not interior profiles.
 	bool Copy(Profile *source);
 
 	// Number of hosts that have this personality
@@ -64,9 +69,6 @@ public:
 
 	// Name for the node
 	std::string m_key;
-
-	// Is this something we can compress?
-	bool m_redundant;
 
 	//Is this an autoconfig generated node? (or manually created)
 	bool m_isGenerated;

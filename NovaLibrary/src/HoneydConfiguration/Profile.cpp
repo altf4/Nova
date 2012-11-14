@@ -34,7 +34,6 @@ Profile::Profile(Profile *parent, string key)
 	m_osclass = "";
 	m_count = 0;
 	m_avgPortCount = 0;
-	m_redundant = false;
 	m_parent = parent;
 	m_isGenerated = false;	//Manually set this to true in Autoconfig
 	m_uptimeMin = ~0;	//TODO: What if we don't see any uptimes? We need to have a sane default
@@ -48,7 +47,6 @@ Profile::Profile(string parentName, std::string key)
 	m_osclass = "";
 	m_count = 0;
 	m_avgPortCount = 0;
-	m_redundant = false;
 	m_parent = HoneydConfiguration::Inst()->GetProfile(parentName);
 	m_isGenerated = false;	//Manually set this to true in Autoconfig
 	m_uptimeMin = ~0;	//TODO: What if we don't see any uptimes? We need to have a sane default
@@ -197,6 +195,19 @@ PortSet *Profile::GetRandomPortSet()
 	return m_portSets[random];
 }
 
+PortSet *Profile::GetPortSet(std::string name)
+{
+	for(uint i = 0; i < m_portSets.size(); i++)
+	{
+		if(m_portSets[i]->m_name == name)
+		{
+			return m_portSets[i];
+		}
+	}
+
+	return NULL;
+}
+
 double Profile::GetVendorDistribution(std::string vendorName)
 {
 	for(uint i = 0; i < m_vendors.size(); i++)
@@ -219,7 +230,28 @@ void Profile::RecalculateChildDistributions()
 
 bool Profile::Copy(Profile *source)
 {
+	if(source == NULL)
+	{
+		return false;
+	}
 
+	m_count = source->m_count;
+	m_distribution = source->m_distribution;
+	m_key = source->m_key;
+	m_isGenerated = source->m_isGenerated;
+	m_parent = source->m_parent;
+	m_uptimeMin = source->m_uptimeMin;
+	m_uptimeMax = source->m_uptimeMax;
+	m_osclass = source->m_osclass;
+	m_personality = source->m_personality;
+	m_dropRate = source->m_dropRate;
+	m_vendors = source->m_vendors;
+	m_children = source->m_children;
+
+	//TODO: Maybe want to copy the port sets too (rather than pointers)
+	m_portSets = source->m_portSets;
+
+	return true;
 }
 
 }
