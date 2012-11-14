@@ -165,7 +165,7 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 
 	portSet->AddPort(port);
 
-	return scope.Close(Boolean::New(obj->GetChild()->AddPort(portName, isInherited, 100)));
+	return scope.Close(Boolean::New(true));
 }
 
 Handle<Value> HoneydProfileBinding::AddPortSet(const Arguments& args)
@@ -182,6 +182,7 @@ Handle<Value> HoneydProfileBinding::AddPortSet(const Arguments& args)
 		return scope.Close(Boolean::New(false));
 	}
 
+	//TODO: Test for uniqueness
 	string portSetName = cvv8::CastFromJS<string>( args[0] );
 
 	obj->m_profile->m_portSets.push_back(new PortSet(portSetName));

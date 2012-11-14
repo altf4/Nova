@@ -31,6 +31,8 @@ private:
 	~HoneydProfileBinding();
 
 	static v8::Handle<v8::Value> New(const v8::Arguments& args);
+
+	//TODO: Make into public member functions
 	static v8::Handle<v8::Value> AddPort(const v8::Arguments& args);
 	static v8::Handle<v8::Value> AddPortSet(const v8::Arguments& args);
 	static v8::Handle<v8::Value> ClearPorts(const v8::Arguments& args);

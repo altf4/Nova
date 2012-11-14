@@ -2163,6 +2163,7 @@ GetPorts = function (profileName, callback) {
 }
 everyone.now.GetPorts = GetPorts;
 
+//portSets = A 2D array. (array of portSets, which are arrays of Ports)
 everyone.now.SaveProfile = function (profile, portSets, callback, ethVendorList) {
 	// Check input
 	var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
@@ -2207,12 +2208,15 @@ everyone.now.SaveProfile = function (profile, portSets, callback, ethVendorList)
 	{
 		//Make a new port set
 		honeydProfile.AddPortSet(portSets[i].name);
-
-		honeydProfile.AddPort(portSets[i].name, 
-					portSets[i].behavior, 
-					portSets[i].protocol
-					Number(portSets[i].portNum
-					portSets[i].script);
+		for (var i = 0; j < portSets[i].size; i++)
+		{
+			
+			honeydProfile.AddPort(portSets[i][j].name, 
+					portSets[i][j].behavior, 
+					portSets[i][j].protocol, 
+					Number(portSets[i][j].portNum), 
+					portSets[i][j].script);
+		}
 	}
 
 	// Save the profile
