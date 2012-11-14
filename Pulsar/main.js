@@ -153,7 +153,8 @@ var hostileEvents = 0;
 app.set('view options', { layout: false });
 app.set('views', __dirname + '/views');
 // TODO: Make port configurable
-app.listen(8080);
+var MASTER_UI_PORT = parseInt(config.ReadSetting("MASTER_UI_PORT"));
+app.listen(MASTER_UI_PORT);
 app.use(express.static(NovaSharedPath + '/Pulsar/www'));
 
 // Initialize nowjs to listen to our express server
@@ -909,9 +910,9 @@ var httpsServer = https.createServer(options, function(request, response)
 // server, or else it'll catch all the messages that express is meant to get
 // and lead to some undesirable behavior
 // TODO: Make this port configurable
-httpsServer.listen(8081, function()
+httpsServer.listen((MASTER_UI_PORT + 1), function()
 {
-	console.log('Pulsar Server is listening on 8081');
+	console.log('Pulsar Server is listening on ' + (MASTER_UI_PORT + 1));
 });
 
 // Initialize the WebSocketServer to use the httpsServer as the 

@@ -278,8 +278,10 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   // is ideal. Also need to find a way to maintain IP address of Pulsar and any needed
   // credentials for reboots, etc. 
   
-  // TODO: Make configurable
-  var connected = config.ReadSetting('MASTER_UI_IP') + ':8081';
+  // The reason for the + 1 at the end is because that's the port in use for the 
+  // server-to-server component of wbsockets on Pulsar. Have to do something in case 
+  // the port gets changed on the Pulsar machine
+  var connected = config.ReadSetting('MASTER_UI_IP') + ':' + (parseInt(config.ReadSetting('MASTER_UI_PORT')) + 1);
   
   var WebSocketClient = require('websocket').client;
   var client;

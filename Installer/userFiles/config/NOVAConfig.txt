@@ -450,6 +450,16 @@ MASTER_UI_RECONNECT_TIME 5
 MASTER_UI_CLIENT_ID nova1
 
 ############################################
+# MASTER_UI_PORT
+############################################
+# Port for Pulsar to use. This will be the
+# port that Pulsar listens on and that
+# the user will use to access Pulsar through
+# the browser. Pulsar issues commands to the
+# Quasar instances using MASTER_UI_PORT + 1
+MASTER_UI_PORT 8082
+
+############################################
 # FEATURE_WEIGHTS #
 ############################################
 FEATURE_WEIGHTS 1 1 1 1 1 1 1 1 1 1 1 1 1 1
