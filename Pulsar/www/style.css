@@ -122,7 +122,6 @@ html, body {
 
 #clientsList {
     border: 2px solid;
-    border-radius: 12px;
     background: #E8A02F;
     width: 250px;
     text-align: center;
@@ -130,7 +129,6 @@ html, body {
 
 #groupsList {
     border: 2px solid;
-    border-radius: 12px;
     background: #E8A02F;
     width: 250px;
     text-align: center;

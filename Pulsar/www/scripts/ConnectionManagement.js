@@ -1,4 +1,5 @@
 var clientCount = 0;
+var groupCount = 0;
         
 var clientDivName = 'clientsList';
 var groupDivName = 'groupsList';
@@ -62,7 +63,10 @@ function setUpClientsList(divName)
           check.id = 'check' + i;
           check.name = 'check' + i;
           check.value = clients[i];
-          check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
+          if(typeof setTarget == 'function')
+          {
+            check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
+          }
           td0.appendChild(check);
           
           var label = document.createElement('label');
@@ -154,6 +158,8 @@ function setUpGroupsList(divName)
         tr.appendChild(td1);
         
         document.getElementById(divName).appendChild(tr);
+        
+        groupCount++;
       }
     }
   }
@@ -165,7 +171,8 @@ now.RefreshPageAfterRename = function()
   document.location.reload(); 
 }
 
-now.UpdateClientsList = function(clientId, action) {
+now.UpdateClientsList = function(clientId, action) 
+{
   var divClientList = document.getElementById(clientDivName);
   switch(action)
   {
@@ -241,69 +248,74 @@ now.UpdateClientsList = function(clientId, action) {
       }
       break;
     default:
-      console.log('UpdateConnectionsList called with invalid action, doing nothing');
+      console.log('UpdateClientsList called with invalid action, doing nothing');
       break;
   }
+}
   
-  now.UpdateGroupList = function(group, action)
+now.UpdateGroupList = function(group, action)
+{
+  var divGroupList = document.getElementById(groupDivName);
+  var groupDiv = document.getElementById(group + 'div');
+  switch(action)
   {
-    var divGroupList = document.getElementById(groupDivName);
-    var groupDiv = document.getElementById(group + 'div');
-    switch(action)
-    {
-      case 'update':
-        if(groupDiv == undefined || groupDiv.childNodes.length == 0)
+    case 'update':
+      if(groupDiv == undefined || groupDiv.childNodes.length == 0)
+      {
+        var deleteMe = document.getElementById('noGroups');
+        
+        if(deleteMe != undefined)
         {
-          var deleteMe = document.getElementById('noGroups');
-          
-          if(deleteMe != undefined)
+          document.getElementById(groupDivName).removeChild(deleteMe);
+        }
+        
+        now.GetGroupMembers(group, function(members){
+          var div = document.createElement('div');
+          div.id = group + 'div';
+          var check = document.createElement('input');
+          check.type = 'checkbox';
+          check.id = 'groupcheck' + groupCount;
+          check.name = 'groupcheck' + groupCount;
+          check.value = members;
+          check.setAttribute('onchange', 'setTarget(("groupcheck' + groupCount + '"), document.getElementById("groupcheck' + groupCount + '").value.replace(new RegExp("," , "g") , ":"), "true")');
+          check.setAttribute('style', 'padding-left: 50px');
+          var label = document.createElement('label');
+          label.value = group;
+          label.innerHTML = group;
+          label.title = members;
+          label.setAttribute('style', 'text-align: center; font-weight: bold; padding-left: 25px');
+          if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
           {
-            document.getElementById(groupDivName).removeChild(deleteMe);
+            check.setAttribute('disabled', true);
           }
-          
-          now.GetGroupMembers(group, function(members){
-            var div = document.createElement('div');
-            div.id = group + 'div';
-            var check = document.createElement('input');
-            check.type = 'checkbox';
-            check.id = 'groupcheck' + i;
-            check.name = 'groupcheck' + i;
-            check.value = members;
-            check.setAttribute('onchange', 'setTarget(("groupcheck' + i + '"), document.getElementById("groupcheck' + i + '").value.replace(new RegExp("," , "g") , ":"), "true")');
-            check.setAttribute('style', 'padding-left: 50px');
-            var label = document.createElement('label');
-            label.value = group;
-            label.innerHTML = group;
-            label.title = members;
-            label.setAttribute('style', 'text-align: center; font-weight: bold; padding-left: 25px');
-            if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
-            {
-              check.setAttribute('disabled', true);
-            }
-            div.appendChild(check);
-            div.appendChild(label);
-            document.getElementById(groupDivName).appendChild(div);
-          });
-        }
-        else
-        {
-          now.GetGroupMembers(group, function(members){
-            var check = groupDiv.childNodes[0];
-            check.value = members;
-            if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
-            {
-              check.setAttribute('disabled', true);
-            }
-            else
-            {
-              check.removeAttribute('disabled'); 
-            }
-          });
-        }
-        break;
-      default:
-        console.log('UpdateGroupList called with invalid action, doing nothing');
-        break; 
-    }
+          div.appendChild(check);
+          div.appendChild(label);
+          document.getElementById(groupDivName).appendChild(div);
+        });
+      }
+      else
+      {
+        now.GetGroupMembers(group, function(members){
+          var check = groupDiv.childNodes[0];
+          check.value = members;
+          if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
+          {
+            check.setAttribute('disabled', true);
+          }
+          else
+          {
+            check.removeAttribute('disabled'); 
+          }
+        });
+      }
+      break;
+    case 'remove':
+      console.log('groupDiv.childNodes[0].id ' + groupDiv.childNodes[0].id);
+      divGroupList.removeChild(groupDiv);
+      
+      break;
+    default:
+      console.log('UpdateGroupList called with invalid action, doing nothing');
+      break; 
   }
 }

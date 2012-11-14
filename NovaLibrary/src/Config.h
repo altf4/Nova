@@ -234,6 +234,9 @@ public:
 	std::vector<HostileThreshold> GetHostileThresholds();
 	bool GetOnlyClassifyHoneypotTraffic();
 
+	void SetMasterUIPort(int newPort);
+	int GetMasterUIPort();
+
 	//Attempts to detect and use intefaces returned by pcap_lookupdev
 	void LoadInterfaces();
 
@@ -283,6 +286,7 @@ private:
 	int m_dataTTL;
 	uint m_minPacketThreshold;
 	int m_webUIPort;
+	int m_masterUIPort;
 
 	int m_captureBufferSize;
 

@@ -131,11 +131,13 @@ function addGroup(group, members)
       if(group == maintainGroups[i].group)
       {
         alert('Cannot have identical group names');
+        theDoc.getElementbyId('groupName').value = '';
         return;
       }
       if(members == theDoc.getElementById('members' + maintainGroups[i].idx).value)
       {
         alert('Already have a group "' + maintainGroups[i].group + '" with members "' + members + '"');
+        theDoc.getElementbyId('groupName').value = '';
         return;
       }
     }

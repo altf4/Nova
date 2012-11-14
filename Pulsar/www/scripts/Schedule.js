@@ -114,11 +114,11 @@ function createScheduledEventElement(clientId)
 {
   var borderDiv = document.createElement('div');
   borderDiv.id = clientId;
-  borderDiv.setAttribute('style', 'border: 2px solid; border-radius: 12px; background: #E8A02F; width: 65%;');
+  borderDiv.setAttribute('style', 'border: 2px solid; background: #E8A02F; width: 450px;');
   
-  var label0 = document.createElement('label');
+  var label0 = document.createElement('h1');
+  label0.setAttribute('style', 'text-align: center');
   label0.innerHTML = clientId;
-  label0.setAttribute('style', 'font-weight: bold;');
   
   var label1 = document.createElement('label');
   label1.innerHTML = 'Message Type: ';
@@ -174,7 +174,6 @@ function createScheduledEventElement(clientId)
   name.maxlength = '10';
   
   var b0 = document.createElement('br');
-  var b1 = document.createElement('br');
   var b2 = document.createElement('br');
   var b3 = document.createElement('br');
   var b4 = document.createElement('br');
@@ -182,7 +181,6 @@ function createScheduledEventElement(clientId)
   var b6 = document.createElement('br');
   
   borderDiv.appendChild(label0);
-  borderDiv.appendChild(b1);
   borderDiv.appendChild(label1);
   borderDiv.appendChild(typeSelect);
   borderDiv.appendChild(b0);

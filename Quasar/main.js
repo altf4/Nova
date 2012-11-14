@@ -278,8 +278,10 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   // is ideal. Also need to find a way to maintain IP address of Pulsar and any needed
   // credentials for reboots, etc. 
   
-  // TODO: Make configurable
-  var connected = config.ReadSetting('MASTER_UI_IP') + ':8081';
+  // The reason for the + 1 at the end is because that's the port in use for the 
+  // server-to-server component of wbsockets on Pulsar. Have to do something in case 
+  // the port gets changed on the Pulsar machine
+  var connected = config.ReadSetting('MASTER_UI_IP') + ':' + (parseInt(config.ReadSetting('MASTER_UI_PORT')) + 1);
   
   var WebSocketClient = require('websocket').client;
   var client;
@@ -574,7 +576,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
       pulsar.sendUTF(JSON.stringify(message1));
       pulsar.sendUTF(JSON.stringify(message2));
     }
-  }, 10000);
+  }, 5000);
   //
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
@@ -1620,30 +1622,39 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 	var interfaces = "";
 	var oneIface = false;
 
-	if (req.body["DOPPELGANGER_INTERFACE"] !== undefined) {
+	if(req.body["DOPPELGANGER_INTERFACE"] !== undefined) 
+	{
 		config.SetDoppelInterface(req.body["DOPPELGANGER_INTERFACE"]);
 	}
 
-	if (req.body["INTERFACE"] !== undefined) {
-		for (item in req.body["INTERFACE"]) {
-			if (req.body["INTERFACE"][item].length > 1) {
+	if(req.body["INTERFACE"] !== undefined) 
+	{
+		for(item in req.body["INTERFACE"]) 
+		{
+			if(req.body["INTERFACE"][item].length > 1) 
+			{
 				interfaces += " " + req.body["INTERFACE"][item];
 				config.AddIface(req.body["INTERFACE"][item]);
-			} else {
+			} 
+			else 
+			{
 				interfaces += req.body["INTERFACE"][item];
 				oneIface = true;
 			}
 		}
 
-		if (oneIface) {
+		if (oneIface) 
+		{
 			config.AddIface(interfaces);
 		}
 
 		req.body["INTERFACE"] = interfaces;
 	}
 
-	for (var item = 0; item < configItems.length; item++) {
-		if (req.body[configItems[item]] == undefined) {
+	for (var item = 0; item < configItems.length; item++) 
+	{
+		if (req.body[configItems[item]] == undefined) 
+		{
 			continue;
 		}
 		switch (configItems[item]) {
@@ -1686,11 +1697,14 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 			validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
 			var split = req.body[configItems[item]].split('.');
 
-			if (split.length == 4) {
-				if (split[3] === "0") {
+			if (split.length == 4) 
+			{
+				if (split[3] === "0") 
+				{
 					validator.check(split[3], 'Can not have last IP octet be 0').equals("255");
 				}
-				if (split[3] === "255") {
+				if (split[3] === "255") 
+				{
 					validator.check(split[3], 'Can not have last IP octet be 255').equals("0");
 				}
 			}
@@ -1699,11 +1713,14 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 			var checkIPZero = 0;
 			var checkIPBroad = 0;
 
-			for (var val = 0; val < split.length; val++) {
-				if (split[val] == "0") {
+			for (var val = 0; val < split.length; val++) 
+			{
+				if (split[val] == "0") 
+				{
 					checkIPZero++;
 				}
-				if (split[val] == "255") {
+				if (split[val] == "255") 
+				{
 					checkIPBroad++;
 				}
 			}
@@ -2712,7 +2729,7 @@ var distributeSuspect = function (suspect) {
 		everyone.now.OnNewSuspect(s);
 	} catch (err) {};
   
-  if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) != -2)
+  if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) >= 0)
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
@@ -2726,7 +2743,7 @@ var distributeSuspect = function (suspect) {
     
     SendHostileEventToPulsar(send);
   }
-  else if(suspect.GetIsHostile() == false && benignRequest && parseInt(suspect.GetClassification()) != -2)
+  else if(suspect.GetIsHostile() == false && benignRequest && parseInt(suspect.GetClassification()) >= 0)
   {
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
