@@ -47,7 +47,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	//tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteProfile>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteNode"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteNode>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("CheckNotInheritingEmptyProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::CheckNotInheritingEmptyProfile>));
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("UpdateNodeMacs"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::UpdateNodeMacs>));
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("UpdateNodeMacs"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::UpdateNodeMacs>));
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNodes"),FunctionTemplate::New(AddNewNodes)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNode"),FunctionTemplate::New(GetNode)->GetFunction());
@@ -98,26 +98,6 @@ Handle<Value> HoneydConfigBinding::DeleteProfile(const Arguments& args)
   {
     return scope.Close(Boolean::New(otherwise));
   }
-}
-
-Handle<Value> HoneydConfigBinding::AddPort(const Arguments& args)
-{
-	HandleScope scope;
-	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
-
-	if( args.Length() != 4 )
-	{
-		return ThrowException(Exception::TypeError(String::New("Must be invoked with 4 parameters")));
-	}
-
-	int portNum = cvv8::JSToInt16( args[0] );
-	Nova::portProtocol isTCP = (Nova::portProtocol)cvv8::JSToInt32( args[1] );
-	Nova::portBehavior portBehavior = (Nova::portBehavior)cvv8::JSToInt32( args[2] );
-	string script = cvv8::CastFromJS<string>( args[3] );
-
-	cout << "C++ Adding port " << portNum << " " << isTCP << " " << portBehavior << " " << script << endl;
-
-	return scope.Close(String::New(obj->m_conf->AddPort(portNum, isTCP, portBehavior, script).c_str()));
 }
 
 Handle<Value> HoneydConfigBinding::AddNewNodes(const Arguments& args)
@@ -205,38 +185,6 @@ Handle<Value> HoneydConfigBinding::GetProfile(const Arguments& args)
 		return scope.Close( Null() );
 	}
 
-}
-
-
-Handle<Value> HoneydConfigBinding::GetPorts(const Arguments& args)
-{
-	HandleScope scope;
-	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
-
-	if (args.Length() != 1)
-	{
-		return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
-	}
-
-	string name = cvv8::CastFromJS<string>(args[0]);
-
-	//TODO Fix
-    vector<Nova::Port> ports = obj->m_conf->GetPortSet(name);
-    v8::Local<v8::Array> portArray = v8::Array::New();
-    if(ports.empty() && name.compare("default"))
-    {
-      Port *nullSub = new Port();
-      nullSub->m_portNum = "0";
-      portArray->Set(v8::Number::New(0), HoneydNodeJs::WrapPort(nullSub));
-      return scope.Close(portArray);
-    }
-    for (uint i = 0; i < ports.size(); i++) {
-        Port *copy = new Port();
-        *copy = ports.at(i);
-        portArray->Set(v8::Number::New(i), HoneydNodeJs::WrapPort(copy));
-    }
-
-	return scope.Close(portArray);
 }
 
 Handle<Value> HoneydConfigBinding::RemoveScriptPort(const Arguments& args)
