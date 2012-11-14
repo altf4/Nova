@@ -145,6 +145,10 @@ function createScheduledEventElement(clientId)
   var cron = document.createElement('input');
   cron.id = clientId + 'cron';
 
+  var cronPrimer = document.createElement('button');
+  cronPrimer.setAttribute('onclick', 'showCronPrimer()');
+  cronPrimer.innerHTML = 'Help with Cron';
+
   var exLabel = document.createElement('label');
   exLabel.innerHTML = '(W, L and # are not supported for the cron syntax. Use 0 for Sunday, not 7)';
   exLabel.setAttribute('style', 'font-style: italic');
@@ -186,6 +190,7 @@ function createScheduledEventElement(clientId)
   borderDiv.appendChild(b0);
   borderDiv.appendChild(label5);
   borderDiv.appendChild(cron);
+  borderDiv.appendChild(cronPrimer);
   borderDiv.appendChild(b3);
   borderDiv.appendChild(exLabel);
   borderDiv.appendChild(b5);
@@ -197,6 +202,18 @@ function createScheduledEventElement(clientId)
   borderDiv.appendChild(name);
   
   document.getElementById('elementHook').appendChild(borderDiv);
+}
+
+function showCronPrimer()
+{
+  document.getElementById('opaque').style.opacity = '0.5';
+  document.getElementById('lightbox').style.display = 'block';
+}
+
+function hideCronPrimer()
+{
+  document.getElementById('opaque').style.opacity = '1.0';
+  document.getElementById('lightbox').style.display = 'none';
 }
 
 function newTypeSelected(clientId)
