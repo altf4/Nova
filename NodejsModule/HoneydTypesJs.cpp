@@ -75,7 +75,7 @@ Handle<Object> HoneydNodeJs::WrapPort(Port *port)
     return scope.Close(result);
 }
 
-Handle<Object> HoneydNodeJs::WrapProfile(NodeProfile *pfile)
+Handle<Object> HoneydNodeJs::WrapProfile(Profile *pfile)
 {
     HandleScope scope;  
     // Setup the template for the type if it hasn't been already
@@ -87,30 +87,30 @@ Handle<Object> HoneydNodeJs::WrapProfile(NodeProfile *pfile)
 
         // Javascript methods
         Local<Template> proto = m_profileTemplate->PrototypeTemplate();
-        proto->Set("GetName",           FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetName>));
-        proto->Set("GetPortNames",		FunctionTemplate::New(InvokeMethod<std::vector<std::string>, NodeProfile, &Nova::NodeProfile::GetPortNames>));
-        proto->Set("GetTcpAction",      FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetTcpAction>));
-        proto->Set("GetUdpAction",      FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetUdpAction>));
-        proto->Set("GetIcmpAction",     FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetIcmpAction>));
-        proto->Set("GetPersonality",    FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetPersonality>));
-        proto->Set("GetEthernet",       FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetEthernet>));
-        proto->Set("GetUptimeMin",      FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetUptimeMin>));
-        proto->Set("GetUptimeMax",      FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetUptimeMax>));
-        proto->Set("GetDropRate",       FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetDropRate>));
-        proto->Set("GetGenerated",       FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::GetGenerated>));
-        proto->Set("GetDistribution",       FunctionTemplate::New(InvokeMethod<double, NodeProfile, &Nova::NodeProfile::GetDistribution>));
-        proto->Set("GetParentProfile",  FunctionTemplate::New(InvokeMethod<std::string, NodeProfile, &Nova::NodeProfile::GetParentProfile>));
-        proto->Set("GetVendors",        FunctionTemplate::New(InvokeMethod<std::vector<std::string>, NodeProfile, &Nova::NodeProfile::GetVendors>));
-        proto->Set("GetVendorDistributions",       FunctionTemplate::New(InvokeMethod<std::vector<double>, NodeProfile, &Nova::NodeProfile::GetVendorDistributions>));
+        proto->Set("GetName",           FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetName>));
+        proto->Set("GetPortNames",		FunctionTemplate::New(InvokeMethod<std::vector<std::string>, Profile, &Nova::Profile::GetPortNames>));
+        proto->Set("GetTcpAction",      FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetTcpAction>));
+        proto->Set("GetUdpAction",      FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetUdpAction>));
+        proto->Set("GetIcmpAction",     FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetIcmpAction>));
+        proto->Set("GetPersonality",    FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetPersonality>));
+        proto->Set("GetEthernet",       FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetEthernet>));
+        proto->Set("GetUptimeMin",      FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetUptimeMin>));
+        proto->Set("GetUptimeMax",      FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetUptimeMax>));
+        proto->Set("GetDropRate",       FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetDropRate>));
+        proto->Set("GetGenerated",       FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::GetGenerated>));
+        proto->Set("GetDistribution",       FunctionTemplate::New(InvokeMethod<double, Profile, &Nova::Profile::GetDistribution>));
+        proto->Set("GetParentProfile",  FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetParentProfile>));
+        proto->Set("GetVendors",        FunctionTemplate::New(InvokeMethod<std::vector<std::string>, Profile, &Nova::Profile::GetVendors>));
+        proto->Set("GetVendorDistributions",       FunctionTemplate::New(InvokeMethod<std::vector<double>, Profile, &Nova::Profile::GetVendorDistributions>));
         
         
-        proto->Set("isTcpActionInherited",  FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isTcpActionInherited>));
-        proto->Set("isUdpActionInherited",  FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isUdpActionInherited>));
-        proto->Set("isIcmpActionInherited", FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isIcmpActionInherited>));
-        proto->Set("isPersonalityInherited",FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isPersonalityInherited>));
-        proto->Set("isEthernetInherited",   FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isEthernetInherited>));
-        proto->Set("isUptimeInherited",     FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isUptimeInherited>));
-        proto->Set("isDropRateInherited",   FunctionTemplate::New(InvokeMethod<bool, NodeProfile, &Nova::NodeProfile::isDropRateInherited>));
+        proto->Set("isTcpActionInherited",  FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::isTcpActionInherited>));
+        proto->Set("isUdpActionInherited",  FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::isUdpActionInherited>));
+        proto->Set("isIcmpActionInherited", FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::isIcmpActionInherited>));
+        proto->Set("isPersonalityInherited",FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::isPersonalityInherited>));
+        proto->Set("isEthernetInherited",   FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::isEthernetInherited>));
+        proto->Set("isUptimeInherited",     FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::isUptimeInherited>));
+        proto->Set("isDropRateInherited",   FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::isDropRateInherited>));
     }
 
     // Get the constructor from the template

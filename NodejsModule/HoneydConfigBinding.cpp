@@ -33,9 +33,9 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 
 	// TODO: Ask ace about doing this the template way. The following segfaults,
 	//tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadAllTemplates"),FunctionTemplate::New(InvokeMethod<Boolean, bool, HoneydConfiguration, &HoneydConfiguration::LoadAllTemplates>));
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadAllTemplates"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::LoadAllTemplates>));
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAllTemplates"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::SaveAllTemplates>));
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("WriteHoneydConfiguration"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::WriteHoneydConfiguration>));
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadAllTemplates"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::ReadAllTemplatesXML>));
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAllTemplates"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::WriteAllTemplatesToXML>));
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("WriteHoneydConfiguration"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, string, &HoneydConfiguration::WriteHoneydConfiguration>));
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfileNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetProfileNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGeneratedProfileNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetGeneratedProfileNames>));
@@ -46,8 +46,6 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 
 	//tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteProfile>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteNode"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteNode>));
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("CheckNotInheritingEmptyProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::CheckNotInheritingEmptyProfile>));
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("UpdateNodeMacs"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::UpdateNodeMacs>));
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNewNodes"),FunctionTemplate::New(AddNewNodes)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNode"),FunctionTemplate::New(GetNode)->GetFunction());
@@ -71,7 +69,7 @@ Handle<Value> HoneydConfigBinding::New(const Arguments& args)
 	HandleScope scope;
 
 	HoneydConfigBinding* obj = new HoneydConfigBinding();
-	obj->m_conf = new HoneydConfiguration();
+	obj->m_conf = HoneydConfiguration::Inst();
 	obj->Wrap(args.This());
 
 	return args.This();
@@ -174,7 +172,7 @@ Handle<Value> HoneydConfigBinding::GetProfile(const Arguments& args)
 	}
 
 	string name = cvv8::CastFromJS<string>(args[0]);
-	Nova::NodeProfile *ret = obj->m_conf->GetProfile(name);
+	Nova::Profile *ret = obj->m_conf->GetProfile(name);
 
 	if (ret != NULL)
 	{
@@ -210,7 +208,7 @@ Handle<Value> HoneydConfigBinding::RemoveScriptPort(const Arguments& args)
 
 	if(!obj->m_conf->m_profiles.keyExists(profileName))
 	{
-		cout << "Profile " << profileName << " does not exist in the m_profiles NodeProfile table." << endl;
+		cout << "Profile " << profileName << " does not exist in the m_profiles Profile table." << endl;
 		return scope.Close(Boolean::New(false));
 	}
 
@@ -334,7 +332,7 @@ Handle<Value> HoneydConfigBinding::SaveAll(const Arguments& args)
 	bool success = true;
 
 
-	if (!obj->m_conf->SaveAllTemplates())
+	if (!obj->m_conf->WriteAllTemplatesToXML())
 	{
 		cout << "ERROR saving honeyd templates " << endl;
 		success = false;

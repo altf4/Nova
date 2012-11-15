@@ -4,13 +4,16 @@
 #include <v8.h>
 #include "v8Helper.h"
 #include "FeatureSet.h"
+#include "HoneydConfiguration/Node.h"
+#include "HoneydConfiguration/Profile.h"
+#include "HoneydConfiguration/Port.h"
 
 class HoneydNodeJs
 {
 
 public:
     static v8::Handle<v8::Object> WrapNode(Nova::Node* node);
-    static v8::Handle<v8::Object> WrapProfile(Nova::NodeProfile *profile);
+    static v8::Handle<v8::Object> WrapProfile(Nova::Profile *profile);
     static v8::Handle<v8::Object> WrapPort(Nova::Port *port);
 
 private:
