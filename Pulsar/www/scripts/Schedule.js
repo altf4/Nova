@@ -312,7 +312,6 @@ function createScheduledEventElement(clientId)
   tbody.appendChild(tr4);
   tbody.appendChild(tr5);
   
-  //var b0 = document.createElement('br');
   var b0 = document.createElement('br');
   var b1 = document.createElement('br');
   
@@ -332,7 +331,8 @@ function createScheduledEventElement(clientId)
 
 function recurringChanged(source)
 {
-  
+  // Restructure table here
+  console.log('recurringChanged');
 }
 
 function newTypeSelected(clientId)
@@ -351,139 +351,32 @@ function submitSchedule()
   for(var i in document.getElementById('elementHook').childNodes)
   {
     var id = document.getElementById('elementHook').childNodes[i].id; 
-    
-    if(/^[a-z0-9]+$/i.test(document.getElementById(id + 'name').value) == false/* || document.getElementById(id + 'name').value.length <= 1*/)
-    {
-      document.getElementById(id + 'name').value = '';
-      alert('Scheduled event names must consist of 2-10 alphanumeric characters');
-      return;
-    }
-    
     if(id != undefined)
     {
-      if((document.getElementById(id + 'name').value != '')
-      && (document.getElementById(id + 'cron').value != ''))
+      console.log('id ' + id);
+      
+      if(/^[a-z0-9]+$/i.test(document.getElementById(id + 'name').value) == false/* || document.getElementById(id + 'name').value.length <= 1*/)
       {
-        var name = document.getElementById(id + 'name').value;
-        
-        var registerMessage = {};
-        registerMessage.type = document.getElementById(id + 'select').value;
-        
-        var cron = document.getElementById(id + 'cron').value;
-        
-        if(/^[a-z0-9\*\/\-]+$/i.test(cron) == false)
-        {
-          document.getElementById(id + 'cron').value = '';
-          alert('cron string contains unallowed characters!');
-          return;
-        }
-        
-        registerScheduledMessage(id, name, registerMessage, cron, undefined, function(id, status, response){
-          if(status == 'failed')
-          {
-            console.log(response);
-          }
-          else if(status == 'succeeded')
-          {
-            console.log(response);
-            document.getElementById('elementHook').removeChild(document.getElementById(id));
-            document.getElementById(id + 'div').childNodes[0].checked = false; 
-          }
-          else
-          {
-            console.log('Unknown status received from SetScheduledMessage, doing nothing.');
-          }  
-        });
+        document.getElementById(id + 'name').value = '';
+        alert('Scheduled event names must consist of 2-10 alphanumeric characters');
+        return;
       }
-      else if((document.getElementById(id + 'date').value != '')
-      && (document.getElementById(id + 'time').value != '')
-      && (document.getElementById(id + 'cron').value == '')
-      && (document.getElementById(id + 'name').value != ''))
+      if(document.getElementById(id + 'recurring').checked)
       {
-        var temp = new Date();
-        
-        if(new RegExp('^[0-9]{2}\/[1-3]?[0-9]\/[0-9]{4}$', 'i').test(document.getElementById(id + 'date').value) == false)
-        {
-          alert('Improperly formatted date string');
-          return;
-        }
-        
-        var monthdayyear = document.getElementById(id + 'date').value.split('/');
-        var month = parseInt(monthdayyear[0]) - 1;
-        
-        if(month < 0 || month > 11)
-        {
-          alert('Invalid value for month');
-          return; 
-        }
-        
-        var day = parseInt(monthdayyear[1]);
-        
-        if(monthdayyear[1].length == 2 && monthdayyear[1] == '0')
-        {
-          day = parseInt(day[1]); 
-        }
-        else if(monthdayyear[1].length > 2 || (day < 1 || day > 31))
-        {
-          alert('Invalid day value for MM/DD/YYYY string');
-          return; 
-        }
-        
-        var year = parseInt(monthdayyear[2]);
-        
-        if(monthdayyear[2].length != 4)
-        {
-          alert('Year value for MM/DD/YYYY string must be four characters');
-          return; 
-        }
-        else if(/^[0-1][0-9]\:[0-5]?[0-9](\:[0-5]?[0-9])?$/.test(document.getElementById(id + 'time').value) == false)
-        {
-          alert('Improperly formatted time string');
-          return;
-        }
-        
-        var hourminutesecond = document.getElementById(id + 'time').value.split(':');
-        var hour = (parseInt(hourminutesecond[0]) % 24);
-        var minute = parseInt(hourminutesecond[1]);
-        var second = parseInt((hourminutesecond[2] != undefined ? hourminutesecond[2] : 0));
-        
-        if(isNaN(month) || isNaN(day) || isNaN(year)
-        || isNaN(hour) || isNaN(minute) || isNaN(second))
-        {
-          alert('Define a cron string for recurring events or a one time run date/time'); 
-        }
-        
-        var name = document.getElementById(id + 'name').value;
-        
-        var registerMessage = {};
-        registerMessage.type = document.getElementById(id + 'select').value;
-        
-        var date = new Date(year, month, day, hour, minute, second);
-        
-        registerScheduledMessage(id, name, registerMessage, undefined, date, function(id, status, response){
-          if(status == 'failed')
-          {
-            console.log(response);
-          }
-          else if(status == 'succeeded')
-          {
-            console.log(response);
-            document.getElementById('elementHook').removeChild(document.getElementById(id));
-            document.getElementById(id + 'div').childNodes[0].checked = false; 
-          }
-          else
-          {
-            console.log('Unknown status received from SetScheduledMessage, doing nothing.');
-          }  
-        });
+        var recurrenceValues = {};
+        console.log('Constructing recurrence rule parameters');
       }
-      else if(document.getElementById(id + 'name').value == '')
+      else
       {
-        console.log('Scheduled event must have a name.'); 
-      }
-      else if(document.getElementById(id + 'cron').value == '')
-      {
-        console.log('Scheduled event must have a cron string');
+        console.log('constructing Date for one time event');
+        var year = (document.getElementById(id + 'year').value != '' ? document.getElementById(id + 'year').value : '0');
+        var month = (document.getElementById(id + 'month').value != '' ? document.getElementById(id + 'month').value : '0');
+        var day = (document.getElementById(id + 'day').value != '' ? document.getElementById(id + 'day').value : '0');
+        var hour = (document.getElementById(id + 'hour').value != '' ? document.getElementById(id + 'hour').value : '0');
+        var minute = (document.getElementById(id + 'minute').value != '' ? document.getElementById(id + 'minute').value : '0');
+        var second = (document.getElementById(id + 'second').value != '' ? document.getElementById(id + 'second').value : '0');
+        var submitDate = new Date(year, month, day, hour, minute, second);
+        console.log('submitDate ' + submitDate.toDateString());
       }
     }
   }
