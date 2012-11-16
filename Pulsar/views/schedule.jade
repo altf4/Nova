@@ -1,36 +1,6 @@
 extends layout
 
 block content
-  div#lightbox(class='white_content')
-    p Cron strings will take the following syntax structure:
-    p   
-    p  *    *    *    *    * 
-    p  ┬    ┬    ┬    ┬    ┬
-    p  │    │    │    │    │
-    p  │    │    │    │    │
-    p  │    │    │    │    └───── day of week (0 - 6) (0 is Sunday)
-    p  │    │    │    └────────── month (1 - 12)
-    p  │    │    └─────────────── day of month (1 - 31)
-    p  │    └──────────────────── hour (0 - 23)
-    p  └───────────────────────── min (0 - 59)
-    p  
-    p  Note: If trying to use a time interval that requires no minutes
-    p  component, minutes must be set to '0', not '*'
-    br
-    p  Some Special Characters: 
-    p  '*' : At every point the clock encounters this time interval,
-    p        execute
-    p  '/' : Used in conjunction with '*'; can be used to subdivide
-    p        the interval into smaller segments. 
-    p        Example: "0 */2 * * *" means execute the selected 
-    p        message cycle every 2 hours. Note that "0 2 * * *"
-    p        would mean execute message cycle every day at 2:00 am  
-    p  '-' : Used to define a range.
-    p 
-    a(href="http://en.wikipedia.org/wiki/Cron") --- More Help ---
-    br
-    br
-    button(onclick='hideCronPrimer()') Close
   div#opaque
     table
       thead

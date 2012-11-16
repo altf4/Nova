@@ -7,27 +7,13 @@ function watermark(id, text)
     if(element.value == text)
     {
       element.value = '';
-      if(id.indexOf('date') != -1)
-      {
-        element.setAttribute('style', 'width: 120px;');
-      }
-      else
-      {
-        element.removeAttribute('style'); 
-      }
+      element.setAttribute('style', 'width: 120px;');
     }
   }
   else
   {
     element.value = text;
-    if(id.indexOf('date') != -1)
-    {
-      element.setAttribute('style', 'font-style: italic; width: 120px;');
-    }
-    else
-    {
-      element.setAttribute('style', 'font-style: italic;');
-    }
+    element.setAttribute('style', 'font-style: italic; width: 120px;');
   }
 }
 
@@ -139,36 +125,172 @@ function createScheduledEventElement(clientId)
   
   typeSelect.setAttribute('onclick', 'newTypeSelected("' + clientId + '")');
 
-  var label5 = document.createElement('label');
-  label5.innerHTML = 'Cron String: ';
+  /*var label5 = document.createElement('label');
+  label5.innerHTML = 'Cron String: ';*/
   
-  var cron = document.createElement('input');
-  cron.id = clientId + 'cron';
-
-  var cronPrimer = document.createElement('button');
-  cronPrimer.setAttribute('onclick', 'showCronPrimer()');
-  cronPrimer.innerHTML = 'Help with Cron';
-
-  var exLabel = document.createElement('label');
-  exLabel.innerHTML = '(W, L and # are not supported for the cron syntax. Use 0 for Sunday, not 7)';
-  exLabel.setAttribute('style', 'font-style: italic');
-
-  var label6 = document.createElement('label');
-  label6.innerHTML = 'OR once on ';
+  var recurring = document.createElement('input');
+  recurring.setAttribute('type', 'checkbox');
+  recurring.id = clientId + 'recurring';
+  recurring.checked = false;
+  recurring.setAttribute('onclick', 'recurringChanged("' + clientId + '")');
   
-  var date = document.createElement('input');
-  date.id = clientId + 'date';
-  date.value = 'Date MM/DD/YYYY';
-  date.setAttribute('style', 'font-style: italic; width: 120px');
-  date.setAttribute('onblur', 'watermark("' + date.id + '", "Date MM/DD/YYYY")');
-  date.setAttribute('onfocus', 'watermark("' + date.id + '", "Date MM/DD/YYYY")');
+  var recurringLabel = document.createElement('label');
+  recurringLabel.innerHTML = 'Recurring?';
   
-  var time = document.createElement('input');
-  time.id = clientId + 'time';
-  time.value = 'Time(24hr) HH:MM(:SS)';
-  time.setAttribute('style', 'font-style: italic');
-  time.setAttribute('onblur', 'watermark("' + time.id + '", "Time(24hr) HH:MM(:SS)")');
-  time.setAttribute('onfocus', 'watermark("' + time.id + '", "Time(24hr) HH:MM(:SS)")');
+  var infoHook = new Date();
+  
+  var tr0 = document.createElement('tr');
+  var mlTd = document.createElement('td');
+  var monthLabel = document.createElement('label');
+  monthLabel.innerHTML = 'Month: ';
+  mlTd.appendChild(monthLabel);
+  var mTd = document.createElement('td');
+  var month = document.createElement('input');
+  month.setAttribute('style', 'width: 120px;');
+  month.setAttribute('type', 'number');
+  month.min = '0';
+  month.max = '11';
+  month.id = clientId + 'month';
+  month.value = infoHook.getMonth();
+  mTd.appendChild(month);
+  tr0.appendChild(mlTd);
+  tr0.appendChild(mTd);
+  
+  var tr1 = document.createElement('tr');
+  var dlTd = document.createElement('td');
+  var dayLabel = document.createElement('label');
+  dayLabel.innerHTML = 'Day: ';
+  dlTd.appendChild(dayLabel);
+  var dTd = document.createElement('td');
+  var day = document.createElement('select');
+  day.setAttribute('style', 'width: 120px;');
+  day.id = clientId + 'day';
+  var options = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  for(var i in options)
+  {
+    var option = document.createElement('option');
+    option.id = options[i];
+    option.innerHTML = options[i];
+    option.value = infoHook.getDay().toString();
+    switch(infoHook.getDay().toString())
+    {
+      case '0': selectedTest = 'Sunday';
+                if(selectedTest == options[i])
+                {
+                  option.selected = true;
+                }
+                break;
+      case '1': selectedTest = 'Monday';
+                if(selectedTest == options[i])
+                {
+                  option.selected = true;
+                }
+                break;
+      case '2': selectedTest = 'Tuesday';
+                if(selectedTest == options[i])
+                {
+                  option.selected = true;
+                }
+                break;
+      case '3': selectedTest = 'Wednesday';
+                if(selectedTest == options[i])
+                {
+                  option.selected = true;
+                }
+                break;
+      case '4': selectedTest = 'Thursday';
+                if(selectedTest == options[i])
+                {
+                  option.selected = true;
+                }
+                break;
+      case '5': selectedTest = 'Friday';
+                if(selectedTest == options[i])
+                {
+                  option.selected = true;
+                }
+                break;
+      case '6': selectedTest = 'Saturday';
+                if(selectedTest == options[i])
+                {
+                  option.selected = true;
+                }
+                break;
+      default:  console.log('infoHook.getDay() ' + infoHook.getDay());
+                break;
+    }
+    day.appendChild(option);
+  }
+  dTd.appendChild(day);
+  tr1.appendChild(dlTd);
+  tr1.appendChild(dTd);
+  
+  var tr2 = document.createElement('tr');
+  var ylTd = document.createElement('td');
+  var yearLabel = document.createElement('label');
+  yearLabel.innerHTML = 'Year: ';
+  ylTd.appendChild(yearLabel);
+  var yTd = document.createElement('td');
+  var year = document.createElement('input');
+  year.setAttribute('style', 'width: 120px;');
+  year.setAttribute('type', 'number');
+  year.min = infoHook.getFullYear();
+  year.id = clientId + 'year';
+  year.value = infoHook.getFullYear();
+  yTd.appendChild(year);
+  tr2.appendChild(ylTd);
+  tr2.appendChild(yTd);
+  
+  var tr3 = document.createElement('tr');
+  var hlTd = document.createElement('td');
+  var hourLabel = document.createElement('label');
+  hourLabel.innerHTML = 'Hour: ';
+  hlTd.appendChild(hourLabel);
+  var hTd = document.createElement('td');
+  var hour = document.createElement('input');
+  hour.setAttribute('style', 'width: 120px;');
+  hour.id = clientId + 'hour';
+  hour.setAttribute('type', 'number');
+  hour.min = '0';
+  hour.max = '23';
+  hour.value = infoHook.getHours();
+  hTd.appendChild(hour);
+  tr3.appendChild(hlTd);
+  tr3.appendChild(hTd);
+  
+  var tr4 = document.createElement('tr');
+  var milTd = document.createElement('td');
+  var minuteLabel = document.createElement('label');
+  minuteLabel.innerHTML = 'Minute: ';
+  milTd.appendChild(minuteLabel);
+  var miTd = document.createElement('td');
+  var minute = document.createElement('input');
+  minute.setAttribute('style', 'width: 120px;');
+  minute.setAttribute('type', 'number');
+  minute.min = '0';
+  minute.max = '59';
+  minute.id = clientId + 'minute';
+  minute.value = infoHook.getMinutes();
+  miTd.appendChild(minute);
+  tr4.appendChild(milTd);
+  tr4.appendChild(miTd);
+  
+  var tr5 = document.createElement('tr');
+  var slTd = document.createElement('td');
+  var secondLabel = document.createElement('label');
+  secondLabel.innerHTML = 'Second: ';
+  slTd.appendChild(secondLabel);
+  var sTd = document.createElement('td');
+  var second = document.createElement('input');
+  second.setAttribute('style', 'width: 120px;');
+  second.setAttribute('type', 'number');
+  second.min = '0';
+  second.max = '59';
+  second.id = clientId + 'second';
+  second.value = infoHook.getSeconds();
+  sTd.appendChild(second);
+  tr5.appendChild(slTd);
+  tr5.appendChild(sTd);
 
   var label4 = document.createElement('label');
   label4.innerHTML = 'Event Name: ';
@@ -177,43 +299,40 @@ function createScheduledEventElement(clientId)
   name.id = clientId + 'name';
   name.maxlength = '10';
   
+  var t = document.createElement('table');
+  t.id = 'subjectToChange';
+  
+  var tbody = document.createElement('tbody');
+  t.appendChild(tbody);
+  
+  tbody.appendChild(tr0);
+  tbody.appendChild(tr1);
+  tbody.appendChild(tr2);
+  tbody.appendChild(tr3);
+  tbody.appendChild(tr4);
+  tbody.appendChild(tr5);
+  
+  //var b0 = document.createElement('br');
   var b0 = document.createElement('br');
-  var b2 = document.createElement('br');
-  var b3 = document.createElement('br');
-  var b4 = document.createElement('br');
-  var b5 = document.createElement('br');
-  var b6 = document.createElement('br');
+  var b1 = document.createElement('br');
   
   borderDiv.appendChild(label0);
   borderDiv.appendChild(label1);
   borderDiv.appendChild(typeSelect);
+  borderDiv.appendChild(recurring);
+  borderDiv.appendChild(recurringLabel);
   borderDiv.appendChild(b0);
-  borderDiv.appendChild(label5);
-  borderDiv.appendChild(cron);
-  borderDiv.appendChild(cronPrimer);
-  borderDiv.appendChild(b3);
-  borderDiv.appendChild(exLabel);
-  borderDiv.appendChild(b5);
-  borderDiv.appendChild(label6);
-  borderDiv.appendChild(date);
-  borderDiv.appendChild(time);
-  borderDiv.appendChild(b6);
+  borderDiv.appendChild(t);
+  borderDiv.appendChild(b1);
   borderDiv.appendChild(label4);
   borderDiv.appendChild(name);
   
   document.getElementById('elementHook').appendChild(borderDiv);
 }
 
-function showCronPrimer()
+function recurringChanged(source)
 {
-  document.getElementById('opaque').style.opacity = '0.5';
-  document.getElementById('lightbox').style.display = 'block';
-}
-
-function hideCronPrimer()
-{
-  document.getElementById('opaque').style.opacity = '1.0';
-  document.getElementById('lightbox').style.display = 'none';
+  
 }
 
 function newTypeSelected(clientId)
@@ -221,10 +340,10 @@ function newTypeSelected(clientId)
   // For when message types requiring arguments are supported
 }
 
-function registerScheduledMessage(clientId, name, message, cron, date, cb)
+function registerScheduledMessage(clientId, name, message, date, cb)
 {
   message.id = clientId + ':';
-  now.SetScheduledMessage(clientId, name, message, cron, date, cb);
+  now.SetScheduledMessage(clientId, name, message, date, cb);
 }
 
 function submitSchedule()
