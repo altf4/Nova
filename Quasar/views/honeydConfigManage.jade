@@ -446,15 +446,6 @@ block headerAdditions
       theDoc.getElementById('parentName').innerHTML = saveProfileObjs[profile].name + ' (OS: ' + saveProfileObjs[profile].os + ')';
       theDoc.getElementById('dropPercent').innerHTML = 'Packet Drop Percentage: ' + saveProfileObjs[profile].packetDrop;
       
-      /*if(saveProfileObjs[profile].os != '')
-      {
-        theDoc.getElementById('os').innerHTML = 'Personality: ' + saveProfileObjs[profile].os;
-      }
-      else
-      {
-        theDoc.getElementById('os').innerHTML = 'Personality: None set';
-      }*/
-      
       for(var i in saveProfileObjs[profile].vendors)
       {
         var tr = theDoc.createElement('tr');
@@ -519,6 +510,27 @@ block headerAdditions
       theDoc.getElementById('defICMP').innerHTML = 'Default ICMP Action: ' + saveProfileObjs[profile].defaultICMP;
     }
     
+    function getConfig()
+    {
+      return document.getElementById('configurations').value;
+    }
+    
+    function confirmHaystackRestart()
+    {
+      now.IsHaystackUp(function(status){
+        if(status == true && confirm("Restart the Haystack with current configuration " + getConfig() + "?"))
+        {
+          now.WriteHoneydConfig(function(){
+            now.RestartHaystack();
+          });
+        }
+        else
+        {
+          return;
+        }
+      });
+    }
+    
     now.ready(function(){
       populateConfigSelect(configurationList);
     });
@@ -528,7 +540,8 @@ block content
     h1 Configuration Summary
     label Current Configuration:
     br
-    select#configurations(onchange='GetConfigurationSummary()') Configuration
+    select#configurations(onchange='GetConfigurationSummary()')
+    button(onclick='confirmHaystackRestart()') Restart Haystack
     br
     br
     div#addNewConfig
