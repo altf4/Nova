@@ -256,59 +256,41 @@ bool HoneydConfiguration::ReadNodesXML()
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
 
-	ptree topLevelGroupTree;
-	topLevelGroupTree.clear();
 	ptree propTree;
 
 	try
 	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/nodes.xml", topLevelGroupTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/nodes.xml", propTree, boost::property_tree::xml_parser::trim_whitespace);
 
+		//For each node tag
 		try
 		{
-			BOOST_FOREACH(ptree::value_type &groupsPtree, topLevelGroupTree.get_child("groups"))
+			BOOST_FOREACH(ptree::value_type &nodePtree, propTree.get_child("nodes"))
 			{
-				string groupName = groupsPtree.second.get<string>("name");
-				NodeTable table;
-				table.set_empty_key("EMPTY");
-				table.set_deleted_key("DELETED");
-
-				//For each node tag
-				try
+				if(!nodePtree.first.compare("node"))
 				{
-					BOOST_FOREACH(ptree::value_type &nodesPtree, topLevelGroupTree.get_child("nodes"))
-					{
-						if(!nodesPtree.first.compare("node"))
-						{
-							Node node;
-							node.m_interface = nodesPtree.second.get<string>("interface");
-							node.m_IP = nodesPtree.second.get<string>("IP");
-							node.m_enabled = nodesPtree.second.get<bool>("enabled");
-							node.m_MAC = nodesPtree.second.get<string>("MAC");
+					Node node;
+					node.m_interface = nodePtree.second.get<string>("interface");
+					node.m_IP = nodePtree.second.get<string>("IP");
+					node.m_enabled = nodePtree.second.get<bool>("enabled");
+					node.m_MAC = nodePtree.second.get<string>("MAC");
 
-							node.m_pfile = nodesPtree.second.get<string>("profile.name");
-							node.m_portSetName = nodesPtree.second.get<string>("profile.portset");
+					node.m_pfile = nodePtree.second.get<string>("profile.name");
+					node.m_portSetName = nodePtree.second.get<string>("profile.portset");
 
-							table[node.m_MAC] = node;
-						}
-					}
+					AddNode(node);
 				}
-				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-				{
-					LOG(DEBUG, "Unable to parse a node within a group in nodes.xml", "");
-				};
-
-				m_nodes.push_back(pair<string, NodeTable>(groupName, table));
 			}
 		}
 		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
-			LOG(WARNING, "Unable to parse nodes.xml", "");
+			LOG(DEBUG, "Unable to parse a node in nodes.xml", "");
 		};
+
 	}
 	catch(Nova::hashMapException &e)
 	{
-		LOG(ERROR, "Problem loading node group: " + Config::Inst()->GetGroup() + " - " + string(e.what()) + ".", "");
+		LOG(ERROR, "Problem loading nodes: " + string(e.what()) + ".", "");
 		return false;
 	}
 	catch (boost::property_tree::xml_parser_error &e) {
@@ -380,10 +362,10 @@ bool HoneydConfiguration::ReadScriptsXML()
 bool HoneydConfiguration::WriteScriptsToXML()
 {
 	ptree scriptsTopLevel;
-	ptree propTree;
 
 	for(uint i = 0; i < m_scripts.size(); i++)
 	{
+		ptree propTree;
 		propTree.put<string>("name", m_scripts[i].m_name);
 		propTree.put<string>("service", m_scripts[i].m_service);
 		propTree.put<string>("osclass", m_scripts[i].m_osclass);
@@ -408,33 +390,20 @@ bool HoneydConfiguration::WriteScriptsToXML()
 bool HoneydConfiguration::WriteNodesToXML()
 {
 	ptree nodesTopLevel;
-	ptree groups;
 
-	for(uint i = 0; i < m_nodes.size(); i++)
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		ptree group;
+		ptree nodePtree;
+		nodePtree.put<string>("interface", it->second.m_interface);
+		nodePtree.put<string>("IP", it->second.m_IP);
+		nodePtree.put<bool>("enabled", it->second.m_enabled);
+		nodePtree.put<string>("MAC", it->second.m_MAC);
 
-		group.put<string>("name", m_nodes[i].first);
+		nodePtree.put<string>("profile.name", it->second.m_pfile);
+		nodePtree.put<string>("profile.portset", it->second.m_portSetName);
 
-		for(NodeTable::iterator it = m_nodes[i].second.begin(); it != m_nodes[i].second.end(); it++)
-		{
-			ptree nodePtree;
-
-			nodePtree.put<string>("interface", it->second.m_interface);
-			nodePtree.put<string>("IP", it->second.m_IP);
-			nodePtree.put<bool>("enabled", it->second.m_enabled);
-			nodePtree.put<string>("MAC", it->second.m_MAC);
-
-			nodePtree.put<string>("profile.name", it->second.m_pfile);
-			nodePtree.put<string>("profile.portset", it->second.m_portSetName);
-
-			group.add_child("node", nodePtree);
-		}
-
-		groups.add_child("group", group);
+		nodesTopLevel.add_child("nodes.node", nodePtree);
 	}
-
-	nodesTopLevel.add_child("groups", groups);
 
 	//Actually write out to file
 	try
@@ -601,8 +570,6 @@ bool HoneydConfiguration::WriteAllTemplatesToXML()
 
 bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 {
-	string groupName = Config::Inst()->GetGroup();
-
 	if(!path.compare(""))
 	{
 		if(!Config::Inst()->GetPathConfigHoneydHS().compare(""))
@@ -620,55 +587,48 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 	//Print the "default" profile
 	out << m_profiles.m_root->ToString() << "\n";
 
-	//Print all the nodes
-	for(uint i = 0; i < m_nodes.size(); i++)
+	uint j = 0;
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		uint j = 0;
-		for(NodeTable::iterator it = m_nodes[i].second.begin(); it != m_nodes[i].second.end(); it++)
+		if(!it->second.m_enabled)
 		{
-			if(!it->second.m_enabled)
-			{
-				continue;
-			}
-
-			stringstream ss;
-			ss << "CustomNodeProfile-" << j;
-			string nodeName = ss.str();
-
-			//Only write out nodes for the intended group
-			if(!groupName.compare(m_nodes[i].first))
-			{
-				Profile *item = m_profiles.GetProfile(it->second.m_pfile);
-				if(item != NULL)
-				{
-					//Print the profile
-					out << item->ToString(it->second.m_portSetName, nodeName);
-					//Then we need to add node-specific information to the profile's output
-					if(!it->second.m_IP.compare("DHCP"))
-					{
-						out << "dhcp " << nodeName << " on " << it->second.m_interface;
-						//If the node has a MAC address (not random generated)
-						if(it->second.m_MAC.compare("RANDOM"))
-						{
-							out << " ethernet \"" << it->second.m_MAC << "\"";
-						}
-						out << "\n\n";
-					}
-					else
-					{
-						//If the node has a MAC address (not random generated)
-						if(it->second.m_MAC.compare("RANDOM"))
-						{
-							//Set the MAC for the custom node profile
-							out << "set " << nodeName << " ethernet \"" << it->second.m_MAC << "\"" << '\n';
-						}
-						//bind the node to the IP address
-						out << "bind " << it->second.m_IP << " " << nodeName << "\n\n";
-					}
-				}
-			}
-			j++;
+			continue;
 		}
+
+		stringstream ss;
+		ss << "CustomNodeProfile-" << j;
+		string nodeName = ss.str();
+
+		Profile *item = m_profiles.GetProfile(it->second.m_pfile);
+		if(item != NULL)
+		{
+			//Print the profile
+			out << item->ToString(it->second.m_portSetName, nodeName);
+			//Then we need to add node-specific information to the profile's output
+			if(!it->second.m_IP.compare("DHCP"))
+			{
+				out << "dhcp " << nodeName << " on " << it->second.m_interface;
+				//If the node has a MAC address (not random generated)
+				if(it->second.m_MAC.compare("RANDOM"))
+				{
+					out << " ethernet \"" << it->second.m_MAC << "\"";
+				}
+				out << "\n\n";
+			}
+			else
+			{
+				//If the node has a MAC address (not random generated)
+				if(it->second.m_MAC.compare("RANDOM"))
+				{
+					//Set the MAC for the custom node profile
+					out << "set " << nodeName << " ethernet \"" << it->second.m_MAC << "\"" << '\n';
+				}
+				//bind the node to the IP address
+				out << "bind " << it->second.m_IP << " " << nodeName << "\n\n";
+			}
+		}
+
+		j++;
 	}
 
 	ofstream outFile(path);
@@ -701,7 +661,6 @@ int HoneydConfiguration::GetMaskBits(in_addr_t mask)
 bool HoneydConfiguration::AddNode(string profileName, string ipAddress, string macAddress,
 		string interface, PortSet *portSet)
 {
-	string groupName = Config::Inst()->GetGroup();
 	Node newNode;
 	uint macPrefix = m_macAddresses.AtoMACPrefix(macAddress);
 	string vendor = m_macAddresses.LookupVendor(macPrefix);
@@ -744,59 +703,29 @@ bool HoneydConfiguration::AddNode(string profileName, string ipAddress, string m
 	}
 	newNode.m_portSetName = portSet->m_name;
 
-	//Make sure we have a unique identifier
-	stringstream ss;
 
-	bool inserted = false;
-	for(uint i = 0; i < m_nodes.size(); i++)
-	{
-		if(!m_nodes[i].first.compare(groupName))
-		{
-			if(m_nodes[i].second.keyExists(newNode.m_MAC))
-			{
-				//We got the right group, but the MAC already exists. So just quit
-				break;
-			}
-			else
-			{
-				m_nodes[i].second[newNode.m_MAC] = newNode;
-				inserted = true;
-				break;
-			}
-		}
-	}
-
-	if(!inserted)
+	if(m_nodes.keyExists(newNode.m_MAC))
 	{
 		return false;
 	}
-
-	//Check for a valid interface
-	vector<string> interfaces = Config::Inst()->GetInterfaces();
-	if(interfaces.empty())
+	else
 	{
-		LOG(ERROR, "No interfaces specified for node creation!", "");
+		m_nodes[newNode.m_MAC] = newNode;
+		return true;
+	}
+}
+
+bool HoneydConfiguration::AddNode(Node node)
+{
+	if(m_nodes.keyExists(node.m_MAC))
+	{
 		return false;
 	}
-	//Iterate over the interface list and try to find one.
-	for(uint i = 0; i < interfaces.size(); i++)
+	else
 	{
-		if(!interfaces[i].compare(newNode.m_interface))
-		{
-			break;
-		}
-		else if((i + 1) == interfaces.size())
-		{
-			LOG(WARNING, "No interface '" + newNode.m_interface + "' detected! Using interface '" + interfaces[0] + "' instead.", "");
-			newNode.m_interface = interfaces[0];
-		}
+		m_nodes[node.m_MAC] = node;
+		return true;
 	}
-
-	//Assign all the values
-
-	LOG(DEBUG, "Added new node '" + newNode.m_MAC + "'.", "");
-
-	return true;
 }
 
 bool HoneydConfiguration::AddNodes(string profileName, string ipAddress, string interface, int numberOfNodes)
@@ -940,22 +869,11 @@ Profile *HoneydConfiguration::GetProfile(string profileName)
 // *Note this function may have poor performance when there are a large number of nodes
 bool HoneydConfiguration::IsMACUsed(string mac)
 {
-	string groupName = Config::Inst()->GetGroup();
-
-	//For each group of nodes
-	for(uint i = 0; i < m_nodes.size(); i++)
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		//If this is our group, OR if we're looking through all groups
-		if(!groupName.compare(m_nodes[i].first) || !groupName.compare(""))
+		if(!it->first.compare(mac))
 		{
-			//Search through every node in the group
-			for(NodeTable::iterator it = m_nodes[i].second.begin(); it != m_nodes[i].second.end(); it++)
-			{
-				if(!it->first.compare(mac))
-				{
-					return true;
-				}
-			}
+			return true;
 		}
 	}
 
@@ -1031,18 +949,6 @@ bool HoneydConfiguration::AddProfile(Profile *profile, std::string parentName)
 	return true;
 }
 
-vector<string> HoneydConfiguration::GetGroupNames()
-{
-	vector<string> groups;
-
-	for(uint i = 0; i < m_nodes.size(); i++)
-	{
-		groups.push_back(m_nodes[i].first);
-	}
-
-	return groups;
-}
-
 vector<string> HoneydConfiguration::GetNodeMACs()
 {
 	vector<string> MACs;
@@ -1050,44 +956,6 @@ vector<string> HoneydConfiguration::GetNodeMACs()
 	//TODO
 
 	return MACs;
-}
-
-
-bool HoneydConfiguration::AddGroup(string groupName)
-{
-	using boost::property_tree::ptree;
-
-	//See if the group name already exists
-	for(uint i = 0; i < m_nodes.size(); i++)
-	{
-		if(!m_nodes[i].first.compare(groupName))
-		{
-			return false;
-		}
-	}
-
-	pair<string, NodeTable> group;
-	group.first = groupName;
-	group.second.set_empty_key("EMPTY");
-	group.second.set_deleted_key("DELETED");
-
-	m_nodes.push_back(group);
-
-	return true;
-}
-
-bool HoneydConfiguration::DeleteGroup(std::string groupName)
-{
-	for(uint i = 0; i < m_nodes.size(); i++)
-	{
-		if(!m_nodes[i].first.compare(groupName))
-		{
-			m_nodes.erase(m_nodes.begin()+i);
-			return true;
-		}
-	}
-
-	return true;
 }
 
 bool HoneydConfiguration::RenameProfile(string oldName, string newName)
@@ -1104,35 +972,23 @@ bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 
 bool HoneydConfiguration::DeleteNode(string nodeMAC)
 {
-	string groupName = Config::Inst()->GetGroup();
-	for(uint i = 0; i < m_nodes.size(); i++)
+	if(m_nodes.keyExists(nodeMAC))
 	{
-		if(m_nodes[i].first == groupName)
-		{
-			if(m_nodes[i].second.keyExists(nodeMAC))
-			{
-				m_nodes[i].second.erase(nodeMAC);
-				return true;
-			}
-		}
+		m_nodes.erase(nodeMAC);
+		return true;
 	}
+
 	return false;
 }
 
 Node *HoneydConfiguration::GetNode(string nodeMAC)
 {
-	string groupName = Config::Inst()->GetGroup();
-	for(uint i = 0; i < m_nodes.size(); i++)
+	if(m_nodes.keyExists(nodeMAC))
 	{
-		if(m_nodes[i].first == groupName)
-		{
-			if(m_nodes[i].second.keyExists(nodeMAC))
-			{
-				//XXX: Unsafe address access into table
-				return &m_nodes[i].second[nodeMAC];
-			}
-		}
+		//XXX: Unsafe address access into table
+		return &m_nodes[nodeMAC];
 	}
+
 	return NULL;
 }
 

@@ -88,8 +88,10 @@ public:
 	//	Returns true if successful and false if not
 	bool AddNode(std::string profileName, std::string ipAddress, std::string macAddress,
 			std::string interface, PortSet *portSet);
+	bool AddNode(Node node);
 
 	bool AddNodes(std::string profileName, std::string ipAddress, std::string interface, int numberOfNodes);
+
 
 	//Inserts the profile into the honeyd configuration
 	//	profile: pointer to the profile you wish to add
@@ -106,8 +108,6 @@ public:
 	//			So don't try accessing the profile object after calling this function
 	bool AddProfile(Profile *profile, std::string parentName);
 
-	bool AddGroup(std::string groupName);
-
 	bool AddScript(Script script);
 
 
@@ -116,7 +116,6 @@ public:
 	// Returns a pointer to the NodeProfile object or NULL if the key doesn't
 	Profile *GetProfile(std::string profileName);
 
-	std::vector<std::string> GetGroupNames();
 	std::vector<std::string> GetNodeMACs();
 
 	//TODO: Unsafe pointer access into table
@@ -148,10 +147,6 @@ public:
 	static int GetMaskBits(in_addr_t mask);
 
 
-	//Deletes the group of nodes with the given name
-	//	returns - True if successfully deleted, or if no group existed. False only on error.
-	bool DeleteGroup(std::string groupName);
-
 	//Removes a profile and all associated nodes from the Honeyd configuration
 	//	profileName: name of the profile you wish to delete
 	// 	Returns: (true) if successful and (false) if the profile could not be found
@@ -170,9 +165,9 @@ public:
 
 	bool RenameProfile(std::string oldName, std::string newName);
 
-	//Finds out if the given MAC address is in use within the given group of nodes
+	//Finds out if the given MAC address is in use
 	//	mac: the string representation of the MAC address
-	//	returns - true if the MAC is in use and false if it is not. returns false if the specified group does not exist
+	//	returns - true if the MAC is in use and false if it is not.
 	// *Note this function may have poor performance when there are a large number of nodes
 	bool IsMACUsed(std::string mac);
 
@@ -180,9 +175,8 @@ public:
 
 	ProfileTree m_profiles;
 
-	//A vector of groups (the pair)
-	// Each pair is a group, with the first string representing the group name, and the second Table being a table of nodes
-	std::vector< std::pair<std::string, NodeTable> > m_nodes;
+	//A map structure for node storage
+	NodeTable m_nodes;
 
 	VendorMacDb m_macAddresses;
 
