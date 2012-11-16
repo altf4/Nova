@@ -974,10 +974,6 @@ void Nova::GenerateConfiguration()
 
 	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
 
-	//Remake the "Autoconfig" group of nodes
-	HoneydConfiguration::Inst()->DeleteGroup("Autoconfig");
-	HoneydConfiguration::Inst()->AddGroup("Autoconfig");
-
 	Config::Inst()->SetGroup("Autoconfig");
 	Config::Inst()->SaveUserConfig();
 
@@ -1009,8 +1005,6 @@ void Nova::GenerateConfiguration()
 
 		//Pick a MAC address for the node:
 		string macAddress = HoneydConfiguration::Inst()->m_macAddresses.GenerateRandomMAC(vendor);
-
-		HoneydConfiguration::Inst()->AddGroup("Autoconfig");
 
 		Config::Inst()->SetGroup("Autoconfig");
 
