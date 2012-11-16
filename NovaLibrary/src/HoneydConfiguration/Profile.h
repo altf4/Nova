@@ -67,8 +67,8 @@ public:
 	uint32_t m_count;
 	double m_distribution;
 
-	// Name for the node
-	std::string m_key;
+	// Name for the profile
+	std::string m_name;
 
 	//Is this an autoconfig generated node? (or manually created)
 	bool m_isGenerated;

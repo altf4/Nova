@@ -156,7 +156,7 @@ block headerAdditions
       
       if(typeof now.RemoveScriptFromProfiles == 'function' && (reload == 'true' || reload == true))
       {
-        now.RemoveScriptFromProfiles(scriptName, profilesIter, function(){
+        now.RemoveScriptFromProfiles(scriptName, function(){
           location.reload(true);
         });
       }

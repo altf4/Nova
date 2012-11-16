@@ -11,18 +11,17 @@ using namespace Nova;
 
 HoneydProfileBinding::HoneydProfileBinding(string parentName, string profileName)
 {
-	Profile profile = HoneydConfiguration::Inst()->Getprofile(profileName);
+	Profile *profile = HoneydConfiguration::Inst()->GetProfile(profileName);
 	if(profile == NULL)
 	{
 		//Then we need to make a brand new profile
 		m_profile = new Profile(parentName, profileName);
-		isNewProfile = true;
+		HoneydConfiguration::Inst()->AddProfile(m_profile);
 	}
 	else
 	{
 		//There is already a profile with that name, so let's use it
 		m_profile = profile;
-		isNewProfile = false;
 	}
 }
 
@@ -32,7 +31,7 @@ HoneydProfileBinding::~HoneydProfileBinding()
 
 bool HoneydProfileBinding::SetName(std::string name)
 {
-	m_profile->m_key = name;
+	m_profile->m_name = name;
 	return true;
 }
 
@@ -62,7 +61,7 @@ bool HoneydProfileBinding::SetDropRate(std::string dropRate)
 
 bool HoneydProfileBinding::SetParentProfile(std::string parentName)
 {
-	m_profile->m_parent = HoneydConfiguration::Inst()->Getprofile(parentName);
+	m_profile->m_parent = HoneydConfiguration::Inst()->GetProfile(parentName);
 	return true;
 }
 
@@ -84,46 +83,46 @@ Profile *HoneydProfileBinding::GetChild()
 }
 
 Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
-{ 
-	if(args.Length() != 2)
+{
+	HandleScope scope;
+	if( args.Length() != 2 )
 	{
-		return ThrowException(Exception::TypeError(String::New("Must be invoked with at exactly two parameters")));
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with two parameters")));
 	}
 
-	HandleScope scope;
 	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
+	if(obj == NULL)
+	{
+		return scope.Close(Boolean::New(false));
+	}
 
-	std::vector<std::string> ethVendors = cvv8::CastFromJS<std::vector<std::string> >(args[0]);
-	std::vector<double> ethDists = cvv8::CastFromJS<std::vector<double> >(args[1]);
+	vector<string> vendorNames = cvv8::CastFromJS<vector<string>>( args[0] );
+	vector<double> vendorDists = cvv8::CastFromJS<vector<double>>( args[1] );
 
-	if(ethVendors.size() != ethDists.size())
+	if(vendorNames.size() != vendorDists.size())
 	{
 		//Mismatch in sizes
 		return scope.Close(Boolean::New(false));
 	}
 
-	if(ethVendors.size() == 0)
+	if(vendorNames.size() == 0)
 	{
-		if(obj->m_profile == NULL)
-		{
-			return scope.Close(Boolean::New(false));
-		}
-		obj->m_profile->m_ethernetVendors.clear();
-		return args.This();
+		obj->m_profile->m_vendors.clear();
+		return scope.Close(Boolean::New(true));
 	}
 	else
 	{
 		std::vector<std::pair<std::string, double> > set;
 
-		for(uint i = 0; i < ethVendors.size(); i++)
+		for(uint i = 0; i < vendorNames.size(); i++)
 		{
-			std::pair<std::string, double> vendorDists;
-			vendorDists.first = ethVendors[i];
-			vendorDists.second = ethDists[i];
-			set.push_back(vendorDists);
+			std::pair<std::string, double> vendor;
+			vendor.first = vendorNames[i];
+			vendor.second = vendorDists[i];
+			set.push_back(vendor);
 		}
-
-		return scope.Close(Boolean::New(obj->GetChild()->SetVendors(set)));
+		obj->m_profile->m_vendors = set;
+		return scope.Close(Boolean::New(true));
 	}
 }
 
@@ -156,7 +155,7 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 
 	Port port;
 	port.m_behavior = Port::StringToPortBehavior(portBehavior);
-	port.m_protocol = port::StringToPortProtocol(portProtcol);
+	port.m_protocol = Port::StringToPortProtocol(portProtcol);
 	port.m_portNumber = portNumber;
 	if(port.m_behavior == PORT_SCRIPT || port.m_behavior == PORT_TARPIT_SCRIPT)
 	{
@@ -168,52 +167,28 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 	return scope.Close(Boolean::New(true));
 }
 
-Handle<Value> HoneydProfileBinding::AddPortSet(const Arguments& args)
+bool HoneydProfileBinding::AddPortSet(std::string portSetName)
 {
-	if( args.Length() != 1 )
+	if(m_profile->GetPortSet(portSetName) != NULL)
 	{
-		return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+		return false;
 	}
 
-	HandleScope scope;
-	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
-	if(obj == NULL)
-	{
-		return scope.Close(Boolean::New(false));
-	}
+	m_profile->m_portSets.push_back(new PortSet(portSetName));
 
-	//TODO: Test for uniqueness
-	string portSetName = cvv8::CastFromJS<string>( args[0] );
-
-	obj->m_profile->m_portSets.push_back(new PortSet(portSetName));
-
-	return scope.Close(Boolean::New(true));
+	return true;
 }
 
-Handle<Value> HoneydProfileBinding::ClearPorts(const Arguments& args)
+bool HoneydProfileBinding::ClearPorts()
 {
-	if( args.Length() != 0 )
-	{
-		return ThrowException(Exception::TypeError(String::New("Must be invoked with no parameters")));
-	}
-
-	HandleScope scope;
-	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
-	if(obj == NULL)
-	{
-		return scope.Close(Boolean::New(false));
-	}
-
-	string portSetName = cvv8::CastFromJS<string>( args[0] );
-
 	//Delete the port sets, then clear the list of them
-	for(uint i = 0; i < obj->m_profile->m_portSets.size(); i++)
+	for(uint i = 0; i < m_profile->m_portSets.size(); i++)
 	{
-		delete obj->m_profile->m_portSets[i];
+		delete m_profile->m_portSets[i];
 	}
-	obj->m_profile->m_portSets.clear();
+	m_profile->m_portSets.clear();
 
-	return scope.Close(Boolean::New(true));
+	return true;
 }
 
 void HoneydProfileBinding::Init(v8::Handle<Object> target)
@@ -225,20 +200,20 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 	// Prototype
 	Local<Template> proto = tpl->PrototypeTemplate();
 
-	proto->Set("SetName",			FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, std::string, &Nova::HoneydProfileBinding::SetName>));
-	proto->Set("SetPersonality",	FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, std::string, &Nova::HoneydProfileBinding::SetPersonality>));
-	proto->Set("SetUptimeMin",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, uint, 		&Nova::HoneydProfileBinding::SetUptimeMin>));
-	proto->Set("SetUptimeMax",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, uint, 		&Nova::HoneydProfileBinding::SetUptimeMax>));
-	proto->Set("SetDropRate",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, std::string, &Nova::HoneydProfileBinding::SetDropRate>));
-	proto->Set("SetParentProfile",	FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, std::string, &Nova::HoneydProfileBinding::SetParentProfile>));
-	proto->Set("SetCount",			FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, int, 		&Nova::HoneydProfileBinding::SetCount>));
-	proto->Set("SetIsGenerated",	FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, bool, 		&Nova::HoneydProfileBinding::SetIsGenerated>));
+	proto->Set("SetName",			FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::SetName>));
+	proto->Set("SetPersonality",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::SetPersonality>));
+	proto->Set("SetUptimeMin",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  uint, 		&HoneydProfileBinding::SetUptimeMin>));
+	proto->Set("SetUptimeMax",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  uint, 		&HoneydProfileBinding::SetUptimeMax>));
+	proto->Set("SetDropRate",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::SetDropRate>));
+	proto->Set("SetParentProfile",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::SetParentProfile>));
+	proto->Set("SetCount",			FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  int, 		&HoneydProfileBinding::SetCount>));
+	proto->Set("SetIsGenerated",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, 		&HoneydProfileBinding::SetIsGenerated>));
+	proto->Set("AddPortSet",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::AddPortSet>));
+	proto->Set("ClearPorts",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  &HoneydProfileBinding::ClearPorts>));
 
+	//Odd ball out, because it needs 5 parameters. More than InvoleWrappedMethod can handle
+	proto->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
 	proto->Set(String::NewSymbol("SetVendors"),FunctionTemplate::New(SetVendors)->GetFunction());
-
-    proto->Set(String::NewSymbol("Save"),FunctionTemplate::New(Save)->GetFunction());
-    proto->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
-    proto->Set(String::NewSymbol("AddPortSet"),FunctionTemplate::New(AddPortSet)->GetFunction());
 
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
 	target->Set(String::NewSymbol("HoneydProfileBinding"), constructor);
@@ -258,25 +233,4 @@ v8::Handle<Value> HoneydProfileBinding::New(const Arguments& args)
 	HoneydProfileBinding* binding = new HoneydProfileBinding(parentName, profileName);
 	binding->Wrap(args.This());
 	return args.This();
-}
-
-Handle<Value> HoneydProfileBinding::Save(const Arguments& args)
-{
-
-	HandleScope scope;
-	HoneydProfileBinding* newProfile = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
-	string profileName = newProfile->m_profile->m_name;
-
-	//If this is a new profile, then add it in
-	if(newProfile->m_isNewProfile)
-	{
-		HoneydConfiguration::Inst()->AddProfile(newProfile->m_profile);
-	}
-	
-	HoneydConfiguration::Inst()->UpdateNodes(profileName);
-
-	HoneydConfiguration::Inst()->WriteAllTemplatesToXML();
-	HoneydConfiguration::Inst()->WriteHoneydConfiguration();
-	
-	return scope.Close(Boolean::New(true));
 }

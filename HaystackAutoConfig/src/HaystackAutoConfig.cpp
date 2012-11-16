@@ -1012,16 +1012,22 @@ void Nova::GenerateConfiguration()
 
 		HoneydConfiguration::Inst()->AddGroup("Autoconfig");
 
+		Config::Inst()->SetGroup("Autoconfig");
+
 		//Make a node for that profile
-		HoneydConfiguration::Inst()->AddNewNode(winningPersonality->m_key, "DHCP", macAddress, Config::Inst()->GetInterface(0),
-				winningPersonality->GetRandomPortSet(), "Autoconfig");
+		HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, Config::Inst()->GetInterface(0),
+				winningPersonality->GetRandomPortSet());
 	}
 
-	if(!HoneydConfiguration::Inst()->WriteAllTemplatesToXML())
+	if(!HoneydConfiguration::Inst()->WriteNodesToXML())
 	{
 		LOG(ERROR, "Unable to save haystack templates", "");
 	}
-	if(!HoneydConfiguration::Inst()->WriteHoneydConfiguration("Autoconfig"))
+	if(!HoneydConfiguration::Inst()->WriteProfilesToXML())
+	{
+		LOG(ERROR, "Unable to save haystack templates", "");
+	}
+	if(!HoneydConfiguration::Inst()->WriteHoneydConfiguration())
 	{
 		LOG(ERROR, "Unable to write haystack configuration", "");
 	}

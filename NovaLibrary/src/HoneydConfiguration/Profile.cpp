@@ -30,7 +30,7 @@ namespace Nova
 Profile::Profile(Profile *parent, string key)
 {
 	m_children.clear();
-	m_key = key;
+	m_name = key;
 	m_osclass = "";
 	m_count = 0;
 	m_avgPortCount = 0;
@@ -43,7 +43,7 @@ Profile::Profile(Profile *parent, string key)
 Profile::Profile(string parentName, std::string key)
 {
 	m_children.clear();
-	m_key = key;
+	m_name = key;
 	m_osclass = "";
 	m_count = 0;
 	m_avgPortCount = 0;
@@ -237,7 +237,7 @@ bool Profile::Copy(Profile *source)
 
 	m_count = source->m_count;
 	m_distribution = source->m_distribution;
-	m_key = source->m_key;
+	m_name = source->m_name;
 	m_isGenerated = source->m_isGenerated;
 	m_parent = source->m_parent;
 	m_uptimeMin = source->m_uptimeMin;

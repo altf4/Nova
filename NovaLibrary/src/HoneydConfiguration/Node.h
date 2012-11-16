@@ -33,7 +33,6 @@ public:
 	std::vector<bool> m_isPortInherited;
 	std::string m_IP;
 	std::string m_MAC;
-	in_addr_t m_realIP;
 	bool m_enabled;
 
 	// This is for the Javascript bindings in the web interface

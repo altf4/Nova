@@ -87,13 +87,13 @@ bool HoneydConfiguration::ReadProfilesXML()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
-	m_profileTree.clear();
+	ptree profilesTopLevel;
 	try
 	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/profiles.xml", m_profileTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/profiles.xml", profilesTopLevel, boost::property_tree::xml_parser::trim_whitespace);
 
 		//Don't loop through the profiles here, as we only expect one root profile. If there are others, ignore them
-		ptree rootProfile = m_profileTree.get_child("profiles").get_child("profile");
+		ptree rootProfile = profilesTopLevel.get_child("profiles").get_child("profile");
 		m_profiles.m_root = ReadProfilesXML_helper(rootProfile, NULL);
 
 		return true;
@@ -207,6 +207,48 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 	return profile;
 }
 
+void HoneydConfiguration::DeleteScriptFromPorts_helper(string scriptName, Profile *profile)
+{
+	if(profile == NULL)
+	{
+		return;
+	}
+
+	//Depth first traversal of tree
+	for(uint i = 0; i < profile->m_children.size(); i++)
+	{
+		DeleteScriptFromPorts_helper(scriptName, profile->m_children[i]);
+	}
+
+	//Search through all the port sets
+	for(uint i = 0; i < profile->m_portSets.size(); i++)
+	{
+		//And all the ports inside the port set
+		for(uint j = 0; j < profile->m_portSets[i]->m_TCPexceptions.size(); j++)
+		{
+			if(profile->m_portSets[i]->m_TCPexceptions[j].m_scriptName == scriptName)
+			{
+				profile->m_portSets[i]->m_TCPexceptions[j].m_behavior = PORT_OPEN;
+				profile->m_portSets[i]->m_TCPexceptions[j].m_scriptName = "";
+			}
+		}
+		//And all the ports inside the port set
+		for(uint j = 0; j < profile->m_portSets[i]->m_UDPexceptions.size(); j++)
+		{
+			if(profile->m_portSets[i]->m_UDPexceptions[j].m_scriptName == scriptName)
+			{
+				profile->m_portSets[i]->m_UDPexceptions[j].m_behavior = PORT_OPEN;
+				profile->m_portSets[i]->m_UDPexceptions[j].m_scriptName = "";
+			}
+		}
+	}
+}
+
+void HoneydConfiguration::DeleteScriptFromPorts(std::string scriptName)
+{
+	DeleteScriptFromPorts_helper(scriptName, m_profiles.m_root);
+}
+
 //Loads Nodes from the xml template located relative to the currently set home path
 // Returns true if successful, false if not.
 bool HoneydConfiguration::ReadNodesXML()
@@ -214,16 +256,17 @@ bool HoneydConfiguration::ReadNodesXML()
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
 
-	m_groupTree.clear();
+	ptree topLevelGroupTree;
+	topLevelGroupTree.clear();
 	ptree propTree;
 
 	try
 	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/nodes.xml", m_groupTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/nodes.xml", topLevelGroupTree, boost::property_tree::xml_parser::trim_whitespace);
 
 		try
 		{
-			BOOST_FOREACH(ptree::value_type &groupsPtree, m_groupTree.get_child("groups"))
+			BOOST_FOREACH(ptree::value_type &groupsPtree, topLevelGroupTree.get_child("groups"))
 			{
 				string groupName = groupsPtree.second.get<string>("name");
 				NodeTable table;
@@ -233,7 +276,7 @@ bool HoneydConfiguration::ReadNodesXML()
 				//For each node tag
 				try
 				{
-					BOOST_FOREACH(ptree::value_type &nodesPtree, m_groupTree.get_child("nodes"))
+					BOOST_FOREACH(ptree::value_type &nodesPtree, topLevelGroupTree.get_child("nodes"))
 					{
 						if(!nodesPtree.first.compare("node"))
 						{
@@ -286,12 +329,12 @@ bool HoneydConfiguration::ReadScriptsXML()
 {
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
-	m_scriptTree.clear();
+	ptree scriptsTopLevel;
 	try
 	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/scripts.xml", m_scriptTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/scripts.xml", scriptsTopLevel, boost::property_tree::xml_parser::trim_whitespace);
 
-		BOOST_FOREACH(ptree::value_type &value, m_scriptTree.get_child("scripts"))
+		BOOST_FOREACH(ptree::value_type &value, scriptsTopLevel.get_child("scripts"))
 		{
 			Script script;
 			try
@@ -336,24 +379,23 @@ bool HoneydConfiguration::ReadScriptsXML()
 
 bool HoneydConfiguration::WriteScriptsToXML()
 {
+	ptree scriptsTopLevel;
 	ptree propTree;
 
-	//Scripts
-	m_scriptTree.clear();
 	for(uint i = 0; i < m_scripts.size(); i++)
 	{
 		propTree.put<string>("name", m_scripts[i].m_name);
 		propTree.put<string>("service", m_scripts[i].m_service);
 		propTree.put<string>("osclass", m_scripts[i].m_osclass);
 		propTree.put<string>("path", m_scripts[i].m_path);
-		m_scriptTree.add_child("scripts.script", propTree);
+		scriptsTopLevel.add_child("scripts.script", propTree);
 	}
 
 	try
 	{
 		boost::property_tree::xml_writer_settings<char> settings('\t', 1);
 		string homePath = Config::Inst()->GetPathHome();
-		write_xml(homePath + "/config/templates/scripts.xml", m_scriptTree, locale(), settings);
+		write_xml(homePath + "/config/templates/scripts.xml", scriptsTopLevel, locale(), settings);
 	}
 	catch(boost::property_tree::xml_parser_error &e)
 	{
@@ -365,9 +407,7 @@ bool HoneydConfiguration::WriteScriptsToXML()
 
 bool HoneydConfiguration::WriteNodesToXML()
 {
-	//Nodes
-	m_nodesTree.clear();
-
+	ptree nodesTopLevel;
 	ptree groups;
 
 	for(uint i = 0; i < m_nodes.size(); i++)
@@ -394,14 +434,14 @@ bool HoneydConfiguration::WriteNodesToXML()
 		groups.add_child("group", group);
 	}
 
-	m_nodesTree.add_child("groups", groups);
+	nodesTopLevel.add_child("groups", groups);
 
 	//Actually write out to file
 	try
 	{
 		boost::property_tree::xml_writer_settings<char> settings('\t', 1);
 		string homePath = Config::Inst()->GetPathHome();
-		write_xml(homePath + "/config/templates/nodes.xml", m_nodesTree, locale(), settings);
+		write_xml(homePath + "/config/templates/nodes.xml", nodesTopLevel, locale(), settings);
 	}
 	catch(boost::property_tree::xml_parser_error &e)
 	{
@@ -413,18 +453,18 @@ bool HoneydConfiguration::WriteNodesToXML()
 
 bool HoneydConfiguration::WriteProfilesToXML()
 {
-	m_profileTree.clear();
-	ptree topLevel;
+	ptree profilesToplevel;
+	ptree rootTree;
 
-	if(WriteProfilesToXML_helper(m_profiles.m_root, topLevel))
+	if(WriteProfilesToXML_helper(m_profiles.m_root, rootTree))
 	{
 		try
 		{
-			m_profileTree.add_child("profiles.profile", topLevel);
+			profilesToplevel.add_child("profiles.profile", rootTree);
 
 			boost::property_tree::xml_writer_settings<char> settings('\t', 1);
 			string homePath = Config::Inst()->GetPathHome();
-			write_xml(homePath + "/config/templates/profiles.xml", m_profileTree, locale(), settings);
+			write_xml(homePath + "/config/templates/profiles.xml", profilesToplevel, locale(), settings);
 		}
 		catch(boost::property_tree::xml_parser_error &e)
 		{
@@ -447,7 +487,7 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 	}
 
 	//Write the current item into the tree
-	propTree.put<string>("name", root->m_key);
+	propTree.put<string>("name", root->m_name);
 	propTree.put<bool>("generated", root->m_isGenerated);
 	propTree.put<double>("count", root->m_count);
 	propTree.put<string>("personality", root->m_personality);
@@ -559,8 +599,10 @@ bool HoneydConfiguration::WriteAllTemplatesToXML()
 	return totalSuccess;
 }
 
-bool HoneydConfiguration::WriteHoneydConfiguration(string groupName, string path)
+bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 {
+	string groupName = Config::Inst()->GetGroup();
+
 	if(!path.compare(""))
 	{
 		if(!Config::Inst()->GetPathConfigHoneydHS().compare(""))
@@ -656,9 +698,10 @@ int HoneydConfiguration::GetMaskBits(in_addr_t mask)
 	return i;
 }
 
-bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, string macAddress,
-		string interface, PortSet *portSet, string groupName)
+bool HoneydConfiguration::AddNode(string profileName, string ipAddress, string macAddress,
+		string interface, PortSet *portSet)
 {
+	string groupName = Config::Inst()->GetGroup();
 	Node newNode;
 	uint macPrefix = m_macAddresses.AtoMACPrefix(macAddress);
 	string vendor = m_macAddresses.LookupVendor(macPrefix);
@@ -683,17 +726,23 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 			LOG(ERROR, "Invalid node IP address '" + ipAddress + "' given!", "");
 			return false;
 		}
-		newNode.m_realIP = htonl(retVal);
 	}
 
 	//Get the name after assigning the values
 	newNode.m_MAC = macAddress;
 	newNode.m_IP = ipAddress;
 
-	if(portSet != NULL)
+	Profile *profile = GetProfile(profileName);
+	if(profile == NULL)
 	{
-		newNode.m_portSetName = portSet->m_name;
+		return false;
 	}
+
+	if(portSet == NULL)
+	{
+		portSet = profile->GetRandomPortSet();
+	}
+	newNode.m_portSetName = portSet->m_name;
 
 	//Make sure we have a unique identifier
 	stringstream ss;
@@ -750,6 +799,64 @@ bool HoneydConfiguration::AddNewNode(string profileName, string ipAddress, strin
 	return true;
 }
 
+bool HoneydConfiguration::AddNodes(string profileName, string ipAddress, string interface, int numberOfNodes)
+{
+	Profile *profile = GetProfile(profileName);
+	if(profile == NULL)
+	{
+		LOG(DEBUG, "Unable to find valid profile named '" + profileName + "' during node creation!", "");
+		return false;
+	}
+
+	if(numberOfNodes <= 0)
+	{
+		LOG(DEBUG, "Must create 1 or more nodes", "");
+		return false;
+	}
+
+	string macVendor = profile->GetRandomVendor();
+
+	//Add nodes in the DHCP case
+	if(!ipAddress.compare("DHCP"))
+	{
+		for(int i = 0; i < numberOfNodes; i++)
+		{
+			string macAddress = m_macAddresses.GenerateRandomMAC(macVendor);
+			if(!AddNode(profileName, ipAddress, macAddress, interface, NULL))
+			{
+				LOG(WARNING, "Adding new nodes failed during node creation!", "");
+				return false;
+			}
+		}
+		return true;
+	}
+
+	//Check the starting ipaddress
+	in_addr_t sAddr = inet_addr(ipAddress.c_str());
+	if(sAddr == INADDR_NONE)
+	{
+		LOG(WARNING,"Invalid IP Address given!", "");
+	}
+
+	//Add nodes in the statically addressed case
+	sAddr = ntohl(sAddr);
+	//Removes un-init compiler warning given for in_addr currentAddr;
+	in_addr currentAddr = *(in_addr *)&sAddr;
+
+	for(int i = 0; i < numberOfNodes; i++)
+	{
+		currentAddr.s_addr = htonl(sAddr);
+		string macAddress = m_macAddresses.GenerateRandomMAC(macVendor);
+		if(!AddNode(profileName, string(inet_ntoa(currentAddr)), macAddress, interface, NULL))
+		{
+			LOG(ERROR, "Adding new nodes failed during node creation!", "");
+			return false;
+		}
+		sAddr++;
+	}
+	return true;
+}
+
 //Recursive helper function to GetProfileNames() and GetGeneratedProfileNames()
 vector<string> GetProfileNames_helper(Profile *item, bool lookForGeneratedOnly)
 {
@@ -764,7 +871,7 @@ vector<string> GetProfileNames_helper(Profile *item, bool lookForGeneratedOnly)
 	//Only add this profile's name if we're not only looking for generated profiles, or if it is generated anyway
 	if(!lookForGeneratedOnly || item->m_isGenerated)
 	{
-		runningTotalProfiles.push_back(item->m_key);
+		runningTotalProfiles.push_back(item->m_name);
 	}
 
 
@@ -808,7 +915,7 @@ Profile *GetProfile_helper(string profileName, Profile *item)
 		return NULL;
 	}
 
-	if(!item->m_key.compare(profileName))
+	if(!item->m_name.compare(profileName))
 	{
 		return item;
 	}
@@ -831,8 +938,10 @@ Profile *HoneydConfiguration::GetProfile(string profileName)
 }
 
 // *Note this function may have poor performance when there are a large number of nodes
-bool HoneydConfiguration::IsMACUsed(string mac, string groupName)
+bool HoneydConfiguration::IsMACUsed(string mac)
 {
+	string groupName = Config::Inst()->GetGroup();
+
 	//For each group of nodes
 	for(uint i = 0; i < m_nodes.size(); i++)
 	{
@@ -861,7 +970,7 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 	}
 
 	//Check to see if the profile name already exists
-	Profile *duplicate = GetProfile(profile->m_key);
+	Profile *duplicate = GetProfile(profile->m_name);
 	if(duplicate != NULL)
 	{
 		//Copy over the contents of this profile, and quit
@@ -879,7 +988,7 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 		return false;
 	}
 
-	Profile *parent = GetProfile(profile->m_parent->m_key);
+	Profile *parent = GetProfile(profile->m_parent->m_name);
 	if(parent == NULL)
 	{
 		//Parent didn't exist
@@ -901,7 +1010,7 @@ bool HoneydConfiguration::AddProfile(Profile *profile, std::string parentName)
 	}
 
 	//Check to see if the profile name already exists
-	Profile *duplicate = GetProfile(profile->m_key);
+	Profile *duplicate = GetProfile(profile->m_name);
 	if(duplicate == NULL)
 	{
 		//Copy over the contents of this profile, and quit
@@ -922,7 +1031,7 @@ bool HoneydConfiguration::AddProfile(Profile *profile, std::string parentName)
 	return true;
 }
 
-vector<string> HoneydConfiguration::GetGroups()
+vector<string> HoneydConfiguration::GetGroupNames()
 {
 	vector<string> groups;
 
@@ -932,6 +1041,15 @@ vector<string> HoneydConfiguration::GetGroups()
 	}
 
 	return groups;
+}
+
+vector<string> HoneydConfiguration::GetNodeMACs()
+{
+	vector<string> MACs;
+
+	//TODO
+
+	return MACs;
 }
 
 
@@ -980,35 +1098,41 @@ bool HoneydConfiguration::RenameProfile(string oldName, string newName)
 		return false;
 	}
 
-	profile->m_key = newName;
+	profile->m_name = newName;
 	return true;
 }
 
 bool HoneydConfiguration::DeleteNode(string nodeMAC)
 {
+	string groupName = Config::Inst()->GetGroup();
 	for(uint i = 0; i < m_nodes.size(); i++)
 	{
-		if(m_nodes[i].second.keyExists(nodeMAC))
+		if(m_nodes[i].first == groupName)
 		{
-			m_nodes[i].second.erase(nodeMAC);
-			return true;
+			if(m_nodes[i].second.keyExists(nodeMAC))
+			{
+				m_nodes[i].second.erase(nodeMAC);
+				return true;
+			}
 		}
 	}
-
 	return false;
 }
 
 Node *HoneydConfiguration::GetNode(string nodeMAC)
 {
+	string groupName = Config::Inst()->GetGroup();
 	for(uint i = 0; i < m_nodes.size(); i++)
 	{
-		if(m_nodes[i].second.keyExists(nodeMAC))
+		if(m_nodes[i].first == groupName)
 		{
-			//XXX: Unsafe address access into table
-			return &m_nodes[i].second[nodeMAC];
+			if(m_nodes[i].second.keyExists(nodeMAC))
+			{
+				//XXX: Unsafe address access into table
+				return &m_nodes[i].second[nodeMAC];
+			}
 		}
 	}
-
 	return NULL;
 }
 
@@ -1086,6 +1210,8 @@ bool HoneydConfiguration::DeleteScript(string name)
 		if(m_scripts[i].m_name == name)
 		{
 			m_scripts.erase(m_scripts.begin()+i);
+			//Also remove any references to this script from any profiles
+			DeleteScriptFromPorts(name);
 			return true;
 		}
 	}

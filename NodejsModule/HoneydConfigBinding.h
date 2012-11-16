@@ -7,7 +7,9 @@
 #include "HoneydConfiguration/HoneydConfiguration.h"
 
 
-class HoneydConfigBinding : public node::ObjectWrap {
+class HoneydConfigBinding : public node::ObjectWrap
+{
+
 public:
 	static void Init(v8::Handle<v8::Object> target);
 	Nova::HoneydConfiguration* GetChild();
@@ -20,8 +22,8 @@ private:
 
 	static v8::Handle<v8::Value> New(const v8::Arguments& args);
 
-	static v8::Handle<v8::Value> AddNewNodes(const v8::Arguments& args);
-	static v8::Handle<v8::Value> AddNewNode(const v8::Arguments& args);
+	static v8::Handle<v8::Value> AddNodes(const v8::Arguments& args);
+	static v8::Handle<v8::Value> AddNode(const v8::Arguments& args);
 	static v8::Handle<v8::Value> AddScript(const v8::Arguments& args);
 	static v8::Handle<v8::Value> RemoveScript(const v8::Arguments& args);
 
@@ -29,7 +31,7 @@ private:
 	static v8::Handle<v8::Value> GetNode(const v8::Arguments& args);
 	static v8::Handle<v8::Value> GetProfile(const v8::Arguments& args);
 
-	static v8::Handle<v8::Value> RemoveScriptPort(const v8::Arguments& args);
+	static v8::Handle<v8::Value> DeleteScriptFromPorts(const v8::Arguments& args);
 
 	static v8::Handle<v8::Value> SaveAll(const v8::Arguments& args);
 	static v8::Handle<v8::Value> DeleteProfile(const v8::Arguments& args);

@@ -92,7 +92,7 @@ Profile *GetProfile_helper(Profile *item, const std::string &name)
 		return NULL;
 	}
 
-	if(!item->m_key.compare(name))
+	if(!item->m_name.compare(name))
 	{
 		return item;
 	}
@@ -152,7 +152,7 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 	uint i = 0;
 	for(; i < parentItem->m_children.size(); i++)
 	{
-		if(!curOSClass.compare(parentItem->m_children[i]->m_key))
+		if(!curOSClass.compare(parentItem->m_children[i]->m_name))
 		{
 			break;
 		}

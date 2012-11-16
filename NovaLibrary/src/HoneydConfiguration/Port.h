@@ -50,7 +50,7 @@ class Port
 
 public:
 
-	Port(std::string name, enum PortProtocol protocol, uint portNumber, enum PortBehavior behavior);
+	Port(std::string serviceName, enum PortProtocol protocol, uint portNumber, enum PortBehavior behavior);
 	Port(){};
 
 	//Returns a string representation of the given PortProtocol

@@ -13,7 +13,6 @@ public:
 	static void Init(v8::Handle<v8::Object> target);
   
 	Nova::Profile *GetChild();
-	static v8::Handle<v8::Value> SetVendors(const v8::Arguments& args);
 
 	bool SetName(std::string name);
 	bool SetPersonality(std::string personality);
@@ -23,6 +22,8 @@ public:
 	bool SetParentProfile(std::string parentName);
 	bool SetCount(int count);
 	bool SetIsGenerated(bool isGenerated);
+	bool AddPortSet(std::string portSetName);
+	bool ClearPorts();
 
 private:
 	//The parent name is needed to know where to put the profile in the tree,
@@ -30,13 +31,11 @@ private:
 	HoneydProfileBinding(std::string parentName, std::string profileName);
 	~HoneydProfileBinding();
 
-	static v8::Handle<v8::Value> New(const v8::Arguments& args);
-
-	//TODO: Make into public member functions
+	//Odd ball out, because it needs 5 parameters. More than InvoleWrappedMethod can handle
 	static v8::Handle<v8::Value> AddPort(const v8::Arguments& args);
-	static v8::Handle<v8::Value> AddPortSet(const v8::Arguments& args);
-	static v8::Handle<v8::Value> ClearPorts(const v8::Arguments& args);
-	static v8::Handle<v8::Value> Save(const v8::Arguments& args);
+	static v8::Handle<v8::Value> SetVendors(const v8::Arguments& args);
+
+	static v8::Handle<v8::Value> New(const v8::Arguments& args);
 
 	Nova::Profile *m_profile;
 	bool isNewProfile;

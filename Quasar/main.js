@@ -849,18 +849,18 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 		return;
 	}
 
-	var nodeNames = honeydConfig.GetNodeNames();
+	var nodeNames = honeydConfig.GetNodeMACs();
 	var nodeList = [];
 	
-	for (var i = 0; i < nodeNames.length; i++) {
-	  var node = honeydConfig.GetNode(nodeNames[i]);
-	  var push = {};
-	  push.enabled = node.IsEnabled();
-	  push.name = node.GetName();
-	  push.pfile = node.GetProfile();
-	  push.ip = node.GetIP();
-	  push.mac = node.GetMAC();
-	  push.interface = node.GetInterface();
+	for (var i = 0; i < nodeNames.length; i++)
+	{
+		var node = honeydConfig.GetNode(nodeNames[i]);
+		var push = {};
+		push.enabled = node.IsEnabled();
+		push.pfile = node.GetProfile();
+		push.ip = node.GetIP();
+		push.mac = node.GetMAC();
+		push.interface = node.GetInterface();
 		nodeList.push(push);
 	}
 	
@@ -881,7 +881,6 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 			interfaceAliases: ConvertInterfacesToAliases(interfaces),
 			profiles: profiles,
 			nodes: nodeList,
-			groups: honeydConfig.GetGroups(),
 			currentGroup: config.GetGroup()
 		}
 	})
@@ -1321,7 +1320,7 @@ app.get('/nodeReview', passport.authenticate('basic', {session: false}), functio
 		profiles.push(honeydConfig.GetProfile(profileNames[i]));
 	}
 
-	var nodeNames = honeydConfig.GetGeneratedNodeNames();
+	var nodeNames = honeydConfig.GetNodeMACs();
 	var nodes = new Array();
 	for (var i = 0; i < nodeNames.length; i++) {
 		nodes.push(honeydConfig.GetNode(nodeNames[i]));
@@ -1469,7 +1468,6 @@ app.post('/scripts', passport.authenticate('basic', {session: false}), function(
     honeydConfig.AddScript(req.body['name'], pathToSave);
   
     honeydConfig.SaveAllTemplates();
-    honeydConfig.LoadAllTemplates();
   });
   
   res.render('saveRedirect.jade', {
@@ -1493,7 +1491,7 @@ app.post('/customizeTrainingSave', passport.authenticate('basic', {session: fals
 	})
 });
 
-everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, interface, subnet, count, callback) {
+everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, interface, count, callback) {
 	var ipAddress;
 	if (ipType == "DHCP") {
 		ipAddress = "DHCP";
@@ -1502,7 +1500,7 @@ everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, i
 	}
 
 	var result = null;
-	if (!honeydConfig.AddNewNodes(profile, ipAddress, interface, subnet, Number(count))) {
+	if (!honeydConfig.AddNodes(profile, ipAddress, interface, Number(count))) {
 		result = "Unable to create new nodes";	
 	}
 
@@ -1515,8 +1513,6 @@ everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, i
 
 everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macType, ip, mac, callback) {
 //app.post('/editHoneydNodeSave', passport.authenticate('basic', {session: false}), function (req, res) {
-	var subnet = "";
-
 	var ipAddress = ip;
 	if (ipType == "DHCP") {
 		ipAddress = "DHCP";
@@ -1529,8 +1525,8 @@ everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macTyp
 	
 	// Delete the old node and then add the new one	
 	honeydConfig.DeleteNode(oldName);
-	if (!honeydConfig.AddNewNode(profile, ipAddress, macAddress, intface, subnet)) {
-		callback("AddNewNode Failed");
+	if (!honeydConfig.AddNode(profile, ipAddress, macAddress, intface)) {
+		callback("AddNode Failed");
 		return;
 	} else {
 		if (!honeydConfig.SaveAll()) {
@@ -2220,7 +2216,9 @@ everyone.now.SaveProfile = function (profile, portSets, callback, ethVendorList)
 	}
 
 	// Save the profile
-	honeydProfile.Save(profile.oldName);
+	if (!honeydConfig.SaveAll()) {
+		result = "Unable to save honeyd configuration";
+	}
 
 	callback();
 }
@@ -2414,36 +2412,16 @@ everyone.now.GetLocalIP = function (interface, callback) {
 	callback(nova.GetLocalIP(interface));
 }
 
-everyone.now.RemoveScriptFromProfiles = function(script, profiles, callback) {
-  for(var i in profiles)
-  {
-    if(profiles[i] != null && profiles[i] != undefined && profiles[i] != '')
-    {
-      GetPorts(profiles[i], function(ports, profileName){
-        if(ports != undefined)
-        {
-          for(var j in ports)
-          {
-            if(ports[j].portName != undefined)
-            {
-              if(ports[j].scriptName == script)
-              {
-                honeydConfig.RemoveScriptPort(ports[j].portName, profileName);
-              }
-            }
-          }
-        }
-      });
-    }
-  } 
-  
-  honeydConfig.SaveAllTemplates();
-  honeydConfig.LoadAllTemplates();
-  
-  if(typeof callback == 'function')
-  {
-    callback();
-  }
+everyone.now.RemoveScriptFromProfiles = function(script, callback)
+{
+	honeydConfig.DeleteScriptFromPorts(script);
+
+	honeydConfig.SaveAllTemplates();
+
+	if(typeof callback == 'function')
+	{
+		callback();
+	}
 }
 
 everyone.now.GenerateMACForVendor = function(vendor, callback) {
@@ -2506,7 +2484,6 @@ everyone.now.RemoveScript = function(scriptName, callback)
   honeydConfig.RemoveScript(scriptName);
   
   honeydConfig.SaveAllTemplates();
-  honeydConfig.LoadAllTemplates();
   
   if(typeof callback == 'function')
   {

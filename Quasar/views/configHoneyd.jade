@@ -22,7 +22,7 @@ block headerAdditions
         var count = document.getElementById("nodeCount").value;
         var interface = currentInterface;
 
-        now.createHoneydNodes(ipType, ip1, ip2, ip3, ip4, profile, interface, "", count, createNodesCallback);
+        now.createHoneydNodes(ipType, ip1, ip2, ip3, ip4, profile, interface, count, createNodesCallback);
     }
 
     function createNodesCallback(err) {
@@ -196,18 +196,6 @@ block headerAdditions
       window.location.href = "editHoneydNode?node=" + nodeName;
     }
 
-    function changeGroup() {
-        try {
-           now.changeGroup(document.getElementById("GROUP").value, function() {
-             window.location.reload();
-           });
-        } catch (err) {
-            console.log(err);
-            alert("ERROR: Unable to contact server!");
-            return;
-        }
-    }
-    
     function restoreDefaults() {
         try {
             now.restoreDefaultHaystackConfiguration(configurationRestored);
@@ -290,13 +278,12 @@ block headerAdditions
     function Init()
     {
       var gridStructure = [];
+      gridStructure.push({name: "MAC"});
       gridStructure.push({name: "Enabled"});
-      gridStructure.push({name: "Name"});
       gridStructure.push({name: "Profile"});
       gridStructure.push({name: "IP"});
-      gridStructure.push({name: "MAC"});
       
-      grid = new NovaGrid(gridStructure, 1, document.getElementById('nodeTable'), 'grid', true);
+      grid = new NovaGrid(gridStructure, 0, document.getElementById('nodeTable'), 'grid', true);
       
       grid.SetSortByKey(1);
       grid.SetRowsPerPage(50);
@@ -310,7 +297,6 @@ block headerAdditions
       {
         var row = [];
         row.push(String(nodeList[i].enabled));
-        row.push(String(nodeList[i].name));
         row.push(String(nodeList[i].pfile));
 
         if (nodeList[i].ip != "DHCP") {
@@ -382,13 +368,6 @@ block content
   h1 Current Haystack Node Configuration
   div#piChart
   br
-  label Group
-    select#GROUP(name="GROUP", onchange="changeGroup()")
-      each g, i in groups
-        if g == currentGroup
-          option(SELECTED) #{g}
-        else
-          option #{g}
   div#node_header
     br
     div#tablePages
