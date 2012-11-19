@@ -100,7 +100,7 @@ function createScheduledEventElement(clientId)
 {
   var borderDiv = document.createElement('div');
   borderDiv.id = clientId;
-  borderDiv.setAttribute('style', 'border: 2px solid; background: #E8A02F; width: 450px;');
+  borderDiv.setAttribute('style', 'border: 2px solid; background: #E8A02F; width: 370px;');
   
   var label0 = document.createElement('h1');
   label0.setAttribute('style', 'text-align: center');
@@ -146,7 +146,7 @@ function createScheduledEventElement(clientId)
   mlTd.appendChild(monthLabel);
   var mTd = document.createElement('td');
   var month = document.createElement('input');
-  month.setAttribute('style', 'width: 120px;');
+  month.setAttribute('style', 'width: 30px;');
   month.setAttribute('type', 'number');
   month.min = '0';
   month.max = '11';
@@ -162,65 +162,13 @@ function createScheduledEventElement(clientId)
   dayLabel.innerHTML = 'Day: ';
   dlTd.appendChild(dayLabel);
   var dTd = document.createElement('td');
-  var day = document.createElement('select');
-  day.setAttribute('style', 'width: 120px;');
+  var day = document.createElement('input');
+  day.setAttribute('type', 'number');
+  day.setAttribute('style', 'width: 30px;');
+  day.min = '1';
+  day.max = '31';
+  day.value = infoHook.getDate();
   day.id = clientId + 'day';
-  var options = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  for(var i in options)
-  {
-    var option = document.createElement('option');
-    option.id = options[i];
-    option.innerHTML = options[i];
-    option.value = infoHook.getDay().toString();
-    switch(infoHook.getDay().toString())
-    {
-      case '0': selectedTest = 'Sunday';
-                if(selectedTest == options[i])
-                {
-                  option.selected = true;
-                }
-                break;
-      case '1': selectedTest = 'Monday';
-                if(selectedTest == options[i])
-                {
-                  option.selected = true;
-                }
-                break;
-      case '2': selectedTest = 'Tuesday';
-                if(selectedTest == options[i])
-                {
-                  option.selected = true;
-                }
-                break;
-      case '3': selectedTest = 'Wednesday';
-                if(selectedTest == options[i])
-                {
-                  option.selected = true;
-                }
-                break;
-      case '4': selectedTest = 'Thursday';
-                if(selectedTest == options[i])
-                {
-                  option.selected = true;
-                }
-                break;
-      case '5': selectedTest = 'Friday';
-                if(selectedTest == options[i])
-                {
-                  option.selected = true;
-                }
-                break;
-      case '6': selectedTest = 'Saturday';
-                if(selectedTest == options[i])
-                {
-                  option.selected = true;
-                }
-                break;
-      default:  console.log('infoHook.getDay() ' + infoHook.getDay());
-                break;
-    }
-    day.appendChild(option);
-  }
   dTd.appendChild(day);
   tr1.appendChild(dlTd);
   tr1.appendChild(dTd);
@@ -232,7 +180,7 @@ function createScheduledEventElement(clientId)
   ylTd.appendChild(yearLabel);
   var yTd = document.createElement('td');
   var year = document.createElement('input');
-  year.setAttribute('style', 'width: 120px;');
+  year.setAttribute('style', 'width: 45px;');
   year.setAttribute('type', 'number');
   year.min = infoHook.getFullYear();
   year.id = clientId + 'year';
@@ -248,7 +196,7 @@ function createScheduledEventElement(clientId)
   hlTd.appendChild(hourLabel);
   var hTd = document.createElement('td');
   var hour = document.createElement('input');
-  hour.setAttribute('style', 'width: 120px;');
+  hour.setAttribute('style', 'width: 30px;');
   hour.id = clientId + 'hour';
   hour.setAttribute('type', 'number');
   hour.min = '0';
@@ -265,7 +213,7 @@ function createScheduledEventElement(clientId)
   milTd.appendChild(minuteLabel);
   var miTd = document.createElement('td');
   var minute = document.createElement('input');
-  minute.setAttribute('style', 'width: 120px;');
+  minute.setAttribute('style', 'width: 30px;');
   minute.setAttribute('type', 'number');
   minute.min = '0';
   minute.max = '59';
@@ -282,7 +230,7 @@ function createScheduledEventElement(clientId)
   slTd.appendChild(secondLabel);
   var sTd = document.createElement('td');
   var second = document.createElement('input');
-  second.setAttribute('style', 'width: 120px;');
+  second.setAttribute('style', 'width: 30px;');
   second.setAttribute('type', 'number');
   second.min = '0';
   second.max = '59';
@@ -300,9 +248,10 @@ function createScheduledEventElement(clientId)
   name.maxlength = '10';
   
   var t = document.createElement('table');
-  t.id = 'subjectToChange';
+  t.id = clientId + 'subjectToChange';
   
   var tbody = document.createElement('tbody');
+  tbody.id = clientId + 'changeHook';
   t.appendChild(tbody);
   
   tbody.appendChild(tr0);
@@ -322,9 +271,9 @@ function createScheduledEventElement(clientId)
   borderDiv.appendChild(recurringLabel);
   borderDiv.appendChild(b0);
   borderDiv.appendChild(t);
-  borderDiv.appendChild(b1);
   borderDiv.appendChild(label4);
   borderDiv.appendChild(name);
+  borderDiv.appendChild(b1);
   
   document.getElementById('elementHook').appendChild(borderDiv);
 }
@@ -333,6 +282,249 @@ function recurringChanged(source)
 {
   // Restructure table here
   console.log('recurringChanged');
+  while(document.getElementById(source + 'changeHook').hasChildNodes())
+  {
+    document.getElementById(source + 'changeHook').removeChild(document.getElementById(source + 'changeHook').lastChild);
+  }
+  
+  var infoHook = new Date();
+  
+  if(document.getElementById(source + 'recurring').checked)
+  {
+    var tr0 = document.createElement('tr');
+    var dlTd = document.createElement('td');
+    var dayLabel = document.createElement('label');
+    dayLabel.innerHTML = 'Day Of Week: ';
+    dlTd.appendChild(dayLabel);
+    var dTd = document.createElement('td');
+    var day = document.createElement('select');
+    day.setAttribute('style', 'width: 100px;');
+    day.id = source + 'dayOfWeek';
+    var options = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    for(var i in options)
+    {
+      var option = document.createElement('option');
+      option.id = options[i];
+      option.innerHTML = options[i];
+      option.value = infoHook.getDay().toString();
+      switch(infoHook.getDay().toString())
+      {
+        case '0': selectedTest = 'Sunday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '1': selectedTest = 'Monday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '2': selectedTest = 'Tuesday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '3': selectedTest = 'Wednesday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '4': selectedTest = 'Thursday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '5': selectedTest = 'Friday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '6': selectedTest = 'Saturday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        default:  console.log('infoHook.getDay() ' + infoHook.getDay());
+                  break;
+      }
+      day.appendChild(option);
+    }
+    dTd.appendChild(day);
+    tr0.appendChild(dlTd);
+    tr0.appendChild(dTd);
+    
+    var tr1 = document.createElement('tr');
+    var hlTd = document.createElement('td');
+    var hourLabel = document.createElement('label');
+    hourLabel.innerHTML = 'Hour: ';
+    hlTd.appendChild(hourLabel);
+    var hTd = document.createElement('td');
+    var hour = document.createElement('input');
+    hour.setAttribute('style', 'width: 30px;');
+    hour.id = source + 'hour';
+    hour.setAttribute('type', 'number');
+    hour.min = '0';
+    hour.max = '23';
+    hour.value = infoHook.getHours();
+    hTd.appendChild(hour);
+    tr1.appendChild(hlTd);
+    tr1.appendChild(hTd);
+    
+    var tr2 = document.createElement('tr');
+    var milTd = document.createElement('td');
+    var minuteLabel = document.createElement('label');
+    minuteLabel.innerHTML = 'Minute: ';
+    milTd.appendChild(minuteLabel);
+    var miTd = document.createElement('td');
+    var minute = document.createElement('input');
+    minute.setAttribute('style', 'width: 30px;');
+    minute.setAttribute('type', 'number');
+    minute.min = '0';
+    minute.max = '59';
+    minute.id = source + 'minute';
+    minute.value = infoHook.getMinutes();
+    miTd.appendChild(minute);
+    tr2.appendChild(milTd);
+    tr2.appendChild(miTd);
+    
+    var tr3 = document.createElement('tr');
+    var slTd = document.createElement('td');
+    var secondLabel = document.createElement('label');
+    secondLabel.innerHTML = 'Second: ';
+    slTd.appendChild(secondLabel);
+    var sTd = document.createElement('td');
+    var second = document.createElement('input');
+    second.setAttribute('style', 'width: 30px;');
+    second.setAttribute('type', 'number');
+    second.min = '0';
+    second.max = '59';
+    second.id = source + 'second';
+    second.value = infoHook.getSeconds();
+    sTd.appendChild(second);
+    tr3.appendChild(slTd);
+    tr3.appendChild(sTd);
+    
+    document.getElementById(source + 'changeHook').appendChild(tr0);
+    document.getElementById(source + 'changeHook').appendChild(tr1);
+    document.getElementById(source + 'changeHook').appendChild(tr2);
+    document.getElementById(source + 'changeHook').appendChild(tr3);
+  }
+  else
+  {
+    var tr0 = document.createElement('tr');
+    var mlTd = document.createElement('td');
+    var monthLabel = document.createElement('label');
+    monthLabel.innerHTML = 'Month: ';
+    mlTd.appendChild(monthLabel);
+    var mTd = document.createElement('td');
+    var month = document.createElement('input');
+    month.setAttribute('style', 'width: 30px;');
+    month.setAttribute('type', 'number');
+    month.min = '0';
+    month.max = '11';
+    month.id = source + 'month';
+    month.value = infoHook.getMonth();
+    mTd.appendChild(month);
+    tr0.appendChild(mlTd);
+    tr0.appendChild(mTd);
+    
+    var tr1 = document.createElement('tr');
+    var dlTd = document.createElement('td');
+    var dayLabel = document.createElement('label');
+    dayLabel.innerHTML = 'Day: ';
+    dlTd.appendChild(dayLabel);
+    var dTd = document.createElement('td');
+    var day = document.createElement('input');
+    day.setAttribute('type', 'number');
+    day.setAttribute('style', 'width: 100px;');
+    day.min = '1';
+    day.max = '31';
+    day.id = source + 'day';
+    dTd.appendChild(day);
+    tr1.appendChild(dlTd);
+    tr1.appendChild(dTd);
+    
+    var tr2 = document.createElement('tr');
+    var ylTd = document.createElement('td');
+    var yearLabel = document.createElement('label');
+    yearLabel.innerHTML = 'Year: ';
+    ylTd.appendChild(yearLabel);
+    var yTd = document.createElement('td');
+    var year = document.createElement('input');
+    year.setAttribute('style', 'width: 45px;');
+    year.setAttribute('type', 'number');
+    year.min = infoHook.getFullYear();
+    year.id = source + 'year';
+    year.value = infoHook.getFullYear();
+    yTd.appendChild(year);
+    tr2.appendChild(ylTd);
+    tr2.appendChild(yTd);
+    
+    var tr3 = document.createElement('tr');
+    var hlTd = document.createElement('td');
+    var hourLabel = document.createElement('label');
+    hourLabel.innerHTML = 'Hour: ';
+    hlTd.appendChild(hourLabel);
+    var hTd = document.createElement('td');
+    var hour = document.createElement('input');
+    hour.setAttribute('style', 'width: 30px;');
+    hour.id = source + 'hour';
+    hour.setAttribute('type', 'number');
+    hour.min = '0';
+    hour.max = '23';
+    hour.value = infoHook.getHours();
+    hTd.appendChild(hour);
+    tr3.appendChild(hlTd);
+    tr3.appendChild(hTd);
+    
+    var tr4 = document.createElement('tr');
+    var milTd = document.createElement('td');
+    var minuteLabel = document.createElement('label');
+    minuteLabel.innerHTML = 'Minute: ';
+    milTd.appendChild(minuteLabel);
+    var miTd = document.createElement('td');
+    var minute = document.createElement('input');
+    minute.setAttribute('style', 'width: 30px;');
+    minute.setAttribute('type', 'number');
+    minute.min = '0';
+    minute.max = '59';
+    minute.id = source + 'minute';
+    minute.value = infoHook.getMinutes();
+    miTd.appendChild(minute);
+    tr4.appendChild(milTd);
+    tr4.appendChild(miTd);
+    
+    var tr5 = document.createElement('tr');
+    var slTd = document.createElement('td');
+    var secondLabel = document.createElement('label');
+    secondLabel.innerHTML = 'Second: ';
+    slTd.appendChild(secondLabel);
+    var sTd = document.createElement('td');
+    var second = document.createElement('input');
+    second.setAttribute('style', 'width: 30px;');
+    second.setAttribute('type', 'number');
+    second.min = '0';
+    second.max = '59';
+    second.id = source + 'second';
+    second.value = infoHook.getSeconds();
+    sTd.appendChild(second);
+    tr5.appendChild(slTd);
+    tr5.appendChild(sTd);
+    
+    document.getElementById(source + 'changeHook').appendChild(tr0);
+    document.getElementById(source + 'changeHook').appendChild(tr1);
+    document.getElementById(source + 'changeHook').appendChild(tr2);
+    document.getElementById(source + 'changeHook').appendChild(tr3);
+    document.getElementById(source + 'changeHook').appendChild(tr4);
+    document.getElementById(source + 'changeHook').appendChild(tr5);
+  }
 }
 
 function newTypeSelected(clientId)
