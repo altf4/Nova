@@ -124,9 +124,6 @@ function createScheduledEventElement(clientId)
   }
   
   typeSelect.setAttribute('onclick', 'newTypeSelected("' + clientId + '")');
-
-  /*var label5 = document.createElement('label');
-  label5.innerHTML = 'Cron String: ';*/
   
   var recurring = document.createElement('input');
   recurring.setAttribute('type', 'checkbox');
@@ -142,9 +139,8 @@ function createScheduledEventElement(clientId)
   var tr0 = document.createElement('tr');
   var mlTd = document.createElement('td');
   var monthLabel = document.createElement('label');
-  monthLabel.innerHTML = 'Month: ';
+  monthLabel.innerHTML = 'M ';
   mlTd.appendChild(monthLabel);
-  var mTd = document.createElement('td');
   var month = document.createElement('input');
   month.setAttribute('style', 'width: 30px;');
   month.setAttribute('type', 'number');
@@ -152,16 +148,13 @@ function createScheduledEventElement(clientId)
   month.max = '11';
   month.id = clientId + 'month';
   month.value = infoHook.getMonth();
-  mTd.appendChild(month);
+  mlTd.appendChild(month);
   tr0.appendChild(mlTd);
-  tr0.appendChild(mTd);
   
-  var tr1 = document.createElement('tr');
   var dlTd = document.createElement('td');
   var dayLabel = document.createElement('label');
-  dayLabel.innerHTML = 'Day: ';
+  dayLabel.innerHTML = '/D ';
   dlTd.appendChild(dayLabel);
-  var dTd = document.createElement('td');
   var day = document.createElement('input');
   day.setAttribute('type', 'number');
   day.setAttribute('style', 'width: 30px;');
@@ -169,32 +162,27 @@ function createScheduledEventElement(clientId)
   day.max = '31';
   day.value = infoHook.getDate();
   day.id = clientId + 'day';
-  dTd.appendChild(day);
-  tr1.appendChild(dlTd);
-  tr1.appendChild(dTd);
+  dlTd.appendChild(day);
+  tr0.appendChild(dlTd);
   
-  var tr2 = document.createElement('tr');
   var ylTd = document.createElement('td');
   var yearLabel = document.createElement('label');
-  yearLabel.innerHTML = 'Year: ';
+  yearLabel.innerHTML = '/Y ';
   ylTd.appendChild(yearLabel);
-  var yTd = document.createElement('td');
   var year = document.createElement('input');
   year.setAttribute('style', 'width: 45px;');
   year.setAttribute('type', 'number');
   year.min = infoHook.getFullYear();
   year.id = clientId + 'year';
   year.value = infoHook.getFullYear();
-  yTd.appendChild(year);
-  tr2.appendChild(ylTd);
-  tr2.appendChild(yTd);
+  ylTd.appendChild(year);
+  tr0.appendChild(ylTd);
   
-  var tr3 = document.createElement('tr');
+  var tr1 = document.createElement('tr');
   var hlTd = document.createElement('td');
   var hourLabel = document.createElement('label');
-  hourLabel.innerHTML = 'Hour: ';
+  hourLabel.innerHTML = 'H ';
   hlTd.appendChild(hourLabel);
-  var hTd = document.createElement('td');
   var hour = document.createElement('input');
   hour.setAttribute('style', 'width: 30px;');
   hour.id = clientId + 'hour';
@@ -202,16 +190,13 @@ function createScheduledEventElement(clientId)
   hour.min = '0';
   hour.max = '23';
   hour.value = infoHook.getHours();
-  hTd.appendChild(hour);
-  tr3.appendChild(hlTd);
-  tr3.appendChild(hTd);
+  hlTd.appendChild(hour);
+  tr1.appendChild(hlTd);
   
-  var tr4 = document.createElement('tr');
   var milTd = document.createElement('td');
   var minuteLabel = document.createElement('label');
-  minuteLabel.innerHTML = 'Minute: ';
+  minuteLabel.innerHTML = ':M ';
   milTd.appendChild(minuteLabel);
-  var miTd = document.createElement('td');
   var minute = document.createElement('input');
   minute.setAttribute('style', 'width: 30px;');
   minute.setAttribute('type', 'number');
@@ -219,16 +204,13 @@ function createScheduledEventElement(clientId)
   minute.max = '59';
   minute.id = clientId + 'minute';
   minute.value = infoHook.getMinutes();
-  miTd.appendChild(minute);
-  tr4.appendChild(milTd);
-  tr4.appendChild(miTd);
+  milTd.appendChild(minute);
+  tr1.appendChild(milTd);
   
-  var tr5 = document.createElement('tr');
   var slTd = document.createElement('td');
   var secondLabel = document.createElement('label');
-  secondLabel.innerHTML = 'Second: ';
+  secondLabel.innerHTML = ':S ';
   slTd.appendChild(secondLabel);
-  var sTd = document.createElement('td');
   var second = document.createElement('input');
   second.setAttribute('style', 'width: 30px;');
   second.setAttribute('type', 'number');
@@ -236,9 +218,8 @@ function createScheduledEventElement(clientId)
   second.max = '59';
   second.id = clientId + 'second';
   second.value = infoHook.getSeconds();
-  sTd.appendChild(second);
-  tr5.appendChild(slTd);
-  tr5.appendChild(sTd);
+  slTd.appendChild(second);
+  tr1.appendChild(slTd);
 
   var label4 = document.createElement('label');
   label4.innerHTML = 'Event Name: ';
@@ -256,10 +237,6 @@ function createScheduledEventElement(clientId)
   
   tbody.appendChild(tr0);
   tbody.appendChild(tr1);
-  tbody.appendChild(tr2);
-  tbody.appendChild(tr3);
-  tbody.appendChild(tr4);
-  tbody.appendChild(tr5);
   
   var b0 = document.createElement('br');
   var b1 = document.createElement('br');
@@ -280,8 +257,6 @@ function createScheduledEventElement(clientId)
 
 function recurringChanged(source)
 {
-  // Restructure table here
-  console.log('recurringChanged');
   while(document.getElementById(source + 'changeHook').hasChildNodes())
   {
     document.getElementById(source + 'changeHook').removeChild(document.getElementById(source + 'changeHook').lastChild);
@@ -363,9 +338,8 @@ function recurringChanged(source)
     var tr1 = document.createElement('tr');
     var hlTd = document.createElement('td');
     var hourLabel = document.createElement('label');
-    hourLabel.innerHTML = 'Hour: ';
+    hourLabel.innerHTML = 'H ';
     hlTd.appendChild(hourLabel);
-    var hTd = document.createElement('td');
     var hour = document.createElement('input');
     hour.setAttribute('style', 'width: 30px;');
     hour.id = source + 'hour';
@@ -373,16 +347,13 @@ function recurringChanged(source)
     hour.min = '0';
     hour.max = '23';
     hour.value = infoHook.getHours();
-    hTd.appendChild(hour);
+    hlTd.appendChild(hour);
     tr1.appendChild(hlTd);
-    tr1.appendChild(hTd);
     
-    var tr2 = document.createElement('tr');
     var milTd = document.createElement('td');
     var minuteLabel = document.createElement('label');
-    minuteLabel.innerHTML = 'Minute: ';
+    minuteLabel.innerHTML = ':M ';
     milTd.appendChild(minuteLabel);
-    var miTd = document.createElement('td');
     var minute = document.createElement('input');
     minute.setAttribute('style', 'width: 30px;');
     minute.setAttribute('type', 'number');
@@ -390,16 +361,13 @@ function recurringChanged(source)
     minute.max = '59';
     minute.id = source + 'minute';
     minute.value = infoHook.getMinutes();
-    miTd.appendChild(minute);
-    tr2.appendChild(milTd);
-    tr2.appendChild(miTd);
+    milTd.appendChild(minute);
+    tr1.appendChild(milTd);
     
-    var tr3 = document.createElement('tr');
     var slTd = document.createElement('td');
     var secondLabel = document.createElement('label');
-    secondLabel.innerHTML = 'Second: ';
+    secondLabel.innerHTML = ':S ';
     slTd.appendChild(secondLabel);
-    var sTd = document.createElement('td');
     var second = document.createElement('input');
     second.setAttribute('style', 'width: 30px;');
     second.setAttribute('type', 'number');
@@ -407,23 +375,19 @@ function recurringChanged(source)
     second.max = '59';
     second.id = source + 'second';
     second.value = infoHook.getSeconds();
-    sTd.appendChild(second);
-    tr3.appendChild(slTd);
-    tr3.appendChild(sTd);
+    slTd.appendChild(second);
+    tr1.appendChild(slTd);
     
     document.getElementById(source + 'changeHook').appendChild(tr0);
     document.getElementById(source + 'changeHook').appendChild(tr1);
-    document.getElementById(source + 'changeHook').appendChild(tr2);
-    document.getElementById(source + 'changeHook').appendChild(tr3);
   }
   else
   {
     var tr0 = document.createElement('tr');
     var mlTd = document.createElement('td');
     var monthLabel = document.createElement('label');
-    monthLabel.innerHTML = 'Month: ';
+    monthLabel.innerHTML = 'M ';
     mlTd.appendChild(monthLabel);
-    var mTd = document.createElement('td');
     var month = document.createElement('input');
     month.setAttribute('style', 'width: 30px;');
     month.setAttribute('type', 'number');
@@ -431,48 +395,42 @@ function recurringChanged(source)
     month.max = '11';
     month.id = source + 'month';
     month.value = infoHook.getMonth();
-    mTd.appendChild(month);
+    mlTd.appendChild(month);
     tr0.appendChild(mlTd);
-    tr0.appendChild(mTd);
     
-    var tr1 = document.createElement('tr');
     var dlTd = document.createElement('td');
     var dayLabel = document.createElement('label');
-    dayLabel.innerHTML = 'Day: ';
+    dayLabel.innerHTML = '/D ';
     dlTd.appendChild(dayLabel);
     var dTd = document.createElement('td');
     var day = document.createElement('input');
     day.setAttribute('type', 'number');
-    day.setAttribute('style', 'width: 100px;');
+    day.setAttribute('style', 'width: 30px;');
     day.min = '1';
     day.max = '31';
     day.id = source + 'day';
-    dTd.appendChild(day);
-    tr1.appendChild(dlTd);
-    tr1.appendChild(dTd);
+    day.value = infoHook.getDate();
+    dlTd.appendChild(day);
+    tr0.appendChild(dlTd);
     
-    var tr2 = document.createElement('tr');
     var ylTd = document.createElement('td');
     var yearLabel = document.createElement('label');
-    yearLabel.innerHTML = 'Year: ';
+    yearLabel.innerHTML = '/Y ';
     ylTd.appendChild(yearLabel);
-    var yTd = document.createElement('td');
     var year = document.createElement('input');
     year.setAttribute('style', 'width: 45px;');
     year.setAttribute('type', 'number');
     year.min = infoHook.getFullYear();
     year.id = source + 'year';
     year.value = infoHook.getFullYear();
-    yTd.appendChild(year);
-    tr2.appendChild(ylTd);
-    tr2.appendChild(yTd);
+    ylTd.appendChild(year);
+    tr0.appendChild(ylTd);
     
-    var tr3 = document.createElement('tr');
+    var tr1 = document.createElement('tr');
     var hlTd = document.createElement('td');
     var hourLabel = document.createElement('label');
-    hourLabel.innerHTML = 'Hour: ';
+    hourLabel.innerHTML = 'H ';
     hlTd.appendChild(hourLabel);
-    var hTd = document.createElement('td');
     var hour = document.createElement('input');
     hour.setAttribute('style', 'width: 30px;');
     hour.id = source + 'hour';
@@ -480,16 +438,13 @@ function recurringChanged(source)
     hour.min = '0';
     hour.max = '23';
     hour.value = infoHook.getHours();
-    hTd.appendChild(hour);
-    tr3.appendChild(hlTd);
-    tr3.appendChild(hTd);
+    hlTd.appendChild(hour);
+    tr1.appendChild(hlTd);
     
-    var tr4 = document.createElement('tr');
     var milTd = document.createElement('td');
     var minuteLabel = document.createElement('label');
-    minuteLabel.innerHTML = 'Minute: ';
+    minuteLabel.innerHTML = ':M ';
     milTd.appendChild(minuteLabel);
-    var miTd = document.createElement('td');
     var minute = document.createElement('input');
     minute.setAttribute('style', 'width: 30px;');
     minute.setAttribute('type', 'number');
@@ -497,16 +452,13 @@ function recurringChanged(source)
     minute.max = '59';
     minute.id = source + 'minute';
     minute.value = infoHook.getMinutes();
-    miTd.appendChild(minute);
-    tr4.appendChild(milTd);
-    tr4.appendChild(miTd);
+    milTd.appendChild(minute);
+    tr1.appendChild(milTd);
     
-    var tr5 = document.createElement('tr');
     var slTd = document.createElement('td');
     var secondLabel = document.createElement('label');
-    secondLabel.innerHTML = 'Second: ';
+    secondLabel.innerHTML = ':S ';
     slTd.appendChild(secondLabel);
-    var sTd = document.createElement('td');
     var second = document.createElement('input');
     second.setAttribute('style', 'width: 30px;');
     second.setAttribute('type', 'number');
@@ -514,16 +466,11 @@ function recurringChanged(source)
     second.max = '59';
     second.id = source + 'second';
     second.value = infoHook.getSeconds();
-    sTd.appendChild(second);
-    tr5.appendChild(slTd);
-    tr5.appendChild(sTd);
+    slTd.appendChild(second);
+    tr1.appendChild(slTd);
     
     document.getElementById(source + 'changeHook').appendChild(tr0);
     document.getElementById(source + 'changeHook').appendChild(tr1);
-    document.getElementById(source + 'changeHook').appendChild(tr2);
-    document.getElementById(source + 'changeHook').appendChild(tr3);
-    document.getElementById(source + 'changeHook').appendChild(tr4);
-    document.getElementById(source + 'changeHook').appendChild(tr5);
   }
 }
 
