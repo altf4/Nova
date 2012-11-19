@@ -373,6 +373,14 @@ MessageSend = function(message)
       }
       if(targets[i] != '' && targets[i] != undefined && sendMessage)
       {
+        if(message.type == 'requestBenign')
+        {
+          AddClientBenignRequest(targets[i]);
+        }
+        else if(message.type == 'cancelRequestBenign')
+        {
+          RemoveClientBenignRequest(targets[i]);
+        }
 	      novaClients[targets[i]].connection.sendUTF(JSON.stringify(message));
 	      seen.push(targets[i]);
       }
@@ -393,11 +401,11 @@ GetSuspectDetails = function(suspect)
 }
 everyone.now.GetSuspectDetails = GetSuspectDetails
 
-SetScheduledMessage = function(clientId, name, message, cron, date, cb)
+SetScheduledMessage = function(clientId, name, message, eventObj, cb)
 {
-  if((cron == '' || cron == undefined) && (date == undefined || date == ''))
+  if(eventObj == undefined || eventObj == '')
   {
-    cb(clientId, 'failed', 'No cron string or scheduled date for ' + newSchedule.id + '.');
+    cb(clientId, 'failed');
     return; 
   }
   
@@ -406,24 +414,59 @@ SetScheduledMessage = function(clientId, name, message, cron, date, cb)
   newSchedule.clientId = clientId;
   newSchedule.messageType = message.type;
   
-  if(date == undefined && (cron != '' && cron != undefined))
+  if(typeof eventObj == 'object')
   {
-    newSchedule.eventType = 'cron';
-    newSchedule.job = schedule.scheduleJob(newSchedule.id, cron, function(){
+    newSchedule.eventType = 'recurring';
+    var passObj = new schedule.RecurrenceRule();
+    passObj.dayOfWeek = parseInt(eventObj.dayOfWeek);
+    passObj.hour = parseInt(eventObj.hour);
+    passObj.minute = parseInt(eventObj.minute);
+    newSchedule.job = schedule.scheduleJob(newSchedule.id, passObj, function(){
       everyone.now.MessageSend(message);
     });
-    newSchedule.cron = cron;
+    var recurringString = '';
+    for(var i in eventObj)
+    {
+      switch(i)
+      {
+        case 'dayOfWeek': switch(eventObj.dayOfWeek)
+                          {
+                            case '0': recurringString += 'Sundays at ';
+                                      break;
+                            case '1': recurringString += 'Mondays at ';
+                                      break;
+                            case '2': recurringString += 'Tuesdays at ';
+                                      break;
+                            case '3': recurringString += 'Wednesdays at ';
+                                      break;
+                            case '4': recurringString += 'Thursdays at ';
+                                      break;
+                            case '5': recurringString += 'Fridays at ';
+                                      break;
+                            case '6': recurringString += 'Saturdays at ';
+                                      break;
+                          }
+                          break;
+        case 'hour': recurringString += eventObj.hour + ':';
+                     break;
+        case 'minute': recurringString += eventObj.minute;
+                       break;
+        default: console.log('Unidentified index ' + i + ', doing nothing');
+                 break;
+      }
+    }
+    newSchedule.recurring = recurringString;
     newSchedule.date = '';
   }
-  else if(date != undefined)
+  else if(typeof eventObj == 'string')
   {
     newSchedule.eventType = 'date';
-    var passDate = new Date(date);
+    var passDate = new Date(eventObj);
     newSchedule.job = schedule.scheduleJob(newSchedule.id, passDate, function(){
       everyone.now.MessageSend(message);
     });
     newSchedule.date = passDate.toString();
-    newSchedule.cron = '';
+    newSchedule.recurring = '';
   }
   else
   {
@@ -441,7 +484,7 @@ SetScheduledMessage = function(clientId, name, message, cron, date, cb)
     } 
   }
   
-  cb(clientId, 'succeeded', 'Adding new scheduled event to list.');
+  cb(clientId, 'succeeded');
   scheduledMessages.push(newSchedule);
 }
 everyone.now.SetScheduledMessage = SetScheduledMessage;
@@ -471,8 +514,8 @@ GetScheduledEvents = function(callback)
     json.messageType = scheduledMessages[i].messageType;
     json.eventName = scheduledMessages[i].id;
     json.eventType = scheduledMessages[i].eventType;
-    json.cronString = scheduledMessages[i].cron; 
-    json.dateString = scheduledMessages[i].date;
+    json.recurring = scheduledMessages[i].recurring; 
+    json.date = scheduledMessages[i].date;
     callback(json);
   }
 }

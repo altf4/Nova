@@ -206,20 +206,6 @@ function createScheduledEventElement(clientId)
   minute.value = infoHook.getMinutes();
   milTd.appendChild(minute);
   tr1.appendChild(milTd);
-  
-  var slTd = document.createElement('td');
-  var secondLabel = document.createElement('label');
-  secondLabel.innerHTML = ':S ';
-  slTd.appendChild(secondLabel);
-  var second = document.createElement('input');
-  second.setAttribute('style', 'width: 30px;');
-  second.setAttribute('type', 'number');
-  second.min = '0';
-  second.max = '59';
-  second.id = clientId + 'second';
-  second.value = infoHook.getSeconds();
-  slTd.appendChild(second);
-  tr1.appendChild(slTd);
 
   var label4 = document.createElement('label');
   label4.innerHTML = 'Event Name: ';
@@ -364,20 +350,6 @@ function recurringChanged(source)
     milTd.appendChild(minute);
     tr1.appendChild(milTd);
     
-    var slTd = document.createElement('td');
-    var secondLabel = document.createElement('label');
-    secondLabel.innerHTML = ':S ';
-    slTd.appendChild(secondLabel);
-    var second = document.createElement('input');
-    second.setAttribute('style', 'width: 30px;');
-    second.setAttribute('type', 'number');
-    second.min = '0';
-    second.max = '59';
-    second.id = source + 'second';
-    second.value = infoHook.getSeconds();
-    slTd.appendChild(second);
-    tr1.appendChild(slTd);
-    
     document.getElementById(source + 'changeHook').appendChild(tr0);
     document.getElementById(source + 'changeHook').appendChild(tr1);
   }
@@ -455,20 +427,6 @@ function recurringChanged(source)
     milTd.appendChild(minute);
     tr1.appendChild(milTd);
     
-    var slTd = document.createElement('td');
-    var secondLabel = document.createElement('label');
-    secondLabel.innerHTML = ':S ';
-    slTd.appendChild(secondLabel);
-    var second = document.createElement('input');
-    second.setAttribute('style', 'width: 30px;');
-    second.setAttribute('type', 'number');
-    second.min = '0';
-    second.max = '59';
-    second.id = source + 'second';
-    second.value = infoHook.getSeconds();
-    slTd.appendChild(second);
-    tr1.appendChild(slTd);
-    
     document.getElementById(source + 'changeHook').appendChild(tr0);
     document.getElementById(source + 'changeHook').appendChild(tr1);
   }
@@ -479,13 +437,13 @@ function newTypeSelected(clientId)
   // For when message types requiring arguments are supported
 }
 
-function registerScheduledMessage(clientId, name, message, date, cb)
+function registerScheduledMessage(clientId, name, message, eventObj, cb)
 {
   message.id = clientId + ':';
-  now.SetScheduledMessage(clientId, name, message, date, cb);
+  now.SetScheduledMessage(clientId, name, message, eventObj, cb);
 }
 
-function submitSchedule()
+function submitSchedule(cb)
 {
   for(var i in document.getElementById('elementHook').childNodes)
   {
@@ -500,23 +458,38 @@ function submitSchedule()
         alert('Scheduled event names must consist of 2-10 alphanumeric characters');
         return;
       }
+      var name = document.getElementById(id + 'name').value;
       if(document.getElementById(id + 'recurring').checked)
       {
         var recurrenceValues = {};
-        console.log('Constructing recurrence rule parameters');
+        var dayOfWeek = (document.getElementById(id + 'dayOfWeek').value != '' ? document.getElementById(id + 'dayOfWeek').value : '0');
+        var hour = (document.getElementById(id + 'hour').value != '' ? document.getElementById(id + 'hour').value : '0');
+        var minute = (document.getElementById(id + 'minute').value != '' ? document.getElementById(id + 'minute').value : '0');
+        recurrenceValues.dayOfWeek = dayOfWeek;
+        recurrenceValues.hour = hour;
+        recurrenceValues.minute = minute;
+        message.type = document.getElementById(id + 'select').value;
+        registerScheduledMessage(id, name, message, recurrenceValues, function(clientId, result){
+          console.log('Event registration for ' + clientId + ' ' + result);
+        });
       }
       else
       {
-        console.log('constructing Date for one time event');
         var year = (document.getElementById(id + 'year').value != '' ? document.getElementById(id + 'year').value : '0');
         var month = (document.getElementById(id + 'month').value != '' ? document.getElementById(id + 'month').value : '0');
         var day = (document.getElementById(id + 'day').value != '' ? document.getElementById(id + 'day').value : '0');
         var hour = (document.getElementById(id + 'hour').value != '' ? document.getElementById(id + 'hour').value : '0');
         var minute = (document.getElementById(id + 'minute').value != '' ? document.getElementById(id + 'minute').value : '0');
-        var second = (document.getElementById(id + 'second').value != '' ? document.getElementById(id + 'second').value : '0');
-        var submitDate = new Date(year, month, day, hour, minute, second);
-        console.log('submitDate ' + submitDate.toDateString());
+        var submitDate = new Date(year, month, day, hour, minute);
+        message.type = document.getElementById(id + 'select').value;
+        registerScheduledMessage(id, name, message, submitDate, function(clientId, result){
+          console.log('Event registration for ' + clientId + ' ' + result);
+        });
       }
     }
+  }
+  if(typeof cb == 'function')
+  {
+    cb();
   }
 }
