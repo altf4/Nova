@@ -33,9 +33,7 @@ namespace Nova
 		pthread_cond_init(&m_cond, NULL);
 		uint64_t initKey = 0;
 		initKey--;
-		m_table.set_empty_key(initKey);
 		initKey--;
-		m_table.set_deleted_key(initKey);
 	}
 
 	// Default Deconstructor for EvidenceTable

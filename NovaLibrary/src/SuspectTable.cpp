@@ -54,14 +54,8 @@ SuspectTable::SuspectTable()
 
 	SuspectIdentifier initKey;
 	initKey.m_internal = 1;
-	m_suspectTable.set_empty_key(initKey);
-	m_lockTable.set_empty_key(initKey);
-	m_empty_key = initKey;
 
 	initKey.m_internal = 2;
-	m_suspectTable.set_deleted_key(initKey);
-	m_lockTable.set_deleted_key(initKey);
-	m_deleted_key = initKey;
 
 	m_emptySuspect.SetClassification(EMPTY_SUSPECT_CLASSIFICATION);
 }
@@ -485,15 +479,6 @@ uint SuspectTable::Size()
 	Lock lock(&m_lock, READ_LOCK);
 	uint ret = m_suspectTable.size();
 	return ret;
-}
-
-// Resizes the table to the given size.
-//		size: the number of bins to use
-// Note: Choosing an initial size that covers normal usage can improve performance.
-void SuspectTable::Resize(uint size)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_suspectTable.resize(size);
 }
 
 void SuspectTable::SaveSuspectsToFile(string filename)

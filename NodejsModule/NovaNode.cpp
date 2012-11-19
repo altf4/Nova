@@ -250,11 +250,7 @@ void NovaNode::Init(Handle<Object> target)
 
 	SuspectIdentifier initKey;
 	initKey.m_internal = 1;
-	m_suspects.set_empty_key(initKey);
 	initKey.m_internal = 2;
-	m_suspects.set_deleted_key(initKey);
-
-	
 }
 
 

@@ -45,8 +45,6 @@ bool TrainingDump::LoadCaptureFile(string pathDumpFile)
 	trainingTable = NULL;
 
 	trainingTable = new trainingFileSuspectMap();
-	trainingTable->set_empty_key("");
-	trainingTable->set_deleted_key(" ");
 
 	ifstream dataFile(pathDumpFile.data());
 	string line, ip, data;

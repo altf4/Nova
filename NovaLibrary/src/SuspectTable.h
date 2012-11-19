@@ -147,11 +147,6 @@ public:
 	// Returns the size of the Table
 	uint Size();
 
-	// Resizes the table to the given size.
-	//		size: the number of bins to use
-	// Note: Choosing an initial size that covers normal usage can improve performance.
-	void Resize(uint size);
-
 	// Saves suspectTable to a human readable text file
 	void SaveSuspectsToFile(std::string filename);
 
@@ -189,9 +184,6 @@ public:
 	Suspect m_emptySuspect;
 
 private:
-
-	Nova::SuspectIdentifier m_empty_key;
-	Nova::SuspectIdentifier m_deleted_key;
 
 	// Hashmap used for constant time key lookups
 	SuspectHashTable m_suspectTable;
