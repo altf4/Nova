@@ -57,10 +57,6 @@ block headerAdditions
      }
     
     function deleteSelectedItems() {
-      // This still isn't working properly, but I wanted to revert it to
-      // it's last point nonetheless. I have a question posted in stack overflow
-      // about it, if that doesn't bear any fruit than we may have to 
-      // move away from a DataGrid and try something else.
       var items = grid.GetSelected();
      
       for(var i in items)
