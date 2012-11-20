@@ -23,16 +23,16 @@
 //   tableElement: DOM object of the <table> 
 //   selection: boolean. Enable or disable the ability to select table rows
 var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection) {
-	this.m_columns = columns; /* Array of objects containing "name" and "formatter" attributes */
-	this.m_keyIndex = keyIndex; /* Column index to use as a row's key */
-	this.m_sortByKey = keyIndex; /* Column index to sort by */
+	this.m_columns = columns;
+	this.m_keyIndex = keyIndex;
+	this.m_sortByKey = keyIndex;
 	this.m_sortDescending = true;
-	this.m_tableElement = tableElement; /* DOM Object of the table */
+	this.m_tableElement = tableElement;
 	this.m_elements = new Object();
-	this.m_pageElements = []; /* Used internally. Array of keys (non escaped) in the order in which the rows are currently displayed */
-	this.m_renderCallback = function() {}; /* Called after the table has rendered */
-	this.m_selected = []; /* Array of keys (run through escape()) that are currently selected */
-	this.m_selection = selection; /* Bool value. True means selection is enabled */
+	this.m_pageElements = [];
+	this.m_renderCallback = function() {};
+	this.m_selected = [];
+	this.m_selection = selection;
 	this.m_currentPage = 0;
 	this.m_rowsPerPage = Number.MAX_VALUE;
 	this.m_name = gridName;
@@ -131,9 +131,37 @@ PushEntry: function (entry) {
 			   }
 
 			   for (var i = this.m_currentPage * this.m_rowsPerPage; (i < arrayRep.length) && (i < (this.m_currentPage + 1)* this.m_rowsPerPage); i++) {
-				this.m_pageElements.push(arrayRep[i][this.m_keyIndex]);
-				var sub = arrayRep[i][this.m_keyIndex];
-					   innerTableString += '<TR class="novaGrid" id=' + escape(sub) + '>';
+				   var sub = '';
+				   var idx = keys[i].indexOf('>');
+				   // All this magic because the grid is keyed to an html
+				   // element and not a string for the main.jade page.
+				   if(idx != -1)
+				   {
+					   var put = keys[i].substring(idx + 1, keys[i].indexOf('<', idx));
+					   if(put[0] == ' ')
+					   {
+						   put = put.substring(1);
+					   }
+					   if(put[put.length] == ' ')
+					   {
+						   put = put.substring(0, put.length - 2);
+					   }
+					   this.m_pageElements.push(put);
+					   sub = put;  
+				   }
+				   else
+				   {
+					   this.m_pageElements.push(arrayRep[i][this.m_keyIndex]);
+					   sub = arrayRep[i][this.m_keyIndex];
+				   }
+				   if(this.m_selection)
+				   {
+					   innerTableString += '<TR class="novaGrid" id=\'' + sub + '\', onclick="' + this.m_name + '.AddToSelected(\'' + sub + '\', event);">';
+		  }
+		  else
+		  {
+		    innerTableString += '<TR class="novaGrid">';
+		  }
 			for (var c = 0; c < this.m_columns.length; c++) {
 				if (this.m_columns[c].formatter !== undefined) {
 				   innerTableString += '<TD class="novaGrid">' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
@@ -187,7 +215,7 @@ PushEntry: function (entry) {
     return ret;
   }
   
-  , AddToSelected: function(key, row, oEvent) {
+  , AddToSelected: function(key, oEvent) {
     if(oEvent.ctrlKey)
     {
       var add = true;
@@ -203,12 +231,12 @@ PushEntry: function (entry) {
       if(add)
       {
         this.m_selected.push(key);
-        this.ChangeRowColor(row, true);
+        this.ChangeRowColor(key, true);
       }
       else
       {
         delete this.m_selected[idx];
-        this.ChangeRowColor(row, false);
+        this.ChangeRowColor(key, false);
       }
     }
     else if(oEvent.shiftKey)
@@ -222,11 +250,11 @@ PushEntry: function (entry) {
       {
 
         for (var i = 0; i < this.m_pageElements.length; i++) {
-          if(escape(this.m_pageElements[i]) == this.m_selected[0])
+          if(this.m_pageElements[i] == this.m_selected[0])
           {
             idxStart = i;
           }
-          else if(escape(this.m_pageElements[i]) == key)
+          else if(this.m_pageElements[i] == key)
           {
             idxEnd = i;
           }
@@ -242,15 +270,15 @@ PushEntry: function (entry) {
         this.m_selected = [];
         for(var i = idxStart; i <= idxEnd; i++)
         {
-          this.m_selected.push(escape(this.m_pageElements[i]));
-          this.ChangeRowColor(document.getElementById(escape(this.m_pageElements[i])), true);
+          this.m_selected.push(this.m_pageElements[i]);
+          this.ChangeRowColor(this.m_pageElements[i], true);
         }
       }
       else
       {
         for(var i in this.m_selected)
         {
-          this.ChangeRowColor(document.getElementById(this.m_selected[i]), false);
+          this.ChangeRowColor(this.m_selected[i], false);
         }
         this.m_selected = [];
         this.m_selected.push(key);       
@@ -261,11 +289,11 @@ PushEntry: function (entry) {
     {
       for(var i in this.m_selected)
       {
-       this.ChangeRowColor(document.getElementById(this.m_selected[i]), false);
+       this.ChangeRowColor(this.m_selected[i], false);
       }
       this.m_selected = [];
       this.m_selected.push(key);
-      this.ChangeRowColor(document.getElementById(this.m_selected[0]), true);
+      this.ChangeRowColor(this.m_selected[0], true);
     }
   }
   
@@ -282,18 +310,18 @@ PushEntry: function (entry) {
     if(add)
     {
       this.m_selected.push(key);
-      this.ChangeRowColor(row, true);
+      this.ChangeRowColor(key, true);
     }
   }
   
-  , ChangeRowColor: function(element, makeBlue) {
+  , ChangeRowColor: function(elementId, makeBlue) {
     if(makeBlue == false)
     {
-      element.style.background = 'white';
+      document.getElementById(elementId).style.background = 'white';
     }
     else
     {
-      element.style.background = '#d0e9fc';
+      document.getElementById(elementId).style.background = '#d0e9fc';
     }
   }
     // Renders the table
@@ -302,23 +330,6 @@ PushEntry: function (entry) {
 		//theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
 		
 		this.m_tableElement = replaceHtml(this.m_tableElement, this.GetTable());
-
-		if (this.m_selection === true) {
-			var rows = this.m_tableElement.getElementsByTagName("tr");
-			for (i = 0; i < rows.length; i++) {
-				var currentRow = this.m_tableElement.rows[i];
-				var createClickHandler = 
-					function(gridObject, row) 
-					{
-						return function() { 
-							var key = row.id;
-							gridObject.AddToSelected(key, row, event);
-						};
-					};
-
-				currentRow.onclick = createClickHandler(this, currentRow);
-			}
-		}
 		this.m_renderCallback();
 	}
 }
