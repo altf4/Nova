@@ -193,7 +193,14 @@ PortSet *Profile::GetRandomPortSet()
 {
 	if(m_portSets.empty())
 	{
-		return NULL;
+		if (m_parent != NULL)
+		{
+			return m_parent->GetRandomPortSet();
+		}
+		else
+		{
+			return NULL;
+		}
 	}
 
 	//Now we pick a random number between 1 and totalOccurrences
