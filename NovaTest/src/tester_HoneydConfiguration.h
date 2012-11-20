@@ -72,8 +72,8 @@ TEST_F(HoneydConfigurationTest, test_RenameProfile)
 	EXPECT_TRUE(HC->RenameProfile("TestProfile", "TestProfile-renamed"));
 
 	// Make sure it was renamed
-	EXPECT_TRUE(HC->GetProfile("TestProfile-renamed") == NULL);
-	EXPECT_TRUE(HC->GetProfile("TestProfile") != NULL);
+	EXPECT_TRUE(HC->GetProfile("TestProfile-renamed") != NULL);
+	EXPECT_TRUE(HC->GetProfile("TestProfile") == NULL);
 }
 
 TEST_F(HoneydConfigurationTest, test_errorCases)
