@@ -484,6 +484,18 @@ function submitSchedule()
           console.log('Event registration for ' + clientId + ' ' + result);
         });
       }
+      
+      var j = 0;
+      var element = document.getElementById('check' + j).value;
+      
+      do
+      {
+        if(element == id)
+        {
+          document.getElementById('check' + j).checked = false;
+          element = undefined;
+        } 
+      }while(element != undefined && j++);
     }
   }
   while(document.getElementById('elementHook').hasChildNodes())

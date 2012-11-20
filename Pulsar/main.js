@@ -18,7 +18,6 @@ var BasicStrategy = require('passport-http').BasicStrategy;
 var NovaHomePath = config.GetPathHome();
 var NovaSharedPath = config.GetPathShared();
 
-
 // Setup TLS
 var app;
 if (config.ReadSetting("PULSAR_WEBUI_TLS_ENABLED") == "1") {
@@ -35,7 +34,6 @@ if (config.ReadSetting("PULSAR_WEBUI_TLS_ENABLED") == "1") {
 } else {
 	app = express.createServer();
 }
-
 
 // Configure the express server to use the 
 // bodyParser so that we can view and use the 
@@ -435,7 +433,7 @@ SetScheduledMessage = function(clientId, name, message, eventObj, cb)
     newSchedule.hour = passObj.hour;
     newSchedule.minute = passObj.minute;
     newSchedule.job = schedule.scheduleJob(newSchedule.id, passObj, function(){
-      everyone.now.MessageSend(message);
+      MessageSend(message);
     });
     var recurringString = '';
     for(var i in eventObj)
@@ -476,7 +474,14 @@ SetScheduledMessage = function(clientId, name, message, eventObj, cb)
     newSchedule.eventType = 'date';
     var passDate = new Date(eventObj);
     newSchedule.job = schedule.scheduleJob(newSchedule.id, passDate, function(){
-      everyone.now.MessageSend(message);
+      MessageSend(message);
+      UnsetScheduledMessage(newSchedule.id, function(result, message){
+        console.log(message);
+      });
+      if(typeof everyone.now.RemoveEventFromList == 'function')
+      {
+        everyone.now.RemoveEventFromList(newSchedule.id);
+      }
     });
     newSchedule.date = passDate.toString();
     newSchedule.recurring = '';

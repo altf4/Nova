@@ -30,6 +30,11 @@ block headerAdditions
       }); 
     }
     
+    now.RemoveEventFromList = function(remove)
+    {
+      document.getElementById('elementHook').removeChild(document.getElementById(remove));
+    }
+    
     function generateScheduledEventElement(json)
     {
       var row = document.createElement('tr');
