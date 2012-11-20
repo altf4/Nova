@@ -1095,4 +1095,18 @@ string HoneydConfiguration::SanitizeProfileName(std::string oldName)
 	return newname;
 }
 
+void HoneydConfiguration::ClearProfiles()
+{
+	for (uint i = 0; i < m_profiles.m_root->m_children.size(); i++)
+	{
+		delete m_profiles.m_root->m_children[i];
+	}
+	m_profiles.m_root->m_children.clear();
+}
+
+void HoneydConfiguration::ClearNodes()
+{
+	m_nodes.clear();
+}
+
 }

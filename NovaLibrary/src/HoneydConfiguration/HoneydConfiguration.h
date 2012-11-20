@@ -173,6 +173,9 @@ public:
 
 	static std::string SanitizeProfileName(std::string pfilename);
 
+	void ClearProfiles();
+	void ClearNodes();
+
 	ProfileTree m_profiles;
 
 	//A map structure for node storage

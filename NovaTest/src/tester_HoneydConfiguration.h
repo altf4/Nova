@@ -37,6 +37,8 @@ protected:
 	{
 		EXPECT_TRUE(HC != NULL);
 		EXPECT_TRUE(HC->ReadAllTemplatesXML());
+		HC->ClearProfiles();
+		HC->ClearNodes();
 	}
 };
 
@@ -57,10 +59,6 @@ TEST_F(HoneydConfigurationTest, test_WriteAllTemplatesXML)
 
 TEST_F(HoneydConfigurationTest, test_RenameProfile)
 {
-	// Delete the profile if it already exists
-	HC->DeleteProfile("TestProfile-renamed");
-	HC->DeleteProfile("TestProfile");
-
 	// Create dummy profile
 	Profile * p = new Profile("default", "TestProfile");
 
@@ -93,12 +91,6 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 {
 	//Create dummy profile
 	Profile * p = new Profile("default", "TestProfile");
-	p->m_uptimeMax = 100;
-	p->m_uptimeMin = 10;
-
-	// Delete the profile if it already exists
-	HC->DeleteProfile("TestProfile-renamed");
-	HC->DeleteProfile("TestProfile");
 
 	//Test adding a profile
 	EXPECT_TRUE(HC->AddProfile(p));
@@ -106,7 +98,6 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 
 	// Add a child profile
 	Profile * pChild = new Profile("TestProfile", "TestProfileChild");
-	pChild->m_uptimeMin = 42;
 	EXPECT_TRUE(HC->AddProfile(pChild));
 	EXPECT_TRUE(HC->GetProfile("TestProfileChild") != NULL);
 
@@ -120,4 +111,33 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 	EXPECT_TRUE(HC->DeleteProfile("TestProfileRenamed"));
 	EXPECT_TRUE(HC->GetProfile("TestProfileRenamed") == NULL);
 	EXPECT_TRUE(HC->GetProfile("TestProfileChild") == NULL);
+}
+
+TEST_F(HoneydConfigurationTest, test_GetProfileNames)
+{
+	EXPECT_TRUE(HC->AddProfile(new Profile("default", "top")));
+	EXPECT_TRUE(HC->AddProfile(new Profile("default", "top")));
+	EXPECT_TRUE(HC->AddProfile(new Profile("top", "topChild")));
+	EXPECT_TRUE(HC->AddProfile(new Profile("topChild", "topGrandChild")));
+
+	vector<string> profiles = HC->GetProfileNames();
+	// default + 4 new ones (one duplicate) = 4
+	EXPECT_EQ(4, profiles.size());
+}
+
+TEST_F(HoneydConfigurationTest, test_AddNodes)
+{
+	EXPECT_TRUE(HC->AddNodes("default", "DHCP", "eth0", 10));
+	EXPECT_EQ(10, HC->GetNodeMACs().size());
+}
+
+TEST_F(HoneydConfigurationTest, test_AddNode)
+{
+	Node node;
+	node.m_MAC = "FF:FF:BA:BE:CA:FE";
+	node.m_pfile = "default";
+
+	EXPECT_TRUE(HC->AddNode(node));
+	EXPECT_TRUE(HC->GetNode("FF:FF:BA:BE:CA:FE") != NULL);
+	EXPECT_TRUE(HC->GetNode("FF:FF:BA:BE:CA:FE")->m_MAC == "FF:FF:BA:BE:CA:FE");
 }
