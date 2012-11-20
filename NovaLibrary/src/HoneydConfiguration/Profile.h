@@ -63,6 +63,38 @@ public:
 	//	NOTE: Works only on leaf profiles. Not interior profiles.
 	bool Copy(Profile *source);
 
+	//Recursively looks up what the personality of this profile should be according to
+	//	Inheritance rules
+	std::string GetPersonality();
+	//Used when you really want the personality string of this profile, ignoring whether
+	//	or not it is inherited
+	std::string GetPersonalityNonRecursive();
+	void SetPersonality(std::string personality);
+
+	uint GetUptimeMin();
+	uint GetUptimeMinNonRecursive();
+	void SetUptimeMin(uint uptime);
+
+	uint GetUptimeMax();
+	uint GetUptimeMaxNonRecursive();
+	void SetUptimeMax(uint uptime);
+
+	std::string GetDropRate();
+	std::string GetDropRateNonRecursive();
+	void SetDropRate(std::string droprate);
+
+	//Javascript compatibility functions
+	//TODO: Move these into the binding class
+	std::string GetName();
+	bool GetIsGenerated();
+	uint32_t GetCount();
+	std::string GetParentProfile();
+	std::vector<std::string> GetVendors();
+	std::vector<double> GetVendorDistributions();
+	bool IsPersonalityInherited();
+	bool IsUptimeInherited();
+	bool IsDropRateInherited();
+
 	// Number of hosts that have this personality
 	uint32_t m_count;
 	double m_distribution;
@@ -73,24 +105,19 @@ public:
 	//Is this an autoconfig generated node? (or manually created)
 	bool m_isGenerated;
 
+	bool m_isPersonalityInherited;
+	bool m_isUptimeInherited;
+	bool m_isDropRateInherited;
+
 	// Vector of the child nodes to this node
 	std::vector<Profile*> m_children;
 
 	//Parent PersonalityTreeItem
 	Profile *m_parent;
 
-	//Upper and lower bound for set uptime
-	uint m_uptimeMin;
-	uint m_uptimeMax;
-
 	// String representing the osclass. Used for matching ports to
 	// scripts from the script table.
 	std::string m_osclass;
-
-	//The personality (usually Operating System) this profile will impersonate. This value is a direct line from the nmap-os-db
-	std::string m_personality;
-
-	std::string m_dropRate;
 
 	//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
 	std::vector<std::pair<std::string, double> > m_vendors;
@@ -102,6 +129,18 @@ private:
 
 	// The average number of ports that this personality has
 	uint16_t m_avgPortCount;
+
+	//Variables affected by inheritance, thus these are private. Use their setters/getters to access them properly
+
+	//The personality (usually Operating System) this profile will impersonate.
+	//	This value is a direct line from the nmap-os-db
+	std::string m_personality;
+
+	std::string m_dropRate;
+
+	//Upper and lower bound for set uptime
+	uint m_uptimeMin;
+	uint m_uptimeMax;
 
 };
 

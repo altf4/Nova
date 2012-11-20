@@ -54,6 +54,8 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteScriptFromPorts"),FunctionTemplate::New(DeleteScriptFromPorts)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAll"),FunctionTemplate::New(SaveAll)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(DeleteProfile)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPortSet"),FunctionTemplate::New(GetPortSet)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPortSetNames"),FunctionTemplate::New(GetPortSetNames)->GetFunction());
 
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
 	target->Set(String::NewSymbol("HoneydConfigBinding"), constructor);
@@ -69,6 +71,57 @@ Handle<Value> HoneydConfigBinding::New(const Arguments& args)
 	obj->Wrap(args.This());
 
 	return args.This();
+}
+
+Handle<Value> HoneydConfigBinding::GetPortSet(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 2)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 2 parameters")));
+	}
+
+	std::string profileName = cvv8::CastFromJS<string>(args[0]);
+	std::string portSetName = cvv8::CastFromJS<string>(args[0]);
+
+	Profile *profile = obj->m_conf->GetProfile(profileName);
+	if(profile == NULL)
+	{
+		//ERROR
+		return scope.Close( Null() );
+	}
+
+	return scope.Close( HoneydNodeJs::WrapPortSet( profile->GetPortSet(portSetName)) );
+}
+
+Handle<Value> HoneydConfigBinding::GetPortSetNames(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 1)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 1 parameter")));
+	}
+
+	std::string profileName = cvv8::CastFromJS<string>(args[0]);
+
+	Profile *profile = obj->m_conf->GetProfile(profileName);
+	if(profile == NULL)
+	{
+		//ERROR
+		return scope.Close( Null() );
+	}
+
+	v8::Local<v8::Array> portArray = v8::Array::New();
+	for(uint i = 0; i < profile->m_portSets.size(); i++)
+	{
+		portArray->Set(v8::Number::New(i),cvv8::CastToJS(profile->m_portSets[i]->m_name));
+	}
+
+	return scope.Close( portArray );
 }
 
 Handle<Value> HoneydConfigBinding::DeleteProfile(const Arguments& args)
@@ -134,12 +187,14 @@ Handle<Value> HoneydConfigBinding::GetNode(const Arguments& args)
 		return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
 	}
 
-	string name = cvv8::CastFromJS<string>(args[0]);
+	string MAC = cvv8::CastFromJS<string>(args[0]);
 
-	Nova::Node *ret = obj->m_conf->GetNode(name);
+	Nova::Node *ret = obj->m_conf->GetNode(MAC);
 
 	if (ret != NULL)
 	{
+		cout << "xxDEBUGxx " << MAC << endl;
+		cout << "xxDEBUGxx " << ret->m_MAC << endl;
 		return scope.Close(HoneydNodeJs::WrapNode(ret));
 	}
 	else

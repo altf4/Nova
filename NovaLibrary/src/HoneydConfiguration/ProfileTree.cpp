@@ -165,7 +165,7 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 	{
 		childProfile = new Profile(parentItem, curOSClass);
 		childProfile->m_osclass = targetHost->m_osclass;
-		childProfile->m_personality = targetHost->m_personality;
+		childProfile->SetPersonality(targetHost->m_personality);
 		parentItem->m_children.push_back(childProfile);
 	}
 	else
@@ -183,13 +183,13 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 	}
 
 	//Set the uptimes
-	if(targetHost->m_uptime > childProfile->m_uptimeMax)
+	if(targetHost->m_uptime > childProfile->GetUptimeMaxNonRecursive())
 	{
-		childProfile->m_uptimeMax = targetHost->m_uptime;
+		childProfile->SetUptimeMax(targetHost->m_uptime);
 	}
-	if(targetHost->m_uptime < childProfile->m_uptimeMin)
+	if(targetHost->m_uptime < childProfile->GetUptimeMinNonRecursive())
 	{
-		childProfile->m_uptimeMin = targetHost->m_uptime;
+		childProfile->SetUptimeMin(targetHost->m_uptime);
 	}
 
 	childProfile->m_portSets = targetHost->m_portSets;

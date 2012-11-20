@@ -278,12 +278,12 @@ block headerAdditions
     function Init()
     {
       var gridStructure = [];
-      gridStructure.push({name: "MAC"});
       gridStructure.push({name: "Enabled"});
+      gridStructure.push({name: "MAC"});
       gridStructure.push({name: "Profile"});
       gridStructure.push({name: "IP"});
       
-      grid = new NovaGrid(gridStructure, 0, document.getElementById('nodeTable'), 'grid', true);
+      grid = new NovaGrid(gridStructure, 1, document.getElementById('nodeTable'), 'grid', true);
       
       grid.SetSortByKey(1);
       grid.SetRowsPerPage(50);
@@ -297,6 +297,7 @@ block headerAdditions
       {
         var row = [];
         row.push(String(nodeList[i].enabled));
+        row.push(String(nodeList[i].mac));
         row.push(String(nodeList[i].pfile));
 
         if (nodeList[i].ip != "DHCP") {
@@ -315,7 +316,6 @@ block headerAdditions
             row.push("DHCP on " + nodeList[i].interface); 
           }
         }
-        row.push(String(nodeList[i].mac));
         grid.PushEntry(row);
       }
       

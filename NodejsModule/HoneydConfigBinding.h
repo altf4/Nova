@@ -31,6 +31,10 @@ private:
 	static v8::Handle<v8::Value> GetNode(const v8::Arguments& args);
 	static v8::Handle<v8::Value> GetProfile(const v8::Arguments& args);
 
+	//TODO:
+	static v8::Handle<v8::Value> GetPortSet(const v8::Arguments& args);
+	static v8::Handle<v8::Value> GetPortSetNames(const v8::Arguments& args);
+
 	static v8::Handle<v8::Value> DeleteScriptFromPorts(const v8::Arguments& args);
 
 	static v8::Handle<v8::Value> SaveAll(const v8::Arguments& args);

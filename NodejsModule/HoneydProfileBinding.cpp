@@ -37,25 +37,25 @@ bool HoneydProfileBinding::SetName(std::string name)
 
 bool HoneydProfileBinding::SetPersonality(std::string personality)
 {
-	m_profile->m_personality = personality;
+	m_profile->SetPersonality(personality);
 	return true;
 }
 
 bool HoneydProfileBinding::SetUptimeMin(uint uptimeMin)
 {
-	m_profile->m_uptimeMin = uptimeMin;
+	m_profile->SetUptimeMin(uptimeMin);
 	return true;
 }
 
 bool HoneydProfileBinding::SetUptimeMax(uint uptimeMax)
 {
-	m_profile->m_uptimeMax = uptimeMax;
+	m_profile->SetUptimeMax(uptimeMax);
 	return true;
 }
 
 bool HoneydProfileBinding::SetDropRate(std::string dropRate)
 {
-	m_profile->m_dropRate = dropRate;
+	m_profile->SetDropRate(dropRate);
 	return true;
 }
 

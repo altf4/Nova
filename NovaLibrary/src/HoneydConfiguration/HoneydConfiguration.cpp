@@ -98,7 +98,8 @@ bool HoneydConfiguration::ReadProfilesXML()
 
 		return true;
 	}
-	catch (boost::property_tree::xml_parser_error &e) {
+	catch (boost::property_tree::xml_parser_error &e)
+	{
 		LOG(ERROR, "Problem loading profiles: " + string(e.what()) + ".", "");
 		return false;
 	}
@@ -120,9 +121,12 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 		profile = new Profile(parent, ptree.get<string>("name"));
 		profile->m_isGenerated = ptree.get<bool>("generated");
 		profile->m_count = ptree.get<double>("count");
-		profile->m_personality = ptree.get<string>("personality");
-		profile->m_uptimeMin = ptree.get<uint>("uptimeMin");
-		profile->m_uptimeMax = ptree.get<uint>("uptimeMax");
+		profile->SetPersonality(ptree.get<string>("personality"));
+		profile->SetUptimeMin(ptree.get<uint>("uptimeMin"));
+		profile->SetUptimeMax(ptree.get<uint>("uptimeMax"));
+		profile->m_isPersonalityInherited = ptree.get<bool>("isPersonalityInherited");
+		profile->m_isUptimeInherited = ptree.get<bool>("isUptimeInherited");
+		profile->m_isDropRateInherited = ptree.get<bool>("isDropRateInherited");
 
 		//Ethernet Settings
 		try
@@ -196,7 +200,6 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 		}
 		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
-			LOG(DEBUG, "Unable to parse children of the current profile", "");
 		};
 	}
 	catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
@@ -459,9 +462,12 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 	propTree.put<string>("name", root->m_name);
 	propTree.put<bool>("generated", root->m_isGenerated);
 	propTree.put<double>("count", root->m_count);
-	propTree.put<string>("personality", root->m_personality);
-	propTree.put<uint>("uptimeMin", root->m_uptimeMin);
-	propTree.put<uint>("uptimeMax", root->m_uptimeMax);
+	propTree.put<string>("personality", root->GetPersonalityNonRecursive());
+	propTree.put<uint>("uptimeMin", root->GetUptimeMinNonRecursive());
+	propTree.put<uint>("uptimeMax", root->GetUptimeMaxNonRecursive());
+	propTree.put<bool>("isPersonalityInherited", root->m_isPersonalityInherited);
+	propTree.put<bool>("isUptimeInherited", root->m_isUptimeInherited);
+	propTree.put<bool>("isDropRateInherited", root->m_isDropRateInherited);
 
 	//Ethernet settings
 	ptree vendors;
@@ -953,7 +959,10 @@ vector<string> HoneydConfiguration::GetNodeMACs()
 {
 	vector<string> MACs;
 
-	//TODO
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		MACs.push_back(it->first);
+	}
 
 	return MACs;
 }
@@ -1012,8 +1021,6 @@ bool HoneydConfiguration::DeleteProfile(string profileName)
 	{
 		return false;
 	}
-
-	//TODO: Recursively delete any nodes for children of the deleted profile
 
 	delete profile;
 

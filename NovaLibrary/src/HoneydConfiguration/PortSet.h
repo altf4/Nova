@@ -46,6 +46,13 @@ public:
 	//Returns a string representation of the PortSet suitable for insertion into the Honeyd Config file
 	std::string ToString(const std::string &profileName);
 
+	//Javascript compatibility functions
+	//TODO: Move these into the binding class
+	std::string GetName() {return m_name;}
+	std::string GetTCPBehavior() {return Port::PortBehaviorToString(m_defaultTCPBehavior);}
+	std::string GetUDPBehavior() {return Port::PortBehaviorToString(m_defaultUDPBehavior);}
+	std::string GetICMPBehavior() {return Port::PortBehaviorToString(m_defaultICMPBehavior);}
+
 	//A unique identifier
 	std::string m_name;
 

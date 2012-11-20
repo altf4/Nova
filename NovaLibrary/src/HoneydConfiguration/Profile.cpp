@@ -38,6 +38,9 @@ Profile::Profile(Profile *parent, string key)
 	m_isGenerated = false;	//Manually set this to true in Autoconfig
 	m_uptimeMin = ~0;	//TODO: What if we don't see any uptimes? We need to have a sane default
 	m_uptimeMax = 0;	//TODO: Let;'s have a more reasonable "maximum" here. We don't want to be setting random uptimes this high
+	m_isPersonalityInherited = false;
+	m_isUptimeInherited = false;
+	m_isDropRateInherited = false;
 }
 
 Profile::Profile(string parentName, std::string key)
@@ -51,6 +54,9 @@ Profile::Profile(string parentName, std::string key)
 	m_isGenerated = false;	//Manually set this to true in Autoconfig
 	m_uptimeMin = ~0;	//TODO: What if we don't see any uptimes? We need to have a sane default
 	m_uptimeMax = 0;	//TODO: Let;'s have a more reasonable "maximum" here. We don't want to be setting random uptimes this high
+	m_isPersonalityInherited = false;
+	m_isUptimeInherited = false;
+	m_isDropRateInherited = false;
 }
 
 Profile::~Profile()
@@ -107,10 +113,12 @@ string Profile::ToString(const std::string &portSetName, const std::string &node
 		}
 	}
 
+	//Use the recursive personality, here
+	string personality = GetPersonality();
 
-	if((m_personality != "") && (m_personality != "NULL"))
+	if((personality != "") && (personality != "NULL"))
 	{
-		out << "set " << nodeName << " personality \"" << m_personality << '"' << '\n';
+		out << "set " << nodeName << " personality \"" << personality << '"' << '\n';
 	}
 
 	//TODO: This always uses the vendor with the highest likelihood. Should get changed?
@@ -252,6 +260,144 @@ bool Profile::Copy(Profile *source)
 	m_portSets = source->m_portSets;
 
 	return true;
+}
+
+std::string Profile::GetParentProfile()
+{
+	if(m_parent != NULL)
+	{
+		return m_parent->m_name;
+	}
+	else
+	{
+		return "";
+	}
+}
+
+uint Profile::GetUptimeMin()
+{
+	if(m_isUptimeInherited && (m_parent != NULL))
+	{
+		return m_parent->GetUptimeMin();
+	}
+	return m_uptimeMin;
+}
+
+uint Profile::GetUptimeMinNonRecursive()
+{
+	return m_uptimeMin;
+}
+
+void Profile::SetUptimeMin(uint uptime)
+{
+	m_uptimeMin = uptime;
+}
+
+uint Profile::GetUptimeMax()
+{
+	if(m_isUptimeInherited && (m_parent != NULL))
+	{
+		return m_parent->GetUptimeMax();
+	}
+	return m_uptimeMax;
+}
+
+uint Profile::GetUptimeMaxNonRecursive()
+{
+	return m_uptimeMax;
+}
+
+void Profile::SetUptimeMax(uint uptime)
+{
+	m_uptimeMax = uptime;
+}
+
+std::string Profile::GetDropRate()
+{
+	if(m_isDropRateInherited && (m_parent != NULL))
+	{
+		return m_parent->GetDropRate();
+	}
+	return m_dropRate;
+}
+
+std::string Profile::GetDropRateNonRecursive()
+{
+	return m_dropRate;
+}
+
+void Profile::SetDropRate(std::string droprate)
+{
+	m_dropRate = droprate;
+}
+
+std::string Profile::GetName()
+{
+	return m_name;
+}
+
+std::string Profile::GetPersonality()
+{
+	if(m_isPersonalityInherited && (m_parent != NULL))
+	{
+		return m_parent->GetPersonality();
+	}
+	return m_personality;
+}
+
+std::string Profile::GetPersonalityNonRecursive()
+{
+	return m_personality;
+}
+
+void Profile::SetPersonality(std::string personality)
+{
+	m_personality = personality;
+}
+
+bool Profile::GetIsGenerated()
+{
+	return m_isGenerated;
+}
+
+uint32_t Profile::GetCount()
+{
+	return m_count;
+}
+
+std::vector<std::string> Profile::GetVendors()
+{
+	std::vector<std::string> list;
+	for(uint i = 0; i < m_vendors.size(); i++)
+	{
+		list.push_back(m_vendors[i].first);
+	}
+	return list;
+}
+
+std::vector<double> Profile::GetVendorDistributions()
+{
+	std::vector<double> list;
+	for(uint i = 0; i < m_vendors.size(); i++)
+	{
+		list.push_back(m_vendors[i].second);
+	}
+	return list;
+}
+
+bool Profile::IsPersonalityInherited()
+{
+	return m_isPersonalityInherited;
+}
+
+bool Profile::IsUptimeInherited()
+{
+	return m_isUptimeInherited;
+}
+
+bool Profile::IsDropRateInherited()
+{
+	return m_isDropRateInherited;
 }
 
 }

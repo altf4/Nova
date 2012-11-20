@@ -69,6 +69,14 @@ public:
 	//	returns PORT_ERROR on error
 	static enum PortBehavior StringToPortBehavior(std::string behavior);
 
+	//Javascript compatibiltiy functions
+	//TODO: Move these into the binding class
+	uint GetPortNum() {return m_portNumber;}
+	std::string GetProtocol() { return PortProtocolToString(m_protocol);}
+	std::string GetBehavior() { return PortBehaviorToString(m_behavior);}
+	std::string GetScriptName() { return m_scriptName;}
+	std::string GetService() { return m_service;}
+
 	std::string m_service;
 
 	enum PortProtocol m_protocol;
