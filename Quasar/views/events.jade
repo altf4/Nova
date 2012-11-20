@@ -62,7 +62,7 @@ block headerAdditions
             gridStructure.push({name:featureNames[i], formatter: featureFormatter});
         }
    
-        suspectGrid = new NovaGrid(gridStructure, 0, document.getElementById('suspectTable'));
+        suspectGrid = new NovaGrid(gridStructure, 0, document.getElementById('suspectTable'), 'suspectGrid');
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(1);
