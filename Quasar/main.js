@@ -1888,7 +1888,7 @@ everyone.now.GetInheritedEthernetList = function (parent, callback) {
 		console.log("ERROR Getting profile " + parent);
 		callback(null);
 	} else {
-		callback(prof.GetVendors(), prof.GetVendorDistributions());
+		callback(prof.GetVendors(), prof.GetVendorCounts());
 	}
 
 }
@@ -2058,6 +2058,7 @@ everyone.now.deleteWhitelistEntry = function (whitelistEntryNames, callback) {
 everyone.now.GetProfile = function (profileName, callback) {
 	var profile = honeydConfig.GetProfile(profileName);
 
+	
 	if (profile == null) {
 		callback(null);
 		return;
@@ -2065,9 +2066,6 @@ everyone.now.GetProfile = function (profileName, callback) {
 
 	// Nowjs can't pass the object with methods, they need to be member vars
 	profile.name = profile.GetName();
-	profile.tcpAction = profile.GetTcpAction();
-	profile.udpAction = profile.GetUdpAction();
-	profile.icmpAction = profile.GetIcmpAction();
 	profile.personality = profile.GetPersonality();
 
 	profile.uptimeMin = profile.GetUptimeMin();
@@ -2075,35 +2073,30 @@ everyone.now.GetProfile = function (profileName, callback) {
 	profile.dropRate = profile.GetDropRate();
 	profile.parentProfile = profile.GetParentProfile();
 
-	profile.isTcpActionInherited = profile.isTcpActionInherited();
-	profile.isUdpActionInherited = profile.isUdpActionInherited();
-	profile.isIcmpActionInherited = profile.isIcmpActionInherited();
-	profile.isPersonalityInherited = profile.isPersonalityInherited();
-	profile.isEthernetInherited = profile.isEthernetInherited();
-	profile.isUptimeInherited = profile.isUptimeInherited();
-	profile.isDropRateInherited = profile.isDropRateInherited();
+	profile.isPersonalityInherited = profile.IsPersonalityInherited();
+	profile.isUptimeInherited = profile.IsUptimeInherited();
+	profile.isDropRateInherited = profile.IsDropRateInherited();
 
-	profile.generated = profile.GetGenerated();
-	profile.distribution = profile.GetDistribution();
+	profile.count = profile.GetCount();
 
-	if (!profile.isEthernetInherited) {
-		var ethVendorList = [];
 
-		var profVendors = profile.GetVendors();
-		var profDists = profile.GetVendorDistributions();
+	var ethVendorList = [];
 
-		for (var i = 0; i < profVendors.length; i++) {
-			var element = {
-				vendor: "",
-				dist: ""
-			};
-			element.vendor = profVendors[i];
-			element.dist = parseFloat(profDists[i]);
-			ethVendorList.push(element);
-		}
+	var profVendors = profile.GetVendors();
+	var profCounts = profile.GetVendorCounts();
 
-		profile.ethernet = ethVendorList;
+	for (var i = 0; i < profVendors.length; i++) {
+		var element = {
+			vendor: "",
+			dist: ""
+		};
+		element.vendor = profVendors[i];
+		element.count = profCounts[i];
+		ethVendorList.push(element);
 	}
+
+	profile.ethernet = ethVendorList;
+
 
 	callback(profile);
 }
@@ -2121,7 +2114,7 @@ everyone.now.GetVendors = function (profileName, callback) {
 	var ethVendorList = [];
 
 	var profVendors = profile.GetVendors();
-	var profDists = profile.GetVendorDistributions();
+	var profDists = profile.GetVendorCounts();
 
 	for (var i = 0; i < profVendors.length; i++) {
 		var element = {

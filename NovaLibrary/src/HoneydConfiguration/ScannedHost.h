@@ -21,13 +21,9 @@
 #define SCANNEDHOST_H_
 
 #include "PortSet.h"
-#include "../HashMapStructs.h"
 
 namespace Nova
 {
-
-//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
-typedef Nova::HashMap<std::string, uint16_t, std::hash<std::string>, eqstr > MACVendorMap;
 
 class ScannedHost
 {
@@ -42,6 +38,7 @@ public:
 	// Returns nothing; if the vendor is there, it increments the count, if it isn't it adds it
 	// and sets count to one.
 	void AddVendor(const std::string &);
+	void AddVendor(const std::string &, uint count);
 
 	// count of the number of instances of this host on the scanned subnets
 	uint m_count;
@@ -65,11 +62,11 @@ public:
 	// vector of IP addresses
 	std::vector<std::string> m_addresses;
 
-	//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this host
-	MACVendorMap m_vendors;
+	std::vector<std::pair<std::string, uint> > m_vendors;
 
 	//A collection of PortSets, representing each group of ports found
 	std::vector<PortSet *> m_portSets;
+
 };
 
 }

@@ -97,9 +97,9 @@ Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
 	}
 
 	vector<string> vendorNames = cvv8::CastFromJS<vector<string>>( args[0] );
-	vector<double> vendorDists = cvv8::CastFromJS<vector<double>>( args[1] );
+	vector<uint> vendorCount = cvv8::CastFromJS<vector<uint>>( args[1] );
 
-	if(vendorNames.size() != vendorDists.size())
+	if(vendorNames.size() != vendorCount.size())
 	{
 		//Mismatch in sizes
 		return scope.Close(Boolean::New(false));
@@ -112,13 +112,13 @@ Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
 	}
 	else
 	{
-		std::vector<std::pair<std::string, double> > set;
+		std::vector<std::pair<std::string, uint> > set;
 
 		for(uint i = 0; i < vendorNames.size(); i++)
 		{
-			std::pair<std::string, double> vendor;
+			std::pair<std::string, uint> vendor;
 			vendor.first = vendorNames[i];
-			vendor.second = vendorDists[i];
+			vendor.second = vendorCount[i];
 			set.push_back(vendor);
 		}
 		obj->m_profile->m_vendors = set;

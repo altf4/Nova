@@ -152,7 +152,7 @@ Handle<Value> HoneydConfigBinding::AddNodes(const Arguments& args)
 	string profile = cvv8::CastFromJS<string>( args[0] );
 	string ipAddress = cvv8::CastFromJS<string>( args[1] );
 	string interface = cvv8::CastFromJS<string>( args[2] );
-	int count = cvv8::JSToInt32( args[4] );
+	int count = cvv8::JSToInt32( args[3] );
 
 	return scope.Close(Boolean::New(obj->m_conf->AddNodes(profile, ipAddress, interface, count)));
 }
@@ -216,9 +216,7 @@ Handle<Value> HoneydConfigBinding::GetProfile(const Arguments& args)
 
 	if (ret != NULL)
 	{
-		//TODO
-		//return scope.Close(HoneydNodeJs::WrapProfile(ret));
-		return scope.Close( Null() );
+		return scope.Close(HoneydNodeJs::WrapProfile(ret));
 	}
 	else
 	{

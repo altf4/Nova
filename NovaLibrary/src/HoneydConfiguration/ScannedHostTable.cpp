@@ -29,7 +29,6 @@ namespace Nova
 ScannedHostTable::ScannedHostTable()
 {
 	m_num_of_hosts = 0;
-	m_num_used_hosts = 0;
 }
 
 ScannedHostTable::~ScannedHostTable()
@@ -40,11 +39,6 @@ ScannedHostTable::~ScannedHostTable()
 // Add a single Host
 void ScannedHostTable::AddHost(ScannedHost *add)
 {
-	// We've gotten to the point where we're adding a host that
-	// has personality data, so increment the number of useful
-	// hosts.
-	m_num_used_hosts++;
-
 	// If the personality pointer that we're passing to the function
 	// doesn't exist in the personalities table, just create a new
 	// instance using the bracket operator and assign the Value to
@@ -75,18 +69,11 @@ void ScannedHostTable::AddHost(ScannedHost *add)
 			currentHost->m_portSets.push_back(add->m_portSets[i]);
 		}
 
-		// and do the same for the MAC vendors in the MAC_Table.
-		for(MACVendorMap::iterator it = add->m_vendors.begin(); it != add->m_vendors.end(); it++)
+		for(uint i = 0; i < add->m_vendors.size(); i++)
 		{
-			if(currentHost->m_vendors.find(it->first) == currentHost->m_vendors.end())
-			{
-				currentHost->m_vendors[it->first] = 1;
-			}
-			else
-			{
-				currentHost->m_vendors[it->first]++;
-			}
+			currentHost->AddVendor(add->m_vendors[i].first, add->m_vendors[i].second);
 		}
+
 		// Finally, delete the pointer we passed to deallocate
 		// its memory.
 		delete add;

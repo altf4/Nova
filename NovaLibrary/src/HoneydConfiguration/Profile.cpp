@@ -216,7 +216,7 @@ PortSet *Profile::GetPortSet(std::string name)
 	return NULL;
 }
 
-double Profile::GetVendorDistribution(std::string vendorName)
+uint Profile::GetVendorCount(std::string vendorName)
 {
 	for(uint i = 0; i < m_vendors.size(); i++)
 	{
@@ -375,9 +375,9 @@ std::vector<std::string> Profile::GetVendors()
 	return list;
 }
 
-std::vector<double> Profile::GetVendorDistributions()
+std::vector<uint> Profile::GetVendorCounts()
 {
-	std::vector<double> list;
+	std::vector<uint> list;
 	for(uint i = 0; i < m_vendors.size(); i++)
 	{
 		list.push_back(m_vendors[i].second);

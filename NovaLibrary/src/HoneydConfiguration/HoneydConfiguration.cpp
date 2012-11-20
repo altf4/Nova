@@ -136,9 +136,9 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 				if(!ethernetVendors.first.compare("vendor"))
 				{
 					string vendorName = ethernetVendors.second.get<string>("prefix");
-					double distribution = ethernetVendors.second.get<double>("distribution");
+					uint count = ethernetVendors.second.get<uint>("count");
 
-					profile->m_vendors.push_back(pair<string, double>(vendorName, distribution));
+					profile->m_vendors.push_back(pair<string, uint>(vendorName, count));
 				}
 			}
 		}
@@ -315,6 +315,7 @@ bool HoneydConfiguration::ReadScriptsXML()
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
 	ptree scriptsTopLevel;
+	m_scripts.clear();
 	try
 	{
 		read_xml(Config::Inst()->GetPathHome() + "/config/templates/scripts.xml", scriptsTopLevel, boost::property_tree::xml_parser::trim_whitespace);
@@ -476,7 +477,7 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 		ptree vendor;
 
 		vendor.put<string>("prefix", root->m_vendors[i].first);
-		vendor.put<double>("distribution", root->m_vendors[i].second);
+		vendor.put<uint>("count", root->m_vendors[i].second);
 
 		vendors.add_child("vendor", vendor);
 	}

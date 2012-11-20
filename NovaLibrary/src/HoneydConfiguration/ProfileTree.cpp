@@ -193,18 +193,7 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 	}
 
 	childProfile->m_portSets = targetHost->m_portSets;
-
-	//Insert or count MAC vendor occurrences
-	for(MACVendorMap::iterator it = targetHost->m_vendors.begin(); it != targetHost->m_vendors.end(); it++)
-	{
-		for(uint j = 0; j < childProfile->m_vendors.size(); j++)
-		{
-			if(!childProfile->m_vendors[j].first.compare(it->first))
-			{
-				childProfile->m_vendors[j].second += it->second;
-			}
-		}
-	}
+	childProfile->m_vendors = targetHost->m_vendors;
 
 	targetHost->m_personalityClass.pop_back();
 	if(!targetHost->m_personalityClass.empty())

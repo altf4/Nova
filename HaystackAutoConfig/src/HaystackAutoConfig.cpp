@@ -291,6 +291,9 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 	// Instantiate Personality object here, populate it from the code below
 	ScannedHost *newHost = new ScannedHost();
 
+	VendorMacDb *macVendorDB = new VendorMacDb();
+	macVendorDB->LoadPrefixFile();
+
 	// For the personality table, increment the number of hosts found
 	// and decrement the number of hosts available, so at the end
 	// of the configuration process we don't over-allocate space
@@ -427,8 +430,6 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 
 						newHost->m_macs.push_back(macString);
 
-						VendorMacDb *macVendorDB = new VendorMacDb();
-						macVendorDB->LoadPrefixFile();
 						uint rawMACPrefix = macVendorDB->AtoMACPrefix(macString);
 						vendorString = macVendorDB->LookupVendor(rawMACPrefix);
 

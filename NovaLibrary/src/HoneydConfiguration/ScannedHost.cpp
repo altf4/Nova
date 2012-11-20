@@ -38,17 +38,50 @@ ScannedHost::~ScannedHost()
 
 void ScannedHost::AddVendor(const string &vendor)
 {
-	// If the vendor does not exist in MAC_Table,
-	// then use the bracket operator to make a new
-	// entry and set its count to 1
-	if(m_vendors.find(vendor) == m_vendors.end())
+	int index = -1;
+	for(uint i = 0; i < m_vendors.size(); i++)
 	{
-		m_vendors[vendor] = 1;
+		if(vendor == m_vendors[i].first)
+		{
+			index = i;
+			break;
+		}
 	}
-	// Otherwise just increase the count at that key
+
+	if(index == -1)
+	{
+		m_vendors.push_back(pair<string, uint>(vendor, 1));
+	}
 	else
 	{
-		m_vendors[vendor]++;
+		m_vendors[index].second++;
+	}
+}
+
+void ScannedHost::AddVendor(const string &vendor, uint count)
+{
+	if(count == 0)
+	{
+		return;
+	}
+
+	int index = -1;
+	for(uint i = 0; i < m_vendors.size(); i++)
+	{
+		if(vendor == m_vendors[i].first)
+		{
+			index = i;
+			break;
+		}
+	}
+
+	if(index == -1)
+	{
+		m_vendors.push_back(pair<string, uint>(vendor, count));
+	}
+	else
+	{
+		m_vendors[index].second += count;
 	}
 }
 

@@ -51,7 +51,7 @@ public:
 	//	returns NULL if not found
 	PortSet *GetPortSet(std::string name);
 
-	double GetVendorDistribution(std::string vendorName);
+	uint GetVendorCount(std::string vendorName);
 
 	//Calculates the distributions of direct children of the given profile
 	//	NOTE: Not recursive. Only calculates the given node's direct children.
@@ -90,7 +90,7 @@ public:
 	uint32_t GetCount();
 	std::string GetParentProfile();
 	std::vector<std::string> GetVendors();
-	std::vector<double> GetVendorDistributions();
+	std::vector<uint> GetVendorCounts();
 	bool IsPersonalityInherited();
 	bool IsUptimeInherited();
 	bool IsDropRateInherited();
@@ -119,8 +119,7 @@ public:
 	// scripts from the script table.
 	std::string m_osclass;
 
-	//HashMap of MACs; Key is Vendor, Value is number of times the MAC vendor is seen for hosts of this personality type
-	std::vector<std::pair<std::string, double> > m_vendors;
+	std::vector<std::pair<std::string, uint> > m_vendors;
 
 	//A collection of PortSets, representing each group of ports found
 	std::vector<PortSet *> m_portSets;

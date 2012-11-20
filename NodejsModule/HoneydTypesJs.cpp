@@ -170,7 +170,7 @@ Handle<Object> HoneydNodeJs::WrapProfile(Profile *pfile)
 		proto->Set("GetCount",			FunctionTemplate::New(InvokeMethod<uint32_t, Profile, &Nova::Profile::GetCount>));
 		proto->Set("GetParentProfile",	FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetParentProfile>));
 		proto->Set("GetVendors",		FunctionTemplate::New(InvokeMethod<std::vector<std::string>, Profile, &Nova::Profile::GetVendors>));
-		proto->Set("GetVendorDistributions",       FunctionTemplate::New(InvokeMethod<std::vector<double>, Profile, &Nova::Profile::GetVendorDistributions>));
+		proto->Set("GetVendorCounts",       FunctionTemplate::New(InvokeMethod<std::vector<uint>, Profile, &Nova::Profile::GetVendorCounts>));
 
 		proto->Set("IsPersonalityInherited",FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::IsPersonalityInherited>));
 		proto->Set("IsUptimeInherited",     FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::IsUptimeInherited>));

@@ -20,6 +20,7 @@
 #define SCANNEDHOSTTREE_H_
 
 #include "ScannedHost.h"
+#include "../HashMapStructs.h"
 
 //total num_hosts is the total num of unique hosts counted.
 //total avail_addrs is the total num of ip addresses avail on the subnet
