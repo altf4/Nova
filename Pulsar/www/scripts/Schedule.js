@@ -443,7 +443,7 @@ function registerScheduledMessage(clientId, name, message, eventObj, cb)
   now.SetScheduledMessage(clientId, name, message, eventObj, cb);
 }
 
-function submitSchedule(cb)
+function submitSchedule()
 {
   for(var i in document.getElementById('elementHook').childNodes)
   {
@@ -488,8 +488,8 @@ function submitSchedule(cb)
       }
     }
   }
-  if(typeof cb == 'function')
+  while(document.getElementById('elementHook').hasChildNodes())
   {
-    cb();
+    document.getElementById('elementHook').removeChild(document.getElementById('elementHook').lastChild);
   }
 }
