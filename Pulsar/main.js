@@ -279,7 +279,7 @@ function readScheduledEvents()
 
 function addScheduledEventToArray(json)
 {
-  if((json.cron == '' || json.cron == undefined) && (json.date == undefined || json.date == ''))
+  if((json.recurring == '' || json.recurring == undefined) && (json.date == undefined || json.date == ''))
   {
     return; 
   }
@@ -293,13 +293,17 @@ function addScheduledEventToArray(json)
   message.id = json.clientId + ':';
   message.type = json.messageType;
   
-  if((json.date == undefined || json.date == '') && (json.cron != '' && json.cron != undefined))
+  if((json.date == undefined || json.date == '') && (json.recurring != '' && json.recurring != undefined))
   {
-    newSchedule.eventType = 'cron';
-    newSchedule.job = schedule.scheduleJob(newSchedule.id, json.cron, function(){
+    newSchedule.eventType = 'recurring';
+    var passObj = new schedule.RecurrenceRule();
+    passObj.dayOfWeek = json.dayOfWeek;
+    passObj.hour = json.hour;
+    passObj.minute = json.minute;
+    newSchedule.job = schedule.scheduleJob(newSchedule.id, passObj, function(){
       everyone.now.MessageSend(message);
     });
-    newSchedule.cron = json.cron;
+    newSchedule.recurring = json.recurring;
     newSchedule.date = '';
   }
   else if(json.date != undefined && json.date != '')
@@ -310,7 +314,7 @@ function addScheduledEventToArray(json)
       everyone.now.MessageSend(message);
     });
     newSchedule.date = passDate.toString();
-    newSchedule.cron = '';
+    newSchedule.recurring = '';
   }
   else
   {
@@ -337,8 +341,14 @@ function writeScheduledEventStructure(sEvent, callback)
   stringifyMe.clientId = sEvent.clientId;
   stringifyMe.messageType = sEvent.messageType;
   stringifyMe.eventType = sEvent.eventType;
-  stringifyMe.cron = sEvent.cron;
+  stringifyMe.recurring = sEvent.recurring;
   stringifyMe.date = sEvent.date;
+  if(stringifyMe.recurring != undefined && stringifyMe.recurring != '')
+  {
+    stringifyMe.dayOfWeek = sEvent.dayOfWeek;
+    stringifyMe.hour = sEvent.hour;
+    stringifyMe.minute = sEvent.minute;
+  }
   callback(JSON.stringify(stringifyMe) + '\n');
 }
 
@@ -421,6 +431,9 @@ SetScheduledMessage = function(clientId, name, message, eventObj, cb)
     passObj.dayOfWeek = parseInt(eventObj.dayOfWeek);
     passObj.hour = parseInt(eventObj.hour);
     passObj.minute = parseInt(eventObj.minute);
+    newSchedule.dayOfWeek = passObj.dayOfWeek;
+    newSchedule.hour = passObj.hour;
+    newSchedule.minute = passObj.minute;
     newSchedule.job = schedule.scheduleJob(newSchedule.id, passObj, function(){
       everyone.now.MessageSend(message);
     });

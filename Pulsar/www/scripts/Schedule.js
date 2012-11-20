@@ -450,8 +450,6 @@ function submitSchedule()
     var id = document.getElementById('elementHook').childNodes[i].id; 
     if(id != undefined)
     {
-      console.log('id ' + id);
-      
       if(/^[a-z0-9]+$/i.test(document.getElementById(id + 'name').value) == false/* || document.getElementById(id + 'name').value.length <= 1*/)
       {
         document.getElementById(id + 'name').value = '';
