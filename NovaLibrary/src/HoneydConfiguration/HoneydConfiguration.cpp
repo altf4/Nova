@@ -810,14 +810,11 @@ vector<string> GetProfileNames_helper(Profile *item, bool lookForGeneratedOnly)
 		runningTotalProfiles.push_back(item->m_name);
 	}
 
-
 	//Depth first traversal of tree
 	for(uint i = 0; i < item->m_children.size(); i++)
 	{
 		vector<string> childProfiles = GetProfileNames_helper(item->m_children[i], lookForGeneratedOnly);
 
-		//Preallocate memory, can significantly speed up the insert
-		runningTotalProfiles.reserve(runningTotalProfiles.size() + childProfiles.size());
 		runningTotalProfiles.insert(runningTotalProfiles.end(), childProfiles.begin(), childProfiles.end());
 	}
 
@@ -851,7 +848,7 @@ Profile *GetProfile_helper(string profileName, Profile *item)
 		return NULL;
 	}
 
-	if(!item->m_name.compare(profileName))
+	if(item->m_name == profileName)
 	{
 		return item;
 	}
@@ -861,7 +858,7 @@ Profile *GetProfile_helper(string profileName, Profile *item)
 		Profile *profile =  GetProfile_helper(profileName, item->m_children[i]);
 		if(profile != NULL)
 		{
-			return item->m_children[i];
+			return profile;
 		}
 	}
 
@@ -936,7 +933,7 @@ bool HoneydConfiguration::AddProfile(Profile *profile, std::string parentName)
 
 	//Check to see if the profile name already exists
 	Profile *duplicate = GetProfile(profile->m_name);
-	if(duplicate == NULL)
+	if(duplicate != NULL)
 	{
 		//Copy over the contents of this profile, and quit
 		duplicate->Copy(profile);

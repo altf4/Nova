@@ -1314,7 +1314,7 @@ app.get('/nodeReview', passport.authenticate('basic', {session: false}), functio
 		return;
 	}
 	
-	var profileNames = honeydConfig.GetGeneratedProfileNames();
+	var profileNames = honeydConfig.GetProfileNames();
 	var profiles = new Array();
 	for (var i = 0; i < profileNames.length; i++) {
 		profiles.push(honeydConfig.GetProfile(profileNames[i]));
@@ -1328,7 +1328,6 @@ app.get('/nodeReview', passport.authenticate('basic', {session: false}), functio
 
 	res.render('nodereview.jade', {
 		locals: {
-			profileNames: honeydConfig.GetGeneratedProfileNames(),
 			profiles: profiles,
 			nodes: nodes,
 		}

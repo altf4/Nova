@@ -127,26 +127,39 @@ bool ProfileTree::LoadTable(ScannedHostTable *persTable)
 
 	for(ScannedHost_Table::iterator it = pTable->begin(); it != pTable->end(); it++)
 	{
-		InsertHost(it->second, m_root);
+		InsertHost(it->second, m_root, it->second->m_personalityClass.size()-1);
 	}
 
 	return true;
 }
 
-bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
+bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem, int persClassIndex)
 {
 	if(targetHost == NULL)
 	{
-		LOG(ERROR, "Unable to update a NULL personality!", "");
+		LOG(WARNING, "Unable to update a NULL personality!", "");
 		return false;
 	}
 	else if(parentItem == NULL)
 	{
-		LOG(ERROR, "Unable to update personality with a NULL PersonalityNode parent", "");
+		LOG(WARNING, "Unable to update personality with a NULL parent", "");
 		return false;
 	}
 
-	string curOSClass = targetHost->m_personalityClass.back();
+	if((persClassIndex > 4) || (persClassIndex < 0))
+	{
+		return false;
+	}
+
+	string curOSClass;
+	for(int i = persClassIndex; i >= 0; i--)
+	{
+		curOSClass += targetHost->m_personalityClass[i];
+		if(i != 0)
+		{
+			curOSClass += " | ";
+		}
+	}
 
 	//Find
 	uint i = 0;
@@ -195,10 +208,9 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem)
 	childProfile->m_portSets = targetHost->m_portSets;
 	childProfile->m_vendors = targetHost->m_vendors;
 
-	targetHost->m_personalityClass.pop_back();
 	if(!targetHost->m_personalityClass.empty())
 	{
-		if(!InsertHost(targetHost, childProfile))
+		if(!InsertHost(targetHost, childProfile, persClassIndex-1))
 		{
 			return false;
 		}

@@ -67,7 +67,7 @@ private:
 	//                      to add to a pre-existing node with the same ScannedHost.
 	//	root - The root item of the PersonalityTree
 	// Returns true on success, false on failure
-	bool InsertHost(ScannedHost *targetHost, Profile *root);
+	bool InsertHost(ScannedHost *targetHost, Profile *root, int persClassIndex);
 
 };
 
