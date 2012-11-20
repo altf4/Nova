@@ -13,41 +13,29 @@ using namespace std;
 Handle<Object> HoneydNodeJs::WrapNode(Node* node)
 {
 	HandleScope scope;
-	cout << "xxDEBUGxx 1" << endl;
 	// Setup the template for the type if it hasn't been already
 	if( nodeTemplate.IsEmpty() )
 	{
-		cout << "xxDEBUGxx 2" << endl;
-		Handle<FunctionTemplate> nodeTemplate = FunctionTemplate::New();
-		cout << "xxDEBUGxx 3" << endl;
-		nodeTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-		cout << "xxDEBUGxx 4" << endl;
-		nodeTemplate = Persistent<FunctionTemplate>::New(nodeTemplate);
-		cout << "xxDEBUGxx 5" << endl;
+		Handle<FunctionTemplate> protoTemplate = FunctionTemplate::New();
+		protoTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+		nodeTemplate = Persistent<FunctionTemplate>::New(protoTemplate);
 
 		// Javascript methods
 		Local<Template> proto = nodeTemplate->PrototypeTemplate();
-		cout << "xxDEBUGxx 6" << endl;
 		proto->Set("GetInterface",  FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetInterface>) );
 		proto->Set("GetProfile",    FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetProfile>) );
 		proto->Set("GetIP",         FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetIP>) );
 		proto->Set("GetMAC",        FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetMAC>) );
 		proto->Set("IsEnabled",     FunctionTemplate::New(InvokeMethod<bool, Node, &Nova::Node::IsEnabled>) );
-		cout << "xxDEBUGxx 7" << endl;
 	}
 
-	cout << "xxDEBUGxx 8" << endl;
 	// Get the constructor from the template
 	Handle<Function> ctor = nodeTemplate->GetFunction();
-	cout << "xxDEBUGxx 9" << endl;
 	// Instantiate the object with the constructor
 	Handle<Object> result = ctor->NewInstance();
-	cout << "xxDEBUGxx 10" << endl;
 	// Wrap the native object in an handle and set it in the internal field to get at later.
 	Handle<External> nodePtr = External::New(node);
-	cout << "xxDEBUGxx 11" << endl;
 	result->SetInternalField(0,nodePtr);
-	cout << "xxDEBUGxx 12" << endl;
 
 	return scope.Close(result);
 }
@@ -59,9 +47,9 @@ Handle<Object> HoneydNodeJs::WrapPortSet(PortSet *portSet)
 	// Setup the template for the type if it hasn't been already
 	if( portSetTemplate.IsEmpty() )
 	{
-		Handle<FunctionTemplate> portSetTemplate = FunctionTemplate::New();
-		portSetTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-		portSetTemplate = Persistent<FunctionTemplate>::New(portSetTemplate);
+		Handle<FunctionTemplate> protoTemplate = FunctionTemplate::New();
+		protoTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+		portSetTemplate = Persistent<FunctionTemplate>::New(protoTemplate);
 
 		// Javascript methods
 		Local<Template> proto = portSetTemplate->PrototypeTemplate();
@@ -93,9 +81,9 @@ Handle<Object> HoneydNodeJs::WrapPort(Port *port)
     // Setup the template for the type if it hasn't been already
     if( portTemplate.IsEmpty() )
     {
-        Handle<FunctionTemplate> portTemplate = FunctionTemplate::New();
-        portTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-        portTemplate = Persistent<FunctionTemplate>::New(portTemplate);
+        Handle<FunctionTemplate> protoTemplate = FunctionTemplate::New();
+        protoTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+        portTemplate = Persistent<FunctionTemplate>::New(protoTemplate);
 
         // Javascript methods
         Local<Template> proto = portTemplate->PrototypeTemplate();
@@ -167,9 +155,9 @@ Handle<Object> HoneydNodeJs::WrapProfile(Profile *pfile)
 	// Setup the template for the type if it hasn't been already
 	if( profileTemplate.IsEmpty() )
 	{
-		Handle<FunctionTemplate> profileTemplate = FunctionTemplate::New();
-		profileTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-		profileTemplate = Persistent<FunctionTemplate>::New(profileTemplate);
+		Handle<FunctionTemplate> protoTemplate = FunctionTemplate::New();
+		protoTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+		profileTemplate = Persistent<FunctionTemplate>::New(protoTemplate);
 
 		// Javascript methods
 		Local<Template> proto = profileTemplate->PrototypeTemplate();

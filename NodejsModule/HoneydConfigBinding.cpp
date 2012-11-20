@@ -193,8 +193,6 @@ Handle<Value> HoneydConfigBinding::GetNode(const Arguments& args)
 
 	if (ret != NULL)
 	{
-		cout << "xxDEBUGxx " << MAC << endl;
-		cout << "xxDEBUGxx " << ret->m_MAC << endl;
 		return scope.Close(HoneydNodeJs::WrapNode(ret));
 	}
 	else
