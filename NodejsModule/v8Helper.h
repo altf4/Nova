@@ -9,13 +9,7 @@
 #include <iostream>
 #include <arpa/inet.h>
 
-template <typename T> T* Unwrap(v8::Handle<v8::Object> obj, int fieldIndex=0)
-{
-	using namespace v8;
-	Handle<External> objectHandle = Handle<External>::Cast(obj->GetInternalField(fieldIndex));
-	void* ptr = objectHandle->Value();
-	return static_cast<T*>(ptr);
-}
+using namespace std;
 
 // For invocation of standalone (non-member) functions,
 // zero-argument version.
@@ -110,7 +104,7 @@ struct InvokeMethod_impl
 		{
 		using namespace v8;
 		HandleScope scope;
-		T* nativeHandler = Unwrap<T>(args.This());
+		T* nativeHandler = node::ObjectWrap::Unwrap<T>(args.This());
 
 		Handle<v8::Value> result = cvv8::CastToJS(  (  (nativeHandler)->*(F)  )()  );
 		return scope.Close(result);
@@ -126,7 +120,7 @@ struct InvokeMethod_impl_1
 		{
 		using namespace v8;
 		HandleScope scope;
-		T* nativeHandler = Unwrap<T>(args.This());
+		T* nativeHandler = node::ObjectWrap::Unwrap<T>(args.This());
 
 		if( args.Length() < 1 )
 		{
@@ -136,6 +130,7 @@ struct InvokeMethod_impl_1
 		NATIVE_P1 p1 = cvv8::CastFromJS<NATIVE_P1>(args[0]);
 
 		Handle<v8::Value> result = cvv8::CastToJS(  (  (nativeHandler)->*(F)  )(p1)  );
+
 		return scope.Close(result);
 		}
 };
@@ -150,7 +145,7 @@ struct InvokeMethod_impl<in_addr, T, F>
 		{
 		using namespace v8;
 		HandleScope scope;
-		T* nativeHandler = Unwrap<T>(args.This());
+		T* nativeHandler = node::ObjectWrap::Unwrap<T>(args.This());
 
 		in_addr addr = (nativeHandler->*(F))();
 		char* addrAsString = inet_ntoa(addr);
@@ -222,6 +217,7 @@ struct InvokeWrappedMethod_impl_1
 		using namespace v8;
 		HandleScope scope;
 		T* nativeHandler = node::ObjectWrap::Unwrap<T>(args.This());
+
 
 		if( args.Length() < 1 )
 		{
