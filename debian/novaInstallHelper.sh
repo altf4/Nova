@@ -2,6 +2,10 @@
 
 PWD=`pwd`
 
+SAVE=$PWD'/'
+
+NEW_PERM=$SUDO_USER:$SUDO_USER
+
 if [ -z $BUILDDIR ]; then
 	BUILDDIR=$PWD/nova-build
 fi
@@ -62,6 +66,13 @@ echo "#                             BUILDING NOVA                               
 echo "##############################################################################"
 cd ${BUILDDIR}/Nova/Quasar
 bash getDependencies.sh
+check_err
+chown -R -f $NEW_PERM node-v0.8.5/
+chown -f $NEW_PERM node-v0.8.5.tar.gz
+cd ${HOME}
+chown -R $NEW_PERM .npm/
+check_err
+cd ${BUILDDIR}/Nova/Quasar
 npm install -g forever
 check_err
 
@@ -84,6 +95,7 @@ if [ "$version" != "Nmap version 6.01 ( http://nmap.org )" ]; then
 	check_err
 	tar -xf nmap-6.01.tar.bz2
 	check_err
+	chown -R nova:nova nmap-6.01
 	cd nmap-6.01
 	./configure
 	check_err
@@ -94,6 +106,11 @@ if [ "$version" != "Nmap version 6.01 ( http://nmap.org )" ]; then
 else
   echo "Nmap version already matches required version. Skipping step."
 fi
+
+cd $SAVE
+chown -R -f $NEW_PERM nova-build/
+cd $HOME
+chown -R -f $NEW_PERM .node-gyp/
 
 echo "##############################################################################"
 echo "#                                    DONE                                    #"
