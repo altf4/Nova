@@ -84,16 +84,21 @@ Handle<Value> HoneydConfigBinding::GetPortSet(const Arguments& args)
 	}
 
 	std::string profileName = cvv8::CastFromJS<string>(args[0]);
-	std::string portSetName = cvv8::CastFromJS<string>(args[0]);
+	std::string portSetName = cvv8::CastFromJS<string>(args[1]);
 
 	Profile *profile = obj->m_conf->GetProfile(profileName);
 	if(profile == NULL)
 	{
-		//ERROR
+		return scope.Close( Null() );
+	}
+	PortSet *portSet = profile->GetPortSet(portSetName);
+	if(portSet == NULL)
+	{
+		cout << "xxxDEBUGxxx OMG!" << endl;
 		return scope.Close( Null() );
 	}
 
-	return scope.Close( HoneydNodeJs::WrapPortSet( profile->GetPortSet(portSetName)) );
+	return scope.Close( HoneydNodeJs::WrapPortSet( portSet ));
 }
 
 Handle<Value> HoneydConfigBinding::GetPortSetNames(const Arguments& args)

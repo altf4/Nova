@@ -2085,10 +2085,7 @@ everyone.now.GetProfile = function (profileName, callback) {
 	var profCounts = profile.GetVendorCounts();
 
 	for (var i = 0; i < profVendors.length; i++) {
-		var element = {
-			vendor: "",
-			dist: ""
-		};
+		var element = {};
 		element.vendor = profVendors[i];
 		element.count = profCounts[i];
 		ethVendorList.push(element);
@@ -2128,28 +2125,42 @@ everyone.now.GetVendors = function (profileName, callback) {
 	callback(profVendors, profDists);
 }
 
-GetPorts = function (profileName, callback) {
-	var ports = honeydConfig.GetPorts(profileName);
+GetPortSets = function (profileName, callback) {
+	var portSetNames = honeydConfig.GetPortSetNames(profileName);
+	
+	var portSets = [];	
 
-	if ((ports[0] == undefined || ports[0].portNum == "0") && profileName != "default") {
-		console.log("ERROR Getting ports for profile '" + profileName + "'");
-		callback(null);
-		return;
+	for (var i = 0; i < portSetNames.length; i++) {
+		console.log("Got to: " + portSetNames[i]);
+		var portSet = honeydConfig.GetPortSet( profileName, portSetNames[i] );
+		portSet.setName = portSet.GetName();
+		portSet.TCPBehavior = portSet.GetTCPBehavior();
+		portSet.UDPBehavior = portSet.GetUDPBehavior();
+		portSet.ICMPBehavior = portSet.GetICMPBehavior();
+
+		portSet.TCPExceptions = portSet.GetTCPPorts();
+		for (var j = 0; j < portSet.TCPExceptions.length; j++) {
+			portSet.TCPExceptions[j].portNum = portSet.TCPExceptions[j].GetPortNum();
+			portSet.TCPExceptions[j].protocol = portSet.TCPExceptions[j].GetProtocol();
+			portSet.TCPExceptions[j].behavior = portSet.TCPExceptions[j].GetBehavior();
+			portSet.TCPExceptions[j].scriptName = portSet.TCPExceptions[j].GetScriptName();
+			portSet.TCPExceptions[j].service = portSet.TCPExceptions[j].GetService();
+		}
+
+		portSet.UDPExceptions = portSet.GetUDPPorts();
+		for (var j = 0; j < portSet.UDPExceptions.length; j++) {
+			portSet.UDPExceptions[j].portNum = portSet.UDPExceptions[j].GetPortNum();
+			portSet.UDPExceptions[j].protocol = portSet.UDPExceptions[j].GetProtocol();
+			portSet.UDPExceptions[j].behavior = portSet.UDPExceptions[j].GetBehavior();
+			portSet.UDPExceptions[j].scriptName = portSet.UDPExceptions[j].GetScriptName();
+			portSet.UDPExceptions[j].service = portSet.UDPExceptions[j].GetService();
+		}
+		portSets.push(portSet);
 	}
 
-	for (var i = 0; i < ports.length; i++) {
-		ports[i].portName = ports[i].GetPortName();
-		ports[i].portNum = ports[i].GetPortNum();
-		ports[i].type = ports[i].GetType();
-		ports[i].behavior = ports[i].GetBehavior();
-		ports[i].scriptName = ports[i].GetScriptName();
-		ports[i].service = ports[i].GetService();
-		ports[i].isInherited = ports[i].GetIsInherited();
-	}
-
-	callback(ports, profileName);
+	callback(portSets, profileName);
 }
-everyone.now.GetPorts = GetPorts;
+everyone.now.GetPortSets = GetPortSets;
 
 //portSets = A 2D array. (array of portSets, which are arrays of Ports)
 everyone.now.SaveProfile = function (profile, portSets, callback, ethVendorList) {

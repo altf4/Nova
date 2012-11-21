@@ -580,12 +580,11 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 		// for matching open ports to scripts in the script table. So, say 22_TCP is open
 		// on a host, we'll use the m_personalityClass string to match the OS and open port
 		// to a script and then assign that script automatically.
-		for(uint i = 0; i < newHost->m_personalityClass.size() - 1; i++)
+		for(uint i = 0; i < newHost->m_personalityClass.size(); i++)
 		{
-			newHost->m_osclass += newHost->m_personalityClass[i] + " | ";
+			newHost->m_osclass += newHost->m_personalityClass[i];
+			newHost->m_osclass += " | ";
 		}
-
-		newHost->m_osclass += newHost->m_personalityClass[newHost->m_personalityClass.size() - 1];
 	}
 
 	// Call AddHost() on the Personality object created at the beginning of this method
@@ -968,11 +967,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 
 void Nova::GenerateConfiguration()
 {
-	if(!HoneydConfiguration::Inst()->ReadNodesXML())
-	{
-		LOG(WARNING, "Problem reading template XMLs from file", "");
-	}
-
 	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
 
 	Config::Inst()->SetGroup("Autoconfig");

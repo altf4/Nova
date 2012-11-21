@@ -151,11 +151,12 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem, int p
 		return false;
 	}
 
+	// pushed in this order: name, type, osgen, osfamily, vendor
 	string curOSClass;
-	for(int i = persClassIndex; i >= 0; i--)
+	for(int i = targetHost->m_personalityClass.size() -1; i >= persClassIndex; i--)
 	{
 		curOSClass += targetHost->m_personalityClass[i];
-		if(i != 0)
+		if(i != persClassIndex)
 		{
 			curOSClass += " | ";
 		}
@@ -173,7 +174,7 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem, int p
 
 	Profile *childProfile = NULL;
 
-	//If node not found
+	//If profile not found
 	if(i == parentItem->m_children.size())
 	{
 		childProfile = new Profile(parentItem, curOSClass);
