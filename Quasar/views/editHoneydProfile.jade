@@ -76,61 +76,13 @@ block content
           input#uptimeMin(type="number", name="uptimeMin", min=0)
           input#uptimeMax(type="number", name="uptimeMax", min=0)
 
-      tr(id="row7")
-        td
-          input#inheritTcpAction(type="checkbox", name="inheritTcpAction", onclick="inheritanceChanged()") 
-        td
-          label Inherit?
-        td(style="text-align:right")
-          label Default TCP Action
-        td
-          select(id='tcpAction')
-            option Closed: Respond with RST
-            option Filter: Drop packet and do not respond
-            option Open: Respond with SYN/ACK
-            option Open with tarpit: Respond with SYN/ACK but delay packets to slow down connected attackers
-
-  
-      tr(id="row8")
-        td
-          input#inheritUdpAction(type="checkbox", name="inheritUdpAction", onclick="inheritanceChanged()") 
-        td
-          label Inherit?
-        td(style="text-align:right")
-          label Default UDP Action
-        td
-          select(id='udpAction')
-            option Closed: Respond with ICMP Port Error
-            option Filter: Drop packet and do not respond
-            option Open: Do nothing
-
-      tr(id="row9")
-        td
-          input#inheritIcmpAction(type="checkbox", name="inheritIcmpAction", onclick="inheritanceChanged()") 
-        td
-          label Inherit?
-        td(style="text-align:right")
-          label Default ICMP Action
-        td
-          select(id='icmpAction')
-            option Filter: Drop packet and do not respond
-            option Open: Respond to ICMP Packets
-
     br
     
     h3 Profile Ethernet Vendor Configuration
-    table(style="_min-height: 100px")
-      tr(id="row3")
-        td
-          input#inheritEthernet(type="checkbox", name="inheritEthernet", onclick="inheritanceChanged()") 
-        td
-          label Inherit?
-        td(id="labelDist", style="text-align:right")
-        td(id="ranges")
-        td(id="deleteButtonHere")        
+    table#ethernetVEndors
      
      div(id="ethSelectDiv")
-       button(type="button", id="ethSelectButton", onclick="addVendor(document.getElementById('ethernet').value)") Add New Vendor
+       button(type="button", id="ethSelectButton", onclick="addEthernetVendor(document.getElementById('ethernet').value, 1)") Add New Vendor
 
        select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
          each vendor in vendors
@@ -139,9 +91,10 @@ block content
       
     label(id="errorEthernet", style="color:red;", value="")
     input(type='hidden', id='profDist', value='')
-    input(type='hidden', id='generated', value='')
     
     h3 Profile Port Configuration
+    label Port Sets
+    select#portSetSelection(onchange='portSetSelectionChanged()')
     table#portTable
 
     button(type="button", onClick="addPort()") Add New Port

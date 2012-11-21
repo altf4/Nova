@@ -2078,6 +2078,8 @@ everyone.now.GetProfile = function (profileName, callback) {
 
 	profile.count = profile.GetCount();
 
+        profile.portSets = GetPortSets(profileName);
+
 
 	var ethVendorList = [];
 
@@ -2158,12 +2160,15 @@ GetPortSets = function (profileName, callback) {
 		portSets.push(portSet);
 	}
 
-	callback(portSets, profileName);
+	if(typeof callback == 'function') {
+        	callback(portSets, profileName);
+        }
+        return portSets;
 }
 everyone.now.GetPortSets = GetPortSets;
 
 //portSets = A 2D array. (array of portSets, which are arrays of Ports)
-everyone.now.SaveProfile = function (profile, portSets, callback, ethVendorList) {
+everyone.now.SaveProfile = function (profile, callback) {
 	// Check input
 	var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
 	var match = profileNameRegexp.exec(profile.name);
@@ -2187,10 +2192,10 @@ everyone.now.SaveProfile = function (profile, portSets, callback, ethVendorList)
 	var ethVendors = [];
 	var ethDists = [];
 
-	for (var i = 0; i < ethVendorList.length; i++)
+	for (var i = 0; i < profile.ethernet.length; i++)
 	{
-		ethVendors.push(ethVendorList[i].vendor);
-		ethDists.push(parseFloat(ethVendorList[i].dist));
+		ethVendors.push(profile.ethernet[i].vendor);
+		ethDists.push(parseFloat(profile.ethernet[i].dist));
 	}
 	honeydProfile.SetVendors(ethVendors, ethDists);
 	
@@ -2203,18 +2208,18 @@ everyone.now.SaveProfile = function (profile, portSets, callback, ethVendorList)
 	// Add new ports
 	honeydProfile.ClearPorts();
 	var portName;
-	for (var i = 0; i < portSets.size; i++) 
+	for (var i = 0; i < profile.portSets.size; i++) 
 	{
 		//Make a new port set
-		honeydProfile.AddPortSet(portSets[i].name);
-		for (var i = 0; j < portSets[i].size; i++)
+		honeydProfile.AddPortSet(profile.portSets[i].name);
+		for (var i = 0; j < profile.portSets[i].size; i++)
 		{
 			
-			honeydProfile.AddPort(portSets[i][j].name, 
-					portSets[i][j].behavior, 
-					portSets[i][j].protocol, 
-					Number(portSets[i][j].portNum), 
-					portSets[i][j].script);
+			honeydProfile.AddPort(profile.portSets[i][j].name, 
+					profile.portSets[i][j].behavior, 
+					profile.portSets[i][j].protocol, 
+					Number(profile.portSets[i][j].portNum), 
+					profile.portSets[i][j].script);
 		}
 	}
 
