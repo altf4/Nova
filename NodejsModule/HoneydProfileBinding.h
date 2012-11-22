@@ -14,16 +14,15 @@ public:
   
 	Nova::Profile *GetChild();
 
-	bool SetName(std::string name);
 	bool SetPersonality(std::string personality);
-	bool SetUptimeMin(uint uptimeMin);
-	bool SetUptimeMax(uint uptimeMax);
-	bool SetDropRate(std::string dropRate);
-	bool SetParentProfile(std::string parentName);
 	bool SetCount(int count);
-	bool SetIsGenerated(bool isGenerated);
 	bool AddPortSet(std::string portSetName);
 	bool ClearPorts();
+
+	bool SetIsPersonalityInherited(bool);
+	bool SetIsDropRateInherited(bool);
+	bool SetIsUptimeInherited(bool);
+	bool Save();
 
 private:
 	//The parent name is needed to know where to put the profile in the tree,

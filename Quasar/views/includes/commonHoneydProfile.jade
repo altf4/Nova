@@ -28,17 +28,10 @@ script
         var checkIfRestartNeeded = function() {};
 
 
-
-
         // Make the HTML view reflect the internal model
         var refreshVendorsView = function() {
                 var vendorDiv = document.getElementById("ethernetVEndors");
                 dojo.empty(vendorDiv);
-
-                // Don't even bother drawing the table header if it's empty
-                if (profile.ethernet.length === 0) {
-                        return
-                }
 
                 // Populate the table header
                 var headerRow = document.createElement("tr");
@@ -69,6 +62,7 @@ script
                         var vendorCountCell = document.createElement("td");
                         var vendorCount = document.createElement("input");
                         vendorCountCell.appendChild(vendorCount);
+                        vendorCount.onchange = function(i, vendorCount) {return function() {changedEthernetVendorCount(i, vendorCount.value)}}(i, vendorCount);
                         
                         vendorCount.id = "vendorCount" + i;
                         vendorCount.type = "number";
@@ -82,7 +76,7 @@ script
                         vendorDeleteCell.appendChild(vendorDelete);
 
                         vendorDelete.innerHTML = "Delete";
-                        vendorDelete.onclick = function(){ var foo = i;return function(){deleteEthernetVendor(foo);}}()
+                        vendorDelete.onclick = function(i){return function(){deleteEthernetVendor(i);}}(i)
 
                         vendorRow.appendChild(vendorNameCell);
                         vendorRow.appendChild(vendorCountCell);
@@ -91,6 +85,10 @@ script
                         vendorDiv.appendChild(vendorRow);
 
                 }
+        }
+
+        var changedEthernetVendorCount = function(vendorIndex, vendorCount) {
+                profile.ethernet[vendorIndex].count = vendorCount;
         }
 
         var addEthernetVendor = function(vendorName, vendorCount) {
@@ -107,7 +105,7 @@ script
 
         var deleteEthernetVendor = function(vendorIndex) {
                 console.log("Deleting " + vendorIndex);
-                delete profile.ethernet[vendorIndex]; 
+                profile.ethernet.splice(vendorIndex, 1); 
                 refreshVendorsView();
         }
 
@@ -157,14 +155,13 @@ script
 
 
                         profile.personality = dojo.byId("personality").value;
-                        profile.ethernet = dojo.byId("ethernet").value;
                         profile.dropRate = dojo.byId("dropRate").value;
                         profile.uptimeMin = dojo.byId("uptimeMin").value;
 
                         if (dojo.byId("uptimeType").selectedIndex == 0) {
-                                profile.uptimeMin = dojo.byId("uptimeMin").value;
+                                profile.uptimeMax = dojo.byId("uptimeMin").value;
                         } else {
-                                profile.uptimeMin = dojo.byId("uptimeMin").value;
+                                profile.uptimeMax = dojo.byId("uptimeMax").value;
                         }
 
 
@@ -552,6 +549,13 @@ script
                                 dojo.byId("personality").value = profile.personality;
                                 dojo.byId("uptimeMin").value = profile.uptimeMin;
                                 dojo.byId("uptimeMax").value = profile.uptimeMax;
+
+                                if (profile.uptimeMin != profile.uptimeMax) {
+                                        dojo.byId("uptimeType").selectedIndex = 1;
+                                        uptimeTypeChanged();
+                                }
+
+
                                 dojo.byId("dropRate").value = profile.dropRate;
 
 

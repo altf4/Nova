@@ -11,28 +11,11 @@ using namespace Nova;
 
 HoneydProfileBinding::HoneydProfileBinding(string parentName, string profileName)
 {
-	Profile *profile = HoneydConfiguration::Inst()->GetProfile(profileName);
-	if(profile == NULL)
-	{
-		//Then we need to make a brand new profile
-		m_profile = new Profile(parentName, profileName);
-		HoneydConfiguration::Inst()->AddProfile(m_profile);
-	}
-	else
-	{
-		//There is already a profile with that name, so let's use it
-		m_profile = profile;
-	}
+	m_profile = new Profile(parentName, profileName);
 }
 
 HoneydProfileBinding::~HoneydProfileBinding()
 {
-}
-
-bool HoneydProfileBinding::SetName(std::string name)
-{
-	m_profile->m_name = name;
-	return true;
 }
 
 bool HoneydProfileBinding::SetPersonality(std::string personality)
@@ -41,39 +24,10 @@ bool HoneydProfileBinding::SetPersonality(std::string personality)
 	return true;
 }
 
-bool HoneydProfileBinding::SetUptimeMin(uint uptimeMin)
-{
-	m_profile->SetUptimeMin(uptimeMin);
-	return true;
-}
-
-bool HoneydProfileBinding::SetUptimeMax(uint uptimeMax)
-{
-	m_profile->SetUptimeMax(uptimeMax);
-	return true;
-}
-
-bool HoneydProfileBinding::SetDropRate(std::string dropRate)
-{
-	m_profile->SetDropRate(dropRate);
-	return true;
-}
-
-bool HoneydProfileBinding::SetParentProfile(std::string parentName)
-{
-	m_profile->m_parent = HoneydConfiguration::Inst()->GetProfile(parentName);
-	return true;
-}
 
 bool HoneydProfileBinding::SetCount(int count)
 {
 	m_profile->m_count = count;
-	return true;
-}
-
-bool HoneydProfileBinding::SetIsGenerated(bool isGenerated)
-{
-	m_profile->m_isGenerated = isGenerated;
 	return true;
 }
 
@@ -91,10 +45,7 @@ Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
 	}
 
 	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
-	if(obj == NULL)
-	{
-		return scope.Close(Boolean::New(false));
-	}
+
 
 	vector<string> vendorNames = cvv8::CastFromJS<vector<string>>( args[0] );
 	vector<uint> vendorCount = cvv8::CastFromJS<vector<uint>>( args[1] );
@@ -136,10 +87,7 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 	HandleScope scope;
 	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
 
-	if(obj == NULL)
-	{
-		return scope.Close(Boolean::New(false));
-	}
+
 
 	string portSetName = cvv8::CastFromJS<string>( args[0] );
 	string portBehavior = cvv8::CastFromJS<string>( args[1] );
@@ -191,6 +139,28 @@ bool HoneydProfileBinding::ClearPorts()
 	return true;
 }
 
+bool HoneydProfileBinding::SetIsPersonalityInherited(bool val) {
+	m_profile->m_isPersonalityInherited = val;
+	return true;
+}
+
+bool HoneydProfileBinding::SetIsDropRateInherited(bool val) {
+	m_profile->m_isDropRateInherited = val;
+	return true;
+}
+
+bool HoneydProfileBinding::SetIsUptimeInherited(bool val) {
+	m_profile->m_isUptimeInherited = val;
+	return true;
+}
+
+bool HoneydProfileBinding::Save() {
+	bool ret = HoneydConfiguration::Inst()->AddProfile(m_profile);
+	cout << "Added profile " << m_profile << endl;
+	m_profile = NULL;
+	return ret;
+}
+
 void HoneydProfileBinding::Init(v8::Handle<Object> target)
 {
 	// Prepare constructor template
@@ -200,16 +170,19 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 	// Prototype
 	Local<Template> proto = tpl->PrototypeTemplate();
 
-	proto->Set("SetName",			FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::SetName>));
 	proto->Set("SetPersonality",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::SetPersonality>));
-	proto->Set("SetUptimeMin",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  uint, 		&HoneydProfileBinding::SetUptimeMin>));
-	proto->Set("SetUptimeMax",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  uint, 		&HoneydProfileBinding::SetUptimeMax>));
-	proto->Set("SetDropRate",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::SetDropRate>));
-	proto->Set("SetParentProfile",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::SetParentProfile>));
 	proto->Set("SetCount",			FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  int, 		&HoneydProfileBinding::SetCount>));
-	proto->Set("SetIsGenerated",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, 		&HoneydProfileBinding::SetIsGenerated>));
 	proto->Set("AddPortSet",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::AddPortSet>));
 	proto->Set("ClearPorts",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  &HoneydProfileBinding::ClearPorts>));
+	proto->Set("SetIsPersonalityInherited",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsPersonalityInherited>));
+	proto->Set("SetIsDropRateInherited",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsDropRateInherited>));
+	proto->Set("SetIsUptimeInherited",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsUptimeInherited>));
+	proto->Set("Save",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding, &HoneydProfileBinding::Save>));
+
+	proto->Set("SetUptimeMin",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, uint, &Profile::SetUptimeMin>));
+	proto->Set("SetUptimeMax",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile,  uint, 		&Profile::SetUptimeMax>));
+	proto->Set("SetDropRate",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile,  std::string, &Profile::SetDropRate>));
+
 
 	//Odd ball out, because it needs 5 parameters. More than InvoleWrappedMethod can handle
 	proto->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());

@@ -262,6 +262,9 @@ bool Profile::Copy(Profile *source)
 	m_dropRate = source->m_dropRate;
 	m_vendors = source->m_vendors;
 	m_children = source->m_children;
+	m_isPersonalityInherited = source->m_isPersonalityInherited;
+	m_isDropRateInherited = source->m_isDropRateInherited;
+	m_isUptimeInherited = source->m_isUptimeInherited;
 
 	//TODO: Maybe want to copy the port sets too (rather than pointers)
 	m_portSets = source->m_portSets;
@@ -295,9 +298,10 @@ uint Profile::GetUptimeMinNonRecursive()
 	return m_uptimeMin;
 }
 
-void Profile::SetUptimeMin(uint uptime)
+bool Profile::SetUptimeMin(uint uptime)
 {
 	m_uptimeMin = uptime;
+	return true;
 }
 
 uint Profile::GetUptimeMax()
@@ -314,9 +318,10 @@ uint Profile::GetUptimeMaxNonRecursive()
 	return m_uptimeMax;
 }
 
-void Profile::SetUptimeMax(uint uptime)
+bool Profile::SetUptimeMax(uint uptime)
 {
 	m_uptimeMax = uptime;
+	return true;
 }
 
 std::string Profile::GetDropRate()
@@ -333,9 +338,10 @@ std::string Profile::GetDropRateNonRecursive()
 	return m_dropRate;
 }
 
-void Profile::SetDropRate(std::string droprate)
+bool Profile::SetDropRate(std::string droprate)
 {
 	m_dropRate = droprate;
+	return true;
 }
 
 std::string Profile::GetName()

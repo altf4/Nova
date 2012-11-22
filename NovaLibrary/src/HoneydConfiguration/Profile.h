@@ -73,15 +73,15 @@ public:
 
 	uint GetUptimeMin();
 	uint GetUptimeMinNonRecursive();
-	void SetUptimeMin(uint uptime);
+	bool SetUptimeMin(uint uptime);
 
 	uint GetUptimeMax();
 	uint GetUptimeMaxNonRecursive();
-	void SetUptimeMax(uint uptime);
+	bool SetUptimeMax(uint uptime);
 
 	std::string GetDropRate();
 	std::string GetDropRateNonRecursive();
-	void SetDropRate(std::string droprate);
+	bool SetDropRate(std::string droprate);
 
 	//Javascript compatibility functions
 	//TODO: Move these into the binding class

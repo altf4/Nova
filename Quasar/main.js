@@ -2133,7 +2133,6 @@ GetPortSets = function (profileName, callback) {
 	var portSets = [];	
 
 	for (var i = 0; i < portSetNames.length; i++) {
-		console.log("Got to: " + portSetNames[i]);
 		var portSet = honeydConfig.GetPortSet( profileName, portSetNames[i] );
 		portSet.setName = portSet.GetName();
 		portSet.TCPBehavior = portSet.GetTCPBehavior();
@@ -2178,32 +2177,31 @@ everyone.now.SaveProfile = function (profile, callback) {
 		return;
 	}
 
-	var honeydProfile = new novaconfig.HoneydProfileBinding(profile.parentProfile, profile.oldname);
-
-	// Move the Javascript object values to the C++ object
-	honeydProfile.SetName(profile.name);
-	honeydProfile.SetPersonality(profile.personality);
-	honeydProfile.SetUptimeMin(profile.uptimeMin);
-	honeydProfile.SetUptimeMax(profile.uptimeMax);
-	honeydProfile.SetDropRate(profile.dropRate);
-	honeydProfile.SetCount(profile.count);
-
-	//Set Ethernet vendors
+	var honeydProfile = new novaconfig.HoneydProfileBinding(profile.parentProfile, profile.name);
+	
+        //Set Ethernet vendors
 	var ethVendors = [];
 	var ethDists = [];
 
-	for (var i = 0; i < profile.ethernet.length; i++)
+	for (var i in profile.ethernet)
 	{
 		ethVendors.push(profile.ethernet[i].vendor);
-		ethDists.push(parseFloat(profile.ethernet[i].dist));
+		ethDists.push(parseFloat(Number(profile.ethernet[i].count)));
 	}
 	honeydProfile.SetVendors(ethVendors, ethDists);
 	
-	if (profile.generated == "true") {
-		honeydProfile.SetGenerated(true);
-	} else {
-		honeydProfile.SetGenerated(false);
-	}
+
+	// Move the Javascript object values to the C++ object
+	honeydProfile.SetUptimeMin(Number(profile.uptimeMin));
+	honeydProfile.SetUptimeMax(Number(profile.uptimeMax));
+	honeydProfile.SetDropRate(Number(profile.dropRate));
+	honeydProfile.SetPersonality(profile.personality);
+	honeydProfile.SetCount(profile.count);
+
+        honeydProfile.SetIsPersonalityInherited(Boolean(profile.isPersonalityInherited));
+        honeydProfile.SetIsDropRateInherited(Boolean(profile.isDropRateInherited));
+        honeydProfile.SetIsUptimeInherited(Boolean(profile.isUptimeInherited));
+
 
 	// Add new ports
 	honeydProfile.ClearPorts();
@@ -2212,7 +2210,7 @@ everyone.now.SaveProfile = function (profile, callback) {
 	{
 		//Make a new port set
 		honeydProfile.AddPortSet(profile.portSets[i].name);
-		for (var i = 0; j < profile.portSets[i].size; i++)
+		for (var j = 0; j < profile.portSets[i].size; j++)
 		{
 			
 			honeydProfile.AddPort(profile.portSets[i][j].name, 
@@ -2222,6 +2220,8 @@ everyone.now.SaveProfile = function (profile, callback) {
 					profile.portSets[i][j].script);
 		}
 	}
+
+        honeydProfile.Save();
 
 	// Save the profile
 	if (!honeydConfig.SaveAll()) {
