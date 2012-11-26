@@ -2285,7 +2285,7 @@ everyone.now.SaveProfile = function (profile, callback) {
 					profile.portSets[i].TCPExceptions[j].behavior, 
 					profile.portSets[i].TCPExceptions[j].protocol, 
 					Number(profile.portSets[i].TCPExceptions[j].portNum), 
-					profile.portSets[i].TCPExceptions[j].script);
+					profile.portSets[i].TCPExceptions[j].scriptName);
 		}
 
 		for (var j = 0; j < profile.portSets[i].UDPExceptions.length; j++)
@@ -2294,7 +2294,7 @@ everyone.now.SaveProfile = function (profile, callback) {
 					profile.portSets[i].UDPExceptions[j].behavior, 
 					profile.portSets[i].UDPExceptions[j].protocol, 
 					Number(profile.portSets[i].UDPExceptions[j].portNum), 
-					profile.portSets[i].UDPExceptions[j].script);
+					profile.portSets[i].UDPExceptions[j].scriptName);
 		}
 
 	}
