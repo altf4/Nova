@@ -7,8 +7,7 @@ block headerAdditions
 block content
   h2 Editing Profile
 
-  form(method="post", action="/editHoneydProfileSave")
-
+  form
     table(id="tableEditProfile")
       col
       col
@@ -93,12 +92,41 @@ block content
     input(type='hidden', id='profDist', value='')
     
     h3 Profile Port Configuration
-    label Port Sets
+    label Create New Port Set
+    input#newPortSetName(type="text")
+    button(type="button", onclick = "addNewPortset()") Add Portset
+    br
+    br
+
+    label Edit Port Set
     select#portSetSelection(onchange='portSetSelectionChanged()')
-    table#portTable
+    button(type="button", onclick = "deletePortset()") Delete Portset
+    br
 
-    button(type="button", onClick="addPort()") Add New Port
-
+    div#portSetDiv
+      label Default TCP Action
+      select#defaultTCPAction
+        option(value="open") Open (respond with SYN/ACK)
+        option(value="closed") Closed (respond with RST)
+        option(value="filtered") Filtered (don't respond)
+      br
+  
+      label Default UDP Action
+      select#defaultUDPAction
+        option(value="closed") Closed (respond with ICMP port unreach)
+        option(value="filtered") Filtered (don't respond)
+      br
+  
+      label Default ICMP Action
+      select#defaultICMPAction
+        option(value="open") Open (respond to pings)
+        option(value="filtered") Filtered (don't respond)
+      br
+  
+      table#portTable
+  
+      button(type="button", onClick="addPort()") Add New Port
+  
     br
     br
     br

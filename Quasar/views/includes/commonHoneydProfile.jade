@@ -1,4 +1,6 @@
 script
+        var ports = {};
+        var lastPortSet = "";
         var loadedName;
         var profile;
         var origProfile;
@@ -28,17 +30,10 @@ script
         var checkIfRestartNeeded = function() {};
 
 
-
-
         // Make the HTML view reflect the internal model
         var refreshVendorsView = function() {
                 var vendorDiv = document.getElementById("ethernetVEndors");
                 dojo.empty(vendorDiv);
-
-                // Don't even bother drawing the table header if it's empty
-                if (profile.ethernet.length === 0) {
-                        return
-                }
 
                 // Populate the table header
                 var headerRow = document.createElement("tr");
@@ -69,6 +64,7 @@ script
                         var vendorCountCell = document.createElement("td");
                         var vendorCount = document.createElement("input");
                         vendorCountCell.appendChild(vendorCount);
+                        vendorCount.onchange = function(i, vendorCount) {return function() {changedEthernetVendorCount(i, vendorCount.value)}}(i, vendorCount);
                         
                         vendorCount.id = "vendorCount" + i;
                         vendorCount.type = "number";
@@ -82,7 +78,7 @@ script
                         vendorDeleteCell.appendChild(vendorDelete);
 
                         vendorDelete.innerHTML = "Delete";
-                        vendorDelete.onclick = function(){ var foo = i;return function(){deleteEthernetVendor(foo);}}()
+                        vendorDelete.onclick = function(i){return function(){deleteEthernetVendor(i);}}(i)
 
                         vendorRow.appendChild(vendorNameCell);
                         vendorRow.appendChild(vendorCountCell);
@@ -91,6 +87,10 @@ script
                         vendorDiv.appendChild(vendorRow);
 
                 }
+        }
+
+        var changedEthernetVendorCount = function(vendorIndex, vendorCount) {
+                profile.ethernet[vendorIndex].count = vendorCount;
         }
 
         var addEthernetVendor = function(vendorName, vendorCount) {
@@ -106,33 +106,152 @@ script
         }
 
         var deleteEthernetVendor = function(vendorIndex) {
-                console.log("Deleting " + vendorIndex);
-                delete profile.ethernet[vendorIndex]; 
+                profile.ethernet.splice(vendorIndex, 1); 
                 refreshVendorsView();
         }
 
+        var updatePortsModel = function() {
+            var TCPExceptions = new Array();
+            var UDPExceptions = new Array();
+            ports.size = portIndexes.length;
+            for (var i = 0; i < portIndexes.length; i++) 
+            {
+                var port = {};
+                port.portNum = dojo.byId("portNum" + portIndexes[i]).value;
 
+                switch (Number(dojo.byId("portBehavior" + portIndexes[i]).value)) 
+                {
+                    case 0: port.behavior = "reset"; break; 
+                    case 1: port.behavior = "block"; break;
+                    case 2: port.behavior = "open"; break;
+                    case 3: port.behavior = "script"; break;
+                    case 4: port.behavior = "tarpit open"; break;
+                    case 5: port.behavior = "tarpit script"; break;
+                }
 
+                if (port.behavior == "script") {
+                    port.scriptName = dojo.byId("portScriptDrop" + portIndexes[i]).value;
+                } else {
+                    port.scriptName = "";
+                }
+
+                port.protocol = dojo.byId("portType" + portIndexes[i]).value;
+
+                if (port.protocol == "tcp") {
+                    TCPExceptions.push(port);
+                } else {
+                    UDPExceptions.push(port);
+                }
+            }
+            for (var i in profile.portSets) {
+                if (profile.portSets[i].setName == lastPortSet) {
+                    profile.portSets[i].TCPExceptions = TCPExceptions;
+                    profile.portSets[i].UDPExceptions = UDPExceptions;
+                    profile.portSets[i].TCPBehavior = dojo.byId("defaultTCPAction").value;
+                    profile.portSets[i].UDPBehavior = dojo.byId("defaultUDPAction").value;
+                    profile.portSets[i].ICMPBehavior = dojo.byId("defaultICMPAction").value;
+                    break;
+                }
+            }
+
+        }
+
+        var updatePortSetLists = function() {
+            dojo.empty(document.getElementById("portSetSelection"));
+            if (profile.portSets.length != 0) {
+                dojo.byId("portSetDiv").style.display = "block";
+                document.getElementById("portSetSelection").disabled = false;
+                for (var i in profile.portSets) {
+                    var option = document.createElement("option");
+                    option.value = profile.portSets[i].setName;
+                    option.innerHTML = profile.portSets[i].setName;
+                    document.getElementById("portSetSelection").appendChild(option);
+                }
+            } else {
+                dojo.byId("portSetDiv").style.display = "none";
+            }
+            portSetSelectionChanged();
+        }
+
+        var deletePortset = function() {
+            var setName = dojo.byId("portSetSelection").value;
+            
+            for (var i in profile.portSets) {
+                if (profile.portSets[i].setName == setName) {
+                    profile.portSets.splice(i, 1);
+                    break;
+                }
+            }
+          
+            updatePortSetLists();
+        }
+
+        var addNewPortset = function addNewPortSet() {
+            var setName = dojo.byId("newPortSetName").value;
+
+            if (setName == "") {
+                alert("Port sets must have a name.");
+                return;
+            }
+
+            for (var i in profile.portSets) {
+                if (profile.portSets[i].setName == setName) {
+                    alert("A port set by that name already exists");
+                    return;
+                }
+            }
+
+            var portSet = {setName: setName
+                , ICMPBehavior: "filtered"
+                , TCPBehavior: "filtered"
+                , UDPBehavior: "filtered"
+                , TCPExceptions: []
+                , UDPExceptions: []
+            }
+
+            // Push to the profile object
+            profile.portSets.push(portSet);
+
+            updatePortsModel();
+
+            // Add into the port set dropdown box
+            updatePortSetLists();
+
+            // Set is as the current portset
+            document.getElementById("portSetSelection").value = setName;
+            portSetSelectionChanged();
+        }
         // Currently edited port set has changed
         var portSetSelectionChanged = function() {
-                var newPortSet = document.getElementById("portSetSelection").value;
+            if (lastPortSet != "") {
+                updatePortsModel();
+            }
 
-                // TODO Warn user that changes will be lost if they continue
 
-                dojo.empty(portTable);
+            lastPortSet = document.getElementById("portSetSelection").value;
 
-                portIndexes = [];
-                for (var i in profile.portSets) {
-                        if (profile.portSets[i].setName == newPortSet) {
-                                for (var port in profile.portSets[i].TCPExceptions) {
-                                        addPort(profile.portSets[i].TCPExceptions[port]);
-                                }
-                                
-                                for (var port in profile.portSets[i].UDPExceptions) {
-                                        addPort(profile.portSets[i].UDPExceptions[port]);
-                                }
-                        }
+
+
+            var newPortSet = document.getElementById("portSetSelection").value;
+
+            dojo.empty(portTable);
+
+            portIndexes = [];
+            for (var i in profile.portSets) {
+                if (profile.portSets[i].setName == newPortSet) {
+                    dojo.byId("defaultICMPAction").value = profile.portSets[i].ICMPBehavior;
+                    dojo.byId("defaultTCPAction").value = profile.portSets[i].TCPBehavior;
+                    dojo.byId("defaultUDPAction").value = profile.portSets[i].UDPBehavior;
+                        
+                    for (var port in profile.portSets[i].TCPExceptions) {
+                        addPort(profile.portSets[i].TCPExceptions[port]);
+                    }
+
+                    for (var port in profile.portSets[i].UDPExceptions) {
+                        addPort(profile.portSets[i].UDPExceptions[port]);
+                    }
                 }
+            }
         }
 
 
@@ -147,7 +266,6 @@ script
         require(["dojo/domReady!", "dojo/ready", "dijit/registry", "dijit/form/FilteringSelect"], function() {
                 function obj() {};
                 saveChanges = function() {
-                        var ports = new obj();
 
                         var ethVendorList = [];
 
@@ -157,21 +275,20 @@ script
 
 
                         profile.personality = dojo.byId("personality").value;
-                        profile.ethernet = dojo.byId("ethernet").value;
                         profile.dropRate = dojo.byId("dropRate").value;
                         profile.uptimeMin = dojo.byId("uptimeMin").value;
 
                         if (dojo.byId("uptimeType").selectedIndex == 0) {
-                                profile.uptimeMin = dojo.byId("uptimeMin").value;
+                                profile.uptimeMax = dojo.byId("uptimeMin").value;
                         }  else {
-                           pfile.uptimeMin = dojo.byId("uptimeMin").value;
-                          pfile.uptimeMax = dojo.byId("uptimeMax").value;
+                                profile.uptimeMax = dojo.byId("uptimeMax").value;
                         }
 
 
                         profile.isPersonalityInherited = dojo.byId("inheritPersonality").checked;
                         profile.isDropRateInherited = dojo.byId("inheritDropRate").checked;
                         profile.isUptimeInherited = dojo.byId("inheritUptime").checked;
+                        updatePortsModel();
 
                         //need conditional here for add vs. edit, false == edit, true == add
                         try {
@@ -186,7 +303,7 @@ script
                 {
                     if (err == null)
                     {
-                        window.location="configHoneydProfiles";
+                        window.location="/configHoneydProfiles";
                         now.IsHaystackUp(checkIfRestartNeeded); 
                     } else {
                         alert("Unable to save profile: " + err);
@@ -202,7 +319,7 @@ script
                         }
                     }
 
-                    location.reload(true);
+                    window.location="/configHoneydProfiles";
                 }
 
                 addPort = function(port) 
@@ -255,21 +372,14 @@ script
                         options = ["udp", "tcp"];
                         for(j = 0; j < options.length; j++)
                         {
+                                var option = document.createElement("option");
+                                option.value = options[j];
+                                option.innerHTML = options[j];
                                 if(port.protocol == options[j])
                                 {
-                                        var option = document.createElement("option");
-                                        option.value = j;
                                         option.selected = true;
-                                        option.innerHTML = options[j];
-                                        typeSelect.appendChild(option);
                                 }
-                                else
-                                {
-                                        var option = document.createElement("option");
-                                        option.value = j;
-                                        option.innerHTML = options[j];
-                                        typeSelect.appendChild(option);
-                                }
+                                typeSelect.appendChild(option);
                         }
 
                         typeContainer.appendChild(typeSelect);
@@ -437,6 +547,7 @@ script
                         {
                                 portIndexes.splice(idx, 1);
                         }
+                        updatePortsModel();
                 }
 
                 inheritanceChanged = function() 
@@ -497,7 +608,7 @@ script
                                 if (pfile == undefined)
                                 {
                                         alert("ERROR: Unable to fetch the requested profile information.");
-                                        window.location="configHoneydProfiles";
+                                        window.location="/configHoneydProfiles";
                                         return;
                                 }
                                 else
@@ -553,17 +664,19 @@ script
                                 dojo.byId("personality").value = profile.personality;
                                 dojo.byId("uptimeMin").value = profile.uptimeMin;
                                 dojo.byId("uptimeMax").value = profile.uptimeMax;
+
+                                if (profile.uptimeMin != profile.uptimeMax) {
+                                        dojo.byId("uptimeType").selectedIndex = 1;
+                                        uptimeTypeChanged();
+                                }
+
+
                                 dojo.byId("dropRate").value = profile.dropRate;
 
 
                                 
                                 // Populate the port set options
-                                for (var i in profile.portSets) {
-                                        var option = document.createElement("option");
-                                        option.value = profile.portSets[i].setName;
-                                        option.innerHTML = profile.portSets[i].setName;
-                                        document.getElementById("portSetSelection").appendChild(option);
-                                }
+                                updatePortSetLists();
                                 
                                 portSetSelectionChanged();
 

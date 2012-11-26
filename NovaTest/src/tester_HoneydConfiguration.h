@@ -54,7 +54,11 @@ TEST_F(HoneydConfigurationTest, test_getMaskBits)
 
 TEST_F(HoneydConfigurationTest, test_WriteAllTemplatesXML)
 {
+	Profile * p = new Profile("default", "TestProfile");
+	EXPECT_TRUE(HC->AddProfile(p));
 	EXPECT_TRUE(HC->WriteAllTemplatesToXML());
+	EXPECT_TRUE(HC->ReadAllTemplatesXML());
+	EXPECT_TRUE(HC->GetProfile("TestProfile") != NULL);
 }
 
 TEST_F(HoneydConfigurationTest, test_RenameProfile)

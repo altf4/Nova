@@ -124,6 +124,7 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 		profile->SetPersonality(ptree.get<string>("personality"));
 		profile->SetUptimeMin(ptree.get<uint>("uptimeMin"));
 		profile->SetUptimeMax(ptree.get<uint>("uptimeMax"));
+		profile->SetDropRate(ptree.get<string>("dropRate"));
 		profile->m_isPersonalityInherited = ptree.get<bool>("isPersonalityInherited");
 		profile->m_isUptimeInherited = ptree.get<bool>("isUptimeInherited");
 		profile->m_isDropRateInherited = ptree.get<bool>("isDropRateInherited");
@@ -287,7 +288,7 @@ bool HoneydConfiguration::ReadNodesXML()
 		}
 		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
-			LOG(DEBUG, "Unable to parse a node in nodes.xml", "");
+			LOG(DEBUG, "Unable to parse a node in nodes.xml: " + string(e.what()), "");
 		};
 
 	}
@@ -466,6 +467,7 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 	propTree.put<string>("personality", root->GetPersonalityNonRecursive());
 	propTree.put<uint>("uptimeMin", root->GetUptimeMinNonRecursive());
 	propTree.put<uint>("uptimeMax", root->GetUptimeMaxNonRecursive());
+	propTree.put<string>("dropRate", root->GetDropRateNonRecursive());
 	propTree.put<bool>("isPersonalityInherited", root->m_isPersonalityInherited);
 	propTree.put<bool>("isUptimeInherited", root->m_isUptimeInherited);
 	propTree.put<bool>("isDropRateInherited", root->m_isDropRateInherited);
@@ -899,7 +901,6 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 		duplicate->Copy(profile);
 
 		//We don't need this new profile anymore, so get rid of it
-		profile->m_children.clear();
 		delete profile;
 		return true;
 	}
@@ -916,6 +917,7 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 		//Parent didn't exist
 		return false;
 	}
+
 	//Add the new profile to its parent's list of children
 	parent->m_children.push_back(profile);
 	//Add the parent as the current profile's parent
