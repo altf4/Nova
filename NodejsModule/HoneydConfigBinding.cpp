@@ -240,7 +240,7 @@ Handle<Value> HoneydConfigBinding::DeleteScriptFromPorts(const Arguments& args)
 	HandleScope scope;
 	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
 
-	if(args.Length() != 2)
+	if(args.Length() != 1)
 	{
 		return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
 	}

@@ -1849,7 +1849,17 @@ app.get('/scripts', passport.authenticate('basic', {session: false}), function(r
   
   var libxml = require('libxmljs');
   
-  var parser = libxml.parseXmlString(xml);
+  try {
+  	var parser = libxml.parseXmlString(xml);
+  } catch (err) {
+    res.render('scripts.jade', {
+	  locals: {
+	    scripts: []
+	    , bindings: {}
+	  }  
+    });
+	return;
+  }
   
   var nodesToParse = parser.root().childNodes();
 
@@ -1876,22 +1886,28 @@ app.get('/scripts', passport.authenticate('basic', {session: false}), function(r
   
   for(var i in profiles)
   {
-    GetPorts(profiles[i], function(ports, profileName){
-      for(var i in ports)
-      {
-        if(ports[i].scriptName != undefined && ports[i].scriptName != '')
-        {
-          if(scriptBindings[ports[i].scriptName] == undefined)
-          {
-            scriptBindings[ports[i].scriptName] = profileName + ':' + ports[i].portNum;
-          }
-          else
-          {
-            scriptBindings[ports[i].scriptName] += ',' + profileName + ':' + ports[i].portNum;
-          }
-        }
-      }
-    });
+	var profileName = profiles[i];
+
+  	var portSets = honeydConfig.GetPortSetNames(profiles[i]);
+	for (var portSetName in portSets) {
+		var portSet = honeydConfig.GetPortSet(profiles[i], portSets[portSetName]);
+		var ports = [];
+		for (var p in portSet.GetTCPPorts()) {
+			ports.push(portSet.GetTCPPorts()[p]);
+		}
+		for (var p in portSet.GetUDPPorts()) {
+			ports.push(portSet.GetUDPPorts()[p]);
+		}
+		for(var p in ports) {
+			if(ports[p].GetScriptName() != undefined && ports[p].GetScriptName() != '') {
+				if(scriptBindings[ports[p].GetScriptName()] == undefined) {
+					scriptBindings[ports[p].GetScriptName()] = profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
+				} else {
+					scriptBindings[ports[p].GetScriptName()] += '<br>' + profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
+				}
+			}
+		}
+	}
   }
   
   profiles = null;
@@ -2483,7 +2499,6 @@ everyone.now.GetLocalIP = function (interface, callback) {
 }
 
 everyone.now.RemoveScriptFromProfiles = function(script, callback)
-      GetPorts(pass, function(ports, profileName){
 {
 	honeydConfig.DeleteScriptFromPorts(script);
 
@@ -2587,7 +2602,7 @@ everyone.now.GetConfigSummary = function(configName, callback)
   
   for(var i in profiles)
   {
-    GetPorts(profiles[i], function(ports, profileName){
+    var ports = honeydConfig.GetPorts(profiles[i]);
       for(var i in ports)
       {
         if(ports[i].scriptName != undefined && ports[i].scriptName != '')
@@ -2602,7 +2617,6 @@ everyone.now.GetConfigSummary = function(configName, callback)
           }
         }
       }
-    });
   }
   
   var profileObj = {};
