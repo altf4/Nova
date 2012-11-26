@@ -1,77 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<groups>
-	<group>
-		<name>main</name>
-		<nodes>
-			<node>
-				<interface>eth0</interface>
-				<IP>DHCP</IP>
-				<enabled>true</enabled>
-				<MAC>14:fe:b5:7c:0b:3f</MAC>
-				<profile>
-					<name>WinServer</name>
-					<add>
-						<ports>
-							<port>20_TCP_open</port>
-							<port>21_TCP_Windows FTP</port>
-							<port>23_TCP_Windows Telnet</port>
-							<port>80_TCP_Windows httpd</port>
-							<port>135_UDP_open</port>
-							<port>137_TCP_open</port>
-							<port>137_UDP_open</port>
-							<port>139_TCP_open</port>
-						</ports>
-					</add>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>DHCP</IP>
-				<enabled>true</enabled>
-				<MAC>00:15:c5:99:cd:da</MAC>
-				<profile>
-					<name>BSDServer</name>
-					<add>
-						<ports>
-							<port>22_TCP_Linux SSH</port>
-							<port>23_TCP_Telnet Router</port>
-						</ports>
-					</add>
-				</profile>
-			</node>
-			<node>
-				<interface>eth0</interface>
-				<IP>DHCP</IP>
-				<MAC>00:12:3f:c6:7c:ec</MAC>
-				<enabled>true</enabled>
-				<profile>
-					<name>LinuxServer</name>
-					<add>
-						<ports>
-							<port>22_TCP_Linux SSH</port>
-							<port>80_TCP_Linux httpd</port>
-						</ports>
-					</add>
-				</profile>
-			</node>
-			<node>
-				<interface>lo</interface>
-				<IP>10.0.0.1</IP>
-				<enabled>true</enabled>
-				<profile>
-					<name>Doppelganger</name>
-					<add>
-						<ports>
-							<port>135_UDP_open</port>
-							<port>137_TCP_open</port>
-							<port>137_UDP_open</port>
-							<port>139_TCP_open</port>
-						</ports>
-					</add>
-				</profile>
-				<name>Doppelganger</name>
-				<MAC>00:20:7b:bf:62:b5</MAC>
-			</node>
-		</nodes>
-	</group>
-</groups>
+<nodes>
+	<node>
+		<interface>eth0</interface>
+		<IP>DHCP</IP>
+		<enabled>true</enabled>
+		<MAC>00:11:43:7d:de:9f</MAC>
+		<profile>
+			<name>BSDServer</name>
+			<portset>Basic FreeBSD Server</portset>
+		</profile>
+	</node>
+	<node>
+		<interface>eth0</interface>
+		<IP>DHCP</IP>
+		<enabled>true</enabled>
+		<MAC>00:18:8b:ba:77:fd</MAC>
+		<profile>
+			<name>WinServer</name>
+			<portset>Basic Windows Configuration</portset>
+		</profile>
+	</node>
+	<node>
+		<interface>eth0</interface>
+		<IP>DHCP</IP>
+		<enabled>true</enabled>
+		<MAC>a4:ba:db:7d:27:5e</MAC>
+		<profile>
+			<name>LinuxServer</name>
+			<portset>Basic Linux Server</portset>
+		</profile>
+	</node>
+</nodes>
