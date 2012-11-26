@@ -1,6 +1,6 @@
 // Used for debugging. Download the node-segfault-handler to use
-var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
-segvhandler.registerHandler();
+//var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
+//segvhandler.registerHandler();
 
 //var agent = require('webkit-devtools-agent');
 
