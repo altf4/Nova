@@ -90,7 +90,7 @@ bool HoneydConfiguration::ReadProfilesXML()
 	ptree profilesTopLevel;
 	try
 	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/profiles.xml", profilesTopLevel, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/profiles.xml", profilesTopLevel, boost::property_tree::xml_parser::trim_whitespace);
 
 		//Don't loop through the profiles here, as we only expect one root profile. If there are others, ignore them
 		ptree rootProfile = profilesTopLevel.get_child("profiles").get_child("profile");
@@ -264,7 +264,8 @@ bool HoneydConfiguration::ReadNodesXML()
 
 	try
 	{
-		read_xml(Config::Inst()->GetPathHome() + "/config/templates/nodes.xml", propTree, boost::property_tree::xml_parser::trim_whitespace);
+		read_xml(Config::Inst()->GetPathHome() + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/nodes.xml", propTree, boost::property_tree::xml_parser::trim_whitespace);
+
 
 		//For each node tag
 		try
@@ -415,7 +416,7 @@ bool HoneydConfiguration::WriteNodesToXML()
 	{
 		boost::property_tree::xml_writer_settings<char> settings('\t', 1);
 		string homePath = Config::Inst()->GetPathHome();
-		write_xml(homePath + "/config/templates/nodes.xml", nodesTopLevel, locale(), settings);
+		write_xml(homePath + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/nodes.xml", nodesTopLevel, locale(), settings);
 	}
 	catch(boost::property_tree::xml_parser_error &e)
 	{
@@ -438,7 +439,7 @@ bool HoneydConfiguration::WriteProfilesToXML()
 
 			boost::property_tree::xml_writer_settings<char> settings('\t', 1);
 			string homePath = Config::Inst()->GetPathHome();
-			write_xml(homePath + "/config/templates/profiles.xml", profilesToplevel, locale(), settings);
+			write_xml(homePath + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/profiles.xml", profilesToplevel, locale(), settings);
 		}
 		catch(boost::property_tree::xml_parser_error &e)
 		{
