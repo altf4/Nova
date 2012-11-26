@@ -25,6 +25,9 @@ private:
 	static v8::Handle<v8::Value> AddNodes(const v8::Arguments& args);
 	static v8::Handle<v8::Value> AddNode(const v8::Arguments& args);
 	static v8::Handle<v8::Value> AddScript(const v8::Arguments& args);
+	static v8::Handle<v8::Value> AddConfiguration(const v8::Arguments& args);
+	static v8::Handle<v8::Value> RemoveConfiguration(const v8::Arguments& args);
+	static v8::Handle<v8::Value> SwitchConfiguration(const v8::Arguments& args);
 	static v8::Handle<v8::Value> RemoveScript(const v8::Arguments& args);
 
 

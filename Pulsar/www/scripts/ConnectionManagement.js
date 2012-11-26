@@ -1,9 +1,20 @@
 var clientCount = 0;
+var groupCount = 0;
         
 var clientDivName = 'clientsList';
 var groupDivName = 'groupsList';
+ 
+now.ClearGroupsList = function()
+{
+  document.getElementById(groupDivName).removeChild(document.getElementById(groupDivName).lastChild); 
+}
         
-function setUpSelect(divName)
+now.ClearClientList = function()
+{
+  document.getElementById(clientDivName).removeChild(document.getElementById(clientDivName).lastChild); 
+}
+        
+function setUpClientsList(divName)
 {     
   if(clients == undefined)
   {
@@ -18,46 +29,65 @@ function setUpSelect(divName)
   
   if(clients[0] == '' || clients.length == 0)
   {
-      var label = document.createElement('label');
-      label.id = 'noClients';
-      label.value = 'noClients';
-      label.innerHTML = 'There are no clients currently connected';
-      document.getElementById(divName).appendChild(label);
+    var tr = document.createElement('tr');
+    tr.id = 'noClients';
+    
+    var td0 = document.createElement('td');
+    td0.innerHTML = 'There are no clients currently connected';
+    
+    tr.appendChild(td0);
+          
+    document.getElementById(divName).appendChild(tr);
   }  
   else
   {
     var deleteMe = document.getElementById('noClients');
+    
     if(deleteMe != undefined)
     {
         document.getElementById(divName).removeChild(deleteMe);
     }
+    
     for(var i = 0; i < clients.length; i++)
     {
-        if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
-        {
-            var div = document.createElement('div');
-            div.id = clients[i] + 'div';
-            var check = document.createElement('input');
-            check.type = 'checkbox';
-            check.id = 'check' + i;
-            check.name = 'check' + i;
-            check.value = clients[i];
+      if(clients[i] != undefined && clients[i] != "undefined" && clients[i] != '')
+      {
+          var tr = document.createElement('tr');
+          tr.id = clients[i] + 'div';
+          
+          var td0 = document.createElement('td');
+          var td1 = document.createElement('td');
+          
+          var check = document.createElement('input');
+          check.type = 'checkbox';
+          check.id = 'check' + i;
+          check.name = 'check' + i;
+          check.value = clients[i];
+          if(typeof setTarget == 'function')
+          {
             check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
-            var label = document.createElement('label');
-            label.value = clients[i];
-            label.innerHTML = clients[i];
-            label.setAttribute('style', 'font-weight: bold; padding-left: 25px');
-            div.appendChild(check);
-            div.appendChild(label);
-            document.getElementById(divName).appendChild(div);
-            clientCount++;
-        }
+          }
+          td0.appendChild(check);
+          
+          var label = document.createElement('label');
+          label.value = clients[i];
+          label.innerHTML = clients[i];
+          label.setAttribute('style', 'font-weight: bold; padding-left: 25px');
+          td1.appendChild(label);
+          
+          tr.appendChild(td0);
+          tr.appendChild(td1);
+          
+          document.getElementById(divName).appendChild(tr);
+          
+          clientCount++;
+      }
     }
   }
   clientDivName = divName;
 }
 
-function setUpGrouplist(divName)
+function setUpGroupsList(divName)
 {
   if(groups == undefined)
   {
@@ -75,25 +105,33 @@ function setUpGrouplist(divName)
   
   if(groupList[0] == '' || (memberList[0] == '' || memberList[0] == undefined))
   {
-    var label = document.createElement('label');
-    label.id = 'noGroups';
-    label.value = 'noGroups';
-    label.innerHTML = 'There are no groups set';
-    document.getElementById(divName).appendChild(label);
+    var tr = document.createElement('tr');
+    tr.id = 'noGroups';
+    
+    var td0 = document.createElement('td');
+    td0.innerHTML = 'There are no groups set';
+    
+    tr.appendChild(td0);
+          
+    document.getElementById(divName).appendChild(tr);
   }
   else
   {
     var deleteMe = document.getElementById('noGroups');
+    
     if(deleteMe != undefined)
     {
-        document.getElementById(divName).removeChild(deleteMe);
+      document.getElementById(divName).removeChild(deleteMe);
     }
+    
     for(var i in groupList)
     {
       if(groupList[i] != '' && memberList[i] != '')
       {
-        var div = document.createElement('div');
-        div.id = groupList[i] + 'div';
+        var tr = document.createElement('tr');
+        tr.id = groupList[i] + 'div';
+        
+        var td0 = document.createElement('td');
         var check = document.createElement('input');
         check.type = 'checkbox';
         check.id = 'groupcheck' + i;
@@ -101,18 +139,27 @@ function setUpGrouplist(divName)
         check.value = memberList[i];
         check.setAttribute('onchange', 'setTarget(("groupcheck' + i + '"), document.getElementById("groupcheck' + i + '").value.replace(new RegExp("," , "g") , ":"), "true")');
         check.setAttribute('style', 'padding-left: 50px');
+        td0.appendChild(check);
+        
+        var td1 = document.createElement('td');
         var label = document.createElement('label');
         label.value = groupList[i];
         label.innerHTML = groupList[i];
         label.title = memberList[i];
         label.setAttribute('style', 'text-align: center; font-weight: bold; padding-left: 25px');
+        td1.appendChild(label);
+        
         if(memberList[i].split(',')[1] == '' || memberList[i].split(',')[1] == undefined)
         {
           check.setAttribute('disabled', true);
         }
-        div.appendChild(check);
-        div.appendChild(label);
-        document.getElementById(divName).appendChild(div);
+        
+        tr.appendChild(td0);
+        tr.appendChild(td1);
+        
+        document.getElementById(divName).appendChild(tr);
+        
+        groupCount++;
       }
     }
   }
@@ -124,7 +171,8 @@ now.RefreshPageAfterRename = function()
   document.location.reload(); 
 }
 
-now.UpdateClientsList = function(clientId, action) {
+now.UpdateClientsList = function(clientId, action) 
+{
   var divClientList = document.getElementById(clientDivName);
   switch(action)
   {
@@ -142,8 +190,10 @@ now.UpdateClientsList = function(clientId, action) {
           return;
         }
       }
+      
       var div = document.createElement('div');
       div.id = clientId + 'div';
+      
       var check = document.createElement('input');
       check.type = 'checkbox';
       check.id = 'check' + (parseInt(clientCount) + 1);
@@ -151,13 +201,16 @@ now.UpdateClientsList = function(clientId, action) {
       check.value = clientId;
       check.setAttribute('onchange', 'setTarget(("check" + ' + (parseInt(clientCount) + 1) + '), clients[' + (parseInt(clientCount) + 1) + '].toString())');
       check.setAttribute('style', 'padding-left: 50px');
+      
       var label = document.createElement('label');
       label.value = clientId;
       label.innerHTML = clientId;
       label.setAttribute('style', 'font-weight: bold; padding-left: 25px');
+      
       div.appendChild(check);
       div.appendChild(label);
       divClientList.appendChild(div);
+      
       clientCount++;
       
       clients.push(clientId);
@@ -168,7 +221,9 @@ now.UpdateClientsList = function(clientId, action) {
       break;
     case 'remove':
       divClientList.removeChild(document.getElementById(clientId + 'div'));
+      
       clientCount--;
+      
       for(var i in clients)
       {
         if(clients[i] == clientId)
@@ -176,95 +231,91 @@ now.UpdateClientsList = function(clientId, action) {
           clients.splice(i, 1);
         }
       }
+      
       if(clientCount == 0)
       {
-        
         var label = document.createElement('label');
         label.id = 'noClients';
         label.value = 'noClients';
         label.innerHTML = 'There are no clients currently connected';
+        
         document.getElementById('clientsList').appendChild(label);
       } 
+      
       if(typeof updateGroup == 'function')
       {
         updateGroup('all', clients.join());
       }
       break;
-    case 'clear':
-      while(divClientList.hasChildNodes())
-      {
-        divClientList.removeChild(divClientList.lastChild); 
-      }
-      break;
     default:
-      console.log('UpdateConnectionsList called with invalid action, doing nothing');
+      console.log('UpdateClientsList called with invalid action, doing nothing');
       break;
   }
+}
   
-  now.UpdateGroupList = function(group, action)
+now.UpdateGroupList = function(group, action)
+{
+  var divGroupList = document.getElementById(groupDivName);
+  var groupDiv = document.getElementById(group + 'div');
+  switch(action)
   {
-    var divGroupList = document.getElementById(groupDivName);
-    var groupDiv = document.getElementById(group + 'div');
-    switch(action)
-    {
-      case 'clear':
-        while(divGroupList.hasChildNodes())
+    case 'update':
+      if(groupDiv == undefined || groupDiv.childNodes.length == 0)
+      {
+        var deleteMe = document.getElementById('noGroups');
+        
+        if(deleteMe != undefined)
         {
-          divGroupList.lastChild.removeAttribute('readonly');
-          divGroupList.removeChild(divGroupList.lastChild); 
+          document.getElementById(groupDivName).removeChild(deleteMe);
         }
-        break;
-      case 'update':
-        if(groupDiv == undefined || groupDiv.childNodes.length == 0)
-        {
-          var deleteMe = document.getElementById('noGroups');
-          if(deleteMe != undefined)
+        
+        now.GetGroupMembers(group, function(members){
+          var div = document.createElement('div');
+          div.id = group + 'div';
+          var check = document.createElement('input');
+          check.type = 'checkbox';
+          check.id = 'groupcheck' + groupCount;
+          check.name = 'groupcheck' + groupCount;
+          check.value = members;
+          check.setAttribute('onchange', 'setTarget(("groupcheck' + groupCount + '"), document.getElementById("groupcheck' + groupCount + '").value.replace(new RegExp("," , "g") , ":"), "true")');
+          check.setAttribute('style', 'padding-left: 50px');
+          var label = document.createElement('label');
+          label.value = group;
+          label.innerHTML = group;
+          label.title = members;
+          label.setAttribute('style', 'text-align: center; font-weight: bold; padding-left: 25px');
+          if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
           {
-            document.getElementById(groupDivName).removeChild(deleteMe);
+            check.setAttribute('disabled', true);
           }
-          now.GetGroupMembers(group, function(members){
-            var div = document.createElement('div');
-            div.id = group + 'div';
-            var check = document.createElement('input');
-            check.type = 'checkbox';
-            check.id = 'groupcheck' + i;
-            check.name = 'groupcheck' + i;
-            check.value = members;
-            check.setAttribute('onchange', 'setTarget(("groupcheck' + i + '"), document.getElementById("groupcheck' + i + '").value.replace(new RegExp("," , "g") , ":"), "true")');
-            check.setAttribute('style', 'padding-left: 50px');
-            var label = document.createElement('label');
-            label.value = group;
-            label.innerHTML = group;
-            label.title = members;
-            label.setAttribute('style', 'text-align: center; font-weight: bold; padding-left: 25px');
-            if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
-            {
-              check.setAttribute('disabled', true);
-            }
-            div.appendChild(check);
-            div.appendChild(label);
-            document.getElementById(groupDivName).appendChild(div);
-          });
-        }
-        else
-        {
-          now.GetGroupMembers(group, function(members){
-            var check = groupDiv.childNodes[0];
-            check.value = members;
-            if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
-            {
-              check.setAttribute('disabled', true);
-            }
-            else
-            {
-              check.removeAttribute('disabled'); 
-            }
-          });
-        }
-        break;
-      default:
-        console.log('UpdateGroupList called with invalid action, doing nothing');
-        break; 
-    }
+          div.appendChild(check);
+          div.appendChild(label);
+          document.getElementById(groupDivName).appendChild(div);
+        });
+      }
+      else
+      {
+        now.GetGroupMembers(group, function(members){
+          var check = groupDiv.childNodes[0];
+          check.value = members;
+          if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
+          {
+            check.setAttribute('disabled', true);
+          }
+          else
+          {
+            check.removeAttribute('disabled'); 
+          }
+        });
+      }
+      break;
+    case 'remove':
+      console.log('groupDiv.childNodes[0].id ' + groupDiv.childNodes[0].id);
+      divGroupList.removeChild(groupDiv);
+      
+      break;
+    default:
+      console.log('UpdateGroupList called with invalid action, doing nothing');
+      break; 
   }
 }

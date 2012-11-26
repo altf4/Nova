@@ -2,7 +2,8 @@ extends layout
 
 block content
   h1 Connected Clients List
-  div(id='clientsList')
+  table(style='border: 2px solid; width: 200px; border-collapse: collapse;')
+    tbody(id='clientsList')
   br
   br
   h1 Add Group
@@ -10,7 +11,7 @@ block content
   input(id='groupName', maxlength='10', size='10', value='')
   button(id='addGroup', onclick='addGroup(document.getElementById("groupName").value, getMembers())') Add Group
   h1 Current Groups
-  table(id='groupsList')
+  table(id='groupsList', style='border-collapse: collapse;')
     thead
       tr
         th Group
@@ -25,11 +26,13 @@ block headerAdditions
   script
     var clients = '#{CLIENTS}'.split(':');
     var theDoc = document;
+    
     if(clients[0] == '')
     {
       clients.length = 0;
       clients = new Array();
     }
+    
     var clientCount = 0;
     var groups = !{GROUPS};
   
@@ -39,7 +42,7 @@ block headerAdditions
       now.GetClients(now.RenderConnectionsList);
       now.SetUpNotificationsButton();
       now.SetUpHostileEventsButton();
-      now.GetClients(function(list){
+      now.GetClients(function(list) {
         for(var i in list)
         {
           if(list[i] != '')
@@ -49,7 +52,7 @@ block headerAdditions
         }
       });
       
-      setUpSelect('clientsList');
+      setUpClientsList('clientsList');
       setUpGroups('appendHook');
       
       var members = '';

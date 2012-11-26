@@ -171,6 +171,7 @@ function createAutoconfigElement(clientName, group)
     document.getElementById('autoconfElements').appendChild(tr);
   }
   document.getElementById('sendAutoconfig').removeAttribute('disabled');
+  document.getElementById('changeStyle').setAttribute('style', 'border: 2px solid; border-collapse: collapse;')
 }
 
 function removeAutoconfigElement(target)

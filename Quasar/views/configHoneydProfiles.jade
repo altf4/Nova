@@ -73,8 +73,8 @@ block headerAdditions
     }
 
     
-    function errorMessageCallback(sucess, message) {
-      if(sucess != true) {
+    function errorMessageCallback(success, message) {
+      if(success != true) {
         var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
         dialog.show();
         return;
@@ -183,7 +183,7 @@ block headerAdditions
             profile.name = children[i].children[0].innerHTML;
             profile.parent = children[i].children[1].innerHTML;
             profile.children = new Array();
-            profile.isSelected = false
+            profile.isSelected = false;
             profile.listElement = null;
             profilesArray[profile.name] = profile;
         }
@@ -241,6 +241,7 @@ block content
           td #{profile.GetParentProfile()}
 
   div#treeDiv
+  br
   br
  
 

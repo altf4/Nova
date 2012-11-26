@@ -5,7 +5,7 @@ function updateConfiguration()
     alert('Attemping to submit to null target string, doing nothing');
     return;
   }
-  console.log('Sending configuration update requests to targets: ' + message.id);
+  
   now.UpdateConfiguration();
 }
  
@@ -58,12 +58,14 @@ now.UpdateConfiguration = function()
   
   message.SERVICE_PREFERENCES = document.getElementsByName('SERVICE_PREFERENCES')[0].value;
   
-  if(/^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;$/.test(message.SERVICE_PREFERENCES) == false)
+  if((/^0:[0-7](\+|\-)?;1:[0-7](\+|\-)?;2:[0-7](\+|\-)?;$/).test(message.SERVICE_PREFERENCES) == false)
   {
     document.getElementById('SERVICE_PREFERENCES').value = replace;
     alert('Service Preferences string is not formatted correctly.');
     return;
   }
   
+  now.UpdateBaseConfig(message);
   now.MessageSend(message);
+  location.reload(true);
 }

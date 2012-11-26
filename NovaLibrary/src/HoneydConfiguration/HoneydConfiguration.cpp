@@ -1109,4 +1109,176 @@ void HoneydConfiguration::ClearNodes()
 	m_nodes.clear();
 }
 
+
+bool HoneydConfiguration::SwitchToConfiguration(const string& configName)
+{
+	bool found = false;
+
+	for(uint i = 0; i < m_configs.size(); i++)
+	{
+		if(!m_configs[i].compare(configName))
+		{
+			found = true;
+		}
+	}
+
+	if(found)
+	{
+		Config::Inst()->SetCurrentConfig(configName);
+		return true;
+	}
+	else
+	{
+		cout << "No configuration with name " << configName << " found, doing nothing" << endl;
+		return false;
+	}
+}
+
+bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clone, const string& cloneConfig)
+{
+	bool found = false;
+
+	if(configName.empty())
+	{
+		cout << "Empty string is not acceptable configuration name, exiting" << endl;
+		return false;
+	}
+
+	for(uint i = 0; i < m_configs.size(); i++)
+	{
+		if(!m_configs[i].compare(configName))
+		{
+			cout << "Cannot add configuration with the same name as existing configuration" << endl;
+			return false;
+		}
+		if(clone && !m_configs[i].compare(cloneConfig))
+		{
+			found = true;
+		}
+	}
+
+	if(clone && !found)
+	{
+		cout << "Cannot find configuration " << cloneConfig << " to clone, exiting" << endl;
+		return false;
+	}
+
+	m_configs.push_back(configName);
+
+	string directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName;
+	system(string("mkdir " + directoryPath).c_str());
+
+	ofstream addfile(Config::Inst()->GetPathHome() + "/config/templates/configurations.txt", ios_base::app);
+
+	if(!clone)
+	{
+		// Add configName to configurations.txt within the templates/ folder,
+		// create the templates/configName/ directory, and fill with
+		// empty (but still parseable) xml files
+		string oldName = Config::Inst()->GetCurrentConfig();
+		Config::Inst()->SetCurrentConfig(configName);
+
+	    ClearNodes();
+		ClearProfiles();
+
+		addfile << configName << '\n';
+		addfile.close();
+		WriteAllTemplatesToXML();
+		string routeString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/default/routes.xml ";
+		routeString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		system(routeString.c_str());
+		Config::Inst()->SetCurrentConfig(oldName);
+	}
+	else if(clone && found)
+	{
+		// Add configName to configurations.txt within the templates/ folder,
+		// create the templates/configName/ directory, and cp the
+		// stuff from templates/cloneConfig/ into it.
+		string cloneString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/" + cloneConfig + "/* ";
+		cloneString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		system(cloneString.c_str());
+		addfile << configName << '\n';
+		addfile.close();
+	}
+	return false;
+}
+
+bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
+{
+	if(!configName.compare("default"))
+	{
+		cout << "Cannot delete default configuration" << endl;
+		return false;
+	}
+
+	bool found = false;
+
+	uint eraseIdx = 0;
+
+	for(uint i = 0; i < m_configs.size(); i++)
+	{
+		if(!m_configs[i].compare(configName))
+		{
+			found = true;
+			eraseIdx = i;
+		}
+	}
+
+	if(found)
+	{
+		string pathToDelete = "rm -r " + Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		system(pathToDelete.c_str());
+		int oldSize = 0;
+		for(uint i = 0; i < m_configs.size(); i++)
+		{
+			if(m_configs[i].compare(""))
+			{
+				oldSize++;
+			}
+		}
+		int newSize = oldSize - 1;
+		m_configs.erase(m_configs.begin() + eraseIdx);
+		m_configs.resize(newSize);
+		ofstream configurationsFile(Config::Inst()->GetPathHome() + "/config/templates/configurations.txt");
+		string writeString = "";
+		for(uint i = 0; i < m_configs.size(); i++)
+		{
+			if(m_configs[i].compare(""))
+			{
+				writeString += m_configs[i] + '\n';
+			}
+		}
+		configurationsFile << writeString;
+		configurationsFile.close();
+		return true;
+	}
+	else
+	{
+		cout << "No configuration with name " << configName << ", exiting" << endl;
+		return false;
+	}
+}
+
+bool HoneydConfiguration::LoadConfigurations()
+{
+	string configurationPath = Config::Inst()->GetPathHome() + "/config/templates/configurations.txt";
+
+	ifstream configList(configurationPath);
+
+	while(configList.good())
+	{
+		char buffer[256];
+		configList.getline(buffer, 256, '\n');
+		string pushback = string(buffer);
+		m_configs.push_back(pushback);
+	}
+
+	return true;
+}
+
+vector<string> HoneydConfiguration::GetConfigurationsList()
+{
+	return m_configs;
+}
+
 }

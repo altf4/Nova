@@ -9,12 +9,14 @@ block content
     tbody
       tr
         td
-          div(id='clientsList')
+          table(style='border: 2px solid; width: 200px; border-collapse: collapse;')
+            tbody(id='clientsList')
         td
-          div(id='groupsList')
+          table(style='border: 2px solid; width: 200px; border-collapse: collapse;')
+            tbody(id='groupsList')
 
   h1 Haystack Autoconfiguration Options 
-  table(style="border: solid 2px;")
+  table(id='changeStyle', style='border-collapse: collapse;')
     tbody(id='autoconfElements')
   br
   button(disabled=true, id='sendAutoconfig', onclick='processAutoconfigElements()') Configure Selected Haystacks
@@ -43,6 +45,6 @@ block headerAdditions
           } 
         }
       });
-      setUpSelect('clientsList');
-      setUpGrouplist('groupsList');
+      setUpClientsList('clientsList');
+      setUpGroupsList('groupsList');
     });

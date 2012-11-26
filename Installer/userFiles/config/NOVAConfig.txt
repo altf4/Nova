@@ -450,6 +450,16 @@ MASTER_UI_RECONNECT_TIME 5
 MASTER_UI_CLIENT_ID nova1
 
 ############################################
+# MASTER_UI_PORT
+############################################
+# Port for Pulsar to use. This will be the
+# port that Pulsar listens on and that
+# the user will use to access Pulsar through
+# the browser. Pulsar issues commands to the
+# Quasar instances using MASTER_UI_PORT + 1
+MASTER_UI_PORT 8082
+
+############################################
 # FEATURE_WEIGHTS #
 ############################################
 FEATURE_WEIGHTS 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -474,7 +484,10 @@ THRESHOLD_HOSTILE_TRIGGERS - - - - >6 >20 >20 - - - - - - >0.5
 ############################################
 ONLY_CLASSIFY_HONEYPOT_TRAFFIC 0
 
-
+############################################
+# CURRENT_CONFIG
+############################################
+CURRENT_CONFIG default
 
 ############################################
 # TLS Options
@@ -504,6 +517,3 @@ QUASAR_TETHER_TLS_ENABLED 1
 QUASAR_TETHER_TLS_CERT /config/keys/quasarTether.crt
 QUASAR_TETHER_TLS_KEY /config/keys/quasarTether.key
 QUASAR_TETHER_TLS_PASSPHRASE toor
-
-
-

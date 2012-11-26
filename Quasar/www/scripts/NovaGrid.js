@@ -151,8 +151,8 @@ PushEntry: function (entry) {
 				   }
 				   else
 				   {
-					   this.m_pageElements.push(arrayRep[i][1]);
-					   sub = arrayRep[i][1];
+					   this.m_pageElements.push(arrayRep[i][this.m_keyIndex]);
+					   sub = arrayRep[i][this.m_keyIndex];
 				   }
 				   if(this.m_selection)
 				   {

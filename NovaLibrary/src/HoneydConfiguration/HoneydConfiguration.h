@@ -110,6 +110,8 @@ public:
 
 	bool AddScript(Script script);
 
+	bool AddNewConfiguration(const std::string& configName, bool clone, const std::string& cloneConfig);
+
 
 	//This function allows access to NodeProfile objects by their name
 	// profileName: the name or key of the NodeProfile
@@ -178,7 +180,17 @@ public:
 
 	ProfileTree m_profiles;
 
+	bool SwitchToConfiguration(const std::string&);
+	
+	bool RemoveConfiguration(const std::string&);
+	
+	bool LoadConfigurations();
+	
+	std::vector<std::string> GetConfigurationsList();
+
+
 	//A map structure for node storage
+        std::vector<std::string> m_configs;
 	NodeTable m_nodes;
 
 	VendorMacDb m_macAddresses;

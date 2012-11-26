@@ -37,23 +37,30 @@ html(lang='en')
        
         if(clients == undefined || clients.length == 0)
         {
-          var label = document.createElement('label');
-          label.id = 'deleteMe';
-          label.innerHTML = 'No clients connected';
-          divConnectionsList.appendChild(label);
+          var tr = document.createElement('tr');
+          tr.id = 'deleteMe';
+          
+          var td0 = document.createElement('td');
+          td0.innerHTML = 'No clients connected';
+          
+          tr.appendChild(td0);
+          
+          divConnectionsList.appendChild(tr);
         }
         else
         {
           for(var i in clients)
           {
-            var div = document.createElement('div');
-            div.id = clients[i];
-            div.setAttribute('style', 'display: inline-block; max-height: 16px');
+            var tr = document.createElement('tr');
+            tr.id = clients[i];
             
+            var td0 = document.createElement('td');
             var label = document.createElement('label');
             label.innerHTML = clients[i];
             label.setAttribute('style', 'float: left');
+            td0.appendChild(label);
             
+            var td1 = document.createElement('td');
             var novadStatus = document.createElement('img');
             novadStatus.width = '16';
             novadStatus.height = '16';
@@ -77,7 +84,7 @@ html(lang='en')
               }
             });
             
-            novadStatus.setAttribute('style', 'float: left');
+            td1.appendChild(novadStatus);
             
             var haystackStatus = document.createElement('img');
             haystackStatus.width = '16';
@@ -102,7 +109,7 @@ html(lang='en')
               }
             });
             
-            haystackStatus.setAttribute('style', 'float: left');
+            td1.appendChild(haystackStatus);
             
             var events = document.createElement('div');
             events.id = clients[i] + 'events';
@@ -124,15 +131,12 @@ html(lang='en')
                 events.setAttribute('style', 'border: 2px; border-radius: 20px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
               }
             }
+            td1.appendChild(events);
             
-            var br = document.createElement('br');
+            tr.appendChild(td0);
+            tr.appendChild(td1);
             
-            div.appendChild(label);
-            div.appendChild(novadStatus);
-            div.appendChild(haystackStatus);
-            div.appendChild(events);
-            divConnectionsList.appendChild(div);
-            divConnectionsList.appendChild(br);
+            divConnectionsList.appendChild(tr);
           }
           
           clients.length = 0;
@@ -155,13 +159,16 @@ html(lang='en')
             {
               return now.UpdateConnectionsList(clientId, 'updateStatus');
             }
-            var div = document.createElement('div');
-            div.id = clientId;
-            div.setAttribute('style', 'display: inline-block; max-height: 16px');
+            var tr = document.createElement('tr');
+            tr.id = clientId;
             
+            var td0 = document.createElement('td');
             var label = document.createElement('label');
             label.innerHTML = clientId;
+            label.setAttribute('style', 'float: left');
+            td0.appendChild(label);
             
+            var td1 = document.createElement('td');
             var novadStatus = document.createElement('img');
             novadStatus.width = '16';
             novadStatus.height = '16';
@@ -184,6 +191,8 @@ html(lang='en')
                 novadStatus.alt = 'No Classification status for ' + client; 
               }
             });
+            
+            td1.appendChild(novadStatus);
             
             var haystackStatus = document.createElement('img');
             haystackStatus.width = '16';
@@ -208,20 +217,19 @@ html(lang='en')
               }
             });
             
+            td1.appendChild(haystackStatus);
+            
             var events = document.createElement('div');
             // This needs to be queried from the server side
             events.id = clientId + 'events';
             events.innerHTML = '0';
             events.setAttribute('style', 'border: 2px; border-radius: 20px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
+            td1.appendChild(events);
             
-            var br = document.createElement('br');
-            
-            div.appendChild(label);
-            div.appendChild(novadStatus);
-            div.appendChild(haystackStatus);
-            div.appendChild(events);
-            divConnectionsList.appendChild(div);
-            divConnectionsList.appendChild(br);
+            tr.appendChild(td0);
+            tr.appendChild(td1);
+
+            divConnectionsList.appendChild(tr);
             break;
           case 'remove':
             if(document.getElementById(clientId) != undefined)
@@ -481,7 +489,8 @@ html(lang='en')
         br
         br
         div(style='text-align:center; font-weight:bold; font-size: 150%;') Connected Clients
-        div(id='connectionsList')
+        table(style='border: 2px solid; width: 156px; border-collapse: collapse;')
+          tbody(id='connectionsList')
         //a(class="button", href= "logout") Log Out
         //br
 

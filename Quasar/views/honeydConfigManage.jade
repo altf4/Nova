@@ -1,0 +1,611 @@
+extends layout
+
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  style(type="text/css")
+    a.selectedProfile, a.unselectedProfile {
+        display: block;
+        font-size: 12px;
+        font-weight: bold;
+        border: 1px solid black;
+        padding: 2px;
+        margin: 5px;
+        height: 100%;
+    }
+
+    a.unselectedProfile:hover {
+        background-color: rgba(255,0,0,0.2);
+        clear: both;
+    }
+
+    a.selectedProfile {
+        background-color: rgba(255,0,0,0.8);
+    }
+
+    a.unselectedProfile {
+        background-color: rgba(255,0,0,0,0.8);
+    }
+
+    ul {
+        margin-bottom: 20px;
+        display: block; 
+        list-style-type:disc;
+    }
+
+    #treeDiv {
+        display: inline-block;
+        padding: 2px;
+        border-style: solid;
+        border-color: black;
+    }
+
+    li {
+        -moz-user-select: none;
+        -webkit-user-select: none;
+    }
+    
+  script(type="text/javascript", src="scripts/NovaPiChart.js")
+  script
+    var configurationList = !{JSON.stringify(configurations)};
+    var theDoc = document;
+    var profilesArray = {};
+    var saveProfileObjs = {};
+    var currentConfig = "#{current}";
+
+    function closeLightbox()
+    {
+      theDoc.getElementById('lightbox').style.display = 'none';
+      theDoc.getElementById('hideme').style.opacity = '1.0';
+      
+      while(theDoc.getElementById('cloneMe').hasChildNodes())
+      {
+        theDoc.getElementById('cloneMe').removeChild(theDoc.getElementById('cloneMe').lastChild);
+      }
+    }
+    
+    function newConfiguration(configName, cloneInfo)
+    {
+      var cloneConfig = cloneInfo;
+      
+      if(cloneInfo == undefined)
+      {
+        console.log('Creating empty configuration ' + configName);
+      }
+      else
+      {
+        console.log('Creating clone configuration ' + configName + ' based on ' + cloneInfo);
+      }
+    }
+    
+    function populateConfigSelect(configs)
+    {
+      if(theDoc.getElementById('configurations').hasChildNodes())
+      {
+        while(theDoc.getElementById('configurations').hasChildNodes())
+        {
+          theDoc.getElementById('configurations').removeChild(theDoc.getElementById('configurations').lastChild);
+        }
+      }
+      
+      if(configs == undefined || configs == '')
+      {
+        console.log('no configs sent');
+        var option = theDoc.createElement('option');
+        
+        option.value = 'None';
+        option.innerHTML = 'None';
+        option.id = 'None';
+        theDoc.getElementById('configurations').appendChild(option);
+      }
+      else
+      {
+        var selected = false;
+        for(var i in configs)
+        {
+          if(configs[i] != '' && configs[i] != undefined)
+          {
+            var option = theDoc.createElement('option');
+            
+            if(!selected && configs[i] == currentConfig)
+            {
+              option.selected = 'selected';
+              selected = true;
+            }
+            
+            option.value = configs[i];
+            option.innerHTML = configs[i];
+            option.id = configs[i];
+            theDoc.getElementById('configurations').appendChild(option);
+          }
+        }
+        
+        GetConfigurationSummary();
+      }
+    }
+    
+    function GetConfigurationSummary(configArg)
+    {
+      var config;
+      profilesArray = {};
+      
+      while(theDoc.getElementById('appendHook').hasChildNodes())
+      {
+        theDoc.getElementById('appendHook').removeChild(theDoc.getElementById('appendHook').lastChild);
+      }
+      while(theDoc.getElementById('treeDiv').hasChildNodes())
+      {
+        theDoc.getElementById('treeDiv').removeChild(theDoc.getElementById('treeDiv').lastChild);
+      }
+      
+      if(configArg == undefined)
+      {
+        config = theDoc.getElementById('configurations').value;
+      }
+      else
+      {
+        config = configArg;
+      }
+      
+      if(typeof now.SwitchConfigurationTo == 'function')
+      {
+        now.SwitchConfigurationTo(config); 
+      }
+      else
+      {
+        console.log('now.SwitchConfigurationTo(configName) is not defined, doing nothing');
+        return;
+      }
+      
+      if(typeof now.GetConfigSummary == 'function')
+      {
+        now.GetConfigSummary(config, function(scriptProfileBindings, profileObj, profiles, nodes){
+          // manipulate elements here (i.e. pi charts, text, tables, etc.)
+          // Will all be contained in the object parseMe that will use the 
+          // object literal notation of javascript to allow the server side
+          // to do the calculations, and then send exactly the data required to
+          // the browser.
+          saveProfileObjs = profileObj;
+          current = configArg;
+          for(var i in scriptProfileBindings)
+          {
+            var tr = theDoc.createElement('tr');
+            var td0 = theDoc.createElement('td');
+            var td1 = theDoc.createElement('td');
+            var scriptName = theDoc.createElement('label');
+            
+            var profilesPorts = theDoc.createElement('label');
+                        
+            scriptName.innerHTML = i;
+            profilesPorts.innerHTML = scriptProfileBindings[i];
+            td0.appendChild(scriptName);
+            td1.appendChild(profilesPorts);
+            tr.appendChild(td0);
+            tr.appendChild(td1);
+            theDoc.getElementById('appendHook').appendChild(tr);
+          }
+          
+          if(scriptProfileBindings.length == 0)
+          {
+            var tr = theDoc.createElement('tr');
+            var td0 = theDoc.createElement('td0');
+            var td1 = theDoc.createElement('td1');
+            var label0 = theDoc.createElement('label');
+            var label1 = theDoc.createElement('label');
+            label0.innerHTML = 'N/A';
+            label1.innerHTML = 'N/A';
+            td0.appendChild(label0);
+            td1.appendChild(label1);
+            tr.appendChild(td0);
+            tr.appendChild(td1);
+            theDoc.getElementById('appendHook').appendChild(tr);
+          }
+          
+          for(var i in profileObj)
+          {
+            var profile = {};
+            profile.name = profileObj[i].name;
+            profile.parent = profileObj[i].parent;
+            profile.children = [];
+            profile.isSelected = false;
+            profile.listElement = null;
+            profilesArray[profile.name] = profile;
+          }
+          
+          for(var i in profilesArray)
+          {
+            for(var j in profilesArray)
+            {
+              if(profilesArray[j].parent == profilesArray[i].name)
+              {
+                profilesArray[i].children.push(profilesArray[j].name);
+              }
+            }
+          }
+          
+          var treeDiv = theDoc.getElementById('treeDiv');
+          
+          var drawNode = function(profile, parentDOMNode){
+            var li = theDoc.createElement('li');
+            var a = theDoc.createElement('a');
+            
+            profilesArray[profile].listElement = a;
+            a.innerHTML = profile;
+            a.className = 'unselectedProfile';
+            a.setAttribute('onclick', 'onProfileClicked("' + profile + '")');
+            
+            li.appendChild(a);
+            parentDOMNode.appendChild(li);
+            
+            if(profilesArray[profile].children.length)
+            {
+              var ul = theDoc.createElement('ul');
+              li.appendChild(ul);  
+            }
+            
+            for(var i = 0; i < profilesArray[profile].children.length; i++)
+            {
+              drawNode(profilesArray[profilesArray[profile].children[i]].name, ul);
+            }
+          }
+          
+          drawNode("default", treeDiv);
+          
+          var nodesPerProfile = {};
+          var piChartRender = [];
+          
+          for(var i in nodes)
+          {
+            if(nodesPerProfile[nodes[i].pfile] === undefined)
+            {
+              nodesPerProfile[nodes[i].pfile] = 1;
+            }
+            else
+            {
+              nodesPerProfile[nodes[i].pfile]++;
+            }
+          }
+          
+          for(var pfile in nodesPerProfile)
+          {
+            var p = {};
+            p.name = pfile;
+            p.value = nodesPerProfile[pfile];
+            piChartRender.push(p);
+          }
+          
+          var pi = new NovaPiChart('piChart', 200);
+          pi.Render(piChartRender);
+        });
+
+        theDoc.getElementById('treeAndPiContainer').setAttribute('style', 'width: ' + theDoc.getElementById('sizeAnchor').style.width);
+      }
+      else
+      {
+        console.log('now.GetConfigSummary(configName, callback) is not defined, doing nothing');
+        return;
+      }
+    }
+    
+    function showLightBox(divIndex)
+    {
+      theDoc.getElementById('hideme').style.opacity = '0.5';
+      theDoc.getElementById('lightbox').style.display = 'block';
+      
+      if(divIndex == '0')
+      {
+        theDoc.getElementById('addConfigForm').style.display = 'block';
+        theDoc.getElementById('newName').value = '';
+        theDoc.getElementById('cloneConfigForm').style.display = 'none';
+        theDoc.getElementById('profileInfo').style.display = 'none';
+      }
+      else if(divIndex == '1')
+      {
+        theDoc.getElementById('addConfigForm').style.display = 'none';
+        theDoc.getElementById('cloneConfigForm').style.display = 'block';
+        theDoc.getElementById('newNameClone').value = '';
+        theDoc.getElementById('profileInfo').style.display = 'none';
+        
+        for(var i in configurationList)
+        {
+          if(configurationList[i] != '' && configurationList[i] != undefined)
+          {
+            var option = theDoc.createElement('option');
+            
+            option.value = configurationList[i];
+            option.innerHTML = configurationList[i];
+            option.id = configurationList[i];
+            theDoc.getElementById('cloneMe').appendChild(option);
+          }
+        }
+      }
+      else if(divIndex == '2')
+      {
+        theDoc.getElementById('addConfigForm').style.display = 'none';
+        theDoc.getElementById('cloneConfigForm').style.display = 'none';
+        theDoc.getElementById('newNameClone').value = '';
+        theDoc.getElementById('newName').value = '';
+        theDoc.getElementById('profileInfo').style.display = 'block';
+      }
+      else
+      {
+        console.log('Unknown divIndex, doing nothing');
+        closeLightbox();
+      }
+    }
+    
+    function checkExistingName(configName)
+    {
+      for(var i in configurationList)
+      {
+        if(configurationList[i] == configName)
+        {
+          return true;
+        }
+      }
+      
+      return false;
+    }
+    
+    function checkParametersAdd()
+    {
+      if(theDoc.getElementById('newName').value == '')
+      {
+        alert('Must give a new name for New Configurations');
+        return false;
+      }
+      else if(checkExistingName(theDoc.getElementById('newName').value) == true)
+      {
+        alert('Cannot add cloned configuration that has the same name as a present configuration');
+        return false;
+      }
+      else
+      {
+        return true;
+      }
+    }
+    
+    function checkParametersClone()
+    { 
+      if(theDoc.getElementById('newNameClone').value == '')
+      {
+        alert('Must give a new name for Cloned Configurations');
+        return false;
+      }
+      else if(checkExistingName(theDoc.getElementById('newNameClone').value) == true)
+      {
+        alert('Cannot add cloned configuration that has the same name as a present configuration');
+        return false;
+      }
+      else
+      {
+        return true;
+      }      
+    }
+    
+    function removeConfig()
+    {
+      var configToRemove = theDoc.getElementById('configurations').value;
+      
+      if(configToRemove == 'default')
+      {
+        alert('Cannot remove default configuration');
+        return;
+      }
+      else if(confirm('Are you sure you want to remove configuration ' + configToRemove + '? This cannot be undone.'))
+      {
+        if(typeof now.RemoveConfiguration == 'function')
+        {
+          now.RemoveConfiguration(configToRemove, function(name){
+            theDoc.getElementById('default').selected = true;
+            theDoc.getElementById('configurations').removeChild(theDoc.getElementById(name));
+            
+            for(var i in configurationList)
+            {
+              if(configurationList[i] == name)
+              {
+                configurationList[i] = undefined;
+              }
+            }
+            
+            for(var i in saveProfileObjs)
+            {
+              if(saveProfileObjs[i].name == name)
+              {
+                saveProfileObjs[i] = undefined;
+              }
+            }
+            
+            GetConfigurationSummary();
+          });
+        }
+        else
+        {
+          alert('Could not remove configuration, now.RemoveConfiguration not found');
+        }
+      }
+      else
+      {
+        return;
+      }
+    }
+    
+    function onProfileClicked(profile)
+    {
+      while(theDoc.getElementById('vendors').hasChildNodes())
+      {
+        theDoc.getElementById('vendors').removeChild(theDoc.getElementById('vendors').lastChild);
+      }
+      
+      while(theDoc.getElementById('ports').hasChildNodes())
+      {
+        theDoc.getElementById('ports').removeChild(theDoc.getElementById('ports').lastChild);
+      }
+      
+      showLightBox('2');
+      
+      theDoc.getElementById('parentName').innerHTML = saveProfileObjs[profile].name + ' (OS: ' + saveProfileObjs[profile].os + ')';
+      theDoc.getElementById('dropPercent').innerHTML = 'Packet Drop Percentage: ' + saveProfileObjs[profile].packetDrop;
+      
+      for(var i in saveProfileObjs[profile].vendors)
+      {
+        var tr = theDoc.createElement('tr');
+        var td0 = theDoc.createElement('td');
+        var td1 = theDoc.createElement('td');
+        
+        td0.innerHTML = saveProfileObjs[profile].vendors[i].name;
+        td1.innerHTML = saveProfileObjs[profile].vendors[i].dist + '%';
+        
+        tr.appendChild(td0);
+        tr.appendChild(td1);
+        theDoc.getElementById('vendors').appendChild(tr);
+      }
+      
+      now.GetPorts(profile, function(ports){
+        for(var i in ports)
+        {
+          if(ports[i].portNum != '0')
+          {
+            var tr = theDoc.createElement('tr');
+            var td0 = theDoc.createElement('td');
+            var td1 = theDoc.createElement('td');
+            var td2 = theDoc.createElement('td');
+            
+            td0.innerHTML = ports[i].portNum;
+            td1.innerHTML = ports[i].type;
+            td2.innerHTML = ports[i].behavior;
+            
+            tr.appendChild(td0);
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            
+            theDoc.getElementById('ports').appendChild(tr);
+          }
+        }
+      });
+      
+      if(saveProfileObjs[profile].fixedOrRange == 'fixed')
+      {
+        if(saveProfileObjs[profile].uptimeValue != '')
+        {
+          theDoc.getElementById('fixedOrUptime').innerHTML = 'Fixed Uptime Value: ' + saveProfileObjs[profile].uptimeValue;
+        }
+        else
+        {
+          theDoc.getElementById('fixedOrUptime').innerHTML = 'Fixed Uptime Value: None';
+        }
+      }
+      else if(saveProfileObjs[profile].fixedOrRange == 'range')
+      {
+        theDoc.getElementById('fixedOrUptime').innerHTML = 'Uptime Value Range: ' + saveProfileObjs[profile].uptimeValueMin + ' to ' + saveProfileObjs[profile].uptimeValueMax;
+      }
+      else
+      {
+        console.log('fixedOrRange not found');
+        closeLightbox();
+        return;
+      }
+      
+      theDoc.getElementById('defTCP').innerHTML = 'Default TCP Action: ' + saveProfileObjs[profile].defaultTCP;
+      theDoc.getElementById('defUDP').innerHTML = 'Default UDP Action: ' + saveProfileObjs[profile].defaultUDP;
+      theDoc.getElementById('defICMP').innerHTML = 'Default ICMP Action: ' + saveProfileObjs[profile].defaultICMP;
+    }
+    
+    function getConfig()
+    {
+      return document.getElementById('configurations').value;
+    }
+    
+    function confirmHaystackRestart()
+    {
+      now.IsHaystackUp(function(status){
+        if(status == true && confirm("Restart the Haystack with current configuration " + getConfig() + "?"))
+        {
+          now.WriteHoneydConfig(function(){
+            now.RestartHaystack();
+          });
+        }
+        else
+        {
+          return;
+        }
+      });
+    }
+    
+    now.ready(function(){
+      populateConfigSelect(configurationList);
+    });
+  
+block content
+  div#hideme
+    h1 Configuration Summary
+    label Current Configuration:
+    br
+    select#configurations(onchange='GetConfigurationSummary()')
+    button(onclick='confirmHaystackRestart()') Restart Haystack
+    br
+    br
+    div#addNewConfig
+      button#addConfig(onclick='showLightBox("0")') Add Configuration
+      button#cloneConfig(onclick='showLightBox("1")') Clone Configuration
+      button#removeConfig(onclick='removeConfig()') Remove Configuration
+    br
+    div#summary
+      table(border='1', style='border: solid black 2px; width: 600px', id='sizeAnchor')
+        thead
+          tr
+            th(style='background-color: #d0e9fc;') Scripts
+            th(style='background-color: #d0e9fc;') Profile:Port Binding
+        tbody#appendHook      
+      br
+      br
+    div#treeAndPiContainer
+      div#piChart(style='float: left')
+      div#treeDiv(style='float: right')
+    br
+  div#lightbox(class='white_content')
+    div#addConfigForm
+      form(method='post', id='addConfig', onsubmit='return checkParametersAdd();')
+        label Name For New Configuration 
+        input#newName(name='newName')
+        br
+        button#submitAdd Submit
+    div#cloneConfigForm
+      form(method='post', id='cloneConfig', onsubmit='return checkParametersClone();')
+        label Name For Cloned Configuration
+        input#newNameClone(name='newNameClone')
+        br
+        label Select Configuration to Clone:
+        select#cloneMe(name='cloneSelect')
+        br
+        button#submitClone Submit
+    div#profileInfo
+      h1#parentName(style='font-weight: bold;')
+      h2 Misc. Information
+      div(style='border: 2px solid #E8A02F; width: 250px')
+        label#dropPercent
+        br
+        label#fixedOrUptime
+        br
+        label#defTCP
+        br
+        label#defUDP
+        br
+        label#defICMP
+        br
+      br
+      h2 Ethernet Info      
+      table(border='1 solid')
+        thead
+          th(style='background-color: #d0e9fc;') Vendor
+          th(style='background-color: #d0e9fc;') Distribution
+        tbody#vendors
+      br
+      h2 Ports
+      table(border='1 solid')
+        thead
+          th(style='background-color: #d0e9fc;') Port Number
+          th(style='background-color: #d0e9fc;') Port Type
+          th(style='background-color: #d0e9fc;') Port Behavior
+        tbody#ports
+      br
+    button#closeLB(onclick='closeLightbox()') Close

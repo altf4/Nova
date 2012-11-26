@@ -30,6 +30,11 @@ block headerAdditions
       }); 
     }
     
+    now.RemoveEventFromList = function(remove)
+    {
+      document.getElementById('elementHook').removeChild(document.getElementById(remove));
+    }
+    
     function generateScheduledEventElement(json)
     {
       var row = document.createElement('tr');
@@ -48,14 +53,13 @@ block headerAdditions
       var td3 = document.createElement('td');
       
       var label3 = document.createElement('label');
-      if(json.cronString == '' && json.dateString != '')
+      if(json.recurring == '' && json.date != '')
       {
-        label3.innerHTML = json.dateString;
-       
+        label3.innerHTML = json.date;
       }
       else
       {
-        label3.innerHTML = json.cronString; 
+        label3.innerHTML = json.recurring; 
       }
 
       var td4 = document.createElement('td');
@@ -83,11 +87,6 @@ block headerAdditions
       
       
       document.getElementById('elementHook').appendChild(row);
-    }
-    
-    function newTypeSelected(clientId)
-    {
-      // For when message types requiring arguments are supported
     }
     
     now.ready(function(){

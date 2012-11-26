@@ -59,7 +59,9 @@ h1 {
     font-size:1.5em;
 }
 
-
+h2 {
+    font-size:1.2em;
+}
 
 html, body {
     height: 100%;
@@ -103,6 +105,7 @@ html, body {
 	background-color: white;
 	z-index: 1002;
 	overflow: hidden;
+	overflow-y: scroll;
 }
 
 .align-left {float:left; margin: 0 15px 15px 0;}

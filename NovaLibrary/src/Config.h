@@ -154,6 +154,7 @@ public:
     void SetKey(std::string key);
     void SetNeigbors(std::vector<in_addr_t> neighbors);
     void SetGroup(std::string group);
+    void SetCurrentConfig(std::string configName);
 
     std::string GetLoggerPreferences();
     std::string GetSMTPAddr();
@@ -211,6 +212,8 @@ public:
 	int GetWebUIPort();
 	void SetWebUIPort(int port);
 
+	std::string GetCurrentConfig();
+
 	version GetVersion();
 	std::string GetVersionString();
 
@@ -230,6 +233,9 @@ public:
 	std::string GetClassificationEngineType();
 	std::vector<HostileThreshold> GetHostileThresholds();
 	bool GetOnlyClassifyHoneypotTraffic();
+
+	void SetMasterUIPort(int newPort);
+	int GetMasterUIPort();
 
 	//Attempts to detect and use intefaces returned by pcap_lookupdev
 	void LoadInterfaces();
@@ -280,6 +286,7 @@ private:
 	int m_dataTTL;
 	uint m_minPacketThreshold;
 	int m_webUIPort;
+	int m_masterUIPort;
 
 	int m_captureBufferSize;
 
@@ -343,6 +350,8 @@ private:
 	std::string m_masterUIClientID;
 
 	bool m_onlyClassifyHoneypotTraffic;
+
+	std::string m_currentConfig;
 
 	std::vector<double> m_featureWeights;
 
