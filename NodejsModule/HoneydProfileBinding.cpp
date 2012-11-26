@@ -127,6 +127,47 @@ bool HoneydProfileBinding::AddPortSet(std::string portSetName)
 	return true;
 }
 
+Handle<Value> HoneydProfileBinding::SetPortSetBehavior(const Arguments& args)
+{
+	if( args.Length() != 3 )
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with five parameters")));
+	}
+
+	HandleScope scope;
+	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
+
+	string portSetName = cvv8::CastFromJS<string>( args[0] );
+	string protocol = cvv8::CastFromJS<string>( args[1] );
+	string behavior = cvv8::CastFromJS<string>( args[2] );
+	
+	PortSet *portSet = obj->m_profile->GetPortSet(portSetName);
+	if(portSet == NULL)
+	{
+		return scope.Close(Boolean::New(false));
+	}
+
+
+	if (protocol == "tcp")
+	{
+		portSet->m_defaultTCPBehavior = Port::StringToPortBehavior(behavior);
+	} 
+	else if (protocol == "udp")
+	{
+		portSet->m_defaultUDPBehavior = Port::StringToPortBehavior(behavior);
+	} 
+	else if (protocol == "icmp")
+	{
+		portSet->m_defaultICMPBehavior = Port::StringToPortBehavior(behavior);
+	} 
+	else 
+	{
+		return scope.Close(Boolean::New(false));
+	}
+
+	return scope.Close(Boolean::New(true));
+}
+
 bool HoneydProfileBinding::ClearPorts()
 {
 	//Delete the port sets, then clear the list of them
@@ -187,6 +228,7 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 	//Odd ball out, because it needs 5 parameters. More than InvoleWrappedMethod can handle
 	proto->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
 	proto->Set(String::NewSymbol("SetVendors"),FunctionTemplate::New(SetVendors)->GetFunction());
+	proto->Set(String::NewSymbol("SetPortSetBehavior"),FunctionTemplate::New(SetPortSetBehavior)->GetFunction());
 
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
 	target->Set(String::NewSymbol("HoneydProfileBinding"), constructor);

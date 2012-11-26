@@ -2198,27 +2198,41 @@ everyone.now.SaveProfile = function (profile, callback) {
 	honeydProfile.SetPersonality(profile.personality);
 	honeydProfile.SetCount(profile.count);
 
-        honeydProfile.SetIsPersonalityInherited(Boolean(profile.isPersonalityInherited));
-        honeydProfile.SetIsDropRateInherited(Boolean(profile.isDropRateInherited));
-        honeydProfile.SetIsUptimeInherited(Boolean(profile.isUptimeInherited));
+	honeydProfile.SetIsPersonalityInherited(Boolean(profile.isPersonalityInherited));
+	honeydProfile.SetIsDropRateInherited(Boolean(profile.isDropRateInherited));
+	honeydProfile.SetIsUptimeInherited(Boolean(profile.isUptimeInherited));
 
 
 	// Add new ports
 	honeydProfile.ClearPorts();
 	var portName;
-	for (var i = 0; i < profile.portSets.size; i++) 
+	for (var i = 0; i < profile.portSets.length; i++) 
 	{
 		//Make a new port set
-		honeydProfile.AddPortSet(profile.portSets[i].name);
-		for (var j = 0; j < profile.portSets[i].size; j++)
+		honeydProfile.AddPortSet(profile.portSets[i].setName);
+
+		honeydProfile.SetPortSetBehavior(profile.portSets[i].setName, "tcp", profile.portSets[i].TCPBehavior);
+		honeydProfile.SetPortSetBehavior(profile.portSets[i].setName, "udp", profile.portSets[i].UDPBehavior);
+		honeydProfile.SetPortSetBehavior(profile.portSets[i].setName, "icmp", profile.portSets[i].ICMPBehavior);
+
+		for (var j = 0; j < profile.portSets[i].TCPExceptions.length; j++)
 		{
-			
-			honeydProfile.AddPort(profile.portSets[i][j].name, 
-					profile.portSets[i][j].behavior, 
-					profile.portSets[i][j].protocol, 
-					Number(profile.portSets[i][j].portNum), 
-					profile.portSets[i][j].script);
+			honeydProfile.AddPort(profile.portSets[i].setName, 
+					profile.portSets[i].TCPExceptions[j].behavior, 
+					profile.portSets[i].TCPExceptions[j].protocol, 
+					Number(profile.portSets[i].TCPExceptions[j].portNum), 
+					profile.portSets[i].TCPExceptions[j].script);
 		}
+
+		for (var j = 0; j < profile.portSets[i].UDPExceptions.length; j++)
+		{
+			honeydProfile.AddPort(profile.portSets[i].setName, 
+					profile.portSets[i].UDPExceptions[j].behavior, 
+					profile.portSets[i].UDPExceptions[j].protocol, 
+					Number(profile.portSets[i].UDPExceptions[j].portNum), 
+					profile.portSets[i].UDPExceptions[j].script);
+		}
+
 	}
 
         honeydProfile.Save();

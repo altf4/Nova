@@ -33,6 +33,7 @@ private:
 	//Odd ball out, because it needs 5 parameters. More than InvoleWrappedMethod can handle
 	static v8::Handle<v8::Value> AddPort(const v8::Arguments& args);
 	static v8::Handle<v8::Value> SetVendors(const v8::Arguments& args);
+	static v8::Handle<v8::Value> SetPortSetBehavior(const v8::Arguments& args);
 
 	static v8::Handle<v8::Value> New(const v8::Arguments& args);
 
