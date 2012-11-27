@@ -966,7 +966,8 @@ app.get('/editHoneydNode', passport.authenticate('basic', {session: false}), fun
 			profile: node.GetProfile(),
 			interface: node.GetInterface(),
 			ip: node.GetIP(),
-			mac: node.GetMAC()
+			mac: node.GetMAC(),
+			portSet: node.GetPortSet()
 		}
 	})
 });
@@ -1541,21 +1542,15 @@ everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, i
 	callback(result);
 };
 
-everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macType, ip, mac, callback) {
-//app.post('/editHoneydNodeSave', passport.authenticate('basic', {session: false}), function (req, res) {
-	var ipAddress = ip;
-	if (ipType == "DHCP") {
+everyone.now.SaveHoneydNode = function(node, callback) {
+	var ipAddress = node.ip;
+	if (node.ipType == "DHCP") {
 		ipAddress = "DHCP";
 	}
 
-	var macAddress = mac;
-	if (macType == "RANDOM") {
-		macAddress = "RANDOM";
-	}
-	
 	// Delete the old node and then add the new one	
-	honeydConfig.DeleteNode(oldName);
-	if (!honeydConfig.AddNode(profile, ipAddress, macAddress, intface)) {
+	honeydConfig.DeleteNode(node.oldName);
+	if (!honeydConfig.AddNode(node.profile, node.portSet, ipAddress, node.mac, node.intface)) {
 		callback("AddNode Failed");
 		return;
 	} else {

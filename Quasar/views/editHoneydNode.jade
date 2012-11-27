@@ -7,16 +7,16 @@ block headerAdditions
     var currentInterface;
 
     function SaveNode() {
-        var profile = document.getElementById("profile").value;
-        var intface = currentInterface;
-        var oldName = "#{oldName}";
-        var ipType = document.getElementById("ipType").value;
-        var macType = document.getElementById("macType").value;
-        var ip = document.getElementById("ip0").value + "." + document.getElementById("ip1").value + "." + document.getElementById("ip2").value + "." + document.getElementById("ip3").value;
-        var mac = document.getElementById("mac0").value + ":" + document.getElementById("mac1").value + ":" + document.getElementById("mac2").value + ":" + document.getElementById("mac3").value;
-        mac += ":" + document.getElementById("mac4").value + ":" + document.getElementById("mac5").value;
+        var node = {profile : document.getElementById("profile").value
+            , portSet : document.getElementById("portSetList").value
+            , intface : currentInterface
+            , oldName : "#{oldName}"
+            , ipType : document.getElementById("ipType").value
+            , ip : document.getElementById("ip0").value + "." + document.getElementById("ip1").value + "." + document.getElementById("ip2").value + "." + document.getElementById("ip3").value
+            , mac : document.getElementById("mac0").value + ":" + document.getElementById("mac1").value + ":" + document.getElementById("mac2").value + ":" + document.getElementById("mac3").value + ":" + document.getElementById("mac4").value + ":" + document.getElementById("mac5").value
+        };
 
-        now.SaveHoneydNode(profile, intface, oldName, ipType, macType, ip, mac, saveNodeCallback);
+        now.SaveHoneydNode(node, saveNodeCallback);
     }
 
     function populateVendorList(profile) {
@@ -26,6 +26,17 @@ block headerAdditions
             var option = document.createElement('option');
             option.innerHTML = v;
             document.getElementById("vendorList").appendChild(option);
+        }
+
+        for (var portset in profile.portSets) {
+            var v = profile.portSets[portset].setName;
+            var option = document.createElement('option');
+            option.innerHTML = v;
+            if (v == "#{portSet}") {
+                option.selected = true;
+            }
+
+            document.getElementById("portSetList").appendChild(option);
         }
     }
 
@@ -68,18 +79,6 @@ block headerAdditions
       }
      }
     
-    function macTypeChanged() {
-      if (document.getElementById("macType").value == "RANDOM") {
-        macEditEnabled = true;
-      } else {
-        macEditEnabled = false;
-      }
-
-      for (var i = 0; i < 6; i++) {
-        document.getElementById("mac" + i).disabled = macEditEnabled;
-      }
-    }
-
     function checkOnlyOne(checkedBox)
     {
       var forLength = document.getElementById("length").getAttribute("value");
@@ -128,7 +127,6 @@ block headerAdditions
     function(){
         now.ready( function() {
             profileChanged();
-            console.log("Interface is #{interface}");
         });
     });
     
@@ -147,6 +145,11 @@ block content
         option(SELECTED) #{p}
       else
         option #{p}
+  br
+  br
+  
+  label Portset
+  select#portSetList(name="profile")
   br
   br
 
@@ -198,19 +201,6 @@ block content
 
 
   br
-  br
-  label MAC Address Type
-  select#macType(name="macType", onChange="macTypeChanged()")
-    if mac != 'RANDOM'
-      option(SELECTED) Specific MAC
-    else
-      option Specific MAC
-
-    if mac != 'RANDOM'
-      option RANDOM
-    else
-      option(SELECTED) RANDOM
-  
   br
   label &nbsp
   a(class="button", href="#", onclick="GenerateMac()") Generate new MAC

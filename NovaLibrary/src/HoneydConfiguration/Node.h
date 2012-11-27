@@ -38,6 +38,7 @@ public:
 	// This is for the Javascript bindings in the web interface
 	inline std::string GetInterface() {return m_interface;}
 	inline std::string GetProfile() {return m_pfile;}
+	inline std::string GetPortSet() {return m_portSetName;}
 	inline std::string GetIP() {return m_IP;}
 	inline std::string GetMAC() {return m_MAC;}
 	inline bool IsEnabled() {return m_enabled;}

@@ -24,6 +24,7 @@ Handle<Object> HoneydNodeJs::WrapNode(Node* node)
 		Local<Template> proto = nodeTemplate->PrototypeTemplate();
 		proto->Set("GetInterface",  FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetInterface>) );
 		proto->Set("GetProfile",    FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetProfile>) );
+		proto->Set("GetPortSet",    FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetPortSet>) );
 		proto->Set("GetIP",         FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetIP>) );
 		proto->Set("GetMAC",        FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetMAC>) );
 		proto->Set("IsEnabled",     FunctionTemplate::New(InvokeMethod<bool, Node, &Nova::Node::IsEnabled>) );

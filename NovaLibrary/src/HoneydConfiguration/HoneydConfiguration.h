@@ -125,6 +125,7 @@ public:
 
 	//Get a vector of PortSets associated with a particular profile
 	std::vector<PortSet*> GetPortSets(std::string profileName);
+	PortSet* GetPortSet(std::string profileName, std::string portSetName);
 
 	//This function allows easy access to all profiles
 	// Returns a vector of strings containing the names of all profiles

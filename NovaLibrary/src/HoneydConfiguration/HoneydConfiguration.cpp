@@ -1016,6 +1016,22 @@ std::vector<PortSet*> HoneydConfiguration::GetPortSets(std::string profileName)
 	return profile->m_portSets;
 }
 
+PortSet* HoneydConfiguration::GetPortSet(string profileName, string portSetName)
+{
+	vector<PortSet*> PortSets;
+	PortSets = GetPortSets(profileName);
+
+	for (uint i = 0; i < PortSets.size(); i++)
+	{
+		if (PortSets[i]->m_name == portSetName)
+		{
+			return PortSets[i];
+		}
+	}
+
+	return NULL;
+}
+
 bool HoneydConfiguration::DeleteProfile(string profileName)
 {
 	Profile *profile = GetProfile(profileName);
