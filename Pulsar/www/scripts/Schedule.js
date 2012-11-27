@@ -505,6 +505,24 @@ function submitSchedule()
           element = undefined;
         } 
       }while(element != undefined && j++);
+      
+      j = 0;
+      element = document.getElementById('groupcheck' + j);
+      
+      while(element == undefined)
+      {
+        j++;
+        element = document.getElementById('groupcheck' + j);
+      }
+      
+      do
+      {
+        if(element.value == id)
+        {
+          document.getElementById('groupcheck' + j).checked = false;
+          element = undefined;
+        } 
+      }while(element != undefined && j++);
     }
   }
   while(document.getElementById('elementHook').hasChildNodes())
