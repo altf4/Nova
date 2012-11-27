@@ -122,12 +122,14 @@ function createAutoconfigElement(clientName, group)
   var td0 = document.createElement('td');
   var labelBold = document.createElement('label');
   labelBold.innerHTML = clientName;
+  labelBold.value = clientName;
   labelBold.setAttribute('style', 'font-weight: bold;');
   var label = document.createElement('label');
   label.innerHTML = ': Create ';
   var inputType = document.createElement('select');
   inputType.id = 'type' + elementCount;
   var types = ['number', 'ratio'];
+  
   for(var i = 0; i < 2; i++)
   {
     var option = document.createElement('option');
@@ -149,6 +151,7 @@ function createAutoconfigElement(clientName, group)
   label1.innerHTML = ' nodes on ';
   label1.id = 'change' + elementCount;
   var dropDown = document.createElement('select');
+  
   now.GetInterfacesOfClient(clientName, function(interfaces){
     for(var i in interfaces)
     {
@@ -158,6 +161,7 @@ function createAutoconfigElement(clientName, group)
       dropDown.appendChild(option);
     }
   });
+  
   td0.appendChild(labelBold);
   td0.appendChild(label);
   td0.appendChild(inputType);
@@ -165,6 +169,7 @@ function createAutoconfigElement(clientName, group)
   td0.appendChild(label1);
   td0.appendChild(dropDown);
   tr.appendChild(td0);
+  
   if(group != '')
   {
     document.getElementById('autoconfElements').appendChild(tr);
@@ -212,15 +217,16 @@ function processAutoconfigElements()
       var autoconfMessage = {};
       autoconfMessage.type = 'haystackConfig';
       autoconfMessage.id = simple.childNodes[0].value;
-      autoconfMessage.numNodesType = simple.childNodes[1].value;
-      autoconfMessage.numNodes = simple.childNodes[2].value;
+      var s = simple.childNodes[2];
+      autoconfMessage.numNodesType = s.options[s.selectedIndex].value;
+      autoconfMessage.numNodes = simple.childNodes[3].value;
       if(/^[0-9]+$/i.test(autoconfMessage.numNodes.toString()) == false)
       {
-        simple.childNodes[2].value = '0';
+        simple.childNodes[3].value = '0';
         alert('Number of nodes/ratio of nodes to create must be a digit');
         return;
       }
-      autoconfMessage.interface = simple.childNodes[4].value;
+      autoconfMessage.interface = simple.childNodes[5].value;
       now.MessageSend(autoconfMessage);
     }
     loopIter.removeChild(loopIter.lastChild);
