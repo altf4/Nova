@@ -24,23 +24,19 @@ block content
     br
   
     button(disabled=true, id='button0', onclick='startNovad();', style='width: 160px') Start Classifying
-    button(disabled=true, id='button1', onclick='stopNovad();', style='width: 160px') Stop Classifying
-  
-    br
-    br
-  
     button(disabled=true, id='button2', onclick='startHaystack();', style='width: 160px') Start Haystack
-    button(disabled=true, id='button3', onclick='stopHaystack();', style='width: 160px') Stop Haystack
-  
-    br
-    br
-  
     button(disabled=true, id='button4', onclick='requestBenign();', style='width: 160px') Get Benign Suspects
+  
+    br
+    br
+  
+    button(disabled=true, id='button1', onclick='stopNovad();', style='width: 160px') Stop Classifying
+    button(disabled=true, id='button3', onclick='stopHaystack();', style='width: 160px') Stop Haystack
     button(disabled=true, id='button5', onclick='stopRequestBenign()', style='width: 160px') Cancel Benign Request
     
     br
     br
-  
+    
     button(disabled=true, id='button6', onclick='clearSuspects()', style='width: 160px') Clear Suspects For Selected Clients
     
     br
