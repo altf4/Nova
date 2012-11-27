@@ -213,7 +213,6 @@ function processAutoconfigElements()
     if(loopIter.lastChild != undefined)
     {
       var simple = loopIter.lastChild.childNodes[0];
-      console.log('Constructing message');
       var autoconfMessage = {};
       autoconfMessage.type = 'haystackConfig';
       autoconfMessage.id = simple.childNodes[0].value;
@@ -227,8 +226,30 @@ function processAutoconfigElements()
         return;
       }
       autoconfMessage.interface = simple.childNodes[5].value;
-      now.MessageSend(autoconfMessage);
+      //now.MessageSend(autoconfMessage);
     }
     loopIter.removeChild(loopIter.lastChild);
   }while(loopIter.hasChildNodes());
+  var uncheck = document.getElementById('clientsList');
+  var count = 0;
+  for(var i in uncheck.children)
+  {
+    if(document.getElementById('check' + count) == undefined)
+    {
+      break;
+    }
+    document.getElementById('check' + count).checked = false;
+    count++;
+  }
+  uncheck = document.getElementById('groupsList');
+  count = 0;
+  for(var i in uncheck.children)
+  {
+    if(document.getElementById('groupcheck' + count) == undefined)
+    {
+      break;
+    }
+    document.getElementById('groupcheck' + count).checked = false;
+    count++;
+  }
 }
