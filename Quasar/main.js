@@ -1844,6 +1844,39 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 	}
 });
 
+function GetPorts() {
+  var scriptBindings = {};
+  
+  var profiles = honeydConfig.GetProfileNames();
+  
+  for(var i in profiles) {
+	var profileName = profiles[i];
+
+  	var portSets = honeydConfig.GetPortSetNames(profiles[i]);
+	for (var portSetName in portSets) {
+		var portSet = honeydConfig.GetPortSet(profiles[i], portSets[portSetName]);
+		var ports = [];
+		for (var p in portSet.GetTCPPorts()) {
+			ports.push(portSet.GetTCPPorts()[p]);
+		}
+		for (var p in portSet.GetUDPPorts()) {
+			ports.push(portSet.GetUDPPorts()[p]);
+		}
+		for(var p in ports) {
+			if(ports[p].GetScriptName() != undefined && ports[p].GetScriptName() != '') {
+				if(scriptBindings[ports[p].GetScriptName()] == undefined) {
+					scriptBindings[ports[p].GetScriptName()] = profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
+				} else {
+					scriptBindings[ports[p].GetScriptName()] += '<br>' + profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
+				}
+			}
+		}
+	}
+  }
+
+  return scriptBindings;
+}
+
 app.get('/scripts', passport.authenticate('basic', {session: false}), function(req, res){
   var xml = fs.readFileSync(NovaHomePath + '/config/templates/scripts.xml', 'utf8');
   
@@ -1879,38 +1912,7 @@ app.get('/scripts', passport.authenticate('basic', {session: false}), function(r
   }
   
   namesAndPaths.sort(cmp);
-  
-  var scriptBindings = {};
-  
-  var profiles = honeydConfig.GetProfileNames();
-  
-  for(var i in profiles)
-  {
-	var profileName = profiles[i];
-
-  	var portSets = honeydConfig.GetPortSetNames(profiles[i]);
-	for (var portSetName in portSets) {
-		var portSet = honeydConfig.GetPortSet(profiles[i], portSets[portSetName]);
-		var ports = [];
-		for (var p in portSet.GetTCPPorts()) {
-			ports.push(portSet.GetTCPPorts()[p]);
-		}
-		for (var p in portSet.GetUDPPorts()) {
-			ports.push(portSet.GetUDPPorts()[p]);
-		}
-		for(var p in ports) {
-			if(ports[p].GetScriptName() != undefined && ports[p].GetScriptName() != '') {
-				if(scriptBindings[ports[p].GetScriptName()] == undefined) {
-					scriptBindings[ports[p].GetScriptName()] = profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
-				} else {
-					scriptBindings[ports[p].GetScriptName()] += '<br>' + profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
-				}
-			}
-		}
-	}
-  }
-  
-  profiles = null;
+  var scriptBindings = GetPorts(); 
   
   res.render('scripts.jade', {
     locals: {
@@ -2179,10 +2181,10 @@ everyone.now.GetVendors = function (profileName, callback) {
 	for (var i = 0; i < profVendors.length; i++) {
 		var element = {
 			vendor: "",
-			dist: ""
+			count: ""
 		};
 		element.vendor = profVendors[i];
-		element.dist = parseFloat(profDists[i]);
+		element.count = parseFloat(profDists[i]);
 		ethVendorList.push(element);
 	}
 
@@ -2597,28 +2599,8 @@ everyone.now.GetConfigSummary = function(configName, callback)
   var libxml = require('libxmljs');
   var parser = libxml.parseXmlString(xml);
   
-  var scriptProfileBindings = {};
+  var scriptProfileBindings = GetPorts();
   var profiles = honeydConfig.GetProfileNames();
-  
-  for(var i in profiles)
-  {
-    var ports = honeydConfig.GetPorts(profiles[i]);
-      for(var i in ports)
-      {
-        if(ports[i].scriptName != undefined && ports[i].scriptName != '')
-        {
-          if(scriptProfileBindings[ports[i].scriptName] == undefined)
-          {
-            scriptProfileBindings[ports[i].scriptName] = profileName + ':' + ports[i].portNum;
-          }
-          else
-          {
-            scriptProfileBindings[ports[i].scriptName] += ',' + profileName + ':' + ports[i].portNum;
-          }
-        }
-      }
-  }
-  
   var profileObj = {};
   
   for (var i = 0; i < profiles.length; i++) 
@@ -2628,7 +2610,7 @@ everyone.now.GetConfigSummary = function(configName, callback)
       var prof = honeydConfig.GetProfile(profiles[i]);
       var obj = {};
       var vendorNames = prof.GetVendors();
-      var vendorDist = prof.GetVendorDistributions();
+      var vendorDist = prof.GetVendorCounts();
       
       obj.name = prof.GetName();
       obj.parent = prof.GetParentProfile();
@@ -2641,7 +2623,7 @@ everyone.now.GetConfigSummary = function(configName, callback)
         var push = {};
         
         push.name = vendorNames[j];
-        push.dist = vendorDist[j];
+        push.count = vendorDist[j];
         obj.vendors.push(push);
       }
       
@@ -2657,14 +2639,14 @@ everyone.now.GetConfigSummary = function(configName, callback)
         obj.uptimeValueMax = prof.GetUptimeMax();        
       }
       
-      obj.defaultTCP = prof.GetTcpAction();
-      obj.defaultUDP = prof.GetUdpAction();
-      obj.defaultICMP = prof.GetIcmpAction();
+      //obj.defaultTCP = prof.GetTcpAction();
+      //obj.defaultUDP = prof.GetUdpAction();
+      //obj.defaultICMP = prof.GetIcmpAction();
       profileObj[profiles[i]] = obj;
     }
   }
   
-  var nodeNames = honeydConfig.GetNodeNames();
+  var nodeNames = honeydConfig.GetNodeMACs();
   var nodeList = [];
   
   for (var i = 0; i < nodeNames.length; i++) {

@@ -49,6 +49,7 @@ HoneydConfiguration *HoneydConfiguration::Inst()
 	if(m_instance == NULL)
 	{
 		m_instance = new HoneydConfiguration();
+		m_instance->LoadConfigurations();
 	}
 	return m_instance;
 }
