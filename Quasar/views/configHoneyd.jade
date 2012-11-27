@@ -309,19 +309,27 @@ block headerAdditions
         row.push(String(nodeList[i].name));
         row.push(String(nodeList[i].pfile));
 
-        if (nodeList[i].ip != "DHCP") {
+        if (nodeList[i].ip != "DHCP") 
+        {
           row.push(String(nodeList[i].ip));
-        } else {
+        } 
+        else 
+        {
           var alias = "";
-          for (var j = 0; j < interfaces.length; j++) {
-            if (interfaces[j] == nodeList[i].interface) {
+          for (var j = 0; j < interfaces.length; j++) 
+          {
+            if (interfaces[j] == nodeList[i].interface) 
+            {
               alias = interfaceAliases[j];
-             }
+            }
           }
 
-          if (alias != "" && alias != nodeList[i].interface) {
+          if (alias != "" && alias != nodeList[i].interface) 
+          {
             row.push("DHCP on " + nodeList[i].interface + " (alias: " + alias + ")"); 
-          } else {
+          } 
+          else 
+          {
             row.push("DHCP on " + nodeList[i].interface); 
           }
         }

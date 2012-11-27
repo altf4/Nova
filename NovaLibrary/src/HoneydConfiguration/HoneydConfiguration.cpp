@@ -2674,6 +2674,7 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		// Add configName to configurations.txt within the templates/ folder,
 		// create the templates/configName/ directory, and fill with
 		// empty (but still parseable) xml files
+		string oldName = Config::Inst()->GetCurrentConfig();
 		Config::Inst()->SetCurrentConfig(configName);
 		NodeTable replace = m_nodes;
 		for(NodeTable::iterator it = replace.begin(); it != replace.end(); it++)
@@ -2699,6 +2700,7 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		string routeString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/default/routes.xml ";
 		routeString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
 		system(routeString.c_str());
+		Config::Inst()->SetCurrentConfig(oldName);
 	}
 	else if(clone && found)
 	{

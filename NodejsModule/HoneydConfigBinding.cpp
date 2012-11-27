@@ -377,7 +377,9 @@ Handle<Value> HoneydConfigBinding::RemoveScript(const Arguments& args)
 		return scope.Close(Boolean::New(false));
 	}
 
+	int oldSize = obj->m_conf->m_scripts.size();
 	obj->m_conf->m_scripts.erase(scriptToRemove);
+	obj->m_conf->m_scripts.resize(oldSize - 1);
 
 	return scope.Close(Boolean::New(true));
 }

@@ -7,27 +7,13 @@ function watermark(id, text)
     if(element.value == text)
     {
       element.value = '';
-      if(id.indexOf('date') != -1)
-      {
-        element.setAttribute('style', 'width: 120px;');
-      }
-      else
-      {
-        element.removeAttribute('style'); 
-      }
+      element.setAttribute('style', 'width: 120px;');
     }
   }
   else
   {
     element.value = text;
-    if(id.indexOf('date') != -1)
-    {
-      element.setAttribute('style', 'font-style: italic; width: 120px;');
-    }
-    else
-    {
-      element.setAttribute('style', 'font-style: italic;');
-    }
+    element.setAttribute('style', 'font-style: italic; width: 120px;');
   }
 }
 
@@ -114,7 +100,7 @@ function createScheduledEventElement(clientId)
 {
   var borderDiv = document.createElement('div');
   borderDiv.id = clientId;
-  borderDiv.setAttribute('style', 'border: 2px solid; background: #E8A02F; width: 450px;');
+  borderDiv.setAttribute('style', 'border: 2px solid; background: #E8A02F; width: 370px;');
   
   var label0 = document.createElement('h1');
   label0.setAttribute('style', 'text-align: center');
@@ -138,33 +124,88 @@ function createScheduledEventElement(clientId)
   }
   
   typeSelect.setAttribute('onclick', 'newTypeSelected("' + clientId + '")');
-
-  var label5 = document.createElement('label');
-  label5.innerHTML = 'Cron String: ';
   
-  var cron = document.createElement('input');
-  cron.id = clientId + 'cron';
-
-  var exLabel = document.createElement('label');
-  exLabel.innerHTML = '(W, L and # are not supported for the cron syntax. Use 0 for Sunday, not 7)';
-  exLabel.setAttribute('style', 'font-style: italic');
-
-  var label6 = document.createElement('label');
-  label6.innerHTML = 'OR once on ';
+  var recurring = document.createElement('input');
+  recurring.setAttribute('type', 'checkbox');
+  recurring.id = clientId + 'recurring';
+  recurring.checked = false;
+  recurring.setAttribute('onclick', 'recurringChanged("' + clientId + '")');
   
-  var date = document.createElement('input');
-  date.id = clientId + 'date';
-  date.value = 'Date MM/DD/YYYY';
-  date.setAttribute('style', 'font-style: italic; width: 120px');
-  date.setAttribute('onblur', 'watermark("' + date.id + '", "Date MM/DD/YYYY")');
-  date.setAttribute('onfocus', 'watermark("' + date.id + '", "Date MM/DD/YYYY")');
+  var recurringLabel = document.createElement('label');
+  recurringLabel.innerHTML = 'Recurring?';
   
-  var time = document.createElement('input');
-  time.id = clientId + 'time';
-  time.value = 'Time(24hr) HH:MM(:SS)';
-  time.setAttribute('style', 'font-style: italic');
-  time.setAttribute('onblur', 'watermark("' + time.id + '", "Time(24hr) HH:MM(:SS)")');
-  time.setAttribute('onfocus', 'watermark("' + time.id + '", "Time(24hr) HH:MM(:SS)")');
+  var infoHook = new Date();
+  
+  var tr0 = document.createElement('tr');
+  var mlTd = document.createElement('td');
+  var monthLabel = document.createElement('label');
+  monthLabel.innerHTML = 'M ';
+  mlTd.appendChild(monthLabel);
+  var month = document.createElement('input');
+  month.setAttribute('style', 'width: 30px;');
+  month.setAttribute('type', 'number');
+  month.min = '0';
+  month.max = '11';
+  month.id = clientId + 'month';
+  month.value = infoHook.getMonth();
+  mlTd.appendChild(month);
+  tr0.appendChild(mlTd);
+  
+  var dlTd = document.createElement('td');
+  var dayLabel = document.createElement('label');
+  dayLabel.innerHTML = '/D ';
+  dlTd.appendChild(dayLabel);
+  var day = document.createElement('input');
+  day.setAttribute('type', 'number');
+  day.setAttribute('style', 'width: 30px;');
+  day.min = '1';
+  day.max = '31';
+  day.value = infoHook.getDate();
+  day.id = clientId + 'day';
+  dlTd.appendChild(day);
+  tr0.appendChild(dlTd);
+  
+  var ylTd = document.createElement('td');
+  var yearLabel = document.createElement('label');
+  yearLabel.innerHTML = '/Y ';
+  ylTd.appendChild(yearLabel);
+  var year = document.createElement('input');
+  year.setAttribute('style', 'width: 45px;');
+  year.setAttribute('type', 'number');
+  year.min = infoHook.getFullYear();
+  year.id = clientId + 'year';
+  year.value = infoHook.getFullYear();
+  ylTd.appendChild(year);
+  tr0.appendChild(ylTd);
+  
+  var tr1 = document.createElement('tr');
+  var hlTd = document.createElement('td');
+  var hourLabel = document.createElement('label');
+  hourLabel.innerHTML = 'H ';
+  hlTd.appendChild(hourLabel);
+  var hour = document.createElement('input');
+  hour.setAttribute('style', 'width: 30px;');
+  hour.id = clientId + 'hour';
+  hour.setAttribute('type', 'number');
+  hour.min = '0';
+  hour.max = '23';
+  hour.value = infoHook.getHours();
+  hlTd.appendChild(hour);
+  tr1.appendChild(hlTd);
+  
+  var milTd = document.createElement('td');
+  var minuteLabel = document.createElement('label');
+  minuteLabel.innerHTML = ':M ';
+  milTd.appendChild(minuteLabel);
+  var minute = document.createElement('input');
+  minute.setAttribute('style', 'width: 30px;');
+  minute.setAttribute('type', 'number');
+  minute.min = '0';
+  minute.max = '59';
+  minute.id = clientId + 'minute';
+  minute.value = infoHook.getMinutes();
+  milTd.appendChild(minute);
+  tr1.appendChild(milTd);
 
   var label4 = document.createElement('label');
   label4.innerHTML = 'Event Name: ';
@@ -173,30 +214,222 @@ function createScheduledEventElement(clientId)
   name.id = clientId + 'name';
   name.maxlength = '10';
   
+  var t = document.createElement('table');
+  t.id = clientId + 'subjectToChange';
+  
+  var tbody = document.createElement('tbody');
+  tbody.id = clientId + 'changeHook';
+  t.appendChild(tbody);
+  
+  tbody.appendChild(tr0);
+  tbody.appendChild(tr1);
+  
   var b0 = document.createElement('br');
-  var b2 = document.createElement('br');
-  var b3 = document.createElement('br');
-  var b4 = document.createElement('br');
-  var b5 = document.createElement('br');
-  var b6 = document.createElement('br');
+  var b1 = document.createElement('br');
   
   borderDiv.appendChild(label0);
   borderDiv.appendChild(label1);
   borderDiv.appendChild(typeSelect);
+  borderDiv.appendChild(recurring);
+  borderDiv.appendChild(recurringLabel);
   borderDiv.appendChild(b0);
-  borderDiv.appendChild(label5);
-  borderDiv.appendChild(cron);
-  borderDiv.appendChild(b3);
-  borderDiv.appendChild(exLabel);
-  borderDiv.appendChild(b5);
-  borderDiv.appendChild(label6);
-  borderDiv.appendChild(date);
-  borderDiv.appendChild(time);
-  borderDiv.appendChild(b6);
+  borderDiv.appendChild(t);
   borderDiv.appendChild(label4);
   borderDiv.appendChild(name);
+  borderDiv.appendChild(b1);
   
   document.getElementById('elementHook').appendChild(borderDiv);
+}
+
+function recurringChanged(source)
+{
+  while(document.getElementById(source + 'changeHook').hasChildNodes())
+  {
+    document.getElementById(source + 'changeHook').removeChild(document.getElementById(source + 'changeHook').lastChild);
+  }
+  
+  var infoHook = new Date();
+  
+  if(document.getElementById(source + 'recurring').checked)
+  {
+    var tr0 = document.createElement('tr');
+    var dlTd = document.createElement('td');
+    var dayLabel = document.createElement('label');
+    dayLabel.innerHTML = 'Day Of Week: ';
+    dlTd.appendChild(dayLabel);
+    var dTd = document.createElement('td');
+    var day = document.createElement('select');
+    day.setAttribute('style', 'width: 100px;');
+    day.id = source + 'dayOfWeek';
+    var options = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    for(var i in options)
+    {
+      var option = document.createElement('option');
+      option.id = options[i];
+      option.innerHTML = options[i];
+      option.value = infoHook.getDay().toString();
+      switch(infoHook.getDay().toString())
+      {
+        case '0': selectedTest = 'Sunday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '1': selectedTest = 'Monday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '2': selectedTest = 'Tuesday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '3': selectedTest = 'Wednesday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '4': selectedTest = 'Thursday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '5': selectedTest = 'Friday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        case '6': selectedTest = 'Saturday';
+                  if(selectedTest == options[i])
+                  {
+                    option.selected = true;
+                  }
+                  break;
+        default:  console.log('infoHook.getDay() ' + infoHook.getDay());
+                  break;
+      }
+      day.appendChild(option);
+    }
+    dTd.appendChild(day);
+    tr0.appendChild(dlTd);
+    tr0.appendChild(dTd);
+    
+    var tr1 = document.createElement('tr');
+    var hlTd = document.createElement('td');
+    var hourLabel = document.createElement('label');
+    hourLabel.innerHTML = 'H ';
+    hlTd.appendChild(hourLabel);
+    var hour = document.createElement('input');
+    hour.setAttribute('style', 'width: 30px;');
+    hour.id = source + 'hour';
+    hour.setAttribute('type', 'number');
+    hour.min = '0';
+    hour.max = '23';
+    hour.value = infoHook.getHours();
+    hlTd.appendChild(hour);
+    tr1.appendChild(hlTd);
+    
+    var milTd = document.createElement('td');
+    var minuteLabel = document.createElement('label');
+    minuteLabel.innerHTML = ':M ';
+    milTd.appendChild(minuteLabel);
+    var minute = document.createElement('input');
+    minute.setAttribute('style', 'width: 30px;');
+    minute.setAttribute('type', 'number');
+    minute.min = '0';
+    minute.max = '59';
+    minute.id = source + 'minute';
+    minute.value = infoHook.getMinutes();
+    milTd.appendChild(minute);
+    tr1.appendChild(milTd);
+    
+    document.getElementById(source + 'changeHook').appendChild(tr0);
+    document.getElementById(source + 'changeHook').appendChild(tr1);
+  }
+  else
+  {
+    var tr0 = document.createElement('tr');
+    var mlTd = document.createElement('td');
+    var monthLabel = document.createElement('label');
+    monthLabel.innerHTML = 'M ';
+    mlTd.appendChild(monthLabel);
+    var month = document.createElement('input');
+    month.setAttribute('style', 'width: 30px;');
+    month.setAttribute('type', 'number');
+    month.min = '0';
+    month.max = '11';
+    month.id = source + 'month';
+    month.value = infoHook.getMonth();
+    mlTd.appendChild(month);
+    tr0.appendChild(mlTd);
+    
+    var dlTd = document.createElement('td');
+    var dayLabel = document.createElement('label');
+    dayLabel.innerHTML = '/D ';
+    dlTd.appendChild(dayLabel);
+    var dTd = document.createElement('td');
+    var day = document.createElement('input');
+    day.setAttribute('type', 'number');
+    day.setAttribute('style', 'width: 30px;');
+    day.min = '1';
+    day.max = '31';
+    day.id = source + 'day';
+    day.value = infoHook.getDate();
+    dlTd.appendChild(day);
+    tr0.appendChild(dlTd);
+    
+    var ylTd = document.createElement('td');
+    var yearLabel = document.createElement('label');
+    yearLabel.innerHTML = '/Y ';
+    ylTd.appendChild(yearLabel);
+    var year = document.createElement('input');
+    year.setAttribute('style', 'width: 45px;');
+    year.setAttribute('type', 'number');
+    year.min = infoHook.getFullYear();
+    year.id = source + 'year';
+    year.value = infoHook.getFullYear();
+    ylTd.appendChild(year);
+    tr0.appendChild(ylTd);
+    
+    var tr1 = document.createElement('tr');
+    var hlTd = document.createElement('td');
+    var hourLabel = document.createElement('label');
+    hourLabel.innerHTML = 'H ';
+    hlTd.appendChild(hourLabel);
+    var hour = document.createElement('input');
+    hour.setAttribute('style', 'width: 30px;');
+    hour.id = source + 'hour';
+    hour.setAttribute('type', 'number');
+    hour.min = '0';
+    hour.max = '23';
+    hour.value = infoHook.getHours();
+    hlTd.appendChild(hour);
+    tr1.appendChild(hlTd);
+    
+    var milTd = document.createElement('td');
+    var minuteLabel = document.createElement('label');
+    minuteLabel.innerHTML = ':M ';
+    milTd.appendChild(minuteLabel);
+    var minute = document.createElement('input');
+    minute.setAttribute('style', 'width: 30px;');
+    minute.setAttribute('type', 'number');
+    minute.min = '0';
+    minute.max = '59';
+    minute.id = source + 'minute';
+    minute.value = infoHook.getMinutes();
+    milTd.appendChild(minute);
+    tr1.appendChild(milTd);
+    
+    document.getElementById(source + 'changeHook').appendChild(tr0);
+    document.getElementById(source + 'changeHook').appendChild(tr1);
+  }
 }
 
 function newTypeSelected(clientId)
@@ -204,10 +437,10 @@ function newTypeSelected(clientId)
   // For when message types requiring arguments are supported
 }
 
-function registerScheduledMessage(clientId, name, message, cron, date, cb)
+function registerScheduledMessage(clientId, name, message, eventObj, cb)
 {
   message.id = clientId + ':';
-  now.SetScheduledMessage(clientId, name, message, cron, date, cb);
+  now.SetScheduledMessage(clientId, name, message, eventObj, cb);
 }
 
 function submitSchedule()
@@ -215,140 +448,58 @@ function submitSchedule()
   for(var i in document.getElementById('elementHook').childNodes)
   {
     var id = document.getElementById('elementHook').childNodes[i].id; 
-    
-    if(/^[a-z0-9]+$/i.test(document.getElementById(id + 'name').value) == false/* || document.getElementById(id + 'name').value.length <= 1*/)
-    {
-      document.getElementById(id + 'name').value = '';
-      alert('Scheduled event names must consist of 2-10 alphanumeric characters');
-      return;
-    }
-    
     if(id != undefined)
     {
-      if((document.getElementById(id + 'name').value != '')
-      && (document.getElementById(id + 'cron').value != ''))
+      if(/^[a-z0-9]+$/i.test(document.getElementById(id + 'name').value) == false/* || document.getElementById(id + 'name').value.length <= 1*/)
       {
-        var name = document.getElementById(id + 'name').value;
-        
-        var registerMessage = {};
-        registerMessage.type = document.getElementById(id + 'select').value;
-        
-        var cron = document.getElementById(id + 'cron').value;
-        
-        if(/^[a-z0-9\*\/\-]+$/i.test(cron) == false)
-        {
-          document.getElementById(id + 'cron').value = '';
-          alert('cron string contains unallowed characters!');
-          return;
-        }
-        
-        registerScheduledMessage(id, name, registerMessage, cron, undefined, function(id, status, response){
-          if(status == 'failed')
-          {
-            console.log(response);
-          }
-          else if(status == 'succeeded')
-          {
-            console.log(response);
-            document.getElementById('elementHook').removeChild(document.getElementById(id));
-            document.getElementById(id + 'div').childNodes[0].checked = false; 
-          }
-          else
-          {
-            console.log('Unknown status received from SetScheduledMessage, doing nothing.');
-          }  
+        document.getElementById(id + 'name').value = '';
+        alert('Scheduled event names must consist of 2-10 alphanumeric characters');
+        return;
+      }
+      var name = document.getElementById(id + 'name').value;
+      if(document.getElementById(id + 'recurring').checked)
+      {
+        var recurrenceValues = {};
+        var dayOfWeek = (document.getElementById(id + 'dayOfWeek').value != '' ? document.getElementById(id + 'dayOfWeek').value : '0');
+        var hour = (document.getElementById(id + 'hour').value != '' ? document.getElementById(id + 'hour').value : '0');
+        var minute = (document.getElementById(id + 'minute').value != '' ? document.getElementById(id + 'minute').value : '0');
+        recurrenceValues.dayOfWeek = dayOfWeek;
+        recurrenceValues.hour = hour;
+        recurrenceValues.minute = minute;
+        message.type = document.getElementById(id + 'select').value;
+        registerScheduledMessage(id, name, message, recurrenceValues, function(clientId, result){
+          console.log('Event registration for ' + clientId + ' ' + result);
         });
       }
-      else if((document.getElementById(id + 'date').value != '')
-      && (document.getElementById(id + 'time').value != '')
-      && (document.getElementById(id + 'cron').value == '')
-      && (document.getElementById(id + 'name').value != ''))
+      else
       {
-        var temp = new Date();
-        
-        if(new RegExp('^[0-9]{2}\/[1-3]?[0-9]\/[0-9]{4}$', 'i').test(document.getElementById(id + 'date').value) == false)
-        {
-          alert('Improperly formatted date string');
-          return;
-        }
-        
-        var monthdayyear = document.getElementById(id + 'date').value.split('/');
-        var month = parseInt(monthdayyear[0]) - 1;
-        
-        if(month < 0 || month > 11)
-        {
-          alert('Invalid value for month');
-          return; 
-        }
-        
-        var day = parseInt(monthdayyear[1]);
-        
-        if(monthdayyear[1].length == 2 && monthdayyear[1] == '0')
-        {
-          day = parseInt(day[1]); 
-        }
-        else if(monthdayyear[1].length > 2 || (day < 1 || day > 31))
-        {
-          alert('Invalid day value for MM/DD/YYYY string');
-          return; 
-        }
-        
-        var year = parseInt(monthdayyear[2]);
-        
-        if(monthdayyear[2].length != 4)
-        {
-          alert('Year value for MM/DD/YYYY string must be four characters');
-          return; 
-        }
-        else if(/^[0-1][0-9]\:[0-5]?[0-9](\:[0-5]?[0-9])?$/.test(document.getElementById(id + 'time').value) == false)
-        {
-          alert('Improperly formatted time string');
-          return;
-        }
-        
-        var hourminutesecond = document.getElementById(id + 'time').value.split(':');
-        var hour = (parseInt(hourminutesecond[0]) % 24);
-        var minute = parseInt(hourminutesecond[1]);
-        var second = parseInt((hourminutesecond[2] != undefined ? hourminutesecond[2] : 0));
-        
-        if(isNaN(month) || isNaN(day) || isNaN(year)
-        || isNaN(hour) || isNaN(minute) || isNaN(second))
-        {
-          alert('Define a cron string for recurring events or a one time run date/time'); 
-        }
-        
-        var name = document.getElementById(id + 'name').value;
-        
-        var registerMessage = {};
-        registerMessage.type = document.getElementById(id + 'select').value;
-        
-        var date = new Date(year, month, day, hour, minute, second);
-        
-        registerScheduledMessage(id, name, registerMessage, undefined, date, function(id, status, response){
-          if(status == 'failed')
-          {
-            console.log(response);
-          }
-          else if(status == 'succeeded')
-          {
-            console.log(response);
-            document.getElementById('elementHook').removeChild(document.getElementById(id));
-            document.getElementById(id + 'div').childNodes[0].checked = false; 
-          }
-          else
-          {
-            console.log('Unknown status received from SetScheduledMessage, doing nothing.');
-          }  
+        var year = (document.getElementById(id + 'year').value != '' ? document.getElementById(id + 'year').value : '0');
+        var month = (document.getElementById(id + 'month').value != '' ? document.getElementById(id + 'month').value : '0');
+        var day = (document.getElementById(id + 'day').value != '' ? document.getElementById(id + 'day').value : '0');
+        var hour = (document.getElementById(id + 'hour').value != '' ? document.getElementById(id + 'hour').value : '0');
+        var minute = (document.getElementById(id + 'minute').value != '' ? document.getElementById(id + 'minute').value : '0');
+        var submitDate = new Date(year, month, day, hour, minute);
+        message.type = document.getElementById(id + 'select').value;
+        registerScheduledMessage(id, name, message, submitDate, function(clientId, result){
+          console.log('Event registration for ' + clientId + ' ' + result);
         });
       }
-      else if(document.getElementById(id + 'name').value == '')
+      
+      var j = 0;
+      var element = document.getElementById('check' + j).value;
+      
+      do
       {
-        console.log('Scheduled event must have a name.'); 
-      }
-      else if(document.getElementById(id + 'cron').value == '')
-      {
-        console.log('Scheduled event must have a cron string');
-      }
+        if(element == id)
+        {
+          document.getElementById('check' + j).checked = false;
+          element = undefined;
+        } 
+      }while(element != undefined && j++);
     }
+  }
+  while(document.getElementById('elementHook').hasChildNodes())
+  {
+    document.getElementById('elementHook').removeChild(document.getElementById('elementHook').lastChild);
   }
 }

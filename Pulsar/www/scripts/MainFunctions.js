@@ -397,7 +397,7 @@ function featureFormatter(d)
 function classificationFormatter(d) 
 {
     var num = 100 * d;
-    if (num > 0) 
+    if (num >= 0) 
     {
         // Minor performance boost, don't bother with coloring those < than 5% hostile, barely shows anyway
         if (num > 5) 
@@ -411,11 +411,11 @@ function classificationFormatter(d)
     } 
     else 
     {
-        if (num == -100) 
+        if (num == -1) 
         {
             return 'Invalid';
         } 
-        else if (num == -200) 
+        else if (num == -2) 
         {
             return 'Not Enough Data';
         } 

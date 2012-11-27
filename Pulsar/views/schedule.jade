@@ -1,24 +1,25 @@
 extends layout
 
 block content
-  table
-    thead
-      tr
-        th Connected Clients
-        th Groups
-    tbody
-      tr
-        td
-          table(style='border: 2px solid; width: 200px; border-collapse: collapse;')
-            tbody(id='clientsList')
-        td
-          table(style='border: 2px solid; width: 200px; border-collapse: collapse;')
-            tbody(id='groupsList')
-  br
-  br
-  div(id='elementHook')
-  br
-  button(onclick='submitSchedule()') Submit Scheduling Changes
+  div#opaque
+    table
+      thead
+        tr
+          th Connected Clients
+          th Groups
+      tbody
+        tr
+          td
+            table(style='border: 2px solid; width: 200px; border-collapse: collapse;')
+              tbody(id='clientsList')
+          td
+            table(style='border: 2px solid; width: 200px; border-collapse: collapse;')
+              tbody(id='groupsList')
+    br
+    br
+    div(id='elementHook')
+    br
+    button(onclick='submitSchedule()') Submit Scheduling Changes
           
 block headerAdditions
   script(type='text/javascript', src='scripts/ConnectionManagement.js')
