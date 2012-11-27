@@ -1040,6 +1040,29 @@ bool HoneydConfiguration::DeleteProfile(string profileName)
 		return false;
 	}
 
+	// You're not allowed to delete the root
+	if (profile->m_parent == NULL)
+	{
+		return false;
+	}
+
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		if(it->second.m_pfile == profile->m_name)
+		{
+			m_nodes.erase(it->first);
+		}
+	}
+
+	for (uint i = 0; i < profile->m_parent->m_children.size(); i++)
+	{
+		if (profile->m_parent->m_children[i] == profile)
+		{
+			profile->m_parent->m_children.erase(profile->m_parent->m_children.begin() + i);
+			break;
+		}
+	}
+
 	delete profile;
 
 	return true;
