@@ -120,9 +120,11 @@ function createAutoconfigElement(clientName, group)
   tr.id = 'autohook' + clientName;
   tr.setAttribute('style', 'background: #E8A02F;');
   var td0 = document.createElement('td');
+  var labelBold = document.createElement('label');
+  labelBold.innerHTML = clientName;
+  labelBold.setAttribute('style', 'font-weight: bold;');
   var label = document.createElement('label');
-  label.value = clientName;
-  label.innerHTML = clientName + ': Create ';
+  label.innerHTML = ': Create ';
   var inputType = document.createElement('select');
   inputType.id = 'type' + elementCount;
   var types = ['number', 'ratio'];
@@ -156,6 +158,7 @@ function createAutoconfigElement(clientName, group)
       dropDown.appendChild(option);
     }
   });
+  td0.appendChild(labelBold);
   td0.appendChild(label);
   td0.appendChild(inputType);
   td0.appendChild(input);

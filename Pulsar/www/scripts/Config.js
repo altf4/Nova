@@ -9,19 +9,34 @@ function updateConfiguration()
   now.UpdateConfiguration();
 }
  
+function checkInt(source)
+{
+  var check = parseFloat(document.getElementById(source).value);
+  var cond = check - parseInt(document.getElementById(source).value);
+  if(cond != 0)
+  {
+    document.getElementById(source).value = parseInt(document.getElementById(source).value);
+  }
+}
+ 
 now.UpdateConfiguration = function()
 {
   //construct json here
   //message type: updateConfiguration
   message.type = 'updateConfiguration';
   
-  message.TCP_TIMEOUT = document.getElementsByName('TCP_TIMEOUT')[0].value;
-  message.TCP_CHECK_FREQ = document.getElementsByName('TCP_CHECK_FREQ')[0].value;
-  message.CLASSIFICATION_TIMEOUT = document.getElementsByName('CLASSIFICATION_TIMEOUT')[0].value;
-  message.K = document.getElementsByName('K')[0].value;
-  message.EPS = document.getElementsByName('EPS')[0].value;
-  message.CLASSIFICATION_THRESHOLD = document.getElementsByName('CLASSIFICATION_THRESHOLD')[0].value;
-  message.MIN_PACKET_THRESHOLD = document.getElementsByName('MIN_PACKET_THRESHOLD')[0].value;
+  message.TCP_TIMEOUT = parseInt(document.getElementsByName('TCP_TIMEOUT')[0].value);
+  message.TCP_CHECK_FREQ = parseInt(document.getElementsByName('TCP_CHECK_FREQ')[0].value);
+  message.CLASSIFICATION_TIMEOUT = parseInt(document.getElementsByName('CLASSIFICATION_TIMEOUT')[0].value);
+  message.K = parseInt(document.getElementsByName('K')[0].value);
+  message.EPS = parseFloat(document.getElementsByName('EPS')[0].value);
+  message.CLASSIFICATION_THRESHOLD = parseFloat(document.getElementsByName('CLASSIFICATION_THRESHOLD')[0].value);
+  if(message.CLASSIFICATION_THRESHOLD < 0 || message.CLASSIFICATION_THRESHOLD > 1)
+  {
+    alert('Invalid value for CLASSIFICATION THRESHOLD! Must be between 0 and 1.');
+    return;
+  }
+  message.MIN_PACKET_THRESHOLD = parseInt(document.getElementsByName('MIN_PACKET_THRESHOLD')[0].value);
   
   if(document.getElementById('clearHostileYes').checked)
   {
@@ -43,9 +58,9 @@ now.UpdateConfiguration = function()
     message.CUSTOM_PCAP_MODE = '0';
   }
   
-  message.CAPTURE_BUFFER_SIZE = document.getElementsByName('CAPTURE_BUFFER_SIZE')[0].value;
-  message.SAVE_FREQUENCY = document.getElementsByName('SAVE_FREQUENCY')[0].value;
-  message.DATA_TTL = document.getElementsByName('DATA_TTL')[0].value;
+  message.CAPTURE_BUFFER_SIZE = parseInt(document.getElementsByName('CAPTURE_BUFFER_SIZE')[0].value);
+  message.SAVE_FREQUENCY = parseInt(document.getElementsByName('SAVE_FREQUENCY')[0].value);
+  message.DATA_TTL = parseInt(document.getElementsByName('DATA_TTL')[0].value);
   
   if(document.getElementById('dmEnabledYes').checked)
   {

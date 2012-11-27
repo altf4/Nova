@@ -6,21 +6,21 @@ block content
   h2 TCP Timeout
   label TCP Timeout
   br
-  input(type='number', name='TCP_TIMEOUT', step='1', min='0', value=TCP_TIMEOUT)    
+  input(type='number', name='TCP_TIMEOUT', step='1', min='0', value=TCP_TIMEOUT, id='TCP_TIMEOUT', onblur='checkInt("TCP_TIMEOUT")')    
   br
   label TCP Timeout Check Frequency
   br
-  input(type='number', name='TCP_CHECK_FREQ', step='1', min='0', value=TCP_CHECK_FREQ)
+  input(type='number', name='TCP_CHECK_FREQ', step='1', min='0', value=TCP_CHECK_FREQ, id='TCP_CHECK_FREQ', onblur='checkInt("TCP_CHECK_FREQ")')
   br
   
   h2 Classification Settings
   label Classification Timeout
   br
-  input(type='number', step='1', min='0', name='CLASSIFICATION_TIMEOUT', value=CLASSIFICATION_TIMEOUT)
+  input(type='number', step='1', min='0', name='CLASSIFICATION_TIMEOUT', value=CLASSIFICATION_TIMEOUT, id='CLASSIFICATION_TIMEOUT', onblur='checkInt("CLASSIFICATION_TIMEOUT")')
   br
   label Neighbors
   br
-  input(type='number', step='1', min='1', name='K', value=K)
+  input(type='number', step='1', min='1', name='K', value=K, id='K', onblur='checkInt("K")')
   br
   label EPS
   br
@@ -32,7 +32,7 @@ block content
   br
   label Packets Needed Before Classification
   br
-  input(type='number', name='MIN_PACKET_THRESHOLD', value=MIN_PACKET_THRESHOLD);
+  input(type='number', name='MIN_PACKET_THRESHOLD', value=MIN_PACKET_THRESHOLD, id='MIN_PACKET_THRESHOLD', onblur='checkInt("MIN_PACKET_THRESHOLD")');
   br
   label Clear data after suspect logged as hostile?
   br
