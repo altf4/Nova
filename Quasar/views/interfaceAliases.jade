@@ -10,7 +10,8 @@ block headerAdditions
     var grid;
 
     var AddNewAlias = function() {
-        var iface = document.getElementById("interfaceSelection").value;
+        var ifaceDropdown = document.getElementById("interfaceSelection");
+        var iface = ifaceDropdown.options[ifaceDropdown.selectedIndex].value;
         var alias = document.getElementById("aliasSelection").value;
 
         now.AddInterfaceAlias(iface, alias, refresh);
