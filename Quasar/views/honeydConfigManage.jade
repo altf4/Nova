@@ -139,7 +139,8 @@ block headerAdditions
       
       if(configArg == undefined)
       {
-        config = theDoc.getElementById('configurations').value;
+        var element = theDoc.getElementById('configurations');
+        config = element.options[element.selectedIndex].value;
       }
       else
       {

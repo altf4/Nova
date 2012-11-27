@@ -270,17 +270,27 @@ script
   
   function onValueChange()
   {
+    var element;
     var newServicePrefString = "0:";
-    newServicePrefString += document.getElementById("syslogLevelSelect").value;
-    var checkSysMod = document.getElementById("syslogModSelect").value;
+    element = document.getElementById("syslogLevelSelect");
+    newServicePrefString += element.options[element.selectedIndex].value;
+   
+    element = document.getElementById("syslogModSelect");
+    var checkSysMod = element.options[element.selectedIndex].value;
     newServicePrefString += (checkSysMod != "NA" ? checkSysMod : "");
     newServicePrefString += ";1:";
-    newServicePrefString += document.getElementById("notifyLevelSelect").value;
-    var checkNotifyMod = document.getElementById("notifyModSelect").value;
+    element = document.getElementById("notifyLevelSelect");
+    newServicePrefString += element.options[element.selectedIndex].value;
+
+    element = document.getElementById("notifyModSelect");
+    var checkNotifyMod = element.options[element.selectedIndex].value;
     newServicePrefString += (checkNotifyMod != "NA" ? checkNotifyMod : "");
     newServicePrefString += ";2:";
-    newServicePrefString += document.getElementById("emailLevelSelect").value;
-    var checkEmailMod = document.getElementById("emailModSelect").value;
+    element = document.getElementById("emailLevelSelect");
+    newServicePrefString += element.options[element.selectedIndex].value;
+    
+    element = document.getElementById("emailModSelect");
+    var checkEmailMod = element.options[element.selectedIndex].value;
     newServicePrefString += (checkEmailMod != "NA" ? checkEmailMod : "");
     newServicePrefString += ";";
     servicePrefs = newServicePrefString;
