@@ -626,6 +626,9 @@ script
                                         dojo.byId("inheritPersonality").checked = true;
                                         dojo.byId("inheritDropRate").checked = true; 
                                         dojo.byId("inheritUptime").checked = true; 
+
+                                        // We don't want copies of the port sets (or do we?)
+                                        profile.portSets = [];
                                 } 
                                 else 
                                 {
