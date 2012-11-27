@@ -76,17 +76,17 @@ block content
   h2 Special Run Settings
   label Packet Capture Buffer Size (in bytes)
   br
-  input(type='number', step='1', min='1024', name='CAPTURE_BUFFER_SIZE', value=CAPTURE_BUFFER_SIZE)
+  input(type='number', step='1', min='1024', name='CAPTURE_BUFFER_SIZE', value=CAPTURE_BUFFER_SIZE, id='CAPTURE_BUFFER_SIZE', onblur='checkInt("CAPTURE_BUFFER_SIZE")')
   br
   
   h2 State File Settings
   label State Save Frequency
   br
-  input(type='number', min='0', name='SAVE_FREQUENCY', value=SAVE_FREQUENCY)
+  input(type='number', min='0', name='SAVE_FREQUENCY', value=SAVE_FREQUENCY, id='SAVE_FREQUENCY', onblur='checkInt("SAVE_FREQUENCY")')
   br
   label Data TTL
   br
-  input(type='number', min='0', name='DATA_TTL', value=DATA_TTL)
+  input(type='number', min='0', name='DATA_TTL', value=DATA_TTL, id='DATA_TTL', onblur='checkInt("DATA_TTL")')
   br
   
   h2 Doppelganger

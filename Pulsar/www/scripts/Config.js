@@ -12,10 +12,14 @@ function updateConfiguration()
 function checkInt(source)
 {
   var check = parseFloat(document.getElementById(source).value);
-  var cond = check - parseInt(document.getElementById(source).value);
+  if(check < 0 || isNaN(check))
+  {
+    document.getElementById(source).value = '0';
+  }
+  var cond = check - parseInt(check);
   if(cond != 0)
   {
-    document.getElementById(source).value = parseInt(document.getElementById(source).value);
+    document.getElementById(source).value = (parseInt(check) != 0 ? parseInt(check) : '0');
   }
 }
  
