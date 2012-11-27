@@ -226,7 +226,7 @@ function processAutoconfigElements()
         return;
       }
       autoconfMessage.interface = simple.childNodes[5].value;
-      //now.MessageSend(autoconfMessage);
+      now.MessageSend(autoconfMessage);
     }
     loopIter.removeChild(loopIter.lastChild);
   }while(loopIter.hasChildNodes());
