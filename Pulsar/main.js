@@ -1299,7 +1299,7 @@ wsServer.on('close', function(connection, reason, description)
       }
       if(typeof everyone.now.UpdateConnectionsList == 'function')
       {
-        everyone.now.UpdateConnectionsList(i, 'remove');
+        everyone.now.UpdateConnectionsList(i, 'updateStatus');
       }
       GetGroupMembers('all', function(members){
         var newList = members.replace(new RegExp(i), '');
@@ -1316,6 +1316,13 @@ wsServer.on('close', function(connection, reason, description)
     }
   }
 });
+
+function ClearFromNovaClients(client)
+{
+  novaClients[client].connection.close();
+  delete novaClients[client];
+}
+everyone.now.ClearFromNovaClients = ClearFromNovaClients;
 
 // A function to get a string representation of the clients list 
 // from the novaClients object. Probably could do it with just 

@@ -53,6 +53,8 @@ html(lang='en')
           {
             var tr = document.createElement('tr');
             tr.id = clients[i];
+            tr.style.minHeight = '17px';
+            tr.style.maxHeight = '17px';
             
             var td0 = document.createElement('td');
             var label = document.createElement('label');
@@ -108,7 +110,6 @@ html(lang='en')
                 haystackStatus.alt = 'No Haystack status for ' + client;
               }
             });
-            
             td1.appendChild(haystackStatus);
             
             var events = document.createElement('div');
@@ -117,24 +118,36 @@ html(lang='en')
             {
               now.UpdateEventCounter(clients[i], '0');
               events.innerHTML = '0';
-              events.setAttribute('style', 'border: 2px; border-radius: 20px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
+              events.setAttribute('style', 'border: 2px; border-radius: 20px; width: 7px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
             }
             else
             {
               events.innerHTML = parseInt(getEventCount(clients[i]));
               if(parseInt(getEventCount(clients[i])) > 0)
               {
-                events.setAttribute('style', 'border: 2px; border-radius: 20px; background: #FF5447; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
+                events.setAttribute('style', 'border: 2px; border-radius: 20px; width: 7px; background: #FF5447; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
               }
               else
               {
-                events.setAttribute('style', 'border: 2px; border-radius: 20px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
+                events.setAttribute('style', 'border: 2px; border-radius: 20px; width: 7px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
               }
             }
             td1.appendChild(events);
             
+            var td2 = document.createElement('td');
+            td2.style.float = 'right';
+            var removeButton = document.createElement('label');
+            removeButton.innerHTML = 'X';
+            removeButton.setAttribute('onclick', 'removeMe("' + clients[i] + '")');
+            removeButton.style.float = 'left';
+            removeButton.style.textAlign = 'center';
+            removeButton.style.border = '1px solid';
+            removeButton.style.background = 'red';
+            td2.appendChild(removeButton);
+            
             tr.appendChild(td0);
             tr.appendChild(td1);
+            tr.appendChild(td2);
             
             divConnectionsList.appendChild(tr);
           }
@@ -151,16 +164,14 @@ html(lang='en')
         switch(action)
         {
           case 'add':
-            if(document.getElementById('deleteMe') != undefined)
-            {
-              divConnectionsList.removeChild(document.getElementById('deleteMe'));
-            }
             if(document.getElementById(clientId) != undefined)
             {
               return now.UpdateConnectionsList(clientId, 'updateStatus');
             }
             var tr = document.createElement('tr');
             tr.id = clientId;
+            tr.style.minHeight = '17px';
+            tr.style.maxHeight = '17px';
             
             var td0 = document.createElement('td');
             var label = document.createElement('label');
@@ -216,20 +227,36 @@ html(lang='en')
                 haystackStatus.alt = 'No Haystack status for ' + client;
               }
             });
-            
             td1.appendChild(haystackStatus);
             
             var events = document.createElement('div');
-            // This needs to be queried from the server side
             events.id = clientId + 'events';
             events.innerHTML = '0';
-            events.setAttribute('style', 'border: 2px; border-radius: 20px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
+            events.setAttribute('style', 'border: 2px; border-radius: 20px; width: 7px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
             td1.appendChild(events);
+            
+            var td2 = document.createElement('td');
+            td2.style.float = 'right';
+            var removeButton = document.createElement('label');
+            removeButton.innerHTML = 'X';
+            removeButton.setAttribute('onclick', 'removeMe("' + clientId + '")');
+            removeButton.style.float = 'left';
+            removeButton.style.textAlign = 'center';
+            removeButton.style.border = '1px solid';
+            removeButton.style.background = 'red';
+            td2.appendChild(removeButton);
             
             tr.appendChild(td0);
             tr.appendChild(td1);
+            tr.appendChild(td2);
 
             divConnectionsList.appendChild(tr);
+            
+            if(document.getElementById('deleteMe') != undefined)
+            {
+              divConnectionsList.removeChild(document.getElementById('deleteMe'));
+            }
+            
             break;
           case 'remove':
             if(document.getElementById(clientId) != undefined)
@@ -427,6 +454,26 @@ html(lang='en')
         }
       }
       
+      function removeMe(client)
+      {
+        if(typeof now.UpdateClientsList == 'function')
+        {
+          now.UpdateClientsList(client, 'remove');
+        }        
+        if(typeof now.ClearFromNovaClients == 'function')
+        {
+          now.ClearFromNovaClients(client);
+        }
+        while(document.getElementById('connectionsList').hasChildNodes())
+        {
+          document.getElementById('connectionsList').removeChild(document.getElementById('connectionsList').lastChild);
+        }
+        if(typeof now.RenderConnectionsList == 'function')
+        {
+          now.RenderConnectionsList();
+        }
+      }
+      
       require(['dijit/layout/BorderContainer', 'dijit/layout/TabContainer', 'dijit/layout/ContentPane', 'dijit/form/Button', 'dojo/parser', 'dojox/grid/DataGrid', 'dojox/data/HtmlStore', 'dijit/ProgressBar'],
         function(ready){
           dojo.addOnLoad(function(){
@@ -489,7 +536,8 @@ html(lang='en')
         br
         br
         div(style='text-align:center; font-weight:bold; font-size: 150%;') Connected Clients
-        table(style='border: 2px solid; width: 156px; border-collapse: collapse;')
+        br
+        table(style='border: 2px solid black; width: 156px; height: 4px; border-collapse: collapse;')
           tbody(id='connectionsList')
         //a(class="button", href= "logout") Log Out
         //br
