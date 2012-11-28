@@ -520,6 +520,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               break;
             case 'suspectDetails':
               var suspectString = nova.GetSuspectDetailsString(json_args.ip, json_args.iface);
+              suspectString = suspectString.replace(/(\r\n|\r|\n)/gm, "<br>");
               var response = {};
               response.id = clientId;
               response.type = 'detailsReceived';

@@ -466,7 +466,9 @@ function submitSchedule()
         recurrenceValues.dayOfWeek = dayOfWeek;
         recurrenceValues.hour = hour;
         recurrenceValues.minute = minute;
-        message.type = document.getElementById(id + 'select').value;
+        var ieWorkaround = document.getElementById(id + 'select');
+        message.type = ieWorkaround.options[ieWorkaround.selectedIndex].value;
+        console.log('message.type == ' + message.type);
         registerScheduledMessage(id, name, message, recurrenceValues, function(clientId, result){
           console.log('Event registration for ' + clientId + ' ' + result);
         });
@@ -479,20 +481,45 @@ function submitSchedule()
         var hour = (document.getElementById(id + 'hour').value != '' ? document.getElementById(id + 'hour').value : '0');
         var minute = (document.getElementById(id + 'minute').value != '' ? document.getElementById(id + 'minute').value : '0');
         var submitDate = new Date(year, month, day, hour, minute);
-        message.type = document.getElementById(id + 'select').value;
+        var ieWorkaround = document.getElementById(id + 'select');
+        message.type = ieWorkaround.options[ieWorkaround.selectedIndex].value;
         registerScheduledMessage(id, name, message, submitDate, function(clientId, result){
           console.log('Event registration for ' + clientId + ' ' + result);
         });
       }
       
       var j = 0;
-      var element = document.getElementById('check' + j).value;
+      var element = document.getElementById('check' + j);
+      
+      while(element == undefined)
+      {
+        j++;
+        element = document.getElementById('check' + j);
+      }
       
       do
       {
-        if(element == id)
+        if(element.value == id)
         {
           document.getElementById('check' + j).checked = false;
+          element = undefined;
+        } 
+      }while(element != undefined && j++);
+      
+      j = 0;
+      element = document.getElementById('groupcheck' + j);
+      
+      while(element == undefined)
+      {
+        j++;
+        element = document.getElementById('groupcheck' + j);
+      }
+      
+      do
+      {
+        if(element.value == id)
+        {
+          document.getElementById('groupcheck' + j).checked = false;
           element = undefined;
         } 
       }while(element != undefined && j++);

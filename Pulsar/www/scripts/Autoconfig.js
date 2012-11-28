@@ -120,12 +120,16 @@ function createAutoconfigElement(clientName, group)
   tr.id = 'autohook' + clientName;
   tr.setAttribute('style', 'background: #E8A02F;');
   var td0 = document.createElement('td');
+  var labelBold = document.createElement('label');
+  labelBold.innerHTML = clientName;
+  labelBold.value = clientName;
+  labelBold.setAttribute('style', 'font-weight: bold;');
   var label = document.createElement('label');
-  label.value = clientName;
-  label.innerHTML = clientName + ': Create ';
+  label.innerHTML = ': Create ';
   var inputType = document.createElement('select');
   inputType.id = 'type' + elementCount;
   var types = ['number', 'ratio'];
+  
   for(var i = 0; i < 2; i++)
   {
     var option = document.createElement('option');
@@ -147,6 +151,7 @@ function createAutoconfigElement(clientName, group)
   label1.innerHTML = ' nodes on ';
   label1.id = 'change' + elementCount;
   var dropDown = document.createElement('select');
+  
   now.GetInterfacesOfClient(clientName, function(interfaces){
     for(var i in interfaces)
     {
@@ -156,12 +161,15 @@ function createAutoconfigElement(clientName, group)
       dropDown.appendChild(option);
     }
   });
+  
+  td0.appendChild(labelBold);
   td0.appendChild(label);
   td0.appendChild(inputType);
   td0.appendChild(input);
   td0.appendChild(label1);
   td0.appendChild(dropDown);
   tr.appendChild(td0);
+  
   if(group != '')
   {
     document.getElementById('autoconfElements').appendChild(tr);
@@ -205,21 +213,43 @@ function processAutoconfigElements()
     if(loopIter.lastChild != undefined)
     {
       var simple = loopIter.lastChild.childNodes[0];
-      console.log('Constructing message');
       var autoconfMessage = {};
       autoconfMessage.type = 'haystackConfig';
       autoconfMessage.id = simple.childNodes[0].value;
-      autoconfMessage.numNodesType = simple.childNodes[1].value;
-      autoconfMessage.numNodes = simple.childNodes[2].value;
+      var s = simple.childNodes[2];
+      autoconfMessage.numNodesType = s.options[s.selectedIndex].value;
+      autoconfMessage.numNodes = simple.childNodes[3].value;
       if(/^[0-9]+$/i.test(autoconfMessage.numNodes.toString()) == false)
       {
-        simple.childNodes[2].value = '0';
+        simple.childNodes[3].value = '0';
         alert('Number of nodes/ratio of nodes to create must be a digit');
         return;
       }
-      autoconfMessage.interface = simple.childNodes[4].value;
+      autoconfMessage.interface = simple.childNodes[5].value;
       now.MessageSend(autoconfMessage);
     }
     loopIter.removeChild(loopIter.lastChild);
   }while(loopIter.hasChildNodes());
+  var uncheck = document.getElementById('clientsList');
+  var count = 0;
+  for(var i in uncheck.children)
+  {
+    if(document.getElementById('check' + count) == undefined)
+    {
+      break;
+    }
+    document.getElementById('check' + count).checked = false;
+    count++;
+  }
+  uncheck = document.getElementById('groupsList');
+  count = 0;
+  for(var i in uncheck.children)
+  {
+    if(document.getElementById('groupcheck' + count) == undefined)
+    {
+      break;
+    }
+    document.getElementById('groupcheck' + count).checked = false;
+    count++;
+  }
 }
