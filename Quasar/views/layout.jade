@@ -19,6 +19,16 @@ html(lang="en")
             dojo.fadeOut({node:"splash", delay:0}).play();
             dojo.style("appLayout", "visibility", "visible");
             dojo.fadeIn({node:"appLayout", delay:0}).play();
+
+            var sideBarButtons = document.getElementsByClassName("sideBarButton");
+            for (var i in sideBarButtons) {
+                if (!sideBarButtons[i].pathname) {continue;}
+                
+                if (sideBarButtons[i].pathname + sideBarButtons[i].search == window.location.pathname + window.location.search) {
+                    sideBarButtons[i].className += ' active';
+                    console.log("Enabled button " + sideBarButtons[i]);
+                }
+            }
           });
         }
       );
