@@ -28,6 +28,7 @@ block headerAdditions
             document.getElementById("vendorList").appendChild(option);
         }
 
+        document.getElementById("portSetList").innerHTML = "";
         for (var portset in profile.portSets) {
             var v = profile.portSets[portset].setName;
             var option = document.createElement('option');
