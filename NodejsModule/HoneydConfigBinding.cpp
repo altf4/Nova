@@ -61,6 +61,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddConfiguration"),FunctionTemplate::New(AddConfiguration)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveConfiguration"),FunctionTemplate::New(RemoveConfiguration)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SwitchConfiguration"),FunctionTemplate::New(SwitchConfiguration)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("SetDoppelganger"),FunctionTemplate::New(SetDoppelganger)->GetFunction());
 
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
 	target->Set(String::NewSymbol("HoneydConfigBinding"), constructor);
@@ -177,7 +178,7 @@ Handle<Value> HoneydConfigBinding::AddNode(const Arguments& args)
 
 	if( args.Length() != 5 )
 	{
-		return ThrowException(Exception::TypeError(String::New("Must be invoked with 4 parameters")));
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 5 parameters")));
 	}
 
 	string profile = cvv8::CastFromJS<string>( args[0] );
@@ -188,6 +189,29 @@ Handle<Value> HoneydConfigBinding::AddNode(const Arguments& args)
 
 	//TODO: Specify the PortSet here instead of NULL
 	return scope.Close(Boolean::New(obj->m_conf->AddNode(profile,ipAddress,mac, interface, HoneydConfiguration::Inst()->GetPortSet(profile, portset))));
+}
+
+
+// xxx Bleh copy/paste code reuse from AddNode. Maybe give addNode an isDoppelganger bool or make it so we can make Node objects in JS
+Handle<Value> HoneydConfigBinding::SetDoppelganger(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if( args.Length() != 5 )
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 5 parameters")));
+	}
+
+	Node node;
+	node.m_pfile = cvv8::CastFromJS<string>( args[0] );
+	node.m_portSetName = cvv8::CastFromJS<string>( args[1] );
+	node.m_IP = cvv8::CastFromJS<string>( args[2] );
+	node.m_MAC = cvv8::CastFromJS<string>( args[3] );
+	node.m_interface = cvv8::CastFromJS<string>( args[4] );
+
+	//TODO: Specify the PortSet here instead of NULL
+	return scope.Close(Boolean::New(obj->m_conf->SetDoppelganger(node)));
 }
 
 Handle<Value> HoneydConfigBinding::GetNode(const Arguments& args)
@@ -202,7 +226,18 @@ Handle<Value> HoneydConfigBinding::GetNode(const Arguments& args)
 
 	string MAC = cvv8::CastFromJS<string>(args[0]);
 
-	Nova::Node *ret = obj->m_conf->GetNode(MAC);
+	Nova::Node *ret;
+
+	// xxx horrible hack to reuse code by sticking "doppelganger" in the MAC field here
+	if (MAC == "doppelganger")
+	{
+		// xxx should we really be calling WrapNode on a HoneydConfiguration::Inst member? Bit dangerous.
+		ret = &obj->m_conf->m_doppelganger;
+	}
+	else
+	{
+		ret = obj->m_conf->GetNode(MAC);
+	}
 
 	if (ret != NULL)
 	{

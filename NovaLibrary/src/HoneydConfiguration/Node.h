@@ -19,6 +19,8 @@
 #ifndef NODE_H_
 #define NODE_H_
 
+#include <boost/property_tree/ptree.hpp>
+
 namespace Nova
 {
 
@@ -30,10 +32,36 @@ public:
 	std::string m_interface;
 	std::string m_pfile;
 	std::string m_portSetName;
-	std::vector<bool> m_isPortInherited;
 	std::string m_IP;
 	std::string m_MAC;
 	bool m_enabled;
+
+
+	Node() {}
+	Node(const boost::property_tree::ptree &nodePtree)
+	{
+		m_interface = nodePtree.get<std::string>("interface");
+		m_IP = nodePtree.get<std::string>("IP");
+		m_enabled = nodePtree.get<bool>("enabled");
+		m_MAC = nodePtree.get<std::string>("MAC");
+
+		m_pfile = nodePtree.get<std::string>("profile.name");
+		m_portSetName = nodePtree.get<std::string>("profile.portset");
+	}
+
+	boost::property_tree::ptree GetPtree()
+	{
+		boost::property_tree::ptree nodePtree;
+		nodePtree.put<std::string>("interface", m_interface);
+		nodePtree.put<std::string>("IP", m_IP);
+		nodePtree.put<bool>("enabled", m_enabled);
+		nodePtree.put<std::string>("MAC", m_MAC);
+
+		nodePtree.put<std::string>("profile.name", m_pfile);
+		nodePtree.put<std::string>("profile.portset", m_portSetName);
+
+		return nodePtree;
+	}
 
 	// This is for the Javascript bindings in the web interface
 	inline std::string GetInterface() {return m_interface;}

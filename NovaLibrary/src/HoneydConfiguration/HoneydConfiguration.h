@@ -190,9 +190,14 @@ public:
 	std::vector<std::string> GetConfigurationsList();
 
 
+	bool SetDoppelganger(Node doppelganger);
+
 	//A map structure for node storage
         std::vector<std::string> m_configs;
 	NodeTable m_nodes;
+
+	// There's only one instance of this node
+	Node m_doppelganger;
 
 	VendorMacDb m_macAddresses;
 

@@ -275,16 +275,26 @@ bool HoneydConfiguration::ReadNodesXML()
 			{
 				if(!nodePtree.first.compare("node"))
 				{
-					Node node;
-					node.m_interface = nodePtree.second.get<string>("interface");
-					node.m_IP = nodePtree.second.get<string>("IP");
-					node.m_enabled = nodePtree.second.get<bool>("enabled");
-					node.m_MAC = nodePtree.second.get<string>("MAC");
-
-					node.m_pfile = nodePtree.second.get<string>("profile.name");
-					node.m_portSetName = nodePtree.second.get<string>("profile.portset");
-
+					Node node(nodePtree.second);
 					AddNode(node);
+				}
+			}
+		}
+		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+		{
+			LOG(DEBUG, "Unable to parse a node in nodes.xml: " + string(e.what()), "");
+		};
+
+		//For the doppelganger tag
+		try
+		{
+			BOOST_FOREACH(ptree::value_type &nodePtree, propTree.get_child("doppelganger"))
+			{
+				// TODO: Make sure there's only one doppelganger node in the xml
+				if(!nodePtree.first.compare("node"))
+				{
+					Node node(nodePtree.second);
+					m_doppelganger = node;
 				}
 			}
 		}
@@ -400,17 +410,10 @@ bool HoneydConfiguration::WriteNodesToXML()
 
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		ptree nodePtree;
-		nodePtree.put<string>("interface", it->second.m_interface);
-		nodePtree.put<string>("IP", it->second.m_IP);
-		nodePtree.put<bool>("enabled", it->second.m_enabled);
-		nodePtree.put<string>("MAC", it->second.m_MAC);
-
-		nodePtree.put<string>("profile.name", it->second.m_pfile);
-		nodePtree.put<string>("profile.portset", it->second.m_portSetName);
-
-		nodesTopLevel.add_child("nodes.node", nodePtree);
+		nodesTopLevel.add_child("nodes.node", it->second.GetPtree());
 	}
+	nodesTopLevel.add_child("doppelganger.node", m_doppelganger.GetPtree());
+
 
 	//Actually write out to file
 	try
@@ -1044,12 +1047,20 @@ bool HoneydConfiguration::DeleteProfile(string profileName)
 		return false;
 	}
 
+	// Delete any nodes that use this profile
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
 		if(it->second.m_pfile == profile->m_name)
 		{
 			m_nodes.erase(it->first);
 		}
+	}
+
+	// If the doppelganger uses this profile, change it to default
+	if (m_doppelganger.m_pfile == profile->m_name)
+	{
+		m_doppelganger.m_pfile = "default";
+		m_doppelganger.m_portSetName = "default";
 	}
 
 	for (uint i = 0; i < profile->m_parent->m_children.size(); i++)
@@ -1320,6 +1331,12 @@ bool HoneydConfiguration::LoadConfigurations()
 vector<string> HoneydConfiguration::GetConfigurationsList()
 {
 	return m_configs;
+}
+
+bool HoneydConfiguration::SetDoppelganger(Node doppelganger)
+{
+	m_doppelganger = doppelganger;
+	return true;
 }
 
 }

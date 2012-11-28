@@ -956,7 +956,13 @@ app.get('/editHoneydNode', passport.authenticate('basic', {session: false}), fun
 		return;
 	}
 
-	var interfaces = config.ListInterfaces().sort();
+	var interfaces;
+	if (nodeName == "doppelganger") {
+		interfaces = config.ListLoopbacks().sort();
+	} else {
+		interfaces = config.ListInterfaces().sort();
+	}
+
 	res.render('editHoneydNode.jade', {
 		locals: {
 			oldName: nodeName,
@@ -1542,16 +1548,15 @@ everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, p
 	callback(result);
 };
 
-everyone.now.SaveHoneydNode = function(node, callback) {
+
+everyone.now.SaveDoppelganger = function(node, callback) {
 	var ipAddress = node.ip;
 	if (node.ipType == "DHCP") {
 		ipAddress = "DHCP";
 	}
 
-	// Delete the old node and then add the new one	
-	honeydConfig.DeleteNode(node.oldName);
-	if (!honeydConfig.AddNode(node.profile, node.portSet, ipAddress, node.mac, node.intface)) {
-		callback("AddNode Failed");
+	if (!honeydConfig.SaveDoppelganger(node.profile, node.portSet, ipAddress, node.mac, node.intface)) {
+		callback("SaveDoppelganger Failed");
 		return;
 	} else {
 		if (!honeydConfig.SaveAll()) {
@@ -1560,6 +1565,42 @@ everyone.now.SaveHoneydNode = function(node, callback) {
 			callback(null);
 		}
 	}
+}
+
+everyone.now.SaveHoneydNode = function(node, callback) {
+	var ipAddress = node.ip;
+	if (node.ipType == "DHCP") {
+		ipAddress = "DHCP";
+	}
+
+	// Delete the old node and then add the new one	
+	honeydConfig.DeleteNode(node.oldName);
+
+	if (node.oldName == "doppelganger") {
+		if (!honeydConfig.SetDoppelganger(node.profile, node.portSet, ipAddress, node.mac, node.intface)) {
+			callback("doppelganger Failed");
+			return;
+		} else {
+			if (!honeydConfig.SaveAll()) {
+				callback("Unable to save honeyd configuration");
+			} else {
+				callback(null);
+			}
+		}
+
+	} else {
+		if (!honeydConfig.AddNode(node.profile, node.portSet, ipAddress, node.mac, node.intface)) {
+			callback("AddNode Failed");
+			return;
+		} else {
+			if (!honeydConfig.SaveAll()) {
+				callback("Unable to save honeyd configuration");
+			} else {
+				callback(null);
+			}
+		}
+	}
+
 };
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
