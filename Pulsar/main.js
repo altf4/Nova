@@ -1299,7 +1299,7 @@ wsServer.on('close', function(connection, reason, description)
       }
       if(typeof everyone.now.UpdateConnectionsList == 'function')
       {
-        everyone.now.UpdateConnectionsList(i, 'updateStatus');
+        everyone.now.UpdateConnectionsList(i, 'remove');
       }
       GetGroupMembers('all', function(members){
         var newList = members.replace(new RegExp(i), '');
