@@ -2,6 +2,7 @@ extends layout
 
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  script(type="text/javascript", src="scripts/portset.js")
   style(type="text/css")
     a.selectedProfile, a.unselectedProfile {
         display: block;
@@ -461,74 +462,12 @@ block headerAdditions
         theDoc.getElementById('vendors').appendChild(tr);
       }
       
+
       now.GetPortSets(profile, function(portsets){
         for(var i in portsets)
         {
-            var br = theDoc.getElementById('portsetDiv').appendChild(theDoc.createElement('br'));
-            var table = theDoc.getElementById('portsetDiv').appendChild(theDoc.createElement('table'));
-            var caption = table.appendChild(theDoc.createElement('caption'));
-            caption.innerHTML = portsets[i].setName;
-
-            var thead = table.appendChild(theDoc.createElement('thead'));
-            var theadtr = thead.appendChild(theDoc.createElement('tr'));
-
-            var header1 = theadtr.appendChild(theDoc.createElement('th'));
-            header1.innerHTML = "Port Number";
-            var header2 = theadtr.appendChild(theDoc.createElement('th'));
-            header2.innerHTML = "Protocol";
-            var header3 = theadtr.appendChild(theDoc.createElement('th'));
-            header3.innerHTML = "Behavior";
-
-            var tr = table.appendChild(theDoc.createElement('tr'));
-            var td0 = tr.appendChild(theDoc.createElement('td'));
-            td0.innerHTML = "default";
-            var td1 = tr.appendChild(theDoc.createElement('td'));
-            td1.innerHTML = "tcp";
-            var td2 = tr.appendChild(theDoc.createElement('td'));
-            td2.innerHTML = portsets[i].TCPBehavior;
-            
-            tr = table.appendChild(theDoc.createElement('tr'));
-            td0 = tr.appendChild(theDoc.createElement('td'));
-            td0.innerHTML = "default";
-            td1 = tr.appendChild(theDoc.createElement('td'));
-            td1.innerHTML = "udp";
-            td2 = tr.appendChild(theDoc.createElement('td'));
-            td2.innerHTML = portsets[i].UDPBehavior;
-            
-            tr = table.appendChild(theDoc.createElement('tr'));
-            td0 = tr.appendChild(theDoc.createElement('td'));
-            td0.innerHTML = "default";
-            td1 = tr.appendChild(theDoc.createElement('td'));
-            td1.innerHTML = "icmp";
-            td2 = tr.appendChild(theDoc.createElement('td'));
-            td2.innerHTML = portsets[i].ICMPBehavior;
-
-
-            for (var port in portsets[i].TCPExceptions) {
-                var tr = table.appendChild(theDoc.createElement('tr'));
-           
-                var td0 = tr.appendChild(theDoc.createElement('td'));
-                td0.innerHTML = portsets[i].TCPExceptions[port].portNum;
-            
-                var td1 = tr.appendChild(theDoc.createElement('td'));
-                td1.innerHTML = portsets[i].TCPExceptions[port].protocol;
-            
-                var td2 = tr.appendChild(theDoc.createElement('td'));
-                td2.innerHTML = portsets[i].TCPExceptions[port].behavior;
-            }
-            
-            for (var port in portsets[i].UDPExceptions) {
-                var tr = table.appendChild(theDoc.createElement('tr'));
-           
-                var td0 = tr.appendChild(theDoc.createElement('td'));
-                td0.innerHTML = portsets[i].UDPExceptions[port].portNum;
-            
-                var td1 = tr.appendChild(theDoc.createElement('td'));
-                td1.innerHTML = portsets[i].UDPExceptions[port].protocol;
-            
-                var td2 = tr.appendChild(theDoc.createElement('td'));
-                td2.innerHTML = portsets[i].UDPExceptions[port].behavior;
-            }
+            var appendTo = theDoc.getElementById('portsetDiv');
+            generatePortSetTable(portsets[i],appendTo);
         }
       });
       

@@ -2,9 +2,11 @@ extends layout
 
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  script(type="text/javascript", src="scripts/portset.js")
 
   script
     var currentInterface;
+    var pfile;
 
     function SaveNode() {
         var node = {profile : document.getElementById("profile").value
@@ -20,6 +22,7 @@ block headerAdditions
     }
 
     function populateVendorList(profile) {
+        pfile = profile;
         document.getElementById("vendorList").innerHTML = "";
         for (var vendor in profile.ethernet) {
             var v = profile.ethernet[vendor].vendor;
@@ -39,6 +42,21 @@ block headerAdditions
 
             document.getElementById("portSetList").appendChild(option);
         }
+        
+        portsetSelectionChanged();
+    }
+
+    function portsetSelectionChanged() {
+        var portsetSelection = document.getElementById("portSetList");
+        dojo.empty(document.getElementById("portSetTable"));
+        var currentportset = portsetSelection.options[portsetSelection.selectedIndex].value;
+        for (var i in pfile.portSets) {
+            if (pfile.portSets[i].setName == currentportset) {
+                generatePortSetTable(pfile.portSets[i], document.getElementById("portSetTable"));
+                break;
+            }
+        }
+        
     }
 
     function profileChanged() {
@@ -152,6 +170,7 @@ block content
   label Portset
   select#portSetList(name="profile")
   br
+  div#portSetTable
   br
 
   label Network Interface
