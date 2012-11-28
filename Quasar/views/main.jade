@@ -52,9 +52,12 @@ block content
       button(onclick='applyAdvancedFilter()') Apply Advanced Filters
       button(onclick='disableAdvancedFilter()') Disable Advanced Filters
     br
-    div#tablePages
-    br
   div#nova_suspects
+    input#showUnclassified(type="checkbox", onchange="showUnclassifiedChanged()")
+    label Show unclassified suspects
+    br
+    div#tablePages(style="width: 100%; margin-left: auto; margin-right: auto; text-align: center;")
+    br
     table.novaGrid#suspectTable
   div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none; width: 600px; margin: 0 auto; text-align: center")
    h4 Novad is not currently connected or running. Try starting it.
@@ -96,6 +99,12 @@ block headerAdditions
       {
         document.getElementById('advancedFiltering').style.display = 'none'; 
       }
+    }
+
+    
+    function showUnclassifiedChanged() {
+        resendSuspects();
+
     }
 
     // Wrappers for now.js calls with some try/catches
@@ -195,11 +204,9 @@ block headerAdditions
     }
     
     var OnNewSuspect = function(suspect){
-       var type = "#{type}";
-      
-       if (type == "hostile" && !suspect.GetIsHostile) {return;}
-       if (type == "unclassified" && (suspect.GetClassification >= 0)) {return;}
-       if (type == "all" && suspect.GetClassification < 0) {return;}
+       if (!document.getElementById("showUnclassified").checked) {
+         if (suspect.GetClassification < 0) {return;}
+       }
 
        //if(!liveUpdate) {return;}
       
@@ -294,6 +301,10 @@ block headerAdditions
         }
 
         advancedFilterEnabled = true;
+        resendSuspects();
+    };
+
+    function resendSuspects() {
         suspectGrid.Clear();
         try {
             now.sendAllSuspects(OnNewSuspect);
@@ -301,7 +312,7 @@ block headerAdditions
             alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
             console.log("err was: " + err);
         }   
-    };
+    }
 
     var disableAdvancedFilter = function() {
         theDoc.getElementById('advancedFiltering').style.display='none';
@@ -309,13 +320,7 @@ block headerAdditions
         advancedFilterEnabled = false;
         var advancedFilters = new Object();
         
-        suspectGrid.Clear();
-        try {
-            now.sendAllSuspects(OnNewSuspect);
-        } catch(err) {
-            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-            console.log("err was: " + err);
-        }   
+        resendSuspects();
     }
               
     function featureFormatter(d) {
@@ -407,14 +412,8 @@ block headerAdditions
         suspectGrid.SetRowsPerPage(100);
         suspectGrid.SetRenderCallback(onGridRendered);
 
-        try {
-          now.sendAllSuspects(OnNewSuspect);
-         } catch(err) {
-           alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-           console.log("err was: " + err);
-         }   
-    
-    
+        resendSuspects();
+
         setInterval(function(){
             if(!liveUpdate || lastNovadStatus == false) {return;}
            

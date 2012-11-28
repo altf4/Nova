@@ -59,10 +59,8 @@ html(lang="en")
       
        
         div.sideBarHeader Status
+          a.sideBarButton(href='/suspects?type=all') Current Suspects
           a.sideBarButton(href='/events') Hostile Events
-          a.sideBarButton(href='/suspects?type=all') Classified Suspects
-          a.sideBarButton(href="/suspects?type=unclassified") Unclassified Suspects
-          a.sideBarButton(href= "/suspects?type=hostile") Only Hostile Suspects
           a.sideBarButton(href= "/haystackStatus") Haystack Details
         
         div.sideBarHeader Logs
@@ -70,24 +68,24 @@ html(lang="en")
           a.sideBarButton(href= "/honeydlog") Haystack Log
        
         div.sideBarHeader Configuration
-          a.sideBarButton(href= "basicOptions") Basic Options
-          a.sideBarButton(href= "advancedOptions") Advanced Options
-          a.sideBarButton(href= "interfaceAliases") Interface Aliases
-          a.sideBarButton(href= "configWhitelist") IP Whitelist
+          a.sideBarButton(href= "/basicOptions") Basic Options
+          a.sideBarButton(href= "/advancedOptions") Advanced Options
+          a.sideBarButton(href= "/interfaceAliases") Interface Aliases
+          a.sideBarButton(href= "/configWhitelist") IP Whitelist
        
         div.sideBarHeader Haystack Settings
-          a.sideBarButton(href= "honeydConfigManage") Configuration Management
-          a.sideBarButton(href= "configHoneydProfiles") Haystack Profiles
-          a.sideBarButton(href= "configHoneydNodes") Haystack Nodes
-          a.sideBarButton(href= "autoConfig") Haystack Autoconfiguration
-          a.sideBarButton(href= "scripts") Haystack Scripts
+          a.sideBarButton(href= "/honeydConfigManage") Configuration Management
+          a.sideBarButton(href= "/configHoneydProfiles") Haystack Profiles
+          a.sideBarButton(href= "/configHoneydNodes") Haystack Nodes
+          a.sideBarButton(href= "/autoConfig") Haystack Autoconfiguration
+          a.sideBarButton(href= "/scripts") Haystack Scripts
         
         div.sideBarHeader Training
-          a.sideBarButton(href= "customizeTraining") Choose Training Data
+          a.sideBarButton(href= "/customizeTraining") Choose Training Data
         
         div.sideBarHeader Users
-          a.sideBarButton(href= "createNewUser") New User
-          a.sideBarButton(href= "editUsers") Edit Users
+          a.sideBarButton(href= "/createNewUser") New User
+          a.sideBarButton(href= "/editUsers") Edit Users
         
         div.sideBarHeader Documentation
           a.sideBarButton(href='/about') About Nova
