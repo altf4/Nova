@@ -36,9 +36,6 @@ html(lang="en")
 
   body.claro
     div#splash(style="position:absolute;left:0px;top:0px;width:100%;height:100%; text-align: center;")
-      // Uncomment below for a simple splash loading screen
-      //h1 Loading... please wait.
-      //img(src="images/novaSplash.png")
     div#appLayout.demoLayout(data-dojo-type="dijit.layout.BorderContainer", data-dojo-props="design: 'headline', region: 'center'", style="visibility: hidden")
       div.centerPanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'center', tabPosition: 'bottom'")
         div(data-dojo-type="dijit.layout.ContentPane",title="NOVA", data-dojo-props="splitter: false")
@@ -59,10 +56,8 @@ html(lang="en")
       
        
         div.sideBarHeader Status
+          a.sideBarButton(href='/suspects?type=all') Current Suspects
           a.sideBarButton(href='/events') Hostile Events
-          a.sideBarButton(href='/suspects?type=all') Classified Suspects
-          a.sideBarButton(href="/suspects?type=unclassified") Unclassified Suspects
-          a.sideBarButton(href= "/suspects?type=hostile") Only Hostile Suspects
           a.sideBarButton(href= "/haystackStatus") Haystack Details
         
         div.sideBarHeader Logs
@@ -70,24 +65,24 @@ html(lang="en")
           a.sideBarButton(href= "/honeydlog") Haystack Log
        
         div.sideBarHeader Configuration
-          a.sideBarButton(href= "basicOptions") Basic Options
-          a.sideBarButton(href= "advancedOptions") Advanced Options
-          a.sideBarButton(href= "interfaceAliases") Interface Aliases
-          a.sideBarButton(href= "configWhitelist") IP Whitelist
+          a.sideBarButton(href= "/basicOptions") Basic Options
+          a.sideBarButton(href= "/advancedOptions") Advanced Options
+          a.sideBarButton(href= "/interfaceAliases") Interface Aliases
+          a.sideBarButton(href= "/configWhitelist") IP Whitelist
        
         div.sideBarHeader Haystack Settings
-          a.sideBarButton(href= "honeydConfigManage") Configuration Management
-          a.sideBarButton(href= "configHoneydProfiles") Haystack Profiles
-          a.sideBarButton(href= "configHoneydNodes") Haystack Nodes
-          a.sideBarButton(href= "autoConfig") Haystack Autoconfiguration
-          a.sideBarButton(href= "scripts") Haystack Scripts
+          a.sideBarButton(href= "/honeydConfigManage") Configuration Management
+          a.sideBarButton(href= "/configHoneydProfiles") Haystack Profiles
+          a.sideBarButton(href= "/configHoneydNodes") Haystack Nodes
+          a.sideBarButton(href= "/autoConfig") Haystack Autoconfiguration
+          a.sideBarButton(href= "/scripts") Haystack Scripts
         
         div.sideBarHeader Training
-          a.sideBarButton(href= "customizeTraining") Choose Training Data
+          a.sideBarButton(href= "/customizeTraining") Choose Training Data
         
         div.sideBarHeader Users
-          a.sideBarButton(href= "createNewUser") New User
-          a.sideBarButton(href= "editUsers") Edit Users
+          a.sideBarButton(href= "/createNewUser") New User
+          a.sideBarButton(href= "/editUsers") Edit Users
         
         div.sideBarHeader Documentation
           a.sideBarButton(href='/about') About Nova
