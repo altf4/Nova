@@ -37,7 +37,7 @@ block content
     br
     br
     
-    button(disabled=true, id='button6', onclick='clearSuspects()', style='width: 160px') Clear Suspects For Selected Clients
+    button(disabled=true, id='button6', onclick='if(confirm("Are you sure you want to clear the suspects for " + getSelected() + "? This is irreversible.")){clearSuspects()}else{return;}', style='width: 160px') Clear Suspects For Selected Clients
     
     br
     br
@@ -110,6 +110,41 @@ block headerAdditions
 
     var clients = '#{CLIENTS}'.split(':');
     var groups = !{GROUPS};
+    
+    function getSelected()
+    {
+      var split = message.id.split(':');
+      
+      var clean = [];
+      
+      for(var i in split)
+      {
+        if(split[i] != undefined && split[i] != '')
+        {
+          clean.push(split[i]);
+        }
+      }
+      
+      var ret = '';
+      
+      for(var i = 0; i < clean.length; i++)
+      {
+        if((i == (clean.length - 1)) && (clean.length > 1))
+        {
+          ret += 'and ' + clean[i];
+        }
+        else if(clean.length > 1)
+        {
+          ret += clean[i] + ', ';
+        }  
+        else
+        {
+          ret += clean[i];
+        }
+      }
+      
+      return ret;
+    }
     
     function Init() {
       var gridStructure = new Array();
