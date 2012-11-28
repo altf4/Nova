@@ -1,14 +1,23 @@
 extends layout
 
 block topPannelAdditions
-  div(style="float: left") Novad Status:&nbsp 
-  div#nova_status unknown
-  div(style="float: left") Haystack Status:&nbsp  
-  div#haystack_status unknown
+  table
+    tr
+      td(style="text-align: right;") Packet Analyzer:&nbsp 
+      td(style="padding: 0;")
+        img#nova_status_icon(src="/images/orangedot.png", width="15px", height="15px")
+      td
+        div#nova_status checking
+    tr
+      td(style="text-align: right;") Haystack Status:&nbsp  
+      td(style="padding: 0;")
+        img#haystack_status_icon(src="/images/orangedot.png", width="15px", height="15px")
+      td
+        div#haystack_status checking
 
 block content
   div(style="width: 600px; margin:0 auto; text-align: center")
-    button(type="button", style="width:160px", onclick='StartNovad()') Start Nova
+    button(type="button", style="width:160px", onclick='StartNovad()') Start Packet Analyzer
     &nbsp
     &nbsp
     button(type="button", style="width:160px", onclick='StartHaystack()') Start Haystack
@@ -18,7 +27,7 @@ block content
   
     br
     
-    button(type="button", style="width:160px", onclick='StopNovad()') Stop Nova
+    button(type="button", style="width:160px", onclick='StopNovad()') Stop Packet Analyzer
     &nbsp
     &nbsp
     button(type="button", style="width:160px", onclick='StopHaystack()') Stop Haystack 
@@ -156,7 +165,8 @@ block headerAdditions
     var updateNovadStatus = function (isNovadUp){
       if (lastNovadStatus == "unknown" || lastNovadStatus != isNovadUp) {
           lastNovadStatus = isNovadUp;
-          dojo.byId("nova_status").innerHTML = isNovadUp ? "Up" : "Down";
+          dojo.byId("nova_status_icon").src = isNovadUp ? "/images/greendot.png" : "/images/reddot.png";;
+          dojo.byId("nova_status").innerHTML = isNovadUp ? "Running" : "Offline";
           dojo.byId("eyeIcon").src = isNovadUp ? "/images/novaIconBlinking.gif" : "/images/novaIcon.png";
           dojo.byId("nova_suspects_header").style.display = isNovadUp ? "block" : "none";
           dojo.byId("nova_suspects").style.display = isNovadUp ? "block" : "none";
@@ -165,7 +175,8 @@ block headerAdditions
     };
 
     var updateHaystackStatus = function (isHaystackUp){
-      dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Up" : "Down";
+      dojo.byId("haystack_status_icon").src = isHaystackUp ? "/images/greendot.png" : "/images/reddot.png";;
+      dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Running" : "Offline";
     };
     
     var AllSuspectsCleared = function() {
@@ -421,14 +432,6 @@ block headerAdditions
             suspectGrid.Render(); 
             console.log("Time to render grid of size " + suspectGrid.Size() + ": " + (new Date().getTime() - start) + "ms");
         },3000);
-    }
-
-    window.onload = function()
-    {
-      document.onselectstart = function()
-      {
-        return false;
-      }
     }
 
     require(["dojo/ready", "dojo/domReady!"], function(ready){
