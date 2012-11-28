@@ -138,7 +138,6 @@ function setUpGroupsList(divName)
         check.name = 'groupcheck' + i;
         check.value = memberList[i];
         check.setAttribute('onchange', 'setTarget(("groupcheck' + i + '"), document.getElementById("groupcheck' + i + '").value.replace(new RegExp("," , "g") , ":"), "true")');
-        check.setAttribute('style', 'padding-left: 50px');
         td0.appendChild(check);
         
         var td1 = document.createElement('td');
@@ -146,7 +145,7 @@ function setUpGroupsList(divName)
         label.value = groupList[i];
         label.innerHTML = groupList[i];
         label.title = memberList[i];
-        label.setAttribute('style', 'text-align: center; font-weight: bold; padding-left: 25px');
+        label.setAttribute('style', 'font-weight: bold; padding-left: 25px');
         td1.appendChild(label);
         
         if(memberList[i].split(',')[1] == '' || memberList[i].split(',')[1] == undefined)
