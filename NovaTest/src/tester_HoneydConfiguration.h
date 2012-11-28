@@ -131,7 +131,7 @@ TEST_F(HoneydConfigurationTest, test_GetProfileNames)
 
 TEST_F(HoneydConfigurationTest, test_AddNodes)
 {
-	EXPECT_TRUE(HC->AddNodes("default", "DHCP", "eth0", 10));
+	EXPECT_TRUE(HC->AddNodes("default", "Dell", "default", "DHCP", "eth0", 10));
 	EXPECT_EQ(10, HC->GetNodeMACs().size());
 }
 

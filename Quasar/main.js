@@ -1522,7 +1522,7 @@ app.post('/customizeTrainingSave', passport.authenticate('basic', {session: fals
 	})
 });
 
-everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, interface, count, callback) {
+everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, portSet, vendor, interface, count, callback) {
 	var ipAddress;
 	if (ipType == "DHCP") {
 		ipAddress = "DHCP";
@@ -1531,7 +1531,7 @@ everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, i
 	}
 
 	var result = null;
-	if (!honeydConfig.AddNodes(profile, ipAddress, interface, Number(count))) {
+	if (!honeydConfig.AddNodes(profile, portSet, vendor, ipAddress, interface, Number(count))) {
 		result = "Unable to create new nodes";	
 	}
 

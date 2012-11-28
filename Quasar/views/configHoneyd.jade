@@ -18,11 +18,35 @@ block headerAdditions
         var ip2 = document.getElementById("ip2").value;
         var ip3 = document.getElementById("ip3").value;
         var ip4 = document.getElementById("ip4").value;
+        var portset = document.getElementById("portSetList").value;
+        var vendor = document.getElementById("vendorList").value;
         var profile = document.getElementById("profile").value;
         var count = document.getElementById("nodeCount").value;
         var interface = currentInterface;
 
-        now.createHoneydNodes(ipType, ip1, ip2, ip3, ip4, profile, interface, count, createNodesCallback);
+        now.createHoneydNodes(ipType, ip1, ip2, ip3, ip4, profile, portset, vendor, interface, count, createNodesCallback);
+    }
+    
+    function profileChanged() {
+        now.GetProfile(document.getElementById("profile").value, populateVendorList);
+    }
+    
+    function populateVendorList(profile) {
+        document.getElementById("vendorList").innerHTML = "";
+        for (var vendor in profile.ethernet) {
+            var v = profile.ethernet[vendor].vendor;
+            var option = document.createElement('option');
+            option.innerHTML = v;
+            document.getElementById("vendorList").appendChild(option);
+        }
+        
+        document.getElementById("portSetList").innerHTML = "";
+        for (var portset in profile.portSets) {
+            var v = profile.portSets[portset].setName;
+            var option = document.createElement('option');
+            option.innerHTML = v;
+            document.getElementById("portSetList").appendChild(option);
+        }
     }
 
     function createNodesCallback(err) {
@@ -366,6 +390,7 @@ block headerAdditions
     now.ready(function(){
       Init();
       checkOnlyOne('if0');
+      profileChanged();
     });
 
 block content
@@ -391,9 +416,16 @@ block content
   br
   h2 Create Honeyd Nodes
   label Profile
-  select#profile(name="profile")
+  select#profile(name="profile", onchange='profileChanged()')
     each profile, i in profiles
       option #{profile}
+  br
+  label Portset
+  select#portSetList(name="profile")
+  br
+  
+  label Ethernet Vendor
+  select#vendorList(name"vendorList")
   br
 
   label Number of nodes to create

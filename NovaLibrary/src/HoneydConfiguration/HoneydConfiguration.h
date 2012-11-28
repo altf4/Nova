@@ -90,7 +90,7 @@ public:
 			std::string interface, PortSet *portSet);
 	bool AddNode(Node node);
 
-	bool AddNodes(std::string profileName, std::string ipAddress, std::string interface, int numberOfNodes);
+	bool AddNodes(std::string profileName, std::string portSetName, std::string macVendor, std::string ipAddress, std::string interface, int numberOfNodes);
 
 
 	//Inserts the profile into the honeyd configuration

@@ -739,7 +739,7 @@ bool HoneydConfiguration::AddNode(Node node)
 	}
 }
 
-bool HoneydConfiguration::AddNodes(string profileName, string ipAddress, string interface, int numberOfNodes)
+bool HoneydConfiguration::AddNodes(string profileName, string portSetName, string macVendor, string ipAddress, string interface, int numberOfNodes)
 {
 	Profile *profile = GetProfile(profileName);
 	if(profile == NULL)
@@ -754,15 +754,13 @@ bool HoneydConfiguration::AddNodes(string profileName, string ipAddress, string 
 		return false;
 	}
 
-	string macVendor = profile->GetRandomVendor();
-
 	//Add nodes in the DHCP case
 	if(!ipAddress.compare("DHCP"))
 	{
 		for(int i = 0; i < numberOfNodes; i++)
 		{
 			string macAddress = m_macAddresses.GenerateRandomMAC(macVendor);
-			if(!AddNode(profileName, ipAddress, macAddress, interface, NULL))
+			if(!AddNode(profileName, ipAddress, macAddress, interface, GetPortSet(profileName, portSetName)))
 			{
 				LOG(WARNING, "Adding new nodes failed during node creation!", "");
 				return false;
@@ -787,7 +785,7 @@ bool HoneydConfiguration::AddNodes(string profileName, string ipAddress, string 
 	{
 		currentAddr.s_addr = htonl(sAddr);
 		string macAddress = m_macAddresses.GenerateRandomMAC(macVendor);
-		if(!AddNode(profileName, string(inet_ntoa(currentAddr)), macAddress, interface, NULL))
+		if(!AddNode(profileName, string(inet_ntoa(currentAddr)), macAddress, interface, GetPortSet(profileName, portSetName)))
 		{
 			LOG(ERROR, "Adding new nodes failed during node creation!", "");
 			return false;

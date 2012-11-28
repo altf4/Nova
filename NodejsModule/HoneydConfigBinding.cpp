@@ -154,17 +154,19 @@ Handle<Value> HoneydConfigBinding::AddNodes(const Arguments& args)
 	HandleScope scope;
 	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
 
-	if( args.Length() != 4 )
+	if( args.Length() != 6 )
 	{
 		return ThrowException(Exception::TypeError(String::New("Must be invoked with 4 parameters")));
 	}
 
 	string profile = cvv8::CastFromJS<string>( args[0] );
-	string ipAddress = cvv8::CastFromJS<string>( args[1] );
-	string interface = cvv8::CastFromJS<string>( args[2] );
-	int count = cvv8::JSToInt32( args[3] );
+	string portsetName = cvv8::CastFromJS<string>( args[1] );
+	string vendor = cvv8::CastFromJS<string>( args[2] );
+	string ipAddress = cvv8::CastFromJS<string>( args[3] );
+	string interface = cvv8::CastFromJS<string>( args[4] );
+	int count = cvv8::JSToInt32( args[5] );
 
-	return scope.Close(Boolean::New(obj->m_conf->AddNodes(profile, ipAddress, interface, count)));
+	return scope.Close(Boolean::New(obj->m_conf->AddNodes(profile, portsetName, vendor, ipAddress, interface, count)));
 }
 
 
