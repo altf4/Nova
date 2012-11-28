@@ -532,8 +532,12 @@ block headerAdditions
       });
     }
     
-    now.ready(function(){
-      populateConfigSelect(configurationList);
+    require(["dojo/ready", "dojo/domReady!"], function(ready){
+        ready(function() {
+            now.ready(function() {
+                populateConfigSelect(configurationList);
+            });
+        });
     });
   
 block content
