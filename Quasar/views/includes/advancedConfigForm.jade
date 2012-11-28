@@ -61,7 +61,8 @@ script
   function updateFeatureSettingStates() {
     var enabledMask = document.getElementById("ENABLED_FEATURES").getAttribute("value");
     for (var i in enabledMask) {
-        if (document.getElementById("CLASSIFICATION_ENGINE").value == "THRESHOLD_TRIGGER") {
+        var CESelectElement = document.getElementById("CLASSIFICATION_ENGINE");
+        if (CESelectElement.options[CESelectElement.selectedIndex].value == "THRESHOLD_TRIGGER") {
             document.getElementById("featureWeight" + i).disabled = true;
             document.getElementById("featureThreshold" + i).disabled = false;
         } else {

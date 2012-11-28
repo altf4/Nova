@@ -26,7 +26,8 @@ block headerAdditions
     function addNewItem()
     {
         var value = dojo.byId("newEntry").value;
-        var interface = document.getElementById("interfaceDropdown").value;
+        var interfaceDropdown = document.getElementById("interfaceDropdown");
+        var interface = interfaceDropdown.options[interfaceDropdown.selectedIndex].value;
         console.log("Value is " + value);
 
         var individualIp = new RegExp("^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))$");
@@ -105,7 +106,7 @@ block content
   br
 
   label Interface
-  select(id='interfaceDropdown', name='interfaceDropdown');
+  select(id='interfaceDropdown', name='interfaceDropdown')
     option(value="All Interfaces") All Interfaces
     each interface, i in INTERFACES
       option(value="#{interface}") #{interface}

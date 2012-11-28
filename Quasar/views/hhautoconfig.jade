@@ -149,7 +149,9 @@ block headerAdditions
             var divWidth = document.getElementById('lightbox').scrollWidth;
             document.getElementById('appendText').style.width = divWidth + 'px';
             try {
-                now.ShowAutoConfig(document.getElementById("nodeCountType").value, GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
+                var element = document.getElementById("nodeCountType");
+                var count = element.options[element.selectedIndex].value;
+                now.ShowAutoConfig(count, GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
             } catch (err) {
                 alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
                 console.log("err was: " + err);
@@ -164,7 +166,9 @@ block headerAdditions
     function GetNumNodes()
     {
         var num;
-        if (document.getElementById("nodeCountType").value == "fixed") {
+        var element = document.getElementById("nodeCountType");
+        var count = element.options[element.selectedIndex].value;
+        if (count == "fixed") {
             num = parseInt(document.getElementById("numNodes").value);
         } else {
             num = parseFloat(document.getElementById("numNodesRatio").value);
@@ -233,7 +237,9 @@ block headerAdditions
 
     function nodeNumberTypeChanged()
     {
-       if (document.getElementById("nodeCountType").value == "fixed") {
+       var element = document.getElementById("nodeCountType");
+       var count = element.options[element.selectedIndex].value;
+       if (count == "fixed") {
             document.getElementById("numNodesLabel").style.display = "block";
             document.getElementById("numNodes").style.display = "block";
             document.getElementById("numNodesRatioLabel").style.display = "none";

@@ -2721,6 +2721,27 @@ everyone.now.RemoveConfiguration = function(configName, callback)
   }
 }
 
+
+everyone.now.SwitchConfigurationTo = function(configName)
+{
+  honeydConfig.SwitchConfiguration(configName);
+}
+
+everyone.now.RemoveConfiguration = function(configName, callback)
+{
+  if(configName == 'default')
+  {
+    console.log('Cannot delete default configuration');
+  }
+  
+  honeydConfig.RemoveConfiguration(configName);
+  
+  if(typeof callback == 'function')
+  {
+    callback(configName);
+  }
+}
+
 var distributeSuspect = function (suspect) {
 	var s = new Object();
 	
