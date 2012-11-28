@@ -20,7 +20,8 @@ var NovaSharedPath = config.GetPathShared();
 
 // Setup TLS
 var app;
-if (config.ReadSetting("PULSAR_WEBUI_TLS_ENABLED") == "1") {
+if(config.ReadSetting("PULSAR_WEBUI_TLS_ENABLED") == "1") 
+{
 	var keyPath = config.ReadSetting("PULSAR_WEBUI_TLS_KEY");
 	var certPath = config.ReadSetting("PULSAR_WEBUI_TLS_CERT");
 	var passPhrase = config.ReadSetting("PULSAR_WEBUI_TLS_PASSPHRASE");
@@ -31,7 +32,9 @@ if (config.ReadSetting("PULSAR_WEBUI_TLS_ENABLED") == "1") {
 	};
  
 	app = express.createServer(express_options);
-} else {
+} 
+else 
+{
 	app = express.createServer();
 }
 
@@ -96,7 +99,8 @@ passport.use(new BasicStrategy(function(username, password, done) {
   
   process.nextTick(function() {
     dbqCredentialsRowCount.all(function(err, rowcount) {
-      if (err) {
+      if (err) 
+      {
         console.log('Database error: ' + err);
       }
 
@@ -116,15 +120,21 @@ passport.use(new BasicStrategy(function(username, password, done) {
         dbqCredentialsCheckLogin.all(user, HashPassword(password),
 
         function selectCb(err, results) {
-          if (err) {
+          if (err) 
+          {
             console.log('Database error: ' + err);
           }
 
-          if (results[0] === undefined) {
+          if (results[0] === undefined) 
+          {
             switcher(err, user, false, done);
-          } else if (user === results[0].user) {
+          } 
+          else if (user === results[0].user) 
+          {
             switcher(err, user, true, done);
-          } else {
+          } 
+          else 
+          {
             switcher(err, user, false, done);
           }
         });
@@ -252,6 +262,7 @@ function readScheduledEvents()
   {
     var fsread = fs.readFileSync(NovaSharedPath + '/Pulsar/scheduledEvents.txt', 'utf8');
     var splitUp = fsread.split(/\r\n|\r|\n/);
+    
     if(splitUp != '')
     {
       for(var i in splitUp)
@@ -270,7 +281,6 @@ function readScheduledEvents()
   }
   catch(err)
   {
-    console.log('Exception caught: ' + err);
     console.log('No scheduled events saved.');
   } 
 }
@@ -341,12 +351,14 @@ function writeScheduledEventStructure(sEvent, callback)
   stringifyMe.eventType = sEvent.eventType;
   stringifyMe.recurring = sEvent.recurring;
   stringifyMe.date = sEvent.date;
+  
   if(stringifyMe.recurring != undefined && stringifyMe.recurring != '')
   {
     stringifyMe.dayOfWeek = sEvent.dayOfWeek;
     stringifyMe.hour = sEvent.hour;
     stringifyMe.minute = sEvent.minute;
   }
+  
   callback(JSON.stringify(stringifyMe) + '\n');
 }
 
@@ -369,6 +381,7 @@ MessageSend = function(message)
     var targets = message.id.split(':');
     var seen = new Array();
     var sendMessage = true;
+    
     for(var i in targets)
     {
       sendMessage = true;
@@ -709,7 +722,6 @@ everyone.now.GetHostileSuspects = GetHostileSuspects;
 ClearSuspectIPs = function(callback)
 {
   suspectIPs.length = 0; 
-  console.log('suspectIPs contains ' + suspectIPs);
   callback(suspectIPs.length);
 }
 everyone.now.ClearSuspectIPs = ClearSuspectIPs;
@@ -891,7 +903,7 @@ function populateNovaClients()
   {
     var seen = new Array();
     var clientFileList = fs.readFileSync(NovaSharedPath + '/Pulsar/clientIds.txt', 'utf8').split(/\r\n|\r|\n/); 
-    console.log('clientFileList: ' + clientFileList.join());
+    
     if(clientFileList == '' || clientFileList == undefined)
     {
       console.log('clientIds.txt empty, doing nothing');
@@ -921,7 +933,7 @@ function populateNovaClients()
   }
   catch(err)
   {
-    console.log('clientIds.txt does not exist, err: ' + err); 
+    console.log('clientIds.txt does not exist, it will be created when quasar next goes down'); 
   } 
 }
 
@@ -1042,11 +1054,6 @@ wsServer.on('request', function(request)
 						if(typeof everyone.now.UpdateNotificationsButton == 'function')
 						{
 						  everyone.now.UpdateNotificationsButton('new');
-						}
-						console.log('Connected clients: ');
-						for(var i in novaClients)
-						{
-							console.log('client ' + i);
 						}
             // TODO: Get hostile suspects from connected client
             var getHostile = {};
