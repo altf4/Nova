@@ -33,6 +33,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("LoadAllTemplates"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::ReadAllTemplatesXML>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAllTemplates"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::WriteAllTemplatesToXML>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("WriteHoneydConfiguration"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::WriteHoneydConfiguration>));
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GenerateRandomUnusedMAC"),FunctionTemplate::New(InvokeWrappedMethod<string, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::GenerateRandomUnusedMAC>));
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfileNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetProfileNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGeneratedProfileNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetGeneratedProfileNames>));

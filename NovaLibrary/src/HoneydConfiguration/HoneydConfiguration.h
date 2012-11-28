@@ -192,8 +192,10 @@ public:
 
 	bool SetDoppelganger(Node doppelganger);
 
+	std::string GenerateRandomUnusedMAC(std::string vendor);
+
 	//A map structure for node storage
-        std::vector<std::string> m_configs;
+	std::vector<std::string> m_configs;
 	NodeTable m_nodes;
 
 	// There's only one instance of this node

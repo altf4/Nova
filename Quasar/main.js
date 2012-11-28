@@ -2549,7 +2549,7 @@ everyone.now.RemoveScriptFromProfiles = function(script, callback)
 }
 
 everyone.now.GenerateMACForVendor = function(vendor, callback) {
-	callback(vendorToMacDb.GenerateRandomMAC(vendor));
+	callback(honeydConfig.GenerateRandomUnusedMAC(vendor));
 }
 
 everyone.now.restoreDefaultHaystackConfiguration = function(callback) {

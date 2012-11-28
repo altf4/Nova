@@ -889,6 +889,19 @@ bool HoneydConfiguration::IsMACUsed(string mac)
 	return false;
 }
 
+
+string HoneydConfiguration::GenerateRandomUnusedMAC(string vendor)
+{
+	string mac;
+
+	do
+	{
+		mac = m_macAddresses.GenerateRandomMAC(vendor);
+	} while (IsMACUsed(mac));
+
+	return mac;
+}
+
 bool HoneydConfiguration::AddProfile(Profile *profile)
 {
 	if(profile == NULL)
