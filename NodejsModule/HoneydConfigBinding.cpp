@@ -227,13 +227,12 @@ Handle<Value> HoneydConfigBinding::GetNode(const Arguments& args)
 
 	string MAC = cvv8::CastFromJS<string>(args[0]);
 
-	Nova::Node *ret;
+	Nova::Node *ret = new Node();
 
 	// xxx horrible hack to reuse code by sticking "doppelganger" in the MAC field here
 	if (MAC == "doppelganger")
 	{
-		// xxx should we really be calling WrapNode on a HoneydConfiguration::Inst member? Bit dangerous.
-		ret = &obj->m_conf->m_doppelganger;
+		*ret = obj->m_conf->GetDoppelganger();
 	}
 	else
 	{

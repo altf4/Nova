@@ -42,16 +42,6 @@ protected:
 	}
 };
 
-TEST_F(HoneydConfigurationTest, test_getMaskBits)
-{
-	EXPECT_EQ(0, HC->GetMaskBits(0));
-	EXPECT_EQ(16, HC->GetMaskBits(~0 - 65535));
-	EXPECT_EQ(24, HC->GetMaskBits(~0 - 255));
-	EXPECT_EQ(31, HC->GetMaskBits(~0 -1));
-	EXPECT_EQ(32, HC->GetMaskBits(~0));
-	EXPECT_EQ(-1, HC->GetMaskBits(240));
-}
-
 TEST_F(HoneydConfigurationTest, test_WriteAllTemplatesXML)
 {
 	Profile * p = new Profile("default", "TestProfile");

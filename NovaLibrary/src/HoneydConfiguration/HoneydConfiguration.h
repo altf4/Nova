@@ -100,14 +100,6 @@ public:
 	//			So don't try accessing the profile object after calling this function
 	bool AddProfile(Profile *profile);
 
-	//Inserts the profile into the honeyd configuration, with parent profile at the given string
-	//	profile: pointer to the profile you wish to add
-	//	parentName: The name of the profile which will be the parent of the given profile
-	//	returns - True on success, false on error (including being unable to find the parent at the given name)
-	//	NOTE: Gives control of the lifecycle of the provided profile to HoneydConfiguration. Maybe deleting it.
-	//			So don't try accessing the profile object after calling this function
-	bool AddProfile(Profile *profile, std::string parentName);
-
 	bool AddScript(Script script);
 
 	bool AddNewConfiguration(const std::string& configName, bool clone, const std::string& cloneConfig);
@@ -142,13 +134,6 @@ public:
 	//This function allows easy access to all scripts
 	// Returns a vector of strings containing the names of all scripts
 	std::vector<std::string> GetScriptNames();
-
-	// This function takes in the raw byte form of a network mask and converts it to the number of bits
-	// 	used when specifiying a subnet in the dots and slash notation. ie. 192.168.1.1/24
-	// 	mask: The raw numerical form of the netmask ie. 255.255.255.0 -> 0xFFFFFF00
-	// Returns an int equal to the number of bits that are 1 in the netmask, ie the example value for mask returns 24
-	static int GetMaskBits(in_addr_t mask);
-
 
 	//Removes a profile and all associated nodes from the Honeyd configuration
 	//	profileName: name of the profile you wish to delete
@@ -191,17 +176,13 @@ public:
 
 
 	bool SetDoppelganger(Node doppelganger);
+	Node GetDoppelganger();
 
 	std::string GenerateRandomUnusedMAC(std::string vendor);
 
 	//A map structure for node storage
 	std::vector<std::string> m_configs;
 	NodeTable m_nodes;
-
-	// There's only one instance of this node
-	Node m_doppelganger;
-
-	VendorMacDb m_macAddresses;
 
 private:
 
@@ -222,6 +203,11 @@ private:
 
     //TODO: If we wind up with many scripts, this may not scale well
     std::vector<Script> m_scripts;
+
+    VendorMacDb m_macAddresses;
+
+	// There's only one instance of this node
+	Node m_doppelganger;
 
 };
 

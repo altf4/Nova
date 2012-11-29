@@ -651,27 +651,6 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 	return true;
 }
 
-// This function takes in the raw byte form of a network mask and converts it to the number of bits
-// 	used when specifiying a subnet in the dots and slash notation. ie. 192.168.1.1/24
-// 	mask: The raw numerical form of the netmask ie. 255.255.255.0 -> 0xFFFFFF00
-// Returns an int equal to the number of bits that are 1 in the netmask, ie the example value for mask returns 24
-int HoneydConfiguration::GetMaskBits(in_addr_t mask)
-{
-	mask = ~mask;
-	int i = 32;
-	while(mask != 0)
-	{
-		if((mask % 2) != 1)
-		{
-			LOG(ERROR, "Invalid mask passed in as a parameter!", "");
-			return -1;
-		}
-		mask = mask/2;
-		i--;
-	}
-	return i;
-}
-
 bool HoneydConfiguration::AddNode(string profileName, string ipAddress, string macAddress,
 		string interface, PortSet *portSet)
 {
@@ -937,35 +916,6 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 	//Add the new profile to its parent's list of children
 	parent->m_children.push_back(profile);
 	//Add the parent as the current profile's parent
-	profile->m_parent = parent;
-
-	return true;
-}
-
-bool HoneydConfiguration::AddProfile(Profile *profile, std::string parentName)
-{
-	if(profile == NULL)
-	{
-		return false;
-	}
-
-	//Check to see if the profile name already exists
-	Profile *duplicate = GetProfile(profile->m_name);
-	if(duplicate != NULL)
-	{
-		//Copy over the contents of this profile, and quit
-		duplicate->Copy(profile);
-		//We don't need this new profile anymore, so get rid of it
-		delete profile;
-		return true;
-	}
-
-	Profile *parent = GetProfile(parentName);
-	if(parent == NULL)
-	{
-		return false;
-	}
-	parent->m_children.push_back(profile);
 	profile->m_parent = parent;
 
 	return true;
@@ -1333,6 +1283,7 @@ bool HoneydConfiguration::LoadConfigurations()
 	while(configList.good())
 	{
 		char buffer[256];
+		getline (configList,pushback);
 		configList.getline(buffer, 256, '\n');
 		string pushback = string(buffer);
 		m_configs.push_back(pushback);
@@ -1350,6 +1301,11 @@ bool HoneydConfiguration::SetDoppelganger(Node doppelganger)
 {
 	m_doppelganger = doppelganger;
 	return true;
+}
+
+Node HoneydConfiguration::GetDoppelganger()
+{
+	return m_doppelganger;
 }
 
 }
