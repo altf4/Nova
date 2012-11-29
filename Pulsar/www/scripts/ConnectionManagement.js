@@ -219,7 +219,10 @@ now.UpdateClientsList = function(clientId, action)
       }
       break;
     case 'remove':
-      divClientList.removeChild(document.getElementById(clientId + 'div'));
+      if(document.getElementById(clientId + 'div') != undefined)
+      {
+        divClientList.removeChild(document.getElementById(clientId + 'div'));
+      }
       
       clientCount--;
       

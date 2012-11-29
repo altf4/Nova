@@ -1317,10 +1317,15 @@ wsServer.on('close', function(connection, reason, description)
   }
 });
 
-function ClearFromNovaClients(client)
+function ClearFromNovaClients(client, cb)
 {
   novaClients[client].connection.close();
   delete novaClients[client];
+  
+  if(typeof cb == 'function')
+  {
+    cb();
+  }
 }
 everyone.now.ClearFromNovaClients = ClearFromNovaClients;
 
