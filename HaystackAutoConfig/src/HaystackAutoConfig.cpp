@@ -999,7 +999,7 @@ void Nova::GenerateConfiguration()
 		string vendor = winningPersonality->GetRandomVendor();
 
 		//Pick a MAC address for the node:
-		string macAddress = HoneydConfiguration::Inst()->m_macAddresses.GenerateRandomMAC(vendor);
+		string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
 
 		Config::Inst()->SetGroup("Autoconfig");
 
