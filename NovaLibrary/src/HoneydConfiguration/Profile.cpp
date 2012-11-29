@@ -35,7 +35,6 @@ Profile::Profile(Profile *parent, string key)
 	m_count = 0;
 	m_avgPortCount = 0;
 	m_parent = parent;
-	m_isGenerated = false;	//Manually set this to true in Autoconfig
 	m_uptimeMin = ~0;	//TODO: What if we don't see any uptimes? We need to have a sane default
 	m_uptimeMax = 0;	//TODO: Let;'s have a more reasonable "maximum" here. We don't want to be setting random uptimes this high
 	m_isPersonalityInherited = false;
@@ -51,7 +50,6 @@ Profile::Profile(string parentName, std::string key)
 	m_count = 0;
 	m_avgPortCount = 0;
 	m_parent = HoneydConfiguration::Inst()->GetProfile(parentName);
-	m_isGenerated = false;	//Manually set this to true in Autoconfig
 	m_uptimeMin = ~0;	//TODO: What if we don't see any uptimes? We need to have a sane default
 	m_uptimeMax = 0;	//TODO: Let;'s have a more reasonable "maximum" here. We don't want to be setting random uptimes this high
 	m_isPersonalityInherited = false;
@@ -253,7 +251,6 @@ bool Profile::Copy(Profile *source)
 	m_count = source->m_count;
 	m_distribution = source->m_distribution;
 	m_name = source->m_name;
-	m_isGenerated = source->m_isGenerated;
 	m_parent = source->m_parent;
 	m_uptimeMin = source->m_uptimeMin;
 	m_uptimeMax = source->m_uptimeMax;
@@ -261,7 +258,6 @@ bool Profile::Copy(Profile *source)
 	m_personality = source->m_personality;
 	m_dropRate = source->m_dropRate;
 	m_vendors = source->m_vendors;
-	m_children = source->m_children;
 	m_isPersonalityInherited = source->m_isPersonalityInherited;
 	m_isDropRateInherited = source->m_isDropRateInherited;
 	m_isUptimeInherited = source->m_isUptimeInherited;
@@ -366,11 +362,6 @@ std::string Profile::GetPersonalityNonRecursive()
 void Profile::SetPersonality(std::string personality)
 {
 	m_personality = personality;
-}
-
-bool Profile::GetIsGenerated()
-{
-	return m_isGenerated;
 }
 
 uint32_t Profile::GetCount()

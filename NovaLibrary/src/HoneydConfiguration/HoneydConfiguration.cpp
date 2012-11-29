@@ -120,7 +120,6 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 	{
 		//TODO: possible memory leak here if an exception is thrown after this is made
 		profile = new Profile(parent, ptree.get<string>("name"));
-		profile->m_isGenerated = ptree.get<bool>("generated");
 		profile->m_count = ptree.get<double>("count");
 		profile->SetPersonality(ptree.get<string>("personality"));
 		profile->SetUptimeMin(ptree.get<uint>("uptimeMin"));
@@ -467,7 +466,6 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 
 	//Write the current item into the tree
 	propTree.put<string>("name", root->m_name);
-	propTree.put<bool>("generated", root->m_isGenerated);
 	propTree.put<double>("count", root->m_count);
 	propTree.put<string>("personality", root->GetPersonalityNonRecursive());
 	propTree.put<uint>("uptimeMin", root->GetUptimeMinNonRecursive());
@@ -777,8 +775,8 @@ bool HoneydConfiguration::AddNodes(string profileName, string portSetName, strin
 	return true;
 }
 
-//Recursive helper function to GetProfileNames() and GetGeneratedProfileNames()
-vector<string> GetProfileNames_helper(Profile *item, bool lookForGeneratedOnly)
+//Recursive helper function to GetProfileNames()
+vector<string> GetProfileNames_helper(Profile *item)
 {
 	if(item == NULL)
 	{
@@ -789,15 +787,12 @@ vector<string> GetProfileNames_helper(Profile *item, bool lookForGeneratedOnly)
 	vector<string> runningTotalProfiles;
 
 	//Only add this profile's name if we're not only looking for generated profiles, or if it is generated anyway
-	if(!lookForGeneratedOnly || item->m_isGenerated)
-	{
-		runningTotalProfiles.push_back(item->m_name);
-	}
+	runningTotalProfiles.push_back(item->m_name);
 
 	//Depth first traversal of tree
 	for(uint i = 0; i < item->m_children.size(); i++)
 	{
-		vector<string> childProfiles = GetProfileNames_helper(item->m_children[i], lookForGeneratedOnly);
+		vector<string> childProfiles = GetProfileNames_helper(item->m_children[i]);
 
 		runningTotalProfiles.insert(runningTotalProfiles.end(), childProfiles.begin(), childProfiles.end());
 	}
@@ -807,12 +802,7 @@ vector<string> GetProfileNames_helper(Profile *item, bool lookForGeneratedOnly)
 
 vector<string> HoneydConfiguration::GetProfileNames()
 {
-	return GetProfileNames_helper(m_profiles.m_root, false);
-}
-
-vector<string> HoneydConfiguration::GetGeneratedProfileNames()
-{
-	return GetProfileNames_helper(m_profiles.m_root, true);
+	return GetProfileNames_helper(m_profiles.m_root);
 }
 
 vector<string> HoneydConfiguration::GetScriptNames()

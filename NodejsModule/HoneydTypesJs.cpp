@@ -167,7 +167,6 @@ Handle<Object> HoneydNodeJs::WrapProfile(Profile *pfile)
 		proto->Set("GetUptimeMin",		FunctionTemplate::New(InvokeMethod<uint, Profile, &Nova::Profile::GetUptimeMin>));
 		proto->Set("GetUptimeMax",		FunctionTemplate::New(InvokeMethod<uint, Profile, &Nova::Profile::GetUptimeMax>));
 		proto->Set("GetDropRate",		FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetDropRate>));
-		proto->Set("GetIsGenerated",	FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::GetIsGenerated>));
 		proto->Set("GetCount",			FunctionTemplate::New(InvokeMethod<uint32_t, Profile, &Nova::Profile::GetCount>));
 		proto->Set("GetParentProfile",	FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetParentProfile>));
 		proto->Set("GetVendors",		FunctionTemplate::New(InvokeMethod<std::vector<std::string>, Profile, &Nova::Profile::GetVendors>));

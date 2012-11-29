@@ -36,21 +36,17 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GenerateRandomUnusedMAC"),FunctionTemplate::New(InvokeWrappedMethod<string, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::GenerateRandomUnusedMAC>));
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfileNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetProfileNames>));
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetGeneratedProfileNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetGeneratedProfileNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNodeMACs"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetNodeMACs >));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetScriptNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetScriptNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetConfigurationsList"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetConfigurationsList>));
 
-	//tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteProfile>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteNode"),FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::DeleteNode>));
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNodes"),FunctionTemplate::New(AddNodes)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNode"),FunctionTemplate::New(GetNode)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNode"),FunctionTemplate::New(AddNode)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfile"),FunctionTemplate::New(GetProfile)->GetFunction());
-	//TODO
-	//tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPorts"),FunctionTemplate::New(GetPorts)->GetFunction());
-	//tpl->PrototypeTemplate()->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());
+
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddScript"),FunctionTemplate::New(AddScript)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveScript"),FunctionTemplate::New(RemoveScript)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteScriptFromPorts"),FunctionTemplate::New(DeleteScriptFromPorts)->GetFunction());
@@ -188,7 +184,6 @@ Handle<Value> HoneydConfigBinding::AddNode(const Arguments& args)
 	string mac = cvv8::CastFromJS<string>( args[3] );
 	string interface = cvv8::CastFromJS<string>( args[4] );
 
-	//TODO: Specify the PortSet here instead of NULL
 	return scope.Close(Boolean::New(obj->m_conf->AddNode(profile,ipAddress,mac, interface, HoneydConfiguration::Inst()->GetPortSet(profile, portset))));
 }
 
@@ -211,7 +206,6 @@ Handle<Value> HoneydConfigBinding::SetDoppelganger(const Arguments& args)
 	node.m_MAC = cvv8::CastFromJS<string>( args[3] );
 	node.m_interface = cvv8::CastFromJS<string>( args[4] );
 
-	//TODO: Specify the PortSet here instead of NULL
 	return scope.Close(Boolean::New(obj->m_conf->SetDoppelganger(node)));
 }
 

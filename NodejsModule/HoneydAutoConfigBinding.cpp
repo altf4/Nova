@@ -90,7 +90,7 @@ Handle<Value> HoneydAutoConfigBinding::GetGeneratedNodeInfo(const Arguments& arg
   
   Nova::HoneydConfiguration::Inst()->ReadAllTemplatesXML();
   
-  Handle<Value> ret = cvv8::CastToJS(Nova::HoneydConfiguration::Inst()->GetGeneratedProfileNames());
+  Handle<Value> ret = cvv8::CastToJS(Nova::HoneydConfiguration::Inst()->GetProfileNames());
   
   return scope.Close(ret);
 }

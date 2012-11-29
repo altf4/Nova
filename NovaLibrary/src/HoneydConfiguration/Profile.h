@@ -86,7 +86,6 @@ public:
 	//Javascript compatibility functions
 	//TODO: Move these into the binding class
 	std::string GetName();
-	bool GetIsGenerated();
 	uint32_t GetCount();
 	std::string GetParentProfile();
 	std::vector<std::string> GetVendors();
@@ -101,9 +100,6 @@ public:
 
 	// Name for the profile
 	std::string m_name;
-
-	//Is this an autoconfig generated node? (or manually created)
-	bool m_isGenerated;
 
 	bool m_isPersonalityInherited;
 	bool m_isUptimeInherited;
