@@ -23,7 +23,7 @@ block content
     button(type="button", style="width:160px", onclick='StartHaystack()') Start Haystack
     &nbsp
     &nbsp
-    button(type="button", style="width:160px", onclick='ClearAllSuspects(); suspectGrid.Clear();') Clear All Suspects
+    button(type="button", style="width:160px", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
   
     br
     
