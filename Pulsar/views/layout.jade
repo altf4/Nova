@@ -35,6 +35,13 @@ html(lang='en')
       {
         var divConnectionsList = document.getElementById('connectionsList');
        
+        while(document.getElementById('connectionsList').hasChildNodes())
+        {
+          document.getElementById('connectionsList').removeChild(document.getElementById('connectionsList').lastChild);
+        }
+       
+       console.log('in RenderConnectionsList, clients == ' + clients.join());
+       
         if(clients == undefined || clients.length == 0)
         {
           var tr = document.createElement('tr');
@@ -51,92 +58,108 @@ html(lang='en')
         {
           for(var i in clients)
           {
-            var tr = document.createElement('tr');
-            tr.id = clients[i];
-            
-            var td0 = document.createElement('td');
-            var label = document.createElement('label');
-            label.innerHTML = clients[i];
-            label.setAttribute('style', 'float: left');
-            td0.appendChild(label);
-            
-            var td1 = document.createElement('td');
-            var novadStatus = document.createElement('img');
-            novadStatus.width = '16';
-            novadStatus.height = '16';
-            novadStatus.id = clients[i] + 'nova';
-            
-            now.IsNovadUp(clients[i], function(client, status){
-              if(status == 'true')
-              {
-                novadStatus.src = 'images/Ngreendot.png';
-                novadStatus.alt = 'Classification is on for ' + client;
-              } 
-              else if(status == 'false')
-              {
-                novadStatus.src = 'images/Nreddot.png';
-                novadStatus.alt = 'Classification is off for ' + client;
-              } 
-              else
-              {
-                novadStatus.src = 'images/Ngreydot.png';
-                novadStatus.alt = 'No Classification status for ' + client; 
-              }
-            });
-            
-            td1.appendChild(novadStatus);
-            
-            var haystackStatus = document.createElement('img');
-            haystackStatus.width = '16';
-            haystackStatus.height = '16';
-            haystackStatus.id = clients[i] + 'haystack';
+            if(clients[i] != undefined && clients[i] != '')
+            {
+              var tr = document.createElement('tr');
+              tr.id = clients[i];
+              tr.style.minHeight = '17px';
+              tr.style.maxHeight = '17px';
               
-            now.IsHaystackUp(clients[i], function(client, status){
-              if(status == 'true')
+              var td0 = document.createElement('td');
+              var label = document.createElement('label');
+              label.innerHTML = clients[i];
+              label.setAttribute('style', 'float: left');
+              td0.appendChild(label);
+              
+              var td1 = document.createElement('td');
+              var novadStatus = document.createElement('img');
+              novadStatus.width = '16';
+              novadStatus.height = '16';
+              novadStatus.id = clients[i] + 'nova';
+              
+              now.IsNovadUp(clients[i], function(client, status){
+                if(status == 'true')
+                {
+                  novadStatus.src = 'images/Ngreendot.png';
+                  novadStatus.alt = 'Classification is on for ' + client;
+                } 
+                else if(status == 'false')
+                {
+                  novadStatus.src = 'images/Nreddot.png';
+                  novadStatus.alt = 'Classification is off for ' + client;
+                } 
+                else
+                {
+                  novadStatus.src = 'images/Ngreydot.png';
+                  novadStatus.alt = 'No Classification status for ' + client; 
+                }
+              });
+              
+              td1.appendChild(novadStatus);
+              
+              var haystackStatus = document.createElement('img');
+              haystackStatus.width = '16';
+              haystackStatus.height = '16';
+              haystackStatus.id = clients[i] + 'haystack';
+                
+              now.IsHaystackUp(clients[i], function(client, status){
+                if(status == 'true')
+                {
+                  haystackStatus.src = 'images/Hgreendot.png';
+                  haystackStatus.alt = 'Haystack is on for ' + client;
+                } 
+                else if(status == 'false')
+                {
+                  haystackStatus.src = 'images/Hreddot.png';
+                  haystackStatus.alt = 'Haystack is off for ' + client;
+                } 
+                else
+                {
+                  haystackStatus.src = 'images/Hgreydot.png';
+                  haystackStatus.alt = 'No Haystack status for ' + client;
+                }
+              });
+              td1.appendChild(haystackStatus);
+              
+              var events = document.createElement('div');
+              events.id = clients[i] + 'events';
+              if(document.URL.indexOf('/hostile') != -1)
               {
-                haystackStatus.src = 'images/Hgreendot.png';
-                haystackStatus.alt = 'Haystack is on for ' + client;
-              } 
-              else if(status == 'false')
-              {
-                haystackStatus.src = 'images/Hreddot.png';
-                haystackStatus.alt = 'Haystack is off for ' + client;
-              } 
+                now.UpdateEventCounter(clients[i], '0');
+                events.innerHTML = '0';
+                events.setAttribute('style', 'border: 2px; border-radius: 20px; width: 7px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
+              }
               else
               {
-                haystackStatus.src = 'images/Hgreydot.png';
-                haystackStatus.alt = 'No Haystack status for ' + client;
+                events.innerHTML = parseInt(getEventCount(clients[i]));
+                if(parseInt(getEventCount(clients[i])) > 0)
+                {
+                  events.setAttribute('style', 'border: 2px; border-radius: 20px; width: 7px; background: #FF5447; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
+                }
+                else
+                {
+                  events.setAttribute('style', 'border: 2px; border-radius: 20px; width: 7px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
+                }
               }
-            });
-            
-            td1.appendChild(haystackStatus);
-            
-            var events = document.createElement('div');
-            events.id = clients[i] + 'events';
-            if(document.URL.indexOf('/hostile') != -1)
-            {
-              now.UpdateEventCounter(clients[i], '0');
-              events.innerHTML = '0';
-              events.setAttribute('style', 'border: 2px; border-radius: 20px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
+              td1.appendChild(events);
+              
+              var td2 = document.createElement('td');
+              td2.style.float = 'right';
+              var removeButton = document.createElement('label');
+              removeButton.innerHTML = 'X';
+              removeButton.setAttribute('onclick', 'removeMe("' + clients[i] + '")');
+              removeButton.style.float = 'left';
+              removeButton.style.textAlign = 'center';
+              removeButton.style.border = '1px solid';
+              removeButton.style.background = 'red';
+              td2.appendChild(removeButton);
+              
+              tr.appendChild(td0);
+              tr.appendChild(td1);
+              tr.appendChild(td2);
+              
+              divConnectionsList.appendChild(tr);
             }
-            else
-            {
-              events.innerHTML = parseInt(getEventCount(clients[i]));
-              if(parseInt(getEventCount(clients[i])) > 0)
-              {
-                events.setAttribute('style', 'border: 2px; border-radius: 20px; background: #FF5447; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
-              }
-              else
-              {
-                events.setAttribute('style', 'border: 2px; border-radius: 20px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
-              }
-            }
-            td1.appendChild(events);
-            
-            tr.appendChild(td0);
-            tr.appendChild(td1);
-            
-            divConnectionsList.appendChild(tr);
           }
           
           clients.length = 0;
@@ -151,16 +174,14 @@ html(lang='en')
         switch(action)
         {
           case 'add':
-            if(document.getElementById('deleteMe') != undefined)
-            {
-              divConnectionsList.removeChild(document.getElementById('deleteMe'));
-            }
             if(document.getElementById(clientId) != undefined)
             {
               return now.UpdateConnectionsList(clientId, 'updateStatus');
             }
             var tr = document.createElement('tr');
             tr.id = clientId;
+            tr.style.minHeight = '17px';
+            tr.style.maxHeight = '17px';
             
             var td0 = document.createElement('td');
             var label = document.createElement('label');
@@ -216,20 +237,36 @@ html(lang='en')
                 haystackStatus.alt = 'No Haystack status for ' + client;
               }
             });
-            
             td1.appendChild(haystackStatus);
             
             var events = document.createElement('div');
-            // This needs to be queried from the server side
             events.id = clientId + 'events';
             events.innerHTML = '0';
-            events.setAttribute('style', 'border: 2px; border-radius: 20px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
+            events.setAttribute('style', 'border: 2px; border-radius: 20px; width: 7px; background: #62FF75; font-weight: bold; color: white; text-align: center; float:right; padding-left: 2px; padding-right: 2px;');
             td1.appendChild(events);
+            
+            var td2 = document.createElement('td');
+            td2.style.float = 'right';
+            var removeButton = document.createElement('label');
+            removeButton.innerHTML = 'X';
+            removeButton.setAttribute('onclick', 'removeMe("' + clientId + '")');
+            removeButton.style.float = 'left';
+            removeButton.style.textAlign = 'center';
+            removeButton.style.border = '1px solid';
+            removeButton.style.background = 'red';
+            td2.appendChild(removeButton);
             
             tr.appendChild(td0);
             tr.appendChild(td1);
+            tr.appendChild(td2);
 
             divConnectionsList.appendChild(tr);
+            
+            if(document.getElementById('deleteMe') != undefined)
+            {
+              divConnectionsList.removeChild(document.getElementById('deleteMe'));
+            }
+            
             break;
           case 'remove':
             if(document.getElementById(clientId) != undefined)
@@ -427,6 +464,27 @@ html(lang='en')
         }
       }
       
+      function removeMe(client)
+      {
+        if(typeof now.UpdateClientsList == 'function')
+        {
+          now.UpdateClientsList(client, 'remove');
+        }        
+        if(typeof now.ClearFromNovaClients == 'function')
+        {
+          var newClients = [];
+          for(var i in clients)
+          {
+            if(clients[i] != client)
+            {
+              newClients.push(clients[i]);
+            }
+          }
+          clients = newClients;
+          now.ClearFromNovaClients(client, function(){now.RenderConnectionsList(clients)});
+        }
+      }
+      
       require(['dijit/layout/BorderContainer', 'dijit/layout/TabContainer', 'dijit/layout/ContentPane', 'dijit/form/Button', 'dojo/parser', 'dojox/grid/DataGrid', 'dojox/data/HtmlStore', 'dijit/ProgressBar'],
         function(ready){
           dojo.addOnLoad(function(){
@@ -489,7 +547,8 @@ html(lang='en')
         br
         br
         div(style='text-align:center; font-weight:bold; font-size: 150%;') Connected Clients
-        table(style='border: 2px solid; width: 156px; border-collapse: collapse;')
+        br
+        table(style='border: 2px solid black; width: 156px; height: 4px; border-collapse: collapse;')
           tbody(id='connectionsList')
         //a(class="button", href= "logout") Log Out
         //br

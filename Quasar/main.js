@@ -520,6 +520,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               break;
             case 'suspectDetails':
               var suspectString = nova.GetSuspectDetailsString(json_args.ip, json_args.iface);
+              suspectString = suspectString.replace(/(\r\n|\r|\n)/gm, "<br>");
               var response = {};
               response.id = clientId;
               response.type = 'detailsReceived';
@@ -1146,19 +1147,10 @@ app.get('/configWhitelist', passport.authenticate('basic', {session: false}), fu
 });
 
 app.get('/suspects', passport.authenticate('basic', {session: false}), function (req, res) {
-	var type;
-	if (req.query["type"] == undefined) {
-		type = 'all';
-	} else {
-		type = req.query["type"];
-	}
-
 	res.render('main.jade', {
 		user: req.user,
 		enabledFeatures: config.ReadSetting("ENABLED_FEATURES"),
 		featureNames: nova.GetFeatureNames(),
-		type: type
-
 	});
 });
 

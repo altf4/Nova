@@ -135,7 +135,7 @@ html, body {
 }
 
 #connectionsList {
-  border: 2px solid;
+  border: 2px solid black;
   border-radius: 4px;
   background: #E8A02F;
   width: inherit;

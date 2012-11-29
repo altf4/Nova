@@ -112,6 +112,9 @@ chown -R -f $NEW_PERM nova-build/
 cd $HOME
 chown -R -f $NEW_PERM .node-gyp/
 
+cd /usr/share/honeyd/scripts/
+chown -R -f $NEW_PERM misc/
+
 echo "##############################################################################"
 echo "#                                    DONE                                    #"
 echo "##############################################################################"

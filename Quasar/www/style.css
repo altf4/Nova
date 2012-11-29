@@ -35,6 +35,10 @@ input[type=button], input[type=submit], button, .button, .sideBarButton {
 	display:block;
 }
 
+.active {
+	background-color: #00FF00;
+}
+
 .sideBarButton, .button:link { color: black;}
 .sideBarButton, .button:visited {color:black;}
 
