@@ -1282,10 +1282,8 @@ bool HoneydConfiguration::LoadConfigurations()
 
 	while(configList.good())
 	{
-		char buffer[256];
+		string pushback;
 		getline (configList,pushback);
-		configList.getline(buffer, 256, '\n');
-		string pushback = string(buffer);
 		m_configs.push_back(pushback);
 	}
 

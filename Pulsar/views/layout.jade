@@ -35,14 +35,12 @@ html(lang='en')
       {
         var divConnectionsList = document.getElementById('connectionsList');
        
-        while(document.getElementById('connectionsList').hasChildNodes())
+        while(divConnectionsList.hasChildNodes())
         {
-          document.getElementById('connectionsList').removeChild(document.getElementById('connectionsList').lastChild);
+          divConnectionsList.removeChild(divConnectionsList.lastChild);
         }
        
-       console.log('in RenderConnectionsList, clients == ' + clients.join());
-       
-        if(clients == undefined || clients.length == 0)
+        if(clients == undefined || clients == '' || clients.length == 0)
         {
           var tr = document.createElement('tr');
           tr.id = 'deleteMe';
