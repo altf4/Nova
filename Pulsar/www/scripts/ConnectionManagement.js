@@ -190,25 +190,28 @@ now.UpdateClientsList = function(clientId, action)
         }
       }
       
-      var div = document.createElement('div');
-      div.id = clientId + 'div';
+      var tr = document.createElement('tr');
+      tr.id = clientId + 'div';
       
+      var td0 = document.createElement('td');
       var check = document.createElement('input');
       check.type = 'checkbox';
       check.id = 'check' + (parseInt(clientCount) + 1);
       check.name = 'check' + (parseInt(clientCount) + 1);
       check.value = clientId;
       check.setAttribute('onchange', 'setTarget(("check" + ' + (parseInt(clientCount) + 1) + '), clients[' + (parseInt(clientCount) + 1) + '].toString())');
-      check.setAttribute('style', 'padding-left: 50px');
+      td0.appendChild(check);
       
+      var td1 = document.createElement('td');
       var label = document.createElement('label');
       label.value = clientId;
       label.innerHTML = clientId;
       label.setAttribute('style', 'font-weight: bold; padding-left: 25px');
+      td1.appendChild(label);
       
-      div.appendChild(check);
-      div.appendChild(label);
-      divClientList.appendChild(div);
+      tr.appendChild(td0);
+      tr.appendChild(td1);
+      divClientList.appendChild(tr);
       
       clientCount++;
       
@@ -226,13 +229,21 @@ now.UpdateClientsList = function(clientId, action)
       
       clientCount--;
       
+      console.log('removing ' + clientId);
+      
+      var newClients = [];
       for(var i in clients)
       {
-        if(clients[i] == clientId)
+        console.log('updateClients clients[i] == ' + clients[i]);
+        if(clients[i] != clientId)
         {
-          clients.splice(i, 1);
+          console.log('in conditional with ' + clientId);
+          newClients.push(clients[i]);
         }
       }
+      clients = newClients;
+      
+      console.log('clients after reassignment ' + clients.join());
       
       if(clientCount == 0)
       {

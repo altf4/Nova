@@ -176,6 +176,11 @@ html(lang='en')
             {
               return now.UpdateConnectionsList(clientId, 'updateStatus');
             }
+            console.log('update clientId ' + clientId);
+            for(var i in clients)
+            {
+              console.log('update clients[i] == ' + clients[i]);
+            }
             var tr = document.createElement('tr');
             tr.id = clientId;
             tr.style.minHeight = '17px';
@@ -470,15 +475,10 @@ html(lang='en')
         }        
         if(typeof now.ClearFromNovaClients == 'function')
         {
-          var newClients = [];
           for(var i in clients)
           {
-            if(clients[i] != client)
-            {
-              newClients.push(clients[i]);
-            }
+            console.log('clients[i] == ' + clients[i]);
           }
-          clients = newClients;
           now.ClearFromNovaClients(client, function(){now.RenderConnectionsList(clients)});
         }
       }

@@ -294,6 +294,11 @@ function pad(num)
 
 now.OnNewSuspect = function(suspect)
 {
+  if(suspectGrid == undefined)
+  {
+    console.log('suspectGrid has not been initialized');
+    return;
+  }
   doRender = true;
   var type = suspect.type;
 
