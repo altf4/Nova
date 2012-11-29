@@ -2236,7 +2236,6 @@ bool HoneydConfiguration::DeleteProfile(string profileName, bool originalCall)
 	for (int i = 0; i < static_cast<int>(profilesToDelete.size()); i++)
 	{
 		string pfile = profilesToDelete.at(i);
-		cout << "Attempting to delete profile " << pfile << endl;
 
 		NodeProfile p = m_profiles[pfile];
 
@@ -2780,9 +2779,8 @@ bool HoneydConfiguration::LoadConfigurations()
 
 	while(configList.good())
 	{
-		char buffer[256];
-		configList.getline(buffer, 256, '\n');
-		string pushback = string(buffer);
+		string pushback;
+		getline(configList, pushback);
 		m_configs.push_back(pushback);
 	}
 
