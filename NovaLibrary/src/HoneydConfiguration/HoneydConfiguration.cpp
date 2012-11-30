@@ -22,6 +22,7 @@
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
+#include <unordered_map>
 #include <arpa/inet.h>
 #include <math.h>
 #include <ctype.h>
@@ -869,6 +870,44 @@ string HoneydConfiguration::GenerateRandomUnusedMAC(string vendor)
 	} while (IsMACUsed(mac));
 
 	return mac;
+}
+
+bool HoneydConfiguration::WouldAddProfileCauseNodeDeletions(Profile *profile)
+{
+	if (profile == NULL)
+	{
+		return false;
+	}
+
+	Profile *currentProfile = GetProfile(profile->m_name);
+	if (currentProfile == NULL)
+	{
+		return false;
+	}
+
+	// Find out if any portsets are missing
+	unordered_map<std::string, bool> oldPortsetNames;
+	for (uint i = 0; i < profile->m_portSets.size(); i++)
+	{
+		oldPortsetNames[profile->m_portSets[i]->m_name] = true;
+	}
+
+	for (uint i = 0; i < currentProfile->m_portSets.size(); i++)
+	{
+		if (oldPortsetNames.count(currentProfile->m_portSets[i]->m_name) == 0)
+		{
+			// Port set existed in old profile but not in new profile
+			for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+			{
+				if (it->second.m_portSetName == currentProfile->m_portSets[i]->m_name)
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
 }
 
 bool HoneydConfiguration::AddProfile(Profile *profile)

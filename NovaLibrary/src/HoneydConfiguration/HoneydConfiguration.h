@@ -92,6 +92,11 @@ public:
 
 	bool AddNodes(std::string profileName, std::string portSetName, std::string macVendor, std::string ipAddress, std::string interface, int numberOfNodes);
 
+	// Calling add profile can result in node deletions if the profile being added already exists, and the
+	// new one is missing portsets. This will check the portsets and tell you if any nodes will be deleted if AddProfile
+	// is called with this profile.
+	bool WouldAddProfileCauseNodeDeletions(Profile *profile);
+
 
 	//Inserts the profile into the honeyd configuration
 	//	profile: pointer to the profile you wish to add
