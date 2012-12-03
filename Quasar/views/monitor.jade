@@ -73,12 +73,11 @@ block headerAdditions
     function markClassificationAs(hostility) {
         "use strict";
         var hostilityString;
-        if (hostility == "0") {
+        if (hostility == "1") {
             hostilityString = "hostile";
         } else {    
             hostilityString = "benign";
         }
-            
 
         if (!confirm("This will train the classifiaction engine to match all suspects looking like this one's current state as " + hostilityString + ". Are you sure you want to do this?")) {
             return;
