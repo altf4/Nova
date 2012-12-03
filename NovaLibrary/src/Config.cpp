@@ -2028,14 +2028,8 @@ bool Config::GetSMTPSettings_FromFile()
 		return false;
 	}
 
-	char user[256];
-	char pass[256];
-
-	ifs.getline(user, 256, '\n');
-	ifs.getline(pass, 256, '\n');
-
-	m_SMTPUser = std::string(user);
-	m_SMTPPass = std::string(pass);
+	getline(ifs, m_SMTPUser);
+	getline(ifs, m_SMTPPass);
 
 	ifs.close();
 	return true;
