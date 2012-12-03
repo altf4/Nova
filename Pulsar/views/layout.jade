@@ -157,7 +157,6 @@ html(lang='en')
               tr.appendChild(td2);
               
               divConnectionsList.appendChild(tr);
-              console.log('RenderConnectionsList over with clients ' + clients.join());
             }
           }
         }
@@ -175,8 +174,6 @@ html(lang='en')
             {
               return now.UpdateConnectionsList(clientId, 'updateStatus');
             }
-            console.log('UpdateConnectionsList clientId ' + clientId);
-            console.log('UpdateConnectionsList clients == ' + clients.join());
 
             var tr = document.createElement('tr');
             tr.id = clientId;
@@ -415,7 +412,6 @@ html(lang='en')
         });
       }
       
-      
       now.ClearConnectionsListEvents = function()
       {
         now.ClearEventCounter(function(){
@@ -466,8 +462,6 @@ html(lang='en')
       
       function removeMe(client)
       {
-        console.log('client in removeMe: ' + client);
-        
         if(typeof now.UpdateClientsList == 'function')
         {
           now.UpdateClientsList(client, 'remove');
@@ -478,10 +472,6 @@ html(lang='en')
         }
         if(typeof now.ClearFromNovaClients == 'function')
         {
-          for(var i in clients)
-          {
-            console.log('removeMe clients[i] == ' + clients[i]);
-          }
           now.ClearFromNovaClients(client, function(){now.RenderConnectionsList(clients)});
         }
       }

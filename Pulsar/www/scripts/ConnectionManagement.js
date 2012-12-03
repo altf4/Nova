@@ -172,8 +172,6 @@ now.RefreshPageAfterRename = function()
 
 now.UpdateClientsList = function(clientId, action) 
 {
-  console.log('UpdateClientsList clientId ' + clientId);
-  console.log('UpdateClientsList action ' + action);
   var divClientList = document.getElementById(clientDivName);
   switch(action)
   {
@@ -231,25 +229,17 @@ now.UpdateClientsList = function(clientId, action)
       
       clientCount--;
       
-      console.log('removing ' + clientId);
-      
       var oldClients = clients.slice();
-      
-      console.log('oldClients ' + oldClients.join());
       
       clients.length = 0;
       
       for(var i in oldClients)
       {
-        console.log('clients[i](' + oldClients[i] + ') != clientId(' + clientId + ')? ' + (oldClients[i] != clientId));
         if(oldClients[i] != clientId && oldClients[i] != '')
         {
-          console.log('in conditional with ' + oldClients[i]);
           clients.push(oldClients[i]);
         }
       }
-      
-      console.log('clients after reassignment ' + clients.join());
       
       if(clientCount == 0)
       {
@@ -329,9 +319,7 @@ now.UpdateGroupList = function(group, action)
       }
       break;
     case 'remove':
-      console.log('groupDiv.childNodes[0].id ' + groupDiv.childNodes[0].id);
       divGroupList.removeChild(groupDiv);
-      
       break;
     default:
       console.log('UpdateGroupList called with invalid action, doing nothing');
