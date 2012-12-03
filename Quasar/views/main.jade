@@ -3,7 +3,7 @@ extends layout
 block topPannelAdditions
   table
     tr
-      td(style="text-align: right;") Packet Analyzer:&nbsp 
+      td(style="text-align: right;") Packet Classifier:&nbsp 
       td(style="padding: 0;")
         img#nova_status_icon(src="/images/orangedot.png", width="15px", height="15px")
       td
@@ -17,7 +17,7 @@ block topPannelAdditions
 
 block content
   div(style="width: 600px; margin:0 auto; text-align: center")
-    button(type="button", style="width:160px", onclick='StartNovad()') Start Packet Analyzer
+    button(type="button", style="width:160px", onclick='StartNovad()') Start Packet Classifier
     &nbsp
     &nbsp
     button(type="button", style="width:160px", onclick='StartHaystack()') Start Haystack
@@ -27,7 +27,7 @@ block content
   
     br
     
-    button(type="button", style="width:160px", onclick='StopNovad()') Stop Packet Analyzer
+    button(type="button", style="width:160px", onclick='StopNovad()') Stop Packet Classifier
     &nbsp
     &nbsp
     button(type="button", style="width:160px", onclick='StopHaystack()') Stop Haystack 
@@ -166,7 +166,7 @@ block headerAdditions
       if (lastNovadStatus == "unknown" || lastNovadStatus != isNovadUp) {
           lastNovadStatus = isNovadUp;
           dojo.byId("nova_status_icon").src = isNovadUp ? "/images/greendot.png" : "/images/reddot.png";;
-          dojo.byId("nova_status").innerHTML = isNovadUp ? "Running" : "Offline";
+          dojo.byId("nova_status").innerHTML = isNovadUp ? "Online" : "Offline";
           dojo.byId("eyeIcon").src = isNovadUp ? "/images/novaIconBlinking.gif" : "/images/novaIcon.png";
           dojo.byId("nova_suspects_header").style.display = isNovadUp ? "block" : "none";
           dojo.byId("nova_suspects").style.display = isNovadUp ? "block" : "none";
@@ -176,7 +176,7 @@ block headerAdditions
 
     var updateHaystackStatus = function (isHaystackUp){
       dojo.byId("haystack_status_icon").src = isHaystackUp ? "/images/greendot.png" : "/images/reddot.png";;
-      dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Running" : "Offline";
+      dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Online" : "Offline";
     };
     
     var AllSuspectsCleared = function() {
