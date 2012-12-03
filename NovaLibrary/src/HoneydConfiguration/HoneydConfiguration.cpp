@@ -886,15 +886,15 @@ bool HoneydConfiguration::WouldAddProfileCauseNodeDeletions(Profile *profile)
 	}
 
 	// Find out if any portsets are missing
-	unordered_map<std::string, bool> oldPortsetNames;
+	unordered_map<std::string, bool> newPortsetNames;
 	for (uint i = 0; i < profile->m_portSets.size(); i++)
 	{
-		oldPortsetNames[profile->m_portSets[i]->m_name] = true;
+		newPortsetNames[profile->m_portSets[i]->m_name] = true;
 	}
 
 	for (uint i = 0; i < currentProfile->m_portSets.size(); i++)
 	{
-		if (oldPortsetNames.count(currentProfile->m_portSets[i]->m_name) == 0)
+		if (newPortsetNames.count(currentProfile->m_portSets[i]->m_name) == 0)
 		{
 			// Port set existed in old profile but not in new profile
 			for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
@@ -923,15 +923,15 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 	{
 
 		// Find out if any portsets are missing and delete their nodes
-		unordered_map<std::string, bool> oldPortsetNames;
+		unordered_map<std::string, bool> newPortsetNames;
 		for (uint i = 0; i < profile->m_portSets.size(); i++)
 		{
-			oldPortsetNames[profile->m_portSets[i]->m_name] = true;
+			newPortsetNames[profile->m_portSets[i]->m_name] = true;
 		}
 
 		for (uint i = 0; i < duplicate->m_portSets.size(); i++)
 		{
-			if (oldPortsetNames.count(duplicate->m_portSets[i]->m_name) == 0)
+			if (newPortsetNames.count(duplicate->m_portSets[i]->m_name) == 0)
 			{
 				// Port set existed in old profile but not in new profile
 				for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)

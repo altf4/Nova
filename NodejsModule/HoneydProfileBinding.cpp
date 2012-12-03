@@ -202,6 +202,11 @@ bool HoneydProfileBinding::Save() {
 	return ret;
 }
 
+bool HoneydProfileBinding::WouldAddProfileCauseNodeDeletions()
+{
+	return HoneydConfiguration::Inst()->WouldAddProfileCauseNodeDeletions(m_profile);
+}
+
 void HoneydProfileBinding::Init(v8::Handle<Object> target)
 {
 	// Prepare constructor template
@@ -219,6 +224,7 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 	proto->Set("SetIsDropRateInherited",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsDropRateInherited>));
 	proto->Set("SetIsUptimeInherited",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsUptimeInherited>));
 	proto->Set("Save",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding, &HoneydProfileBinding::Save>));
+	proto->Set("WouldAddProfileCauseNodeDeletions",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding, &HoneydProfileBinding::WouldAddProfileCauseNodeDeletions>));
 
 	proto->Set("SetUptimeMin",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, uint, &Profile::SetUptimeMin>));
 	proto->Set("SetUptimeMax",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile,  uint, 		&Profile::SetUptimeMax>));

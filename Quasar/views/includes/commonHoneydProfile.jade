@@ -290,13 +290,24 @@ script
                         profile.isUptimeInherited = dojo.byId("inheritUptime").checked;
                         updatePortsModel();
 
-                        //need conditional here for add vs. edit, false == edit, true == add
-                        try {
-                            now.SaveProfile(profile, savedChanges);
-                        } catch (err) {
-                            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-                            console.log("err was: " + err);
-                        }
+                        now.WouldProfileSaveDeleteNodes(profile, function(result) {
+                            var userConfirmed;
+                            if (result == true) {
+                                userConfirmed = confirm("Warning: this will delete nodes that used deleted portsets");
+                            }
+
+                                if (userConfirmed) {
+                                    //need conditional here for add vs. edit, false == edit, true == add
+                                    try {
+                                        now.SaveProfile(profile, savedChanges);
+                                    } catch (err) {
+                                        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+                                        console.log("err was: " + err);
+                                    }
+                                }
+
+                        });
+
                 }
 
                 savedChanges = function(err) 

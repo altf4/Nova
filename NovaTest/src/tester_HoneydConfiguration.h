@@ -142,9 +142,15 @@ TEST_F(HoneydConfigurationTest, test_WouldAddProfileCauseNodeDeletions)
 	p->m_portSets.push_back(new PortSet("test"));
 	EXPECT_TRUE(HC->AddProfile(p));
 
+	Node node;
+	node.m_pfile == "testProfile";
+	node.m_portSetName = "test";
+	node.m_MAC = "FF:FF:BA:BE:CA:FE";
+	EXPECT_TRUE(HC->AddNode(node));
+
 	Profile *p2 = new Profile("default", "testProfile");
 	EXPECT_TRUE(HC->WouldAddProfileCauseNodeDeletions(p2));
 
-	p->m_portSets.push_back(new PortSet("test"));
+	p2->m_portSets.push_back(new PortSet("test"));
 	EXPECT_FALSE(HC->WouldAddProfileCauseNodeDeletions(p2));
 }

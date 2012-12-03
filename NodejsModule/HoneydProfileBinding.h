@@ -23,6 +23,7 @@ public:
 	bool SetIsDropRateInherited(bool);
 	bool SetIsUptimeInherited(bool);
 	bool Save();
+	bool WouldAddProfileCauseNodeDeletions();
 
 private:
 	//The parent name is needed to know where to put the profile in the tree,

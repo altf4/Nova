@@ -2258,19 +2258,8 @@ GetPortSets = function (profileName, callback) {
 }
 everyone.now.GetPortSets = GetPortSets;
 
-//portSets = A 2D array. (array of portSets, which are arrays of Ports)
-everyone.now.SaveProfile = function (profile, callback) {
-	// Check input
-	var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
-	var match = profileNameRegexp.exec(profile.name);
-	
-	if (match == null) 
-	{
-		var err = "ERROR: Attempt to save a profile with an invalid name. Must be alphanumeric and not begin with a number.";
-		callback(err);
-		return;
-	}
 
+function jsProfileToHoneydProfile(profile) {
 	var honeydProfile = new novaconfig.HoneydProfileBinding(profile.parentProfile, profile.name);
 	
         //Set Ethernet vendors
@@ -2329,7 +2318,26 @@ everyone.now.SaveProfile = function (profile, callback) {
 
 	}
 
-        honeydProfile.Save();
+	return honeydProfile;
+}
+
+
+//portSets = A 2D array. (array of portSets, which are arrays of Ports)
+everyone.now.SaveProfile = function (profile, callback) {
+	// Check input
+	var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
+	var match = profileNameRegexp.exec(profile.name);
+	
+	if (match == null) 
+	{
+		var err = "ERROR: Attempt to save a profile with an invalid name. Must be alphanumeric and not begin with a number.";
+		callback(err);
+		return;
+	}
+
+
+	var honeydProfile = jsProfileToHoneydProfile(profile);
+	honeydProfile.Save();
 
 	// Save the profile
 	if (!honeydConfig.SaveAll()) {
@@ -2337,6 +2345,12 @@ everyone.now.SaveProfile = function (profile, callback) {
 	}
 
 	callback();
+}
+
+everyone.now.WouldProfileSaveDeleteNodes = function (profile, callback) {
+	var honeydProfile = jsProfileToHoneydProfile(profile);
+
+	callback(honeydProfile.WouldAddProfileCauseNodeDeletions());
 }
 
 everyone.now.GetCaptureSession = function (callback) {
