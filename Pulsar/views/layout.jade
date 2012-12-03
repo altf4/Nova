@@ -157,10 +157,9 @@ html(lang='en')
               tr.appendChild(td2);
               
               divConnectionsList.appendChild(tr);
+              console.log('RenderConnectionsList over with clients ' + clients.join());
             }
           }
-          
-          clients.length = 0;
         }
         divConnectionsList = null;
       }
@@ -176,11 +175,9 @@ html(lang='en')
             {
               return now.UpdateConnectionsList(clientId, 'updateStatus');
             }
-            console.log('update clientId ' + clientId);
-            for(var i in clients)
-            {
-              console.log('update clients[i] == ' + clients[i]);
-            }
+            console.log('UpdateConnectionsList clientId ' + clientId);
+            console.log('UpdateConnectionsList clients == ' + clients.join());
+
             var tr = document.createElement('tr');
             tr.id = clientId;
             tr.style.minHeight = '17px';
@@ -469,15 +466,21 @@ html(lang='en')
       
       function removeMe(client)
       {
+        console.log('client in removeMe: ' + client);
+        
         if(typeof now.UpdateClientsList == 'function')
         {
           now.UpdateClientsList(client, 'remove');
         }        
+        if(typeof now.UpdateConnectionsList == 'function')
+        {
+          now.UpdateConnectionsList(client, 'remove');
+        }
         if(typeof now.ClearFromNovaClients == 'function')
         {
           for(var i in clients)
           {
-            console.log('clients[i] == ' + clients[i]);
+            console.log('removeMe clients[i] == ' + clients[i]);
           }
           now.ClearFromNovaClients(client, function(){now.RenderConnectionsList(clients)});
         }

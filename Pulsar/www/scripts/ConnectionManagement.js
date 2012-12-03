@@ -172,6 +172,8 @@ now.RefreshPageAfterRename = function()
 
 now.UpdateClientsList = function(clientId, action) 
 {
+  console.log('UpdateClientsList clientId ' + clientId);
+  console.log('UpdateClientsList action ' + action);
   var divClientList = document.getElementById(clientDivName);
   switch(action)
   {
@@ -231,17 +233,21 @@ now.UpdateClientsList = function(clientId, action)
       
       console.log('removing ' + clientId);
       
-      var newClients = [];
-      for(var i in clients)
+      var oldClients = clients.slice();
+      
+      console.log('oldClients ' + oldClients.join());
+      
+      clients.length = 0;
+      
+      for(var i in oldClients)
       {
-        console.log('updateClients clients[i] == ' + clients[i]);
-        if(clients[i] != clientId)
+        console.log('clients[i](' + oldClients[i] + ') != clientId(' + clientId + ')? ' + (oldClients[i] != clientId));
+        if(oldClients[i] != clientId && oldClients[i] != '')
         {
-          console.log('in conditional with ' + clientId);
-          newClients.push(clients[i]);
+          console.log('in conditional with ' + oldClients[i]);
+          clients.push(oldClients[i]);
         }
       }
-      clients = newClients;
       
       console.log('clients after reassignment ' + clients.join());
       
