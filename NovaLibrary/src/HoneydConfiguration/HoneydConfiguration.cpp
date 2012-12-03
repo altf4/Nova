@@ -921,6 +921,30 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 	Profile *duplicate = GetProfile(profile->m_name);
 	if(duplicate != NULL)
 	{
+
+		// Find out if any portsets are missing and delete their nodes
+		unordered_map<std::string, bool> oldPortsetNames;
+		for (uint i = 0; i < profile->m_portSets.size(); i++)
+		{
+			oldPortsetNames[profile->m_portSets[i]->m_name] = true;
+		}
+
+		for (uint i = 0; i < duplicate->m_portSets.size(); i++)
+		{
+			if (oldPortsetNames.count(duplicate->m_portSets[i]->m_name) == 0)
+			{
+				// Port set existed in old profile but not in new profile
+				for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+				{
+					if (it->second.m_portSetName == duplicate->m_portSets[i]->m_name)
+					{
+						m_nodes.erase(it);
+						return true;
+					}
+				}
+			}
+		}
+
 		//Copy over the contents of this profile, and quit
 		duplicate->Copy(profile);
 
