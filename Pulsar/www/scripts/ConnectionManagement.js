@@ -264,6 +264,10 @@ now.UpdateClientsList = function(clientId, action)
   
 now.UpdateGroupList = function(group, action)
 {
+  if(document.location.pathname == '/groups')
+  {
+    return;
+  }
   var divGroupList = document.getElementById(groupDivName);
   var groupDiv = document.getElementById(group + 'div');
   switch(action)
