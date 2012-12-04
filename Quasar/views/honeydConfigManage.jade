@@ -78,6 +78,19 @@ block headerAdditions
       }
     }
     
+   function restoreDefaults() 
+   {
+        try 
+        {
+            now.restoreDefaultHaystackConfiguration(configurationRestored);
+        } 
+        catch (err) 
+        {
+            alert("Unable to contact server");
+            console.log("Error was: " + err);
+        }
+    }
+    
     function populateConfigSelect(configs)
     {
       if(theDoc.getElementById('configurations').hasChildNodes())
