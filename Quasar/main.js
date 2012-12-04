@@ -1495,15 +1495,53 @@ app.post('/honeydConfigManage', passport.authenticate('basic', {session: false})
     cloneBool = true;
   }
   
-  honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
+  console.log('configToClone ' + configToClone);
   
-  honeydConfig.LoadAllTemplates();
-  
-  res.render('saveRedirect.jade', {
-    locals: {
-      redirectLink: '/honeydConfigManage'
+  if(!cloneBool)
+  {
+    if((new RegExp('^[a-zA-Z0-9]+$')).test(newName))
+    {
+      honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
+      
+      honeydConfig.LoadAllTemplates();
+    
+      res.render('saveRedirect.jade', {
+       locals: {
+         redirectLink: '/honeydConfigManage'
+       }
+      });
+    } 
+    else
+    {
+      RenderError(res, 'Unacceptable characters in new configuration name', '/honeydConfigManage');
     }
-  });
+  }
+  else
+  {
+    if((new RegExp('^[a-zA-Z0-9]+$')).test(newName))
+    {
+      if((new RegExp('^[a-zA-Z0-9]+$')).test(configToClone))
+      {
+        honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
+        
+        honeydConfig.LoadAllTemplates();
+      
+        res.render('saveRedirect.jade', {
+         locals: {
+           redirectLink: '/honeydConfigManage'
+         }
+        });
+      }
+      else
+      {
+        RenderError(res, 'Unacceptable characters in clone configuration name', '/honeydConfigManage');  
+      }
+    } 
+    else
+    {
+      RenderError(res, 'Unacceptable characters in new configuration name', '/honeydConfigManage');
+    }
+  }
 });
 
 app.post('/customizeTrainingSave', passport.authenticate('basic', {session: false}), function (req, res) {
@@ -2709,28 +2747,14 @@ everyone.now.GetConfigSummary = function(configName, callback)
 
 everyone.now.SwitchConfigurationTo = function(configName)
 {
-  honeydConfig.SwitchConfiguration(configName);
-}
-
-everyone.now.RemoveConfiguration = function(configName, callback)
-{
-  if(configName == 'default')
+  if((new RegExp('^[a-zA-Z0-9]+$')).test(configName))
   {
-    console.log('Cannot delete default configuration');
+    honeydConfig.SwitchConfiguration(configName); 
   }
-  
-  honeydConfig.RemoveConfiguration(configName);
-  
-  if(typeof callback == 'function')
+  else
   {
-    callback(configName);
+    console.log('regular expression detected irregular characters in configName');
   }
-}
-
-
-everyone.now.SwitchConfigurationTo = function(configName)
-{
-  honeydConfig.SwitchConfiguration(configName);
 }
 
 everyone.now.RemoveConfiguration = function(configName, callback)
