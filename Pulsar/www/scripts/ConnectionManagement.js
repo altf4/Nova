@@ -65,7 +65,7 @@ function setUpClientsList(divName)
           check.value = clients[i];
           if(typeof setTarget == 'function')
           {
-            check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
+            check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), "' + clients[i].toString() + '")');
           }
           td0.appendChild(check);
           
@@ -190,6 +190,16 @@ now.UpdateClientsList = function(clientId, action)
         }
       }
       
+      for(var i in clients)
+      {
+        console.log('clients[' + i + '] == ' + clients[i]);
+      }
+      
+      if(clients[(parseInt(clientCount) + 1)] == undefined)
+      {
+        clients.push(clientId);
+      }
+      
       var tr = document.createElement('tr');
       tr.id = clientId + 'div';
       
@@ -199,7 +209,7 @@ now.UpdateClientsList = function(clientId, action)
       check.id = 'check' + (parseInt(clientCount) + 1);
       check.name = 'check' + (parseInt(clientCount) + 1);
       check.value = clientId;
-      check.setAttribute('onchange', 'setTarget(("check" + ' + (parseInt(clientCount) + 1) + '), clients[' + (parseInt(clientCount) + 1) + '].toString())');
+      check.setAttribute('onchange', 'setTarget(("check" + ' + (parseInt(clientCount) + 1) + '), "' + clients[(parseInt(clientCount) + 1)].toString()) + '")';
       td0.appendChild(check);
       
       var td1 = document.createElement('td');
