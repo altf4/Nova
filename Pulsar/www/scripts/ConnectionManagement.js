@@ -190,15 +190,6 @@ now.UpdateClientsList = function(clientId, action)
         }
       }
       
-      console.log('adding ' + clientId);
-      
-      console.log('clients.length == ' + clients.length);
-      
-      for(var i in clients)
-      {
-        console.log('clients[' + i + '] == ' + clients[i]);
-      }
-      
       if(clients[parseInt(clientCount)] == undefined && clients[0] != '')
       {
         clients.push(clientId);
@@ -211,8 +202,6 @@ now.UpdateClientsList = function(clientId, action)
       {
         clients[parseInt(clientCount)] = clientId;
       }
-      
-      console.log('clients == ' + clients.join());
       
       var tr = document.createElement('tr');
       tr.id = clientId + 'div';
