@@ -646,22 +646,7 @@ script
                                         dojo.byId("name").value = profile.name;
                                         if(profile.name == "default")
                                         {
-                                          dojo.byId("name").setAttribute('readonly', true);
-                                          var hide = dojo.byId("row1").childNodes;
-                                          var forLength = hide.length;
-                                          for(var j = 0; j < forLength - 1; j++)
-                                          {
-                                            var secondSet = hide[j].childNodes;
-                                            if(secondSet.childNodes == undefined || secondSet.childNodes[0].tagName != "INPUT")
-                                            {
-                                              console.log("Deleting found " + hide[j].tagName + " with " + secondSet.childNodes + " childNodes");
-                                              dojo.byId("row1").removeChild(hide[j]);
-                                            }
-                                            forLength = hide.length;
-                                            j--;
-                                          }
-                                          dojo.byId("parentName").value = "";
-                                          dojo.byId("parentName").setAttribute('type', 'hidden');
+                                          dojo.byId("row1").style.display = 'none';
                                         }
                                         else
                                         {
@@ -670,9 +655,6 @@ script
                                         dojo.byId("inheritPersonality").checked = profile.isPersonalityInherited;
                                         dojo.byId("inheritDropRate").checked = profile.isDropRateInherited;
                                         dojo.byId("inheritUptime").checked = profile.isUptimeInherited;
-
-
-
                                 }
 
                                 dojo.byId("personality").value = profile.personality;
@@ -687,8 +669,6 @@ script
 
                                 dojo.byId("dropRate").value = profile.dropRate;
 
-
-                                
                                 // Populate the port set options
                                 updatePortSetLists();
                                 
@@ -697,22 +677,6 @@ script
                                 refreshVendorsView();
                                 inheritanceChanged();
                         });
-                        /*
-                        now.GetPorts(currentName, function(ports) 
-                        {
-                                if(currentName != "default" && ports[0].portNum == "0")
-                                {
-                                  return;
-                                }
-                                
-                                for (var i = 0; i < ports.length; i++) 
-                                {
-                                        portList[ports[i].portNum] = ports[i];
-                                        //ports[i].isInherited = true;
-                                        addPort(ports[i]);
-                                }
-                                portBehaviorChanged();
-                        });*/
 
                         } catch(err) {
                             alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
