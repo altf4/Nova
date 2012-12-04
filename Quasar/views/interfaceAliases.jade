@@ -52,9 +52,7 @@ block headerAdditions
 block content
   h1 Interface Aliases
 
-  table.novaGrid#aliasTable
   br
-
   span(style="width:100px; display: inline-block;") Interface:
   select#interfaceSelection
     - each interface, i in INTERFACES
@@ -66,4 +64,9 @@ block content
 
   br
   button#addNewAliasButton(onclick="AddNewAlias()") Add/Update Alias
+  
+  br
+  br
+  h1 Current Aliases
+  table.novaGrid#aliasTable
 
