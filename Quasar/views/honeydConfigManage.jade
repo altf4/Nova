@@ -15,16 +15,16 @@ block headerAdditions
     }
 
     a.unselectedProfile:hover {
-        background-color: rgba(255,0,0,0.2);
+        background-color: #F1CC91;
         clear: both;
     }
 
     a.selectedProfile {
-        background-color: rgba(255,0,0,0.8);
+        background-color: #E8A02F;
     }
 
     a.unselectedProfile {
-        background-color: rgba(255,0,0,0,0.8);
+        background-color: #E4F2FF;
     }
 
     ul {
@@ -75,6 +75,19 @@ block headerAdditions
       else
       {
         console.log('Creating clone configuration ' + configName + ' based on ' + cloneInfo);
+      }
+    }
+    
+    function restoreDefaults() 
+    {
+      try 
+      {
+        now.restoreDefaultHaystackConfiguration(configurationRestored);
+      } 
+      catch (err) 
+      {
+        alert("Unable to contact server");
+        console.log("Error was: " + err);
       }
     }
     

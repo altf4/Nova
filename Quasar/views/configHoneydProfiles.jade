@@ -15,16 +15,16 @@ block headerAdditions
     }
 
     a.unselectedProfile:hover {
-        background-color: rgba(255,0,0,0.2);
+        background-color: #F1CC91;
         clear: both;
     }
 
     a.selectedProfile {
-        background-color: rgba(255,0,0,0.8);
+        background-color: #E8A02F;
     }
 
     a.unselectedProfile {
-        background-color: rgba(255,0,0,0,0.8);
+        background-color: #E4F2FF;
     }
 
     ul {
@@ -134,15 +134,6 @@ block headerAdditions
         return selected;
     }
 
-    function restoreDefaults() {
-        try {
-            now.restoreDefaultHaystackConfiguration(configurationRestored);
-        } catch (err) {
-            alert("Unable to contact server");
-            console.log("Error was: " + err);
-        }
-    }
-
     function configurationRestored() {
         now.IsHaystackUp(checkIfRestartNeeded); 
     }
@@ -210,12 +201,12 @@ block headerAdditions
             li.appendChild(a); 
             parentDOMNode.appendChild(li);
            
-            if (profilesArray[profile].children.length) {
+            if(profilesArray[profile].children.length) {
                 var ul = document.createElement('ul'); 
                 li.appendChild(ul);
             }
 
-            for (var i = 0; i < profilesArray[profile].children.length; i++) {
+            for(var i = 0; i < profilesArray[profile].children.length; i++) {
                drawNode(profilesArray[profilesArray[profile].children[i]].name, ul);
             }
 
@@ -248,9 +239,3 @@ block content
   button(onClick="deleteSelectedItems()") Delete Selected Profiles 
   button(onClick="editSelectedItem()") Edit Selected Profile
   button(onClick="addChildSelectedItem()") Add Child Profile
-  br
-  br
-  button(onClick="window.location='/configHoneydNodes';") Configure Haystack Nodes
-  br
-  br
-  button(onClick="restoreDefaults()") Restore Default Configuration (will erase all changes!)

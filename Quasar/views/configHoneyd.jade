@@ -132,20 +132,6 @@ block headerAdditions
       }
     }
 
-    function selectAllOnPage() {
-      var pageElements = grid.GetPageElements();
-      
-      console.log('pageElements ' + pageElements);
-      
-      for(var row in pageElements)
-      {
-        if(pageElements[row] !== 'Doppelganger')
-        {
-          grid.PushKeyToSelected(pageElements[row]);
-        }
-      }
-    }
-
     function checkOnlyOne(checkedBox)
     {
       var checkedBox = document.getElementById(checkedBox);
@@ -214,15 +200,6 @@ block headerAdditions
         return; 
       }
       window.location.href = "editHoneydNode?node=" + nodeName;
-    }
-
-    function restoreDefaults() {
-        try {
-            now.restoreDefaultHaystackConfiguration(configurationRestored);
-        } catch (err) {
-            alert("Unable to contact server");
-            console.log("Error was: " + err);
-        }
     }
 
     function configurationRestored() {
@@ -405,7 +382,6 @@ block content
   br
   br
 
-  button(onclick="selectAllOnPage()") Select All Nodes on Page
   button(onclick="deleteSelectedItems()") Delete Selected Nodes
   button(onclick="deleteAllNodes()") Delete All Nodes 
   button(onclick="editSelectedItem()") Edit Selected Node
@@ -413,9 +389,6 @@ block content
   br
   br
   a.button(href="/editHoneydNode?node=doppelganger") Edit Doppelganger
-  br
-  br
-  button(onClick="restoreDefaults()") Restore Default Configuration (will erase all saved haystack configurations!)
   br
   br
   h2 Create Honeyd Nodes
