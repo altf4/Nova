@@ -23,8 +23,8 @@ html(lang="en")
             var sideBarButtons = document.getElementsByClassName("sideBarButton");
             for (var i in sideBarButtons) {
                 if (!sideBarButtons[i].pathname) {
-					continue;
-				}
+                    continue;
+                }
                 
                 if (sideBarButtons[i].pathname == window.location.pathname) {
                     sideBarButtons[i].className += ' active';
