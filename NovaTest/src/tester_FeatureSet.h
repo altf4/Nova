@@ -34,13 +34,8 @@ protected:
 		p2.m_evidencePacket.ip_len = (uint16_t)256;
 		p2.m_evidencePacket.ts = 20;
 
-		Evidence *t1 = new Evidence();
-		Evidence *t2 = new Evidence();
-		*t1 = p1;
-		*t2 = p2;
-
-		fset.UpdateEvidence(t1);
-		fset.UpdateEvidence(t2);
+		fset.UpdateEvidence(&p1);
+		fset.UpdateEvidence(&p2);
 		fset.CalculateAll();
 	}
 
@@ -89,13 +84,13 @@ TEST_F(FeatureSetTest, test_SerializationLength)
 // Check if the features got computed correctly
 TEST_F(FeatureSetTest, test_Calculate)
 {
-	EXPECT_EQ(fset.m_features[IP_TRAFFIC_DISTRIBUTION], 1);
-	EXPECT_EQ(fset.m_features[PORT_TRAFFIC_DISTRIBUTION], 1);
-	EXPECT_EQ(fset.m_features[PACKET_SIZE_DEVIATION], 0);
-	EXPECT_EQ(fset.m_features[PACKET_SIZE_MEAN], 256);
-	EXPECT_EQ(fset.m_features[DISTINCT_IPS], 2);
-	EXPECT_EQ(fset.m_features[DISTINCT_TCP_PORTS], 2);
-	EXPECT_EQ(fset.m_features[DISTINCT_UDP_PORTS], 0);
-	EXPECT_EQ(fset.m_features[AVG_TCP_PORTS_PER_HOST], 1);
-	EXPECT_EQ(fset.m_features[AVG_UDP_PORTS_PER_HOST], 0);
+	EXPECT_EQ(1, fset.m_features[IP_TRAFFIC_DISTRIBUTION]);
+	EXPECT_EQ(1, fset.m_features[PORT_TRAFFIC_DISTRIBUTION]);
+	EXPECT_EQ(0, fset.m_features[PACKET_SIZE_DEVIATION]);
+	EXPECT_EQ(256, fset.m_features[PACKET_SIZE_MEAN]);
+	EXPECT_EQ(2, fset.m_features[DISTINCT_IPS]);
+	EXPECT_EQ(2, fset.m_features[DISTINCT_TCP_PORTS]);
+	EXPECT_EQ(0, fset.m_features[DISTINCT_UDP_PORTS]);
+	EXPECT_EQ(1, fset.m_features[AVG_TCP_PORTS_PER_HOST]);
+	EXPECT_EQ(0, fset.m_features[AVG_UDP_PORTS_PER_HOST]);
 }

@@ -112,4 +112,8 @@ html, body {
 	overflow-y: scroll;
 }
 
+.portset {
+	border: 2px solid black;
+}
+
 .align-left {float:left; margin: 0 15px 15px 0;}

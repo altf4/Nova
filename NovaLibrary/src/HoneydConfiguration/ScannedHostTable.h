@@ -13,12 +13,14 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : Contains function definitions and member variable declarations
-//               for the PersonalityTable class. Adds the class to the Nova
-//               namespace.
+// Description : A hash table of ScannedHosts and accompanying helper functions
 //============================================================================
 
-#include "Personality.h"
+#ifndef SCANNEDHOSTTREE_H_
+#define SCANNEDHOSTTREE_H_
+
+#include "ScannedHost.h"
+#include "../HashMapStructs.h"
 
 //total num_hosts is the total num of unique hosts counted.
 //total avail_addrs is the total num of ip addresses avail on the subnet
@@ -34,28 +36,24 @@
  */
 
 //HashMap of Personality objects; Key is personality specific name (i.e. Linux 2.6.35-2.6.38), Value is ptr to Personality object
-typedef Nova::HashMap<std::string, class Nova::Personality *, std::hash<std::string>, eqstr > Personality_Table;
+typedef Nova::HashMap<std::string, class Nova::ScannedHost *, std::hash<std::string>, eqstr > ScannedHost_Table;
 
 namespace Nova
 {
 
-class PersonalityTable
+class ScannedHostTable
 {
 
 public:
 
-	PersonalityTable();
+	ScannedHostTable();
 
-	~PersonalityTable();
+	~ScannedHostTable();
 
 	// Adds a host to the Personality Table if it's not there; if it is, just aggregate the values
 	//  Personality *add - pointer to a Personality object that contains new information for the table
 	// No return value
-	void AddHost(Personality *add);
-
-	// Void method to print out the information stored within the Personality table into a nice format
-	// Takes no arguments and returns nothing
-	void ListInfo();
+	void AddHost(ScannedHost *add);
 
 	//Increment every time a host is added
 	unsigned long int m_num_of_hosts;
@@ -67,10 +65,9 @@ public:
 	unsigned long int m_numAddrsAvail;
 
 	//HashMAP[std::string key]; key == Personality, val == ptr to Personality object
-	Personality_Table m_personalities;
-
-	//This function takes the count seen for a personality and assigns m_distribution to m_count/m_num_of_hosts
-	void CalculateDistributions();
+	ScannedHost_Table m_personalities;
 };
 
 }
+
+#endif

@@ -33,15 +33,11 @@ using namespace Nova;
 VendorMacDb::VendorMacDb()
 {
 	m_macVendorFile =  Config::Inst()->GetPathShared() + "/nmap-mac-prefixes";
-	m_MACVendorTable.set_empty_key(16777216); //2^24, invalid MAC prefix.
-	m_vendorMACTable.set_empty_key("");
 }
 
 VendorMacDb::VendorMacDb(string MacVendorFile)
 {
 	m_macVendorFile = MacVendorFile;
-	m_MACVendorTable.set_empty_key(16777216); //2^24, invalid MAC prefix.
-	m_vendorMACTable.set_empty_key("");
 }
 
 void VendorMacDb::LoadPrefixFile()
@@ -135,7 +131,7 @@ string VendorMacDb::GenerateRandomMAC(string vendor)
 		}
 		return tempStr.str();
 	}
-	LOG(ERROR, "Random MAC Generation failed!", "");
+	LOG(DEBUG, "Random MAC Generation failed!", "");
 	return "";
 }
 

@@ -3,24 +3,29 @@
 
 #include <v8.h>
 #include "v8Helper.h"
-#include "HoneydConfiguration/HoneydConfigTypes.h"
 #include "FeatureSet.h"
+#include "HoneydConfiguration/Node.h"
+#include "HoneydConfiguration/Profile.h"
+#include "HoneydConfiguration/Port.h"
 
-class HoneydNodeJs
+class HoneydNodeJs : public node::ObjectWrap
 {
 
 public:
     static v8::Handle<v8::Object> WrapNode(Nova::Node* node);
-    static v8::Handle<v8::Object> WrapProfile(Nova::NodeProfile *profile);
+    static v8::Handle<v8::Object> WrapProfile(Nova::Profile *profile);
     static v8::Handle<v8::Object> WrapPort(Nova::Port *port);
+    static v8::Handle<v8::Object> WrapPortSet(Nova::PortSet *portSet);
+
+    static v8::Handle<v8::Value> GetTCPPorts(const v8::Arguments& args);
+    static v8::Handle<v8::Value> GetUDPPorts(const v8::Arguments& args);
 
 private:
 
-	static v8::Persistent<v8::FunctionTemplate> m_NodeTemplate;
-	static v8::Persistent<v8::FunctionTemplate> m_profileTemplate;
-	static v8::Persistent<v8::FunctionTemplate> m_portTemplate;
-
-
+	static v8::Persistent<v8::FunctionTemplate> nodeTemplate;
+	static v8::Persistent<v8::FunctionTemplate> profileTemplate;
+	static v8::Persistent<v8::FunctionTemplate> portTemplate;
+	static v8::Persistent<v8::FunctionTemplate> portSetTemplate;
 };
 
 

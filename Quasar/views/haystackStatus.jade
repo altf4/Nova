@@ -9,6 +9,6 @@ block content
     li No DHCP addresses
   each ip in haystackDHCPIps
     li
-      a(href = "/editHoneydNode?node=DHCP - " + ip[1].replace(" ", ""))= "DHCP -" + ip[1]
+      a(href = "/editHoneydNode?node=" + ip[1].replace(" ", ""))= "DHCP -" + ip[1]
       span  is currently at IP address #{ip[0]}
   

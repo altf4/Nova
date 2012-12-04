@@ -34,7 +34,6 @@ using namespace Nova;
 trainingDumpMap *TrainingData::ParseEngineCaptureFile(string captureFile)
 {
 	trainingDumpMap *trainingTable = new trainingDumpMap();
-	trainingTable->set_empty_key("");
 
 	ifstream dataFile(captureFile.data());
 	string line, ip, data;
@@ -76,7 +75,6 @@ trainingDumpMap *TrainingData::ParseEngineCaptureFile(string captureFile)
 trainingSuspectMap *TrainingData::ParseTrainingDb(string dbPath)
 {
 	trainingSuspectMap *suspects = new trainingSuspectMap();
-	suspects->set_empty_key("");
 
 	string line;
 	bool getHeader = true;

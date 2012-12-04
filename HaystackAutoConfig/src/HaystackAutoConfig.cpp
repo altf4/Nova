@@ -20,6 +20,7 @@
 
 // REQUIRES NMAP 6
 
+#include <time.h>
 #include <stdio.h>
 #include <netdb.h>
 #include <sstream>
@@ -31,44 +32,48 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include "HoneydConfiguration/NodeManager.h"
-#include "PersonalityTree.h"
-#include "HoneydHostConfig.h"
+#include "HaystackAutoConfig.h"
+#include "HoneydConfiguration/HoneydConfiguration.h"
+#include "HoneydConfiguration/ProfileTree.h"
 #include "HoneydConfiguration/VendorMacDb.h"
+#include "HoneydConfiguration/Subnet.h"
 #include "Logger.h"
 
 using namespace std;
 using namespace Nova;
 
-vector<uint16_t> leftoverHostspace;
 vector<string> interfacesToMatch;
 vector<string> subnetsToAdd;
-uint16_t tempHostspace;
 string localMachine;
 string nmapFileName;
 uint numNodes;
-string groupName;
 double nodeRatio;
 
-enum NumberOfNodesType {
-	FIXED_NUMBER_OF_NODES
-	, RATIO_BASED_NUMBER_OF_NODES
+enum NumberOfNodesType
+{
+	FIXED_NUMBER_OF_NODES,
+	RATIO_BASED_NUMBER_OF_NODES
 };
+
 NumberOfNodesType numberOfNodesType;
 
 vector<Subnet> subnetsDetected;
 
-PersonalityTable personalities;
+ScannedHostTable scannedHosts;
 
 string lockFilePath;
 
 int main(int argc, char ** argv)
 {
+	//Seed any future random values
+	srand(time(NULL));
+
 	namespace po = boost::program_options;
 	po::options_description desc("Command line options");
 	try
@@ -80,7 +85,6 @@ int main(int argc, char ** argv)
 				("interface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
 				("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
 				("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
-				("group-name,g", po::value<string>(), "User-designated name for generated profile group. Only used if one profile or subnet is scanned.")
 		;
 
 		po::variables_map vm;
@@ -101,7 +105,7 @@ int main(int argc, char ** argv)
 		}
 
 
-		if(vm.count("num-nodes-ratio") && vm.count("num-nodes"))
+		if (vm.count("num-nodes-ratio") && vm.count("num-nodes"))
 		{
 			cout << "ERROR: You can only use one of -r and -n to specify the number of nodes." << endl;
 			lockFile.close();
@@ -109,7 +113,7 @@ int main(int argc, char ** argv)
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 
-		if(vm.count("num-nodes-ratio"))
+		if (vm.count("num-nodes-ratio"))
 		{
 			cout << "Number of nodes to create: " << nodeRatio << " * number of real hosts found" << endl;
 			numberOfNodesType = RATIO_BASED_NUMBER_OF_NODES;
@@ -180,13 +184,8 @@ int main(int argc, char ** argv)
 			nmapFileName = vm["nmap-xml"].as<string>();
 			f_flag_set = true;
 		}
-		if(vm.count("group-name"))
-		{
-			cout<< "selected group name is " << vm["group-name"].as< string >() << endl;
-			groupName = vm["group-name"].as< string >();
-		}
 
-		if(numberOfNodesType == FIXED_NUMBER_OF_NODES && numNodes < 0)
+		if((numberOfNodesType == FIXED_NUMBER_OF_NODES) && (numNodes < 0))
 		{
 			lockFile.close();
 			remove(lockFilePath.c_str());
@@ -206,7 +205,13 @@ int main(int argc, char ** argv)
 		// Arg parsing done, moving onto execution items
 		if(f_flag_set)
 		{
-			LOG(ALERT, "Launching Honeyd Host Configuration Tool", "");
+			LOG(ALERT, "Launching Haystack Auto-configuration Tool", "");
+
+			if(!HoneydConfiguration::Inst()->ReadScriptsXML())
+			{
+				LOG(WARNING, "Problem reading script template XML from file", "");
+			}
+
 			if(!LoadNmapXML(nmapFileName))
 			{
 				LOG(ERROR, "LoadNmapXML failed. Aborting...", "");
@@ -279,23 +284,77 @@ int main(int argc, char ** argv)
 	}
 }
 
-HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
+void Nova::ParseHost(boost::property_tree::ptree propTree)
 {
 	using boost::property_tree::ptree;
 
 	// Instantiate Personality object here, populate it from the code below
-	Personality *persObject = new Personality();
+	ScannedHost *newHost = new ScannedHost();
+
+	VendorMacDb *macVendorDB = new VendorMacDb();
+	macVendorDB->LoadPrefixFile();
 
 	// For the personality table, increment the number of hosts found
 	// and decrement the number of hosts available, so at the end
 	// of the configuration process we don't over-allocate space
 	// in the hostspace for the subnets, clobbering existing DHCP
 	// allocations.
-	personalities.m_num_of_hosts++;
-	personalities.m_numAddrsAvail--;
+	scannedHosts.m_num_of_hosts++;
 
-	int i = 0;
+	//Parse the OS first, as we need its value for other calculations
+	BOOST_FOREACH(ptree::value_type &value, propTree.get_child("os"))
+	{
+		if(!value.first.compare("osmatch") && newHost->m_personalityClass.empty())
+		{
+			try
+			{
+				if(value.second.get<string>("<xmlattr>.name").compare(""))
+				{
+					newHost->m_personality = value.second.get<string>("<xmlattr>.name");
+					newHost->m_personalityClass.push_back(value.second.get<string>("<xmlattr>.name"));
+				}
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+			}
+			try
+			{
+				if(value.second.get<string>("osclass.<xmlattr>.osgen").compare(""))
+				{
+					newHost->m_personalityClass.push_back(value.second.get<string>("osclass.<xmlattr>.osgen"));
+				}
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+			}
+			try
+			{
+				if(value.second.get<string>("osclass.<xmlattr>.osfamily").compare(""))
+				{
+					newHost->m_personalityClass.push_back(value.second.get<string>("osclass.<xmlattr>.osfamily"));
+				}
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+			}
+			try
+			{
+				if(value.second.get<string>("osclass.<xmlattr>.vendor").compare(""))
+				{
+					newHost->m_personalityClass.push_back(value.second.get<string>("osclass.<xmlattr>.vendor"));
+				}
+			}
+			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+			{
+				LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
+			}
+		}
+	}
 
+	//Parse the rest of the xml tags
 	BOOST_FOREACH(ptree::value_type &value, propTree.get_child(""))
 	{
 		try
@@ -311,7 +370,7 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 					// <addr> tag
 					if(localMachine.compare(value.second.get<string>("<xmlattr>.addr")))
 					{
-						persObject->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
+						newHost->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
 					}
 					// If, however, we're parsing ourself, we need to do some extra work.
 					// The IP address will be in the nmap XML structure, but the MAC will not.
@@ -321,32 +380,31 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 					// of Nova proper.
 					else
 					{
-						persObject->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
+						newHost->m_addresses.push_back(value.second.get<string>("<xmlattr>.addr"));
 
 						string vendorString = "";
 						string macString = "";
 
-						int s;
 						struct ifreq buffer;
 						vector<string> interfacesFromConfig = Config::Inst()->ListInterfaces();
 
 						for(uint j = 0; j < interfacesFromConfig.size() && macString.empty(); j++)
 						{
-							s = socket(PF_INET, SOCK_DGRAM, 0);
+							int socketFD = socket(PF_INET, SOCK_DGRAM, 0);
 
 							memset(&buffer, 0x00, sizeof(buffer));
-							strcpy(buffer.ifr_name, interfacesFromConfig[j].c_str());
-							ioctl(s, SIOCGIFHWADDR, &buffer);
-							close(s);
+							strncpy(buffer.ifr_name, interfacesFromConfig[j].c_str(), sizeof(buffer.ifr_name));
+							ioctl(socketFD, SIOCGIFHWADDR, &buffer);
+							close(socketFD);
 
 							char macPair[3];
 
 							stringstream ss;
 							string zeroCheck;
 
-							for(s = 0; s < 6; s++)
+							for(uint k = 0; k < 6; k++)
 							{
-								sprintf(macPair, "%2x", (unsigned char)buffer.ifr_hwaddr.sa_data[s]);
+								sprintf(macPair, "%2x", (unsigned char)buffer.ifr_hwaddr.sa_data[k]);
 								zeroCheck = string(macPair);
 
 								zeroCheck = boost::trim_left_copy(zeroCheck);
@@ -360,7 +418,7 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 								{
 									ss << macPair;
 								}
-								if(s != 5)
+								if(k != 5)
 								{
 									ss << ":";
 								}
@@ -370,10 +428,8 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 							ss.str("");
 						}
 
-						persObject->m_macs.push_back(macString);
+						newHost->m_macs.push_back(macString);
 
-						VendorMacDb *macVendorDB = new VendorMacDb();
-						macVendorDB->LoadPrefixFile();
 						uint rawMACPrefix = macVendorDB->AtoMACPrefix(macString);
 						vendorString = macVendorDB->LookupVendor(rawMACPrefix);
 
@@ -381,7 +437,7 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 						{
 							try
 							{
-								persObject->AddVendor(vendorString);
+								newHost->AddVendor(vendorString);
 							}
 							catch(emptyKeyException &e)
 							{
@@ -395,29 +451,98 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 				// the MAC_Table inside the object as well.
 				else if(!value.second.get<string>("<xmlattr>.addrtype").compare("mac"))
 				{
-					persObject->m_macs.push_back(value.second.get<string>("<xmlattr>.addr"));
-					persObject->AddVendor(value.second.get<string>("<xmlattr>.vendor"));
+					newHost->m_macs.push_back(value.second.get<string>("<xmlattr>.addr"));
+					newHost->AddVendor(value.second.get<string>("<xmlattr>.vendor"));
 				}
 			}
 			// If we've found the <ports> tag within the <host> xml node
 			else if(!value.first.compare("ports"))
 			{
+				string portName;
+				if(!newHost->m_addresses.empty())
+				{
+					portName = "Autoconfig-PortSet-" + newHost->m_addresses[0];
+				}
+				else
+				{
+					stringstream ss;
+					static uint portSetCount = 0;
+					ss << "Autoconfig-PortSet-" << portSetCount++;
+					portName = ss.str();
+				}
+
+				PortSet *newPortSet = new PortSet(portName);
+				newHost->m_portSets.push_back(newPortSet);
+
 				BOOST_FOREACH(ptree::value_type &portValue, value.second.get_child(""))
 				{
 					try
 					{
-						// try, for every <port> tag in <ports>, to get the
+						// try, for every tag in <ports>, to get the
 						// port number, the protocol (tcp, udp, sctp, etc...)
 						// and the name of the <service> running on the port
-						// and add the port to the Port_Table in the Personality
-						// object.
+
+						if(!portValue.first.compare("extraports"))
+						{
+							//XXX: Assume TCP for now, because there is no tag for protocol from Nmap here
+							string defaultBehavior = portValue.second.get<string>("<xmlattr>.state");
+							if(!defaultBehavior.empty())
+							{
+								if(!newPortSet->SetTCPBehavior(defaultBehavior))
+								{
+									//TODO: ERROR
+								}
+								continue;
+							}
+						}
+
 						stringstream ss;
-						ss << portValue.second.get<int>("<xmlattr>.portid");
-						string port_key = ss.str() + "_" + boost::to_upper_copy(portValue.second.get<string>("<xmlattr>.protocol"));
-						ss.str("");
-						string port_service = portValue.second.get<string>("service.<xmlattr>.name");
-						persObject->AddPort(port_key, port_service);
-						i++;
+						uint portNumber = portValue.second.get<uint>("<xmlattr>.portid");
+
+
+						string protocolString = portValue.second.get<string>("<xmlattr>.protocol");
+						enum PortProtocol protocol = Port::StringToPortProtocol(protocolString);
+						if(protocol == PROTOCOL_ERROR)
+						{
+							continue;
+						}
+
+						string serviceName = portValue.second.get<string>("service.<xmlattr>.name");
+
+						string portState = portValue.second.get<string>("state.<xmlattr>.state");
+						enum PortBehavior behavior = Port::StringToPortBehavior(portState);
+						if(behavior == PORT_ERROR)
+						{
+							//ERROR
+							continue;
+						}
+
+						//Add this port into the running port set
+						Port port(serviceName, protocol, portNumber, behavior);
+
+						if(behavior == PORT_OPEN)
+						{
+							//We need all the OS strings to have been read
+							if(newHost->m_personalityClass.size() > 3)
+							{
+								//Form the correct OS string to do the script lookup: "vendor | family"
+								string osclass = newHost->m_personalityClass[3] + " | " + newHost->m_personalityClass[2];
+
+								//Do a lookup to see if there are scripts for this open port
+								vector<Script> validScripts = HoneydConfiguration::Inst()->GetScripts(
+										serviceName, osclass);
+								if(!validScripts.empty())
+								{
+									//Pick one of the scripts at random
+									uint random = rand() % validScripts.size();
+
+									port.m_scriptName = validScripts[random].m_name;
+									port.m_behavior = PORT_SCRIPT;
+								}
+							}
+						}
+
+						newPortSet->AddPort(port);
 					}
 					catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 					{
@@ -425,74 +550,15 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 					}
 				}
 			}
-			// If we've found the <os> tags in the <host> xml node
-			else if(!value.first.compare("os") && persObject->m_personalityClass.empty())
+			else if(!value.first.compare("uptime"))
 			{
-				// try to get the name, type, osgen, osfamily and vendor for the most
-				// accurate guess by nmap. This will (provided the xml is structured correctly)
-				// push back the values in the following form:
-				// personality_name, type, osgen, osfamily, vendor
-				// This order must be properly maintained for use in the PersonalityTree class.
-				BOOST_FOREACH(ptree::value_type &osValue, value.second.get_child(""))
+				try
 				{
-					if(!osValue.first.compare("osmatch") && persObject->m_personalityClass.empty())
-					{
-						try
-						{
-							if(osValue.second.get<string>("<xmlattr>.name").compare(""))
-							{
-								persObject->m_personalityClass.push_back(osValue.second.get<string>("<xmlattr>.name"));
-							}
-						}
-						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-						{
-							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
-						}
-						/*try
-						{
-							if(osValue.second.get<string>("osclass.<xmlattr>.type").compare(""))
-							{
-								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.type"));
-							}
-						}
-						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-						{
-							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
-						}*/
-						try
-						{
-							if(osValue.second.get<string>("osclass.<xmlattr>.osgen").compare(""))
-							{
-								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osgen"));
-							}
-						}
-						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-						{
-							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
-						}
-						try
-						{
-							if(osValue.second.get<string>("osclass.<xmlattr>.osfamily").compare(""))
-							{
-								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.osfamily"));
-							}
-						}
-						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-						{
-							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
-						}
-						try
-						{
-							if(osValue.second.get<string>("osclass.<xmlattr>.vendor").compare(""))
-							{
-								persObject->m_personalityClass.push_back(osValue.second.get<string>("osclass.<xmlattr>.vendor"));
-							}
-						}
-						catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
-						{
-							LOG(DEBUG, "Caught Exception: " + string(e.what()), "");
-						}
-					}
+					newHost->m_uptime = value.second.get<uint>("<xmlattr>.seconds");
+				}
+				catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+				{
+					LOG(DEBUG, "Error parsing nmap XML uptime attribute: " + string(e.what()), "");
 				}
 			}
 		}
@@ -502,34 +568,27 @@ HHC_ERR_CODE Nova::ParseHost(boost::property_tree::ptree propTree)
 		}
 	}
 
-	// Assign the number of ports found to the m_port_count member variable,
-	// for use
-	persObject->m_port_count = i;
-
-	// If personalityClass vector is empty, nmap wasn't able to generate
-	// a personality for a host, and therefore we don't want to include it
-	// into any structure that would use the Personality object populated above.
-	// Just return and let the scoping take care of deallocating the object.
-	if(persObject->m_personalityClass.empty())
+	// If personalityClass vector is empty, assign this profile to the NULL fake profile
+	if(newHost->m_personalityClass.empty())
 	{
-		return HHC_CODE_NO_MATCHED_PERSONALITY;
+		newHost->m_personalityClass.push_back("NULL");
+		newHost->m_osclass = "NULL";
 	}
-
-	// Generate OS Class strings for use later down the line; used primarily
-	// for matching open ports to scripts in the script table. So, say 22_TCP is open
-	// on a host, we'll use the m_personalityClass string to match the OS and open port
-	// to a script and then assign that script automatically.
-	for(uint i = 0; i < persObject->m_personalityClass.size() - 1; i++)
+	else
 	{
-		persObject->m_osclass += persObject->m_personalityClass[i] + " | ";
+		// Generate OS Class strings for use later down the line; used primarily
+		// for matching open ports to scripts in the script table. So, say 22_TCP is open
+		// on a host, we'll use the m_personalityClass string to match the OS and open port
+		// to a script and then assign that script automatically.
+		for(uint i = 0; i < newHost->m_personalityClass.size(); i++)
+		{
+			newHost->m_osclass += newHost->m_personalityClass[i];
+			newHost->m_osclass += " | ";
+		}
 	}
-
-	persObject->m_osclass += persObject->m_personalityClass[persObject->m_personalityClass.size() - 1];
 
 	// Call AddHost() on the Personality object created at the beginning of this method
-	personalities.AddHost(persObject);
-
-	return HHC_CODE_OKAY;
+	scannedHosts.AddHost(newHost);
 }
 
 bool Nova::LoadNmapXML(const string &filename)
@@ -555,30 +614,7 @@ bool Nova::LoadNmapXML(const string &filename)
 				ptree tempPropTree = host.second;
 
 				// Call ParseHost on the <host> subtree within the xml file.
-				switch(ParseHost(tempPropTree))
-				{
-					// Output for alerting user that a found host had incomplete
-					// personality data, and thus was not added to the PersonalityTable.
-					case HHC_CODE_NO_MATCHED_PERSONALITY:
-					{
-						LOG(WARNING, "Unable to obtain personality data for host "
-							+ tempPropTree.get<std::string>("address.<xmlattr>.addr") + ".", "");
-						break;
-					}
-					// Everything parsed fine, don't output anything.
-					case HHC_CODE_OKAY:
-					{
-						break;
-					}
-					// Execution should never get here; if you're adding ErrCodes
-					// that could occur in ParseHost, add a case for it
-					// with an appropriate output detailing what went wrong.
-					default:
-					{
-						LOG(ERROR, "Unknown return value.", "");
-						break;
-					}
-				}
+				ParseHost(tempPropTree);
 			}
 		}
 	}
@@ -763,12 +799,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 			string bitmaskString = string(bitmaskBuffer);
 			string addrString = string(addrBuffer);
 
-			// Spurious debug prints for now. May change them to be used
-			// in UI hooks later.
-			//cout << "Interface: " << curIf->ifa_name << endl;
-			//cout << "Address: " << addrString << endl;
-			//cout << "Netmask: " << bitmaskString << endl;
-
 			// Put the network ordered address values into the
 			// address and bitmaks in_addr structs, and then
 			// convert them to host longs for use in
@@ -786,12 +816,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 			// and the max address
 			uint32_t hostOrderMaxAddrInRange = ~(hostOrderBitmask) + hostOrderMinAddrInRange;
 			maxAddrInRange.s_addr = htonl(hostOrderMaxAddrInRange);
-
-			// and then add max - base (minus three, for the current
-			// host, the .0 address, and the .255 address)
-			// into the PersonalityTable's aggregate coutn of
-			// available host address space.
-			personalities.m_numAddrsAvail += hostOrderMaxAddrInRange - hostOrderMinAddrInRange - 3;
 
 			// Find out how many bits there are to work with in
 			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
@@ -885,12 +909,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 				localMachine = addrString;
 			}
 
-			// Spurious debug prints for now. May change them to be used
-			// in UI hooks later.
-			//cout << "Interface: " << curIf->ifa_name << endl;
-			//cout << "Address: " << addrString << endl;
-			//cout << "Netmask: " << bitmaskString << endl;
-
 			// Put the network ordered address values into the
 			// address and bitmaks in_addr structs, and then
 			// convert them to host longs for use in
@@ -908,12 +926,6 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 			// and the max address
 			uint32_t hostOrderMaxAddrInRange = ~(hostOrderBitmask) + hostOrderMinAddrInRange;
 			maxAddrInRange.s_addr = htonl(hostOrderMaxAddrInRange);
-
-			// and then add max - base (minus three, for the current
-			// host, the .0 address, and the .255 address)
-			// into the PersonalityTable's aggregate coutn of
-			// available host address space.
-			personalities.m_numAddrsAvail += hostOrderMaxAddrInRange - hostOrderMinAddrInRange - 3;
 
 			// Find out how many bits there are to work with in
 			// the subnet (i.e. X.X.X.X/24? X.X.X.X/31?).
@@ -955,37 +967,59 @@ vector<string> Nova::GetSubnetsToScan(Nova::HHC_ERR_CODE *errVar, vector<string>
 
 void Nova::GenerateConfiguration()
 {
-	personalities.CalculateDistributions();
-	PersonalityTree persTree = PersonalityTree(&personalities, subnetsDetected);
-	persTree.AddAllPorts();
-	NodeManager nodeBuilder = NodeManager(persTree.GetHDConfig());
+	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
+
+	Config::Inst()->SetGroup("Autoconfig");
+	Config::Inst()->SaveUserConfig();
 
 	uint nodesToCreate = 0;
-	switch (numberOfNodesType)
+	if(numberOfNodesType == FIXED_NUMBER_OF_NODES)
 	{
-		case FIXED_NUMBER_OF_NODES:
-		{
-			nodesToCreate = numNodes;
-			break;
-		}
-
-		case RATIO_BASED_NUMBER_OF_NODES:
-		{
-			nodesToCreate = ((double)personalities.m_num_of_hosts) * nodeRatio;
-			break;
-		}
-
-		default:
-		{}
-	};
+		nodesToCreate = numNodes;
+	}
+	else
+	{
+		nodesToCreate = ((double)scannedHosts.m_num_of_hosts) * nodeRatio;
+	}
 
 	stringstream ss;
-	ss << "Creating " << nodesToCreate << " new nodes" << endl;
+	ss << "Creating " << nodesToCreate << " new nodes";
 	LOG(DEBUG, ss.str(), "");
 
-	nodeBuilder.SetNumNodesOnProfileTree(&persTree.GetHDConfig()->m_profiles["default"], nodesToCreate);
-	persTree.GetHDConfig()->SaveAllTemplates();
-	persTree.GetHDConfig()->WriteHoneydConfiguration();
+	for(uint i = 0; i < nodesToCreate; i++)
+	{
+		//Pick a (leaf) profile at random
+		Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
+		if(winningPersonality == NULL)
+		{
+			continue;
+		}
+
+		//Pick a random MAC vendor from this profile
+		string vendor = winningPersonality->GetRandomVendor();
+
+		//Pick a MAC address for the node:
+		string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
+
+		Config::Inst()->SetGroup("Autoconfig");
+
+		//Make a node for that profile
+		HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, Config::Inst()->GetInterface(0),
+				winningPersonality->GetRandomPortSet());
+	}
+
+	if(!HoneydConfiguration::Inst()->WriteNodesToXML())
+	{
+		LOG(ERROR, "Unable to save haystack templates", "");
+	}
+	if(!HoneydConfiguration::Inst()->WriteProfilesToXML())
+	{
+		LOG(ERROR, "Unable to save haystack templates", "");
+	}
+	if(!HoneydConfiguration::Inst()->WriteHoneydConfiguration())
+	{
+		LOG(ERROR, "Unable to write haystack configuration", "");
+	}
 }
 
 bool Nova::CheckSubnet(vector<string> &hostAddrStrings, string matchStr)

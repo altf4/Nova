@@ -18,6 +18,11 @@
 
 #include "gtest/gtest.h"
 #include "HoneydConfiguration/HoneydConfiguration.h"
+#include "HoneydConfiguration/Profile.h"
+#include "HoneydConfiguration/Node.h"
+
+
+#define HC HoneydConfiguration::Inst()
 
 using namespace Nova;
 
@@ -26,239 +31,126 @@ class HoneydConfigurationTest : public ::testing::Test
 {
 
 protected:
-
-	// Objects declared here can be used by all tests in the test case
-	HoneydConfiguration * m_config;
-
-	HoneydConfigurationTest()
-	{
-		m_config = new HoneydConfiguration();
-	}
-
-	~HoneydConfigurationTest()
-	{
-		delete m_config;
-	}
-
 	// If the constructor and destructor are not enough for setting up
 	// and cleaning up each test, you can define the following methods:
 	void SetUp()
 	{
-		EXPECT_TRUE(m_config != NULL);
-		EXPECT_TRUE(m_config->LoadAllTemplates());
-	}
-
-	void TearDown()
-	{
-
+		EXPECT_TRUE(HC != NULL);
+		EXPECT_TRUE(HC->ReadAllTemplatesXML());
+		HC->ClearProfiles();
+		HC->ClearNodes();
 	}
 };
 
-// Tests go here. Multiple small tests are better than one large test, as each test
-// will get a pass/fail and debugging information associated with it.
-
-TEST_F(HoneydConfigurationTest, test_getMaskBits)
+TEST_F(HoneydConfigurationTest, test_WriteAllTemplatesXML)
 {
-	EXPECT_EQ(0, m_config->GetMaskBits(0));
-	EXPECT_EQ(16, m_config->GetMaskBits(~0 - 65535));
-	EXPECT_EQ(24, m_config->GetMaskBits(~0 - 255));
-	EXPECT_EQ(31, m_config->GetMaskBits(~0 -1));
-	EXPECT_EQ(32, m_config->GetMaskBits(~0));
-	EXPECT_EQ(-1, m_config->GetMaskBits(240));
-}
-
-TEST_F(HoneydConfigurationTest, test_Port)
-{
-	stringstream ss;
-	vector<string> expectedPorts;
-	ss.str("");
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(0, TCP, OPEN, ""))));
-	ss.str("1_TCP_open");
-	expectedPorts.push_back(ss.str());
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(1, TCP, OPEN, ""))));
-	ss.str("65535_UDP_block");
-	expectedPorts.push_back(ss.str());
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, UDP, BLOCK, ""))));
-	ss.str("65535_TCP_reset");
-	expectedPorts.push_back(ss.str());
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(~0, TCP, RESET, ""))));
-	ss.str("65534_TCP_block");
-	expectedPorts.push_back(ss.str());
-	EXPECT_TRUE(!(ss.str().compare(m_config->AddPort(65534, TCP, BLOCK, ""))));
-
-	std::vector<std::string> scriptNames;
-	EXPECT_NO_FATAL_FAILURE(scriptNames = m_config->GetScriptNames());
-	uint i = 2;
-	while(!scriptNames.empty())
-	{
-		ss.str("");
-		ss << i << "_TCP_script_" << scriptNames.back();
-		EXPECT_EQ(ss.str(), m_config->AddPort(i, TCP, SCRIPT, scriptNames.back()));
-		expectedPorts.push_back(ss.str());
-		scriptNames.pop_back();
-		i++;
-	}
-	while(!expectedPorts.empty())
-	{
-		EXPECT_EQ(m_config->GetPort(expectedPorts.back()).m_portName, expectedPorts.back());
-		expectedPorts.pop_back();
-	}
+	Profile * p = new Profile("default", "TestProfile");
+	EXPECT_TRUE(HC->AddProfile(p));
+	EXPECT_TRUE(HC->WriteAllTemplatesToXML());
+	EXPECT_TRUE(HC->ReadAllTemplatesXML());
+	EXPECT_TRUE(HC->GetProfile("TestProfile") != NULL);
 }
 
 TEST_F(HoneydConfigurationTest, test_RenameProfile)
 {
-	//Create dummy profile
-	NodeProfile * p = new NodeProfile();
-	p->m_name = "TestProfile";
-	p->SetEthernet("Dell");
-	p->m_icmpAction = "block";
-	p->m_parentProfile = "default";
-	p->m_udpAction = "block";
-	p->m_tcpAction = "reset";
-	p->m_uptimeMax = "100";
-	p->m_uptimeMin = "10";
+	// Create dummy profile
+	Profile * p = new Profile("default", "TestProfile");
 
-	// Delete the profile if it already exists
-	m_config->DeleteProfile("TestProfile-renamed");
-	m_config->DeleteProfile("TestProfile");
-
-	//Test adding a profile
-	EXPECT_TRUE(m_config->AddProfile(p));
-	EXPECT_TRUE(m_config->m_profiles.find("TestProfile") != m_config->m_profiles.end());
+	// Add the dummy profile
+	EXPECT_TRUE(HC->AddProfile(p));
+	EXPECT_TRUE(HC->GetProfile("TestProfile") != NULL);
 
 	//Test renaming a profile
-	EXPECT_TRUE(m_config->RenameProfile("TestProfile", "TestProfile-renamed"));
+	EXPECT_TRUE(HC->RenameProfile("TestProfile", "TestProfile-renamed"));
 
-	m_config->UpdateAllProfiles();
-
-	// Save and delete object
-	EXPECT_TRUE(m_config->SaveAllTemplates());
-	delete m_config;
-
-	// Reload from the config file
-	m_config = new HoneydConfiguration();
-	EXPECT_TRUE(m_config != NULL);
-	EXPECT_TRUE(m_config->LoadAllTemplates());
-
-	EXPECT_TRUE(m_config->m_profiles.find("TestProfile-renamed") != m_config->m_profiles.end());
-	EXPECT_TRUE(m_config->m_profiles.find("TestProfile") == m_config->m_profiles.end());
-
-
-	EXPECT_TRUE(m_config->DeleteProfile("TestProfile-renamed"));
-	EXPECT_TRUE(m_config->SaveAllTemplates());
+	// Make sure it was renamed
+	EXPECT_TRUE(HC->GetProfile("TestProfile-renamed") != NULL);
+	EXPECT_TRUE(HC->GetProfile("TestProfile") == NULL);
 }
 
 TEST_F(HoneydConfigurationTest, test_errorCases)
 {
-	EXPECT_FALSE(m_config->DeleteProfile(""));
-	EXPECT_FALSE(m_config->DeleteProfile("aoeustnhaoesnuhaosenuht"));
-	EXPECT_FALSE(m_config->DeleteNode(""));
-	EXPECT_FALSE(m_config->DeleteNode("aoeuhaonsehuaonsehu"));
-	EXPECT_EQ(NULL, m_config->GetProfile(""));
-	EXPECT_EQ(NULL, m_config->GetProfile("aouhaosnuheaonstuh"));
-	EXPECT_EQ(NULL, m_config->GetNode(""));
-	EXPECT_EQ(NULL, m_config->GetNode("aouhaosnuheaonstuh"));
+	EXPECT_FALSE(HC->DeleteProfile(""));
+	EXPECT_FALSE(HC->DeleteProfile("aoeustnhaoesnuhaosenuht"));
+	EXPECT_FALSE(HC->DeleteNode(""));
+	EXPECT_FALSE(HC->DeleteNode("aoeuhaonsehuaonsehu"));
+	EXPECT_EQ(NULL, HC->GetProfile(""));
+	EXPECT_EQ(NULL, HC->GetProfile("aouhaosnuheaonstuh"));
+	EXPECT_EQ(NULL, HC->GetNode(""));
+	EXPECT_EQ(NULL, HC->GetNode("aouhaosnuheaonstuh"));
 
 }
 
 TEST_F(HoneydConfigurationTest, test_Profile)
 {
 	//Create dummy profile
-	NodeProfile * p = new NodeProfile();
-	p->m_name = "TestProfile";
-	p->SetEthernet("Dell");
-	p->m_icmpAction = "block";
-	p->m_parentProfile = "default";
-	p->m_udpAction = "block";
-	p->m_tcpAction = "reset";
-	p->m_uptimeMax = "100";
-	p->m_uptimeMin = "10";
-
-	bool dmEn = Config::Inst()->GetIsDmEnabled();
-	Config::Inst()->SetIsDmEnabled(false);
-
-	// Delete the profile if it already exists
-	m_config->DeleteProfile("TestProfile-renamed");
-	m_config->DeleteProfile("TestProfile");
+	Profile * p = new Profile("default", "TestProfile");
 
 	//Test adding a profile
-	EXPECT_TRUE(m_config->AddProfile(p));
-	EXPECT_TRUE(m_config->m_profiles.find("TestProfile") != m_config->m_profiles.end());
+	EXPECT_TRUE(HC->AddProfile(p));
+	EXPECT_TRUE(HC->GetProfile("TestProfile") != NULL);
 
-	//Modify the test profile to add a second one.
-	p->m_parentProfile = "TestProfile";
-	p->m_name = "TestProfile2";
-	EXPECT_TRUE(m_config->AddProfile(p));
-	EXPECT_TRUE(m_config->m_profiles.find("TestProfile2") != m_config->m_profiles.end());
+	// Add a child profile
+	Profile * pChild = new Profile("TestProfile", "TestProfileChild");
+	EXPECT_TRUE(HC->AddProfile(pChild));
+	EXPECT_TRUE(HC->GetProfile("TestProfileChild") != NULL);
 
 	//Test renaming a profile
-	EXPECT_TRUE(m_config->RenameProfile("TestProfile2", "TestProfile-2"));
-	EXPECT_TRUE(m_config->m_profiles.find("TestProfile2") == m_config->m_profiles.end());
-	EXPECT_TRUE(m_config->m_profiles.find("TestProfile-2") != m_config->m_profiles.end());
-
-	//Test Inheriting of a profile
-	EXPECT_TRUE((m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("default")));
-	EXPECT_TRUE(!(m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("TestProfile")));
-	EXPECT_TRUE(m_config->InheritProfile("TestProfile-2", "default"));
-	EXPECT_TRUE(!(m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("default")));
-	EXPECT_TRUE((m_config->m_profiles.find("TestProfile-2")->second.m_parentProfile.compare("TestProfile")));
+	EXPECT_TRUE(HC->RenameProfile("TestProfile", "TestProfileRenamed"));
+	EXPECT_TRUE(HC->GetProfile("TestProfile") == NULL);
+	EXPECT_TRUE(HC->GetProfile("TestProfileRenamed") != NULL);
+	EXPECT_TRUE(HC->GetProfile("TestProfile") == NULL);
 
 	//Test deleting a profile
-	EXPECT_TRUE(m_config->DeleteProfile("TestProfile"));
-	EXPECT_TRUE(m_config->m_profiles.find("TestProfile") == m_config->m_profiles.end());
-
-	Config::Inst()->SetIsDmEnabled(dmEn);
+	EXPECT_TRUE(HC->DeleteProfile("TestProfileRenamed"));
+	EXPECT_TRUE(HC->GetProfile("TestProfileRenamed") == NULL);
+	EXPECT_TRUE(HC->GetProfile("TestProfileChild") == NULL);
 }
 
-
-TEST_F(HoneydConfigurationTest, test_NewProfileSaving)
+TEST_F(HoneydConfigurationTest, test_GetProfileNames)
 {
-	EXPECT_TRUE(m_config->AddPort(1, (portProtocol)1, (portBehavior)0, "NA") == "1_TCP_block");
-	EXPECT_TRUE(m_config->AddPort(2, (portProtocol)1, (portBehavior)1, "NA") == "2_TCP_reset");
-	EXPECT_TRUE(m_config->AddPort(3, (portProtocol)1, (portBehavior)2, "NA") == "3_TCP_open");
+	EXPECT_TRUE(HC->AddProfile(new Profile("default", "top")));
+	EXPECT_TRUE(HC->AddProfile(new Profile("default", "top")));
+	EXPECT_TRUE(HC->AddProfile(new Profile("top", "topChild")));
+	EXPECT_TRUE(HC->AddProfile(new Profile("topChild", "topGrandChild")));
 
-	NodeProfile * p = new NodeProfile();
-	for (int i = 0; i < INHERITED_MAX; i++)
-	{
-		p->m_inherited[i] = true;
-	}
-	p->m_name = "test";
-	p->m_parentProfile = "default";
-	p->AddPort("1_TCP_block", false, 100);
-	p->AddPort("2_TCP_reset", false, 100);
-	p->AddPort("3_TCP_open", false, 100);
-
-	EXPECT_TRUE(m_config->AddProfile(p));
-	//EXPECT_TRUE(m_config->SaveAllTemplates());
+	vector<string> profiles = HC->GetProfileNames();
+	// default + 4 new ones (one duplicate) = 4
+	EXPECT_EQ(4, profiles.size());
 }
 
-TEST_F(HoneydConfigurationTest, test_profileDeletion)
+TEST_F(HoneydConfigurationTest, test_AddNodes)
 {
-	NodeProfile *parent = new NodeProfile();
-	parent->SetName("parent");
-	parent->SetParentProfile("default");
-	EXPECT_TRUE(m_config->AddProfile(parent));
+	EXPECT_TRUE(HC->AddNodes("default", "default", "Dell", "DHCP", "eth0", 10));
+	EXPECT_EQ(10, HC->GetNodeMACs().size());
+}
 
-	m_config->UpdateAllProfiles();
+TEST_F(HoneydConfigurationTest, test_AddNode)
+{
+	Node node;
+	node.m_MAC = "FF:FF:BA:BE:CA:FE";
+	node.m_pfile = "default";
 
-	NodeProfile *child = new NodeProfile();
-	child->SetName("child");
-	child->SetParentProfile("parent");
-	EXPECT_TRUE(m_config->AddProfile(child));
+	EXPECT_TRUE(HC->AddNode(node));
+	EXPECT_TRUE(HC->GetNode("FF:FF:BA:BE:CA:FE") != NULL);
+	EXPECT_TRUE(HC->GetNode("FF:FF:BA:BE:CA:FE")->m_MAC == "FF:FF:BA:BE:CA:FE");
+}
 
-	// Save, reload
-	EXPECT_TRUE(m_config->SaveAllTemplates());
-	EXPECT_TRUE(m_config->LoadAllTemplates());
+TEST_F(HoneydConfigurationTest, test_WouldAddProfileCauseNodeDeletions)
+{
+	Profile *p = new Profile("default", "testProfile");
+	p->m_portSets.push_back(new PortSet("test"));
+	EXPECT_TRUE(HC->AddProfile(p));
 
-	// Delete the child and make sure it worked after a reload
-	EXPECT_TRUE(m_config->DeleteProfile("child"));
-	EXPECT_TRUE(m_config->SaveAllTemplates());
-	EXPECT_TRUE(m_config->LoadAllTemplates());
-	EXPECT_TRUE(m_config->m_profiles.find("child") == m_config->m_profiles.end());
+	Node node;
+	node.m_pfile == "testProfile";
+	node.m_portSetName = "test";
+	node.m_MAC = "FF:FF:BA:BE:CA:FE";
+	EXPECT_TRUE(HC->AddNode(node));
 
-	// Delete the parent and make sure it worked after a reload
-	EXPECT_TRUE(m_config->DeleteProfile("parent"));
-	EXPECT_TRUE(m_config->SaveAllTemplates());
-	EXPECT_TRUE(m_config->LoadAllTemplates());
-	EXPECT_TRUE(m_config->m_profiles.find("parent") == m_config->m_profiles.end());
+	Profile *p2 = new Profile("default", "testProfile");
+	EXPECT_TRUE(HC->WouldAddProfileCauseNodeDeletions(p2));
+
+	p2->m_portSets.push_back(new PortSet("test"));
+	EXPECT_FALSE(HC->WouldAddProfileCauseNodeDeletions(p2));
 }

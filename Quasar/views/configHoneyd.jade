@@ -18,11 +18,35 @@ block headerAdditions
         var ip2 = document.getElementById("ip2").value;
         var ip3 = document.getElementById("ip3").value;
         var ip4 = document.getElementById("ip4").value;
+        var portset = document.getElementById("portSetList").value;
+        var vendor = document.getElementById("vendorList").value;
         var profile = document.getElementById("profile").value;
         var count = document.getElementById("nodeCount").value;
         var interface = currentInterface;
 
-        now.createHoneydNodes(ipType, ip1, ip2, ip3, ip4, profile, interface, "", count, createNodesCallback);
+        now.createHoneydNodes(ipType, ip1, ip2, ip3, ip4, profile, portset, vendor, interface, count, createNodesCallback);
+    }
+    
+    function profileChanged() {
+        now.GetProfile(document.getElementById("profile").value, populateVendorList);
+    }
+    
+    function populateVendorList(profile) {
+        document.getElementById("vendorList").innerHTML = "";
+        for (var vendor in profile.ethernet) {
+            var v = profile.ethernet[vendor].vendor;
+            var option = document.createElement('option');
+            option.innerHTML = v;
+            document.getElementById("vendorList").appendChild(option);
+        }
+        
+        document.getElementById("portSetList").innerHTML = "";
+        for (var portset in profile.portSets) {
+            var v = profile.portSets[portset].setName;
+            var option = document.createElement('option');
+            option.innerHTML = v;
+            document.getElementById("portSetList").appendChild(option);
+        }
     }
 
     function createNodesCallback(err) {
@@ -192,18 +216,6 @@ block headerAdditions
       window.location.href = "editHoneydNode?node=" + nodeName;
     }
 
-    function changeGroup() {
-        try {
-           now.changeGroup(document.getElementById("GROUP").value, function() {
-             window.location.reload();
-           });
-        } catch (err) {
-            console.log(err);
-            alert("ERROR: Unable to contact server!");
-            return;
-        }
-    }
-    
     function restoreDefaults() {
         try {
             now.restoreDefaultHaystackConfiguration(configurationRestored);
@@ -287,10 +299,9 @@ block headerAdditions
     {
       var gridStructure = [];
       gridStructure.push({name: "Enabled"});
-      gridStructure.push({name: "Name"});
+      gridStructure.push({name: "MAC"});
       gridStructure.push({name: "Profile"});
       gridStructure.push({name: "IP"});
-      gridStructure.push({name: "MAC"});
       
       grid = new NovaGrid(gridStructure, 1, document.getElementById('nodeTable'), 'grid', true);
       
@@ -306,7 +317,7 @@ block headerAdditions
       {
         var row = [];
         row.push(String(nodeList[i].enabled));
-        row.push(String(nodeList[i].name));
+        row.push(String(nodeList[i].mac));
         row.push(String(nodeList[i].pfile));
 
         if (nodeList[i].ip != "DHCP") 
@@ -333,7 +344,6 @@ block headerAdditions
             row.push("DHCP on " + nodeList[i].interface); 
           }
         }
-        row.push(String(nodeList[i].mac));
         grid.PushEntry(row);
       }
       
@@ -380,19 +390,13 @@ block headerAdditions
     now.ready(function(){
       Init();
       checkOnlyOne('if0');
+      profileChanged();
     });
 
 block content
   h1 Current Haystack Node Configuration
   div#piChart
   br
-  label Group
-    select#GROUP(name="GROUP", onchange="changeGroup()")
-      each g, i in groups
-        if g == currentGroup
-          option(SELECTED) #{g}
-        else
-          option #{g}
   div#node_header
     br
     div#tablePages
@@ -407,14 +411,25 @@ block content
   button(onclick="editSelectedItem()") Edit Selected Node
 
   br
-  button(onClick="restoreDefaults()") Restore Default Configuration (will erase all changes!)
+  br
+  a.button(href="/editHoneydNode?node=doppelganger") Edit Doppelganger
+  br
+  br
+  button(onClick="restoreDefaults()") Restore Default Configuration (will erase all saved haystack configurations!)
   br
   br
   h2 Create Honeyd Nodes
   label Profile
-  select#profile(name="profile")
+  select#profile(name="profile", onchange='profileChanged()')
     each profile, i in profiles
       option #{profile}
+  br
+  label Portset
+  select#portSetList(name="profile")
+  br
+  
+  label Ethernet Vendor
+  select#vendorList(name"vendorList")
   br
 
   label Number of nodes to create

@@ -861,18 +861,18 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 		return;
 	}
 
-	var nodeNames = honeydConfig.GetNodeNames();
+	var nodeNames = honeydConfig.GetNodeMACs();
 	var nodeList = [];
 	
-	for (var i = 0; i < nodeNames.length; i++) {
-	  var node = honeydConfig.GetNode(nodeNames[i]);
-	  var push = {};
-	  push.enabled = node.IsEnabled();
-	  push.name = node.GetName();
-	  push.pfile = node.GetProfile();
-	  push.ip = node.GetIP();
-	  push.mac = node.GetMAC();
-	  push.interface = node.GetInterface();
+	for (var i = 0; i < nodeNames.length; i++)
+	{
+		var node = honeydConfig.GetNode(nodeNames[i]);
+		var push = {};
+		push.enabled = node.IsEnabled();
+		push.pfile = node.GetProfile();
+		push.ip = node.GetIP();
+		push.mac = node.GetMAC();
+		push.interface = node.GetInterface();
 		nodeList.push(push);
 	}
 	
@@ -893,7 +893,6 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 			interfaceAliases: ConvertInterfacesToAliases(interfaces),
 			profiles: profiles,
 			nodes: nodeList,
-			groups: honeydConfig.GetGroups(),
 			currentGroup: config.GetGroup()
 		}
 	})
@@ -958,7 +957,13 @@ app.get('/editHoneydNode', passport.authenticate('basic', {session: false}), fun
 		return;
 	}
 
-	var interfaces = config.ListInterfaces().sort();
+	var interfaces;
+	if (nodeName == "doppelganger") {
+		interfaces = config.ListLoopbacks().sort();
+	} else {
+		interfaces = config.ListInterfaces().sort();
+	}
+
 	res.render('editHoneydNode.jade', {
 		locals: {
 			oldName: nodeName,
@@ -968,7 +973,8 @@ app.get('/editHoneydNode', passport.authenticate('basic', {session: false}), fun
 			profile: node.GetProfile(),
 			interface: node.GetInterface(),
 			ip: node.GetIP(),
-			mac: node.GetMAC()
+			mac: node.GetMAC(),
+			portSet: node.GetPortSet()
 		}
 	})
 });
@@ -1318,13 +1324,13 @@ app.get('/nodeReview', passport.authenticate('basic', {session: false}), functio
 		return;
 	}
 	
-	var profileNames = honeydConfig.GetGeneratedProfileNames();
+	var profileNames = honeydConfig.GetProfileNames();
 	var profiles = new Array();
 	for (var i = 0; i < profileNames.length; i++) {
 		profiles.push(honeydConfig.GetProfile(profileNames[i]));
 	}
 
-	var nodeNames = honeydConfig.GetGeneratedNodeNames();
+	var nodeNames = honeydConfig.GetNodeMACs();
 	var nodes = new Array();
 	for (var i = 0; i < nodeNames.length; i++) {
 		nodes.push(honeydConfig.GetNode(nodeNames[i]));
@@ -1332,7 +1338,6 @@ app.get('/nodeReview', passport.authenticate('basic', {session: false}), functio
 
 	res.render('nodereview.jade', {
 		locals: {
-			profileNames: honeydConfig.GetGeneratedProfileNames(),
 			profiles: profiles,
 			nodes: nodes,
 		}
@@ -1472,7 +1477,6 @@ app.post('/scripts', passport.authenticate('basic', {session: false}), function(
     honeydConfig.AddScript(req.body['name'], pathToSave);
   
     honeydConfig.SaveAllTemplates();
-    honeydConfig.LoadAllTemplates();
   });
   
   res.render('saveRedirect.jade', {
@@ -1516,7 +1520,7 @@ app.post('/customizeTrainingSave', passport.authenticate('basic', {session: fals
 	})
 });
 
-everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, interface, subnet, count, callback) {
+everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, portSet, vendor, interface, count, callback) {
 	var ipAddress;
 	if (ipType == "DHCP") {
 		ipAddress = "DHCP";
@@ -1525,7 +1529,7 @@ everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, i
 	}
 
 	var result = null;
-	if (!honeydConfig.AddNewNodes(profile, ipAddress, interface, subnet, Number(count))) {
+	if (!honeydConfig.AddNodes(profile, portSet, vendor, ipAddress, interface, Number(count))) {
 		result = "Unable to create new nodes";	
 	}
 
@@ -1536,24 +1540,15 @@ everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, i
 	callback(result);
 };
 
-everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macType, ip, mac, callback) {
-//app.post('/editHoneydNodeSave', passport.authenticate('basic', {session: false}), function (req, res) {
-	var subnet = "";
 
-	var ipAddress = ip;
-	if (ipType == "DHCP") {
+everyone.now.SaveDoppelganger = function(node, callback) {
+	var ipAddress = node.ip;
+	if (node.ipType == "DHCP") {
 		ipAddress = "DHCP";
 	}
 
-	var macAddress = mac;
-	if (macType == "RANDOM") {
-		macAddress = "RANDOM";
-	}
-	
-	// Delete the old node and then add the new one	
-	honeydConfig.DeleteNode(oldName);
-	if (!honeydConfig.AddNewNode(profile, ipAddress, macAddress, intface, subnet)) {
-		callback("AddNewNode Failed");
+	if (!honeydConfig.SaveDoppelganger(node.profile, node.portSet, ipAddress, node.mac, node.intface)) {
+		callback("SaveDoppelganger Failed");
 		return;
 	} else {
 		if (!honeydConfig.SaveAll()) {
@@ -1562,6 +1557,42 @@ everyone.now.SaveHoneydNode = function(profile, intface, oldName, ipType, macTyp
 			callback(null);
 		}
 	}
+}
+
+everyone.now.SaveHoneydNode = function(node, callback) {
+	var ipAddress = node.ip;
+	if (node.ipType == "DHCP") {
+		ipAddress = "DHCP";
+	}
+
+	// Delete the old node and then add the new one	
+	honeydConfig.DeleteNode(node.oldName);
+
+	if (node.oldName == "doppelganger") {
+		if (!honeydConfig.SetDoppelganger(node.profile, node.portSet, ipAddress, node.mac, node.intface)) {
+			callback("doppelganger Failed");
+			return;
+		} else {
+			if (!honeydConfig.SaveAll()) {
+				callback("Unable to save honeyd configuration");
+			} else {
+				callback(null);
+			}
+		}
+
+	} else {
+		if (!honeydConfig.AddNode(node.profile, node.portSet, ipAddress, node.mac, node.intface)) {
+			callback("AddNode Failed");
+			return;
+		} else {
+			if (!honeydConfig.SaveAll()) {
+				callback("Unable to save honeyd configuration");
+			} else {
+				callback(null);
+			}
+		}
+	}
+
 };
 
 app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res) {
@@ -1841,12 +1872,55 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 	}
 });
 
+function GetPorts() {
+  var scriptBindings = {};
+  
+  var profiles = honeydConfig.GetProfileNames();
+  
+  for(var i in profiles) {
+	var profileName = profiles[i];
+
+  	var portSets = honeydConfig.GetPortSetNames(profiles[i]);
+	for (var portSetName in portSets) {
+		var portSet = honeydConfig.GetPortSet(profiles[i], portSets[portSetName]);
+		var ports = [];
+		for (var p in portSet.GetTCPPorts()) {
+			ports.push(portSet.GetTCPPorts()[p]);
+		}
+		for (var p in portSet.GetUDPPorts()) {
+			ports.push(portSet.GetUDPPorts()[p]);
+		}
+		for(var p in ports) {
+			if(ports[p].GetScriptName() != undefined && ports[p].GetScriptName() != '') {
+				if(scriptBindings[ports[p].GetScriptName()] == undefined) {
+					scriptBindings[ports[p].GetScriptName()] = profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
+				} else {
+					scriptBindings[ports[p].GetScriptName()] += '<br>' + profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
+				}
+			}
+		}
+	}
+  }
+
+  return scriptBindings;
+}
+
 app.get('/scripts', passport.authenticate('basic', {session: false}), function(req, res){
   var xml = fs.readFileSync(NovaHomePath + '/config/templates/scripts.xml', 'utf8');
   
   var libxml = require('libxmljs');
   
-  var parser = libxml.parseXmlString(xml);
+  try {
+  	var parser = libxml.parseXmlString(xml);
+  } catch (err) {
+    res.render('scripts.jade', {
+	  locals: {
+	    scripts: []
+	    , bindings: {}
+	  }  
+    });
+	return;
+  }
   
   var nodesToParse = parser.root().childNodes();
 
@@ -1866,32 +1940,7 @@ app.get('/scripts', passport.authenticate('basic', {session: false}), function(r
   }
   
   namesAndPaths.sort(cmp);
-  
-  var scriptBindings = {};
-  
-  var profiles = honeydConfig.GetProfileNames();
-  
-  for(var i in profiles)
-  {
-    GetPorts(profiles[i], function(ports, profileName){
-      for(var i in ports)
-      {
-        if(ports[i].scriptName != undefined && ports[i].scriptName != '')
-        {
-          if(scriptBindings[ports[i].scriptName] == undefined)
-          {
-            scriptBindings[ports[i].scriptName] = profileName + ':' + ports[i].portNum;
-          }
-          else
-          {
-            scriptBindings[ports[i].scriptName] += ',' + profileName + ':' + ports[i].portNum;
-          }
-        }
-      }
-    });
-  }
-  
-  profiles = null;
+  var scriptBindings = GetPorts(); 
   
   res.render('scripts.jade', {
     locals: {
@@ -1930,7 +1979,7 @@ everyone.now.GetInheritedEthernetList = function (parent, callback) {
 		console.log("ERROR Getting profile " + parent);
 		callback(null);
 	} else {
-		callback(prof.GetVendors(), prof.GetVendorDistributions());
+		callback(prof.GetVendors(), prof.GetVendorCounts());
 	}
 
 }
@@ -2100,6 +2149,7 @@ everyone.now.deleteWhitelistEntry = function (whitelistEntryNames, callback) {
 everyone.now.GetProfile = function (profileName, callback) {
 	var profile = honeydConfig.GetProfile(profileName);
 
+	
 	if (profile == null) {
 		callback(null);
 		return;
@@ -2107,9 +2157,6 @@ everyone.now.GetProfile = function (profileName, callback) {
 
 	// Nowjs can't pass the object with methods, they need to be member vars
 	profile.name = profile.GetName();
-	profile.tcpAction = profile.GetTcpAction();
-	profile.udpAction = profile.GetUdpAction();
-	profile.icmpAction = profile.GetIcmpAction();
 	profile.personality = profile.GetPersonality();
 
 	profile.uptimeMin = profile.GetUptimeMin();
@@ -2117,35 +2164,29 @@ everyone.now.GetProfile = function (profileName, callback) {
 	profile.dropRate = profile.GetDropRate();
 	profile.parentProfile = profile.GetParentProfile();
 
-	profile.isTcpActionInherited = profile.isTcpActionInherited();
-	profile.isUdpActionInherited = profile.isUdpActionInherited();
-	profile.isIcmpActionInherited = profile.isIcmpActionInherited();
-	profile.isPersonalityInherited = profile.isPersonalityInherited();
-	profile.isEthernetInherited = profile.isEthernetInherited();
-	profile.isUptimeInherited = profile.isUptimeInherited();
-	profile.isDropRateInherited = profile.isDropRateInherited();
+	profile.isPersonalityInherited = profile.IsPersonalityInherited();
+	profile.isUptimeInherited = profile.IsUptimeInherited();
+	profile.isDropRateInherited = profile.IsDropRateInherited();
 
-	profile.generated = profile.GetGenerated();
-	profile.distribution = profile.GetDistribution();
+	profile.count = profile.GetCount();
 
-	if (!profile.isEthernetInherited) {
-		var ethVendorList = [];
+        profile.portSets = GetPortSets(profileName);
 
-		var profVendors = profile.GetVendors();
-		var profDists = profile.GetVendorDistributions();
 
-		for (var i = 0; i < profVendors.length; i++) {
-			var element = {
-				vendor: "",
-				dist: ""
-			};
-			element.vendor = profVendors[i];
-			element.dist = parseFloat(profDists[i]);
-			ethVendorList.push(element);
-		}
+	var ethVendorList = [];
 
-		profile.ethernet = ethVendorList;
+	var profVendors = profile.GetVendors();
+	var profCounts = profile.GetVendorCounts();
+
+	for (var i = 0; i < profVendors.length; i++) {
+		var element = {};
+		element.vendor = profVendors[i];
+		element.count = profCounts[i];
+		ethVendorList.push(element);
 	}
+
+	profile.ethernet = ethVendorList;
+
 
 	callback(profile);
 }
@@ -2163,45 +2204,126 @@ everyone.now.GetVendors = function (profileName, callback) {
 	var ethVendorList = [];
 
 	var profVendors = profile.GetVendors();
-	var profDists = profile.GetVendorDistributions();
+	var profDists = profile.GetVendorCounts();
 
 	for (var i = 0; i < profVendors.length; i++) {
 		var element = {
 			vendor: "",
-			dist: ""
+			count: ""
 		};
 		element.vendor = profVendors[i];
-		element.dist = parseFloat(profDists[i]);
+		element.count = parseFloat(profDists[i]);
 		ethVendorList.push(element);
 	}
 
 	callback(profVendors, profDists);
 }
 
-GetPorts = function (profileName, callback) {
-	var ports = honeydConfig.GetPorts(profileName);
+GetPortSets = function (profileName, callback) {
+	var portSetNames = honeydConfig.GetPortSetNames(profileName);
+	
+	var portSets = [];	
 
-	if ((ports[0] == undefined || ports[0].portNum == "0") && profileName != "default") {
-		console.log("ERROR Getting ports for profile '" + profileName + "'");
-		callback(null);
-		return;
+	for (var i = 0; i < portSetNames.length; i++) {
+		var portSet = honeydConfig.GetPortSet( profileName, portSetNames[i] );
+		portSet.setName = portSet.GetName();
+		portSet.TCPBehavior = portSet.GetTCPBehavior();
+		portSet.UDPBehavior = portSet.GetUDPBehavior();
+		portSet.ICMPBehavior = portSet.GetICMPBehavior();
+
+		portSet.TCPExceptions = portSet.GetTCPPorts();
+		for (var j = 0; j < portSet.TCPExceptions.length; j++) {
+			portSet.TCPExceptions[j].portNum = portSet.TCPExceptions[j].GetPortNum();
+			portSet.TCPExceptions[j].protocol = portSet.TCPExceptions[j].GetProtocol();
+			portSet.TCPExceptions[j].behavior = portSet.TCPExceptions[j].GetBehavior();
+			portSet.TCPExceptions[j].scriptName = portSet.TCPExceptions[j].GetScriptName();
+			portSet.TCPExceptions[j].service = portSet.TCPExceptions[j].GetService();
+		}
+
+		portSet.UDPExceptions = portSet.GetUDPPorts();
+		for (var j = 0; j < portSet.UDPExceptions.length; j++) {
+			portSet.UDPExceptions[j].portNum = portSet.UDPExceptions[j].GetPortNum();
+			portSet.UDPExceptions[j].protocol = portSet.UDPExceptions[j].GetProtocol();
+			portSet.UDPExceptions[j].behavior = portSet.UDPExceptions[j].GetBehavior();
+			portSet.UDPExceptions[j].scriptName = portSet.UDPExceptions[j].GetScriptName();
+			portSet.UDPExceptions[j].service = portSet.UDPExceptions[j].GetService();
+		}
+		portSets.push(portSet);
 	}
 
-	for (var i = 0; i < ports.length; i++) {
-		ports[i].portName = ports[i].GetPortName();
-		ports[i].portNum = ports[i].GetPortNum();
-		ports[i].type = ports[i].GetType();
-		ports[i].behavior = ports[i].GetBehavior();
-		ports[i].scriptName = ports[i].GetScriptName();
-		ports[i].service = ports[i].GetService();
-		ports[i].isInherited = ports[i].GetIsInherited();
-	}
-
-	callback(ports, profileName);
+	if(typeof callback == 'function') {
+        	callback(portSets, profileName);
+        }
+        return portSets;
 }
-everyone.now.GetPorts = GetPorts;
+everyone.now.GetPortSets = GetPortSets;
 
-everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, addOrEdit) {
+
+function jsProfileToHoneydProfile(profile) {
+	var honeydProfile = new novaconfig.HoneydProfileBinding(profile.parentProfile, profile.name);
+	
+        //Set Ethernet vendors
+	var ethVendors = [];
+	var ethDists = [];
+
+	for (var i in profile.ethernet)
+	{
+		ethVendors.push(profile.ethernet[i].vendor);
+		ethDists.push(parseFloat(Number(profile.ethernet[i].count)));
+	}
+	honeydProfile.SetVendors(ethVendors, ethDists);
+	
+
+	// Move the Javascript object values to the C++ object
+	honeydProfile.SetUptimeMin(Number(profile.uptimeMin));
+	honeydProfile.SetUptimeMax(Number(profile.uptimeMax));
+	honeydProfile.SetDropRate(Number(profile.dropRate));
+	honeydProfile.SetPersonality(profile.personality);
+	honeydProfile.SetCount(profile.count);
+
+	honeydProfile.SetIsPersonalityInherited(Boolean(profile.isPersonalityInherited));
+	honeydProfile.SetIsDropRateInherited(Boolean(profile.isDropRateInherited));
+	honeydProfile.SetIsUptimeInherited(Boolean(profile.isUptimeInherited));
+
+
+	// Add new ports
+	honeydProfile.ClearPorts();
+	var portName;
+	for (var i = 0; i < profile.portSets.length; i++) 
+	{
+		//Make a new port set
+		honeydProfile.AddPortSet(profile.portSets[i].setName);
+
+		honeydProfile.SetPortSetBehavior(profile.portSets[i].setName, "tcp", profile.portSets[i].TCPBehavior);
+		honeydProfile.SetPortSetBehavior(profile.portSets[i].setName, "udp", profile.portSets[i].UDPBehavior);
+		honeydProfile.SetPortSetBehavior(profile.portSets[i].setName, "icmp", profile.portSets[i].ICMPBehavior);
+
+		for (var j = 0; j < profile.portSets[i].TCPExceptions.length; j++)
+		{
+			honeydProfile.AddPort(profile.portSets[i].setName, 
+					profile.portSets[i].TCPExceptions[j].behavior, 
+					profile.portSets[i].TCPExceptions[j].protocol, 
+					Number(profile.portSets[i].TCPExceptions[j].portNum), 
+					profile.portSets[i].TCPExceptions[j].scriptName);
+		}
+
+		for (var j = 0; j < profile.portSets[i].UDPExceptions.length; j++)
+		{
+			honeydProfile.AddPort(profile.portSets[i].setName, 
+					profile.portSets[i].UDPExceptions[j].behavior, 
+					profile.portSets[i].UDPExceptions[j].protocol, 
+					Number(profile.portSets[i].UDPExceptions[j].portNum), 
+					profile.portSets[i].UDPExceptions[j].scriptName);
+		}
+
+	}
+
+	return honeydProfile;
+}
+
+
+//portSets = A 2D array. (array of portSets, which are arrays of Ports)
+everyone.now.SaveProfile = function (profile, callback) {
 	// Check input
 	var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
 	var match = profileNameRegexp.exec(profile.name);
@@ -2213,94 +2335,22 @@ everyone.now.SaveProfile = function (profile, ports, callback, ethVendorList, ad
 		return;
 	}
 
-	var honeydProfile = new novaconfig.HoneydProfileBinding();
 
-	// Move the Javascript object values to the C++ object
-	honeydProfile.SetName(profile.name);
-	honeydProfile.SetTcpAction(profile.tcpAction);
-	honeydProfile.SetUdpAction(profile.udpAction);
-	honeydProfile.SetIcmpAction(profile.icmpAction);
-	honeydProfile.SetPersonality(profile.personality);
-
-	if (ethVendorList == undefined || ethVendorList == null) {
-		honeydProfile.SetEthernet(profile.ethernet);
-	} else if (profile.isEthernetInherited) {
-		honeydProfile.SetVendors([], []);
-	} else if (profile.isEthernetInherited == false) {
-		var ethVendors = [];
-		var ethDists = [];
-
-		for (var i = 0; i < ethVendorList.length; i++) {
-			ethVendors.push(ethVendorList[i].vendor);
-			ethDists.push(parseFloat(ethVendorList[i].dist));
-		}
-
-		honeydProfile.SetVendors(ethVendors, ethDists);
-	}
-
-	honeydProfile.SetUptimeMin(profile.uptimeMin);
-	if (profile.uptimeMax != undefined) {
-		honeydProfile.SetUptimeMax(profile.uptimeMax);
-	} else {
-		honeydProfile.SetUptimeMax(profile.uptimeMin);
-	}
-	honeydProfile.SetDropRate(profile.dropRate);
-	honeydProfile.SetParentProfile(profile.parentProfile);
-
-	honeydProfile.setTcpActionInherited(profile.isTcpActionInherited);
-	honeydProfile.setUdpActionInherited(profile.isUdpActionInherited);
-	honeydProfile.setIcmpActionInherited(profile.isIcmpActionInherited);
-	honeydProfile.setPersonalityInherited(profile.isPersonalityInherited);
-	honeydProfile.setEthernetInherited(profile.isEthernetInherited);
-	honeydProfile.setUptimeInherited(profile.isUptimeInherited);
-	honeydProfile.setDropRateInherited(profile.isDropRateInherited);
-	if (profile.generated == "true") {
-		honeydProfile.SetGenerated(true);
-	} else {
-		honeydProfile.SetGenerated(false);
-	}
-	honeydProfile.SetDistribution(parseFloat(profile.distribution));
-
-	// Add new ports
-	var portName;
-	for (var i = 0; i < ports.size; i++) {
-		// Convert the string to the proper enum number in HoneydConfiguration.h
-		var behavior = ports[i].behavior;
-		console.log("Port behavior is " + behavior);
-		var behaviorEnumValue = new Number();
-		if (behavior == "block") {
-			behaviorEnumValue = 0;
-		} else if (behavior == "reset") {
-			behaviorEnumValue = 1;
-		} else if (behavior == "open") {
-			behaviorEnumValue = 2;
-		} else if (behavior == "script") {
-			behaviorEnumValue = 3;
-		} else if (behavior == "tarpit open") {
-			behaviorEnumValue = 4;
-		} else if (behavior == "tarpit script") {
-			behaviorEnumValue = 5;
-		}
-
-		portName = honeydConfig.AddPort(Number(ports[i].portNum), Number(ports[i].type), behaviorEnumValue, ports[i].script);
-
-		if (portName != "") {
-			honeydProfile.AddPort(portName, ports[i].isInherited);
-		}
-	}
-
-	honeydConfig.SaveAll();
-
-	if (addOrEdit == "true") {
-		addOrEdit = true;
-	} else {
-		addOrEdit = false;
-	}
+	var honeydProfile = jsProfileToHoneydProfile(profile);
+	honeydProfile.Save();
 
 	// Save the profile
-	honeydProfile.Save(profile.oldName, addOrEdit);
+	if (!honeydConfig.SaveAll()) {
+		result = "Unable to save honeyd configuration";
+	}
 
 	callback();
+}
+
+everyone.now.WouldProfileSaveDeleteNodes = function (profile, callback) {
+	var honeydProfile = jsProfileToHoneydProfile(profile);
+
+	callback(honeydProfile.WouldAddProfileCauseNodeDeletions());
 }
 
 everyone.now.GetCaptureSession = function (callback) {
@@ -2492,41 +2542,20 @@ everyone.now.GetLocalIP = function (interface, callback) {
 	callback(nova.GetLocalIP(interface));
 }
 
-everyone.now.RemoveScriptFromProfiles = function(script, profiles, callback) {
-  for(var i in profiles)
-  {
-    if(profiles[i] != null && profiles[i] != undefined && profiles[i] != '')
-    {
-      var pass = profiles[i].substring(0, profiles[i].indexOf(':'));
-      GetPorts(pass, function(ports, profileName){
-        if(ports != undefined)
-        {
-          for(var j in ports)
-          {
-            if(ports[j].portName != undefined)
-            {
-              if(ports[j].scriptName == script)
-              {
-                honeydConfig.RemoveScriptPort(ports[j].portName, profileName);
-              }
-            }
-          }
-        }
-      });
-    }
-  } 
-  
-  honeydConfig.SaveAllTemplates();
-  honeydConfig.LoadAllTemplates();
-  
-  if(typeof callback == 'function')
-  {
-    callback();
-  }
+everyone.now.RemoveScriptFromProfiles = function(script, callback)
+{
+	honeydConfig.DeleteScriptFromPorts(script);
+
+	honeydConfig.SaveAllTemplates();
+
+	if(typeof callback == 'function')
+	{
+		callback();
+	}
 }
 
 everyone.now.GenerateMACForVendor = function(vendor, callback) {
-	callback(vendorToMacDb.GenerateRandomMAC(vendor));
+	callback(honeydConfig.GenerateRandomUnusedMAC(vendor));
 }
 
 everyone.now.restoreDefaultHaystackConfiguration = function(callback) {
@@ -2585,7 +2614,6 @@ everyone.now.RemoveScript = function(scriptName, callback)
   honeydConfig.RemoveScript(scriptName);
   
   honeydConfig.SaveAllTemplates();
-  honeydConfig.LoadAllTemplates();
   
   if(typeof callback == 'function')
   {
@@ -2613,29 +2641,8 @@ everyone.now.GetConfigSummary = function(configName, callback)
   var libxml = require('libxmljs');
   var parser = libxml.parseXmlString(xml);
   
-  var scriptProfileBindings = {};
+  var scriptProfileBindings = GetPorts();
   var profiles = honeydConfig.GetProfileNames();
-  
-  for(var i in profiles)
-  {
-    GetPorts(profiles[i], function(ports, profileName){
-      for(var i in ports)
-      {
-        if(ports[i].scriptName != undefined && ports[i].scriptName != '')
-        {
-          if(scriptProfileBindings[ports[i].scriptName] == undefined)
-          {
-            scriptProfileBindings[ports[i].scriptName] = profileName + ':' + ports[i].portNum;
-          }
-          else
-          {
-            scriptProfileBindings[ports[i].scriptName] += ',' + profileName + ':' + ports[i].portNum;
-          }
-        }
-      }
-    });
-  }
-  
   var profileObj = {};
   
   for (var i = 0; i < profiles.length; i++) 
@@ -2645,7 +2652,7 @@ everyone.now.GetConfigSummary = function(configName, callback)
       var prof = honeydConfig.GetProfile(profiles[i]);
       var obj = {};
       var vendorNames = prof.GetVendors();
-      var vendorDist = prof.GetVendorDistributions();
+      var vendorDist = prof.GetVendorCounts();
       
       obj.name = prof.GetName();
       obj.parent = prof.GetParentProfile();
@@ -2658,7 +2665,7 @@ everyone.now.GetConfigSummary = function(configName, callback)
         var push = {};
         
         push.name = vendorNames[j];
-        push.dist = vendorDist[j];
+        push.count = vendorDist[j];
         obj.vendors.push(push);
       }
       
@@ -2674,14 +2681,14 @@ everyone.now.GetConfigSummary = function(configName, callback)
         obj.uptimeValueMax = prof.GetUptimeMax();        
       }
       
-      obj.defaultTCP = prof.GetTcpAction();
-      obj.defaultUDP = prof.GetUdpAction();
-      obj.defaultICMP = prof.GetIcmpAction();
+      //obj.defaultTCP = prof.GetTcpAction();
+      //obj.defaultUDP = prof.GetUdpAction();
+      //obj.defaultICMP = prof.GetIcmpAction();
       profileObj[profiles[i]] = obj;
     }
   }
   
-  var nodeNames = honeydConfig.GetNodeNames();
+  var nodeNames = honeydConfig.GetNodeMACs();
   var nodeList = [];
   
   for (var i = 0; i < nodeNames.length; i++) {
@@ -2699,6 +2706,27 @@ everyone.now.GetConfigSummary = function(configName, callback)
     callback(scriptProfileBindings, profileObj, profiles, nodeList);
   }
 }
+
+everyone.now.SwitchConfigurationTo = function(configName)
+{
+  honeydConfig.SwitchConfiguration(configName);
+}
+
+everyone.now.RemoveConfiguration = function(configName, callback)
+{
+  if(configName == 'default')
+  {
+    console.log('Cannot delete default configuration');
+  }
+  
+  honeydConfig.RemoveConfiguration(configName);
+  
+  if(typeof callback == 'function')
+  {
+    callback(configName);
+  }
+}
+
 
 everyone.now.SwitchConfigurationTo = function(configName)
 {

@@ -14,21 +14,11 @@ using namespace std;
 
 HoneydAutoConfigBinding::HoneydAutoConfigBinding()
 {
-  m_hdconfig = NULL;
 };
 
 HoneydAutoConfigBinding::~HoneydAutoConfigBinding()
 {
-  if(m_hdconfig != NULL)
-  {
-    delete m_hdconfig;
-  }
 };
-
-Nova::HoneydConfiguration* HoneydAutoConfigBinding::GetChild()
-{
-  return m_hdconfig;
-}
 
 void HoneydAutoConfigBinding::Init(Handle<Object> target) 
 {
@@ -96,23 +86,11 @@ Handle<Value> HoneydAutoConfigBinding::GetGeneratedNodeInfo(const Arguments& arg
 {
   HandleScope scope;
   
-  HoneydAutoConfigBinding* obj = ObjectWrap::Unwrap<HoneydAutoConfigBinding>(args.This());
-  
-  obj->m_hdconfig = new Nova::HoneydConfiguration();
   Nova::Config::Inst()->SetGroup("HaystackAutoConfig");
   
-  obj->m_hdconfig->LoadAllTemplates(); 
+  Nova::HoneydConfiguration::Inst()->ReadAllTemplatesXML();
   
-  for(Nova::NodeTable::iterator it = obj->m_hdconfig->m_nodes.begin(); it != obj->m_hdconfig->m_nodes.end(); it++)
-  {
-    cout << it->first << ", " << it->second.m_pfile << '\n';
-  }
-  
-  Handle<Value> ret = cvv8::CastToJS(obj->m_hdconfig->GeneratedProfilesStrings());
+  Handle<Value> ret = cvv8::CastToJS(Nova::HoneydConfiguration::Inst()->GetProfileNames());
   
   return scope.Close(ret);
 }
-
-
-
-

@@ -28,17 +28,16 @@ block headerAdditions
   script(type="text/javascript")
           /*set up data store*/
           var layoutNodes = [[
-            { field: "Enabled", name: "Enabled", width: '100px' },
-            { field: "Name", name: "Name", width: '400px' },
-            { field: "Profile", name: "Profile", width: '100px' },
-            { field: "IP", name: "IP", width: '150px' },
             { field: "MAC", name: "MAC", width: '150px' },
+            { field: "Enabled", name: "Enabled", width: '100px' },
+            { field: "Profile", name: "Profile", width: '700px' },
+            { field: "IP", name: "IP", width: '150px' },
           ]];
   script(type="text/javascript")
           /*set up data store*/
           var layoutProfiles = [[
             { field: "Name", name: "Profile Name", width: '300px' },
-            { field: "Personality", name: "Operating System Emulation", width: '300px' },
+            { field: "Personality", name: "Operating System Emulation", width: '700px' },
             { field: "Ethernet", name: "Ethernet Vendor Emulation", width: '300px' }
           ]];
 
@@ -55,7 +54,7 @@ block content
         tr
           td #{profile.GetName()}
           td #{profile.GetPersonality()}
-          td #{profile.GetEthernet()}
+          td #{profile.GetVendors()}
  
   div(style="height: 200px;")
     div#gridDiv(style="height: 200px")
@@ -65,19 +64,17 @@ block content
   table#nodeTable(style="display: none")
     thead
       tr
+        th MAC
         th Enabled
-        th Name
         th Profile
         th IP
-        th MAC
     tbody
       each node, i in nodes
         tr
+          td #{node.GetMAC()}
           td #{node.IsEnabled()}
-          td #{node.GetName()}
           td #{node.GetProfile()}
           td #{node.GetIP()}
-          td #{node.GetMAC()}
           
   div(style="height: 200px;")
     div#gridDiv2(style="height: 200px")

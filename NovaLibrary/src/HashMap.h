@@ -50,15 +50,12 @@ public:
 	ValueType& operator[](KeyType key);
 	ValueType& get(KeyType key);
 
-	void set_deleted_key(KeyType key);
-	void set_empty_key(KeyType key);
-
 	bool keyExists(KeyType key);
 	void erase(KeyType key);
+	void erase(typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator key);
 
 	// Expose generic methods we use
 	void clear();
-	void resize(size_t newSize);
 	uint size() const;
 	bool empty() const;
 
@@ -73,42 +70,17 @@ private:
 
 	std::unordered_map<KeyType, ValueType, HashFcn, EqualKey> m_map;
 
-	KeyType m_emptyKey;
-	KeyType m_deletedKey;
-
 	EqualKey m_equalityChecker;
-
-	bool m_isDeletedKeyUsed;
-	bool m_isEmptyKeyUsed;
 };
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 HashMap<KeyType,ValueType,HashFcn,EqualKey>::HashMap()
 {
-	m_isDeletedKeyUsed = false;
-	m_isEmptyKeyUsed = false;
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 HashMap<KeyType,ValueType,HashFcn,EqualKey>::~HashMap()
 {}
-
-template<class KeyType, class ValueType, class HashFcn, class EqualKey>
-void HashMap<KeyType,ValueType,HashFcn,EqualKey>::set_deleted_key(KeyType key)
-{
-	m_isDeletedKeyUsed = true;
-	m_deletedKey = key;
-	//m_map.set_deleted_key(key);
-}
-
-template<class KeyType, class ValueType, class HashFcn, class EqualKey>
-void HashMap<KeyType,ValueType,HashFcn,EqualKey>::set_empty_key(KeyType key)
-{
-	m_isEmptyKeyUsed = true;
-
-	m_emptyKey = key;
-	//m_map.set_empty_key(key);
-}
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator HashMap<KeyType,ValueType,HashFcn,EqualKey>::begin()
@@ -120,6 +92,12 @@ template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator HashMap<KeyType,ValueType,HashFcn,EqualKey>::end()
 {
 	return m_map.end();
+}
+
+template<class KeyType, class ValueType, class HashFcn, class EqualKey>
+void HashMap<KeyType,ValueType,HashFcn,EqualKey>::erase(typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator key)
+{
+	m_map.erase(key);
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
@@ -135,30 +113,9 @@ void HashMap<KeyType,ValueType,HashFcn,EqualKey>::clear()
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
-void HashMap<KeyType,ValueType,HashFcn,EqualKey>::resize(size_t size)
-{
-	//m_map.resize(size);
-}
-
-template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 void HashMap<KeyType,ValueType,HashFcn,EqualKey>::erase(KeyType key)
 {
-	if(!m_isEmptyKeyUsed)
-	{
-		throw emptyKeyNotSetException();
-	}
-	else if(m_isEmptyKeyUsed && m_equalityChecker.operator()(key, m_emptyKey))
-	{
-		throw emptyKeyException();
-	}
-	else if(!m_isDeletedKeyUsed || m_equalityChecker.operator()(key, m_deletedKey))
-	{
-		throw deleteKeyException();
-	}
-	else
-	{
-		m_map.erase(key);
-	}
+	m_map.erase(key);
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
@@ -182,22 +139,7 @@ bool HashMap<KeyType,ValueType,HashFcn,EqualKey>::keyExists(KeyType key)
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
 ValueType& HashMap<KeyType,ValueType,HashFcn,EqualKey>::operator[](KeyType key)
 {
-	if(!m_isEmptyKeyUsed)
-	{
-		throw emptyKeyNotSetException();
-	}
-	else if(m_isEmptyKeyUsed && m_equalityChecker.operator()(key, m_emptyKey))
-	{
-		throw emptyKeyException();
-	}
-	else if(m_isDeletedKeyUsed && m_equalityChecker.operator()(key, m_deletedKey))
-	{
-		throw deleteKeyException();
-	}
-	else
-	{
-		return m_map[key];
-	}
+	return m_map[key];
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>

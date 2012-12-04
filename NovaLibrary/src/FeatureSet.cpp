@@ -51,17 +51,6 @@ string FeatureSet::m_featureNames[] =
 
 FeatureSet::FeatureSet()
 {
-	m_IPTable.set_empty_key(0);
-	m_tcpPortsContactedForIP.set_empty_key(0);
-	m_udpPortsContactedForIP.set_empty_key(0);
-	m_HaystackIPTable.set_empty_key(0);
-	m_PortTCPTable.set_empty_key(0);
-	m_PortUDPTable.set_empty_key(0);
-	m_packTable.set_empty_key(0);
-
-	m_hasUdpPortIpBeenContacted.set_empty_key(IpPortCombination::GetEmptyKey());
-	m_hasTcpPortIpBeenContacted.set_empty_key(IpPortCombination::GetEmptyKey());
-
 	m_numberOfHaystackNodesContacted = 0;
 
 	//Temp variables

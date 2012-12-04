@@ -4,25 +4,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/HoneydHostConfig.cpp \
-../src/Personality.cpp \
-../src/PersonalityNode.cpp \
-../src/PersonalityTable.cpp \
-../src/PersonalityTree.cpp 
+../src/HaystackAutoConfig.cpp 
 
 OBJS += \
-./src/HoneydHostConfig.o \
-./src/Personality.o \
-./src/PersonalityNode.o \
-./src/PersonalityTable.o \
-./src/PersonalityTree.o 
+./src/HaystackAutoConfig.o 
 
 CPP_DEPS += \
-./src/HoneydHostConfig.d \
-./src/Personality.d \
-./src/PersonalityNode.d \
-./src/PersonalityTable.d \
-./src/PersonalityTree.d 
+./src/HaystackAutoConfig.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

@@ -2,6 +2,7 @@ extends layout
 
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  script(type="text/javascript", src="scripts/portset.js")
   style(type="text/css")
     a.selectedProfile, a.unselectedProfile {
         display: block;
@@ -172,9 +173,9 @@ block headerAdditions
             var tr = theDoc.createElement('tr');
             var td0 = theDoc.createElement('td');
             var td1 = theDoc.createElement('td');
-            var scriptName = theDoc.createElement('label');
+            var scriptName = theDoc.createElement('div');
             
-            var profilesPorts = theDoc.createElement('label');
+            var profilesPorts = theDoc.createElement('div');
                         
             scriptName.innerHTML = i;
             profilesPorts.innerHTML = scriptProfileBindings[i];
@@ -190,8 +191,8 @@ block headerAdditions
             var tr = theDoc.createElement('tr');
             var td0 = theDoc.createElement('td0');
             var td1 = theDoc.createElement('td1');
-            var label0 = theDoc.createElement('label');
-            var label1 = theDoc.createElement('label');
+            var label0 = theDoc.createElement('div');
+            var label1 = theDoc.createElement('div');
             label0.innerHTML = 'N/A';
             label1.innerHTML = 'N/A';
             td0.appendChild(label0);
@@ -437,9 +438,9 @@ block headerAdditions
         theDoc.getElementById('vendors').removeChild(theDoc.getElementById('vendors').lastChild);
       }
       
-      while(theDoc.getElementById('ports').hasChildNodes())
+      while(theDoc.getElementById('portsetDiv').hasChildNodes())
       {
-        theDoc.getElementById('ports').removeChild(theDoc.getElementById('ports').lastChild);
+        theDoc.getElementById('portsetDiv').removeChild(theDoc.getElementById('portsetDiv').lastChild);
       }
       
       showLightBox('2');
@@ -454,33 +455,19 @@ block headerAdditions
         var td1 = theDoc.createElement('td');
         
         td0.innerHTML = saveProfileObjs[profile].vendors[i].name;
-        td1.innerHTML = saveProfileObjs[profile].vendors[i].dist + '%';
+        td1.innerHTML = saveProfileObjs[profile].vendors[i].count;
         
         tr.appendChild(td0);
         tr.appendChild(td1);
         theDoc.getElementById('vendors').appendChild(tr);
       }
       
-      now.GetPorts(profile, function(ports){
-        for(var i in ports)
+
+      now.GetPortSets(profile, function(portsets){
+        for(var i in portsets)
         {
-          if(ports[i].portNum != '0')
-          {
-            var tr = theDoc.createElement('tr');
-            var td0 = theDoc.createElement('td');
-            var td1 = theDoc.createElement('td');
-            var td2 = theDoc.createElement('td');
-            
-            td0.innerHTML = ports[i].portNum;
-            td1.innerHTML = ports[i].type;
-            td2.innerHTML = ports[i].behavior;
-            
-            tr.appendChild(td0);
-            tr.appendChild(td1);
-            tr.appendChild(td2);
-            
-            theDoc.getElementById('ports').appendChild(tr);
-          }
+            var appendTo = theDoc.getElementById('portsetDiv');
+            generatePortSetTable(portsets[i],appendTo);
         }
       });
       
@@ -506,9 +493,6 @@ block headerAdditions
         return;
       }
       
-      theDoc.getElementById('defTCP').innerHTML = 'Default TCP Action: ' + saveProfileObjs[profile].defaultTCP;
-      theDoc.getElementById('defUDP').innerHTML = 'Default UDP Action: ' + saveProfileObjs[profile].defaultUDP;
-      theDoc.getElementById('defICMP').innerHTML = 'Default ICMP Action: ' + saveProfileObjs[profile].defaultICMP;
     }
     
     function getConfig()
@@ -554,8 +538,23 @@ block content
       button#cloneConfig(onclick='showLightBox("1")') Clone Configuration
       button#removeConfig(onclick='removeConfig()') Remove Configuration
     br
+    div#treeAndPiContainer
+      label Current Node Configuration
+      br
+      div#piChart(style='float: left')
+      br
+      br
+      br
+      label Current Profile Configuration
+      br
+      div#treeDiv(style='float: left')
+    br
+    br
+
     div#summary
-      table(border='1', style='border: solid black 2px; width: 600px', id='sizeAnchor')
+      label Current Script Usage
+      br
+      table(border='1', style='border: solid black 2px;', id='sizeAnchor')
         thead
           tr
             th(style='background-color: #d0e9fc;') Scripts
@@ -563,10 +562,6 @@ block content
         tbody#appendHook      
       br
       br
-    div#treeAndPiContainer
-      div#piChart(style='float: left')
-      div#treeDiv(style='float: right')
-    br
   div#lightbox(class='white_content')
     div#addConfigForm
       form(method='post', id='addConfig', onsubmit='return checkParametersAdd();')
@@ -591,26 +586,15 @@ block content
         br
         label#fixedOrUptime
         br
-        label#defTCP
-        br
-        label#defUDP
-        br
-        label#defICMP
-        br
       br
       h2 Ethernet Info      
       table(border='1 solid')
         thead
           th(style='background-color: #d0e9fc;') Vendor
-          th(style='background-color: #d0e9fc;') Distribution
+          th(style='background-color: #d0e9fc;') Count
         tbody#vendors
       br
-      h2 Ports
-      table(border='1 solid')
-        thead
-          th(style='background-color: #d0e9fc;') Port Number
-          th(style='background-color: #d0e9fc;') Port Type
-          th(style='background-color: #d0e9fc;') Port Behavior
-        tbody#ports
+      h2 Port Sets
+      div#portsetDiv
       br
     button#closeLB(onclick='closeLightbox()') Close
