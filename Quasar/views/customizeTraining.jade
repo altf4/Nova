@@ -2,9 +2,15 @@ extends layout
 
 block headerAdditions
   link(rel="stylesheet", name="text/css", href="configstyle.css", media="screen")
+  style(type='text/css')
+    th {
+     background-color: #d0e9fc; 
+    }
+    
   
 block content
   div
+    h1 Choose Training Data
     form(method="post", action="/customizeTrainingSave")
       table(border = "1")
         thead
@@ -21,4 +27,5 @@ block content
               td #{hostiles[i]}
               td #{uids[i]}
               td #{desc[i]}
+      br
       input(type="Submit", value="Confirm Training Data Selection")
