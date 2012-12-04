@@ -291,7 +291,7 @@ script
                         updatePortsModel();
 
                         now.WouldProfileSaveDeleteNodes(profile, function(result) {
-                            var userConfirmed;
+                            var userConfirmed = true;
                             if (result == true) {
                                 userConfirmed = confirm("Warning: this will delete nodes that used deleted portsets");
                             }
