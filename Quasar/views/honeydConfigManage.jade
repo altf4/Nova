@@ -24,7 +24,7 @@ block headerAdditions
     }
 
     a.unselectedProfile {
-        background-color: #D0E9FC;
+        background-color: #E4F2FF;
     }
 
     ul {
@@ -78,17 +78,17 @@ block headerAdditions
       }
     }
     
-   function restoreDefaults() 
-   {
-        try 
-        {
-            now.restoreDefaultHaystackConfiguration(configurationRestored);
-        } 
-        catch (err) 
-        {
-            alert("Unable to contact server");
-            console.log("Error was: " + err);
-        }
+    function restoreDefaults() 
+    {
+      try 
+      {
+        now.restoreDefaultHaystackConfiguration(configurationRestored);
+      } 
+      catch (err) 
+      {
+        alert("Unable to contact server");
+        console.log("Error was: " + err);
+      }
     }
     
     function populateConfigSelect(configs)
