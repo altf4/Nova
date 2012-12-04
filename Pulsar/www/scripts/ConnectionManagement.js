@@ -60,12 +60,12 @@ function setUpClientsList(divName)
           
           var check = document.createElement('input');
           check.type = 'checkbox';
-          check.id = 'check' + i;
-          check.name = 'check' + i;
+          check.id = 'client' + clients[i];
+          check.name = 'client' + clients[i];
           check.value = clients[i];
           if(typeof setTarget == 'function')
           {
-            check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), "' + clients[i].toString() + '")');
+            check.setAttribute('onchange', 'setTarget(("client' + clients[i] + '"), "' + clients[i].toString() + '")');
           }
           td0.appendChild(check);
           
@@ -183,22 +183,36 @@ now.UpdateClientsList = function(clientId, action)
       }
       for(var i = 0; i < clientCount; i++)
       {
-        if(document.getElementById('check' + i) != undefined && document.getElementById('check' + i).value == clientId)
+        if(document.getElementById('client' + clientId) != undefined && document.getElementById('client' + clientId).value == clientId)
         {
           console.log(clientId + ' needlessly attempting to re-establish connection, doing nothing');
           return;
         }
       }
       
+      console.log('adding ' + clientId);
+      
+      console.log('clients.length == ' + clients.length);
+      
       for(var i in clients)
       {
         console.log('clients[' + i + '] == ' + clients[i]);
       }
       
-      if(clients[(parseInt(clientCount) + 1)] == undefined)
+      if(clients[parseInt(clientCount)] == undefined && clients[0] != '')
       {
         clients.push(clientId);
       }
+      else if(clients[0] == '')
+      {
+        clients[0] = clientId;
+      }
+      else if(clients[parseInt(clientCount)] == '')
+      {
+        clients[parseInt(clientCount)] = clientId;
+      }
+      
+      console.log('clients == ' + clients.join());
       
       var tr = document.createElement('tr');
       tr.id = clientId + 'div';
@@ -206,10 +220,10 @@ now.UpdateClientsList = function(clientId, action)
       var td0 = document.createElement('td');
       var check = document.createElement('input');
       check.type = 'checkbox';
-      check.id = 'check' + (parseInt(clientCount) + 1);
-      check.name = 'check' + (parseInt(clientCount) + 1);
+      check.id = 'client' + clientId;
+      check.name = 'client' + clientId;
       check.value = clientId;
-      check.setAttribute('onchange', 'setTarget(("check" + ' + (parseInt(clientCount) + 1) + '), "' + clients[(parseInt(clientCount) + 1)].toString()) + '")';
+      check.setAttribute('onchange', 'setTarget(("client' + clientId + '"), "' + clients[parseInt(clientCount)].toString() + '")');
       td0.appendChild(check);
       
       var td1 = document.createElement('td');
@@ -225,7 +239,7 @@ now.UpdateClientsList = function(clientId, action)
       
       clientCount++;
       
-      clients.push(clientId);
+      //clients.push(clientId);
       if(typeof updateGroup == 'function')
       {
         updateGroup('all', clients.join());
