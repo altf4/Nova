@@ -1497,8 +1497,6 @@ app.post('/honeydConfigManage', passport.authenticate('basic', {session: false})
     cloneBool = true;
   }
   
-  console.log('configToClone ' + configToClone);
-  
   if(!cloneBool)
   {
     if((new RegExp('^[a-zA-Z0-9]+$')).test(newName))
@@ -2398,12 +2396,13 @@ everyone.now.GetCaptureSession = function (callback) {
 	callback(ret);
 }
 
-everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subnets, callback, route) {
+everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subnets, groupName, callback, route) {
 	var executionString = 'haystackautoconfig';
 	var nFlag = '-n';
 	var rFlag = '-r';
 	var iFlag = '-i';
 	var aFlag = '-a';
+	var gFlag = '-g';
 
 	var hhconfigArgs = new Array();
 
@@ -2425,6 +2424,10 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	if (subnets !== undefined && subnets.length > 0) {
 		hhconfigArgs.push(aFlag);
 		hhconfigArgs.push(subnets);
+	}
+	if (groupName !== undefined) {
+	  hhconfigArgs.push(gFlag);
+	  hhconfigArgs.push(groupName);
 	}
 
 	var util = require('util');

@@ -85,6 +85,8 @@ int main(int argc, char ** argv)
 				("interface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
 				("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
 				("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
+				("group,g", po::value<string>(), "Name for new haystack group created by the AutoConfig tool. Incompatible with (--append-to,-t) flag")
+				("append-to,t", po::value<string>(), "Name of haystack group to append AutoConfig results to. Incompatible with (--group,-g) flag")
 		;
 
 		po::variables_map vm;
@@ -104,6 +106,13 @@ int main(int argc, char ** argv)
 			return HHC_CODE_OKAY;
 		}
 
+		if(vm.count("group") && vm.count("append-to"))
+		{
+			cout << "ERROR: You can use either -g to define a new group or -t to append to a specific group, not both." << endl;
+			lockFile.close();
+			remove(lockFilePath.c_str());
+			exit(HHC_CODE_BAD_ARG_VALUE);
+		}
 
 		if (vm.count("num-nodes-ratio") && vm.count("num-nodes"))
 		{
@@ -111,6 +120,19 @@ int main(int argc, char ** argv)
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			exit(HHC_CODE_BAD_ARG_VALUE);
+		}
+
+		if(vm.count("group"))
+		{
+			cout << "Creating new haystack group " << vm["group"].as<string>() << endl;
+			HoneydConfiguration::Inst()->AddNewConfiguration(vm["group"].as<string>(), false, "");
+			HoneydConfiguration::Inst()->SwitchToConfiguration(vm["group"].as<string>());
+			cout << "Current config is " << Config::Inst()->GetCurrentConfig() << endl;
+		}
+
+		if(vm.count("append-to"))
+		{
+			cout << "*** DEBUG *** Setting AutoConfig to append results to " << vm["append-to"].as<string>() << ", not working yet" << endl;
 		}
 
 		if (vm.count("num-nodes-ratio"))
@@ -969,8 +991,8 @@ void Nova::GenerateConfiguration()
 {
 	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
 
-	Config::Inst()->SetGroup("Autoconfig");
-	Config::Inst()->SaveUserConfig();
+	//Config::Inst()->SetGroup("Autoconfig");
+	//Config::Inst()->SaveUserConfig();
 
 	uint nodesToCreate = 0;
 	if(numberOfNodesType == FIXED_NUMBER_OF_NODES)
