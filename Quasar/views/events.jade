@@ -6,6 +6,10 @@ block content
     br
     input(type="button", onClick="now.ClearHostileEvents(finishedClearing)", value="Clear all events")
     br
+    br
+    input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
+    label Show Advanced Suspect Statistics
+    br
     
   div#nova_suspects
     table.novaGrid#suspectTable
@@ -50,16 +54,32 @@ block headerAdditions
         }
     }
     
+    function showAdvancedChanged() {
+        if (document.getElementById("showAdvanced").checked) {
+            for (var i = 4; i < suspectGrid.m_columns.length; i++) {
+                suspectGrid.m_columns[i].isDisabled = false;
+            }
+        } else {
+            for (var i = 4; i < suspectGrid.m_columns.length; i++) {
+                suspectGrid.m_columns[i].isDisabled = true;
+            }
+            
+        }
+
+        suspectGrid.GenerateTableHeader();
+        suspectGrid.Render();
+    }
+    
     function Init() {
         var gridStructure = new Array();
-        gridStructure.push({name: "ID"});
-        gridStructure.push({name: "Timestamp"});
-        gridStructure.push({name: "Address"});
-        gridStructure.push({name: "Classification"});
+        gridStructure.push({name: "ID", isDisabled: false});
+        gridStructure.push({name: "Timestamp", isDisabled: false});
+        gridStructure.push({name: "Address", isDisabled: false});
+        gridStructure.push({name: "Classification", isDisabled: false});
    
         var featureNames = String("#{featureNames}").split(",");
         for (var i = 0; i < featureNames.length; i++) {
-            gridStructure.push({name:featureNames[i], formatter: featureFormatter});
+            gridStructure.push({name:featureNames[i], formatter: featureFormatter, isDisabled: true});
         }
    
         suspectGrid = new NovaGrid(gridStructure, 0, document.getElementById('suspectTable'), 'suspectGrid');

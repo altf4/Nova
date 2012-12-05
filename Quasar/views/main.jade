@@ -14,7 +14,7 @@ block topPannelAdditions
         img#haystack_status_icon(src="/images/orangedot.png", width="15px", height="15px")
       td
         div#haystack_status checking
-  button.button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopNovad()') Stop Packet Classifier
+  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopNovad()') Stop Packet Classifier
   button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartNovad()') Start Packet Classifier
   br
   br
@@ -22,9 +22,9 @@ block topPannelAdditions
   button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartHaystack()') Start Haystack
   br
   br
-  button.button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
+  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
 
-  a(style="margin-top: 2px; margin-bottom: 2px; margin-right: 4px; width:160px; float: right;", class="button", href="/novaState.csv") Suspects as CSV file
+  a.button(style="margin-top: 2px; margin-bottom: 2px; margin-right: 4px; width:150px; float: right;", href="/novaState.csv") Suspects as CSV file
 
 block content
   div#nova_suspects_header(style="width:600px;")
@@ -58,10 +58,15 @@ block content
     label Live Grid Update
     br
     
-    input#showUnclassified(type="checkbox", onchange="showUnclassifiedChanged()")
-    label Show unclassified suspects
+    input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
+    label Show Advanced Suspect Statistics
     br
-    div#tablePages(style="width: 100%; margin-left: auto; margin-right: auto; text-align: center;")
+    
+    input#showUnclassified(type="checkbox", onchange="showUnclassifiedChanged()")
+    label Show Unclassified Suspects
+    br
+    br
+    div#tablePages(style="width: 100%;")
     br
     table.novaGrid#suspectTable
   div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none; width: 600px; margin: 0 auto; text-align: center")
@@ -324,6 +329,22 @@ block headerAdditions
         
         resendSuspects();
     }
+
+    function showAdvancedChanged() {
+        if (document.getElementById("showAdvanced").checked) {
+            for (var i = 7; i < suspectGrid.m_columns.length - 1; i++) {
+                suspectGrid.m_columns[i].isDisabled = false;
+            }
+        } else {
+            for (var i = 7; i < suspectGrid.m_columns.length - 1; i++) {
+                suspectGrid.m_columns[i].isDisabled = true;
+            }
+            
+        }
+
+        suspectGrid.GenerateTableHeader();
+        suspectGrid.Render();
+    }
               
     function featureFormatter(d) {
         var num = new Number(d);
@@ -394,16 +415,16 @@ block headerAdditions
         theDoc = document;
         var enabledFeatures = "#{enabledFeatures}";
         var gridStructure = [];
-        gridStructure.push({name: "Monitor"});
-        gridStructure.push({name: "Interface"});
-        gridStructure.push({name: "Address"});
-        gridStructure.push({name: "Classification", formatter: classificationFormatter});
-        gridStructure.push({name: "Last Seen"});
-        gridStructure.push({name: "Hostile"});
+        gridStructure.push({name: "Monitor", isDisabled: false});
+        gridStructure.push({name: "Interface", isDisabled: false});
+        gridStructure.push({name: "Address", isDisabled: false});
+        gridStructure.push({name: "Classification", isDisabled: false, formatter: classificationFormatter});
+        gridStructure.push({name: "Last Seen", isDisabled: false});
+        gridStructure.push({name: "Hostile", isDisabled: false});
    
         var featureNames = String("#{featureNames}").split(",");
         for (var i = 0; i < featureNames.length; i++) {
-            if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], formatter: featureFormatter});
+            if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], isDisabled: true, formatter: featureFormatter});
         }
         gridStructure.push({name: "Clear"});
    
@@ -411,7 +432,7 @@ block headerAdditions
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(3);
-        suspectGrid.SetRowsPerPage(100);
+        suspectGrid.SetRowsPerPage(20);
         suspectGrid.SetRenderCallback(onGridRendered);
 
         resendSuspects();
