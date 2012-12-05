@@ -414,7 +414,6 @@ bool HoneydConfiguration::WriteNodesToXML()
 	}
 	nodesTopLevel.add_child("doppelganger.node", m_doppelganger.GetPtree());
 
-
 	//Actually write out to file
 	try
 	{
@@ -1245,6 +1244,8 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		// empty (but still parseable) xml files
 		string oldName = Config::Inst()->GetCurrentConfig();
 		Config::Inst()->SetCurrentConfig(configName);
+
+		ReadAllTemplatesXML();
 
 	    ClearNodes();
 		ClearProfiles();

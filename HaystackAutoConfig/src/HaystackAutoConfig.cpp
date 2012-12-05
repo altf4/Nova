@@ -127,7 +127,17 @@ int main(int argc, char ** argv)
 			cout << "Creating new haystack group " << vm["group"].as<string>() << endl;
 			HoneydConfiguration::Inst()->AddNewConfiguration(vm["group"].as<string>(), false, "");
 			HoneydConfiguration::Inst()->SwitchToConfiguration(vm["group"].as<string>());
-			cout << "Current config is " << Config::Inst()->GetCurrentConfig() << endl;
+		}
+		else if(!vm.count("group"))
+		{
+			string defaultCreatedGroup = "autoconfig";
+			time_t timestamp = time(NULL);
+			stringstream ss;
+			ss << timestamp;
+			defaultCreatedGroup += ss.str();
+			cout << "No group dictated, using default group name " << defaultCreatedGroup << endl;
+			HoneydConfiguration::Inst()->AddNewConfiguration(defaultCreatedGroup, false, "");
+			HoneydConfiguration::Inst()->SwitchToConfiguration(defaultCreatedGroup);
 		}
 
 		if(vm.count("append-to"))
@@ -1023,7 +1033,7 @@ void Nova::GenerateConfiguration()
 		//Pick a MAC address for the node:
 		string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
 
-		Config::Inst()->SetGroup("Autoconfig");
+		//Config::Inst()->SetGroup("Autoconfig");
 
 		//Make a node for that profile
 		HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, Config::Inst()->GetInterface(0),

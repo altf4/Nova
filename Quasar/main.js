@@ -59,6 +59,7 @@ var exec = require('child_process').exec;
 var nowjs = require("now");
 var Validator = require('validator').Validator;
 var dns = require('dns');
+var wrench = require('wrench');
 
 var Tail = require('tail').Tail;
 var NovaHomePath = config.GetPathHome();
@@ -2417,6 +2418,7 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 			hhconfigArgs.push(numNodes);
 		}
 	}
+	
 	if (interfaces !== undefined && interfaces.length > 0) {
 		hhconfigArgs.push(iFlag);
 		hhconfigArgs.push(interfaces);
@@ -2468,11 +2470,13 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	});
 }
 
-everyone.now.CancelAutoScan = function() {
+everyone.now.CancelAutoScan = function(groupName) {
   if(autoconfig != undefined)
   {
     autoconfig.kill();
     autoconfig = undefined;
+    wrench.rmdirSyncRecursive(NovaHomePath + '/config/templates/' + groupName);
+    now.SwitchConfigurationTo('default');
   }
   // TODO: make sure that any changes that might've occurred to the xml
   // files are revoked, the new configuration that was created gets 

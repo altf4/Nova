@@ -284,7 +284,8 @@ block headerAdditions
     {
       if(typeof now.CancelAutoScan == 'function')
       {
-        now.CancelAutoScan();
+        var group = document.getElementById("newGroup").value;
+        now.CancelAutoScan(group);
         document.getElementById("lightbox").style.display='block';
         document.getElementById("setup").style.display='none';
       }
@@ -342,7 +343,8 @@ block content
     
   h1 Haystack Autoconfig
   br
-  label(style='font-weight: bold') New Group Name
+  label(style='font-weight: bold') New Haystack Group Name
+  br
   br
   input(type='text', id='newGroup')
   br
