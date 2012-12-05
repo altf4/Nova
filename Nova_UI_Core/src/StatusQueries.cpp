@@ -61,7 +61,7 @@ bool IsNovadUp(bool tryToConnect)
 		Message *reply = MessageManager::Instance().ReadMessage(ticket);
 		if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 		{
-			LOG(ERROR, "Timeout error when waiting for message reply", "");
+			LOG(WARNING, "Timeout error when waiting for message reply", "");
 			reply->DeleteContents();
 			delete reply;
 			isUp = false;
