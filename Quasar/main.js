@@ -2450,7 +2450,7 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 			var response = "haystackautoconfig failed to start.";
 			if(typeof route == 'function')
 			{
-			  route("/nodeReview", response);
+			  route("/autoConfig", response);
 			}
 		}
 	});
@@ -2460,7 +2460,7 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 		var response = "autoconfig exited with code " + code;
 	  if(typeof route == 'function' && signal != 'SIGTERM')
     {
-      route("/nodeReview", response);
+      route("/honeydConfigManage", response);
     }
     if(signal == 'SIGTERM')
     {
