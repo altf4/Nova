@@ -22,9 +22,11 @@ html(lang="en")
 
             var sideBarButtons = document.getElementsByClassName("sideBarButton");
             for (var i in sideBarButtons) {
-                if (!sideBarButtons[i].pathname) {continue;}
+                if (!sideBarButtons[i].pathname) {
+                    continue;
+                }
                 
-                if (sideBarButtons[i].pathname + sideBarButtons[i].search == window.location.pathname + window.location.search) {
+                if (sideBarButtons[i].pathname == window.location.pathname) {
                     sideBarButtons[i].className += ' active';
                     console.log("Enabled button " + sideBarButtons[i]);
                 }
@@ -56,7 +58,7 @@ html(lang="en")
       
        
         div.sideBarHeader Status
-          a.sideBarButton(href='/suspects?type=all') Current Suspects
+          a.sideBarButton(href='/suspects') Current Suspects
           a.sideBarButton(href='/events') Hostile Events
           a.sideBarButton(href= "/haystackStatus") Haystack Details
         
