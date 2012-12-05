@@ -310,6 +310,16 @@ block content
     label(id="scanError", style="color: red;") #{SCANERROR}
     
   h1 Haystack Autoconfig
+  hidden(id="length", value=INTERFACES.length)
+  br    
+  label#numNodesLabel(style='font-weight: bold') Number of Haystack Nodes to create
+  br
+  br
+  select#nodeCountType(onchange="nodeNumberTypeChanged()")
+    option(value="fixed", selected='selected') Fixed
+    option(value="ratio") Ratio
+  input(type="number", name="numNodes", id="numNodes", width="4", min="1", onblur="checkIntMax(\"numNodes\")", value="1")
+  br
   div#setup
     p The interfaces shown below are the interfaces currently connected to the server. Selecting one of these will result in a scan against the entire subnet that that interface represents.
     table
@@ -317,17 +327,6 @@ block content
         tr 
           th Interfaces connected to Server
       tbody(id='appendHook')
-              
-    hidden(id="length", value=INTERFACES.length)
-    br    
-    label#numNodesLabel(style='font-weight: bold') Number of Haystack Nodes to create
-    br
-    br
-    select#nodeCountType(onchange="nodeNumberTypeChanged()")
-      option(value="fixed", selected='selected') Fixed
-      option(value="ratio") Ratio
-    input(type="number", name="numNodes", id="numNodes", width="4", min="1", onblur="checkIntMax(\"numNodes\")", value="1")
-    br
     
     p Below, you can add subnets of the given format to a list that will be scanned during the autoconfiguration process. Right now the input only recognizes strings of the format that is watermarked within the input box. To scan a specific host, put their IPv4 address in the input and append "/32" to the end. It is not suggested to add subnets with a mask less than '/24' (i.e. /16, etc.) due to nmap OS scan restrictions.
     label Additional Subnets to scan:
