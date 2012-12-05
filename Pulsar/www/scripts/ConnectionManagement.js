@@ -60,12 +60,12 @@ function setUpClientsList(divName)
           
           var check = document.createElement('input');
           check.type = 'checkbox';
-          check.id = 'check' + i;
-          check.name = 'check' + i;
+          check.id = 'client' + clients[i];
+          check.name = 'client' + clients[i];
           check.value = clients[i];
           if(typeof setTarget == 'function')
           {
-            check.setAttribute('onchange', 'setTarget(("check" + ' + i + '), clients[' + i + '].toString())');
+            check.setAttribute('onchange', 'setTarget(("client' + clients[i] + '"), "' + clients[i].toString() + '")');
           }
           td0.appendChild(check);
           
@@ -183,36 +183,52 @@ now.UpdateClientsList = function(clientId, action)
       }
       for(var i = 0; i < clientCount; i++)
       {
-        if(document.getElementById('check' + i) != undefined && document.getElementById('check' + i).value == clientId)
+        if(document.getElementById('client' + clientId) != undefined && document.getElementById('client' + clientId).value == clientId)
         {
           console.log(clientId + ' needlessly attempting to re-establish connection, doing nothing');
           return;
         }
       }
       
-      var div = document.createElement('div');
-      div.id = clientId + 'div';
+      if(clients[parseInt(clientCount)] == undefined && clients[0] != '')
+      {
+        clients.push(clientId);
+      }
+      else if(clients[0] == '')
+      {
+        clients[0] = clientId;
+      }
+      else if(clients[parseInt(clientCount)] == '')
+      {
+        clients[parseInt(clientCount)] = clientId;
+      }
       
+      var tr = document.createElement('tr');
+      tr.id = clientId + 'div';
+      
+      var td0 = document.createElement('td');
       var check = document.createElement('input');
       check.type = 'checkbox';
-      check.id = 'check' + (parseInt(clientCount) + 1);
-      check.name = 'check' + (parseInt(clientCount) + 1);
+      check.id = 'client' + clientId;
+      check.name = 'client' + clientId;
       check.value = clientId;
-      check.setAttribute('onchange', 'setTarget(("check" + ' + (parseInt(clientCount) + 1) + '), clients[' + (parseInt(clientCount) + 1) + '].toString())');
-      check.setAttribute('style', 'padding-left: 50px');
+      check.setAttribute('onchange', 'setTarget(("client' + clientId + '"), "' + clients[parseInt(clientCount)].toString() + '")');
+      td0.appendChild(check);
       
+      var td1 = document.createElement('td');
       var label = document.createElement('label');
       label.value = clientId;
       label.innerHTML = clientId;
       label.setAttribute('style', 'font-weight: bold; padding-left: 25px');
+      td1.appendChild(label);
       
-      div.appendChild(check);
-      div.appendChild(label);
-      divClientList.appendChild(div);
+      tr.appendChild(td0);
+      tr.appendChild(td1);
+      divClientList.appendChild(tr);
       
       clientCount++;
       
-      clients.push(clientId);
+      //clients.push(clientId);
       if(typeof updateGroup == 'function')
       {
         updateGroup('all', clients.join());
@@ -226,11 +242,15 @@ now.UpdateClientsList = function(clientId, action)
       
       clientCount--;
       
-      for(var i in clients)
+      var oldClients = clients.slice();
+      
+      clients.length = 0;
+      
+      for(var i in oldClients)
       {
-        if(clients[i] == clientId)
+        if(oldClients[i] != clientId && oldClients[i] != '')
         {
-          clients.splice(i, 1);
+          clients.push(oldClients[i]);
         }
       }
       
@@ -257,6 +277,10 @@ now.UpdateClientsList = function(clientId, action)
   
 now.UpdateGroupList = function(group, action)
 {
+  if(document.location.pathname == '/groups')
+  {
+    return;
+  }
   var divGroupList = document.getElementById(groupDivName);
   var groupDiv = document.getElementById(group + 'div');
   switch(action)
@@ -312,9 +336,7 @@ now.UpdateGroupList = function(group, action)
       }
       break;
     case 'remove':
-      console.log('groupDiv.childNodes[0].id ' + groupDiv.childNodes[0].id);
       divGroupList.removeChild(groupDiv);
-      
       break;
     default:
       console.log('UpdateGroupList called with invalid action, doing nothing');

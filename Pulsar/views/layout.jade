@@ -159,8 +159,6 @@ html(lang='en')
               divConnectionsList.appendChild(tr);
             }
           }
-          
-          clients.length = 0;
         }
         divConnectionsList = null;
       }
@@ -176,6 +174,7 @@ html(lang='en')
             {
               return now.UpdateConnectionsList(clientId, 'updateStatus');
             }
+
             var tr = document.createElement('tr');
             tr.id = clientId;
             tr.style.minHeight = '17px';
@@ -413,7 +412,6 @@ html(lang='en')
         });
       }
       
-      
       now.ClearConnectionsListEvents = function()
       {
         now.ClearEventCounter(function(){
@@ -468,18 +466,13 @@ html(lang='en')
         {
           now.UpdateClientsList(client, 'remove');
         }        
+        if(typeof now.UpdateConnectionsList == 'function')
+        {
+          now.UpdateConnectionsList(client, 'remove');
+        }
         if(typeof now.ClearFromNovaClients == 'function')
         {
-          var newClients = [];
-          for(var i in clients)
-          {
-            if(clients[i] != client)
-            {
-              newClients.push(clients[i]);
-            }
-          }
-          clients = newClients;
-          now.ClearFromNovaClients(client, function(){now.RenderConnectionsList(clients)});
+          now.ClearFromNovaClients(client);
         }
       }
       
@@ -546,7 +539,7 @@ html(lang='en')
         br
         div(style='text-align:center; font-weight:bold; font-size: 150%;') Connected Clients
         br
-        table(style='border: 2px solid black; width: 156px; height: 4px; border-collapse: collapse;')
+        table(style='border: 2px solid black; width: 156px; height: 4px; background: #E8A02F;')
           tbody(id='connectionsList')
         //a(class="button", href= "logout") Log Out
         //br
