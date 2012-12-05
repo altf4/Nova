@@ -123,7 +123,6 @@ function updateGroup(group, newMembers)
 
 function addGroup(group, members)
 {
-  
   if(members != undefined && group != undefined)
   {
     for(var i in maintainGroups)

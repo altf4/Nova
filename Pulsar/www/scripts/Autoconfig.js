@@ -40,10 +40,10 @@ function setTarget(source, target, group)
       }
       for(var i in document.getElementById('clientsList').childNodes)
       {
-        if(document.getElementById('check' + i) != undefined)
+        if(document.getElementById('client' + target) != undefined)
         {
-          document.getElementById('check' + i).checked = false;
-          document.getElementById('check' + i).setAttribute('disabled', true);
+          document.getElementById('client' + target).checked = false;
+          document.getElementById('client' + target).setAttribute('disabled', true);
         } 
       }
     }
@@ -63,9 +63,9 @@ function setTarget(source, target, group)
       }
       for(var i in document.getElementById('clientsList').childNodes)
       {
-        if(document.getElementById('check' + i) != undefined)
+        if(document.getElementById('client' + target) != undefined)
         {
-          document.getElementById('check' + i).removeAttribute('disabled');
+          document.getElementById('client' + target).removeAttribute('disabled');
         } 
       }
     }

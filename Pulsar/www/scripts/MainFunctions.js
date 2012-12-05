@@ -197,10 +197,10 @@ function setTarget(source, target, group)
         }
         for(var i in theDoc.getElementById('clientsList').childNodes)
         {
-          if(theDoc.getElementById('check' + i) != undefined)
+          if(theDoc.getElementById('client' + target) != undefined)
           {
-            theDoc.getElementById('check' + i).checked = false;
-            theDoc.getElementById('check' + i).setAttribute('disabled', true);
+            theDoc.getElementById('client' + target).checked = false;
+            theDoc.getElementById('client' + target).setAttribute('disabled', true);
           } 
         }
         for(var i = 0; i < 7; i++)
@@ -220,9 +220,9 @@ function setTarget(source, target, group)
         }
         for(var i in theDoc.getElementById('clientsList').childNodes)
         {
-          if(theDoc.getElementById('check' + i) != undefined)
+          if(theDoc.getElementById('client' + target) != undefined)
           {
-            theDoc.getElementById('check' + i).removeAttribute('disabled');
+            theDoc.getElementById('client' + target).removeAttribute('disabled');
           } 
         }
         for(var i = 0; i < 7; i++)
@@ -294,6 +294,11 @@ function pad(num)
 
 now.OnNewSuspect = function(suspect)
 {
+  if(suspectGrid == undefined)
+  {
+    console.log('suspectGrid has not been initialized');
+    return;
+  }
   doRender = true;
   var type = suspect.type;
 

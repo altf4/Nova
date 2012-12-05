@@ -142,6 +142,12 @@ html, body {
   text-align: center;
 }
 
+.listContainer {
+  background: #E8A02F;
+  border: 2px solid; 
+  width: 200px;
+}
+
 .white_content {
 	display: none;
 	position: absolute;

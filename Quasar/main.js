@@ -72,6 +72,8 @@ var honeydLog = new Tail(honeydLogPath);
 var benignRequest = false;
 var pulsar;
 
+var autoconfig;
+
 var interfaceAliases = new Object();
 ReloadInterfaceAliasFile();
 
@@ -484,7 +486,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               var util = require('util');
               var spawn = require('child_process').spawn;
             
-              var autoconfig = spawn(executionString.toString(), hhconfigArgs);
+              autoconfig = spawn(executionString.toString(), hhconfigArgs);
             
               autoconfig.stdout.on('data', function (data){
                 console.log('' + data);
@@ -2397,6 +2399,8 @@ everyone.now.GetCaptureSession = function (callback) {
 }
 
 everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subnets, callback, route) {
+  fs.mkdirSync(NovaHomePath + '/config/templates/tmp/');
+  
 	var executionString = 'haystackautoconfig';
 	var nFlag = '-n';
 	var rFlag = '-r';
@@ -2428,7 +2432,7 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	var util = require('util');
 	var spawn = require('child_process').spawn;
 
-	var autoconfig = spawn(executionString.toString(), hhconfigArgs);
+	autoconfig = spawn(executionString.toString(), hhconfigArgs);
 
 	autoconfig.stdout.on('data', function (data) {
 	  if(typeof callback == 'function')
@@ -2448,14 +2452,30 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 		}
 	});
 
-	autoconfig.on('exit', function (code) {
+	autoconfig.on('exit', function (code, signal) {
 		console.log("autoconfig exited with code " + code);
 		var response = "autoconfig exited with code " + code;
-	  if(typeof route == 'function')
+	  if(typeof route == 'function' && signal != 'SIGTERM')
     {
       route("/nodeReview", response);
     }
+    if(signal == 'SIGTERM')
+    {
+      response = "autoconfig scan terminated early";
+      route("/autoConfig", response);
+    }
 	});
+}
+
+everyone.now.CancelAutoScan = function() {
+  if(autoconfig != undefined)
+  {
+    autoconfig.kill();
+    autoconfig = undefined;
+  }
+  // TODO: make sure that any changes that might've occurred to the xml
+  // files are revoked, the new configuration that was created gets 
+  // deleted, etc.
 }
 
 // TODO: Fix training
@@ -2576,8 +2596,12 @@ var SendBenignSuspectToPulsar = function(suspect) {
 };
 everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
-everyone.now.GetLocalIP = function (interface, callback) {
-	callback(nova.GetLocalIP(interface));
+everyone.now.GetLocalIP = function (iface, callback) {
+	callback(nova.GetLocalIP(iface));
+}
+
+everyone.now.GetSubnetFromInterface = function (iface, callback) {
+  callback(nova.GetSubnetFromInterface(iface));
 }
 
 everyone.now.RemoveScriptFromProfiles = function(script, callback)

@@ -440,7 +440,7 @@ MASTER_UI_IP 0.0.0.0
 ############################################
 # Time between connection attempts in case
 # of lost connection (in seconds)
-MASTER_UI_RECONNECT_TIME 5
+MASTER_UI_RECONNECT_TIME 10
 
 ############################################
 # MASTER_UI_CLIENT_ID

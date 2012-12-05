@@ -23,6 +23,14 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <netdb.h>
+#include <net/if.h>
+#include <ifaddrs.h>
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 #include "sys/types.h"
 
@@ -37,6 +45,8 @@ void CryptBuffer(u_char *buf, uint size, bool mode);
 // Returns: IP addresses
 std::string GetLocalIP(const char *dev);
 std::string GetLocalIP(std::string dev);
+
+std::string GetSubnetFromInterface(std::string interface);
 
 //Removes any instance of the specified character from the front and back of the string
 //		str - pointer to the string you want to modify
