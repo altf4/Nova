@@ -220,10 +220,12 @@ block headerAdditions
         }
       }
     }
-    
-    now.ready(function(){
-      setUpScriptTable();
-    });
+   
+    function init() {
+        now.ready(function(){
+          setUpScriptTable();
+        });
+    }
 
 block content
   div#hideme

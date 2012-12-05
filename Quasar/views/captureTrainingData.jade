@@ -69,7 +69,7 @@ block headerAdditions
             window.location = "/importCapture?trainingSession=" + sessionNameElement.value;
         }
 
-        require(["dojo/domReady!", "dojo/ready"], function(){
+        function() init{
             trainingStarted = false;
             buttonElement = document.getElementById("toggleButton");
             statusElement = document.getElementById("status");
@@ -94,7 +94,7 @@ block headerAdditions
             });
 
 
-        });
+        };
 
 block content
   p Note: This will stop any currently running instances of nova. It is not recommended to leave this page while the capture is running.

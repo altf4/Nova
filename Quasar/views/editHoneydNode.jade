@@ -141,16 +141,13 @@ block headerAdditions
             document.getElementById("mac" + i).value = splitMac[i];
         }
     }
-    
-    require(["dojo/domReady!"],
-    function(){
+   
+    function init() {
         now.ready( function() {
             profileChanged();
         });
-    });
+    }
     
-
-
 block content
   br
   h2 Editing Honeyd Node "#{oldName}"

@@ -363,12 +363,12 @@ block headerAdditions
         return false;
       }
     }
-    
-    now.ready(function(){
+
+    function init() {
       Init();
       checkOnlyOne('if0');
       profileChanged();
-    });
+    }
 
 block content
   h1 Current Haystack Node Configuration

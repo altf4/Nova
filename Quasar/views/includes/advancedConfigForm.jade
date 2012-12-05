@@ -84,9 +84,9 @@ script
     }
   }
 
-  require(["dojo/domReady!"], function(){
+  function init() {
     updateFeatureSettingStates();
-  });
+  }
   
 form(method="post", action="/configureNovaSave")
   h2 General Configuration

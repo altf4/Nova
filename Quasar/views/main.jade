@@ -434,9 +434,8 @@ block headerAdditions
         },3000);
     }
 
-    require(["dojo/ready", "dojo/domReady!"], function(ready){
-        ready(function() {
-            now.ready(function() {
+    function init() {
+        now.ready(function() {
 
             now.updateHaystackStatus = updateHaystackStatus;
             now.updateNovadStatus = updateNovadStatus;
@@ -448,7 +447,6 @@ block headerAdditions
             
             now.IsHaystackUp(updateHaystackStatus);
             now.IsNovadUp(updateNovadStatus);
-            });
         });
-    });
+    };
 

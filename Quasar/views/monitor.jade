@@ -42,7 +42,7 @@ block headerAdditions
   script(type="text/javascript", src="scripts/NovaPiChart.js")
   script
     var lastSuspectObject = null;
-    var init = true;
+    var initialized = true;
     var data = new Array();
     var classificationData = new Array();
     var tcpChart = new NovaPiChart("tcpPiChart", 200);
@@ -128,9 +128,9 @@ block headerAdditions
 
     function OnNewSuspect(suspect) {
         // We throw the first suspect in the graphs twice so it'll have a line instead of nothing
-        if (init)
+        if (initialized)
         {
-            init = false;
+            initialized = false;
             OnNewSuspect(suspect);
         }
         
@@ -319,13 +319,11 @@ block headerAdditions
 
 
 
-    require(["dojo/ready", "dojo/domReady!"], function(ready){
-        ready(function() {
-            now.ready(function() {
-                Init();
-                now.OnNewSuspect = OnNewSuspect;
-            });
+    function init(ready){
+        now.ready(function() {
+            Init();
+            now.OnNewSuspect = OnNewSuspect;
         });
-    });
+    };
 
 

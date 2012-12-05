@@ -263,7 +263,8 @@ script
                 }
         }
 
-        require(["dojo/domReady!", "dojo/ready", "dijit/registry", "dijit/form/FilteringSelect"], function() {
+        function init() {
+        require(["dijit/registry", "dijit/form/FilteringSelect"], function() {
                 function obj() {};
                 saveChanges = function() {
 
@@ -684,5 +685,6 @@ script
                         }  
                 });
         });
+        }
 
 
