@@ -120,6 +120,18 @@ block headerAdditions
 
     function RunScan()
     {
+      var checkGroupName = GetGroupName();
+
+        if(GetGroupName() == '*')
+        {
+          alert('Must enter a group name!');
+          return;          
+        }
+        else if(GetGroupName() == '#')
+        {
+          alert('No special characters in group name! Alphanumeric only.');
+          return;
+        }
         if(checkAtLeastOne())
         { 
             document.getElementById("startScan").value='Scanning...'; 
@@ -151,7 +163,7 @@ block headerAdditions
             try {
                 var element = document.getElementById("nodeCountType");
                 var count = element.options[element.selectedIndex].value;
-                now.ShowAutoConfig(count, GetNumNodes(), GetInterfaces(), GetSubnets(), autoscancb, routeToReview); 
+                now.ShowAutoConfig(count, GetNumNodes(), GetInterfaces(), GetSubnets(), GetGroupName(), autoscancb, routeToReview); 
             } catch (err) {
                 alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
                 console.log("err was: " + err);
@@ -220,6 +232,25 @@ block headerAdditions
         return returnString;
     }
 
+    function GetGroupName()
+    {
+      var group = document.getElementById('newGroup').value;
+      
+      if(group == undefined || group == '')
+      {
+        return '*';
+      }
+      if((new RegExp('^[a-zA-Z0-9]+$')).test(group))
+      {
+        return group;
+      }
+      else
+      {
+        alert('Unacceptable characters in group name!');
+        return '#';
+      }
+    }
+
     function autoscancb(text)
     {
         var p = document.createElement('p');
@@ -253,7 +284,8 @@ block headerAdditions
     {
       if(typeof now.CancelAutoScan == 'function')
       {
-        now.CancelAutoScan();
+        var group = document.getElementById("newGroup").value;
+        now.CancelAutoScan(group);
         document.getElementById("lightbox").style.display='block';
         document.getElementById("setup").style.display='none';
       }
@@ -310,6 +342,12 @@ block content
     label(id="scanError", style="color: red;") #{SCANERROR}
     
   h1 Haystack Autoconfig
+  br
+  label(style='font-weight: bold') New Haystack Group Name
+  br
+  br
+  input(type='text', id='newGroup')
+  br
   hidden(id="length", value=INTERFACES.length)
   br    
   label#numNodesLabel(style='font-weight: bold') Number of Haystack Nodes to create

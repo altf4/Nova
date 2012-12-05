@@ -15,5 +15,6 @@
 		, "websocket" : "1.x.x"
 		, "sudo" : ""
 		, "libxmljs" : ""
+		, "wrench" : ""
 	}
 }
