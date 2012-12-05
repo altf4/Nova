@@ -43,6 +43,7 @@ input[type=button], input[type=submit], button, .button, .sideBarButton {
     padding: 2px 4px 4px;
 	text-align: center;
 	text-decoration: none;
+	color: black;
 }
 
 .sideBarButton {
