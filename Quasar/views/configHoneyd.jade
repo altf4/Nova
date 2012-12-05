@@ -224,46 +224,9 @@ block headerAdditions
     }
     
     function onGridRendered() {
-       var gridSize = grid.GetNumberOfPages();
-       var currentPage = grid.GetCurrentPage();
-
-       var temp = document.createElement('a');
-       document.getElementById("tablePages").innerHTML = "";
-
-       var pageLink = document.createElement('a');
-       pageLink.setAttribute('href', '#');
-       pageLink.setAttribute('onclick', 'grid.PreviousPage();');
-       var pageLinkText = document.createTextNode(" <-- ");
-       pageLink.appendChild(pageLinkText);
-       document.getElementById("tablePages").appendChild(pageLink);
-
-       for (var i = 0; i < gridSize; i++) {
-           var pageLink = document.createElement('a');
-           pageLink.setAttribute('href', '#');
-           pageLink.setAttribute('onclick', 'grid.SetCurrentPage( ' + i + ');');
-
-           var pageLinkText = document.createTextNode(" " + (i + 1) + " ");
-           pageLink.appendChild(pageLinkText);
-
-           if (i == currentPage) 
-           {
-               var boldTag = document.createElement('b');
-               boldTag.appendChild(pageLink);
-
-               document.getElementById("tablePages").appendChild(boldTag);
-           }
-           else 
-           {
-               document.getElementById("tablePages").appendChild(pageLink);
-           }    
-       }
-
-       var pageLink = document.createElement('a');
-       pageLink.setAttribute('href', '#');
-       pageLink.setAttribute('onclick', 'grid.NextPage();');
-       var pageLinkText = document.createTextNode(" --> ");
-       pageLink.appendChild(pageLinkText);
-       document.getElementById("tablePages").appendChild(pageLink);
+       var tablePages = document.getElementById("tablePages");
+       tablePages.innerHTML = "";
+       grid.populateTablePages(tablePages);   
     }
     
     function deleteByProfile(profileName)
