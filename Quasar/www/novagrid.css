@@ -1,3 +1,10 @@
+div.novaGrid {
+	border: 1px solid black;
+	min-height:  200px;
+	width: auto;
+	display: inline-block;
+}
+
 .novaGrid {
 	table-layout:fixed;
 	border-collapse:collapse;
