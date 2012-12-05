@@ -44,7 +44,7 @@ void NovaNode::CheckInitNova()
 
 	if( ! Nova::TryWaitConnectToNovad(3000) )
 	{
-		LOG(ERROR, "Error connecting to Novad","");
+		LOG(WARNING, "Could not connect to Novad. It is likely down.","");
 		return;
 	}
 

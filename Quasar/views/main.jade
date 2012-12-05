@@ -1,7 +1,7 @@
 extends layout
 
 block topPannelAdditions
-  table
+  table(style="float: left;")
     tr
       td(style="text-align: right;") Packet Classifier:&nbsp 
       td(style="padding: 0;")
@@ -14,30 +14,21 @@ block topPannelAdditions
         img#haystack_status_icon(src="/images/orangedot.png", width="15px", height="15px")
       td
         div#haystack_status checking
+  button.button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopNovad()') Stop Packet Classifier
+  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartNovad()') Start Packet Classifier
+  br
+  br
+  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopHaystack()') Stop Haystack 
+  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartHaystack()') Start Haystack
+  br
+  br
+  button.button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
+
+  a(style="margin-top: 2px; margin-bottom: 2px; margin-right: 4px; width:160px; float: right;", class="button", href="/novaState.csv") Suspects as CSV file
 
 block content
-  div(style="width: 600px; margin:0 auto; text-align: center")
-    button(type="button", style="width:160px", onclick='StartNovad()') Start Packet Classifier
-    &nbsp
-    &nbsp
-    button(type="button", style="width:160px", onclick='StartHaystack()') Start Haystack
-    &nbsp
-    &nbsp
-    button(type="button", style="width:160px", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
-  
+  div#nova_suspects_header(style="width:600px;")
     br
-    
-    button(type="button", style="width:160px", onclick='StopNovad()') Stop Packet Classifier
-    &nbsp
-    &nbsp
-    button(type="button", style="width:160px", onclick='StopHaystack()') Stop Haystack 
-    &nbsp
-    &nbsp
-    button#liveUpdateButton(type="button", style="width:160px", onclick='toggleLiveUpdate()') Pause Updates 
-
-  div#nova_suspects_header(style="width:600px; margin: 0 auto; text-align:center;")
-    br
-    a(class="button", href="/novaState.csv") Suspects as CSV file
     &nbsp
     
     a(class="button", href="javascript:void(0)", onclick="toggleFilterBlock()") Filtering Options
@@ -62,6 +53,11 @@ block content
       button(onclick='disableAdvancedFilter()') Disable Advanced Filters
     br
   div#nova_suspects
+    
+    input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
+    label Live Grid Update
+    br
+    
     input#showUnclassified(type="checkbox", onchange="showUnclassifiedChanged()")
     label Show unclassified suspects
     br
@@ -88,14 +84,9 @@ block headerAdditions
 
     require(["dijit/form/TextBox"]);
 
-    var toggleLiveUpdate = function() {
-      liveUpdate = !liveUpdate;
+    var LiveUpdateChanged = function() {
+      liveUpdate = document.getElementById("liveGridUpdate").checked;
       console.log("Toggled live update to " + liveUpdate);
-      if (!liveUpdate) {
-        dojo.byId("liveUpdateButton").innerHTML = "Unpause table refreshing";}
-      else {
-        dojo.byId("liveUpdateButton").innerHTML = "Pause table refreshing";
-      }
     }
 
     var toggleFilterBlock = function()
@@ -227,9 +218,9 @@ block headerAdditions
       
       var row = new Array();
       
-      var monitorButton = "<a href='javascript:void(0)' onclick='MonitorSuspect(";
+      var monitorButton = "<a class='button' href='javascript:void(0)' onclick='MonitorSuspect(";
       monitorButton += '"' + suspect.GetIpString + '"' + ', ' + '"' + suspect.GetInterface + '"' + ', ' + '"' + suspect.GetIdString + '"';
-      monitorButton += ");'>Monitor</button>";
+      monitorButton += ");'>Monitor</a>";
       row.push(monitorButton);
         
       var ip = suspect.GetIpString;
