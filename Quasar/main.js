@@ -2399,8 +2399,6 @@ everyone.now.GetCaptureSession = function (callback) {
 }
 
 everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subnets, callback, route) {
-  fs.mkdirSync(NovaHomePath + '/config/templates/tmp/');
-  
 	var executionString = 'haystackautoconfig';
 	var nFlag = '-n';
 	var rFlag = '-r';
