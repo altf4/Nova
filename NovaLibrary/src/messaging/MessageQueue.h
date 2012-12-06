@@ -33,7 +33,7 @@ class MessageQueue
 
 public:
 
-	MessageQueue();
+	MessageQueue(uint32_t ourSerial);
 	~MessageQueue();
 
 	//Functions for pushing and popping messages off the Message queue
@@ -41,6 +41,7 @@ public:
 	bool PushMessage(Message *message);
 
 	uint32_t GetTheirSerialNum();
+	uint32_t GetOurSerialNum();
 
 	//Shuts down MessageQueue, also wakes up any reading threads
 	void Shutdown();
@@ -56,6 +57,9 @@ private:
 
 	uint32_t m_theirSerialNum;
 	pthread_mutex_t m_theirSerialNumMutex;
+
+	uint32_t m_ourSerialNum;
+	pthread_mutex_t m_ourSerialNumMutex;
 
 	bool isShutdown;
 

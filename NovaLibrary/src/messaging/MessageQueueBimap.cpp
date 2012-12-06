@@ -81,7 +81,7 @@ void MessageQueueBimap::AddQueue(uint32_t ourSerial)
 		return;
 	}
 
-	m_ourQueues[ourSerial] = new MessageQueue();
+	m_ourQueues[ourSerial] = new MessageQueue(ourSerial);
 }
 
 void MessageQueueBimap::AddQueue(uint32_t ourSerial, uint32_t theirSerial)
@@ -97,7 +97,7 @@ void MessageQueueBimap::AddQueue(uint32_t ourSerial, uint32_t theirSerial)
 	}
 	else
 	{
-		queue = new MessageQueue();
+		queue = new MessageQueue(ourSerial);
 		m_ourQueues[ourSerial] = queue;
 	}
 

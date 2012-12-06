@@ -28,12 +28,14 @@
 namespace Nova
 {
 
-MessageQueue::MessageQueue()
+MessageQueue::MessageQueue(uint32_t ourSerial)
 {
 	pthread_mutex_init(&m_queueMutex, NULL);
 	pthread_mutex_init(&m_theirSerialNumMutex, NULL);
+	pthread_mutex_init(&m_ourSerialNumMutex, NULL);
 	pthread_cond_init(&m_popWakeupCondition, NULL);
 
+	m_ourSerialNum = ourSerial;
 	m_theirSerialNum = 0;
 	isShutdown = false;
 }
@@ -152,6 +154,12 @@ uint32_t MessageQueue::GetTheirSerialNum()
 {
 	Lock lock(&m_theirSerialNumMutex);
 	return m_theirSerialNum;
+}
+
+uint32_t MessageQueue::GetOurSerialNum()
+{
+	Lock lock(&m_ourSerialNumMutex);
+	return m_ourSerialNum;
 }
 
 void MessageQueue::SetTheirSerialNum(uint32_t serial)

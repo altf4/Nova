@@ -148,13 +148,13 @@ bool MessageEndpoint::PushMessage(Message *message)
 	//If this is a new conversation from the endpoint (new callback conversation)
 	if(message->m_theirSerialNumber == 0)
 	{
-		isNewCallback = true;
 		//Look up to see if there's a MessageQueue for this serial
 		MessageQueue *queue = m_queues.GetByTheirSerial(message->m_ourSerialNumber);
 
 		//If this is a brand new callback message
 		if(queue == NULL)
 		{
+			isNewCallback = true;
 			ourSerial = GetNextOurSerialNum();
 			m_queues.AddQueue(ourSerial, message->m_ourSerialNumber);
 
@@ -166,6 +166,10 @@ bool MessageEndpoint::PushMessage(Message *message)
 				delete message;
 				return false;
 			}
+		}
+		else
+		{
+			ourSerial = queue->GetOurSerialNum();
 		}
 		if(queue->PushMessage(message))
 		{

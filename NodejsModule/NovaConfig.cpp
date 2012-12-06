@@ -8,7 +8,6 @@
 #include "NovaNode.h"
 #include "CustomizeTraining.h"
 #include "WhitelistConfigurationBinding.h"
-#include "HoneydAutoConfigBinding.h"
 #include "TrainingDumpBinding.h"
 #include "LoggerBinding.h"
 
@@ -24,7 +23,6 @@ void InitAll(Handle<Object> target)
 	HoneydProfileBinding::Init(target);
 	CustomizeTrainingBinding::Init(target);
 	WhitelistConfigurationBinding::Init(target);
-	HoneydAutoConfigBinding::Init(target);
 	TrainingDumpBinding::Init(target);
 	LoggerBinding::Init(target);
 }

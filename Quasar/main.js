@@ -35,7 +35,6 @@ var vendorToMacDb = new novaconfig.VendorMacDbBinding();
 var osPersonalityDb = new novaconfig.OsPersonalityDbBinding();
 var trainingDb = new novaconfig.CustomizeTrainingBinding();
 var whitelistConfig = new novaconfig.WhitelistConfigurationBinding();
-var hhconfig = new novaconfig.HoneydAutoConfigBinding();
 
 // Modules from NodejsModule/Javascript
 var LOG = require("../NodejsModule/Javascript/Logger").LOG;
@@ -1367,45 +1366,6 @@ app.post("/editTLSCerts", passport.authenticate('basic', {session: false}), func
 			});
 		});
 	});
-});
-
-app.post('/scanning', passport.authenticate('basic', {session: false}), function (req, res) {
-	if (req.body["numNodes"] === undefined) {
-		RenderError(res, "Invalid arguements to /scanning. You most likely tried to refresh a page that you shouldn't");
-		return;
-	}
-
-	var numNodes = req.body["numNodes"];
-	var subnets = req.body["subnets"];
-	var interfaces = req.body["interfaces"];
-
-	if (interfaces === undefined) {
-		interfaces = "";
-		console.log("No interfaces selected.");
-	}
-
-	if (subnets === undefined) {
-		subnets = "";
-		console.log("No additional subnets selected.");
-	}
-
-
-	if (!path.existsSync("/usr/bin/haystackautoconfig")) {
-		LOG(ERROR, "HaystackAutoConfig binary not found in /usr/bin/. Redirect to /autoConfig.");
-		res.render('hhautoconfig.jade', {
-			locals: {
-				user: req.user,
-				INTERFACES: config.ListInterfaces().sort(),
-				SCANERROR: "HaystackAutoConfig binary not found, scan cancelled"
-			}
-		});
-	} else if ((subnets === "" && interfaces === "") && (subnets === undefined && interfaces === undefined)) {
-		res.redirect('/autoConfig');
-	} else {
-		hhconfig.RunAutoScan(numNodes, interfaces, subnets);
-
-		res.redirect('/nodeReview');
-	}
 });
 
 app.post('/scripts', passport.authenticate('basic', {session: false}), function(req, res){
