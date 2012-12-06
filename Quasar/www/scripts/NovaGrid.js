@@ -199,6 +199,7 @@ PushEntry: function (entry) {
           else
           {
             innerTableString += '<TR class="novaGrid">';
+            innerTableString += '<TR class="novaGrid" style="' + arrayRep[i].style + '">';
           }
             for (var c = 0; c < this.m_columns.length; c++) {
                 if (this.m_columns[c].isDisabled == true) {continue;}

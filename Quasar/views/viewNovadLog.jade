@@ -1,0 +1,86 @@
+extends layout
+
+block content
+  input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
+  label Show Debugging Information
+  br
+  div.novaGrid
+    table#logTable
+  p#rawLog(style="display: none")= log
+
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
+  script(type="text/javascript", src="scripts/NovaGrid.js")
+
+  style(type="text/css")
+    td.novaGrid {
+        text-align: left;
+    }
+  
+  script
+    var line;
+    var logGrid;
+    
+    function showAdvancedChanged() {
+        if (document.getElementById("showAdvanced").checked) {
+            for (var i = 1; i < 5; i++) {
+                logGrid.m_columns[i].isDisabled = false;
+            }
+        } else {
+            for (var i = 1; i < 5; i++) {
+                logGrid.m_columns[i].isDisabled = true;
+            }
+            
+        }
+
+        logGrid.GenerateTableHeader();
+        logGrid.Render();
+    }
+
+    function init() {
+        var log = document.getElementById("rawLog").innerHTML;
+        var gridStructure = new Array();
+        gridStructure.push({name: "Timestamp", isDisabled: false});
+        gridStructure.push({name: "Machine Info", isDisabled: true});
+        gridStructure.push({name: "Level", isDisabled: true});
+        gridStructure.push({name: "File", isDisabled: true});
+        gridStructure.push({name: "Line", isDisabled: true});
+        gridStructure.push({name: "Message", isDisabled: false});
+        logGrid = new NovaGrid(gridStructure, 0, document.getElementById('logTable'), 'logGrid');
+
+        
+        var log = log.toString().split(/(\\r\\n|\\n|\\r)/gm);
+
+        for(var i in log) {
+            line = String(log[i]);
+            line = line.replace(/ +(?= )/g,'');
+
+            var match = line.match(/(\\S+ \\S+ \\S+) ([^:]+): (\\S+) File (\\S+) at line (\\d+): (.*)/);
+
+            if (match != null) {
+                match.splice(0,1);
+                
+                
+                match[5] = "<span style='font-weight: bold;'>" + match[5] + "</span>";
+                
+                switch (match[2]) {
+                    case "DEBUG":
+                        match.style = "background-color: #99FF99";
+                        break;
+                    case "ERROR":
+                    case "CRITICAL":
+                        match.style = "background-color: #FF9999";
+                        break;
+                    case "WARNING":
+                        match.style = "background-color: orange";
+                        break;
+                    case "ALERT":
+                        match.style = "background-color: #9999FF";
+                        break;
+                }
+                logGrid.PushEntry(match);
+            }
+        }
+
+        logGrid.Render();
+    }
