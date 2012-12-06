@@ -2756,10 +2756,11 @@ bool Config::GetOnlyClassifyHoneypotTraffic()
 	return m_onlyClassifyHoneypotTraffic;
 }
 
-void Config::SetCurrentConfig(string configName)
+bool Config::SetCurrentConfig(string configName)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_currentConfig = configName;
+	return true;
 }
 
 int Config::GetMasterUIPort()

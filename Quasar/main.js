@@ -2432,6 +2432,8 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	  hhconfigArgs.push(groupName);
 	}
 
+  config.SetCurrentConfig(groupName);
+
 	var util = require('util');
 	var spawn = require('child_process').spawn;
 
@@ -2448,6 +2450,7 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 		if (/^execvp\(\)/.test(data)) {
 			console.log("haystackautoconfig failed to start.");
 			var response = "haystackautoconfig failed to start.";
+			everyone.now.SwitchConfigurationTo('default');
 			if(typeof route == 'function')
 			{
 			  route("/autoConfig", response);
@@ -2476,7 +2479,7 @@ everyone.now.CancelAutoScan = function(groupName) {
     autoconfig.kill();
     autoconfig = undefined;
     wrench.rmdirSyncRecursive(NovaHomePath + '/config/templates/' + groupName);
-    now.SwitchConfigurationTo('default');
+    everyone.now.SwitchConfigurationTo('default');
   }
   // TODO: make sure that any changes that might've occurred to the xml
   // files are revoked, the new configuration that was created gets 

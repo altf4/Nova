@@ -1243,9 +1243,8 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		// create the templates/configName/ directory, and fill with
 		// empty (but still parseable) xml files
 		string oldName = Config::Inst()->GetCurrentConfig();
-		Config::Inst()->SetCurrentConfig(configName);
-
 		ReadAllTemplatesXML();
+		Config::Inst()->SetCurrentConfig(configName);
 
 	    ClearNodes();
 		ClearProfiles();
@@ -1334,6 +1333,8 @@ bool HoneydConfiguration::LoadConfigurations()
 
 	ifstream configList(configurationPath);
 
+	m_configs.clear();
+
 	while(configList.good())
 	{
 		string pushback;
@@ -1346,6 +1347,7 @@ bool HoneydConfiguration::LoadConfigurations()
 
 vector<string> HoneydConfiguration::GetConfigurationsList()
 {
+	LoadConfigurations();
 	return m_configs;
 }
 

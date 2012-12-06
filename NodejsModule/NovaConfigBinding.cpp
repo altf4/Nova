@@ -52,6 +52,7 @@ void NovaConfigBinding::Init(Handle<Object> target) {
 
 
   tpl->PrototypeTemplate()->Set(String::NewSymbol("SetSMTPUser"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, std::string, &Config::SetSMTPUser>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("SetCurrentConfig"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, std::string, &Config::SetCurrentConfig>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("SetSMTPPass"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, std::string, &Config::SetSMTPPass>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSMTPUser"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetSMTPUser>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSMTPPass"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetSMTPPass>));

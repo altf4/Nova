@@ -137,7 +137,7 @@ block headerAdditions
             document.getElementById("startScan").value='Scanning...'; 
             document.getElementById("startScan").setAttribute('disabled', 'true');
             document.getElementById("lightbox").style.display='block';
-            document.getElementById("setup").style.display='none';
+            document.getElementById("setup").style.opacity='0.5';
             var opts = {
                 lines: 17,
                 length: 0,
@@ -286,8 +286,6 @@ block headerAdditions
       {
         var group = document.getElementById("newGroup").value;
         now.CancelAutoScan(group);
-        document.getElementById("lightbox").style.display='block';
-        document.getElementById("setup").style.display='none';
       }
       else
       {
@@ -341,24 +339,24 @@ block content
   if(SCANERROR !== undefined)
     label(id="scanError", style="color: red;") #{SCANERROR}
     
-  h1 Haystack Autoconfig
-  br
-  label(style='font-weight: bold') New Haystack Group Name
-  br
-  br
-  input(type='text', id='newGroup')
-  br
-  hidden(id="length", value=INTERFACES.length)
-  br    
-  label#numNodesLabel(style='font-weight: bold') Number of Haystack Nodes to create
-  br
-  br
-  select#nodeCountType(onchange="nodeNumberTypeChanged()")
-    option(value="fixed", selected='selected') Fixed
-    option(value="ratio") Ratio
-  input(type="number", name="numNodes", id="numNodes", width="4", min="1", onblur="checkIntMax(\"numNodes\")", value="1")
-  br
   div#setup
+    h1 Haystack Autoconfig
+    br
+    label(style='font-weight: bold') New Haystack Group Name
+    br
+    br
+    input(type='text', id='newGroup')
+    br
+    hidden(id="length", value=INTERFACES.length)
+    br    
+    label#numNodesLabel(style='font-weight: bold') Number of Haystack Nodes to create
+    br
+    br
+    select#nodeCountType(onchange="nodeNumberTypeChanged()")
+      option(value="fixed", selected='selected') Fixed
+      option(value="ratio") Ratio
+    input(type="number", name="numNodes", id="numNodes", width="4", min="1", onblur="checkIntMax(\"numNodes\")", value="1")
+    br
     p The interfaces shown below are the interfaces currently connected to the server. Selecting one of these will result in a scan against the entire subnet that that interface represents.
     table
       thead
