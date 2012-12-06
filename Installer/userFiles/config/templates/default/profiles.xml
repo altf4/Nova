@@ -2,11 +2,10 @@
 <profiles>
 	<profile>
 		<name>default</name>
-		<generated>false</generated>
 		<count>0</count>
 		<personality>Linux 3.0</personality>
-		<uptimeMin>4294967295</uptimeMin>
-		<uptimeMax>0</uptimeMax>
+		<uptimeMin>0</uptimeMin>
+		<uptimeMax>4294967295</uptimeMax>
 		<dropRate>0</dropRate>
 		<isPersonalityInherited>false</isPersonalityInherited>
 		<isUptimeInherited>false</isUptimeInherited>
@@ -29,7 +28,6 @@
 		<profiles>
 			<profile>
 				<name>WinServer</name>
-				<generated>false</generated>
 				<count>0</count>
 				<personality>Microsoft Windows Server 2003 SP1 or SP2</personality>
 				<uptimeMin>4294967295</uptimeMin>
@@ -113,7 +111,6 @@
 			</profile>
 			<profile>
 				<name>LinuxServer</name>
-				<generated>false</generated>
 				<count>0</count>
 				<personality>Linux 3.0 - 3.1</personality>
 				<uptimeMin>4294967295</uptimeMin>
@@ -162,7 +159,6 @@
 			</profile>
 			<profile>
 				<name>BSDServer</name>
-				<generated>false</generated>
 				<count>0</count>
 				<personality>FreeBSD 8.2-STABLE</personality>
 				<uptimeMin>4294967295</uptimeMin>

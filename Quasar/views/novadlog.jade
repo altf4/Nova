@@ -11,6 +11,7 @@ block content
 
 block headerAdditions
   script
+    function init() {
     now.ready(function() {
       now.newLogLine = function (line) {
         var logDiv = document.getElementById("lastLogLine");
@@ -38,3 +39,4 @@ block headerAdditions
         logDiv.insertBefore(logP, logDiv.firstChild);
       };
     });
+    }

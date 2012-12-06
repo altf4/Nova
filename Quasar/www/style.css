@@ -13,6 +13,21 @@ body {
 p {
 }
 
+select {
+	padding:3px;
+	margin: 0;
+	-webkit-border-radius:4px;
+	-moz-border-radius:4px;
+	border-radius:4px;
+	-webkit-box-shadow: 0 3px 0 #ccc, 0 -1px #fff inset;
+	-moz-box-shadow: 0 3px 0 #ccc, 0 -1px #fff inset;
+	box-shadow: 0 3px 0 #ccc, 0 -1px #fff inset;
+	background: #E4F2FF;
+	border: 1px solid #769DC0;
+	-moz-appearance:none;
+	cursor:pointer;
+}
+
 div.sideBarHeader {
 	dislay: block;
 	text-align: center;
@@ -28,6 +43,7 @@ input[type=button], input[type=submit], button, .button, .sideBarButton {
     padding: 2px 4px 4px;
 	text-align: center;
 	text-decoration: none;
+	color: black;
 }
 
 .sideBarButton {

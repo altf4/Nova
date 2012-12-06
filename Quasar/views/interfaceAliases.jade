@@ -25,8 +25,7 @@ block headerAdditions
         window.location = window.location;
     }
     
-    require(["dojo/domReady!"],
-    function(){
+    function init(){
         var columns = new Array();
         columns.push({name: "Interface"});
         columns.push({name: "Alias"});
@@ -47,7 +46,7 @@ block headerAdditions
         }
     
         grid.Render();
-    });
+    };
   
 block content
   h1 Interface Aliases
@@ -60,7 +59,7 @@ block content
  
   br
   span(style="width:100px; display: inline-block;") Alias: 
-  input#aliasSelection(type="text")
+  input#aliasSelection(type="text", placeholder="Enter name of alias")
 
   br
   button#addNewAliasButton(onclick="AddNewAlias()") Add/Update Alias
@@ -68,5 +67,6 @@ block content
   br
   br
   h1 Current Aliases
-  table.novaGrid#aliasTable
+  div.novaGrid
+    table.novaGrid#aliasTable
 

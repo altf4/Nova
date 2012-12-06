@@ -234,7 +234,7 @@ script
 
             var newPortSet = document.getElementById("portSetSelection").value;
 
-            dojo.empty(portTable);
+            dojo.empty("portTable");
 
             portIndexes = [];
             for (var i in profile.portSets) {
@@ -263,7 +263,8 @@ script
                 }
         }
 
-        require(["dojo/domReady!", "dojo/ready", "dijit/registry", "dijit/form/FilteringSelect"], function() {
+        function init() {
+        require(["dijit/registry", "dijit/form/FilteringSelect"], function() {
                 function obj() {};
                 saveChanges = function() {
 
@@ -684,5 +685,6 @@ script
                         }  
                 });
         });
+        }
 
 

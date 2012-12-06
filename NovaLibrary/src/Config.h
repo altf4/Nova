@@ -154,7 +154,7 @@ public:
     void SetKey(std::string key);
     void SetNeigbors(std::vector<in_addr_t> neighbors);
     void SetGroup(std::string group);
-    void SetCurrentConfig(std::string configName);
+    bool SetCurrentConfig(std::string configName);
 
     std::string GetLoggerPreferences();
     std::string GetSMTPAddr();

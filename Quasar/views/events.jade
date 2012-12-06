@@ -6,8 +6,12 @@ block content
     br
     input(type="button", onClick="now.ClearHostileEvents(finishedClearing)", value="Clear all events")
     br
+    br
+    input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
+    label Show Advanced Suspect Statistics
+    br
     
-  div#nova_suspects
+  div.novaGrid#nova_suspects
     table.novaGrid#suspectTable
   div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none")
    h4 Novad is not currently connected or running. Try starting it.
@@ -50,16 +54,32 @@ block headerAdditions
         }
     }
     
+    function showAdvancedChanged() {
+        if (document.getElementById("showAdvanced").checked) {
+            for (var i = 4; i < suspectGrid.m_columns.length; i++) {
+                suspectGrid.m_columns[i].isDisabled = false;
+            }
+        } else {
+            for (var i = 4; i < suspectGrid.m_columns.length; i++) {
+                suspectGrid.m_columns[i].isDisabled = true;
+            }
+            
+        }
+
+        suspectGrid.GenerateTableHeader();
+        suspectGrid.Render();
+    }
+    
     function Init() {
         var gridStructure = new Array();
-        gridStructure.push({name: "ID"});
-        gridStructure.push({name: "Timestamp"});
-        gridStructure.push({name: "Address"});
-        gridStructure.push({name: "Classification"});
+        gridStructure.push({name: "ID", isDisabled: false});
+        gridStructure.push({name: "Timestamp", isDisabled: false});
+        gridStructure.push({name: "Address", isDisabled: false});
+        gridStructure.push({name: "Classification", isDisabled: false});
    
         var featureNames = String("#{featureNames}").split(",");
         for (var i = 0; i < featureNames.length; i++) {
-            gridStructure.push({name:featureNames[i], formatter: featureFormatter});
+            gridStructure.push({name:featureNames[i], formatter: featureFormatter, isDisabled: true});
         }
    
         suspectGrid = new NovaGrid(gridStructure, 0, document.getElementById('suspectTable'), 'suspectGrid');
@@ -88,12 +108,10 @@ block headerAdditions
         }   
     }
 
-    require(["dojo/ready", "dojo/domReady!"], function(ready){
-        ready(function() {
-            now.ready(function() {
+    function init() {
+        now.ready(function() {
                 Init();
-            });
         });
-    });
+    };
 
 

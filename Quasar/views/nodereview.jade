@@ -8,23 +8,21 @@ block headerAdditions
   script
     var grid;
     var grid2;
-    
-    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
+   
+    function init() {
+        require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojox/data/HtmlStore", "dijit/Dialog"],
+            function(DataGrid,ObjectStore){
+             
+             var gridStore = new dojox.data.HtmlStore({dataId:"profileTable"});
+             grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutProfiles',query:{},rowsPerPage:40, autoWidth:true});
+             dojo.byId("gridDiv").appendChild(grid.domNode);
 
-    function(DataGrid,ObjectStore){
-      var gridStore = new dojox.data.HtmlStore({dataId:"profileTable"});
-      grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutProfiles',query:{},rowsPerPage:40, autoWidth:true});
-      dojo.byId("gridDiv").appendChild(grid.domNode);
-    });
-    
-    require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojo/domReady!", "dojox/data/HtmlStore", "dijit/Dialog"],
+             var gridStore2 = new dojox.data.HtmlStore({dataId:"nodeTable"});
+             grid2 = new dojox.grid.DataGrid({store:gridStore2,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true});
+             dojo.byId("gridDiv2").appendChild(grid2.domNode);
+        });
+    }
 
-    function(DataGrid,ObjectStore){
-      var gridStore = new dojox.data.HtmlStore({dataId:"nodeTable"});
-      grid2 = new dojox.grid.DataGrid({store:gridStore,structure:'layoutNodes',query:{},rowsPerPage:40, autoWidth:true});
-      dojo.byId("gridDiv2").appendChild(grid2.domNode);
-    });
-  
   script(type="text/javascript")
           /*set up data store*/
           var layoutNodes = [[

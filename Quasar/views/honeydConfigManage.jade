@@ -529,13 +529,11 @@ block headerAdditions
       });
     }
     
-    require(["dojo/ready", "dojo/domReady!"], function(ready){
-        ready(function() {
-            now.ready(function() {
-                populateConfigSelect(configurationList);
-            });
+    function init(){
+        now.ready(function() {
+            populateConfigSelect(configurationList);
         });
-    });
+    };
   
 block content
   div#hideme

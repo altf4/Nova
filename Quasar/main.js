@@ -59,6 +59,7 @@ var exec = require('child_process').exec;
 var nowjs = require("now");
 var Validator = require('validator').Validator;
 var dns = require('dns');
+var wrench = require('wrench');
 
 var Tail = require('tail').Tail;
 var NovaHomePath = config.GetPathHome();
@@ -1497,8 +1498,6 @@ app.post('/honeydConfigManage', passport.authenticate('basic', {session: false})
     cloneBool = true;
   }
   
-  console.log('configToClone ' + configToClone);
-  
   if(!cloneBool)
   {
     if((new RegExp('^[a-zA-Z0-9]+$')).test(newName))
@@ -2398,13 +2397,13 @@ everyone.now.GetCaptureSession = function (callback) {
 	callback(ret);
 }
 
-everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subnets, callback, route) {
-  console.log('autoconfig ' + autoconfig);
+everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subnets, groupName, callback, route) {
 	var executionString = 'haystackautoconfig';
 	var nFlag = '-n';
 	var rFlag = '-r';
 	var iFlag = '-i';
 	var aFlag = '-a';
+	var gFlag = '-g';
 
 	var hhconfigArgs = new Array();
 
@@ -2419,6 +2418,7 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 			hhconfigArgs.push(numNodes);
 		}
 	}
+	
 	if (interfaces !== undefined && interfaces.length > 0) {
 		hhconfigArgs.push(iFlag);
 		hhconfigArgs.push(interfaces);
@@ -2427,6 +2427,12 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 		hhconfigArgs.push(aFlag);
 		hhconfigArgs.push(subnets);
 	}
+	if (groupName !== undefined) {
+	  hhconfigArgs.push(gFlag);
+	  hhconfigArgs.push(groupName);
+	}
+
+  config.SetCurrentConfig(groupName);
 
 	var util = require('util');
 	var spawn = require('child_process').spawn;
@@ -2444,27 +2450,36 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 		if (/^execvp\(\)/.test(data)) {
 			console.log("haystackautoconfig failed to start.");
 			var response = "haystackautoconfig failed to start.";
+			everyone.now.SwitchConfigurationTo('default');
 			if(typeof route == 'function')
 			{
-			  route("/nodeReview", response);
+			  route("/autoConfig", response);
 			}
 		}
 	});
 
-	autoconfig.on('exit', function (code) {
+	autoconfig.on('exit', function (code, signal) {
 		console.log("autoconfig exited with code " + code);
 		var response = "autoconfig exited with code " + code;
-	  if(typeof route == 'function')
+	  if(typeof route == 'function' && signal != 'SIGTERM')
     {
-      route("/nodeReview", response);
+      route("/honeydConfigManage", response);
+    }
+    if(signal == 'SIGTERM')
+    {
+      response = "autoconfig scan terminated early";
+      route("/autoConfig", response);
     }
 	});
 }
 
-everyone.now.CancelAutoScan = function() {
+everyone.now.CancelAutoScan = function(groupName) {
   if(autoconfig != undefined)
   {
     autoconfig.kill();
+    autoconfig = undefined;
+    wrench.rmdirSyncRecursive(NovaHomePath + '/config/templates/' + groupName);
+    everyone.now.SwitchConfigurationTo('default');
   }
   // TODO: make sure that any changes that might've occurred to the xml
   // files are revoked, the new configuration that was created gets 
@@ -2589,8 +2604,12 @@ var SendBenignSuspectToPulsar = function(suspect) {
 };
 everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
-everyone.now.GetLocalIP = function (interface, callback) {
-	callback(nova.GetLocalIP(interface));
+everyone.now.GetLocalIP = function (iface, callback) {
+	callback(nova.GetLocalIP(iface));
+}
+
+everyone.now.GetSubnetFromInterface = function (iface, callback) {
+  callback(nova.GetSubnetFromInterface(iface));
 }
 
 everyone.now.RemoveScriptFromProfiles = function(script, callback)

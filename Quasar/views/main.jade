@@ -1,7 +1,7 @@
 extends layout
 
 block topPannelAdditions
-  table
+  table(style="float: left;")
     tr
       td(style="text-align: right;") Packet Classifier:&nbsp 
       td(style="padding: 0;")
@@ -14,30 +14,21 @@ block topPannelAdditions
         img#haystack_status_icon(src="/images/orangedot.png", width="15px", height="15px")
       td
         div#haystack_status checking
+  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopNovad()') Stop Packet Classifier
+  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartNovad()') Start Packet Classifier
+  br
+  br
+  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopHaystack()') Stop Haystack 
+  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartHaystack()') Start Haystack
+  br
+  br
+  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
+
+  a.button(style="margin-top: 2px; margin-bottom: 2px; margin-right: 4px; width:150px; float: right;", href="/novaState.csv") Suspects as CSV file
 
 block content
-  div(style="width: 600px; margin:0 auto; text-align: center")
-    button(type="button", style="width:160px", onclick='StartNovad()') Start Packet Classifier
-    &nbsp
-    &nbsp
-    button(type="button", style="width:160px", onclick='StartHaystack()') Start Haystack
-    &nbsp
-    &nbsp
-    button(type="button", style="width:160px", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
-  
+  div#nova_suspects_header(style="width:600px; display: none")
     br
-    
-    button(type="button", style="width:160px", onclick='StopNovad()') Stop Packet Classifier
-    &nbsp
-    &nbsp
-    button(type="button", style="width:160px", onclick='StopHaystack()') Stop Haystack 
-    &nbsp
-    &nbsp
-    button#liveUpdateButton(type="button", style="width:160px", onclick='toggleLiveUpdate()') Pause Updates 
-
-  div#nova_suspects_header(style="width:600px; margin: 0 auto; text-align:center;")
-    br
-    a(class="button", href="/novaState.csv") Suspects as CSV file
     &nbsp
     
     a(class="button", href="javascript:void(0)", onclick="toggleFilterBlock()") Filtering Options
@@ -61,15 +52,26 @@ block content
       button(onclick='applyAdvancedFilter()') Apply Advanced Filters
       button(onclick='disableAdvancedFilter()') Disable Advanced Filters
     br
-  div#nova_suspects
+  div#nova_suspects(style="display: none;")
+    
+    input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
+    label Live Grid Update
+    br
+    
+    input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
+    label Show Advanced Suspect Statistics
+    br
+    
     input#showUnclassified(type="checkbox", onchange="showUnclassifiedChanged()")
-    label Show unclassified suspects
+    label Show Unclassified Suspects
     br
-    div#tablePages(style="width: 100%; margin-left: auto; margin-right: auto; text-align: center;")
     br
-    table.novaGrid#suspectTable
-  div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: none; width: 600px; margin: 0 auto; text-align: center")
-   h4 Novad is not currently connected or running. Try starting it.
+    div#tablePages(style="width: 100%;")
+    br
+    div.novaGrid
+      table.novaGrid#suspectTable
+  div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: block; width: 600px; margin: 0 auto; text-align: center")
+   h4 Novad is not currently connected or running. If the status shows as offline, try starting it.
    
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
@@ -88,14 +90,9 @@ block headerAdditions
 
     require(["dijit/form/TextBox"]);
 
-    var toggleLiveUpdate = function() {
-      liveUpdate = !liveUpdate;
+    var LiveUpdateChanged = function() {
+      liveUpdate = document.getElementById("liveGridUpdate").checked;
       console.log("Toggled live update to " + liveUpdate);
-      if (!liveUpdate) {
-        dojo.byId("liveUpdateButton").innerHTML = "Unpause table refreshing";}
-      else {
-        dojo.byId("liveUpdateButton").innerHTML = "Pause table refreshing";
-      }
     }
 
     var toggleFilterBlock = function()
@@ -227,9 +224,9 @@ block headerAdditions
       
       var row = new Array();
       
-      var monitorButton = "<a href='javascript:void(0)' onclick='MonitorSuspect(";
+      var monitorButton = "<a class='button' href='javascript:void(0)' onclick='MonitorSuspect(";
       monitorButton += '"' + suspect.GetIpString + '"' + ', ' + '"' + suspect.GetInterface + '"' + ', ' + '"' + suspect.GetIdString + '"';
-      monitorButton += ");'>Monitor</button>";
+      monitorButton += ");'>Monitor</a>";
       row.push(monitorButton);
         
       var ip = suspect.GetIpString;
@@ -333,6 +330,22 @@ block headerAdditions
         
         resendSuspects();
     }
+
+    function showAdvancedChanged() {
+        if (document.getElementById("showAdvanced").checked) {
+            for (var i = 7; i < suspectGrid.m_columns.length - 1; i++) {
+                suspectGrid.m_columns[i].isDisabled = false;
+            }
+        } else {
+            for (var i = 7; i < suspectGrid.m_columns.length - 1; i++) {
+                suspectGrid.m_columns[i].isDisabled = true;
+            }
+            
+        }
+
+        suspectGrid.GenerateTableHeader();
+        suspectGrid.Render();
+    }
               
     function featureFormatter(d) {
         var num = new Number(d);
@@ -403,16 +416,16 @@ block headerAdditions
         theDoc = document;
         var enabledFeatures = "#{enabledFeatures}";
         var gridStructure = [];
-        gridStructure.push({name: "Monitor"});
-        gridStructure.push({name: "Interface"});
-        gridStructure.push({name: "Address"});
-        gridStructure.push({name: "Classification", formatter: classificationFormatter});
-        gridStructure.push({name: "Last Seen"});
-        gridStructure.push({name: "Hostile"});
+        gridStructure.push({name: "Monitor", isDisabled: false});
+        gridStructure.push({name: "Interface", isDisabled: false});
+        gridStructure.push({name: "Address", isDisabled: false});
+        gridStructure.push({name: "Classification", isDisabled: false, formatter: classificationFormatter});
+        gridStructure.push({name: "Last Seen", isDisabled: false});
+        gridStructure.push({name: "Hostile", isDisabled: false});
    
         var featureNames = String("#{featureNames}").split(",");
         for (var i = 0; i < featureNames.length; i++) {
-            if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], formatter: featureFormatter});
+            if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], isDisabled: true, formatter: featureFormatter});
         }
         gridStructure.push({name: "Clear"});
    
@@ -420,7 +433,7 @@ block headerAdditions
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(3);
-        suspectGrid.SetRowsPerPage(100);
+        suspectGrid.SetRowsPerPage(20);
         suspectGrid.SetRenderCallback(onGridRendered);
 
         resendSuspects();
@@ -434,9 +447,8 @@ block headerAdditions
         },3000);
     }
 
-    require(["dojo/ready", "dojo/domReady!"], function(ready){
-        ready(function() {
-            now.ready(function() {
+    function init() {
+        now.ready(function() {
 
             now.updateHaystackStatus = updateHaystackStatus;
             now.updateNovadStatus = updateNovadStatus;
@@ -448,7 +460,6 @@ block headerAdditions
             
             now.IsHaystackUp(updateHaystackStatus);
             now.IsNovadUp(updateNovadStatus);
-            });
         });
-    });
+    };
 

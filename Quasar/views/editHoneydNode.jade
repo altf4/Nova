@@ -48,7 +48,7 @@ block headerAdditions
 
     function portsetSelectionChanged() {
         var portsetSelection = document.getElementById("portSetList");
-        dojo.empty(document.getElementById("portSetTable"));
+        dojo.empty("portSetTable");
         var currentportset = portsetSelection.options[portsetSelection.selectedIndex].value;
         for (var i in pfile.portSets) {
             if (pfile.portSets[i].setName == currentportset) {
@@ -141,16 +141,13 @@ block headerAdditions
             document.getElementById("mac" + i).value = splitMac[i];
         }
     }
-    
-    require(["dojo/domReady!"],
-    function(){
+   
+    function init() {
         now.ready( function() {
             profileChanged();
         });
-    });
+    }
     
-
-
 block content
   br
   h2 Editing Honeyd Node "#{oldName}"

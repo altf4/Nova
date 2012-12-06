@@ -11,19 +11,21 @@ block content
 
 block headerAdditions
   script
-    now.ready(function() {
-      now.newHoneydLogLine = function (line) {
-        var logDiv = document.getElementById("lastLogLine");
-        
-        var logP = document.createElement("P");
-        logP.appendChild(document.createTextNode(line));
+    function init() {
+        now.ready(function() {
+          now.newHoneydLogLine = function (line) {
+            var logDiv = document.getElementById("lastLogLine");
+                
+            var logP = document.createElement("P");
+            logP.appendChild(document.createTextNode(line));
 
-        var styleString = 'margin: 0; padding: 4px;';
-        // Colorize the line a bit
-        styleString += 'color: blue';
+            var styleString = 'margin: 0; padding: 4px;';
+            // Colorize the line a bit
+            styleString += 'color: blue';
 
-        logP.setAttribute("style", styleString)
+            logP.setAttribute("style", styleString)
 
-        logDiv.insertBefore(logP, logDiv.firstChild);
-      };
-    });
+            logDiv.insertBefore(logP, logDiv.firstChild);
+          };
+        });
+    }

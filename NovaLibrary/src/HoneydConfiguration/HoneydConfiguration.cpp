@@ -414,7 +414,6 @@ bool HoneydConfiguration::WriteNodesToXML()
 	}
 	nodesTopLevel.add_child("doppelganger.node", m_doppelganger.GetPtree());
 
-
 	//Actually write out to file
 	try
 	{
@@ -1244,6 +1243,7 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		// create the templates/configName/ directory, and fill with
 		// empty (but still parseable) xml files
 		string oldName = Config::Inst()->GetCurrentConfig();
+		ReadAllTemplatesXML();
 		Config::Inst()->SetCurrentConfig(configName);
 
 	    ClearNodes();
@@ -1333,6 +1333,8 @@ bool HoneydConfiguration::LoadConfigurations()
 
 	ifstream configList(configurationPath);
 
+	m_configs.clear();
+
 	while(configList.good())
 	{
 		string pushback;
@@ -1345,6 +1347,7 @@ bool HoneydConfiguration::LoadConfigurations()
 
 vector<string> HoneydConfiguration::GetConfigurationsList()
 {
+	LoadConfigurations();
 	return m_configs;
 }
 

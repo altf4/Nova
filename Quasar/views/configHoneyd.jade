@@ -5,10 +5,12 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaPiChart.js")
   script(type="text/javascript", src="scripts/NovaGrid.js")
+  script(type="text/javascript", src="scripts/portset.js")
 
   script
     var grid;
     var currentInterface;
+    var pfile;
 
     function createNodes() {
         document.getElementById("createNewNodes").disables = true;
@@ -32,6 +34,7 @@ block headerAdditions
     }
     
     function populateVendorList(profile) {
+        pfile = profile;
         document.getElementById("vendorList").innerHTML = "";
         for (var vendor in profile.ethernet) {
             var v = profile.ethernet[vendor].vendor;
@@ -46,6 +49,20 @@ block headerAdditions
             var option = document.createElement('option');
             option.innerHTML = v;
             document.getElementById("portSetList").appendChild(option);
+        }
+
+        portsetSelectionChanged();
+    }
+    
+    function portsetSelectionChanged() {
+        var portsetSelection = document.getElementById("portSetList");
+        dojo.empty("portSetTable");
+        var currentportset = portsetSelection.options[portsetSelection.selectedIndex].value;
+        for (var i in pfile.portSets) {
+            if (pfile.portSets[i].setName == currentportset) {
+                generatePortSetTable(pfile.portSets[i], document.getElementById("portSetTable"));
+                break;
+            }
         }
     }
 
@@ -363,12 +380,12 @@ block headerAdditions
         return false;
       }
     }
-    
-    now.ready(function(){
+
+    function init() {
       Init();
       checkOnlyOne('if0');
       profileChanged();
-    });
+    }
 
 block content
   h1 Current Haystack Node Configuration
@@ -378,7 +395,8 @@ block content
     br
     div#tablePages
     br
-  table.novaGrid#nodeTable
+  div.novaGrid
+    table.novaGrid#nodeTable
   br
   br
 
@@ -398,7 +416,9 @@ block content
       option #{profile}
   br
   label Portset
-  select#portSetList(name="profile")
+  select#portSetList(name="profile", onchange='portsetSelectionChanged()')
+  br
+  div(style="margin-left: 300px")#portSetTable
   br
   
   label Ethernet Vendor

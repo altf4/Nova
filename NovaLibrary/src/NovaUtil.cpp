@@ -218,4 +218,66 @@ vector<int> RoundDistributionToIntegers(vector<double> inputDoubles)
 	return ret;
 }
 
+string GetSubnetFromInterface(string interface)
+{
+	struct ifaddrs *devices = NULL;
+	ifaddrs *curIf = NULL;
+	char addrBuffer[NI_MAXHOST];
+	char bitmaskBuffer[NI_MAXHOST];
+	struct in_addr netOrderAddrStruct;
+	struct in_addr netOrderBitmaskStruct;
+	struct in_addr minAddrInRange;
+	uint32_t hostOrderAddr;
+	uint32_t hostOrderBitmask;
+	string ret;
+
+	if(getifaddrs(&devices))
+	{
+		LOG(ERROR, "getifaddrs failed", "");
+		return "";
+	}
+
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		if(!string(curIf->ifa_name).compare(interface) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+		{
+			stringstream ss;
+			int socket = getnameinfo(curIf->ifa_addr, sizeof(sockaddr_in), addrBuffer, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+			if(socket != 0)
+			{
+				LOG(ERROR, "getnameinfo failed to get IP address", "");
+				return "";
+			}
+			socket = getnameinfo(curIf->ifa_netmask, sizeof(sockaddr_in), bitmaskBuffer, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+			if(socket != 0)
+			{
+				LOG(ERROR, "getnameinfo failed to get netmask", "");
+				return "";
+			}
+			string bitmaskString = string(bitmaskBuffer);
+			string addrString = string(addrBuffer);
+			inet_aton(addrString.c_str(), &netOrderAddrStruct);
+			inet_aton(bitmaskString.c_str(), &netOrderBitmaskStruct);
+			hostOrderAddr = ntohl(netOrderAddrStruct.s_addr);
+			hostOrderBitmask = ntohl(netOrderBitmaskStruct.s_addr);
+			uint32_t hostOrderMinAddrInRange = hostOrderBitmask & hostOrderAddr;
+			minAddrInRange.s_addr = htonl(hostOrderMinAddrInRange);
+			uint32_t tempRawMask = ~hostOrderBitmask;
+
+			int i = 32;
+			while(tempRawMask != 0)
+			{
+				tempRawMask /= 2;
+				i--;
+			}
+
+			ss << i;
+			ret = string(inet_ntoa(minAddrInRange)) + "/" + ss.str();
+			ss.str("");
+		}
+	}
+
+	return ret;
+}
+
 }
