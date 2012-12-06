@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?fileVersion 4.0.0?>
-
-<cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="cdt.managedbuild.config.gnu.exe.release.1557979740.508612721">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.exe.release.1557979740.508612721" moduleId="org.eclipse.cdt.core.settings" name="Debug">
@@ -42,6 +40,8 @@
 								<option id="gnu.cpp.link.option.libs.99451372" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="Nova_UI_Core"/>
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
+									<listOptionValue builtIn="false" value="boost_system"/>
+									<listOptionValue builtIn="false" value="boost_filesystem"/>
 									<listOptionValue builtIn="false" value="event"/>
 									<listOptionValue builtIn="false" value="event_pthreads"/>
 									<listOptionValue builtIn="false" value="pcap"/>
@@ -113,6 +113,8 @@
 								<option id="gnu.cpp.link.option.libs.776927835" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="Nova_UI_Core"/>
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
+									<listOptionValue builtIn="false" value="boost_system"/>
+									<listOptionValue builtIn="false" value="boost_filesystem"/>
 									<listOptionValue builtIn="false" value="event"/>
 									<listOptionValue builtIn="false" value="event_pthreads"/>
 									<listOptionValue builtIn="false" value="pcap"/>

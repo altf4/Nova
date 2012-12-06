@@ -194,11 +194,9 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.so.debug.737670348" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.so.debug">
 								<option defaultValue="true" id="gnu.cpp.link.so.debug.option.shared.1296918252" name="Shared (-shared)" superClass="gnu.cpp.link.so.debug.option.shared" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.libs.1035353977" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="NovaLibrary"/>
-									<listOptionValue builtIn="false" value="event"/>
-									<listOptionValue builtIn="false" value="event_pthreads"/>
+									<listOptionValue builtIn="false" value="gcov"/>
 								</option>
-								<option id="gnu.cpp.link.option.paths.1351812563" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths"/>
+								<option id="gnu.cpp.link.option.paths.1351812563" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
 								<option id="gnu.cpp.link.option.soname.893372407" name="Shared object name (-Wl,-soname=)" superClass="gnu.cpp.link.option.soname" value="Nova_UI_Core" valueType="string"/>
 								<option id="gnu.cpp.link.option.flags.340233305" name="Linker flags" superClass="gnu.cpp.link.option.flags" value=" -fprofile-arcs" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.160775098" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
