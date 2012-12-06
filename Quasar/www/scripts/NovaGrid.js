@@ -34,6 +34,7 @@ var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection) {
     this.m_selected = [];
     this.m_selection = selection;
     this.m_currentPage = 0;
+    this.m_relativePageNumbersToShow = 2;
     this.m_rowsPerPage = Number.MAX_VALUE;
     this.m_name = gridName;
 
@@ -342,6 +343,94 @@ PushEntry: function (entry) {
       this.m_selected.push(key);
       this.ChangeRowColor(this.m_selected[0], true);
     }
+  }
+
+  // Pass this a div DOM element and it will throw the page numbers in it
+  ,populateTablePages: function(tablePages) {
+       var gridSize = this.GetNumberOfPages();
+       var currentPage = this.GetCurrentPage();
+
+       var temp = document.createElement('a');
+	   
+	   
+	   var startpageLink = document.createElement('a');
+       startpageLink.setAttribute('href', '#');
+       startpageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(0);');
+	   startpageLink.className += "pageNumberLink";
+	   startpageLink.title = "First page";
+	   var startpageLinkText = document.createTextNode("<<");
+       startpageLink.appendChild(startpageLinkText);
+       tablePages.appendChild(startpageLink);
+
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', this.m_name + '.PreviousPage();');
+	   pageLink.className += "pageNumberLink";
+	   pageLink.title = "Previous page";
+	   var pageLinkText = document.createTextNode(" < ");
+       pageLink.appendChild(pageLinkText);
+       tablePages.appendChild(pageLink);
+       
+    
+       // We only show the current page and the current page +/- m_relativePageNumbersToShow
+       if (gridSize < (this.m_relativePageNumbersToShow*2 + 1)) {
+           var minPage = 0;
+           var maxPage = gridSize - 1;
+       } else {
+           var minPage = currentPage - this.m_relativePageNumbersToShow;
+           var maxPage = currentPage + this.m_relativePageNumbersToShow;
+       }
+
+       // Handle edge case where we can't center the current page in the list because it's too low
+       if (minPage < 0) {
+           minPage = 0;
+           maxPage = this.m_relativePageNumbersToShow*2;
+       }
+       
+       // Handle edge case where we can't center the current page in the list because it's too high
+       if (maxPage > gridSize - 1) {
+           maxPage = gridSize - 1;
+           minPage = maxPage - this.m_relativePageNumbersToShow*2;
+       }
+
+       for (var i = minPage; i <= maxPage; i++) {
+           var pageLink = document.createElement('a');
+           pageLink.setAttribute('href', '#');
+           pageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(' + i + ');');
+		   pageLink.className += "pageNumberLink";
+
+           var pageLinkText = document.createTextNode(i + 1);
+           pageLink.appendChild(pageLinkText);
+
+           if (i == currentPage) {
+               var boldTag = document.createElement('b');
+               boldTag.appendChild(pageLink);
+
+               tablePages.appendChild(boldTag);
+           } else {
+               tablePages.appendChild(pageLink);
+           }    
+       }
+       
+       var pageLink = document.createElement('a');
+       pageLink.setAttribute('href', '#');
+       pageLink.setAttribute('onclick', this.m_name + '.NextPage();');
+	   pageLink.className += "pageNumberLink";
+	   pageLink.title = "Next page";
+       var pageLinkText = document.createTextNode(" > ");
+       pageLink.appendChild(pageLinkText);
+       tablePages.appendChild(pageLink);
+	   
+	   var lastpageLink = document.createElement('a');
+       lastpageLink.setAttribute('href', '#');
+       lastpageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(' + (this.GetNumberOfPages() - 1) + ');');
+	   lastpageLink.className += "pageNumberLink";
+	   lastpageLink.title = "Last page";
+       var lastpageLinkText = document.createTextNode(">>");
+       lastpageLink.appendChild(lastpageLinkText);
+       tablePages.appendChild(lastpageLink);
+
+
   }
   
   , PushKeyToSelected: function(key)
