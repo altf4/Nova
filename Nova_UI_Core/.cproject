@@ -194,9 +194,6 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.so.debug.737670348" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.so.debug">
 								<option defaultValue="true" id="gnu.cpp.link.so.debug.option.shared.1296918252" name="Shared (-shared)" superClass="gnu.cpp.link.so.debug.option.shared" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.libs.1035353977" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="NovaLibrary"/>
-									<listOptionValue builtIn="false" value="event"/>
-									<listOptionValue builtIn="false" value="event_pthreads"/>
 									<listOptionValue builtIn="false" value="gcov"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1351812563" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
