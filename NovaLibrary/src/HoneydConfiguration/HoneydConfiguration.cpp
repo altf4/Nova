@@ -22,6 +22,7 @@
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
+#include <boost/filesystem.hpp>
 #include <unordered_map>
 #include <arpa/inet.h>
 #include <math.h>
@@ -1234,8 +1235,8 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 
 	m_configs.push_back(configName);
 
-	string directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName;
-	system(string("mkdir " + directoryPath).c_str());
+	string directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+	boost::filesystem::create_directories(directoryPath.c_str());
 
 	ofstream addfile(Config::Inst()->GetPathHome() + "/config/templates/configurations.txt", ios_base::app);
 
