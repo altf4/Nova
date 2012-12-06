@@ -71,7 +71,7 @@ block content
     div.novaGrid
       table.novaGrid#suspectTable
   div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: block; width: 600px; margin: 0 auto; text-align: center")
-   h4 Novad is not currently connected or running. If the status shows as offline, try starting it.
+   h4 The Packet Classifier is not currently connected or running. If the status shows as offline, try starting it.
    
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
@@ -373,43 +373,9 @@ block headerAdditions
     }
 
     function onGridRendered() {
-       var gridSize = suspectGrid.GetNumberOfPages();
-       var currentPage = suspectGrid.GetCurrentPage();
-
-       var temp = document.createElement('a');
-       document.getElementById("tablePages").innerHTML = "";
-
-       var pageLink = document.createElement('a');
-       pageLink.setAttribute('href', '#');
-       pageLink.setAttribute('onclick', 'suspectGrid.PreviousPage();');
-       var pageLinkText = document.createTextNode(" <-- ");
-       pageLink.appendChild(pageLinkText);
-       document.getElementById("tablePages").appendChild(pageLink);
-
-       for (var i = 0; i < gridSize; i++) {
-           var pageLink = document.createElement('a');
-           pageLink.setAttribute('href', '#');
-           pageLink.setAttribute('onclick', 'suspectGrid.SetCurrentPage( ' + i + ');');
-
-           var pageLinkText = document.createTextNode(" " + (i + 1) + " ");
-           pageLink.appendChild(pageLinkText);
-
-           if (i == currentPage) {
-               var boldTag = document.createElement('b');
-               boldTag.appendChild(pageLink);
-
-               document.getElementById("tablePages").appendChild(boldTag);
-           } else {
-               document.getElementById("tablePages").appendChild(pageLink);
-           }    
-       }
-
-       var pageLink = document.createElement('a');
-       pageLink.setAttribute('href', '#');
-       pageLink.setAttribute('onclick', 'suspectGrid.NextPage();');
-       var pageLinkText = document.createTextNode(" --> ");
-       pageLink.appendChild(pageLinkText);
-       document.getElementById("tablePages").appendChild(pageLink);
+       var tablePages = document.getElementById("tablePages");
+       tablePages.innerHTML = "";
+       suspectGrid.populateTablePages(tablePages);   
     }
     
     function Init() {

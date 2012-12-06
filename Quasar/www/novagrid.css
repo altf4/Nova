@@ -38,6 +38,20 @@ tr.novaGrid:hover {
 	background-color: #AFD9FF !important;
 }
 
+.pageNumberLink {
+	font-size: 18px;
+	margin-right: 2px;
+	margin-left: 2px;
+	padding-right: 2px;
+	padding-left: 2px;
+	text-decoration: none;
+	color: black;
+}
+
+.pageNumberLink:hover {
+	background-color: #AFD9FF !important;
+}
+
 div.sortArrow
 {
 	margin: 0 4px 0 5px;
