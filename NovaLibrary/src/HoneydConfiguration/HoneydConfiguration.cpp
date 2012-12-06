@@ -263,6 +263,8 @@ bool HoneydConfiguration::ReadNodesXML()
 
 	ptree propTree;
 
+	m_nodes.clear();
+
 	try
 	{
 		read_xml(Config::Inst()->GetPathHome() + "/config/templates/" + Config::Inst()->GetCurrentConfig() + "/nodes.xml", propTree, boost::property_tree::xml_parser::trim_whitespace);

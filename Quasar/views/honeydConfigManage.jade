@@ -529,6 +529,16 @@ block headerAdditions
       });
     }
     
+    function switchConfiguration()
+    {
+      if(typeof now.SwitchConfigurationTo == 'function')
+      {
+        var configSelect = document.getElementById('configurations');
+        var config = configSelect.options[configSelect.selectedIndex].value;
+        now.SwitchConfigurationTo(config);
+      }
+    }
+    
     function init(){
         now.ready(function() {
             populateConfigSelect(configurationList);
@@ -541,6 +551,7 @@ block content
     label Current Configuration:
     br
     select#configurations(onchange='GetConfigurationSummary()')
+    button(onclick='switchConfiguration()') Switch To This Configuration
     button(onclick='confirmHaystackRestart()') Restart Haystack
     br
     br

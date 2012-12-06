@@ -2742,6 +2742,7 @@ everyone.now.SwitchConfigurationTo = function(configName)
   if((new RegExp('^[a-zA-Z0-9]+$')).test(configName))
   {
     honeydConfig.SwitchConfiguration(configName); 
+    config.WriteSetting('CURRENT_CONFIG', configName);
   }
   else
   {
