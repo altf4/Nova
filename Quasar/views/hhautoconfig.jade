@@ -185,14 +185,12 @@ block headerAdditions
         } else {
             num = parseFloat(document.getElementById("numNodesRatio").value);
         }
-        console.log("GetNumNodes returning number " + num);
         return num;
     }
     
     function GetInterfaces()
     {
         var length = interfaceLength;
-        console.log("GetInterfaces length == " + length);
         
         var returnString = "";
         
@@ -208,14 +206,12 @@ block headerAdditions
             }
         }
         
-        console.log("GetInterfaces returning " + returnString);
         return returnString;
     }
     
     function GetSubnets()
     {
         var length = subnetsLength;
-        console.log("GetSubnets length == " + length);
         
         var returnString = "";
         
@@ -228,7 +224,6 @@ block headerAdditions
             }
         }       
         
-        console.log("GetSubnets returning " + returnString);
         return returnString;
     }
 
