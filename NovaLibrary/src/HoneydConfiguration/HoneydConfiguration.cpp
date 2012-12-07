@@ -1302,8 +1302,8 @@ bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
 
 	if(found)
 	{
-		string pathToDelete = "rm -r " + Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
-		system(pathToDelete.c_str());
+		boost::filesystem::path pathToDelete = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		boost::filesystem::remove_all(pathToDelete);
 		int oldSize = 0;
 		for(uint i = 0; i < m_configs.size(); i++)
 		{
