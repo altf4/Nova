@@ -68,17 +68,9 @@ html(lang="en")
           a.sideBarButton(href='/suspects') Current Suspects
           a.sideBarButton(href='/events') Hostile Events
           a.sideBarButton(href= "/haystackStatus") Haystack Details
-        
-        div.sideBarHeader Logs
           a.sideBarButton(href= "/viewNovadLog") Nova Log
           a.sideBarButton(href= "/viewHoneydLog") Haystack Log
-       
-        div.sideBarHeader Configuration
-          a.sideBarButton(href= "/basicOptions") Basic Options
-          a.sideBarButton(href= "/advancedOptions") Advanced Options
-          a.sideBarButton(href= "/interfaceAliases") Interface Aliases
-          a.sideBarButton(href= "/configWhitelist") Whitelist
-       
+        
         div.sideBarHeader Haystack Settings
           a.sideBarButton(href= "/honeydConfigManage") Presets
           a.sideBarButton(href= "/autoConfig") Autoconfiguration
@@ -86,9 +78,13 @@ html(lang="en")
           a.sideBarButton(href= "/configHoneydNodes") Nodes
           a.sideBarButton(href= "/scripts")  Scripts
         
-        div.sideBarHeader Training
-          a.sideBarButton(href= "/customizeTraining") Training Data
-        
+        div.sideBarHeader Configuration
+          a.sideBarButton(href= "/basicOptions") Basic Options
+          a.sideBarButton(href= "/advancedOptions") Advanced Options
+          a.sideBarButton(href= "/customizeTraining") Classification Training
+          a.sideBarButton(href= "/interfaceAliases") Interface Aliases
+          a.sideBarButton(href= "/configWhitelist") Whitelist
+       
         div.sideBarHeader Users
           a.sideBarButton(href= "/createNewUser") New User
           a.sideBarButton(href= "/editUsers") Edit User
