@@ -139,6 +139,7 @@ block headerAdditions
     
     function GetConfigurationSummary(configArg)
     {
+      switchConfiguration();
       var config;
       profilesArray = {};
       
@@ -547,34 +548,39 @@ block headerAdditions
   
 block content
   div#hideme
-    h1 Configuration Summary
-    label Current Configuration:
-    br
+    hr
+    h2 Current Configuration
     select#configurations(onchange='GetConfigurationSummary()')
-    button(onclick='switchConfiguration()') Switch To This Configuration
-    button(onclick='confirmHaystackRestart()') Restart Haystack
-    br
-    br
+    hr
+    h2 Edit Configurations
     div#addNewConfig
       button#addConfig(onclick='showLightBox("0")') Add Configuration
       button#cloneConfig(onclick='showLightBox("1")') Clone Configuration
       button#removeConfig(onclick='removeConfig()') Remove Configuration
-    br
+      br
+      br
+      a.button(href= "/autoConfig") Create Configuration From Network Scan
+    hr
+
     div#treeAndPiContainer
-      label Current Node Configuration
+      h2 Current Profile Configuration
+      a.sideBarButton(href= "/configHoneydProfiles") Edit Profiles
       br
-      div#piChart(style='float: left')
+      div#treeDiv
       br
+    
+      hr
+    
+      h2 Current Node Configuration
+      a.sideBarButton(href= "/configHoneydNodes") Edit Nodes
       br
-      br
-      label Current Profile Configuration
-      br
-      div#treeDiv(style='float: left')
-    br
-    br
+      div#piChart
+
+    hr
 
     div#summary
-      label Current Script Usage
+      h2 Current Script Usage
+      a.sideBarButton(href= "/scripts") Edit Scripts
       br
       table(border='1', style='border: solid black 2px;', id='sizeAnchor')
         thead
@@ -582,7 +588,6 @@ block content
             th(style='background-color: #d0e9fc;') Scripts
             th(style='background-color: #d0e9fc;') Profile:Port Binding
         tbody#appendHook      
-      br
       br
   div#lightbox(class='white_content')
     div#addConfigForm
