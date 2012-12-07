@@ -474,6 +474,26 @@ html(lang='en')
         {
           now.ClearFromNovaClients(client);
         }
+        if(message != undefined && message.id != undefined)
+        {
+          if(message.id.indexOf(client + ':') != -1)
+          {
+            var regex = new RegExp(client + ':', 'i');
+            message.id = message.id.replace(regex, '');
+          }
+          if(document.getElementById('showtargets') != undefined)
+          {
+            document.getElementById('showtargets').value = message.id;
+          }
+        }
+        if(typeof removeAutoconfigElement == 'function')
+        {
+          removeAutoconfigElement(client);
+        }
+        if(document.getElementById('elementHook') != undefined && document.getElementById('schedule' + client) != undefined)
+        {
+          document.getElementById('elementHook').removeChild(document.getElementById('schedule' + client));
+        }
       }
       
       require(['dijit/layout/BorderContainer', 'dijit/layout/TabContainer', 'dijit/layout/ContentPane', 'dijit/form/Button', 'dojo/parser', 'dojox/grid/DataGrid', 'dojox/data/HtmlStore', 'dijit/ProgressBar'],

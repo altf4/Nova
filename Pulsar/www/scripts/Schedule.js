@@ -90,7 +90,7 @@ function setTarget(source, target, group)
     {
       var regex = new RegExp(target + ':', 'i');
       message.id = message.id.replace(regex, '');
-      document.getElementById('elementHook').removeChild(document.getElementById(target));
+      document.getElementById('elementHook').removeChild(document.getElementById('schedule' + target));
     }
   }
 }
@@ -98,7 +98,7 @@ function setTarget(source, target, group)
 function createScheduledEventElement(clientId)
 {
   var borderDiv = document.createElement('div');
-  borderDiv.id = clientId;
+  borderDiv.id = 'schedule' + clientId;
   borderDiv.setAttribute('style', 'border: 2px solid; background: #E8A02F; width: 370px;');
   
   var label0 = document.createElement('h1');
