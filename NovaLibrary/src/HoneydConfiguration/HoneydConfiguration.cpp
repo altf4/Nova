@@ -1257,7 +1257,7 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		boost::filesystem::path fromString = Config::Inst()->GetPathHome() + "/config/templates/default/routes.xml";
 		boost::filesystem::path toString = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/routes.xml";
 
-		boost::filesystem3::copy(fromString, toString);
+		boost::filesystem::copy_file(fromString, toString);
 		Config::Inst()->SetCurrentConfig(oldName);
 	}
 	else if(clone && found)
@@ -1408,7 +1408,7 @@ bool HoneydConfiguration::RecursiveDirectoryCopy(boost::filesystem::path const& 
 			}
 			else
 			{
-				boost::filesystem3::copy(current, to / current.filename());
+				boost::filesystem::copy_file(current, to / current.filename());
 			}
 		}
 		catch(boost::filesystem::filesystem_error const & e)
