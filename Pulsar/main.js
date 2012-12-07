@@ -1301,6 +1301,10 @@ wsServer.on('close', function(connection, reason, description)
       {
         everyone.now.UpdateConnectionsList(i, 'updateStatus');
       }
+      if(typeof everyone.now.ClearFromClientSide == 'function')
+      {
+        everyone.now.ClearFromClientSide(i);
+      }
       GetGroupMembers('all', function(members){
         var newList = members.replace(new RegExp(i), '');
         newList = newList.substr(0, newList.length - 1);

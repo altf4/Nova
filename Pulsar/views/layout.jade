@@ -474,6 +474,14 @@ html(lang='en')
         {
           now.ClearFromNovaClients(client);
         }
+        if(typeof now.ClearFromClientSide == 'function')
+        {
+          now.ClearFromClientSide(client);
+        }
+      }
+      
+      now.ClearFromClientSide = function(client)
+      {
         if(message != undefined && message.id != undefined)
         {
           if(message.id.indexOf(client + ':') != -1)
