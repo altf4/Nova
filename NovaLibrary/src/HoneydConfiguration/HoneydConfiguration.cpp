@@ -1234,9 +1234,6 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 
 	m_configs.push_back(configName);
 
-	boost::filesystem::path directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
-	boost::filesystem::create_directories(directoryPath);
-
 	ofstream addfile(Config::Inst()->GetPathHome() + "/config/templates/configurations.txt", ios_base::app);
 
 	if(!clone)
@@ -1244,6 +1241,9 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		// Add configName to configurations.txt within the templates/ folder,
 		// create the templates/configName/ directory, and fill with
 		// empty (but still parseable) xml files
+		boost::filesystem::path directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		boost::filesystem::create_directories(directoryPath);
+
 		string oldName = Config::Inst()->GetCurrentConfig();
 		ReadAllTemplatesXML();
 		Config::Inst()->SetCurrentConfig(configName);
