@@ -32,6 +32,9 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#define BOOST_FILESYSTEM_VERSION 2
+#include <boost/filesystem.hpp>
+
 #include "sys/types.h"
 
 namespace Nova{
@@ -95,6 +98,9 @@ std::vector<double> ShiftDistribution(std::vector<double> inputDoubles, double t
 // ie. if this were a vector of percentages <33.333, 33.333, 33.333> it would return <33,34,33>
 //	inputDoulbes: The list of doubles to round
 std::vector<int> RoundDistributionToIntegers(std::vector<double> inputDoubles);
+
+
+bool RecursiveDirectoryCopy(boost::filesystem::path const& from, boost::filesystem::path const& to);
 }
 
 #endif /* NOVAUTIL_H_ */
