@@ -95,7 +95,6 @@ std::vector<double> ShiftDistribution(std::vector<double> inputDoubles, double t
 // ie. if this were a vector of percentages <33.333, 33.333, 33.333> it would return <33,34,33>
 //	inputDoulbes: The list of doubles to round
 std::vector<int> RoundDistributionToIntegers(std::vector<double> inputDoubles);
-
 }
 
 #endif /* NOVAUTIL_H_ */
