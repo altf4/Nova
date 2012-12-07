@@ -28,6 +28,9 @@
 
 #include <map>
 #include <boost/property_tree/ptree.hpp>
+
+#define BOOST_FILESYSTEM_VERSION 2
+
 #include <boost/filesystem.hpp>
 
 namespace Nova
