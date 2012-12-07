@@ -632,31 +632,22 @@ app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), funct
 	});
 });
 
+
 app.get('/viewHoneydLog', passport.authenticate('basic', {session: false}), function (req, res) {
 	fs.readFile(honeydLogPath, 'utf8', function (err, data) {
 		if (err) {
-			RenderError(res, "Unable to open HONEYD log file for reading due to error: " + err);
+			RenderError(res, "Unable to open honeyd log file for reading due to error: " + err);
 			return;
 		} else {
-			var reply = data.toString().split(/(\r\n|\n|\r)/gm);
-			var html = "";
-			for (var i = 0; i < reply.length; i++) {
-				var styleString = "";
-				var line = reply[i];
-				styleString += 'color: blue';
-
-				html += '<P style="' + styleString + '">' + line + "<P>";
-
-			}
-
-			res.render('viewLog.jade', {
+			res.render('viewHoneydLog.jade', {
 				locals: {
-					log: html
+					log: data
 				}
 			});
 		}
 	});
 });
+
 app.get('/advancedOptions', passport.authenticate('basic', {session: false}), function (req, res) {
 	var all = config.ListInterfaces().sort();
 	var used = config.GetInterfaces().sort();
@@ -1150,10 +1141,6 @@ app.get('/events', passport.authenticate('basic', {session: false}), function (r
 	res.render('events.jade', {
 		featureNames: nova.GetFeatureNames()
 	});
-});
-
-app.get('/honeydlog', passport.authenticate('basic', {session: false}), function (req, res) {
-	res.render('honeydlog.jade');
 });
 
 app.get('/', passport.authenticate('basic', {session: false}), function (req, res) {
