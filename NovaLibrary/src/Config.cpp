@@ -1015,7 +1015,7 @@ bool Config::SaveUserConfig()
 	string configurationBackup = m_userConfigFilePath + ".tmp";
 	boost::filesystem::path from = m_userConfigFilePath;
 	boost::filesystem::path to = configurationBackup;
-	boost::filesystem::copy_file(from, to);
+	boost::filesystem::copy_file(from, to, boost::filesystem::copy_option::overwrite_if_exists);
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
 	ofstream *out = new ofstream(m_userConfigFilePath.c_str());
@@ -1344,7 +1344,7 @@ bool Config::SaveConfig()
 	string configurationBackup = m_configFilePath + ".tmp";
 	boost::filesystem::path from = m_configFilePath;
 	boost::filesystem::path to = configurationBackup;
-	boost::filesystem::copy_file(from, to);
+	boost::filesystem::copy_file(from, to, boost::filesystem::copy_option::overwrite_if_exists);
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
 	ofstream *out = new ofstream(m_configFilePath.c_str());
@@ -1575,10 +1575,9 @@ bool Config::InitUserConfigs()
 	if(!stat(m_pathHome.c_str(), &fileAttr ) == 0)
 	{
 		boost::filesystem::path fromPath = m_pathPrefix + "/usr/share/nova/userFiles/";
-		boost::filesystem::path toPath = m_pathHome;
-		boost::filesystem::create_directories(toPath);
+		boost::filesystem::path toPath = m_pathHome + "/";
 
-		if(!RecursiveDirectoryCopy(fromPath, toPath))
+		if(!RecursiveDirectoryCopy(fromPath, toPath, false))
 		{
 			cout << "Error copying files to user's HOME folder." << endl;
 		}
@@ -1708,7 +1707,7 @@ bool Config::WriteSetting(std::string key, std::string value)
 	boost::filesystem::path from = m_configFilePath;
 	boost::filesystem::path to = configurationBackup;
 	string copyCommand = "cp -fp " + m_configFilePath + " " + configurationBackup;
-	boost::filesystem::copy_file(from, to);
+	boost::filesystem::copy_file(from, to, boost::filesystem::copy_option::overwrite_if_exists);
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
 	ofstream *out = new ofstream(m_configFilePath.c_str());

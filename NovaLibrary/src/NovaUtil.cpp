@@ -280,29 +280,57 @@ string GetSubnetFromInterface(string interface)
 	return ret;
 }
 
-bool RecursiveDirectoryCopy(boost::filesystem::path const& from, boost::filesystem::path const& to)
+bool RecursiveDirectoryCopy(boost::filesystem::path const& from, boost::filesystem::path const& to, bool logOrNot)
 {
 	try
 	{
 		if(!boost::filesystem::exists(from) || !boost::filesystem::is_directory(from))
 		{
-			LOG(DEBUG, "Source " + from.string() + " doesn't exist or isn't a directory", "");
+			if(logOrNot)
+			{
+				LOG(DEBUG, "Source " + from.string() + " doesn't exist or isn't a directory", "");
+			}
+			else
+			{
+				cout << "Source " << from.string() << " doesn't exist or isn't a directory" << endl;
+			}
 			return false;
 		}
 		if(boost::filesystem::exists(to))
 		{
-			LOG(DEBUG, "Destination " + to.string() + " already exists", "");
+			if(logOrNot)
+			{
+				LOG(DEBUG, "Destination " + to.string() + " already exists", "");
+			}
+			else
+			{
+				cout << "Destination " << to.string() << " already exists" << endl;
+			}
 			return false;
 		}
 		if(!boost::filesystem::create_directory(to))
 		{
-			LOG(DEBUG, "Couldn't create destination directory " + to.string(), "");
+			if(logOrNot)
+			{
+				LOG(DEBUG, "Couldn't create destination directory " + to.string(), "");
+			}
+			else
+			{
+				cout << "Couldn't create destination directory " << to.string() << endl;
+			}
 			return false;
 		}
 	}
 	catch(boost::filesystem::filesystem_error const& e)
 	{
-		LOG(DEBUG, "RecursiveDirectoryCopy caught the following exception: " + string(e.what()), "");
+		if(logOrNot)
+		{
+			LOG(DEBUG, "RecursiveDirectoryCopy caught the following exception: " + string(e.what()), "");
+		}
+		else
+		{
+			cout << "RecursiveDirectoryCopy caught the following exception: " << string(e.what()) << endl;
+		}
 	}
 	for(boost::filesystem::directory_iterator file(from); file != boost::filesystem::directory_iterator(); ++file)
 	{
@@ -311,7 +339,7 @@ bool RecursiveDirectoryCopy(boost::filesystem::path const& from, boost::filesyst
 			boost::filesystem::path current(file->path());
 			if(boost::filesystem::is_directory(current))
 			{
-				if(!RecursiveDirectoryCopy(current, to / current.filename()))
+				if(!RecursiveDirectoryCopy(current, to / current.filename(), logOrNot))
 				{
 					return false;
 				}
@@ -323,7 +351,14 @@ bool RecursiveDirectoryCopy(boost::filesystem::path const& from, boost::filesyst
 		}
 		catch(boost::filesystem::filesystem_error const & e)
 		{
-			LOG(DEBUG, e.what(), "");
+			if(logOrNot)
+			{
+				LOG(DEBUG, e.what(), "");
+			}
+			else
+			{
+				cout << e.what() << endl;
+			}
 		}
 	}
 	return true;

@@ -1271,7 +1271,7 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		boost::filesystem::path fromString = Config::Inst()->GetPathHome() + "/config/templates/" + cloneConfig + "/";
 		boost::filesystem::path toString = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
 
-		RecursiveDirectoryCopy(fromString, toString);
+		RecursiveDirectoryCopy(fromString, toString, true);
 
 		addfile << configName << '\n';
 		addfile.close();

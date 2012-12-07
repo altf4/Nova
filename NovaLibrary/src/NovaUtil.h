@@ -100,7 +100,7 @@ std::vector<double> ShiftDistribution(std::vector<double> inputDoubles, double t
 std::vector<int> RoundDistributionToIntegers(std::vector<double> inputDoubles);
 
 
-bool RecursiveDirectoryCopy(boost::filesystem::path const& from, boost::filesystem::path const& to);
+bool RecursiveDirectoryCopy(boost::filesystem::path const& from, boost::filesystem::path const& to, bool);
 }
 
 #endif /* NOVAUTIL_H_ */
