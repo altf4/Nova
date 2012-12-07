@@ -1,30 +1,6 @@
 extends layout
 
 block topPannelAdditions
-  table(style="float: left;")
-    tr
-      td(style="text-align: right;") Packet Classifier:&nbsp 
-      td(style="padding: 0;")
-        img#nova_status_icon(src="/images/orangedot.png", width="15px", height="15px")
-      td
-        div#nova_status checking
-    tr
-      td(style="text-align: right;") Haystack Status:&nbsp  
-      td(style="padding: 0;")
-        img#haystack_status_icon(src="/images/orangedot.png", width="15px", height="15px")
-      td
-        div#haystack_status checking
-  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopNovad()') Stop Packet Classifier
-  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartNovad()') Start Packet Classifier
-  br
-  br
-  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopHaystack()') Stop Haystack 
-  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartHaystack()') Start Haystack
-  br
-  br
-  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
-
-  a.button(style="margin-top: 2px; margin-bottom: 2px; margin-right: 4px; width:150px; float: right;", href="/novaState.csv") Suspects as CSV file
 
 block content
   div#nova_suspects_header(style="width:600px; display: none")
@@ -32,7 +8,8 @@ block content
     &nbsp
     
     a(class="button", href="javascript:void(0)", onclick="toggleFilterBlock()") Filtering Options
-    br
+    button(type="button", style="width:160px;", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
+    a.button(style="width:150px;", href="/novaState.csv") Suspects as CSV file
 
     div#advancedFiltering(style="display: none;")
       br
@@ -82,13 +59,18 @@ block headerAdditions
 
     var suspectGrid;
     var liveUpdate = true;
-    var lastNovadStatus = "unknown";
 
     var advancedFilters = new Object();
     var advancedFilterEnabled = false;
     var advancedIpFilter = null;
 
     require(["dijit/form/TextBox"]);
+
+    function isNovadUpChanged(isNovadUp) {
+        document.getElementById("nova_suspects_header").style.display = isNovadUp ? "block" : "none";
+        document.getElementById("nova_suspects").style.display = isNovadUp ? "block" : "none";
+        document.getElementById("nova_suspects_error_view").style.display = isNovadUp ? "none" : "block";
+    }
 
     var LiveUpdateChanged = function() {
       liveUpdate = document.getElementById("liveGridUpdate").checked;
@@ -107,74 +89,22 @@ block headerAdditions
       }
     }
 
+      var ClearAllSuspects = function() {
+          try {
+              now.ClearAllSuspects();
+            } catch(err) {
+              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+              console.log("err was: " + err);
+          } 
+      }
     
     function showUnclassifiedChanged() {
         resendSuspects();
 
     }
 
-    // Wrappers for now.js calls with some try/catches
-    var StartNovad = function() {
-        try {
-            now.StartNovad();
-          } catch(err) {
-            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-            console.log("err was: " + err);
-        } 
-    }
-    var StopNovad = function() {
-        try {
-            now.StopNovad();
-          } catch(err) {
-            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-            console.log("err was: " + err);
-        } 
-    }
-
-    var StartHaystack = function() {
-        try {
-            now.StartHaystack();
-          } catch(err) {
-            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-            console.log("err was: " + err);
-        } 
-    }
-
-    var StopHaystack = function() {
-        try {
-            now.StopHaystack();
-          } catch(err) {
-            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-            console.log("err was: " + err);
-        } 
-    }
 
 
-    var ClearAllSuspects = function() {
-        try {
-            now.ClearAllSuspects();
-          } catch(err) {
-            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-            console.log("err was: " + err);
-        } 
-    }
-
-    var updateNovadStatus = function (isNovadUp){
-      if (lastNovadStatus == "unknown" || lastNovadStatus != isNovadUp) {
-          lastNovadStatus = isNovadUp;
-          dojo.byId("nova_status_icon").src = isNovadUp ? "/images/greendot.png" : "/images/reddot.png";;
-          dojo.byId("nova_status").innerHTML = isNovadUp ? "Online" : "Offline";
-          dojo.byId("eyeIcon").src = isNovadUp ? "/images/novaIconBlinking.gif" : "/images/novaIcon.png";
-          dojo.byId("nova_suspects_header").style.display = isNovadUp ? "block" : "none";
-          dojo.byId("nova_suspects").style.display = isNovadUp ? "block" : "none";
-          dojo.byId("nova_suspects_error_view").style.display = isNovadUp ? "none" : "block";
-      }
-    };
-
-    var updateHaystackStatus = function (isHaystackUp){
-      dojo.byId("haystack_status_icon").src = isHaystackUp ? "/images/greendot.png" : "/images/reddot.png";;
-      dojo.byId("haystack_status").innerHTML = isHaystackUp ? "Online" : "Offline";
-    };
     
     var AllSuspectsCleared = function() {
       suspectGrid.Clear();
@@ -415,17 +345,18 @@ block headerAdditions
 
     function init() {
         now.ready(function() {
-
             now.updateHaystackStatus = updateHaystackStatus;
             now.updateNovadStatus = updateNovadStatus;
+            now.IsHaystackUp(updateHaystackStatus);
+            now.IsNovadUp(updateNovadStatus);
+
             now.AllSuspectsCleared = AllSuspectsCleared;
             now.SuspectCleared = SuspectCleared;
             now.OnNewSuspect = OnNewSuspect;
+            
 
             Init();
             
-            now.IsHaystackUp(updateHaystackStatus);
-            now.IsNovadUp(updateNovadStatus);
         });
     };
 
