@@ -35,9 +35,6 @@ block headerAdditions
 
     #treeDiv {
         display: inline-block;
-        padding: 2px;
-        border-style: solid;
-        border-color: black;
     }
 
     li {
@@ -293,7 +290,6 @@ block headerAdditions
           pi.Render(piChartRender);
         });
 
-        theDoc.getElementById('treeAndPiContainer').setAttribute('style', 'width: ' + theDoc.getElementById('sizeAnchor').style.width);
       }
       else
       {
@@ -548,10 +544,6 @@ block headerAdditions
   
 block content
   div#hideme
-    hr
-    h2 Current Configuration
-    select#configurations(onchange='GetConfigurationSummary()')
-    hr
     h2 Edit Configurations
     div#addNewConfig
       button#addConfig(onclick='showLightBox("0")') Add Configuration
@@ -560,35 +552,46 @@ block content
       br
       br
       a.button(href= "/autoConfig") Create Configuration From Network Scan
-    hr
 
-    div#treeAndPiContainer
-      h2 Current Profile Configuration
-      a.sideBarButton(href= "/configHoneydProfiles") Edit Profiles
+      br
+      br
+
+    div#treeAndPiContainer(style="border: 3px solid black; display: inline-block; margin: 5px 5px 5px 5px; text-align: center")
+      h1 Current Configuration
+      select#configurations(onchange='GetConfigurationSummary()')
+      
+      div(style="margin-top: 20px")
+      hr
+      h1 Current Profile Configuration
+      a.button(href= "/configHoneydProfiles") Edit Profiles
+      br
+      br
       br
       div#treeDiv
-      br
     
+      div(style="margin-top: 20px")
       hr
-    
-      h2 Current Node Configuration
-      a.sideBarButton(href= "/configHoneydNodes") Edit Nodes
+      h1 Current Node Configuration
+      a.button(href= "/configHoneydNodes") Edit Nodes
+      br
+      br
       br
       div#piChart
 
-    hr
-
-    div#summary
-      h2 Current Script Usage
-      a.sideBarButton(href= "/scripts") Edit Scripts
+      div(style="margin-top: 20px")
+      hr
+      h1 Current Script Usage
+      a.button(href= "/scripts") Edit Scripts
       br
-      table(border='1', style='border: solid black 2px;', id='sizeAnchor')
+      br
+      br
+      table(border='1', id='sizeAnchor')
         thead
           tr
             th(style='background-color: #d0e9fc;') Scripts
             th(style='background-color: #d0e9fc;') Profile:Port Binding
         tbody#appendHook      
-      br
+  
   div#lightbox(class='white_content')
     div#addConfigForm
       form(method='post', id='addConfig', onsubmit='return checkParametersAdd();')
