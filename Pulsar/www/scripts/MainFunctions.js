@@ -195,12 +195,12 @@ function setTarget(source, target, group)
             theDoc.getElementById('groupcheck' + i).setAttribute('disabled', true);
           }
         }
-        for(var i in theDoc.getElementById('clientsList').childNodes)
+        for(var i in clients)
         {
-          if(theDoc.getElementById('client' + target) != undefined)
+          if(clients[i] != '' && clients[i] != undefined && document.getElementById('client' + clients[i]) != undefined)
           {
-            theDoc.getElementById('client' + target).checked = false;
-            theDoc.getElementById('client' + target).setAttribute('disabled', true);
+            document.getElementById('client' + clients[i]).checked = false;
+            document.getElementById('client' + clients[i]).disabled = true;
           } 
         }
         for(var i = 0; i < 7; i++)
@@ -218,11 +218,11 @@ function setTarget(source, target, group)
             theDoc.getElementById('groupcheck' + i).removeAttribute('disabled');
           }
         }
-        for(var i in theDoc.getElementById('clientsList').childNodes)
+        for(var i in clients)
         {
-          if(theDoc.getElementById('client' + target) != undefined)
+          if(clients[i] != '' && clients[i] != undefined && document.getElementById('client' + clients[i]) != undefined)
           {
-            theDoc.getElementById('client' + target).removeAttribute('disabled');
+            document.getElementById('client' + clients[i]).disabled = false;
           } 
         }
         for(var i = 0; i < 7; i++)

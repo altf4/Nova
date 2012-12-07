@@ -38,12 +38,12 @@ function setTarget(source, target, group)
           document.getElementById('groupcheck' + i).setAttribute('disabled', true);
         }
       }
-      for(var i in document.getElementById('clientsList').childNodes)
+      for(var i in clients)
       {
-        if(document.getElementById('client' + target) != undefined)
+        if(clients[i] != '' && clients[i] != undefined && document.getElementById('client' + clients[i]) != undefined)
         {
-          document.getElementById('client' + target).checked = false;
-          document.getElementById('client' + target).setAttribute('disabled', true);
+          document.getElementById('client' + clients[i]).checked = false;
+          document.getElementById('client' + clients[i]).disabled = true;
         } 
       }
     }
@@ -61,11 +61,11 @@ function setTarget(source, target, group)
           document.getElementById('groupcheck' + i).removeAttribute('disabled');
         }
       }
-      for(var i in document.getElementById('clientsList').childNodes)
+      for(var i in clients)
       {
-        if(document.getElementById('client' + target) != undefined)
+        if(clients[i] != '' && clients[i] != undefined && document.getElementById('client' + clients[i]) != undefined)
         {
-          document.getElementById('client' + target).removeAttribute('disabled');
+          document.getElementById('client' + clients[i]).disabled = false;
         } 
       }
     }

@@ -28,6 +28,7 @@
 
 #include <map>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/filesystem.hpp>
 
 namespace Nova
 {
@@ -180,6 +181,8 @@ public:
 	Node GetDoppelganger();
 
 	std::string GenerateRandomUnusedMAC(std::string vendor);
+
+	bool RecursiveDirectoryCopy(boost::filesystem::path const& from, boost::filesystem::path const& to);
 
 	//A map structure for node storage
 	std::vector<std::string> m_configs;

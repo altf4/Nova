@@ -22,7 +22,6 @@
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
-#include <boost/filesystem.hpp>
 #include <unordered_map>
 #include <arpa/inet.h>
 #include <math.h>
@@ -1235,9 +1234,6 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 
 	m_configs.push_back(configName);
 
-	string directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
-	boost::filesystem::create_directories(directoryPath.c_str());
-
 	ofstream addfile(Config::Inst()->GetPathHome() + "/config/templates/configurations.txt", ios_base::app);
 
 	if(!clone)
@@ -1245,6 +1241,9 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		// Add configName to configurations.txt within the templates/ folder,
 		// create the templates/configName/ directory, and fill with
 		// empty (but still parseable) xml files
+		boost::filesystem::path directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		boost::filesystem::create_directories(directoryPath);
+
 		string oldName = Config::Inst()->GetCurrentConfig();
 		ReadAllTemplatesXML();
 		Config::Inst()->SetCurrentConfig(configName);
@@ -1255,9 +1254,10 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		addfile << configName << '\n';
 		addfile.close();
 		WriteAllTemplatesToXML();
-		string routeString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/default/routes.xml ";
-		routeString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
-		system(routeString.c_str());
+		boost::filesystem::path fromString = Config::Inst()->GetPathHome() + "/config/templates/default/routes.xml";
+		boost::filesystem::path toString = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/routes.xml";
+
+		boost::filesystem3::copy(fromString, toString);
 		Config::Inst()->SetCurrentConfig(oldName);
 	}
 	else if(clone && found)
@@ -1265,9 +1265,14 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		// Add configName to configurations.txt within the templates/ folder,
 		// create the templates/configName/ directory, and cp the
 		// stuff from templates/cloneConfig/ into it.
-		string cloneString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/" + cloneConfig + "/* ";
-		cloneString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
-		system(cloneString.c_str());
+
+		// Make a function for recursively copying a directory
+
+		boost::filesystem::path fromString = Config::Inst()->GetPathHome() + "/config/templates/" + cloneConfig + "/";
+		boost::filesystem::path toString = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+
+		RecursiveDirectoryCopy(fromString, toString);
+
 		addfile << configName << '\n';
 		addfile.close();
 	}
@@ -1363,6 +1368,55 @@ bool HoneydConfiguration::SetDoppelganger(Node doppelganger)
 Node HoneydConfiguration::GetDoppelganger()
 {
 	return m_doppelganger;
+}
+
+bool HoneydConfiguration::RecursiveDirectoryCopy(boost::filesystem::path const& from, boost::filesystem::path const& to)
+{
+	try
+	{
+		if(!boost::filesystem::exists(from) || !boost::filesystem::is_directory(from))
+		{
+			LOG(DEBUG, "Source " + from.string() + " doesn't exist or isn't a directory", "");
+			return false;
+		}
+		if(boost::filesystem::exists(to))
+		{
+			LOG(DEBUG, "Destination " + to.string() + " already exists", "");
+			return false;
+		}
+		if(!boost::filesystem::create_directory(to))
+		{
+			LOG(DEBUG, "Couldn't create destination directory " + to.string(), "");
+			return false;
+		}
+	}
+	catch(boost::filesystem::filesystem_error const& e)
+	{
+		LOG(DEBUG, "RecursiveDirectoryCopy caught the following exception: " + string(e.what()), "");
+	}
+	for(boost::filesystem::directory_iterator file(from); file != boost::filesystem::directory_iterator(); ++file)
+	{
+		try
+		{
+			boost::filesystem::path current(file->path());
+			if(boost::filesystem::is_directory(current))
+			{
+				if(!RecursiveDirectoryCopy(current, to / current.filename()))
+				{
+					return false;
+				}
+			}
+			else
+			{
+				boost::filesystem3::copy(current, to / current.filename());
+			}
+		}
+		catch(boost::filesystem::filesystem_error const & e)
+		{
+			LOG(DEBUG, e.what(), "");
+		}
+	}
+	return true;
 }
 
 }
