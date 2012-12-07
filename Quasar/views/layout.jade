@@ -68,9 +68,7 @@ html(lang="en")
           a.sideBarButton(href='/suspects') Current Suspects
           a.sideBarButton(href='/events') Hostile Events
           a.sideBarButton(href= "/haystackStatus") Haystack Details
-          a.sideBarButton(href= "/viewNovadLog") Nova Log
-          a.sideBarButton(href= "/viewHoneydLog") Haystack Log
-        
+         
         div.sideBarHeader Configuration
           a.sideBarButton(href= "/honeydConfigManage") Haystack Settings
           a.sideBarButton(href= "/basicOptions") Basic Options
@@ -78,6 +76,10 @@ html(lang="en")
           a.sideBarButton(href= "/customizeTraining") Classification Training
           a.sideBarButton(href= "/interfaceAliases") Interface Aliases
           a.sideBarButton(href= "/configWhitelist") Whitelist
+        
+        div.sideBarHeader Logs
+          a.sideBarButton(href= "/viewNovadLog") Nova Log
+          a.sideBarButton(href= "/viewHoneydLog") Haystack Log
        
         div.sideBarHeader Users
           a.sideBarButton(href= "/createNewUser") New User
