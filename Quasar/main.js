@@ -1152,11 +1152,6 @@ app.get('/events', passport.authenticate('basic', {session: false}), function (r
 	});
 });
 
-app.get('/novadlog', passport.authenticate('basic', {session: false}), function (req, res) {
-	//initLogWatch();
-	res.render('novadlog.jade');
-});
-
 app.get('/honeydlog', passport.authenticate('basic', {session: false}), function (req, res) {
 	res.render('honeydlog.jade');
 });
