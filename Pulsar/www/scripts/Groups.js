@@ -68,11 +68,11 @@ function getMembers()
   else
   {
     var members = '';
-    for(var i = 0; i < clientCount; i++)
+    for(var i in clients)
     {
-      if(theDoc.getElementById('check' + i) != null && theDoc.getElementById('check' + i).checked)
+      if(theDoc.getElementById('client' + clients[i]) != null && theDoc.getElementById('client' + clients[i]).checked)
       {
-        members += theDoc.getElementById('check' + i).value + ',';
+        members += theDoc.getElementById('client' + clients[i]).value + ',';
       }
     }
     if(members[members.length - 1] === ',')
@@ -130,13 +130,13 @@ function addGroup(group, members)
       if(group == maintainGroups[i].group)
       {
         alert('Cannot have identical group names');
-        theDoc.getElementbyId('groupName').value = '';
+        theDoc.getElementById('groupName').value = '';
         return;
       }
       if(members == theDoc.getElementById('members' + maintainGroups[i].idx).value)
       {
         alert('Already have a group "' + maintainGroups[i].group + '" with members "' + members + '"');
-        theDoc.getElementbyId('groupName').value = '';
+        theDoc.getElementById('groupName').value = '';
         return;
       }
     }
