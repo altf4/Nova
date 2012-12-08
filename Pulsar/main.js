@@ -1309,8 +1309,11 @@ wsServer.on('close', function(connection, reason, description)
         var newList = members.replace(new RegExp(i), '');
         newList = newList.substr(0, newList.length - 1);
         UpdateGroup('all', newList);
+        if(typeof now.UpdateGroupList == 'function')
+        {
+          now.UpdateGroupList('all', 'update');
+        }
       });
-      
       var date = new Date();
       WriteNotification(i + ' disconnected at ' + date);
       if(typeof everyone.now.UpdateNotificationsButton == 'function')

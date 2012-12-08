@@ -288,6 +288,8 @@ now.UpdateGroupList = function(group, action)
     case 'update':
       if(groupDiv == undefined || groupDiv.childNodes.length == 0)
       {
+        console.log('in now.GetGroupMembers if statement');
+        
         var deleteMe = document.getElementById('noGroups');
         
         if(deleteMe != undefined)
@@ -322,7 +324,8 @@ now.UpdateGroupList = function(group, action)
       else
       {
         now.GetGroupMembers(group, function(members){
-          var check = groupDiv.childNodes[0];
+          console.log('in now.GetGroupMembers else statement with members ' + members);
+          var check = groupDiv.childNodes[0].childNodes[0];
           check.value = members;
           if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
           {
