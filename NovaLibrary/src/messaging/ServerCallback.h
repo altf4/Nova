@@ -25,6 +25,15 @@
 namespace Nova
 {
 
+//Forward declaration
+class ServerCallback;
+
+struct ServerCallbackArg
+{
+	int m_socketFD;
+	ServerCallback *m_callback;
+};
+
 class ServerCallback
 {
 
