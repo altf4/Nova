@@ -32,6 +32,9 @@
 #include <string>
 #include <iostream>
 
+#define BOOST_FILESYSTEM_VERSION 2
+#include <boost/filesystem.hpp>
+
 #include "Config.h"
 #include "Logger.h"
 #include "NovaUtil.h"
@@ -1010,11 +1013,9 @@ bool Config::SaveUserConfig()
 
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_userConfigFilePath + ".tmp";
-	string copyCommand = "cp -fp \"" + m_userConfigFilePath + "\" \"" + configurationBackup + "\"";
-	if(system(copyCommand.c_str()) != 0)
-	{
-		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
-	}
+	boost::filesystem::path from = m_userConfigFilePath;
+	boost::filesystem::path to = configurationBackup;
+	boost::filesystem::copy_file(from, to, boost::filesystem::copy_option::overwrite_if_exists);
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
 	ofstream *out = new ofstream(m_userConfigFilePath.c_str());
@@ -1054,10 +1055,7 @@ bool Config::SaveUserConfig()
 	delete in;
 	delete out;
 
-	if(system("rm -f Config/NOVAConfig.txt.tmp") != 0)
-	{
-		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/NOVAConfig.txt.tmp has failed.");
-	}
+	boost::filesystem::remove(to);
 
 	return true;
 }
@@ -1344,11 +1342,9 @@ bool Config::SaveConfig()
 
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_configFilePath + ".tmp";
-	string copyCommand = "cp -fp \"" + m_configFilePath + "\" \"" + configurationBackup + "\"";
-	if(system(copyCommand.c_str()) != 0)
-	{
-		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
-	}
+	boost::filesystem::path from = m_configFilePath;
+	boost::filesystem::path to = configurationBackup;
+	boost::filesystem::copy_file(from, to, boost::filesystem::copy_option::overwrite_if_exists);
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
 	ofstream *out = new ofstream(m_configFilePath.c_str());
@@ -1559,10 +1555,8 @@ bool Config::SaveConfig()
 	out->close();
 	delete in;
 	delete out;
-	if(system("rm -f Config/NOVAConfig.txt.tmp") != 0)
-	{
-		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/NOVAConfig.txt.tmp has failed.");
-	}
+
+	boost::filesystem::remove(to);
 
 	return true;
 }
@@ -1580,24 +1574,14 @@ bool Config::InitUserConfigs()
 	//check for home folder
 	if(!stat(m_pathHome.c_str(), &fileAttr ) == 0)
 	{
-		string fromPath = m_pathPrefix + "/usr/share/nova/userFiles";
-		string toPath = m_pathHome;
-		string mkdirString = "mkdir -p \"" + toPath + "\"";
+		boost::filesystem::path fromPath = m_pathPrefix + "/usr/share/nova/userFiles/";
+		boost::filesystem::path toPath = m_pathHome + "/";
 
-		if(system(mkdirString.c_str()) != 0)
+		if(!RecursiveDirectoryCopy(fromPath, toPath, false))
 		{
-			cout << "Error creating folder for user configuration. Failed command was: " + mkdirString << endl;
+			cout << "Error copying files to user's HOME folder." << endl;
 		}
 
-
-		string copyString = "cp -rfpT \"" + fromPath + "\" \"" + toPath + "\"";
-
-		if(system(copyString.c_str()) != 0)
-		{
-			cout << "Error copying files to user's HOME folder. Failed copy command was: " + copyString << endl;
-		}
-
-		//Check the nova dir again
 		if(stat(m_pathHome.c_str(), &fileAttr) == 0)
 		{
 			return returnValue;
@@ -1720,11 +1704,10 @@ bool Config::WriteSetting(std::string key, std::string value)
 
 	//Rewrite the config file with the new settings
 	string configurationBackup = m_configFilePath + ".tmp";
+	boost::filesystem::path from = m_configFilePath;
+	boost::filesystem::path to = configurationBackup;
 	string copyCommand = "cp -fp " + m_configFilePath + " " + configurationBackup;
-	if(system(copyCommand.c_str()) != 0)
-	{
-		LOG(ERROR, "Problem saving current configuration.","System Call " + copyCommand + " has failed.");
-	}
+	boost::filesystem::copy_file(from, to, boost::filesystem::copy_option::overwrite_if_exists);
 
 	ifstream *in = new ifstream(configurationBackup.c_str());
 	ofstream *out = new ofstream(m_configFilePath.c_str());
@@ -1758,12 +1741,7 @@ bool Config::WriteSetting(std::string key, std::string value)
 	delete in;
 	delete out;
 
-	if(system("rm -f Config/NOVAConfig.txt.tmp") != 0)
-	{
-		LOG(WARNING, "Problem saving current configuration.", "System Command rm -f Config/NOVAConfig.txt.tmp has failed.");
-	}
-
-
+	boost::filesystem::remove(to);
 
 	if(error)
 	{

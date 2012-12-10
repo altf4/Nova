@@ -30,8 +30,8 @@
 				<name>WinServer</name>
 				<count>0</count>
 				<personality>Microsoft Windows Server 2003 SP1 or SP2</personality>
-				<uptimeMin>4294967295</uptimeMin>
-				<uptimeMax>0</uptimeMax>
+				<uptimeMin>0</uptimeMin>
+				<uptimeMax>4294967295</uptimeMax>
 				<dropRate>0</dropRate>
 				<isPersonalityInherited>false</isPersonalityInherited>
 				<isUptimeInherited>true</isUptimeInherited>
@@ -113,8 +113,8 @@
 				<name>LinuxServer</name>
 				<count>0</count>
 				<personality>Linux 3.0 - 3.1</personality>
-				<uptimeMin>4294967295</uptimeMin>
-				<uptimeMax>0</uptimeMax>
+				<uptimeMin>0</uptimeMin>
+				<uptimeMax>4294967295</uptimeMax>
 				<dropRate>0</dropRate>
 				<isPersonalityInherited>false</isPersonalityInherited>
 				<isUptimeInherited>true</isUptimeInherited>

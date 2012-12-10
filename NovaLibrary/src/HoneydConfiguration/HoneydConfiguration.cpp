@@ -1234,9 +1234,6 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 
 	m_configs.push_back(configName);
 
-	string directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName;
-	system(string("mkdir " + directoryPath).c_str());
-
 	ofstream addfile(Config::Inst()->GetPathHome() + "/config/templates/configurations.txt", ios_base::app);
 
 	if(!clone)
@@ -1244,6 +1241,9 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		// Add configName to configurations.txt within the templates/ folder,
 		// create the templates/configName/ directory, and fill with
 		// empty (but still parseable) xml files
+		boost::filesystem::path directoryPath = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		boost::filesystem::create_directories(directoryPath);
+
 		string oldName = Config::Inst()->GetCurrentConfig();
 		ReadAllTemplatesXML();
 		Config::Inst()->SetCurrentConfig(configName);
@@ -1254,9 +1254,10 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		addfile << configName << '\n';
 		addfile.close();
 		WriteAllTemplatesToXML();
-		string routeString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/default/routes.xml ";
-		routeString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
-		system(routeString.c_str());
+		boost::filesystem::path fromString = Config::Inst()->GetPathHome() + "/config/templates/default/routes.xml";
+		boost::filesystem::path toString = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/routes.xml";
+
+		boost::filesystem::copy_file(fromString, toString);
 		Config::Inst()->SetCurrentConfig(oldName);
 	}
 	else if(clone && found)
@@ -1264,9 +1265,14 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		// Add configName to configurations.txt within the templates/ folder,
 		// create the templates/configName/ directory, and cp the
 		// stuff from templates/cloneConfig/ into it.
-		string cloneString = "cp " + Config::Inst()->GetPathHome() + "/config/templates/" + cloneConfig + "/* ";
-		cloneString += Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
-		system(cloneString.c_str());
+
+		// Make a function for recursively copying a directory
+
+		boost::filesystem::path fromString = Config::Inst()->GetPathHome() + "/config/templates/" + cloneConfig + "/";
+		boost::filesystem::path toString = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+
+		RecursiveDirectoryCopy(fromString, toString, true);
+
 		addfile << configName << '\n';
 		addfile.close();
 	}
@@ -1296,8 +1302,8 @@ bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
 
 	if(found)
 	{
-		string pathToDelete = "rm -r " + Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
-		system(pathToDelete.c_str());
+		boost::filesystem::path pathToDelete = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
+		boost::filesystem::remove_all(pathToDelete);
 		int oldSize = 0;
 		for(uint i = 0; i < m_configs.size(); i++)
 		{

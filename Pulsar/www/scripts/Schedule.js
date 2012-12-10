@@ -26,7 +26,7 @@ function setTarget(source, target, group)
       document.getElementById('elementHook').removeChild(document.getElementById('elementHook').lastChild);
     }
     
-    if(document.getElementById(source).checked)
+    if(document.getElementById(source).checked == 'true' || document.getElementById(source).checked == true)
     {
       message.id = target + ':';
       var targets = target.split(':');
@@ -38,7 +38,6 @@ function setTarget(source, target, group)
           createScheduledEventElement(targets[i]);
         } 
       }
-
       for(var i in document.getElementById('groupsList').childNodes)
       {
         if(document.getElementById('groupcheck' + i) != undefined && document.getElementById('groupcheck' + i).id.indexOf(source) == -1)
@@ -46,12 +45,12 @@ function setTarget(source, target, group)
           document.getElementById('groupcheck' + i).setAttribute('disabled', true);
         }
       }
-      for(var i in document.getElementById('clientsList').childNodes)
+      for(var i in clients)
       {
-        if(document.getElementById('client' + target) != undefined)
+        if(clients[i] != '' && clients[i] != undefined && document.getElementById('client' + clients[i]) != undefined)
         {
-          document.getElementById('client' + target).checked = false;
-          document.getElementById('client' + target).setAttribute('disabled', true);
+          document.getElementById('client' + clients[i]).checked = false;
+          document.getElementById('client' + clients[i]).disabled = true;
         } 
       }
     }
@@ -71,11 +70,11 @@ function setTarget(source, target, group)
           document.getElementById('groupcheck' + i).removeAttribute('disabled');
         }
       }
-      for(var i in document.getElementById('clientsList').childNodes)
+      for(var i in clients)
       {
-        if(document.getElementById('client' + target) != undefined)
+        if(clients[i] != '' && clients[i] != undefined && document.getElementById('client' + clients[i]) != undefined)
         {
-          document.getElementById('client' + target).removeAttribute('disabled');
+          document.getElementById('client' + clients[i]).disabled = false;
         } 
       }
     }
@@ -91,7 +90,7 @@ function setTarget(source, target, group)
     {
       var regex = new RegExp(target + ':', 'i');
       message.id = message.id.replace(regex, '');
-      document.getElementById('elementHook').removeChild(document.getElementById(target));
+      document.getElementById('elementHook').removeChild(document.getElementById('schedule' + target));
     }
   }
 }
@@ -99,7 +98,7 @@ function setTarget(source, target, group)
 function createScheduledEventElement(clientId)
 {
   var borderDiv = document.createElement('div');
-  borderDiv.id = clientId;
+  borderDiv.id = 'schedule' + clientId;
   borderDiv.setAttribute('style', 'border: 2px solid; background: #E8A02F; width: 370px;');
   
   var label0 = document.createElement('h1');
@@ -468,7 +467,6 @@ function submitSchedule()
         recurrenceValues.minute = minute;
         var ieWorkaround = document.getElementById(id + 'select');
         message.type = ieWorkaround.options[ieWorkaround.selectedIndex].value;
-        console.log('message.type == ' + message.type);
         registerScheduledMessage(id, name, message, recurrenceValues, function(clientId, result){
           console.log('Event registration for ' + clientId + ' ' + result);
         });
@@ -488,23 +486,14 @@ function submitSchedule()
         });
       }
       
-      var j = 0;
-      var element = document.getElementById('check' + j);
-      
-      while(element == undefined)
+      for(var i in clients)
       {
-        j++;
-        element = document.getElementById('check' + j);
-      }
-      
-      do
-      {
-        if(element.value == id)
+        if(clients[i] != '')
         {
-          document.getElementById('check' + j).checked = false;
-          element = undefined;
-        } 
-      }while(element != undefined && j++);
+          console.log('clients[i] == ' + clients[i]);
+          document.getElementById('client' + clients[i]).checked = false;
+        }
+      }
       
       j = 0;
       element = document.getElementById('groupcheck' + j);
@@ -517,12 +506,8 @@ function submitSchedule()
       
       do
       {
-        if(element.value == id)
-        {
-          document.getElementById('groupcheck' + j).checked = false;
-          element = undefined;
-        } 
-      }while(element != undefined && j++);
+        document.getElementById('groupcheck' + j).checked = false;
+      }while(document.getElementById('groupcheck' + j) != undefined && j++);
     }
   }
   while(document.getElementById('elementHook').hasChildNodes())

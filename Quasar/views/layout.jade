@@ -11,6 +11,81 @@ html(lang="en")
     script
       // This function should be replaced in other jade files, and will be called when the DOM is ready
       function init() {};
+
+      // This function should be replaced
+      function isNovadUpChanged(isNovadUp) {};
+
+      var lastNovadStatus = "unknown";
+
+      // Wrappers for now.js calls with some try/catches
+      var StartNovad = function() {
+          try {
+              now.StartNovad();
+            } catch(err) {
+              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+              console.log("err was: " + err);
+          } 
+      }
+      var StopNovad = function() {
+          try {
+              now.StopNovad();
+            } catch(err) {
+              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+              console.log("err was: " + err);
+          } 
+      }
+  
+      var StartHaystack = function() {
+          try {
+              now.StartHaystack();
+            } catch(err) {
+              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+              console.log("err was: " + err);
+          } 
+      }
+  
+      var StopHaystack = function() {
+          try {
+              now.StopHaystack();
+            } catch(err) {
+              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+              console.log("err was: " + err);
+          } 
+      }
+  
+      var updateNovadStatus = function (isNovadUp){
+        if (lastNovadStatus == "unknown" || lastNovadStatus != isNovadUp) {
+            lastNovadStatus = isNovadUp;
+
+            document.getElementById("nova_status_icon_red").style.display = "none";
+            document.getElementById("nova_status_icon_green").style.display = "none";
+            document.getElementById("nova_status_icon_orange").style.display = "none";
+            
+            if (isNovadUp) {
+              document.getElementById("nova_status_icon_green").style.display = "block";
+            } else {
+              document.getElementById("nova_status_icon_red").style.display = "block";
+            }
+
+            document.getElementById("nova_status").innerHTML = isNovadUp ? "Online" : "Offline";
+            document.getElementById("eyeIcon").src = isNovadUp ? "/images/novaIconBlinking.gif" : "/images/novaIcon.png";
+            isNovadUpChanged(isNovadUp);
+        }
+      };
+
+      var updateHaystackStatus = function (isHaystackUp){
+        document.getElementById("haystack_status_icon_red").style.display = "none";
+        document.getElementById("haystack_status_icon_green").style.display = "none";
+        document.getElementById("haystack_status_icon_orange").style.display = "none";
+        
+        if (isHaystackUp) {
+          document.getElementById("haystack_status_icon_green").style.display = "block";
+        } else {
+          document.getElementById("haystack_status_icon_red").style.display = "block";
+        }
+        
+        document.getElementById("haystack_status").innerHTML = isHaystackUp ? "Online" : "Offline";
+      };
     
     block headerAdditions
 
@@ -39,6 +114,14 @@ html(lang="en")
             }
           });
 
+          now.ready(function() {
+            now.updateHaystackStatus = updateHaystackStatus;
+            now.updateNovadStatus = updateNovadStatus;
+            now.IsHaystackUp(updateHaystackStatus);
+            now.IsNovadUp(updateNovadStatus);
+          });
+
+
           init();
         }
       );
@@ -58,6 +141,34 @@ html(lang="en")
               img#eyeIcon(src="images/novaIcon.png",class="align-left", width="100px", height="100px")
               h1(style="margin-top: 6px; margin-bottom: 6px") DataSoft Nova Anti-reconnaissance System
             block topPannelAdditions
+            
+            // This is so the browser will cache all 3 pics when it first loads
+            
+            table(style="float: left;")
+              tr
+                td(style="text-align: right;") Packet Classifier:&nbsp 
+                td(style="padding: 0;")
+                  img#nova_status_icon_orange(src="/images/orangedot.png", width="15px", height="15px")
+                  img#nova_status_icon_red(src="/images/reddot.png", width="15px", height="15px", style="display: none;")
+                  img#nova_status_icon_green(src="/images/greendot.png", width="15px", height="15px", style="display: none;")
+                td
+                  div#nova_status checking
+              tr
+                td(style="text-align: right;") Haystack Status:&nbsp  
+                td(style="padding: 0;")
+                  img#haystack_status_icon_orange(src="/images/orangedot.png", width="15px", height="15px")
+                  img#haystack_status_icon_red(src="/images/reddot.png", width="15px", height="15px", style="display: none;")
+                  img#haystack_status_icon_green(src="/images/greendot.png", width="15px", height="15px", style="display: none;")
+                td
+                  div#haystack_status checking
+            button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopNovad()') Stop Packet Classifier
+            button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartNovad()') Start Packet Classifier
+            br
+            br
+            button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopHaystack()') Stop Haystack 
+            button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartHaystack()') Start Haystack
+            br
+            br
     
       // Left panel
       div#leftCol.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'left', splitter: false")
@@ -65,30 +176,22 @@ html(lang="en")
       
        
         div.sideBarHeader Status
-          a.sideBarButton(href='/suspects') Current Suspects
-          a.sideBarButton(href='/events') Hostile Events
-          a.sideBarButton(href= "/haystackStatus") Haystack Details
+          a.sideBarButton(href='/suspects') Packet Classifier
+          a.sideBarButton(href= "/haystackStatus") Haystack
         
         div.sideBarHeader Logs
-          a.sideBarButton(href= "/novadlog") Nova Log
-          a.sideBarButton(href= "/honeydlog") Haystack Log
-       
+          a.sideBarButton(href='/events') Hostile Events
+          a.sideBarButton(href= "/viewNovadLog") Nova Log
+          a.sideBarButton(href= "/viewHoneydLog") Haystack Log
+         
         div.sideBarHeader Configuration
+          a.sideBarButton(href= "/honeydConfigManage") Haystack Settings
           a.sideBarButton(href= "/basicOptions") Basic Options
           a.sideBarButton(href= "/advancedOptions") Advanced Options
+          a.sideBarButton(href= "/customizeTraining") Classification Training
           a.sideBarButton(href= "/interfaceAliases") Interface Aliases
           a.sideBarButton(href= "/configWhitelist") Whitelist
        
-        div.sideBarHeader Haystack Settings
-          a.sideBarButton(href= "/honeydConfigManage") Presets
-          a.sideBarButton(href= "/autoConfig") Autoconfiguration
-          a.sideBarButton(href= "/configHoneydProfiles") Profiles
-          a.sideBarButton(href= "/configHoneydNodes") Nodes
-          a.sideBarButton(href= "/scripts")  Scripts
-        
-        div.sideBarHeader Training
-          a.sideBarButton(href= "/customizeTraining") Training Data
-        
         div.sideBarHeader Users
           a.sideBarButton(href= "/createNewUser") New User
           a.sideBarButton(href= "/editUsers") Edit User

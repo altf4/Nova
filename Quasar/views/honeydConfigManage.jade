@@ -35,9 +35,6 @@ block headerAdditions
 
     #treeDiv {
         display: inline-block;
-        padding: 2px;
-        border-style: solid;
-        border-color: black;
     }
 
     li {
@@ -139,6 +136,7 @@ block headerAdditions
     
     function GetConfigurationSummary(configArg)
     {
+      switchConfiguration();
       var config;
       profilesArray = {};
       
@@ -292,7 +290,6 @@ block headerAdditions
           pi.Render(piChartRender);
         });
 
-        theDoc.getElementById('treeAndPiContainer').setAttribute('style', 'width: ' + theDoc.getElementById('sizeAnchor').style.width);
       }
       else
       {
@@ -547,43 +544,54 @@ block headerAdditions
   
 block content
   div#hideme
-    h1 Configuration Summary
-    label Current Configuration:
-    br
-    select#configurations(onchange='GetConfigurationSummary()')
-    button(onclick='switchConfiguration()') Switch To This Configuration
-    button(onclick='confirmHaystackRestart()') Restart Haystack
-    br
-    br
+    h2 Edit Configurations
     div#addNewConfig
       button#addConfig(onclick='showLightBox("0")') Add Configuration
       button#cloneConfig(onclick='showLightBox("1")') Clone Configuration
       button#removeConfig(onclick='removeConfig()') Remove Configuration
-    br
-    div#treeAndPiContainer
-      label Current Node Configuration
-      br
-      div#piChart(style='float: left')
       br
       br
-      br
-      label Current Profile Configuration
-      br
-      div#treeDiv(style='float: left')
-    br
-    br
+      a.button(href= "/autoConfig") Create Configuration From Network Scan
 
-    div#summary
-      label Current Script Usage
       br
-      table(border='1', style='border: solid black 2px;', id='sizeAnchor')
+      br
+
+    div#treeAndPiContainer(style="border: 3px solid black; display: inline-block; margin: 5px 5px 5px 5px; text-align: center")
+      h1 Current Configuration
+      select#configurations(onchange='GetConfigurationSummary()')
+      
+      div(style="margin-top: 20px")
+      hr
+      h1 Current Profile Configuration
+      a.button(href= "/configHoneydProfiles") Edit Profiles
+      br
+      br
+      br
+      div#treeDiv
+    
+      div(style="margin-top: 20px")
+      hr
+      h1 Current Node Configuration
+      a.button(href= "/configHoneydNodes") Edit Nodes
+      br
+      br
+      br
+      div#piChart
+
+      div(style="margin-top: 20px")
+      hr
+      h1 Current Script Usage
+      a.button(href= "/scripts") Edit Scripts
+      br
+      br
+      br
+      table(border='1', id='sizeAnchor')
         thead
           tr
             th(style='background-color: #d0e9fc;') Scripts
             th(style='background-color: #d0e9fc;') Profile:Port Binding
         tbody#appendHook      
-      br
-      br
+  
   div#lightbox(class='white_content')
     div#addConfigForm
       form(method='post', id='addConfig', onsubmit='return checkParametersAdd();')
