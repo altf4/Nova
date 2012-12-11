@@ -44,18 +44,21 @@ block headerAdditions
       if((toValidate[toValidate.length - 2] >= 3 && toValidate[toValidate.length - 1] > 2)
         || (toValidate[toValidate.length - 3] != '/' && toValidate[toValidate.length - 2] != '/'))
       {
+        document.getElementById(errLabel).style.color = 'red';
         document.getElementById(errLabel).innerHTML = "Invalid subnet bit value (e.g. 33 or higher)";
         return;
       }
     
       if(noSubnetRepeats(toValidate) == 'false')
       {
+        document.getElementById(errLabel).style.color = 'red';
         document.getElementById(errLabel).innerHTML = "That subnet is already in the subnets list";
         return;
       }
     
       if(regex.test(toValidate))
       {
+        document.getElementById(errLabel).style.color = 'green';
         document.getElementById(errLabel).innerHTML = "Valid subnet found!";
         // add here
         var tr = document.createElement("tr");
@@ -124,19 +127,6 @@ block headerAdditions
         }
       }
       return 'true';
-    }
-    
-    function checkIntMax(id)
-    {
-      if(document.getElementById(id).value > 511)
-      {
-        document.getElementById(id).value = 511;
-      }
-      else if(document.getElementById(id).value < 1)
-      {
-        document.getElementById(id).value = 1;
-      }
-      return;
     }
     
     function checkAtLeastOne()
@@ -227,9 +217,12 @@ block headerAdditions
         var num;
         var element = document.getElementById("nodeCountType");
         var count = element.options[element.selectedIndex].value;
-        if (count == "fixed") {
+        if(count == "fixed") 
+        {
             num = parseInt(document.getElementById("numNodes").value);
-        } else {
+        } 
+        else 
+        {
             num = parseFloat(document.getElementById("numNodesRatio").value);
         }
         return num;
@@ -312,7 +305,7 @@ block headerAdditions
     {
        var element = document.getElementById("nodeCountType");
        var count = element.options[element.selectedIndex].value;
-       if (count == "fixed") 
+       if(count == "fixed") 
        {
          document.getElementById("numNodesLabel").innerHTML = "Number of Haystack Nodes to create";
        } 
@@ -397,7 +390,7 @@ block content
     select#nodeCountType(onchange="nodeNumberTypeChanged()")
       option(value="fixed", selected='selected') Fixed
       option(value="ratio") Ratio
-    input(type="number", name="numNodes", id="numNodes", width="4", min="1", onblur="checkIntMax(\"numNodes\")", value="1")
+    input(type="number", name="numNodes", id="numNodes", width="4", min="1", value="1")
     br
     table
       thead
