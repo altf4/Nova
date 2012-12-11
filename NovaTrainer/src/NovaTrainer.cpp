@@ -37,6 +37,8 @@
 #include <iostream>
 #include <signal.h>
 
+#define BOOST_FILESYSTEM_VERSION 2
+#include <boost/filesystem.hpp>
 
 using namespace std;
 using namespace Nova;
@@ -289,10 +291,16 @@ void CaptureData(std::string captureFolder, std::string interface)
 {
 	LOG(DEBUG, "Starting data capture. Storing results in folder:" + captureFolder, "");
 
-    if(system(string("mkdir " + captureFolder).c_str()))
-    {
-        // Not really an problem, throws compiler warning if we don't catch the system call though
-    }
+	boost::filesystem::path create = captureFolder;
+
+	try
+	{
+		boost::filesystem::create_directory(create);
+	}
+	catch(boost::filesystem::filesystem_error const& e)
+	{
+		LOG(DEBUG, ("Problem creating directory " + captureFolder), ("Problem creating directory " + captureFolder + ": " + e.what()));
+	}
 
     // Write out the state of the haystack at capture
     if(IsHaystackUp())
