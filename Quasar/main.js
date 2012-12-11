@@ -2528,8 +2528,8 @@ everyone.now.GetLocalIP = function (iface, callback) {
 	callback(nova.GetLocalIP(iface));
 }
 
-everyone.now.GetSubnetFromInterface = function (iface, callback) {
-  callback(nova.GetSubnetFromInterface(iface));
+everyone.now.GetSubnetFromInterface = function (iface, index, callback) {
+  callback(iface, nova.GetSubnetFromInterface(iface), index);
 }
 
 everyone.now.RemoveScriptFromProfiles = function(script, callback)

@@ -294,10 +294,10 @@ block headerAdditions
       var checked = true;
       for(var i in interfaceList)
       {
-        now.GetSubnetFromInterface(interfaceList[i], function(subnet){
+        now.GetSubnetFromInterface(interfaceList[i], i, function(iface, subnet, index){
           if(subnet == '')
           {
-            console.log('subnet string is empty; failed to get IP/netmask for interface ' + interfaceList[i]);
+            console.log('subnet string is empty; failed to get IP/netmask for interface ' + iface);
             return;
           }
           var tr = document.createElement('tr');
@@ -306,7 +306,7 @@ block headerAdditions
           var input = document.createElement('input');
           var label = document.createElement('label');
           input.type = 'checkbox';
-          input.value = interfaceList[i];
+          input.value = iface;
           input.name = 'interfaces';
           input.style.width = 10;
           if(checked)
@@ -314,8 +314,8 @@ block headerAdditions
             input.checked = checked;
             checked = false;
           }
-          input.id = 'if' + i;
-          label.innerHTML = interfaceList[i] + ' (' + subnet + ')';
+          input.id = 'if' + index;
+          label.innerHTML = iface + ' (' + subnet + ')';
                     
           td.appendChild(input);
           td.appendChild(label);
