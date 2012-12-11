@@ -85,6 +85,8 @@ block headerAdditions
         document.getElementById(id).blur();
         
         subnetsArray.push(toValidate);
+        
+        document.getElementById('showTable').style.display = 'block';
       }
       else
       {
@@ -101,10 +103,14 @@ block headerAdditions
         {
           if(subnetsArray[i] == source)
           {
-            delete subnetsArray[i];
+            subnetsArray.splice(i, 1);
           }
         }
         document.getElementById('subnetsList').removeChild(document.getElementById(source));
+        if(subnetsArray.length == 0)
+        {
+          document.getElementById('showTable').style.display = 'none';
+        }
       }
     }
     
@@ -402,13 +408,12 @@ block content
     br
     label(style="font-weight: bold;") Additional Subnets to Scan
     br
+    label(id="errorLabel", style="color:red;")  
     br
     input(type="text", style="width:200px", id="subnetToAdd", width="20", onkeydown="if(event.keyCode == 13){ document.getElementById('addSubnet').click(); document.getElementById('subnetToAdd').value='Format: XXX.XXX.XXX.XXX/##'; event.returnValue=false; event.cancel=true; }", onblur="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", onfocus="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", value="Format: XXX.XXX.XXX.XXX/##") 
-    button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet
+    button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet  
     br
-    label(id="errorLabel", style="color:red;")    
-    br
-    table
+    table(id='showTable', style='display:none;')
       thead
         tr
           th
