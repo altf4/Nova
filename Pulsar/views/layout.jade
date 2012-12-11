@@ -470,21 +470,6 @@ html(lang='en')
         {
           now.UpdateConnectionsList(client, 'remove');
         }
-        if(typeof now.GetGroupMembers == 'function' && typeof now.UpdateGroup == 'function')
-        {
-          now.GetGroupMembers('all', function(members){
-            console.log('client ' + client);
-            console.log('members ' + members);
-            var newList = members.replace(new RegExp(client), '');
-            newList = newList.substr(0, newList.length - 1);
-            console.log('members after regex ' + newList);
-            now.UpdateGroup('all', newList);
-            if(typeof now.UpdateGroupList == 'function')
-            {
-              now.UpdateGroupList('all', 'update');
-            }
-          });
-        }
         if(typeof now.ClearFromNovaClients == 'function')
         {
           now.ClearFromNovaClients(client);

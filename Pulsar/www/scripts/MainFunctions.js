@@ -181,7 +181,7 @@ function stopRequestBenign()
 
 function setTarget(source, target, group)
 {
-    if(group == 'true' || group == true)
+    if(group != undefined)
     {
       if(theDoc.getElementById(source).checked)
       {
@@ -190,9 +190,9 @@ function setTarget(source, target, group)
 
         for(var i in theDoc.getElementById('groupsList').childNodes)
         {
-          if(theDoc.getElementById('groupcheck' + i) != undefined && theDoc.getElementById('groupcheck' + i).id.indexOf(source) == -1)
+          if(theDoc.getElementById('groupcheck' + group) != undefined && theDoc.getElementById('groupcheck' + group).id.indexOf(source) == -1)
           {
-            theDoc.getElementById('groupcheck' + i).setAttribute('disabled', true);
+            theDoc.getElementById('groupcheck' + group).setAttribute('disabled', true);
           }
         }
         for(var i in clients)
@@ -213,9 +213,9 @@ function setTarget(source, target, group)
         message.id = '';
         for(var i in theDoc.getElementById('groupsList').childNodes)
         {
-          if(theDoc.getElementById('groupcheck' + i) != undefined && theDoc.getElementById('groupcheck' + i).id.indexOf(source) == -1)
+          if(theDoc.getElementById('groupcheck' + group) != undefined && theDoc.getElementById('groupcheck' + group).id.indexOf(source) == -1)
           {
-            theDoc.getElementById('groupcheck' + i).removeAttribute('disabled');
+            theDoc.getElementById('groupcheck' + group).removeAttribute('disabled');
           }
         }
         for(var i in clients)

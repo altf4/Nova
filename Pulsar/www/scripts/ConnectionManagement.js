@@ -134,10 +134,10 @@ function setUpGroupsList(divName)
         var td0 = document.createElement('td');
         var check = document.createElement('input');
         check.type = 'checkbox';
-        check.id = 'groupcheck' + i;
-        check.name = 'groupcheck' + i;
+        check.id = 'groupcheck' + groupList[i];
+        check.name = 'groupcheck' + groupList[i];
         check.value = memberList[i];
-        check.setAttribute('onchange', 'setTarget(("groupcheck' + i + '"), document.getElementById("groupcheck' + i + '").value.replace(new RegExp("," , "g") , ":"), "true")');
+        check.setAttribute('onchange', 'setTarget(("groupcheck' + groupList[i] + '"), document.getElementById("groupcheck' + groupList[i] + '").value.replace(new RegExp("," , "g") , ":"), "' + groupList[i] + '")');
         td0.appendChild(check);
         
         var td1 = document.createElement('td');
@@ -268,6 +268,11 @@ now.UpdateClientsList = function(clientId, action)
       {
         updateGroup('all', clients.join());
       }
+
+      console.log('updating group');
+      now.UpdateGroup('all', clients.join(), function(){
+        now.UpdateGroupList('all', 'update');
+      });
       break;
     default:
       console.log('UpdateClientsList called with invalid action, doing nothing');
@@ -288,8 +293,6 @@ now.UpdateGroupList = function(group, action)
     case 'update':
       if(groupDiv == undefined || groupDiv.childNodes.length == 0)
       {
-        console.log('in now.GetGroupMembers if statement');
-        
         var deleteMe = document.getElementById('noGroups');
         
         if(deleteMe != undefined)
@@ -298,14 +301,19 @@ now.UpdateGroupList = function(group, action)
         }
         
         now.GetGroupMembers(group, function(members){
+          console.log('updating groupcheck' + group + ' with new members ' + members + ' in now.GetGroupMembers');
+          if(members[members.length - 1] == ';')
+          {
+            members = members.substring(0, members.length - 1);
+          }
           var div = document.createElement('div');
           div.id = group + 'div';
           var check = document.createElement('input');
           check.type = 'checkbox';
-          check.id = 'groupcheck' + groupCount;
-          check.name = 'groupcheck' + groupCount;
+          check.id = 'groupcheck' + group;
+          check.name = 'groupcheck' + group;
           check.value = members;
-          check.setAttribute('onchange', 'setTarget(("groupcheck' + groupCount + '"), document.getElementById("groupcheck' + groupCount + '").value.replace(new RegExp("," , "g") , ":"), "true")');
+          check.setAttribute('onchange', 'setTarget(("groupcheck' + group + '"), document.getElementById("groupcheck' + group + '").value.replace(new RegExp("," , "g") , ":"), "true")');
           check.setAttribute('style', 'padding-left: 50px');
           var label = document.createElement('label');
           label.value = group;
@@ -324,8 +332,12 @@ now.UpdateGroupList = function(group, action)
       else
       {
         now.GetGroupMembers(group, function(members){
-          console.log('in now.GetGroupMembers else statement with members ' + members);
           var check = groupDiv.childNodes[0].childNodes[0];
+          console.log('check is ' + check.id);
+          if(members[members.length - 1] == ';' || members[members.length - 1] == ',')
+          {
+            members = members.substring(0, members.length - 1);
+          }
           check.value = members;
           if(members.split(',')[1] == '' || members.split(',')[1] == undefined)
           {

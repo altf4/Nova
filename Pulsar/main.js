@@ -741,17 +741,49 @@ everyone.now.RemoveGroup = RemoveGroup;
 
 // Update a group inside the client_groups.txt file to have
 // a new list of member clientIds.
-UpdateGroup = function(group, newMembers)
+UpdateGroup = function(group, newMembers, callback)
 {
-  if(group != 'all')
-  {
-    console.log('Updating group ' + group + ' to have members ' + newMembers);
-  }
+  console.log('Updating group ' + group + ' to have members ' + newMembers);
   var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
   var regex = group + '.*?;';
   var replaceWithNull = new RegExp(regex, 'g');
-  groupFile = groupFile.replace(replaceWithNull, group + ':' + newMembers + ';');
+  var sanitizeMemberString = '';
+  for(var i in newMembers)
+  {
+    if(newMembers[i] != ',' && newMembers[i] != ';')
+    {
+      sanitizeMemberString += newMembers[i];
+    }
+    else
+    {
+      if(newMembers[i] == ',')
+      {
+        var nextIndex = (parseInt(i) + 1);
+        if(newMembers[nextIndex] != undefined && (newMembers[nextIndex] == ';' || newMembers[nextIndex] == ','))
+        {
+         
+        }
+        else if(newMembers[nextIndex] == undefined)
+        {
+          
+        }
+        else
+        {
+          sanitizeMemberString += newMembers[i]; 
+        }
+      }
+      if(newMembers == ';')
+      {
+        
+      }
+    }
+  }
+  groupFile = groupFile.replace(replaceWithNull, group + ':' + sanitizeMemberString + ';');
   fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
+  if(typeof callback == 'function')
+  {
+    callback();
+  }
 }
 everyone.now.UpdateGroup = UpdateGroup;
 
@@ -1309,6 +1341,7 @@ wsServer.on('close', function(connection, reason, description)
         var newList = members.replace(new RegExp(i), '');
         newList = newList.substr(0, newList.length - 1);
         UpdateGroup('all', newList);
+        console.log('newList ' + newList);
         if(typeof now.UpdateGroupList == 'function')
         {
           now.UpdateGroupList('all', 'update');
