@@ -151,6 +151,7 @@ html, body {
 .white_content {
 	display: none;
 	position: absolute;
+	top: 5%;
 	left: 0%;
 	width: 75%;
 	height: 80%;

@@ -18,6 +18,7 @@ function clearSuspects()
 
 function getDetails(suspect)
 {
+  disableBackground();
   var send = {};
   var splitString = suspect.split('@');
   var ip = splitString[0];
@@ -34,7 +35,7 @@ function getDetails(suspect)
   splitString = null;
   
   theDoc.getElementById('lightbox').style.display = 'block';
-  theDoc.getElementById('setup').style.display = 'none';
+  theDoc.getElementById('setup').style.opacity = '0.5';
   var opts = {
       lines: 17,
       length: 0,
@@ -61,10 +62,29 @@ function getDetails(suspect)
 function closeLightbox()
 {
   theDoc.getElementById('lightbox').style.display = 'none';
-  theDoc.getElementById('setup').style.display = 'block'; 
+  theDoc.getElementById('setup').style.opacity = '1'; 
   while(theDoc.getElementById('details').hasChildNodes())
   {
     theDoc.getElementById('details').removeChild(theDoc.getElementById('details').lastChild); 
+  }
+  enableBackground();
+}
+
+function disableBackground()
+{
+  var disableUs = document.getElementById('setup').childNodes;
+  for(var i in disableUs)
+  {
+    disableUs[i].disabled = true;
+  }
+}
+
+function enableBackground()
+{
+  var enableUs = document.getElementById('setup').childNodes;
+  for(var i in disableUs)
+  {
+    enableUs[i].disabled = false;
   }
 }
 
