@@ -40,6 +40,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define BOOST_FILESYSTEM_VERSION 2
+#include <boost/filesystem.hpp>
+
 using namespace Nova;
 using namespace std;
 
@@ -77,11 +80,15 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 		{
 			suspects.EraseAllSuspects();
 			suspectsSinceLastSave.EraseAllSuspects();
-			string delString = "rm -f " + Config::Inst()->GetPathCESaveFile();
+			boost::filesystem::path delString = Config::Inst()->GetPathCESaveFile();
 			bool successResult = true;
-			if(system(delString.c_str()) == -1)
+			try
 			{
-				LOG(ERROR, "Unable to delete CE state file. System call to rm failed.","");
+				boost::filesystem::remove(delString);
+			}
+			catch(boost::filesystem::filesystem_error const& e)
+			{
+				LOG(ERROR, ("Unable to delete CE state file." + string(e.what())),"");
 				successResult = false;
 			}
 

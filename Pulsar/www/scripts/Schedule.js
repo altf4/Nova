@@ -19,7 +19,7 @@ function watermark(id, text)
 
 function setTarget(source, target, group)
 {
-  if(group == 'true' || group == true)
+  if(group != undefined)
   {
     while(document.getElementById('elementHook').hasChildNodes())
     {
@@ -40,9 +40,9 @@ function setTarget(source, target, group)
       }
       for(var i in document.getElementById('groupsList').childNodes)
       {
-        if(document.getElementById('groupcheck' + i) != undefined && document.getElementById('groupcheck' + i).id.indexOf(source) == -1)
+        if(document.getElementById('groupcheck' + group) != undefined && document.getElementById('groupcheck' + group).id.indexOf(source) == -1)
         {
-          document.getElementById('groupcheck' + i).setAttribute('disabled', true);
+          document.getElementById('groupcheck' + group).setAttribute('disabled', true);
         }
       }
       for(var i in clients)
@@ -65,9 +65,9 @@ function setTarget(source, target, group)
       }
       for(var i in document.getElementById('groupsList').childNodes)
       {
-        if(document.getElementById('groupcheck' + i) != undefined && document.getElementById('groupcheck' + i).id.indexOf(source) == -1)
+        if(document.getElementById('groupcheck' + group) != undefined && document.getElementById('groupcheck' + group).id.indexOf(source) == -1)
         {
-          document.getElementById('groupcheck' + i).removeAttribute('disabled');
+          document.getElementById('groupcheck' + group).removeAttribute('disabled');
         }
       }
       for(var i in clients)

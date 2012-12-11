@@ -56,6 +56,9 @@
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
 
+#define BOOST_FILESYSTEM_VERSION 2
+#include <boost/filesystem.hpp>
+
 using namespace std;
 using namespace Nova;
 
@@ -289,7 +292,6 @@ void AppendToStateFile()
 //Loads the statefile by reading table state dumps that haven't expired yet.
 void LoadStateFile()
 {
-
 	lastLoadTime = time(NULL);
 	if(lastLoadTime == ((time_t)-1))
 	{
@@ -340,11 +342,19 @@ void LoadStateFile()
 			LOG(WARNING, "Backing up possibly corrupt state file to file " + fileName, "");
 
 			// Copy the file
-			stringstream copyCommand;
-			copyCommand << "mv \"" << Config::Inst()->GetPathCESaveFile() << "\" \"" << fileName << "\"";
+			boost::filesystem::path CESaveFile = Config::Inst()->GetPathCESaveFile();
+			boost::filesystem::path target = fileName;
 
-			if(system(copyCommand.str().c_str()) == -1) {
-				LOG(ERROR, "There was a problem when attempting to move the corrupt state file. System call failed: " + copyCommand.str(), "");
+			cout << "CESaveFile " << CESaveFile.string() << endl;
+			cout << "filename " << target.string() << endl;
+
+			try
+			{
+				boost::filesystem::rename(CESaveFile, target);
+			}
+			catch(boost::filesystem::filesystem_error const& e)
+			{
+				LOG(ERROR, "There was a problem when attempting to move the corrupt state file.", "");
 			}
 
 			// Recreate an empty file
@@ -373,6 +383,9 @@ void RefreshStateFile()
 	string ceFile = Config::Inst()->GetPathCESaveFile();
 	string tmpFile = Config::Inst()->GetPathCESaveFile() + ".tmp";
 
+	boost::filesystem::path from = ceFile;
+	boost::filesystem::path to = tmpFile;
+
 	lastLoadTime = time(NULL);
 	time_t timestamp = lastLoadTime - Config::Inst()->GetDataTTL();
 
@@ -381,10 +394,14 @@ void RefreshStateFile()
 	{
 		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
 	}
-	if(system(string("cp -f -p \""+ceFile+"\" \""+tmpFile + "\"").c_str()) != 0)
+	try
+	{
+		boost::filesystem::copy_file(from, to, boost::filesystem::copy_option::overwrite_if_exists);
+	}
+	catch(boost::filesystem::filesystem_error const& e)
 	{
 		LOG(ERROR, "Unable to refresh CE State File.",
-				string("Unable to refresh CE State File: cp -f -p "+ceFile+" "+tmpFile+ " failed."));
+				string("Unable to refresh CE State File: " + string(e.what())));
 		return;
 	}
 	// Open input file
