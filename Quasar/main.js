@@ -2352,6 +2352,7 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	  hhconfigArgs.push(groupName);
 	}
 
+  honeydConfig.AddConfiguration(groupName, 'false', '');
   config.SetCurrentConfig(groupName);
 
 	var util = require('util');
@@ -2399,6 +2400,8 @@ everyone.now.CancelAutoScan = function(groupName) {
     autoconfig.kill();
     autoconfig = undefined;
     wrench.rmdirSyncRecursive(NovaHomePath + '/config/templates/' + groupName);
+    everyone.now.RemoveConfiguration(groupName);
+    
     everyone.now.SwitchConfigurationTo('default');
   }
   // TODO: make sure that any changes that might've occurred to the xml
