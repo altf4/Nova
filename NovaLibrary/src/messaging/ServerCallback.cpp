@@ -24,13 +24,16 @@
 namespace Nova
 {
 
-
 void ServerCallback::StartServerCallbackThread(int socketFD, struct bufferevent *bufferevent)
 {
 	MessageManager::Instance().DeleteEndpoint(socketFD);
 	MessageManager::Instance().StartSocket(socketFD, bufferevent);
-	m_socketFD = socketFD;
-	int err = pthread_create(&m_callbackThread, NULL, StaticThreadHelper, this);
+
+	struct ServerCallbackArg *arg = new ServerCallbackArg();
+	arg->m_socketFD = socketFD;
+	arg->m_callback = this;
+	int err = pthread_create(&m_callbackThread, NULL, StaticThreadHelper, arg);
+
 	if(err != 0)
 	{
 		LOG(WARNING, "Internal error: Thread failed to launch. Error code: " + err, "");
@@ -39,12 +42,13 @@ void ServerCallback::StartServerCallbackThread(int socketFD, struct bufferevent 
 	{
 		pthread_detach(m_callbackThread);
 	}
-
 }
 
 void *ServerCallback::StaticThreadHelper(void *ptr)
 {
-	reinterpret_cast<ServerCallback*>(ptr)->CallbackThread(reinterpret_cast<ServerCallback*>(ptr)->m_socketFD);
+	struct ServerCallbackArg *arg = reinterpret_cast<struct ServerCallbackArg *>(ptr);
+	arg->m_callback->CallbackThread(arg->m_socketFD);
+	delete arg;
 	return NULL;
 }
 
