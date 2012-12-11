@@ -2548,14 +2548,6 @@ everyone.now.GenerateMACForVendor = function(vendor, callback) {
 	callback(honeydConfig.GenerateRandomUnusedMAC(vendor));
 }
 
-everyone.now.restoreDefaultHaystackConfiguration = function(callback) {
-	var source = NovaSharedPath + "/../userFiles/config/templates/*";
-	var destination = NovaHomePath + "/config/templates/";
-	exec('cp -f ' + source + ' ' + destination, function(err) {
-		callback();
-	});	
-}
-
 everyone.now.restoreDefaultSettings = function(callback) {
 	var source = NovaSharedPath + "/../userFiles/config/NOVAConfig.txt";
 	var destination = NovaHomePath + "/config/NOVAConfig.txt";
