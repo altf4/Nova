@@ -258,10 +258,10 @@ bool CloseNovadConnection()
 			ControlMessage *connectionReply = (ControlMessage*)reply;
 			if(connectionReply->m_controlType != CONTROL_DISCONNECT_ACK)
 			{
-				connectionReply->DeleteContents();
-				delete connectionReply;
 				success = false;
 			}
+			connectionReply->DeleteContents();
+			delete connectionReply;
 		}
 	}
 	DisconnectFromNovad();
