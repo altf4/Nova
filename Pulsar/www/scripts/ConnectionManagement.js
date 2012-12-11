@@ -269,7 +269,6 @@ now.UpdateClientsList = function(clientId, action)
         updateGroup('all', clients.join());
       }
 
-      console.log('updating group');
       now.UpdateGroup('all', clients.join(), function(){
         now.UpdateGroupList('all', 'update');
       });
@@ -301,7 +300,6 @@ now.UpdateGroupList = function(group, action)
         }
         
         now.GetGroupMembers(group, function(members){
-          console.log('updating groupcheck' + group + ' with new members ' + members + ' in now.GetGroupMembers');
           if(members[members.length - 1] == ';')
           {
             members = members.substring(0, members.length - 1);
@@ -333,7 +331,6 @@ now.UpdateGroupList = function(group, action)
       {
         now.GetGroupMembers(group, function(members){
           var check = groupDiv.childNodes[0].childNodes[0];
-          console.log('check is ' + check.id);
           if(members[members.length - 1] == ';' || members[members.length - 1] == ',')
           {
             members = members.substring(0, members.length - 1);
