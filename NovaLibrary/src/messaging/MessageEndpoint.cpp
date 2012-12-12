@@ -233,6 +233,7 @@ bool MessageEndpoint::RegisterCallback(Ticket &outTicket)
 		outTicket.m_hasInit = true;
 		outTicket.m_ourSerialNum = nextSerial;
 		outTicket.m_socketFD = m_socketFD;
+		outTicket.m_endpoint = this;
 
 		MessageQueue *queue = m_queues.GetByOurSerial(nextSerial);
 		if(queue == NULL)

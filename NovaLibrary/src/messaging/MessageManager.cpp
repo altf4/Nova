@@ -51,15 +51,12 @@ MessageManager &MessageManager::Instance()
 
 Message *MessageManager::ReadMessage(Ticket &ticket, int timeout)
 {
-	//Read lock the Endpoint (so it can't get deleted from us while we're using it)
-	MessageEndpointLock endpointLock = GetEndpoint(ticket.m_socketFD);
-
-	if(endpointLock.m_endpoint == NULL)
+	if(ticket.m_endpoint == NULL)
 	{
 		return new ErrorMessage(ERROR_SOCKET_CLOSED);
 	}
 
-	Message *message = endpointLock.m_endpoint->PopMessage(ticket, timeout);
+	Message *message = ticket.m_endpoint->PopMessage(ticket, timeout);
 	if(message->m_messageType == ERROR_MESSAGE)
 	{
 		ErrorMessage *errorMessage = (ErrorMessage*)message;
