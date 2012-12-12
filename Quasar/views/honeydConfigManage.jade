@@ -586,7 +586,7 @@ block content
       div(style="margin-top: 20px")
       hr
       h1 Current Profile Configuration
-      button(onclick="'/configHoneydProfiles'") Edit Profiles
+      button(onclick="window.location='/configHoneydProfiles'") Edit Profiles
       br
       br
       br
@@ -619,16 +619,19 @@ block content
     div#addConfigForm
       form(method='post', id='addConfig', onsubmit='return checkParametersAdd();')
         label Name For New Configuration 
-        input#newName(name='newName')
+        br
+        input#newName(name='newName', onkeypress='if(event.keyCode == 13){document.getElementById("addConfig").submit()}')
         br
         button#submitAdd Submit
     div#cloneConfigForm
       form(method='post', id='cloneConfig', onsubmit='return checkParametersClone();')
-        label Name For Cloned Configuration
-        input#newNameClone(name='newNameClone')
-        br
         label Select Configuration to Clone:
+        br
         select#cloneMe(name='cloneSelect')
+        br
+        label Name For Cloned Configuration
+        br
+        input#newNameClone(name='newNameClone', onkeypress='if(event.keyCode == 13){document.getElementById("cloneConfig").submit()}')
         br
         button#submitClone Submit
     div#profileInfo

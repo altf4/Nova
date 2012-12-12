@@ -18,23 +18,6 @@ block headerAdditions
         interfaceLength = parseInt(interfaceList.length);
     }
   
-    function watermark(id, text)
-    {
-      var element = document.getElementById(id);
-    
-      if(element.value.length > 0)
-      {
-        if(element.value == text)
-        {
-          element.value = '';
-        }
-      }
-      else
-      {
-        element.value = text;
-      }
-    }
-  
     function validateAndAdd(id, errLabel, dest)
     {
       var toValidate = document.getElementById(id).value;
@@ -414,7 +397,7 @@ block content
     label(style='font-weight: bold') New Haystack Group Name
     br
     br
-    input(type='text', id='newGroup', value="Required Field", onblur='watermark("newGroup", "Required Field")', onfocus='watermark("newGroup", "Required Field")')
+    input(type='text', id='newGroup', placeholder='Required Field')
     br
     hidden(id="length", value=INTERFACES.length)
     br    
@@ -437,7 +420,7 @@ block content
     br
     label(id="errorLabel", style="color:red;")  
     br
-    input(type="text", style="width:200px", id="subnetToAdd", width="20", onkeydown="if(event.keyCode == 13){ document.getElementById('addSubnet').click(); document.getElementById('subnetToAdd').value='Format: XXX.XXX.XXX.XXX/##'; event.returnValue=false; event.cancel=true; }", onblur="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", onfocus="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", value="Format: XXX.XXX.XXX.XXX/##") 
+    input(type="text", style="width:200px", id="subnetToAdd", width="20", onkeydown="if(event.keyCode == 13){document.getElementById('addSubnet').click(); document.getElementById('subnetToAdd').value='Format: xxx.xxx.xxx.xxx/##'; event.returnValue=false; event.cancel=true; }", placeholder="xxx.xxx.xxx.xxx/##") 
     button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet  
     br
     table(id='showTable', style='display:none;')

@@ -137,9 +137,6 @@ function createScheduledEventElement(clientId)
   
   var tr0 = document.createElement('tr');
   var mlTd = document.createElement('td');
-  var monthLabel = document.createElement('label');
-  monthLabel.innerHTML = 'M ';
-  mlTd.appendChild(monthLabel);
   var month = document.createElement('input');
   month.setAttribute('style', 'width: 30px;');
   month.setAttribute('type', 'number');
@@ -147,12 +144,13 @@ function createScheduledEventElement(clientId)
   month.max = '11';
   month.id = clientId + 'month';
   month.value = infoHook.getMonth();
+  month.placeholder = 'M';
   mlTd.appendChild(month);
   tr0.appendChild(mlTd);
   
   var dlTd = document.createElement('td');
   var dayLabel = document.createElement('label');
-  dayLabel.innerHTML = '/D ';
+  dayLabel.innerHTML = '/ ';
   dlTd.appendChild(dayLabel);
   var day = document.createElement('input');
   day.setAttribute('type', 'number');
@@ -161,12 +159,13 @@ function createScheduledEventElement(clientId)
   day.max = '31';
   day.value = infoHook.getDate();
   day.id = clientId + 'day';
+  day.placeholder = 'D';
   dlTd.appendChild(day);
   tr0.appendChild(dlTd);
   
   var ylTd = document.createElement('td');
   var yearLabel = document.createElement('label');
-  yearLabel.innerHTML = '/Y ';
+  yearLabel.innerHTML = '/ ';
   ylTd.appendChild(yearLabel);
   var year = document.createElement('input');
   year.setAttribute('style', 'width: 45px;');
@@ -174,14 +173,12 @@ function createScheduledEventElement(clientId)
   year.min = infoHook.getFullYear();
   year.id = clientId + 'year';
   year.value = infoHook.getFullYear();
+  year.placeholder = 'Y';
   ylTd.appendChild(year);
   tr0.appendChild(ylTd);
   
   var tr1 = document.createElement('tr');
   var hlTd = document.createElement('td');
-  var hourLabel = document.createElement('label');
-  hourLabel.innerHTML = 'H ';
-  hlTd.appendChild(hourLabel);
   var hour = document.createElement('input');
   hour.setAttribute('style', 'width: 30px;');
   hour.id = clientId + 'hour';
@@ -189,12 +186,13 @@ function createScheduledEventElement(clientId)
   hour.min = '0';
   hour.max = '23';
   hour.value = infoHook.getHours();
+  hour.placeholder = 'H';
   hlTd.appendChild(hour);
   tr1.appendChild(hlTd);
   
   var milTd = document.createElement('td');
   var minuteLabel = document.createElement('label');
-  minuteLabel.innerHTML = ':M ';
+  minuteLabel.innerHTML = ': ';
   milTd.appendChild(minuteLabel);
   var minute = document.createElement('input');
   minute.setAttribute('style', 'width: 30px;');
@@ -203,6 +201,7 @@ function createScheduledEventElement(clientId)
   minute.max = '59';
   minute.id = clientId + 'minute';
   minute.value = infoHook.getMinutes();
+  minute.placeholder = 'M';
   milTd.appendChild(minute);
   tr1.appendChild(milTd);
 
@@ -322,9 +321,6 @@ function recurringChanged(source)
     
     var tr1 = document.createElement('tr');
     var hlTd = document.createElement('td');
-    var hourLabel = document.createElement('label');
-    hourLabel.innerHTML = 'H ';
-    hlTd.appendChild(hourLabel);
     var hour = document.createElement('input');
     hour.setAttribute('style', 'width: 30px;');
     hour.id = source + 'hour';
@@ -332,12 +328,14 @@ function recurringChanged(source)
     hour.min = '0';
     hour.max = '23';
     hour.value = infoHook.getHours();
+    hour.placeholder = 'H';
+    hour.style.float = 'right';
     hlTd.appendChild(hour);
     tr1.appendChild(hlTd);
     
     var milTd = document.createElement('td');
     var minuteLabel = document.createElement('label');
-    minuteLabel.innerHTML = ':M ';
+    minuteLabel.innerHTML = ': ';
     milTd.appendChild(minuteLabel);
     var minute = document.createElement('input');
     minute.setAttribute('style', 'width: 30px;');
@@ -346,6 +344,7 @@ function recurringChanged(source)
     minute.max = '59';
     minute.id = source + 'minute';
     minute.value = infoHook.getMinutes();
+    minute.placeholder = 'M';
     milTd.appendChild(minute);
     tr1.appendChild(milTd);
     
@@ -356,9 +355,6 @@ function recurringChanged(source)
   {
     var tr0 = document.createElement('tr');
     var mlTd = document.createElement('td');
-    var monthLabel = document.createElement('label');
-    monthLabel.innerHTML = 'M ';
-    mlTd.appendChild(monthLabel);
     var month = document.createElement('input');
     month.setAttribute('style', 'width: 30px;');
     month.setAttribute('type', 'number');
@@ -366,12 +362,13 @@ function recurringChanged(source)
     month.max = '11';
     month.id = source + 'month';
     month.value = infoHook.getMonth();
+    month.placeholder = 'M';
     mlTd.appendChild(month);
     tr0.appendChild(mlTd);
     
     var dlTd = document.createElement('td');
     var dayLabel = document.createElement('label');
-    dayLabel.innerHTML = '/D ';
+    dayLabel.innerHTML = '/ ';
     dlTd.appendChild(dayLabel);
     var dTd = document.createElement('td');
     var day = document.createElement('input');
@@ -381,12 +378,13 @@ function recurringChanged(source)
     day.max = '31';
     day.id = source + 'day';
     day.value = infoHook.getDate();
+    day.placeholder = 'D';
     dlTd.appendChild(day);
     tr0.appendChild(dlTd);
     
     var ylTd = document.createElement('td');
     var yearLabel = document.createElement('label');
-    yearLabel.innerHTML = '/Y ';
+    yearLabel.innerHTML = '/ ';
     ylTd.appendChild(yearLabel);
     var year = document.createElement('input');
     year.setAttribute('style', 'width: 45px;');
@@ -394,14 +392,12 @@ function recurringChanged(source)
     year.min = infoHook.getFullYear();
     year.id = source + 'year';
     year.value = infoHook.getFullYear();
+    year.placeholder = 'Y';
     ylTd.appendChild(year);
     tr0.appendChild(ylTd);
     
     var tr1 = document.createElement('tr');
     var hlTd = document.createElement('td');
-    var hourLabel = document.createElement('label');
-    hourLabel.innerHTML = 'H ';
-    hlTd.appendChild(hourLabel);
     var hour = document.createElement('input');
     hour.setAttribute('style', 'width: 30px;');
     hour.id = source + 'hour';
@@ -409,12 +405,13 @@ function recurringChanged(source)
     hour.min = '0';
     hour.max = '23';
     hour.value = infoHook.getHours();
+    hour.placeholder = 'H';
     hlTd.appendChild(hour);
     tr1.appendChild(hlTd);
     
     var milTd = document.createElement('td');
     var minuteLabel = document.createElement('label');
-    minuteLabel.innerHTML = ':M ';
+    minuteLabel.innerHTML = ': ';
     milTd.appendChild(minuteLabel);
     var minute = document.createElement('input');
     minute.setAttribute('style', 'width: 30px;');
@@ -423,6 +420,7 @@ function recurringChanged(source)
     minute.max = '59';
     minute.id = source + 'minute';
     minute.value = infoHook.getMinutes();
+    minute.placeholder = 'M';
     milTd.appendChild(minute);
     tr1.appendChild(milTd);
     
