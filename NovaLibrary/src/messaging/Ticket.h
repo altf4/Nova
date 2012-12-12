@@ -21,10 +21,15 @@
 #ifndef TICKET_H_
 #define TICKET_H_
 
+#include "MessageEndpoint.h"
+
 #include "pthread.h"
 
 namespace Nova
 {
+
+//Forward declaration to resolve mutual inclusion with MessageEndpoint
+class MessageEndpoint;
 
 class Ticket
 {
@@ -33,7 +38,8 @@ public:
 
 	Ticket();
 
-	Ticket(uint32_t, uint32_t, bool, bool, int, pthread_rwlock_t *);
+	//NOTE: pthread_rwlock_t * MUST be read-locked when passing in
+	Ticket(uint32_t, uint32_t, bool, bool, int, pthread_rwlock_t *,  MessageEndpoint *);
 
 	~Ticket();
 
@@ -43,6 +49,7 @@ public:
 	bool m_hasInit;
 	int m_socketFD;
 	pthread_rwlock_t *m_endpointLock;
+	MessageEndpoint *m_endpoint;
 
 };
 

@@ -35,6 +35,9 @@
 namespace Nova
 {
 
+//Forward declaration to resolve mutual inclusion with Ticket
+class Ticket;
+
 class MessageEndpoint
 {
 public:

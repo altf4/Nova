@@ -144,13 +144,16 @@ Ticket MessageManager::StartConversation(int socketFD)
 		return Ticket();
 	}
 
-	Lock rwLock(m_endpoints[socketFD].second, READ_LOCK);
+	//We don't use a Lock() here, because we need to pass the rwlock as read-locked to Ticket()
+	pthread_rwlock_rdlock(m_endpoints[socketFD].second);
 	if(m_endpoints[socketFD].first == NULL)
 	{
+		pthread_rwlock_unlock(m_endpoints[socketFD].second);
 		return Ticket();
 	}
 
-	return Ticket(m_endpoints[socketFD].first->StartConversation(), 0, false, false, socketFD, m_endpoints[socketFD].second);
+	return Ticket(m_endpoints[socketFD].first->StartConversation(), 0,
+			false, false, socketFD, m_endpoints[socketFD].second, m_endpoints[socketFD].first);
 }
 
 void MessageManager::DeleteEndpoint(int socketFD)
@@ -173,14 +176,10 @@ void MessageManager::DeleteEndpoint(int socketFD)
 			m_endpoints[socketFD].first->Shutdown();
 		}
 
-		//We unlock and relock in order to prevent a deadlock here with ~Ticket
 		pthread_rwlock_t *rwlock = m_endpoints[socketFD].second;
-		pthread_mutex_unlock(&m_endpointsMutex);
 		Lock lock(rwlock, WRITE_LOCK);
-		pthread_mutex_lock(&m_endpointsMutex);
 
 		delete m_endpoints[socketFD].first;
-
 		m_endpoints[socketFD].first = NULL;
 	}
 }

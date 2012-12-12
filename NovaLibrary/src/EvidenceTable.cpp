@@ -62,7 +62,6 @@ namespace Nova
 
 	Evidence *EvidenceTable::GetEvidence()
 	{
-		//We use manual mutex locking instead of a lock object for performance reasons
 		Lock lock(&m_lock);
 		Evidence *lookup = m_processingList.Pop();
 		//While we are unable to get evidence (other consumers got it first)

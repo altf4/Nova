@@ -175,10 +175,8 @@ bool MessageEndpoint::PushMessage(Message *message)
 		{
 			if(isNewCallback)
 			{
-				{
-					Lock lock(&m_availableCBsMutex);
-					m_availableCBs.push(ourSerial);
-				}
+				Lock lock(&m_availableCBsMutex);
+				m_availableCBs.push(ourSerial);
 				pthread_cond_signal(&m_callbackWakeupCondition);
 			}
 			return true;
@@ -266,11 +264,6 @@ uint32_t MessageEndpoint::GetNextOurSerialNum()
 
 void MessageEndpoint::Shutdown()
 {
-	{
-		Lock shutdownLock(&m_isShutdownMutex);
-		m_isShutDown = true;
-	}
-
 	//Shut down each MessageQueue
 	std::vector<uint32_t> serials = m_queues.GetUsedSerials();
 	for(uint i = 0; i < serials.size(); i++)
@@ -280,6 +273,13 @@ void MessageEndpoint::Shutdown()
 		{
 			queue->Shutdown();
 		}
+	}
+
+	Lock condLock(&m_availableCBsMutex);
+
+	{
+		Lock shutdownLock(&m_isShutdownMutex);
+		m_isShutDown = true;
 	}
 
 	pthread_cond_signal(&m_callbackWakeupCondition);
