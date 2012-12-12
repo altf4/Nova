@@ -143,10 +143,10 @@ bool MessageQueue::PushMessage(Message *message)
 	{
 		Lock lock(&m_queueMutex);
 		m_queue.push(message);
-	}
 
-	//Wake up anyone sleeping for a message
-	pthread_cond_signal(&m_popWakeupCondition);
+		//Wake up anyone sleeping for a message
+		pthread_cond_signal(&m_popWakeupCondition);
+	}
 	return true;
 }
 
@@ -170,6 +170,7 @@ void MessageQueue::SetTheirSerialNum(uint32_t serial)
 
 void MessageQueue::Shutdown()
 {
+	Lock lock(&m_queueMutex);
 	isShutdown = true;
 	pthread_cond_signal(&m_popWakeupCondition);
 }

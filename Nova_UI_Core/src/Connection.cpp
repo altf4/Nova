@@ -40,6 +40,7 @@ int IPCSocketFD = -1;
 
 static struct event_base *libeventBase = NULL;
 static struct bufferevent *bufferevent = NULL;
+pthread_mutex_t bufferevent_mutex;				//Mutex for the bufferevent pointer (not object)
 pthread_t eventDispatchThread;
 
 namespace Nova
@@ -77,6 +78,7 @@ bool ConnectToNovad()
 	{
 		evthread_use_pthreads();
 		libeventBase = event_base_new();
+		pthread_mutex_init(&bufferevent_mutex, NULL);
 	}
 
 	//Builds the key path
@@ -90,49 +92,51 @@ bool ConnectToNovad()
 	memset(novadAddress.sun_path, '\0', sizeof(novadAddress.sun_path));
 	strncpy(novadAddress.sun_path, key.c_str(), sizeof(novadAddress.sun_path));
 
-	bufferevent = bufferevent_socket_new(libeventBase, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
-	if(bufferevent == NULL)
 	{
-		LOG(ERROR, "Unable to create a socket to Nova", "");
-		DisconnectFromNovad();
-		return false;
+		Lock buffereventLock(&bufferevent_mutex);
+		bufferevent = bufferevent_socket_new(libeventBase, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+		if(bufferevent == NULL)
+		{
+			LOG(ERROR, "Unable to create a socket to Nova", "");
+			DisconnectFromNovad();
+			return false;
+		}
+
+		bufferevent_setcb(bufferevent, MessageManager::MessageDispatcher, NULL, MessageManager::ErrorDispatcher, NULL);
+
+		if(bufferevent_enable(bufferevent, EV_READ) == -1)
+		{
+			LOG(ERROR, "Unable to enable socket events", "");
+			return false;
+		}
+
+		if(bufferevent_socket_connect(bufferevent, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
+		{
+			bufferevent = NULL;
+			LOG(DEBUG, "Unable to connect to NOVAD: "+string(strerror(errno))+".", "");
+			return false;
+		}
+
+		IPCSocketFD = bufferevent_getfd(bufferevent);
+		if(IPCSocketFD == -1)
+		{
+			LOG(DEBUG, "Unable to connect to Novad: "+string(strerror(errno))+".", "");
+			bufferevent_free(bufferevent);
+			bufferevent = NULL;
+			return false;
+		}
+
+		if(evutil_make_socket_nonblocking(IPCSocketFD) == -1)
+		{
+			LOG(DEBUG, "Unable to connect to Novad", "Could not set socket to non-blocking mode");
+			bufferevent_free(bufferevent);
+			bufferevent = NULL;
+			return false;
+		}
+
+		MessageManager::Instance().DeleteEndpoint(IPCSocketFD);
+		MessageManager::Instance().StartSocket(IPCSocketFD, bufferevent);
 	}
-
-	bufferevent_setcb(bufferevent, MessageManager::MessageDispatcher, NULL, MessageManager::ErrorDispatcher, NULL);
-
-	if(bufferevent_enable(bufferevent, EV_READ) == -1)
-	{
-		LOG(ERROR, "Unable to enable socket events", "");
-		return false;
-	}
-
-	if(bufferevent_socket_connect(bufferevent, (struct sockaddr *)&novadAddress, sizeof(novadAddress)) == -1)
-	{
-		bufferevent = NULL;
-		LOG(DEBUG, "Unable to connect to NOVAD: "+string(strerror(errno))+".", "");
-		return false;
-	}
-
-	IPCSocketFD = bufferevent_getfd(bufferevent);
-	if(IPCSocketFD == -1)
-	{
-		LOG(DEBUG, "Unable to connect to Novad: "+string(strerror(errno))+".", "");
-		bufferevent_free(bufferevent);
-		bufferevent = NULL;
-		return false;
-	}
-
-	if(evutil_make_socket_nonblocking(IPCSocketFD) == -1)
-	{
-		LOG(DEBUG, "Unable to connect to Novad", "Could not set socket to non-blocking mode");
-		bufferevent_free(bufferevent);
-		bufferevent = NULL;
-		return false;
-	}
-
-	MessageManager::Instance().DeleteEndpoint(IPCSocketFD);
-	MessageManager::Instance().StartSocket(IPCSocketFD, bufferevent);
-
 	pthread_create(&eventDispatchThread, NULL, EventDispatcherThread, NULL);
 
 	//Send a connection request
@@ -196,10 +200,13 @@ void DisconnectFromNovad()
 		}
 	}
 
-	if(bufferevent != NULL)
 	{
-		bufferevent_free(bufferevent);
-		bufferevent = NULL;
+		Lock buffereventLock(&bufferevent_mutex);
+		if(bufferevent != NULL)
+		{
+			bufferevent_free(bufferevent);
+			bufferevent = NULL;
+		}
 	}
 
 	MessageManager::Instance().DeleteEndpoint(IPCSocketFD);
