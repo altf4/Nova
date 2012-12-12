@@ -226,7 +226,6 @@ console.info("Listening on port " + WEB_UI_PORT);
 app.listen(WEB_UI_PORT);
 var everyone = nowjs.initialize(app);
 
-
 var initLogWatch = function () {
 	var novadLog = new Tail(novadLogPath);
 	novadLog.on("line", function (data) {
@@ -632,7 +631,6 @@ app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), funct
 	});
 });
 
-
 app.get('/viewHoneydLog', passport.authenticate('basic', {session: false}), function (req, res) {
 	fs.readFile(honeydLogPath, 'utf8', function (err, data) {
 		if (err) {
@@ -729,7 +727,6 @@ app.get('/advancedOptions', passport.authenticate('basic', {session: false}), fu
 		}
 	});
 });
-
 
 function renderBasicOptions(jadefile, res, req) {
 	var all = config.ListInterfaces().sort();
@@ -848,27 +845,19 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 	}
 	
 	var profiles = honeydConfig.GetProfileNames();
-	/*var pass = [];
-	for(var i in profiles)
-	{
-	  if(profiles[i] != 'default' && profiles[i] != 'Doppelganger')
-	  {
-	    pass.push(profiles[i]);
-	  }
-	}*/
 	
 	var interfaces = config.ListInterfaces().sort();
-	res.render('configHoneyd.jade', {
-		locals: {
-			INTERFACES: interfaces,
-			interfaceAliases: ConvertInterfacesToAliases(interfaces),
-			profiles: profiles,
-			nodes: nodeList,
-			currentGroup: config.GetGroup()
-		}
-	})
+	
+  res.render('configHoneydNodes.jade', {
+    locals: {
+      INTERFACES: interfaces,
+      interfaceAliases: ConvertInterfacesToAliases(interfaces),
+      profiles: profiles,
+      nodes: nodeList,
+      currentGroup: config.GetGroup()
+    }
+  });
 });
-
 
 app.get('/configHoneydProfiles', passport.authenticate('basic', {session: false}), function (req, res) {
 	if (!honeydConfig.LoadAllTemplates()) {
@@ -968,7 +957,6 @@ app.get('/editHoneydProfile', passport.authenticate('basic', {session: false}), 
 		}
 	})
 });
-
 
 app.get('/addHoneydProfile', passport.authenticate('basic', {session: false}), function (req, res) {
 	if (req.query["parent"] === undefined) {
@@ -1125,7 +1113,6 @@ app.get('/suspects', passport.authenticate('basic', {session: false}), function 
 	});
 });
 
-
 app.get('/monitor', passport.authenticate('basic', {session: false}), function (req, res) {
 	var suspectIp = req.query["ip"];
 	var suspectInterface = req.query["interface"];
@@ -1193,29 +1180,6 @@ app.get('/about', passport.authenticate('basic', {session: false}), function (re
 	res.render('about.jade');
 });
 
-app.get('/haystackStatus', passport.authenticate('basic', {session: false}), function (req, res) {
-	fs.readFile("/var/log/honeyd/ipList", 'utf8', function (err, data) {
-		var DHCPIps = new Array();
-		if (err) {
-			RenderError(res, "Unable to open Honeyd status file for reading due to error: " + err);
-			return;
-		} else {
-
-			data = data.toString().split("\n");
-			for(var i = 0; i < data.length; i++) {
-				if (data[i] == "") {continue};
-				DHCPIps.push(data[i].toString().split(","));
-			}	
-			res.render('haystackStatus.jade', {
-				locals: {
-					haystackDHCPIps: DHCPIps
-				}
-			});
-		}
-	});
-});
-
-
 app.post('/createNewUser', passport.authenticate('basic', {session: false}), function (req, res) {
 	var password = req.body["password"];
 	var userName = req.body["username"];
@@ -1242,7 +1206,6 @@ app.post('/createNewUser', passport.authenticate('basic', {session: false}), fun
 		}
 	});
 });
-
 
 app.post('/createInitialUser', passport.authenticate('basic', {session: false}), function (req, res) {
 	var password = req.body["password"];
@@ -1278,32 +1241,6 @@ app.get('/autoConfig', passport.authenticate('basic', {session: false}), functio
 		INTERFACES: config.ListInterfaces().sort(),
 		SCANERROR: ""
 	});
-});
-
-app.get('/nodeReview', passport.authenticate('basic', {session: false}), function (req, res) {
-	if (!honeydConfig.LoadAllTemplates()) {
-		RenderError("Unable to load honeyd configuration XML files")
-		return;
-	}
-	
-	var profileNames = honeydConfig.GetProfileNames();
-	var profiles = new Array();
-	for (var i = 0; i < profileNames.length; i++) {
-		profiles.push(honeydConfig.GetProfile(profileNames[i]));
-	}
-
-	var nodeNames = honeydConfig.GetNodeMACs();
-	var nodes = new Array();
-	for (var i = 0; i < nodeNames.length; i++) {
-		nodes.push(honeydConfig.GetNode(nodeNames[i]));
-	}
-
-	res.render('nodereview.jade', {
-		locals: {
-			profiles: profiles,
-			nodes: nodes,
-		}
-	})
 });
 
 app.get("/editTLSCerts", passport.authenticate('basic', {session: false}), function (req, res) {
@@ -2352,6 +2289,7 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	  hhconfigArgs.push(groupName);
 	}
 
+  honeydConfig.AddConfiguration(groupName, 'false', '');
   config.SetCurrentConfig(groupName);
 
 	var util = require('util');
@@ -2399,6 +2337,8 @@ everyone.now.CancelAutoScan = function(groupName) {
     autoconfig.kill();
     autoconfig = undefined;
     wrench.rmdirSyncRecursive(NovaHomePath + '/config/templates/' + groupName);
+    everyone.now.RemoveConfiguration(groupName);
+    
     everyone.now.SwitchConfigurationTo('default');
   }
   // TODO: make sure that any changes that might've occurred to the xml
@@ -2546,14 +2486,6 @@ everyone.now.RemoveScriptFromProfiles = function(script, callback)
 
 everyone.now.GenerateMACForVendor = function(vendor, callback) {
 	callback(honeydConfig.GenerateRandomUnusedMAC(vendor));
-}
-
-everyone.now.restoreDefaultHaystackConfiguration = function(callback) {
-	var source = NovaSharedPath + "/../userFiles/config/templates/*";
-	var destination = NovaHomePath + "/config/templates/";
-	exec('cp -f ' + source + ' ' + destination, function(err) {
-		callback();
-	});	
 }
 
 everyone.now.restoreDefaultSettings = function(callback) {

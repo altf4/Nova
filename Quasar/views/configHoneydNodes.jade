@@ -256,11 +256,12 @@ block headerAdditions
     {
       var gridStructure = [];
       gridStructure.push({name: "Enabled"});
+      gridStructure.push({name: "IP"});
+      gridStructure.push({name: "Interface"});
       gridStructure.push({name: "MAC"});
       gridStructure.push({name: "Profile"});
-      gridStructure.push({name: "IP"});
       
-      grid = new NovaGrid(gridStructure, 1, document.getElementById('nodeTable'), 'grid', true);
+      grid = new NovaGrid(gridStructure, 3, document.getElementById('nodeTable'), 'grid', true);
       
       grid.SetSortByKey(1);
       grid.SetRowsPerPage(50);
@@ -274,33 +275,37 @@ block headerAdditions
       {
         var row = [];
         row.push(String(nodeList[i].enabled));
-        row.push(String(nodeList[i].mac));
-        row.push(String(nodeList[i].pfile));
-
-        if (nodeList[i].ip != "DHCP") 
+        
+        if(nodeList[i].ip != "DHCP") 
         {
           row.push(String(nodeList[i].ip));
         } 
         else 
         {
-          var alias = "";
-          for (var j = 0; j < interfaces.length; j++) 
+          row.push("DHCP");
+        }
+        
+        var alias = "";
+        for(var j = 0; j < interfaces.length; j++) 
+        {
+          if(interfaces[j] == nodeList[i].interface) 
           {
-            if (interfaces[j] == nodeList[i].interface) 
-            {
-              alias = interfaceAliases[j];
-            }
-          }
-
-          if (alias != "" && alias != nodeList[i].interface) 
-          {
-            row.push("DHCP on " + nodeList[i].interface + " (alias: " + alias + ")"); 
-          } 
-          else 
-          {
-            row.push("DHCP on " + nodeList[i].interface); 
+            alias = interfaceAliases[j];
           }
         }
+
+        if(alias != "" && alias != nodeList[i].interface) 
+        {
+          row.push(nodeList[i].interface + " (alias: " + alias + ")"); 
+        } 
+        else 
+        {
+          row.push(nodeList[i].interface); 
+        }
+
+        row.push(String(nodeList[i].mac));
+        row.push(String(nodeList[i].pfile));
+
         grid.PushEntry(row);
       }
       
@@ -313,7 +318,7 @@ block headerAdditions
       
       for(var i in gridElements)
       {
-        var pfile = gridElements[i][2];
+        var pfile = gridElements[i][4];
         if(nodesPerProfile[pfile] === undefined)
         {
           nodesPerProfile[pfile] = 1;

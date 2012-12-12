@@ -52,8 +52,10 @@ block headerAdditions
 
     function closeLightbox()
     {
+      enableBackground(document.getElementById('setup'));
+      
       theDoc.getElementById('lightbox').style.display = 'none';
-      theDoc.getElementById('hideme').style.opacity = '1.0';
+      theDoc.getElementById('setup').style.opacity = '1.0';
       
       while(theDoc.getElementById('cloneMe').hasChildNodes())
       {
@@ -72,19 +74,6 @@ block headerAdditions
       else
       {
         console.log('Creating clone configuration ' + configName + ' based on ' + cloneInfo);
-      }
-    }
-    
-    function restoreDefaults() 
-    {
-      try 
-      {
-        now.restoreDefaultHaystackConfiguration(configurationRestored);
-      } 
-      catch (err) 
-      {
-        alert("Unable to contact server");
-        console.log("Error was: " + err);
       }
     }
     
@@ -300,7 +289,9 @@ block headerAdditions
     
     function showLightBox(divIndex)
     {
-      theDoc.getElementById('hideme').style.opacity = '0.5';
+      disableBackground(theDoc.getElementById('setup'));
+      
+      theDoc.getElementById('setup').style.opacity = '0.5';
       theDoc.getElementById('lightbox').style.display = 'block';
       
       if(divIndex == '0')
@@ -536,6 +527,38 @@ block headerAdditions
       }
     }
     
+    function disableBackground(source)
+    {
+      var disableUs = source.childNodes;
+      for(var i in disableUs)
+      {
+        if(typeof disableUs[i] == 'object' && disableUs[i].tagName != undefined)
+        {
+          disableUs[i].disabled = true;
+          if(disableUs[i].hasChildNodes())
+          {
+            disableBackground(disableUs[i]);
+          }
+        }
+      }
+    }
+
+    function enableBackground(source)
+    {
+      var enableUs = source.childNodes;
+      for(var i in enableUs)
+      {
+        if(typeof enableUs[i] == 'object' && enableUs[i].tagName != undefined)
+        {
+          enableUs[i].disabled = false;
+          if(enableUs[i].hasChildNodes())
+          {
+            enableBackground(enableUs[i]);
+          }
+        }
+      }
+    }
+    
     function init(){
         now.ready(function() {
             populateConfigSelect(configurationList);
@@ -543,27 +566,27 @@ block headerAdditions
     };
   
 block content
-  div#hideme
+  div#setup
     h2 Edit Configurations
     div#addNewConfig
-      button#addConfig(onclick='showLightBox("0")') Add Configuration
-      button#cloneConfig(onclick='showLightBox("1")') Clone Configuration
-      button#removeConfig(onclick='removeConfig()') Remove Configuration
+      button#addConfig(onclick='showLightBox("0")') Add Group
+      button#cloneConfig(onclick='showLightBox("1")') Clone Group
+      button#removeConfig(onclick='removeConfig()') Remove Group
       br
       br
-      a.button(href= "/autoConfig") Create Configuration From Network Scan
+      button(onclick="window.location='/autoConfig'") Create Group From Network Scan
 
       br
       br
 
     div#treeAndPiContainer(style="border: 3px solid black; display: inline-block; margin: 5px 5px 5px 5px; text-align: center")
-      h1 Current Configuration
+      h1 Current Group
       select#configurations(onchange='GetConfigurationSummary()')
       
       div(style="margin-top: 20px")
       hr
       h1 Current Profile Configuration
-      a.button(href= "/configHoneydProfiles") Edit Profiles
+      button(onclick="window.location='/configHoneydProfiles'") Edit Profiles
       br
       br
       br
@@ -572,7 +595,7 @@ block content
       div(style="margin-top: 20px")
       hr
       h1 Current Node Configuration
-      a.button(href= "/configHoneydNodes") Edit Nodes
+      button(onclick="window.location='/configHoneydNodes'") Edit Nodes
       br
       br
       br
@@ -581,7 +604,7 @@ block content
       div(style="margin-top: 20px")
       hr
       h1 Current Script Usage
-      a.button(href= "/scripts") Edit Scripts
+      button(onclick="window.location='/scripts'") Edit Scripts
       br
       br
       br
@@ -596,16 +619,19 @@ block content
     div#addConfigForm
       form(method='post', id='addConfig', onsubmit='return checkParametersAdd();')
         label Name For New Configuration 
-        input#newName(name='newName')
+        br
+        input#newName(name='newName', onkeypress='if(event.keyCode == 13){document.getElementById("addConfig").submit()}')
         br
         button#submitAdd Submit
     div#cloneConfigForm
       form(method='post', id='cloneConfig', onsubmit='return checkParametersClone();')
-        label Name For Cloned Configuration
-        input#newNameClone(name='newNameClone')
-        br
         label Select Configuration to Clone:
+        br
         select#cloneMe(name='cloneSelect')
+        br
+        label Name For Cloned Configuration
+        br
+        input#newNameClone(name='newNameClone', onkeypress='if(event.keyCode == 13){document.getElementById("cloneConfig").submit()}')
         br
         button#submitClone Submit
     div#profileInfo

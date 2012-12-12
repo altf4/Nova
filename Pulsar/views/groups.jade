@@ -8,7 +8,7 @@ block content
   br
   h1 Add Group
   label New Group Name: 
-  input(id='groupName', maxlength='10', size='10', value='')
+  input(id='groupName', maxlength='10', size='10', placeholder='Required Field', onkeypress='if(event.keyCode == 13){addGroup(document.getElementById("groupName").value, getMembers())}')
   button(id='addGroup', onclick='addGroup(document.getElementById("groupName").value, getMembers())') Add Group
   h1 Current Groups
   table(id='groupsList')

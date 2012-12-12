@@ -59,7 +59,7 @@ block content
  
   br
   span(style="width:100px; display: inline-block;") Alias: 
-  input#aliasSelection(type="text", placeholder="Enter name of alias")
+  input#aliasSelection(type="text", placeholder="Enter name of alias", onkeypress='if(event.keyCode == 13){AddNewAlias()}')
 
   br
   button#addNewAliasButton(onclick="AddNewAlias()") Add/Update Alias

@@ -8,8 +8,10 @@ block headerAdditions
 
     function closeLightbox()
     {
+      enableBackground();
+      
       theDoc.getElementById('lightbox').style.display = 'none';
-      theDoc.getElementById('hideme').style.opacity = '1.0'; 
+      theDoc.getElementById('setup').style.opacity = '1.0'; 
       while(theDoc.getElementById('appendHook').hasChildNodes())
       {
         theDoc.getElementById('appendHook').removeChild(theDoc.getElementById('appendHook').lastChild); 
@@ -173,7 +175,9 @@ block headerAdditions
 
     function showLightBox(divIndex)
     {
-      theDoc.getElementById('hideme').style.opacity='0.5';
+      disableBackground();
+      
+      theDoc.getElementById('setup').style.opacity='0.5';
       theDoc.getElementById('lightbox').style.display='block';
       if(divIndex == '0')
       {
@@ -221,6 +225,24 @@ block headerAdditions
       }
     }
    
+    function disableBackground()
+    {
+      var disableUs = document.getElementById('setup').childNodes;
+      for(var i in disableUs)
+      {
+        disableUs[i].disabled = true;
+      }
+    }
+
+    function enableBackground()
+    {
+      var enableUs = document.getElementById('setup').childNodes;
+      for(var i in disableUs)
+      {
+        enableUs[i].disabled = false;
+      }
+    }
+   
     function init() {
         now.ready(function(){
           setUpScriptTable();
@@ -228,7 +250,7 @@ block headerAdditions
     }
 
 block content
-  div#hideme
+  div#setup
     h1 Honeyd Scripts
   
     button(onclick='showLightBox("0")') Add New Honeyd Script

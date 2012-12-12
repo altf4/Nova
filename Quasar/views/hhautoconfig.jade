@@ -18,23 +18,6 @@ block headerAdditions
         interfaceLength = parseInt(interfaceList.length);
     }
   
-    function watermark(id, text)
-    {
-      var element = document.getElementById(id);
-    
-      if(element.value.length > 0)
-      {
-        if(element.value == text)
-        {
-          element.value = '';
-        }
-      }
-      else
-      {
-        element.value = text;
-      }
-    }
-  
     function validateAndAdd(id, errLabel, dest)
     {
       var toValidate = document.getElementById(id).value;
@@ -44,18 +27,21 @@ block headerAdditions
       if((toValidate[toValidate.length - 2] >= 3 && toValidate[toValidate.length - 1] > 2)
         || (toValidate[toValidate.length - 3] != '/' && toValidate[toValidate.length - 2] != '/'))
       {
+        document.getElementById(errLabel).style.color = 'red';
         document.getElementById(errLabel).innerHTML = "Invalid subnet bit value (e.g. 33 or higher)";
         return;
       }
     
       if(noSubnetRepeats(toValidate) == 'false')
       {
+        document.getElementById(errLabel).style.color = 'red';
         document.getElementById(errLabel).innerHTML = "That subnet is already in the subnets list";
         return;
       }
     
       if(regex.test(toValidate))
       {
+        document.getElementById(errLabel).style.color = 'green';
         document.getElementById(errLabel).innerHTML = "Valid subnet found!";
         // add here
         var tr = document.createElement("tr");
@@ -85,6 +71,8 @@ block headerAdditions
         document.getElementById(id).blur();
         
         subnetsArray.push(toValidate);
+        
+        document.getElementById('showTable').style.display = 'block';
       }
       else
       {
@@ -101,10 +89,14 @@ block headerAdditions
         {
           if(subnetsArray[i] == source)
           {
-            delete subnetsArray[i];
+            subnetsArray.splice(i, 1);
           }
         }
         document.getElementById('subnetsList').removeChild(document.getElementById(source));
+        if(subnetsArray.length == 0)
+        {
+          document.getElementById('showTable').style.display = 'none';
+        }
       }
     }
     
@@ -118,19 +110,6 @@ block headerAdditions
         }
       }
       return 'true';
-    }
-    
-    function checkIntMax(id)
-    {
-      if(document.getElementById(id).value > 511)
-      {
-        document.getElementById(id).value = 511;
-      }
-      else if(document.getElementById(id).value < 1)
-      {
-        document.getElementById(id).value = 1;
-      }
-      return;
     }
     
     function checkAtLeastOne()
@@ -175,40 +154,44 @@ block headerAdditions
         }
         if(checkAtLeastOne())
         { 
-            document.getElementById("startScan").value='Scanning...'; 
-            document.getElementById("startScan").setAttribute('disabled', 'true');
-            document.getElementById("lightbox").style.display='block';
-            document.getElementById("setup").style.opacity='0.5';
-            var opts = {
-                lines: 17,
-                length: 0,
-                width: 4,
-                radius: 27,
-                corners: 0.6,
-                rotate: 0,
-                color: '#E8A02F',
-                speed: 1,
-                trail: 34,
-                shadow: false,
-                hwaccel: false,
-                className: 'spinner',
-                zIndex: 1003,
-                top: 20,
-                left: 'auto'
-            };
-            
-            var spinner = new Spinner(opts).spin(document.getElementById('spinnerDiv'));
-            document.getElementById('spinnerDiv').style.height = ((opts.radius * 2) + 30)+ 'px';
-            var divWidth = document.getElementById('lightbox').scrollWidth;
-            document.getElementById('appendText').style.width = divWidth + 'px';
-            try {
-                var element = document.getElementById("nodeCountType");
-                var count = element.options[element.selectedIndex].value;
-                now.ShowAutoConfig(count, GetNumNodes(), GetInterfaces(), GetSubnets(), GetGroupName(), autoscancb, routeToReview); 
-            } catch (err) {
-                alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-                console.log("err was: " + err);
-            }   
+          disableBackground(document.getElementById('setup'));
+          document.getElementById("startScan").value='Scanning...'; 
+          document.getElementById("startScan").setAttribute('disabled', 'true');
+          document.getElementById("lightbox").style.display='block';
+          document.getElementById("setup").style.opacity='0.5';
+          var opts = {
+              lines: 17,
+              length: 0,
+              width: 4,
+              radius: 27,
+              corners: 0.6,
+              rotate: 0,
+              color: '#E8A02F',
+              speed: 1,
+              trail: 34,
+              shadow: false,
+              hwaccel: false,
+              className: 'spinner',
+              zIndex: 1003,
+              top: 20,
+              left: 'auto'
+          };
+          
+          var spinner = new Spinner(opts).spin(document.getElementById('spinnerDiv'));
+          document.getElementById('spinnerDiv').style.height = ((opts.radius * 2) + 30)+ 'px';
+          var divWidth = document.getElementById('lightbox').scrollWidth;
+          document.getElementById('appendText').style.width = divWidth + 'px';
+          try 
+          {
+              var element = document.getElementById("nodeCountType");
+              var count = element.options[element.selectedIndex].value;
+              now.ShowAutoConfig(count, GetNumNodes(), GetInterfaces(), GetSubnets(), GetGroupName(), autoscancb, routeToReview); 
+          } 
+          catch(err) 
+          {
+              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+              console.log("err was: " + err);
+          }   
         } 
         else
         {
@@ -216,14 +199,49 @@ block headerAdditions
         }
     }
 
+    function disableBackground(source)
+    {
+      var disableUs = source.childNodes;
+      for(var i in disableUs)
+      {
+        if(typeof disableUs[i] == 'object' && disableUs[i].tagName != undefined)
+        {
+          disableUs[i].disabled = true;
+          if(disableUs[i].hasChildNodes())
+          {
+            disableBackground(disableUs[i]);
+          }
+        }
+      }
+    }
+
+    function enableBackground(source)
+    {
+      var enableUs = source.childNodes;
+      for(var i in enableUs)
+      {
+        if(typeof enableUs[i] == 'object' && enableUs[i].tagName != undefined)
+        {
+          enableUs[i].disabled = false;
+          if(enableUs[i].hasChildNodes())
+          {
+            enableBackground(enableUs[i]);
+          }
+        }
+      }
+    }
+
     function GetNumNodes()
     {
         var num;
         var element = document.getElementById("nodeCountType");
         var count = element.options[element.selectedIndex].value;
-        if (count == "fixed") {
+        if(count == "fixed") 
+        {
             num = parseInt(document.getElementById("numNodes").value);
-        } else {
+        } 
+        else 
+        {
             num = parseFloat(document.getElementById("numNodesRatio").value);
         }
         return num;
@@ -262,8 +280,6 @@ block headerAdditions
                 returnString += ",";
             }
         }       
-        
-        console.log('returnString ' + returnString);
         
         return returnString;
     }
@@ -306,7 +322,7 @@ block headerAdditions
     {
        var element = document.getElementById("nodeCountType");
        var count = element.options[element.selectedIndex].value;
-       if (count == "fixed") 
+       if(count == "fixed") 
        {
          document.getElementById("numNodesLabel").innerHTML = "Number of Haystack Nodes to create";
        } 
@@ -381,7 +397,7 @@ block content
     label(style='font-weight: bold') New Haystack Group Name
     br
     br
-    input(type='text', id='newGroup', value="Required Field", onblur='watermark("newGroup", "Required Field")', onfocus='watermark("newGroup", "Required Field")')
+    input(type='text', id='newGroup', placeholder='Required Field')
     br
     hidden(id="length", value=INTERFACES.length)
     br    
@@ -391,7 +407,7 @@ block content
     select#nodeCountType(onchange="nodeNumberTypeChanged()")
       option(value="fixed", selected='selected') Fixed
       option(value="ratio") Ratio
-    input(type="number", name="numNodes", id="numNodes", width="4", min="1", onblur="checkIntMax(\"numNodes\")", value="1")
+    input(type="number", name="numNodes", id="numNodes", width="4", min="1", value="1")
     br
     table
       thead
@@ -402,13 +418,12 @@ block content
     br
     label(style="font-weight: bold;") Additional Subnets to Scan
     br
+    label(id="errorLabel", style="color:red;")  
     br
-    input(type="text", style="width:200px", id="subnetToAdd", width="20", onkeydown="if(event.keyCode == 13){ document.getElementById('addSubnet').click(); document.getElementById('subnetToAdd').value='Format: XXX.XXX.XXX.XXX/##'; event.returnValue=false; event.cancel=true; }", onblur="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", onfocus="watermark(\"subnetToAdd\", \"Format: XXX.XXX.XXX.XXX/##\");", value="Format: XXX.XXX.XXX.XXX/##") 
-    button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet
+    input(type="text", style="width:200px", id="subnetToAdd", width="20", onkeydown="if(event.keyCode == 13){document.getElementById('addSubnet').click(); document.getElementById('subnetToAdd').value='Format: xxx.xxx.xxx.xxx/##'; event.returnValue=false; event.cancel=true; }", placeholder="xxx.xxx.xxx.xxx/##") 
+    button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet  
     br
-    label(id="errorLabel", style="color:red;")    
-    br
-    table
+    table(id='showTable', style='display:none;')
       thead
         tr
           th

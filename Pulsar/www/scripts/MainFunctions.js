@@ -18,6 +18,7 @@ function clearSuspects()
 
 function getDetails(suspect)
 {
+  disableBackground(theDoc.getElementById('setup'));
   var send = {};
   var splitString = suspect.split('@');
   var ip = splitString[0];
@@ -34,7 +35,7 @@ function getDetails(suspect)
   splitString = null;
   
   theDoc.getElementById('lightbox').style.display = 'block';
-  theDoc.getElementById('setup').style.display = 'none';
+  theDoc.getElementById('setup').style.opacity = '0.5';
   var opts = {
       lines: 17,
       length: 0,
@@ -61,10 +62,43 @@ function getDetails(suspect)
 function closeLightbox()
 {
   theDoc.getElementById('lightbox').style.display = 'none';
-  theDoc.getElementById('setup').style.display = 'block'; 
+  theDoc.getElementById('setup').style.opacity = '1'; 
   while(theDoc.getElementById('details').hasChildNodes())
   {
     theDoc.getElementById('details').removeChild(theDoc.getElementById('details').lastChild); 
+  }
+  enableBackground(theDoc.getElementById('setup'));
+}
+
+function disableBackground(source)
+{
+  var disableUs = source.childNodes;
+  for(var i in disableUs)
+  {
+    if(typeof disableUs[i] == 'object' && disableUs[i].tagName != undefined)
+    {
+      disableUs[i].disabled = true;
+      if(disableUs[i].hasChildNodes())
+      {
+        disableBackground(disableUs[i]);
+      }
+    }
+  }
+}
+
+function enableBackground(source)
+{
+  var enableUs = source.childNodes;
+  for(var i in enableUs)
+  {
+    if(typeof enableUs[i] == 'object' && enableUs[i].tagName != undefined)
+    {
+      enableUs[i].disabled = false;
+      if(enableUs[i].hasChildNodes())
+      {
+        enableBackground(enableUs[i]);
+      }
+    }
   }
 }
 
