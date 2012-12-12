@@ -82,7 +82,7 @@ function disableBackground()
 function enableBackground()
 {
   var enableUs = document.getElementById('setup').childNodes;
-  for(var i in disableUs)
+  for(var i in enableUs)
   {
     enableUs[i].disabled = false;
   }

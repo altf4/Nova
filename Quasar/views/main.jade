@@ -3,15 +3,39 @@ extends layout
 block topPannelAdditions
 
 block content
-  div#nova_suspects_header(style="width:600px; display: none")
-    br
-    &nbsp
-    
-    a(class="button", href="javascript:void(0)", onclick="toggleFilterBlock()") Filtering Options
-    button(type="button", style="width:160px;", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
-    a.button(style="width:150px;", href="/novaState.csv") Suspects as CSV file
-
-    div#advancedFiltering(style="display: none;")
+  div#setup
+    div#nova_suspects_header(style="width:600px; display: none")
+      br
+      &nbsp
+      
+      a(class="button", href="javascript:void(0)", onclick="toggleFilterBlock()") Filtering Options
+      button(type="button", style="width:160px;", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
+      a.button(style="width:150px;", href="/novaState.csv") Suspects as CSV file
+  
+      br
+    div#nova_suspects(style="display: none;")
+      
+      input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
+      label Live Grid Update
+      br
+      
+      input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
+      label Show Advanced Suspect Statistics
+      br
+      
+      input#showUnclassified(type="checkbox", onchange="showUnclassifiedChanged()")
+      label Show Unclassified Suspects
+      br
+      br
+      div#tablePages(style="width: 100%;")
+      br
+      div.novaGrid
+        table.novaGrid#suspectTable
+    div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: block; width: 600px; margin: 0 auto; text-align: center")
+      h4 The Packet Classifier is not currently connected or running. If the status shows as offline, try starting it.
+      
+  div#lightbox(class="white_content", style="display:none;")
+    div#advancedFiltering
       br
       p Filter by IP (supports standard regular expressions. Example: "192\.168\.10\..*|192\.168\.3\..*")
       input#ipFilter(type="text", name="ipFilter", value="")
@@ -28,27 +52,7 @@ block content
       br
       button(onclick='applyAdvancedFilter()') Apply Advanced Filters
       button(onclick='disableAdvancedFilter()') Disable Advanced Filters
-    br
-  div#nova_suspects(style="display: none;")
-    
-    input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
-    label Live Grid Update
-    br
-    
-    input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
-    label Show Advanced Suspect Statistics
-    br
-    
-    input#showUnclassified(type="checkbox", onchange="showUnclassifiedChanged()")
-    label Show Unclassified Suspects
-    br
-    br
-    div#tablePages(style="width: 100%;")
-    br
-    div.novaGrid
-      table.novaGrid#suspectTable
-  div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: block; width: 600px; margin: 0 auto; text-align: center")
-   h4 The Packet Classifier is not currently connected or running. If the status shows as offline, try starting it.
+    button#closeLB(onclick='closeLightbox()') Close
    
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
@@ -79,33 +83,52 @@ block headerAdditions
 
     var toggleFilterBlock = function()
     {
-      if(document.getElementById('advancedFiltering').style.display == 'none')
+      document.getElementById('setup').style.opacity = '0.5';
+      document.getElementById('lightbox').style.display = 'block';
+      disableBackground();
+    }
+
+    var closeLightbox = function()
+    {
+      document.getElementById('lightbox').style.display = 'none';
+      document.getElementById('setup').style.opacity = '1';
+      enableBackground();
+    }
+
+    function disableBackground()
+    {
+      var disableUs = document.getElementById('setup').childNodes;
+      for(var i in disableUs)
       {
-        document.getElementById('advancedFiltering').style.display = 'block';  
-      }
-      else
-      {
-        document.getElementById('advancedFiltering').style.display = 'none'; 
+        disableUs[i].disabled = true;
       }
     }
 
-      var ClearAllSuspects = function() {
-          try {
-              now.ClearAllSuspects();
-            } catch(err) {
-              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-              console.log("err was: " + err);
-          } 
+    function enableBackground()
+    {
+      var enableUs = document.getElementById('setup').childNodes;
+      for(var i in enableUs)
+      {
+        enableUs[i].disabled = false;
       }
+    }
+
+    var ClearAllSuspects = function() {
+      try 
+      {
+        now.ClearAllSuspects();
+      } 
+      catch(err) 
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      } 
+    }
     
     function showUnclassifiedChanged() {
         resendSuspects();
-
     }
 
-
-
-    
     var AllSuspectsCleared = function() {
       suspectGrid.Clear();
     }
@@ -239,6 +262,7 @@ block headerAdditions
         }
 
         advancedFilterEnabled = true;
+        closeLightbox();
         resendSuspects();
     };
 
