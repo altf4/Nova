@@ -18,7 +18,7 @@ function clearSuspects()
 
 function getDetails(suspect)
 {
-  disableBackground();
+  disableBackground(theDoc.getElementById('setup'));
   var send = {};
   var splitString = suspect.split('@');
   var ip = splitString[0];
@@ -67,24 +67,38 @@ function closeLightbox()
   {
     theDoc.getElementById('details').removeChild(theDoc.getElementById('details').lastChild); 
   }
-  enableBackground();
+  enableBackground(theDoc.getElementById('setup'));
 }
 
-function disableBackground()
+function disableBackground(source)
 {
-  var disableUs = document.getElementById('setup').childNodes;
+  var disableUs = source.childNodes;
   for(var i in disableUs)
   {
-    disableUs[i].disabled = true;
+    if(typeof disableUs[i] == 'object' && disableUs[i].tagName != undefined)
+    {
+      disableUs[i].disabled = true;
+      if(disableUs[i].hasChildNodes())
+      {
+        disableBackground(disableUs[i]);
+      }
+    }
   }
 }
 
-function enableBackground()
+function enableBackground(source)
 {
-  var enableUs = document.getElementById('setup').childNodes;
+  var enableUs = source.childNodes;
   for(var i in enableUs)
   {
-    enableUs[i].disabled = false;
+    if(typeof enableUs[i] == 'object' && enableUs[i].tagName != undefined)
+    {
+      enableUs[i].disabled = false;
+      if(enableUs[i].hasChildNodes())
+      {
+        enableBackground(enableUs[i]);
+      }
+    }
   }
 }
 
