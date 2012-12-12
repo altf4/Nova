@@ -52,8 +52,10 @@ block headerAdditions
 
     function closeLightbox()
     {
+      enableBackground();
+      
       theDoc.getElementById('lightbox').style.display = 'none';
-      theDoc.getElementById('hideme').style.opacity = '1.0';
+      theDoc.getElementById('setup').style.opacity = '1.0';
       
       while(theDoc.getElementById('cloneMe').hasChildNodes())
       {
@@ -287,7 +289,9 @@ block headerAdditions
     
     function showLightBox(divIndex)
     {
-      theDoc.getElementById('hideme').style.opacity = '0.5';
+      disableBackground();
+      
+      theDoc.getElementById('setup').style.opacity = '0.5';
       theDoc.getElementById('lightbox').style.display = 'block';
       
       if(divIndex == '0')
@@ -523,6 +527,24 @@ block headerAdditions
       }
     }
     
+    function disableBackground()
+    {
+      var disableUs = document.getElementById('setup').childNodes;
+      for(var i in disableUs)
+      {
+        disableUs[i].disabled = true;
+      }
+    }
+
+    function enableBackground()
+    {
+      var enableUs = document.getElementById('setup').childNodes;
+      for(var i in disableUs)
+      {
+        enableUs[i].disabled = false;
+      }
+    }
+    
     function init(){
         now.ready(function() {
             populateConfigSelect(configurationList);
@@ -530,21 +552,21 @@ block headerAdditions
     };
   
 block content
-  div#hideme
+  div#setup
     h2 Edit Configurations
     div#addNewConfig
-      button#addConfig(onclick='showLightBox("0")') Add Configuration
-      button#cloneConfig(onclick='showLightBox("1")') Clone Configuration
-      button#removeConfig(onclick='removeConfig()') Remove Configuration
+      button#addConfig(onclick='showLightBox("0")') Add Group
+      button#cloneConfig(onclick='showLightBox("1")') Clone Group
+      button#removeConfig(onclick='removeConfig()') Remove Group
       br
       br
-      a.button(href= "/autoConfig") Create Configuration From Network Scan
+      a.button(href= "/autoConfig") Create Group From Network Scan
 
       br
       br
 
     div#treeAndPiContainer(style="border: 3px solid black; display: inline-block; margin: 5px 5px 5px 5px; text-align: center")
-      h1 Current Configuration
+      h1 Current Group
       select#configurations(onchange='GetConfigurationSummary()')
       
       div(style="margin-top: 20px")
