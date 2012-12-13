@@ -12,8 +12,7 @@ block content
       button(onclick="window.location='/novaState.csv'") Suspects as CSV file
   
       br
-    div#nova_suspects(style="display: none;")
-      
+    div#nova_suspects(style="display: none;")      
       input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
       label Live Grid Update
       br
@@ -189,11 +188,6 @@ block headerAdditions
       suspect.LastPacketString = dString;
       
       var row = new Array();
-      
-      var monitorButton = "<a class='button' href='javascript:void(0)' onclick='MonitorSuspect(";
-      monitorButton += '"' + suspect.GetIpString + '"' + ', ' + '"' + suspect.GetInterface + '"' + ', ' + '"' + suspect.GetIdString + '"';
-      monitorButton += ");'>Monitor</a>";
-      row.push(monitorButton);
         
       var ip = suspect.GetIpString;
     
@@ -349,7 +343,6 @@ block headerAdditions
         theDoc = document;
         var enabledFeatures = "#{enabledFeatures}";
         var gridStructure = [];
-        gridStructure.push({name: "Monitor", isDisabled: false});
         gridStructure.push({name: "Interface", isDisabled: false});
         gridStructure.push({name: "Address", isDisabled: false});
         gridStructure.push({name: "Classification", isDisabled: false, formatter: classificationFormatter});
@@ -362,10 +355,12 @@ block headerAdditions
         }
         gridStructure.push({name: "Clear"});
    
-        suspectGrid = new NovaGrid(gridStructure, 2, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
-
+        suspectGrid = new NovaGrid(gridStructure, 3, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
+        
+        suspectGrid.SetRightClickEventListener("replacementContextMenu(event);");
+    
         // Sort by classification by default
-        suspectGrid.SetSortByKey(3);
+        suspectGrid.SetSortByKey(2);
         suspectGrid.SetRowsPerPage(20);
         suspectGrid.SetRenderCallback(onGridRendered);
 
@@ -378,6 +373,128 @@ block headerAdditions
             suspectGrid.Render(); 
             console.log("Time to render grid of size " + suspectGrid.Size() + ": " + (new Date().getTime() - start) + "ms");
         },3000);
+    }
+
+    function replacementContextMenu(e)
+    {
+      if(document.getElementById('contextMenu') != undefined)
+      {
+        document.getElementById('hook').removeChild(document.getElementById('contextMenu'));
+      }
+      
+      var evt = (e ? e : window.event);
+      var source = evt.target || evt.srcElement;
+      
+      if(source.tagName != 'TD')
+      {
+        evt.returnValue = false || evt.preventDefault();
+        return false;
+      }
+      
+      source = source.parentNode;
+      
+      var ip = source.childNodes[1].childNodes[0].innerHTML;
+      var iface = source.childNodes[0].innerHTML;
+      var features = '0 0 ' + source.childNodes[5].innerHTML;
+      for(var i = 6; i < 17; i++)
+      {
+        if(source.childNodes[i].innerHTML == '0.00')
+        {
+          features += ' 0';
+        }
+        else
+        {
+          features += ' ' + source.childNodes[i].innerHTML;
+        }
+      }
+      
+      console.log('features ' + features);
+      
+      function trim(string)
+      {
+        var ret = string;
+        if(string[0] == ' ')
+        {
+          ret = ret.substr(1);
+        }
+        if(string[string.length] == ' ')
+        {
+          ret = ret.substr(0, string.length - 1);
+        }
+        return ret;
+      }
+      
+      ip = trim(ip);
+      iface = trim(iface);
+      
+      var clickX = 0;
+      var clickY = 0;
+      if((evt.clientX || evt.clientY) &&
+        document.body &&
+        document.body.scrollLeft != null) 
+      {
+        clickX = evt.clientX + document.body.scrollLeft;
+        clickY = evt.clientY + document.body.scrollTop;
+      }
+      
+      if((evt.clientX || evt.clientY) &&
+         document.compatMode == 'CSS1Compat' && 
+         document.documentElement && 
+         document.documentElement.scrollLeft != null) 
+      {
+        clickX = evt.clientX + document.documentElement.scrollLeft;
+        clickY = evt.clientY + document.documentElement.scrollTop;
+      }
+      
+      if(evt.pageX || evt.pageY) 
+      {
+        clickX = evt.pageX;
+        clickY = evt.pageY;
+      }
+      
+      var contextMenuDiv = document.createElement('div');
+      contextMenuDiv.setAttribute('style', 'border-radius: 5px; box-shadow: 0 0 5px #AAA; width: 200px; z-index: 1002; position: absolute; top: ' + clickY + 'px; left:' + clickX + 'px; opacity: 1;');
+      contextMenuDiv.id = iface + ' ' + ip;
+      
+      var monitor = document.createElement('div');
+      monitor.setAttribute('class', 'topcontainer');
+      monitor.innerHTML = 'Monitor ' + ip;
+      monitor.setAttribute('onclick', 'MonitorSuspect("' + ip + '", "' + iface + '")');
+      contextMenuDiv.appendChild(monitor);
+      
+      var markAsHostile = document.createElement('div');
+      markAsHostile.setAttribute('class', 'middlecontainer');
+      markAsHostile.innerHTML = 'Mark ' + ip + ' as Hostile';
+      markAsHostile.setAttribute('onclick', 'if(confirm("This will train the classification engine to match all suspects looking like this one as hostile. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "hostile" , addedCb)}');
+      contextMenuDiv.appendChild(markAsHostile);
+      
+      var markAsBenign = document.createElement('div');
+      markAsBenign.setAttribute('class', 'middlecontainer');
+      markAsBenign.innerHTML = 'Mark ' + ip + ' as Benign';
+      markAsBenign.setAttribute('onclick', 'if(confirm("This will train the classification engine to match all suspects looking like this one as benign. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "benign" , addedCb)}');
+      contextMenuDiv.appendChild(markAsBenign);
+
+      var clearSuspect = document.createElement('div');
+      clearSuspect.setAttribute('class', 'bottomcontainer');
+      clearSuspect.innerHTML = 'Clear Suspect ' + ip;
+      clearSuspect.setAttribute('onclick', 'ClearSuspect("' + ip + '", "' + iface + '")');
+      contextMenuDiv.appendChild(clearSuspect);
+      
+      document.getElementById('hook').appendChild(contextMenuDiv);
+      evt.returnValue = false || evt.preventDefault();
+      return false;
+    }
+
+    function addedCb(err) 
+    {
+      if(err) 
+      {
+          alert("There was and error adding the new training point: " + err);
+      } 
+      else 
+      {
+          alert("Added suspect point to training data");
+      }
     }
 
     function init() {

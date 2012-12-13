@@ -1,5 +1,5 @@
 doctype 5
-html(lang="en")
+html(lang="en", onclick='removeContextMenu()')
   head
     meta(charset="utf-8")
     link(rel="stylesheet", type="text/css", href="style.css", media="screen")
@@ -14,6 +14,14 @@ html(lang="en")
 
       // This function should be replaced
       function isNovadUpChanged(isNovadUp) {};
+
+      function removeContextMenu()
+      {
+        if(document.getElementById('contextMenu') != undefined)
+        {
+          document.getElementById('hook').removeChild(document.getElementById('contextMenu'));
+        }
+      }
 
       var lastNovadStatus = "unknown";
 
@@ -126,6 +134,7 @@ html(lang="en")
         }
       );
 
+  div#hook(style="position:absolute;left:0px;top:0px;width:100%;height:100%;style='z-index:1001;opacity:0;'")
   body.claro
     div#splash(style="position:absolute;left:0px;top:0px;width:100%;height:100%; text-align: center;")
     div#appLayout.demoLayout(data-dojo-type="dijit.layout.BorderContainer", data-dojo-props="design: 'headline', region: 'center'", style="visibility: hidden")
