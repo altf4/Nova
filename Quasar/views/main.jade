@@ -433,7 +433,6 @@ block headerAdditions
             {
               ret += ' ' + iter[i][j];
             }
-            console.log('ret ' + ret);
           }
         }
         return ret;
@@ -479,13 +478,13 @@ block headerAdditions
       var markAsHostile = document.createElement('div');
       markAsHostile.setAttribute('class', 'middlecontainer');
       markAsHostile.innerHTML = 'Mark ' + ip + ' as Hostile';
-      markAsHostile.setAttribute('onclick', 'if(confirm("This will train the classification engine to match all suspects looking like this one as hostile. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "hostile" , addedCb)}');
+      markAsHostile.setAttribute('onclick', 'if(confirm("This will train the classification engine to match all suspects looking like this one as hostile. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "1" , addedCb)}');
       contextMenuDiv.appendChild(markAsHostile);
       
       var markAsBenign = document.createElement('div');
       markAsBenign.setAttribute('class', 'middlecontainer');
       markAsBenign.innerHTML = 'Mark ' + ip + ' as Benign';
-      markAsBenign.setAttribute('onclick', 'if(confirm("This will train the classification engine to match all suspects looking like this one as benign. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "benign" , addedCb)}');
+      markAsBenign.setAttribute('onclick', 'if(confirm("This will train the classification engine to match all suspects looking like this one as benign. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "0" , addedCb)}');
       contextMenuDiv.appendChild(markAsBenign);
 
       var clearSuspect = document.createElement('div');
