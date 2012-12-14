@@ -234,6 +234,7 @@ NovaGrid.prototype = {
 
     // Sets which column to sort the table by
     , SetSortByKey: function(key) {
+        // Why? This is really inconvenient...
         if (this.m_sortByKey == key) {
             this.m_sortDescending = !this.m_sortDescending;
         }

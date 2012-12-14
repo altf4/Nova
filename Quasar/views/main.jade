@@ -158,8 +158,9 @@ block headerAdditions
     }
     
     function ClearSuspect(ip, interface, idString) {
-        now.ClearSuspect(ip, interface);
-        suspectGrid.DeleteRow(buildLink(ip, interface));
+      console.log('in ClearSuspect with ' + ip + ' ' + interface);
+      now.ClearSuspect(ip, interface);
+      suspectGrid.DeleteRow(buildLink(ip, interface));
     }
 
     function MonitorSuspect(ip, interface, idString) {
@@ -168,7 +169,7 @@ block headerAdditions
 
     function buildLink(ip, interface) {
       var res = "<a  href='javascript:void(0)' onclick='getSuspectDetails(";
-      res += '"' + ip + '","' + interface + "\\")'> " + ip + "</a>";
+      res += '"' + ip + '","' + interface + '")' + "'" + '> ' + ip + '</a>';
       return res;
     }
 
@@ -177,8 +178,9 @@ block headerAdditions
     }
     
     var OnNewSuspect = function(suspect){
-       if (!document.getElementById("showUnclassified").checked) {
-         if (suspect.GetClassification < 0) {return;}
+       if(!document.getElementById("showUnclassified").checked)
+       {
+         if(suspect.GetClassification < 0) {return;}
        }
 
        //if(!liveUpdate) {return;}
@@ -198,32 +200,32 @@ block headerAdditions
       row.push(String(suspect.LastPacketString));
       row.push(String(suspect.GetIsHostile));
       var enabledFeatures = "#{enabledFeatures}";
-      for (var i in suspect.GetFeatures) {  
+      for(var i in suspect.GetFeatures)
+      {  
         suspect[i] = suspect.GetFeatures[i];
-        if (enabledFeatures.charAt(i) == "1") row.push(Number(suspect.GetFeatures[i])); 
+        if(enabledFeatures.charAt(i) == "1") row.push(Number(suspect.GetFeatures[i])); 
       }
        
-       if (advancedFilterEnabled) {
-         for (var i in advancedFilters) {
-             var x = String(suspect[i]);
-             var expr = String(advancedFilters[i]);
-             if (!eval(expr)) {
-                return;
-             }
-         }
+      if(advancedFilterEnabled)
+      {
+        for(var i in advancedFilters)
+        {
+          var x = String(suspect[i]);
+          var expr = String(advancedFilters[i]);
+          if(!eval(expr))
+          {
+            return;
+          }
+        }
 
-         if (advancedIpFilter != null) {
-            if (!advancedIpFilter.test(suspect.GetIdString)) {
-                return;
-            }
-         }
-       }
-      
-      var clearButton = "<button onclick='ClearSuspect(";
-      clearButton += '"' + suspect.GetIpString + '"' + ', ' + '"' + suspect.GetInterface + '"' + ', ' + '"' + suspect.GetIdString + '"';
-      clearButton += ");'>Clear</button>";
-      row.push(clearButton);
-
+        if(advancedIpFilter != null)
+        {
+          if(!advancedIpFilter.test(suspect.GetIdString))
+          {
+            return;
+          }
+        }
+      }
       suspectGrid.PushEntry(row);
     };
 
@@ -353,9 +355,8 @@ block headerAdditions
         for (var i = 0; i < featureNames.length; i++) {
             if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], isDisabled: true, formatter: featureFormatter});
         }
-        gridStructure.push({name: "Clear"});
    
-        suspectGrid = new NovaGrid(gridStructure, 3, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
+        suspectGrid = new NovaGrid(gridStructure, 1, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
         
         suspectGrid.SetRightClickEventListener("replacementContextMenu(event);");
     
@@ -395,20 +396,6 @@ block headerAdditions
       
       var ip = source.childNodes[1].childNodes[0].innerHTML;
       var iface = source.childNodes[0].innerHTML;
-      var features = '0 0 ' + source.childNodes[5].innerHTML;
-      for(var i = 6; i < 17; i++)
-      {
-        if(source.childNodes[i].innerHTML == '0.00')
-        {
-          features += ' 0';
-        }
-        else
-        {
-          features += ' ' + source.childNodes[i].innerHTML;
-        }
-      }
-      
-      console.log('features ' + features);
       
       function trim(string)
       {
@@ -426,6 +413,33 @@ block headerAdditions
       
       ip = trim(ip);
       iface = trim(iface);
+      
+      function getFeatureSetOf(ip)
+      {
+        var iter = suspectGrid.GetElements();
+        var ret = '';
+        var check = '';
+        
+        for(var i in iter)
+        {
+          var split0 = parseInt(i.toString().indexOf(">")) + 2;
+          var split1 = parseInt(i.toString().lastIndexOf("<"));
+          check = i.toString().substring(split0, split1);
+          
+          if(check == ip)
+          {
+            ret = iter[i][5];
+            for(var j = 6; j < 19; j++)
+            {
+              ret += ' ' + iter[i][j];
+            }
+            console.log('ret ' + ret);
+          }
+        }
+        return ret;
+      }
+
+      var features = getFeatureSetOf(ip);
       
       var clickX = 0;
       var clickY = 0;
@@ -454,7 +468,7 @@ block headerAdditions
       
       var contextMenuDiv = document.createElement('div');
       contextMenuDiv.setAttribute('style', 'border-radius: 5px; box-shadow: 0 0 5px #AAA; width: 200px; z-index: 1002; position: absolute; top: ' + clickY + 'px; left:' + clickX + 'px; opacity: 1;');
-      contextMenuDiv.id = iface + ' ' + ip;
+      contextMenuDiv.id = 'contextMenu';
       
       var monitor = document.createElement('div');
       monitor.setAttribute('class', 'topcontainer');
