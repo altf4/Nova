@@ -161,13 +161,17 @@ html(lang="en")
                   img#haystack_status_icon_green(src="/images/greendot.png", width="15px", height="15px", style="display: none;")
                 td
                   div#haystack_status checking
-            button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopNovad()') Stop Packet Classifier
-            button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartNovad()') Start Packet Classifier
-            br
-            br
-            button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopHaystack()') Stop Haystack 
-            button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartHaystack()') Start Haystack
-            br
+            table(style="float: right;")
+              tr
+                td
+                  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartNovad()') Start Packet Classifier
+                td
+                  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopNovad()') Stop Packet Classifier
+              tr
+                td
+                  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StartHaystack()') Start Haystack
+                td
+                  button(type="button", style="width:160px; float: right; margin-right: 4px", onclick='StopHaystack()') Stop Haystack 
             br
     
       // Left panel
