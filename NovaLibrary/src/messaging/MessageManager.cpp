@@ -173,8 +173,7 @@ void MessageManager::DeleteEndpoint(int socketFD)
 			m_endpoints[socketFD].first->Shutdown();
 		}
 
-		pthread_rwlock_t *rwlock = m_endpoints[socketFD].second;
-		Lock lock(rwlock, WRITE_LOCK);
+		Lock lock(m_endpoints[socketFD].second, WRITE_LOCK);
 
 		delete m_endpoints[socketFD].first;
 		m_endpoints[socketFD].first = NULL;
@@ -183,13 +182,30 @@ void MessageManager::DeleteEndpoint(int socketFD)
 
 bool MessageManager::RegisterCallback(int socketFD, Ticket &outTicket)
 {
-	MessageEndpointLock endpointLock = GetEndpoint(socketFD);
-	if(endpointLock.m_endpoint != NULL)
+	MessageEndpoint *endpoint = NULL;
 	{
-		return endpointLock.m_endpoint->RegisterCallback(outTicket);
+		Lock lock(&m_endpointsMutex);
+		if(m_endpoints.count(socketFD) > 0)
+		{
+			if(m_endpoints[socketFD].first == NULL)
+			{
+				//Endpoint doesn't exist
+				return false;
+			}
+			//Read lock the enpoint's lock for our ticket, and assign it in
+			//	We now have access to this endpoint for the duration of the Ticket
+			//	The ticket will automatically unlock it for us later
+			pthread_rwlock_rdlock(m_endpoints[socketFD].second);
+			outTicket.m_endpointLock = m_endpoints[socketFD].second;
+			endpoint = m_endpoints[socketFD].first;
+		}
+		else
+		{
+			//Endpoint doesn't exist
+			return false;
+		}
 	}
-
-	return false;
+	return endpoint->RegisterCallback(outTicket);
 }
 
 std::vector <int>MessageManager::GetSocketList()
