@@ -46,7 +46,6 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 	if(!MessageManager::Instance().RegisterCallback(m_socketFD, ticket))
 	{
 		change.m_type = CALLBACK_HUNG_UP;
-		MessageManager::Instance().DeleteEndpoint(m_socketFD);
 		return change;
 	}
 
