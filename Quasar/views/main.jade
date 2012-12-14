@@ -473,6 +473,7 @@ block headerAdditions
       monitor.setAttribute('class', 'topcontainer');
       monitor.innerHTML = 'Monitor ' + ip;
       monitor.setAttribute('onclick', 'MonitorSuspect("' + ip + '", "' + iface + '")');
+      //monitor.setAttribute('oncontextmenu', 'removeContextMenu()');
       contextMenuDiv.appendChild(monitor);
       
       var markAsHostile = document.createElement('div');

@@ -60,24 +60,28 @@ html(lang="en", onclick='removeContextMenu()')
               console.log("err was: " + err);
           } 
       }
-  
+ 
       var updateNovadStatus = function (isNovadUp){
-        if (lastNovadStatus == "unknown" || lastNovadStatus != isNovadUp) {
-            lastNovadStatus = isNovadUp;
+        if(lastNovadStatus == "unknown" || lastNovadStatus != isNovadUp) 
+        {
+          lastNovadStatus = isNovadUp;
 
-            document.getElementById("nova_status_icon_red").style.display = "none";
-            document.getElementById("nova_status_icon_green").style.display = "none";
-            document.getElementById("nova_status_icon_orange").style.display = "none";
-            
-            if (isNovadUp) {
-              document.getElementById("nova_status_icon_green").style.display = "block";
-            } else {
-              document.getElementById("nova_status_icon_red").style.display = "block";
-            }
+          document.getElementById("nova_status_icon_red").style.display = "none";
+          document.getElementById("nova_status_icon_green").style.display = "none";
+          document.getElementById("nova_status_icon_orange").style.display = "none";
+          
+          if(isNovadUp) 
+          {
+            document.getElementById("nova_status_icon_green").style.display = "block";
+          } 
+          else 
+          {
+            document.getElementById("nova_status_icon_red").style.display = "block";
+          }
 
-            document.getElementById("nova_status").innerHTML = isNovadUp ? "Online" : "Offline";
-            document.getElementById("eyeIcon").src = isNovadUp ? "/images/novaIconBlinking.gif" : "/images/novaIcon.png";
-            isNovadUpChanged(isNovadUp);
+          document.getElementById("nova_status").innerHTML = isNovadUp ? "Online" : "Offline";
+          document.getElementById("eyeIcon").src = isNovadUp ? "/images/novaIconBlinking.gif" : "/images/novaIcon.png";
+          isNovadUpChanged(isNovadUp);
         }
       };
 
@@ -161,7 +165,7 @@ html(lang="en", onclick='removeContextMenu()')
                   img#nova_status_icon_red(src="/images/reddot.png", width="15px", height="15px", style="display: none;")
                   img#nova_status_icon_green(src="/images/greendot.png", width="15px", height="15px", style="display: none;")
                 td
-                  div#nova_status checking
+                  div#nova_status Checking
               tr
                 td(style="text-align: right;") Haystack Status:&nbsp  
                 td(style="padding: 0;")
@@ -169,7 +173,7 @@ html(lang="en", onclick='removeContextMenu()')
                   img#haystack_status_icon_red(src="/images/reddot.png", width="15px", height="15px", style="display: none;")
                   img#haystack_status_icon_green(src="/images/greendot.png", width="15px", height="15px", style="display: none;")
                 td
-                  div#haystack_status checking
+                  div#haystack_status Checking
             table(style="float: right;")
               tr
                 td
