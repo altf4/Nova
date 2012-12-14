@@ -91,16 +91,7 @@ public:
 
 private:
 
-	//Returns a new "our" serial number to use for a conversation. This is guaranteed to not currently be in use and not be 0
-	//	This increments m_forwardSerialNumber
-	//	NOTE: You must have the lock on the socket before using this. (Used inside UseSocket)
-	uint32_t GetNextOurSerialNum();
-
 	MessageQueueBimap m_queues;
-
-	//The next serial number that will be given to a conversation
-	uint32_t m_nextSerial;
-	pthread_mutex_t m_nextSerialMutex;
 
 	//A set of "their" serial numbers currently in use by the endpoint
 	std::set<uint32_t> m_theirUsedSerials;

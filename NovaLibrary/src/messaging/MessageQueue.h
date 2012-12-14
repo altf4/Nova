@@ -61,7 +61,7 @@ private:
 	uint32_t m_ourSerialNum;
 	pthread_mutex_t m_ourSerialNumMutex;
 
-	bool isShutdown;
+	bool m_isShutdown;
 
 };
 

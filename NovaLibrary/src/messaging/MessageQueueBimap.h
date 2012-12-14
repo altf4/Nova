@@ -21,12 +21,20 @@
 #define MESSAGEQUEUEBIMAP_H_
 
 #include "MessageQueue.h"
+#include "../Lock.h"
 
 #include <map>
 #include "pthread.h"
 
 namespace Nova
 {
+
+enum PushSuccess
+{
+	PUSH_FAIL,
+	PUSH_SUCCESS_NEW,
+	PUSH_SUCCESS_OLD
+};
 
 class MessageQueueBimap
 {
@@ -36,14 +44,15 @@ public:
 	MessageQueueBimap();
 	~MessageQueueBimap();
 
-	//Returns the MessageQueue for the given "our" serial number, NULL if it doesn't exist
-	MessageQueue *GetByOurSerial(uint32_t ourSerial);
+	//Functions for pushing and popping messages off the Message queue
+	Message *PopMessage(int timeout, uint32_t ourSerial);
+	enum PushSuccess PushMessage(Message *message, uint32_t &outSerial);
 
-	//Returns the MessageQueue for the given "their" serial number, NULL if it doesn't exist
-	//	NOTE: "Their" serial numbers are not always known, and therefore you should always prefer to call
-	//		GetByOurSerial() if you know the "our" serial number. Only call this function if you really
-	//		don't know what the "our" serial number that you want is.
-	MessageQueue *GetByTheirSerial(uint32_t theirSerial);
+	uint32_t GetTheirSerialNum(uint32_t ourSerial);
+	uint32_t GetOurSerialNum(uint32_t theirSerial);
+
+	//Shuts down all the MessageQueues in the bimap
+	void Shutdown();
 
 	//Makes a new MessageQueue at the given serial number
 	//	ourSerial - The "our" serial number to index by
@@ -55,19 +64,45 @@ public:
 
 	//Removes and deletes the MessageQueue at the given "our" serial number
 	//	ourSerial - The "our" serial number of the MessageQueue to delete
-	//	returns - true on successful delettion, false on error or if the MessageQueue did not exist.
+	//	returns - true on successful deletion, false on error or if the MessageQueue did not exist.
 	//NOTE: Safely does nothing if no MessageQueue exists at ourSerial (but returns false)
 	bool RemoveQueue(uint32_t ourSerial);
 
 	std::vector<uint32_t> GetUsedSerials();
 
+	//Returns a new "our" serial number to use for a conversation. This is guaranteed to not currently be in use and not be 0
+	//	This increments m_forwardSerialNumber
+	//	NOTE: You must have the lock on the socket before using this. (Used inside UseSocket)
+	uint32_t GetNextOurSerialNum();
+
+
 private:
 
-	//Message queues, uniquely identified by their serial number
+	//Returns the MessageQueue for the given "our" serial number, NULL if it doesn't exist
+	MessageQueue *GetByOurSerial(uint32_t ourSerial);
+
+	//Returns the MessageQueue for the given "their" serial number, NULL if it doesn't exist
+	//	NOTE: "Their" serial numbers are not always known, and therefore you should always prefer to call
+	//		GetByOurSerial() if you know the "our" serial number. Only call this function if you really
+	//		don't know what the "our" serial number that you want is.
+	MessageQueue *GetByTheirSerial(uint32_t theirSerial);
+
+	Lock ReadLockQueue(uint32_t ourSerial);
+
+	Lock WriteLockQueue(uint32_t ourSerial);
+
+	//Message queues, uniquely identified by serial numbers
 	std::map<uint32_t, MessageQueue*> m_ourQueues;
 	std::map<uint32_t, MessageQueue*> m_theirQueues;
-
 	pthread_mutex_t m_queuesMutex;
+
+	std::map<uint32_t, pthread_rwlock_t *> m_queuelocks;
+	pthread_mutex_t m_locksMutex;
+
+	//The next serial number that will be given to a conversation
+	uint32_t m_nextSerial;
+	pthread_mutex_t m_nextSerialMutex;
+
 };
 
 }
