@@ -83,7 +83,7 @@ int main(int argc, char ** argv)
 				("help,h", "Show command line options")
 				("num-nodes,n", po::value<uint>(&numNodes), "Number of nodes to create (can't be used with -r)")
 				("num-nodes-ratio,r", po::value<double>(&nodeRatio), "Ratio of haystack nodes to create vs real nodes (eg, 2 for 2x haystack nodes per real host or 0.5 for half the number of haystack nodes as real hosts)")
-				("num-nodes-range,e", po::value<string>(), "Range of IPs which to assign nodes to; the range will be filled completely with haystack nodes. ")
+				//("num-nodes-range,e", po::value<string>(), "Range of IPs which to assign nodes to; the range will be filled completely with haystack nodes.")
 				("interface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
 				("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
 				("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
@@ -235,10 +235,10 @@ int main(int argc, char ** argv)
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 
-		if(numberOfNodesType == RANGE_BASED_NUMBER_OF_NODES && nodeRange.empty())
+		/*if(numberOfNodesType == RANGE_BASED_NUMBER_OF_NODES && nodeRange.empty())
 		{
 			lockFile.close();
-		}
+		}*/
 
 		HHC_ERR_CODE errVar = HHC_CODE_OKAY;
 
