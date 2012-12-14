@@ -54,6 +54,7 @@ string localMachine;
 string nmapFileName;
 uint numNodes;
 double nodeRatio;
+string nodeRange;
 
 enum NumberOfNodesType
 {
@@ -83,7 +84,7 @@ int main(int argc, char ** argv)
 				("help,h", "Show command line options")
 				("num-nodes,n", po::value<uint>(&numNodes), "Number of nodes to create (can't be used with -r)")
 				("num-nodes-ratio,r", po::value<double>(&nodeRatio), "Ratio of haystack nodes to create vs real nodes (eg, 2 for 2x haystack nodes per real host or 0.5 for half the number of haystack nodes as real hosts)")
-				//("num-nodes-range,e", po::value<string>(), "Range of IPs which to assign nodes to; the range will be filled completely with haystack nodes.")
+				("num-nodes-range,e", po::value<string>(&nodeRange), "Range of IPs which to assign nodes to; the range will be filled completely with haystack nodes.")
 				("interface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
 				("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
 				("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
@@ -116,9 +117,11 @@ int main(int argc, char ** argv)
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 
-		if (vm.count("num-nodes-ratio") && vm.count("num-nodes"))
+		if((vm.count("num-nodes-ratio") && vm.count("num-nodes"))
+			|| (vm.count("num-nodes") && vm.count("num-nodes-range"))
+			|| (vm.count("num-nodes-ratio") && vm.count("num-nodes-range")))
 		{
-			cout << "ERROR: You can only use one of -r and -n to specify the number of nodes." << endl;
+			cout << "ERROR: You can only use one of -r, -n and -e to specify the number of nodes." << endl;
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			exit(HHC_CODE_BAD_ARG_VALUE);
@@ -147,11 +150,20 @@ int main(int argc, char ** argv)
 			cout << "*** DEBUG *** Setting AutoConfig to append results to " << vm["append-to"].as<string>() << ", not working yet" << endl;
 		}
 
-		if (vm.count("num-nodes-ratio"))
+		if(vm.count("num-nodes-ratio"))
 		{
 			cout << "Number of nodes to create: " << nodeRatio << " * number of real hosts found" << endl;
 			numberOfNodesType = RATIO_BASED_NUMBER_OF_NODES;
 		}
+
+		if(vm.count("num-nodes-range"))
+		{
+			cout << "" << endl;
+			numberOfNodesType = RANGE_BASED_NUMBER_OF_NODES;
+			GetNumberOfIPsInRange(nodeRange);
+			exit(1);
+		}
+
 		if(vm.count("num-nodes"))
 		{
 			cout << "Number of nodes to create: " << numNodes << '\n';
@@ -235,10 +247,13 @@ int main(int argc, char ** argv)
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 
-		/*if(numberOfNodesType == RANGE_BASED_NUMBER_OF_NODES && nodeRange.empty())
+		if(numberOfNodesType == RANGE_BASED_NUMBER_OF_NODES && (nodeRange.empty() || false /* this will be a regular expression format */))
 		{
 			lockFile.close();
-		}*/
+			remove(lockFilePath.c_str());
+			LOG(ERROR, "num-nodes range argument was given no value or is in an incorrect format. Aborting...", "");
+			exit(HHC_CODE_BAD_ARG_VALUE);
+		}
 
 		HHC_ERR_CODE errVar = HHC_CODE_OKAY;
 
@@ -1017,35 +1032,44 @@ void Nova::GenerateConfiguration()
 	{
 		nodesToCreate = numNodes;
 	}
-	else
+	else if(numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES)
 	{
 		nodesToCreate = ((double)scannedHosts.m_num_of_hosts) * nodeRatio;
 	}
-
-	stringstream ss;
-	ss << "Creating " << nodesToCreate << " new nodes";
-	LOG(DEBUG, ss.str(), "");
-
-	for(uint i = 0; i < nodesToCreate; i++)
+	else
 	{
-		//Pick a (leaf) profile at random
-		Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
-		if(winningPersonality == NULL)
+		nodesToCreate = GetNumberOfIPsInRange(nodeRange);
+	}
+
+	if(numberOfNodesType == FIXED_NUMBER_OF_NODES || numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES)
+	{
+		stringstream ss;
+		ss << "Creating " << nodesToCreate << " new nodes";
+		LOG(DEBUG, ss.str(), "");
+
+		for(uint i = 0; i < nodesToCreate; i++)
 		{
-			continue;
+			//Pick a (leaf) profile at random
+			Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
+			if(winningPersonality == NULL)
+			{
+				continue;
+			}
+
+			//Pick a random MAC vendor from this profile
+			string vendor = winningPersonality->GetRandomVendor();
+
+			//Pick a MAC address for the node:
+			string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
+
+			//Make a node for that profile
+			HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, Config::Inst()->GetInterface(0),
+					winningPersonality->GetRandomPortSet());
 		}
-
-		//Pick a random MAC vendor from this profile
-		string vendor = winningPersonality->GetRandomVendor();
-
-		//Pick a MAC address for the node:
-		string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
-
-		//Config::Inst()->SetGroup("Autoconfig");
-
-		//Make a node for that profile
-		HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, Config::Inst()->GetInterface(0),
-				winningPersonality->GetRandomPortSet());
+	}
+	else
+	{
+		exit(1);
 	}
 
 	if(!HoneydConfiguration::Inst()->WriteNodesToXML())
@@ -1078,4 +1102,44 @@ bool Nova::CheckSubnet(vector<string> &hostAddrStrings, string matchStr)
 		}
 	}
 	return false;
+}
+
+int Nova::GetNumberOfIPsInRange(string ipRange)
+{
+	// TODO: Extend this method to take into account a comma-separated list of ranges
+	int split = ipRange.find('-');
+	// Isolate the IPs from the full string
+	string rangeStart = ipRange.substr(0, split);
+	string rangeEnd = ipRange.substr(split + 1, ipRange.length());
+	cout << "rangeStart " << rangeStart << endl;
+	cout << "rangeEnd " << rangeEnd << endl;
+	// Check to make sure that rangeStart < rangeEnd
+	vector<string> ip1;
+	vector<string> ip2;
+	boost::split(ip1, rangeStart, boost::is_any_of("."));
+	boost::split(ip2, rangeEnd, boost::is_any_of("."));
+
+	if(ip1.size() != ip2.size())
+	{
+		// If the arrays are not the same size, then there's a malformed range
+		return -1;
+	}
+
+	bool noRangeSwapError = false;
+
+	bool comparison = new bool[ip1.size()];
+
+	for(uint i = ip1.size() - 1; i >= 0; i++)
+	{
+		if(ip1[i] > ip2[i])
+		{
+			comparison[i] = false;
+		}
+		else
+		{
+			comparison[i] = true;
+		}
+	}
+
+	return 0;
 }

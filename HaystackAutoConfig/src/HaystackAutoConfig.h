@@ -71,5 +71,7 @@ void GenerateConfiguration();
 
 bool CheckSubnet(std::vector<std::string> &hostAddrStrings, std::string matchStr);
 
+int GetNumberOfIPsInRange(std::string ipRange);
+
 }
 #endif
