@@ -73,5 +73,7 @@ bool CheckSubnet(std::vector<std::string> &hostAddrStrings, std::string matchStr
 
 int GetNumberOfIPsInRange(std::string ipRange);
 
+std::string GetReverseIp(std::string ip);
+
 }
 #endif

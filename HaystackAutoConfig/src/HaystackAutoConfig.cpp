@@ -55,6 +55,10 @@ string nmapFileName;
 uint numNodes;
 double nodeRatio;
 string nodeRange;
+string nodeRangeStart;
+string nodeRangeEnd;
+int nodeRangeStartInt;
+int nodeRangeEndInt;
 
 enum NumberOfNodesType
 {
@@ -161,7 +165,6 @@ int main(int argc, char ** argv)
 			cout << "" << endl;
 			numberOfNodesType = RANGE_BASED_NUMBER_OF_NODES;
 			GetNumberOfIPsInRange(nodeRange);
-			exit(1);
 		}
 
 		if(vm.count("num-nodes"))
@@ -1041,35 +1044,50 @@ void Nova::GenerateConfiguration()
 		nodesToCreate = GetNumberOfIPsInRange(nodeRange);
 	}
 
-	if(numberOfNodesType == FIXED_NUMBER_OF_NODES || numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES)
-	{
-		stringstream ss;
-		ss << "Creating " << nodesToCreate << " new nodes";
-		LOG(DEBUG, ss.str(), "");
+	stringstream ss;
+	ss << "Creating " << nodesToCreate << " new nodes";
+	LOG(DEBUG, ss.str(), "");
 
-		for(uint i = 0; i < nodesToCreate; i++)
+	for(uint i = 0; i < nodesToCreate; i++)
+	{
+		//Pick a (leaf) profile at random
+		Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
+		if(winningPersonality == NULL)
 		{
-			//Pick a (leaf) profile at random
-			Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
-			if(winningPersonality == NULL)
-			{
-				continue;
-			}
-
-			//Pick a random MAC vendor from this profile
-			string vendor = winningPersonality->GetRandomVendor();
-
-			//Pick a MAC address for the node:
-			string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
-
-			//Make a node for that profile
-			HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, Config::Inst()->GetInterface(0),
-					winningPersonality->GetRandomPortSet());
+			continue;
 		}
-	}
-	else
-	{
-		exit(1);
+
+		//Pick a random MAC vendor from this profile
+		string vendor = winningPersonality->GetRandomVendor();
+
+		//Pick a MAC address for the node:
+		string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
+
+		//Make a node for that profile
+		if(numberOfNodesType == FIXED_NUMBER_OF_NODES || numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES)
+		{
+			HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, Config::Inst()->GetInterface(0),
+				winningPersonality->GetRandomPortSet());
+		}
+		else if(numberOfNodesType == RANGE_BASED_NUMBER_OF_NODES)
+		{
+			struct sockaddr_in start;
+			start.sin_addr.s_addr = nodeRangeStartInt;
+			struct sockaddr_in end;
+			end.sin_addr.s_addr = nodeRangeEndInt;
+			char startResult[INET_ADDRSTRLEN];
+			char endResult[INET_ADDRSTRLEN];
+			inet_ntop(AF_INET, &(start.sin_addr), startResult, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, &(end.sin_addr), endResult, INET_ADDRSTRLEN);
+			string startResultString(GetReverseIp(startResult));
+			string endResultString(GetReverseIp(endResult));
+			if(nodeRangeStartInt <= nodeRangeEndInt)
+			{
+				nodeRangeStartInt++;
+			}
+			HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, startResultString, macAddress, Config::Inst()->GetInterface(0),
+				winningPersonality->GetRandomPortSet());
+		}
 	}
 
 	if(!HoneydConfiguration::Inst()->WriteNodesToXML())
@@ -1110,14 +1128,14 @@ int Nova::GetNumberOfIPsInRange(string ipRange)
 	// i.e. "10.10.1.0-11.10.10.0,11.10.11.0-12.10.0.0"
 	int split = ipRange.find('-');
 	// Isolate the IPs from the full string
-	string rangeStart = ipRange.substr(0, split);
-	string rangeEnd = ipRange.substr(split + 1, ipRange.length());
-	cout << "rangeStart " << rangeStart << endl;
-	cout << "rangeEnd " << rangeEnd << endl;
+	nodeRangeStart = ipRange.substr(0, split);
+	nodeRangeEnd = ipRange.substr(split + 1, ipRange.length());
 	struct sockaddr_in start;
 	struct sockaddr_in end;
-	int retCodeStart = inet_pton(AF_INET, rangeStart.c_str(), &(start.sin_addr));
-	int retCodeEnd = inet_pton(AF_INET, rangeEnd.c_str(), &(end.sin_addr));
+	string inetPtonSrcStart = GetReverseIp(nodeRangeStart);
+	string inetPtonSrcEnd = GetReverseIp(nodeRangeEnd);
+	int retCodeStart = inet_pton(AF_INET, inetPtonSrcStart.c_str(), &(start.sin_addr));
+	int retCodeEnd = inet_pton(AF_INET, inetPtonSrcEnd.c_str(), &(end.sin_addr));
 
 	switch(retCodeStart)
 	{
@@ -1151,8 +1169,30 @@ int Nova::GetNumberOfIPsInRange(string ipRange)
 		return -1;
 	}
 
-	cout << "rangeStart == " << start.sin_addr << endl;
-	cout << "rangeEnd == " << end.sin_addr << endl;
+	nodeRangeStartInt = start.sin_addr.s_addr;
+	nodeRangeEndInt = end.sin_addr.s_addr;
 
-	return 0;
+	if(start.sin_addr.s_addr > end.sin_addr.s_addr)
+	{
+		cout << "User-supplied IP range is invalid: range goes from high to low addresses" << endl;
+		return -1;
+	}
+
+	int returnValue = end.sin_addr.s_addr - start.sin_addr.s_addr + 1;
+
+	return returnValue;
+}
+
+string Nova::GetReverseIp(string ip)
+{
+	string ret = "";
+	vector<string> split;
+	boost::split(split, ip, boost::is_any_of("."));
+	reverse(split.begin(), split.end());
+	for(uint i = 0; i < split.size() - 1; i++)
+	{
+		ret += split[i] + ".";
+	}
+	ret += split[split.size() - 1];
+	return ret;
 }
