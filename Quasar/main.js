@@ -2261,19 +2261,33 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	var iFlag = '-i';
 	var aFlag = '-a';
 	var gFlag = '-g';
+	var eFlag = '-e';
 
 	var hhconfigArgs = new Array();
 
-	if (numNodesType == "fixed") {
-		if (numNodes !== undefined) {
+	if(numNodesType == "fixed") 
+	{
+		if(numNodes !== undefined) 
+		{
 			hhconfigArgs.push(nFlag);
 			hhconfigArgs.push(numNodes);
 		}
-	} else if (numNodesType == "ratio") {
-		if (numNodes !== undefined) {
+	} 
+	else if(numNodesType == "ratio") 
+	{
+		if(numNodes !== undefined) 
+		{
 			hhconfigArgs.push(rFlag);
 			hhconfigArgs.push(numNodes);
 		}
+	}
+	else if(numNodesType == 'range')
+	{
+	  if(numNodes !== undefined)
+	  {
+	    hhconfigArgs.push(eFlag);
+	    hhconfigArgs.push(numNodes);
+	  }
 	}
 	
 	if (interfaces !== undefined && interfaces.length > 0) {
