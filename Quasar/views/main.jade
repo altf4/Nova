@@ -296,11 +296,11 @@ block headerAdditions
 
     function showAdvancedChanged() {
         if (document.getElementById("showAdvanced").checked) {
-            for (var i = 7; i < suspectGrid.m_columns.length - 1; i++) {
+            for (var i = 5; i < suspectGrid.m_columns.length; i++) {
                 suspectGrid.m_columns[i].isDisabled = false;
             }
         } else {
-            for (var i = 7; i < suspectGrid.m_columns.length - 1; i++) {
+            for (var i = 5; i < suspectGrid.m_columns.length; i++) {
                 suspectGrid.m_columns[i].isDisabled = true;
             }
             
