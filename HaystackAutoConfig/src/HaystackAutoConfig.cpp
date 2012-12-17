@@ -164,7 +164,6 @@ int main(int argc, char ** argv)
 		{
 			cout << "" << endl;
 			numberOfNodesType = RANGE_BASED_NUMBER_OF_NODES;
-			GetNumberOfIPsInRange(nodeRange);
 		}
 
 		if(vm.count("num-nodes"))
@@ -1027,9 +1026,6 @@ void Nova::GenerateConfiguration()
 {
 	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
 
-	//Config::Inst()->SetGroup("Autoconfig");
-	//Config::Inst()->SaveUserConfig();
-
 	uint nodesToCreate = 0;
 	if(numberOfNodesType == FIXED_NUMBER_OF_NODES)
 	{
@@ -1042,6 +1038,11 @@ void Nova::GenerateConfiguration()
 	else
 	{
 		nodesToCreate = GetNumberOfIPsInRange(nodeRange);
+		if(nodesToCreate == -1)
+		{
+			LOG(ERROR, "There was a problem with the construction of the IP range.", "");
+			return;
+		}
 	}
 
 	stringstream ss;
@@ -1122,9 +1123,31 @@ int Nova::GetNumberOfIPsInRange(string ipRange)
 	// TODO: Extend this method to take into account a comma-separated list of ranges
 	// i.e. "10.10.1.0-11.10.10.0,11.10.11.0-12.10.0.0"
 	int split = ipRange.find('-');
-	// Isolate the IPs from the full string
 	nodeRangeStart = ipRange.substr(0, split);
 	nodeRangeEnd = ipRange.substr(split + 1, ipRange.length());
+
+	vector<string> valueCheckStart;
+	vector<string> valueCheckEnd;
+	boost::split(valueCheckStart, nodeRangeStart, boost::is_any_of("."));
+	boost::split(valueCheckEnd, nodeRangeEnd, boost::is_any_of("."));
+
+	if(valueCheckEnd.size() != valueCheckStart.size())
+	{
+		LOG(ERROR, "Split ip vectors are of different length, aborting...", "");
+		return -1;
+	}
+
+	for(uint i = 0; i < valueCheckStart.size(); i++)
+	{
+		int startValueI = atoi(valueCheckStart[i].c_str());
+		int endValueI = atoi(valueCheckEnd[i].c_str());
+		if((startValueI > 255 || startValueI < 0) || (endValueI > 255 || endValueI < 0))
+		{
+			LOG(ERROR, "Value within IP address out of range within user-defined IP range, aborting...", "");
+			return -1;
+		}
+	}
+
 	struct sockaddr_in start;
 	struct sockaddr_in end;
 	string inetPtonSrcStart = GetReverseIp(nodeRangeStart);
@@ -1132,35 +1155,9 @@ int Nova::GetNumberOfIPsInRange(string ipRange)
 	int retCodeStart = inet_pton(AF_INET, inetPtonSrcStart.c_str(), &(start.sin_addr));
 	int retCodeEnd = inet_pton(AF_INET, inetPtonSrcEnd.c_str(), &(end.sin_addr));
 
-	switch(retCodeStart)
-	{
-		case 1:
-			break;
-		case 0:
-			cout << "rangeStart is an invalid ip address, aborting..." << endl;
-			break;
-		case -1:
-			cout << "inet_pton returned an error, aborting..." << endl;
-			break;
-		default:
-			break;
-	}
-	switch(retCodeEnd)
-	{
-		case 1:
-			break;
-		case 0:
-			cout << "rangeEnd is an invalid ip address, aborting..." << endl;
-			break;
-		case -1:
-			cout << "inet_pton returned an error, aborting..." << endl;
-			break;
-		default:
-			break;
-	}
-
 	if(retCodeStart < 1 || retCodeEnd < 1)
 	{
+		LOG(ERROR, "inet_pton returned an error, aborting...", "");
 		return -1;
 	}
 
@@ -1169,7 +1166,7 @@ int Nova::GetNumberOfIPsInRange(string ipRange)
 
 	if(start.sin_addr.s_addr > end.sin_addr.s_addr)
 	{
-		cout << "User-supplied IP range is invalid: range goes from high to low addresses" << endl;
+		LOG(ERROR, "User-supplied IP range is invalid: range goes from high to low addresses", "");
 		return -1;
 	}
 
