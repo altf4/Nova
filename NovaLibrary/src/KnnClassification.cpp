@@ -50,6 +50,7 @@ KnnClassification::KnnClassification()
 
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
+	m_kdTree = NULL;
 }
 
 KnnClassification::~KnnClassification()
@@ -58,8 +59,20 @@ KnnClassification::~KnnClassification()
 	{
 		delete m_dataPtsWithClass[i];
 	}
+	if(m_kdTree != NULL)
+	{
+		cout << "xxxDEBUGxxx Deleting kdTree" << endl;
+		delete m_kdTree;
+	}
+	if(m_dataPts != NULL)
+	{
+		annDeallocPts(m_dataPts);
+	}
+	if(m_normalizedDataPts != NULL)
+	{
+		annDeallocPts(m_normalizedDataPts);
+	}
 }
-
 
 double KnnClassification::Classify(Suspect *suspect)
 {
@@ -252,7 +265,8 @@ double KnnClassification::Classify(Suspect *suspect)
 	return suspect->GetClassification();
 }
 
-void KnnClassification::LoadConfiguration() {
+void KnnClassification::LoadConfiguration()
+{
 	this->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 }
 
@@ -331,7 +345,6 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 	myfile.open(inFilePath.data(), ifstream::in);
 	m_dataPts = annAllocPts(maxPts, Config::Inst()->GetEnabledFeatureCount()); // allocate data points
 	m_normalizedDataPts = annAllocPts(maxPts, Config::Inst()->GetEnabledFeatureCount());
-
 
 	if(myfile.is_open())
 	{
@@ -456,6 +469,10 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 		}
 	}
 
+	if(m_kdTree != NULL)
+	{
+		delete m_kdTree;
+	}
 	m_kdTree = new ANNkd_tree(					// build search structure
 			m_normalizedDataPts,					// the data points
 					m_nPts,						// number of points
@@ -561,11 +578,14 @@ void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 		}
 	}
 
+	if(m_kdTree != NULL)
+	{
+		delete m_kdTree;
+	}
 	m_kdTree = new ANNkd_tree(					// build search structure
 			m_normalizedDataPts,					// the data points
 					m_nPts,						// number of points
 					Config::Inst()->GetEnabledFeatureCount());						// dimension of space
-
 }
 
 double KnnClassification::Normalize(normalizationType type, double value, double min, double max, double weight)

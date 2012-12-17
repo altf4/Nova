@@ -53,6 +53,7 @@ void SaveAndExit(int param)
 	{
 		delete engine;
 	}
+	annClose();
 	LOG(ALERT, "Novad is exiting cleanly.", "");
 	exit(EXIT_SUCCESS);
 }
