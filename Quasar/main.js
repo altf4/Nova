@@ -2810,6 +2810,29 @@ everyone.now.AddInterfaceAlias = function(iface, alias, callback) {
     fs.writeFile(NovaHomePath + "/config/interface_aliases.txt", fileString, callback);
 }
 
+everyone.now.GetHaystackDHCPStatus = function(callback) {
+	fs.readFile("/var/log/honeyd/ipList", 'utf8', function (err, data) {
+		var DHCPIps = new Array();
+		if (err) {
+			RenderError(res, "Unable to open Honeyd status file for reading due to error: " + err);
+			return;
+		} else {
+
+			data = data.toString().split("\n");
+			for(var i = 0; i < data.length; i++) {
+				if (data[i] == "") {continue};
+				var entry = {
+                    ip: data[i].toString().split(",")[0],
+                    mac: data[i].toString().split(",")[1]
+                };
+				DHCPIps.push(entry);
+			}	
+
+            callback(DHCPIps);
+		}
+	});
+}
+
 function ReloadInterfaceAliasFile() 
 {
 	var aliasFileData = fs.readFileSync(NovaHomePath + "/config/interface_aliases.txt");

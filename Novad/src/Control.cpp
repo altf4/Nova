@@ -22,6 +22,9 @@
 #include "Config.h"
 #include "Logger.h"
 #include "Novad.h"
+#include "ClassificationEngine.h"
+
+extern Nova::ClassificationEngine *engine;
 
 namespace Nova
 {
@@ -46,6 +49,11 @@ void SaveAndExit(int param)
 	{
 		// TODO Logging
 	}
+	if(engine != NULL)
+	{
+		delete engine;
+	}
+	annClose();
 	LOG(ALERT, "Novad is exiting cleanly.", "");
 	exit(EXIT_SUCCESS);
 }

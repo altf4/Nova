@@ -13,7 +13,7 @@ block headerAdditions
     var pfile;
 
     function createNodes() {
-        document.getElementById("createNewNodes").disables = true;
+        document.getElementById("createNewNodes").disabled = true;
         document.getElementById("createNewNodes").value = "Please wait. Creating new nodes...";
         var ipType = document.getElementById("ipType").value;
         var ip1 = document.getElementById("ip1").value;
@@ -130,13 +130,8 @@ block headerAdditions
       var gridElements = grid.GetElements();
       var passToDeleteNodes = [];
       
-      for(var i in gridElements)
-      {
-        if(gridElements[i][1] !== 'Doppelganger')
-        {
-          passToDeleteNodes.push(gridElements[i][1]);
-          grid.DeleteRow(gridElements[i][1]);
-        }
+      for(var i in gridElements) {
+        passToDeleteNodes.push(i);
       }
       try
       {
@@ -251,6 +246,18 @@ block headerAdditions
         console.log("err was: " + err);
       }
     }
+
+    function dhcpStatusCallback(dhcpNodes) {
+        for (var i in dhcpNodes) {
+            var mac = dhcpNodes[i].mac.replace(/ /, '');
+            if (grid.GetElements()[mac] !== undefined) {
+                var oldRow = grid.m_elements[mac];
+                oldRow[1] = "DHCP (currently " + dhcpNodes[i].ip + ")";
+                grid.PushEntry(oldRow);
+                grid.Render();
+            }
+        }
+    }
     
     function Init()
     {
@@ -353,6 +360,8 @@ block headerAdditions
       Init();
       checkOnlyOne('if0');
       profileChanged();
+
+      now.GetHaystackDHCPStatus(dhcpStatusCallback);
     }
 
 block content

@@ -50,13 +50,28 @@ KnnClassification::KnnClassification()
 
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
+	m_kdTree = NULL;
 }
 
 KnnClassification::~KnnClassification()
 {
-
+	for(uint i = 0; i < m_dataPtsWithClass.size(); i++)
+	{
+		delete m_dataPtsWithClass[i];
+	}
+	if(m_kdTree != NULL)
+	{
+		delete m_kdTree;
+	}
+	if(m_dataPts != NULL)
+	{
+		annDeallocPts(m_dataPts);
+	}
+	if(m_normalizedDataPts != NULL)
+	{
+		annDeallocPts(m_normalizedDataPts);
+	}
 }
-
 
 double KnnClassification::Classify(Suspect *suspect)
 {
@@ -249,7 +264,8 @@ double KnnClassification::Classify(Suspect *suspect)
 	return suspect->GetClassification();
 }
 
-void KnnClassification::LoadConfiguration() {
+void KnnClassification::LoadConfiguration()
+{
 	this->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
 }
 
@@ -286,6 +302,11 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 		annDeallocPts(m_normalizedDataPts);
 	}
 
+	//Delete any contents of the points list first
+	for(uint i = 0; i < m_dataPtsWithClass.size(); i++)
+	{
+		delete m_dataPtsWithClass[i];
+	}
 	m_dataPtsWithClass.clear();
 
 	//string array to check whether a line in data.txt file has the right number of fields
@@ -323,7 +344,6 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 	myfile.open(inFilePath.data(), ifstream::in);
 	m_dataPts = annAllocPts(maxPts, Config::Inst()->GetEnabledFeatureCount()); // allocate data points
 	m_normalizedDataPts = annAllocPts(maxPts, Config::Inst()->GetEnabledFeatureCount());
-
 
 	if(myfile.is_open())
 	{
@@ -448,6 +468,10 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 		}
 	}
 
+	if(m_kdTree != NULL)
+	{
+		delete m_kdTree;
+	}
 	m_kdTree = new ANNkd_tree(					// build search structure
 			m_normalizedDataPts,					// the data points
 					m_nPts,						// number of points
@@ -484,6 +508,11 @@ void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 		annDeallocPts(m_normalizedDataPts);
 	}
 
+	//Delete any contents of the points list first
+	for(uint i = 0; i < m_dataPtsWithClass.size(); i++)
+	{
+		delete m_dataPtsWithClass[i];
+	}
 	m_dataPtsWithClass.clear();
 
 	//Open the file again, allocate the number of points and assign
@@ -548,11 +577,14 @@ void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 		}
 	}
 
+	if(m_kdTree != NULL)
+	{
+		delete m_kdTree;
+	}
 	m_kdTree = new ANNkd_tree(					// build search structure
 			m_normalizedDataPts,					// the data points
 					m_nPts,						// number of points
 					Config::Inst()->GetEnabledFeatureCount());						// dimension of space
-
 }
 
 double KnnClassification::Normalize(normalizationType type, double value, double min, double max, double weight)

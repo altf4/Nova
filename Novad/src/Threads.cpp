@@ -153,19 +153,20 @@ void *UpdateIPFilter(void *ptr)
 
 				UpdateHaystackFeatures();
 
-				Lock *lock = new Lock(&packetCapturesLock);
-				for(uint i = 0; i < packetCaptures.size(); i++)
 				{
-					try {
-					string captureFilterString = ConstructFilterString(packetCaptures.at(i)->GetIdentifier());
-						packetCaptures.at(i)->SetFilter(captureFilterString);
-					}
-					catch (Nova::PacketCaptureException &e)
+					Lock lock(&packetCapturesLock);
+					for(uint i = 0; i < packetCaptures.size(); i++)
 					{
-						LOG(ERROR, string("Unable to update capture filter: ") + e.what(), "");
+						try {
+						string captureFilterString = ConstructFilterString(packetCaptures.at(i)->GetIdentifier());
+							packetCaptures.at(i)->SetFilter(captureFilterString);
+						}
+						catch (Nova::PacketCaptureException &e)
+						{
+							LOG(ERROR, string("Unable to update capture filter: ") + e.what(), "");
+						}
 					}
 				}
-				delete lock;
 			}
 		}
 		else
@@ -200,19 +201,20 @@ void *UpdateWhitelistIPFilter(void *ptr)
 				whitelistIpAddresses = WhitelistConfiguration::GetIps();
 				whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 
-				Lock *lock = new Lock(&packetCapturesLock);
-				for(uint i = 0; i < packetCaptures.size(); i++)
 				{
-					try {
-						string captureFilterString = ConstructFilterString(packetCaptures.at(i)->GetIdentifier());
-						packetCaptures.at(i)->SetFilter(captureFilterString);
-					}
-					catch (Nova::PacketCaptureException &e)
+					Lock lock(&packetCapturesLock);
+					for(uint i = 0; i < packetCaptures.size(); i++)
 					{
-						LOG(ERROR, string("Unable to update capture filter: ") + e.what(), "");
+						try {
+							string captureFilterString = ConstructFilterString(packetCaptures.at(i)->GetIdentifier());
+							packetCaptures.at(i)->SetFilter(captureFilterString);
+						}
+						catch (Nova::PacketCaptureException &e)
+						{
+							LOG(ERROR, string("Unable to update capture filter: ") + e.what(), "");
+						}
 					}
 				}
-				delete lock;
 
 
 				// Clear any suspects that were whitelisted from the GUIs
