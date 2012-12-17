@@ -55,8 +55,6 @@ string nmapFileName;
 uint numNodes;
 double nodeRatio;
 string nodeRange;
-string nodeRangeStart;
-string nodeRangeEnd;
 int nodeRangeStartInt;
 int nodeRangeEndInt;
 
@@ -1123,8 +1121,8 @@ int Nova::GetNumberOfIPsInRange(string ipRange)
 	// TODO: Extend this method to take into account a comma-separated list of ranges
 	// i.e. "10.10.1.0-11.10.10.0,11.10.11.0-12.10.0.0"
 	int split = ipRange.find('-');
-	nodeRangeStart = ipRange.substr(0, split);
-	nodeRangeEnd = ipRange.substr(split + 1, ipRange.length());
+	string nodeRangeStart = ipRange.substr(0, split);
+	string nodeRangeEnd = ipRange.substr(split + 1, ipRange.length());
 
 	vector<string> valueCheckStart;
 	vector<string> valueCheckEnd;
