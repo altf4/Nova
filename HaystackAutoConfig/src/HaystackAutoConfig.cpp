@@ -1073,14 +1073,9 @@ void Nova::GenerateConfiguration()
 		{
 			struct sockaddr_in start;
 			start.sin_addr.s_addr = nodeRangeStartInt;
-			struct sockaddr_in end;
-			end.sin_addr.s_addr = nodeRangeEndInt;
 			char startResult[INET_ADDRSTRLEN];
-			char endResult[INET_ADDRSTRLEN];
 			inet_ntop(AF_INET, &(start.sin_addr), startResult, INET_ADDRSTRLEN);
-			inet_ntop(AF_INET, &(end.sin_addr), endResult, INET_ADDRSTRLEN);
 			string startResultString(GetReverseIp(startResult));
-			string endResultString(GetReverseIp(endResult));
 			if(nodeRangeStartInt <= nodeRangeEndInt)
 			{
 				nodeRangeStartInt++;
