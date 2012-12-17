@@ -549,9 +549,9 @@ void StopCapture_noLocking()
 	for (uint i = 0; i < packetCaptures.size(); i++)
 	{
 		packetCaptures.at(i)->StopCapture();
-		//delete packetCaptures.at(i);
+		delete packetCaptures.at(i);
+		packetCaptures.erase(packetCaptures.begin() + i);
 	}
-	//packetCaptures.clear();
 }
 
 void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet)
