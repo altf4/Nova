@@ -61,7 +61,6 @@ KnnClassification::~KnnClassification()
 	}
 	if(m_kdTree != NULL)
 	{
-		cout << "xxxDEBUGxxx Deleting kdTree" << endl;
 		delete m_kdTree;
 	}
 	if(m_dataPts != NULL)
