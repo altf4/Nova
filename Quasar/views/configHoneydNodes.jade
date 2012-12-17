@@ -130,13 +130,8 @@ block headerAdditions
       var gridElements = grid.GetElements();
       var passToDeleteNodes = [];
       
-      for(var i in gridElements)
-      {
-        if(gridElements[i][1] !== 'Doppelganger')
-        {
-          passToDeleteNodes.push(gridElements[i][1]);
-          grid.DeleteRow(gridElements[i][1]);
-        }
+      for(var i in gridElements) {
+        passToDeleteNodes.push(i);
       }
       try
       {
