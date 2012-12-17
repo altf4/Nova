@@ -32,6 +32,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <csignal>
 
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
@@ -57,6 +58,7 @@ double nodeRatio;
 string nodeRange;
 int nodeRangeStartInt;
 int nodeRangeEndInt;
+string group;
 
 enum NumberOfNodesType
 {
@@ -66,17 +68,24 @@ enum NumberOfNodesType
 };
 
 NumberOfNodesType numberOfNodesType;
-
 vector<Subnet> subnetsDetected;
-
 ScannedHostTable scannedHosts;
-
 string lockFilePath;
+
+void sig_handler(int x)
+{
+	if(!group.empty())
+	{
+		HoneydConfiguration::Inst()->RemoveConfiguration(group);
+	}
+}
 
 int main(int argc, char ** argv)
 {
 	//Seed any future random values
 	srand(time(NULL));
+
+	signal(SIGINT, sig_handler);
 
 	namespace po = boost::program_options;
 	po::options_description desc("Command line options");
@@ -132,6 +141,7 @@ int main(int argc, char ** argv)
 		if(vm.count("group"))
 		{
 			cout << "Creating new haystack group " << vm["group"].as<string>() << endl;
+			group = vm["group"].as<string>();
 			HoneydConfiguration::Inst()->AddNewConfiguration(vm["group"].as<string>(), false, "");
 			HoneydConfiguration::Inst()->SwitchToConfiguration(vm["group"].as<string>());
 		}
@@ -142,6 +152,7 @@ int main(int argc, char ** argv)
 			stringstream ss;
 			ss << timestamp;
 			defaultCreatedGroup += ss.str();
+			group = defaultCreatedGroup;
 			cout << "No group dictated, using default group name " << defaultCreatedGroup << endl;
 			HoneydConfiguration::Inst()->AddNewConfiguration(defaultCreatedGroup, false, "");
 			HoneydConfiguration::Inst()->SwitchToConfiguration(defaultCreatedGroup);
@@ -233,6 +244,7 @@ int main(int argc, char ** argv)
 
 		if((numberOfNodesType == FIXED_NUMBER_OF_NODES) && (numNodes < 0))
 		{
+			HoneydConfiguration::Inst()->RemoveConfiguration(group);
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			LOG(ERROR, "num-nodes argument takes an integer greater than or equal to 0. Aborting...", "");
@@ -241,6 +253,7 @@ int main(int argc, char ** argv)
 
 		if(numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES && nodeRatio < 0)
 		{
+			HoneydConfiguration::Inst()->RemoveConfiguration(group);
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			LOG(ERROR, "num-nodes ratio argument must be greater than or equal to 0. Aborting...", "");
@@ -249,6 +262,7 @@ int main(int argc, char ** argv)
 
 		if(numberOfNodesType == RANGE_BASED_NUMBER_OF_NODES && (nodeRange.empty() || false /* this will be a regular expression format */))
 		{
+			HoneydConfiguration::Inst()->RemoveConfiguration(group);
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			LOG(ERROR, "num-nodes range argument was given no value or is in an incorrect format. Aborting...", "");
@@ -269,6 +283,7 @@ int main(int argc, char ** argv)
 
 			if(!LoadNmapXML(nmapFileName))
 			{
+				HoneydConfiguration::Inst()->RemoveConfiguration(group);
 				LOG(ERROR, "LoadNmapXML failed. Aborting...", "");
 				lockFile.close();
 				remove(lockFilePath.c_str());
@@ -283,6 +298,7 @@ int main(int argc, char ** argv)
 		}
 		else if(a_flag_empty && i_flag_empty)
 		{
+			HoneydConfiguration::Inst()->RemoveConfiguration(group);
 			errVar = HHC_CODE_REQUIRED_FLAGS_MISSING;
 			lockFile.close();
 			remove(lockFilePath.c_str());
@@ -318,6 +334,7 @@ int main(int argc, char ** argv)
 
 			if(errVar != HHC_CODE_OKAY)
 			{
+				HoneydConfiguration::Inst()->RemoveConfiguration(group);
 				lockFile.close();
 				remove(lockFilePath.c_str());
 				LOG(ERROR, "There was a problem loading the PersonalityTable. Aborting...", "");
@@ -1038,6 +1055,7 @@ void Nova::GenerateConfiguration()
 		nodesToCreate = GetNumberOfIPsInRange(nodeRange);
 		if(nodesToCreate == -1)
 		{
+			HoneydConfiguration::Inst()->RemoveConfiguration(group);
 			LOG(ERROR, "There was a problem with the construction of the IP range.", "");
 			return;
 		}
