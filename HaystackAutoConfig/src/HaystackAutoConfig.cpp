@@ -1107,39 +1107,52 @@ bool Nova::CheckSubnet(vector<string> &hostAddrStrings, string matchStr)
 int Nova::GetNumberOfIPsInRange(string ipRange)
 {
 	// TODO: Extend this method to take into account a comma-separated list of ranges
+	// i.e. "10.10.1.0-11.10.10.0,11.10.11.0-12.10.0.0"
 	int split = ipRange.find('-');
 	// Isolate the IPs from the full string
 	string rangeStart = ipRange.substr(0, split);
 	string rangeEnd = ipRange.substr(split + 1, ipRange.length());
 	cout << "rangeStart " << rangeStart << endl;
 	cout << "rangeEnd " << rangeEnd << endl;
-	// Check to make sure that rangeStart < rangeEnd
-	vector<string> ip1;
-	vector<string> ip2;
-	boost::split(ip1, rangeStart, boost::is_any_of("."));
-	boost::split(ip2, rangeEnd, boost::is_any_of("."));
+	struct sockaddr_in start;
+	struct sockaddr_in end;
+	int retCodeStart = inet_pton(AF_INET, rangeStart.c_str(), &(start.sin_addr));
+	int retCodeEnd = inet_pton(AF_INET, rangeEnd.c_str(), &(end.sin_addr));
 
-	if(ip1.size() != ip2.size())
+	switch(retCodeStart)
 	{
-		// If the arrays are not the same size, then there's a malformed range
+		case 1:
+			break;
+		case 0:
+			cout << "rangeStart is an invalid ip address, aborting..." << endl;
+			break;
+		case -1:
+			cout << "inet_pton returned an error, aborting..." << endl;
+			break;
+		default:
+			break;
+	}
+	switch(retCodeEnd)
+	{
+		case 1:
+			break;
+		case 0:
+			cout << "rangeEnd is an invalid ip address, aborting..." << endl;
+			break;
+		case -1:
+			cout << "inet_pton returned an error, aborting..." << endl;
+			break;
+		default:
+			break;
+	}
+
+	if(retCodeStart < 1 || retCodeEnd < 1)
+	{
 		return -1;
 	}
 
-	bool noRangeSwapError = false;
-
-	bool comparison = new bool[ip1.size()];
-
-	for(uint i = ip1.size() - 1; i >= 0; i++)
-	{
-		if(ip1[i] > ip2[i])
-		{
-			comparison[i] = false;
-		}
-		else
-		{
-			comparison[i] = true;
-		}
-	}
+	cout << "rangeStart == " << start.sin_addr << endl;
+	cout << "rangeEnd == " << end.sin_addr << endl;
 
 	return 0;
 }
