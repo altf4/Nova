@@ -54,7 +54,10 @@ KnnClassification::KnnClassification()
 
 KnnClassification::~KnnClassification()
 {
-
+	for(uint i = 0; i < m_dataPtsWithClass.size(); i++)
+	{
+		delete m_dataPtsWithClass[i];
+	}
 }
 
 
@@ -286,6 +289,11 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 		annDeallocPts(m_normalizedDataPts);
 	}
 
+	//Delete any contents of the points list first
+	for(uint i = 0; i < m_dataPtsWithClass.size(); i++)
+	{
+		delete m_dataPtsWithClass[i];
+	}
 	m_dataPtsWithClass.clear();
 
 	//string array to check whether a line in data.txt file has the right number of fields
@@ -484,6 +492,11 @@ void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 		annDeallocPts(m_normalizedDataPts);
 	}
 
+	//Delete any contents of the points list first
+	for(uint i = 0; i < m_dataPtsWithClass.size(); i++)
+	{
+		delete m_dataPtsWithClass[i];
+	}
 	m_dataPtsWithClass.clear();
 
 	//Open the file again, allocate the number of points and assign

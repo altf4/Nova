@@ -99,7 +99,7 @@ int honeydDHCPWatch;
 int whitelistNotifyFd;
 int whitelistWatch;
 
-ClassificationEngine *engine;
+ClassificationEngine *engine = NULL;
 
 pthread_t classificationLoopThread;
 pthread_t ipUpdateThread;

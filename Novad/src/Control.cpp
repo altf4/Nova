@@ -22,6 +22,9 @@
 #include "Config.h"
 #include "Logger.h"
 #include "Novad.h"
+#include "ClassificationEngine.h"
+
+extern Nova::ClassificationEngine *engine;
 
 namespace Nova
 {
@@ -45,6 +48,10 @@ void SaveAndExit(int param)
 	if(system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) == -1)
 	{
 		// TODO Logging
+	}
+	if(engine != NULL)
+	{
+		delete engine;
 	}
 	LOG(ALERT, "Novad is exiting cleanly.", "");
 	exit(EXIT_SUCCESS);
