@@ -38,31 +38,38 @@ script
     document.getElementById("enabledFeaturesLabel").innerHTML = "Features Mask: " + changeTo;
   }
 
-  function featureWeightChanged() {
+  function featureWeightChanged()
+  {
     var enabledMask = document.getElementById("ENABLED_FEATURES").getAttribute("value");
     var weights = "";
-    for(var i in enabledMask) {
+    for(var i in enabledMask)
+    {
         weights += String(document.getElementById("featureWeight" + i).value) + " ";
     }
     weights = weights.slice(0, -1);
     document.getElementById("FEATURE_WEIGHTS").value = weights; 
   }
 
-  function featureThresholdChanged() {
+  function featureThresholdChanged()
+  {
       var enabledMask = document.getElementById("ENABLED_FEATURES").getAttribute("value");
       var hostileThresholds = "";
-      for (var i in enabledMask) {
+      for (var i in enabledMask)
+      {
           hostileThresholds += String(document.getElementById("featureThreshold" + i).value + " ");
       }
       hostileThresholds = hostileThresholds.slice(0, -1);
       document.getElementById("THRESHOLD_HOSTILE_TRIGGERS").value = hostileThresholds;
   }
 
-  function updateFeatureSettingStates() {
+  function updateFeatureSettingStates()
+  {
     var enabledMask = document.getElementById("ENABLED_FEATURES").getAttribute("value");
-    for (var i in enabledMask) {
+    for (var i in enabledMask)
+    {
         var CESelectElement = document.getElementById("CLASSIFICATION_ENGINE");
-        if (CESelectElement.options[CESelectElement.selectedIndex].value == "THRESHOLD_TRIGGER") {
+        if (CESelectElement.options[CESelectElement.selectedIndex].value == "THRESHOLD_TRIGGER")
+        {
             document.getElementById("featureWeight" + i).disabled = true;
             document.getElementById("featureThreshold" + i).disabled = false;
         } else {
@@ -84,7 +91,8 @@ script
     }
   }
 
-  function init() {
+  function init()
+  {
     updateFeatureSettingStates();
   }
   

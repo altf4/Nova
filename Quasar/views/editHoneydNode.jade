@@ -8,7 +8,8 @@ block headerAdditions
     var currentInterface;
     var pfile;
 
-    function SaveNode() {
+    function SaveNode()
+    {
         var node = {profile : document.getElementById("profile").value
             , portSet : document.getElementById("portSetList").value
             , intface : currentInterface
@@ -21,10 +22,12 @@ block headerAdditions
         now.SaveHoneydNode(node, saveNodeCallback);
     }
 
-    function populateVendorList(profile) {
+    function populateVendorList(profile)
+    {
         pfile = profile;
         document.getElementById("vendorList").innerHTML = "";
-        for (var vendor in profile.ethernet) {
+        for (var vendor in profile.ethernet)
+        {
             var v = profile.ethernet[vendor].vendor;
             var option = document.createElement('option');
             option.innerHTML = v;
@@ -32,11 +35,13 @@ block headerAdditions
         }
 
         document.getElementById("portSetList").innerHTML = "";
-        for (var portset in profile.portSets) {
+        for (var portset in profile.portSets)
+        {
             var v = profile.portSets[portset].setName;
             var option = document.createElement('option');
             option.innerHTML = v;
-            if (v == "#{portSet}") {
+            if (v == "#{portSet}")
+            {
                 option.selected = true;
             }
 
@@ -46,12 +51,15 @@ block headerAdditions
         portsetSelectionChanged();
     }
 
-    function portsetSelectionChanged() {
+    function portsetSelectionChanged()
+    {
         var portsetSelection = document.getElementById("portSetList");
         dojo.empty("portSetTable");
         var currentportset = portsetSelection.options[portsetSelection.selectedIndex].value;
-        for (var i in pfile.portSets) {
-            if (pfile.portSets[i].setName == currentportset) {
+        for (var i in pfile.portSets)
+        {
+            if (pfile.portSets[i].setName == currentportset)
+            {
                 generatePortSetTable(pfile.portSets[i], document.getElementById("portSetTable"));
                 break;
             }
@@ -59,12 +67,15 @@ block headerAdditions
         
     }
 
-    function profileChanged() {
+    function profileChanged()
+    {
         now.GetProfile(document.getElementById("profile").value, populateVendorList);
     }
 
-    function saveNodeCallback(err) {
-      if(err != null) {
+    function saveNodeCallback(err)
+    {
+      if(err != null)
+      {
         alert("Unable to complete operation due to error: " + err);
         window.location = "/configHoneydNodes";
         return;
@@ -72,10 +83,13 @@ block headerAdditions
      now.IsHaystackUp(checkIfRestartNeeded); 
     }
 
-    function checkIfRestartNeeded(haystackUp) {
-      if (haystackUp) {
+    function checkIfRestartNeeded(haystackUp)
+    {
+      if (haystackUp)
+      {
         var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
-        if (restartHaystack) {
+        if (restartHaystack)
+        {
           now.RestartHaystack();
         }
       }
@@ -83,17 +97,20 @@ block headerAdditions
       window.location = "/configHoneydNodes";
     }
 
-    function ipTypeChanged() {
+    function ipTypeChanged()
+    {
       var ipEditEnabled;
       var macEditEnabled;
 
-      if (document.getElementById("ipType").value == "DHCP") {
+      if (document.getElementById("ipType").value == "DHCP")
+      {
         ipEditEnabled = true;
       } else {
         ipEditEnabled = false;
       }
 
-      for (var i = 0; i < 4; i++) {
+      for (var i = 0; i < 4; i++)
+      {
         document.getElementById("ip" + i).disabled = ipEditEnabled;
       }
      }
@@ -125,25 +142,31 @@ block headerAdditions
       }  
     }
 
-    function GenerateMac() {
+    function GenerateMac()
+    {
         var vendor = document.getElementById("vendorList").value;
         now.GenerateMACForVendor(vendor, MACAddressCb);
     }
 
-    function MACAddressCb(mac) {
-        if (mac == null) {
+    function MACAddressCb(mac)
+    {
+        if (mac == null)
+        {
             alert("Unable to get MAC Address");
             return;
         }
 
         var splitMac = mac.split(":");
-        for (var i = 0; i < 6; i++) {
+        for (var i = 0; i < 6; i++)
+        {
             document.getElementById("mac" + i).value = splitMac[i];
         }
     }
    
-    function init() {
-        now.ready( function() {
+    function init()
+    {
+        now.ready( function()
+        {
             profileChanged();
         });
     }

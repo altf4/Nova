@@ -68,13 +68,15 @@ block headerAdditions
 
     require(["dijit/form/TextBox"]);
 
-    function isNovadUpChanged(isNovadUp) {
+    function isNovadUpChanged(isNovadUp)
+    {
         document.getElementById("nova_suspects_header").style.display = isNovadUp ? "block" : "none";
         document.getElementById("nova_suspects").style.display = isNovadUp ? "block" : "none";
         document.getElementById("nova_suspects_error_view").style.display = isNovadUp ? "none" : "block";
     }
 
-    var LiveUpdateChanged = function() {
+    var LiveUpdateChanged = function()
+    {
       liveUpdate = document.getElementById("liveGridUpdate").checked;
       console.log("Toggled live update to " + liveUpdate);
     }
@@ -125,27 +127,29 @@ block headerAdditions
       }
     }
 
-    var ClearAllSuspects = function() {
-      try 
-      {
+    var ClearAllSuspects = function()
+    {
+      try {
         now.ClearAllSuspects();
-      } 
-      catch(err) 
+      } catch(err)
       {
         alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
         console.log("err was: " + err);
       } 
     }
     
-    function showUnclassifiedChanged() {
+    function showUnclassifiedChanged()
+    {
         resendSuspects();
     }
 
-    var AllSuspectsCleared = function() {
+    var AllSuspectsCleared = function()
+    {
       suspectGrid.Clear();
     }
     
-    var SuspectCleared = function(suspect) {
+    var SuspectCleared = function(suspect)
+    {
         console.log("Cleared suspect ");
         console.log(suspect);
         suspectGrid.DeleteRow(buildLink(suspect.ip, suspect.interface));
@@ -153,27 +157,32 @@ block headerAdditions
         return;
     }
       
-    function pad(num) {
+    function pad(num)
+    {
         return ("0" + num.toString()).slice(-2);
     }
     
-    function ClearSuspect(ip, interface, idString) {
+    function ClearSuspect(ip, interface, idString)
+    {
       console.log('in ClearSuspect with ' + ip + ' ' + interface);
       now.ClearSuspect(ip, interface);
       suspectGrid.DeleteRow(buildLink(ip, interface));
     }
 
-    function MonitorSuspect(ip, interface, idString) {
+    function MonitorSuspect(ip, interface, idString)
+    {
         window.open("/monitor?ip=" + ip + "&interface=" + interface, 'Monitoring ' + ip);
     }
 
-    function buildLink(ip, interface) {
+    function buildLink(ip, interface)
+    {
       var res = "<a  href='javascript:void(0)' onclick='getSuspectDetails(";
       res += '"' + ip + '","' + interface + '")' + "'" + '> ' + ip + '</a>';
       return res;
     }
 
-    function getSuspectDetails(ip, interface) {
+    function getSuspectDetails(ip, interface)
+    {
         window.open('/GetSuspectDetails?ip=' + ip + '&interface=' + interface, 'Details for suspect ' + ip);
     }
     
@@ -183,8 +192,6 @@ block headerAdditions
          if(suspect.GetClassification < 0) {return;}
        }
 
-       //if(!liveUpdate) {return;}
-      
       var d = new Date(suspect.GetLastPacketTime*1000);
       var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
       suspect.LastPacketString = dString;
@@ -201,7 +208,7 @@ block headerAdditions
       row.push(String(suspect.GetIsHostile));
       var enabledFeatures = "#{enabledFeatures}";
       for(var i in suspect.GetFeatures)
-      {  
+      {
         suspect[i] = suspect.GetFeatures[i];
         if(enabledFeatures.charAt(i) == "1") row.push(Number(suspect.GetFeatures[i])); 
       }
@@ -229,22 +236,27 @@ block headerAdditions
       suspectGrid.PushEntry(row);
     };
 
-    var applyAdvancedFilter = function() {
+    var applyAdvancedFilter = function()
+    {
         var patt = new RegExp("^[1234567890x\. ()<>=!&|]+$");
         var featureNames = String("#{featureNames}").split(",");
-        for (var i = 0; i < featureNames.length; i++) {
+        for (var i = 0; i < featureNames.length; i++)
+        {
             var filter = "";
             var id = "advancedFilter" + String(i);
             var element = theDoc.getElementById(id);
-            if (element != null) {
+            if (element != null)
+            {
                 filter = element.value;
             }
 
-            if (filter == "") {
+            if (filter == "")
+            {
                 continue;
             }
 
-            if (!patt.test(filter)) {
+            if (!patt.test(filter))
+            {
                 alert("Invalid filter: " + filter);
                 return;
             } else {
@@ -253,7 +265,8 @@ block headerAdditions
                     var x = 2.5;
                     eval(filter);
                     advancedFilters[i] = filter;
-                } catch (err) {
+                } catch (err)
+                {
                     alert("Invalid filter: " + filter);
                     return;
                 }
@@ -261,10 +274,12 @@ block headerAdditions
         }
 
         var filter = theDoc.getElementById("ipFilter").value;
-        if (filter != "") {
+        if (filter != "")
+        {
             try {
                 advancedIpFilter = new RegExp(filter);
-            } catch (err) {
+            } catch (err)
+            {
                 alert("Invalid filter: " + filter);
                 return;
             }
@@ -275,17 +290,20 @@ block headerAdditions
         resendSuspects();
     };
 
-    function resendSuspects() {
+    function resendSuspects()
+    {
         suspectGrid.Clear();
         try {
             now.sendAllSuspects(OnNewSuspect);
-        } catch(err) {
+        } catch(err)
+        {
             alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
             console.log("err was: " + err);
         }   
     }
 
-    var disableAdvancedFilter = function() {
+    var disableAdvancedFilter = function()
+    {
         theDoc.getElementById('advancedFiltering').style.display='none';
         
         advancedFilterEnabled = false;
@@ -294,13 +312,17 @@ block headerAdditions
         resendSuspects();
     }
 
-    function showAdvancedChanged() {
-        if (document.getElementById("showAdvanced").checked) {
-            for (var i = 5; i < suspectGrid.m_columns.length; i++) {
+    function showAdvancedChanged()
+    {
+        if (document.getElementById("showAdvanced").checked)
+        {
+            for (var i = 5; i < suspectGrid.m_columns.length; i++)
+            {
                 suspectGrid.m_columns[i].isDisabled = false;
             }
         } else {
-            for (var i = 5; i < suspectGrid.m_columns.length; i++) {
+            for (var i = 5; i < suspectGrid.m_columns.length; i++)
+            {
                 suspectGrid.m_columns[i].isDisabled = true;
             }
             
@@ -310,22 +332,29 @@ block headerAdditions
         suspectGrid.Render();
     }
               
-    function featureFormatter(d) {
+    function featureFormatter(d)
+    {
         var num = new Number(d);
         return (num.toFixed(2));
     }
 
-    function classificationFormatter(d) {
-        if (d === null) {
+    function classificationFormatter(d)
+    {
+        if (d === null)
+        {
             return "NULL";
-        } else if (d == -1) {
+        } else if (d == -1)
+        {
             return "Invalid";
-        } else if (d == -2) {
+        } else if (d == -2)
+        {
             return "Not Enough Data";
-        } else if (d >= 0 && d <= 1) {
+        } else if (d >= 0 && d <= 1)
+        {
             var num = 100 * d;
             // Minor performance boost, don not bother with coloring those < than 5% hostile, barely shows anyway
-            if (num > 5) {
+            if (num > 5)
+            {
                 return '<div style="background: rgba(255, 0, 0, ' + d.toFixed(2) + ');">' + num.toFixed(2) + "%</div>";
             } else {
                 return num.toFixed(2) + "%";
@@ -335,13 +364,15 @@ block headerAdditions
         }
     }
 
-    function onGridRendered() {
+    function onGridRendered()
+    {
        var tablePages = document.getElementById("tablePages");
        tablePages.innerHTML = "";
        suspectGrid.populateTablePages(tablePages);   
     }
     
-    function Init() {
+    function Init()
+    {
         theDoc = document;
         var enabledFeatures = "#{enabledFeatures}";
         var gridStructure = [];
@@ -352,7 +383,8 @@ block headerAdditions
         gridStructure.push({name: "Hostile", isDisabled: false});
    
         var featureNames = String("#{featureNames}").split(",");
-        for (var i = 0; i < featureNames.length; i++) {
+        for (var i = 0; i < featureNames.length; i++)
+        {
             if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], isDisabled: true, formatter: featureFormatter});
         }
    
@@ -522,8 +554,10 @@ block headerAdditions
       }
     }
 
-    function init() {
-        now.ready(function() {
+    function init()
+    {
+        now.ready(function()
+        {
             now.updateHaystackStatus = updateHaystackStatus;
             now.updateNovadStatus = updateNovadStatus;
             now.IsHaystackUp(updateHaystackStatus);

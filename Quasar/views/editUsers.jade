@@ -8,23 +8,27 @@ block headerAdditions
   script
     var grid;
     
-    function deleteSelectedItems() {
+    function deleteSelectedItems()
+    {
       var numberOfNames = #{usernames.length}
       var items = grid.selection.getSelected();
         
-        if (items.length >= numberOfNames) {
+        if (items.length >= numberOfNames)
+        {
             var dialog = new dijit.Dialog({title: "Error", content: "You can not delete all user accounts! It will be impossible to log in."});
             dialog.show();  
             return;
         }
       var names = [];
-      dojo.forEach(items, function(selectedItem) {
+      dojo.forEach(items, function(selectedItem)
+      {
         names.push(grid.store.getValues(selectedItem, "users")); 
       });
       
       try {
         now.deleteUserEntry(names, errorMessageCallback);
-      } catch(err) {
+      } catch(err)
+      {
         alert("Action failed! Unable to connect to server. Try refreshing the page.");
         console.log("Caught error was: " + err);
       }
@@ -34,7 +38,8 @@ block headerAdditions
     {
         var items = grid.selection.getSelected();
 
-        if (items.length != 1) {
+        if (items.length != 1)
+        {
             var dialog = new dijit.Dialog({title: "Error", content: "Please select 1 user account to edit the password of"});
             dialog.show();  
             return;
@@ -44,15 +49,18 @@ block headerAdditions
         var password = dojo.byId("newPassword").value;
         try {
             now.updateUserPassword(user, password, errorMessageCallback);
-         } catch(err) {
+         } catch(err)
+         {
            alert("Action failed! Unable to connect to server. Try refreshing the page.");
            console.log("Caught error was: " + err);
          }
     }
 
     
-    function errorMessageCallback(sucess, message) {
-      if(sucess != true) {
+    function errorMessageCallback(sucess, message)
+    {
+      if(sucess != true)
+      {
         var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
         dialog.show();
         return;
@@ -60,7 +68,8 @@ block headerAdditions
       location.reload(true);
     }
 
-    function init() {
+    function init()
+    {
         require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojox/data/HtmlStore", "dijit/Dialog"],
             function(DataGrid,ObjectStore){
               var gridStore = new dojox.data.HtmlStore({dataId:"profileTable"});

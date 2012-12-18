@@ -12,7 +12,8 @@ block headerAdditions
     var currentInterface;
     var pfile;
 
-    function createNodes() {
+    function createNodes()
+    {
         document.getElementById("createNewNodes").disabled = true;
         document.getElementById("createNewNodes").value = "Please wait. Creating new nodes...";
         var ipType = document.getElementById("ipType").value;
@@ -29,14 +30,17 @@ block headerAdditions
         now.createHoneydNodes(ipType, ip1, ip2, ip3, ip4, profile, portset, vendor, interface, count, createNodesCallback);
     }
     
-    function profileChanged() {
+    function profileChanged()
+    {
         now.GetProfile(document.getElementById("profile").value, populateVendorList);
     }
     
-    function populateVendorList(profile) {
+    function populateVendorList(profile)
+    {
         pfile = profile;
         document.getElementById("vendorList").innerHTML = "";
-        for (var vendor in profile.ethernet) {
+        for (var vendor in profile.ethernet)
+        {
             var v = profile.ethernet[vendor].vendor;
             var option = document.createElement('option');
             option.innerHTML = v;
@@ -44,7 +48,8 @@ block headerAdditions
         }
         
         document.getElementById("portSetList").innerHTML = "";
-        for (var portset in profile.portSets) {
+        for (var portset in profile.portSets)
+        {
             var v = profile.portSets[portset].setName;
             var option = document.createElement('option');
             option.innerHTML = v;
@@ -54,39 +59,49 @@ block headerAdditions
         portsetSelectionChanged();
     }
     
-    function portsetSelectionChanged() {
+    function portsetSelectionChanged()
+    {
         var portsetSelection = document.getElementById("portSetList");
         dojo.empty("portSetTable");
         var currentportset = portsetSelection.options[portsetSelection.selectedIndex].value;
-        for (var i in pfile.portSets) {
-            if (pfile.portSets[i].setName == currentportset) {
+        for (var i in pfile.portSets)
+        {
+            if (pfile.portSets[i].setName == currentportset)
+            {
                 generatePortSetTable(pfile.portSets[i], document.getElementById("portSetTable"));
                 break;
             }
         }
     }
 
-    function createNodesCallback(err) {
-        if (err) {
+    function createNodesCallback(err)
+    {
+        if (err)
+        {
             alert("Unable to create nodes due to error: " + err);
         } else {
             now.IsHaystackUp(checkIfRestartNeeded); 
         }
     }
 
-    function checkIfRestartNeeded(haystackUp) {
-      if (haystackUp) {
+    function checkIfRestartNeeded(haystackUp)
+    {
+      if (haystackUp)
+      {
         var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
-        if (restartHaystack) {
+        if (restartHaystack)
+        {
           now.RestartHaystack();
         }
       }
       location.reload(true);
     }
     
-    function ipTypeChanged() {
+    function ipTypeChanged()
+    {
       var ipEditEnabled;
-      if (document.getElementById("ipType").value == "DHCP") {
+      if (document.getElementById("ipType").value == "DHCP")
+      {
         ipEditEnabled = true;
       } else {
         ipEditEnabled = false;
@@ -97,7 +112,8 @@ block headerAdditions
       document.getElementById("ip4").disabled = ipEditEnabled;
      }
     
-    function deleteSelectedItems() {
+    function deleteSelectedItems()
+    {
       var items = grid.GetSelected();
      
       for(var i in items)
@@ -117,8 +133,10 @@ block headerAdditions
       grid.Render();
     }
 
-    function errorMessageCallback(success, message) {
-      if(success != true) {
+    function errorMessageCallback(success, message)
+    {
+      if(success != true)
+      {
         alert("Unable to complete operation due to error: " + message);
         location.reload(true);
         return;
@@ -126,11 +144,13 @@ block headerAdditions
       now.IsHaystackUp(checkIfRestartNeeded); 
     }
 
-    function deleteAllNodes() {
+    function deleteAllNodes()
+    {
       var gridElements = grid.GetElements();
       var passToDeleteNodes = [];
       
-      for(var i in gridElements) {
+      for(var i in gridElements)
+      {
         passToDeleteNodes.push(i);
       }
       try
@@ -155,7 +175,8 @@ block headerAdditions
       currentInterface = checkedBox.value;
       try {
           var ip = now.GetLocalIP(checkedInterface, UpdateIpField);
-      } catch(err) {
+      } catch(err)
+      {
         alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
         console.log("err was: " + err);
       }   
@@ -180,8 +201,10 @@ block headerAdditions
       }
     }
 
-    function UpdateIpField(ip) {
-      if (ip != undefined) {
+    function UpdateIpField(ip)
+    {
+      if (ip != undefined)
+      {
         var ipParts = ip.split(".");
         document.getElementById("ip1").value = ipParts[0];
         document.getElementById("ip2").value = ipParts[1];
@@ -196,7 +219,8 @@ block headerAdditions
 
     }
 
-    function editSelectedItem() {
+    function editSelectedItem()
+    {
       var items = grid.GetSelected();
       if (items.length != 1)
       {
@@ -214,11 +238,13 @@ block headerAdditions
       window.location.href = "editHoneydNode?node=" + nodeName;
     }
 
-    function configurationRestored() {
+    function configurationRestored()
+    {
         now.IsHaystackUp(checkIfRestartNeeded); 
     }
     
-    function onGridRendered() {
+    function onGridRendered()
+    {
        var tablePages = document.getElementById("tablePages");
        tablePages.innerHTML = "";
        grid.populateTablePages(tablePages);   
@@ -247,10 +273,13 @@ block headerAdditions
       }
     }
 
-    function dhcpStatusCallback(dhcpNodes) {
-        for (var i in dhcpNodes) {
+    function dhcpStatusCallback(dhcpNodes)
+    {
+        for (var i in dhcpNodes)
+        {
             var mac = dhcpNodes[i].mac.replace(/ /, '');
-            if (grid.GetElements()[mac] !== undefined) {
+            if (grid.GetElements()[mac] !== undefined)
+            {
                 var oldRow = grid.m_elements[mac];
                 oldRow[1] = "DHCP (currently " + dhcpNodes[i].ip + ")";
                 grid.PushEntry(oldRow);
@@ -356,7 +385,8 @@ block headerAdditions
       }
     }
 
-    function init() {
+    function init()
+    {
       Init();
       checkOnlyOne('if0');
       profileChanged();

@@ -5,16 +5,19 @@ block headerAdditions
   script
     alert("Warning! These are advanced configuration options for experienced users.");
     
-    function restoreDefaults() {
+    function restoreDefaults()
+    {
         try {
             now.restoreDefaultSettings(configurationRestored);
-        } catch (err) {
+        } catch (err)
+        {
             alert("Unable to contact server");
             console.log("Error was: " + err);
         }
     }
 
-    function configurationRestored() {
+    function configurationRestored()
+    {
         window.location.reload();
     }
 

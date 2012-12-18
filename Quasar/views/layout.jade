@@ -26,36 +26,44 @@ html(lang="en", onclick='removeContextMenu()')
       var lastNovadStatus = "unknown";
 
       // Wrappers for now.js calls with some try/catches
-      var StartNovad = function() {
+      var StartNovad = function()
+      {
           try {
               now.StartNovad();
-            } catch(err) {
+            } catch(err)
+            {
               alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
               console.log("err was: " + err);
           } 
       }
-      var StopNovad = function() {
+      var StopNovad = function()
+      {
           try {
               now.StopNovad();
-            } catch(err) {
+            } catch(err)
+            {
               alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
               console.log("err was: " + err);
           } 
       }
   
-      var StartHaystack = function() {
+      var StartHaystack = function()
+      {
           try {
               now.StartHaystack();
-            } catch(err) {
+            } catch(err)
+            {
               alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
               console.log("err was: " + err);
           } 
       }
   
-      var StopHaystack = function() {
+      var StopHaystack = function()
+      {
           try {
               now.StopHaystack();
-            } catch(err) {
+            } catch(err)
+            {
               alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
               console.log("err was: " + err);
           } 
@@ -90,7 +98,8 @@ html(lang="en", onclick='removeContextMenu()')
         document.getElementById("haystack_status_icon_green").style.display = "none";
         document.getElementById("haystack_status_icon_orange").style.display = "none";
         
-        if (isHaystackUp) {
+        if (isHaystackUp)
+        {
           document.getElementById("haystack_status_icon_green").style.display = "block";
         } else {
           document.getElementById("haystack_status_icon_red").style.display = "block";
@@ -114,19 +123,23 @@ html(lang="en", onclick='removeContextMenu()')
             dojo.fadeIn({node:"appLayout", delay:0}).play();
 
             var sideBarButtons = document.getElementsByClassName("sideBarButton");
-            for (var i in sideBarButtons) {
-                if (!sideBarButtons[i].pathname) {
+            for (var i in sideBarButtons)
+            {
+                if (!sideBarButtons[i].pathname)
+                {
                     continue;
                 }
                 
-                if (sideBarButtons[i].pathname == window.location.pathname) {
+                if (sideBarButtons[i].pathname == window.location.pathname)
+                {
                     sideBarButtons[i].className += ' active';
                     console.log("Enabled button " + sideBarButtons[i]);
                 }
             }
           });
 
-          now.ready(function() {
+          now.ready(function()
+          {
             now.updateHaystackStatus = updateHaystackStatus;
             now.updateNovadStatus = updateNovadStatus;
             now.IsHaystackUp(updateHaystackStatus);
