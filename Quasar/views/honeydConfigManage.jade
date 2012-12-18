@@ -586,12 +586,11 @@ block content
   div#setup
     h2 Edit Configurations
     div#addNewConfig
-      button#addConfig(onclick='showLightBox("0")') Add Group
-      button#cloneConfig(onclick='showLightBox("1")') Clone Group
-      button#removeConfig(onclick='removeConfig()') Remove Group
+      button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch') Add Group
+      button#cloneConfig(onclick='showLightBox("1")', title='Create a new configuration group by cloning an existing configuration') Clone Group
       br
       br
-      button(onclick="window.location='/autoConfig'") Create Group From Network Scan
+      button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') Create Group From Network Scan
 
       br
       br
@@ -599,6 +598,7 @@ block content
     div#treeAndPiContainer(style="border: 3px solid black; display: inline-block; margin: 5px 5px 5px 5px; text-align: center")
       h1 Current Group
       select#configurations(onchange='GetConfigurationSummary()')
+      button#removeConfig(onclick='removeConfig()', title='Delete the currently selected group') Delete Group
       
       div(style="margin-top: 20px")
       hr

@@ -23,9 +23,9 @@ block content
     div#nova_suspects_header(style="width:600px; display: none")
       br
       
-      button(onclick="toggleFilterBlock()") Filtering Options
-      button(type="button", style="width:160px;", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
-      button(onclick="window.location='/novaState.csv'") Suspects as CSV file
+      button(onclick="toggleFilterBlock()", title='Only show rows that match a certain specific criteria') Filtering Options
+      button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
+      button(onclick="window.location='/novaState.csv'") Save as CSV file
   
       br
     div#nova_suspects(style="display: none;")      
