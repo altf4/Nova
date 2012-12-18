@@ -9,7 +9,8 @@ block headerAdditions
   script
     var grid;
 
-    var AddNewAlias = function() {
+    var AddNewAlias = function()
+    {
         var ifaceDropdown = document.getElementById("interfaceSelection");
         var iface = ifaceDropdown.options[ifaceDropdown.selectedIndex].value;
         var alias = document.getElementById("aliasSelection").value;
@@ -17,11 +18,13 @@ block headerAdditions
         now.AddInterfaceAlias(iface, alias, refresh);
     }
 
-    var DeleteAlias = function(iface) {
+    var DeleteAlias = function(iface)
+    {
         now.AddInterfaceAlias(iface, "", refresh);
     }
 
-    var refresh = function() {
+    var refresh = function()
+    {
         window.location = window.location;
     }
     
@@ -34,7 +37,8 @@ block headerAdditions
         grid = new NovaGrid(columns, 0, aliasTable, 'grid', false);
 
         var interfaceAliases = !{JSON.stringify(interfaceAliases)};
-        for (i in interfaceAliases) {
+        for (i in interfaceAliases)
+        {
             var row = new Array();
             row.push(i);
             row.push(interfaceAliases[i]);

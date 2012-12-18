@@ -8,16 +8,19 @@ block headerAdditions
   script
     var grid;
     
-    function deleteSelectedItems() {
+    function deleteSelectedItems()
+    {
       var items = grid.selection.getSelected();
       var names = [];
-      dojo.forEach(items, function(selectedItem) {
+      dojo.forEach(items, function(selectedItem)
+      {
         names.push(grid.store.getValues(selectedItem, "whitelistedIp")); 
       });
       
       try {
         now.deleteWhitelistEntry(names, errorMessageCallback);
-      } catch(err) {
+      } catch(err)
+      {
         alert("Action failed! Unable to connect to server. Try refreshing the page.");
         console.log("Caught error was: " + err);
       }
@@ -58,8 +61,10 @@ block headerAdditions
     }
 
     
-    function errorMessageCallback(success, message) {
-      if(success != true) {
+    function errorMessageCallback(success, message)
+    {
+      if(success != true)
+      {
         var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
         dialog.show();
         return;
@@ -67,7 +72,8 @@ block headerAdditions
       location.reload(true);
     }
 
-    function init() {
+    function init()
+    {
         require(["dojox/grid/DataGrid","dojo/data/ObjectStore", "dojox/data/HtmlStore", "dijit/Dialog"],
         function(DataGrid,ObjectStore){
           var gridStore = new dojox.data.HtmlStore({dataId:"profileTable"});
