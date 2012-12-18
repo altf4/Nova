@@ -3,7 +3,8 @@ html
   head
     script(type="text/javascript")
       var time = null;
-      function move () {
+      function move ()
+      {
           window.location = "#{redirectLink}"; 
       }
   body(onload="timer=setTimeout('move()',5000)")

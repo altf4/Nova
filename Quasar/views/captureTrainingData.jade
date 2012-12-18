@@ -8,26 +8,31 @@ block headerAdditions
         var statusElement;
         var sessionNameElement;
 
-        var toggleTrainingCapture = function() {
+        var toggleTrainingCapture = function()
+        {
           try {
             now.GetCaptureSession(function(ret) {console.log(ret)} );
-          } catch(err) {
+          } catch(err)
+          {
             alert("Action failed! Unable to connect to server. Try refreshing the page.");
             console.log("Caught error was: " + err);
           }
             
-            if (sessionNameElement.value == "") {
+            if (sessionNameElement.value == "")
+            {
                 alert("Training session name can not be blank");
                 return;
             }
 
-            if (!trainingStarted) {
+            if (!trainingStarted)
+            {
                 statusElement.innerHTML = "Status: Starting data capture...";
                 buttonElement.disabled = true;
 
                 try {
                     now.StartTrainingCapture(sessionNameElement.value, trainingCaptureStarted); 
-                } catch(err) {
+                } catch(err)
+                {
                     alert("Action failed! Unable to connect to server. Try refreshing the page.");
                     console.log("Caught error was: " + err);
                 }
@@ -38,7 +43,8 @@ block headerAdditions
           
                 try {
                     now.StopTrainingCapture(sessionNameElement.value, trainingCaptureStopped);
-                } catch(err) {
+                } catch(err)
+                {
                     alert("Action failed! Unable to connect to server. Try refreshing the page.");
                     console.log("Caught error was: " + err);
                 }
@@ -47,8 +53,10 @@ block headerAdditions
             }
         }
 
-        var trainingCaptureStarted = function(result) {
-            if (result != undefined && result != "") {
+        var trainingCaptureStarted = function(result)
+        {
+            if (result != undefined && result != "")
+            {
                 alert("Unable to start training capture due to error: " + result);
                 trainingStarted = false;
                 buttonElement.innerHTML = "Start Training Capture";
@@ -61,7 +69,8 @@ block headerAdditions
             statusElement.innerHTML = "Status: Capturing training data";
         }
     
-        var trainingCaptureStopped = function(result) {
+        var trainingCaptureStopped = function(result)
+        {
             buttonElement.innerHTML = "Start training Capture";
             buttonElement.disabled = false;
             statusElement.innerHTML = "Status: Capture session stopped";
@@ -75,10 +84,13 @@ block headerAdditions
             statusElement = document.getElementById("status");
             sessionNameElement = document.getElementById("sessionName");
             
-            now.ready( function() {
+            now.ready( function()
+            {
                 try {
-                now.GetCaptureSession( function(ret) {
-                    if (ret != "null" && ret != "undefined" && ret != "") {
+                now.GetCaptureSession( function(ret)
+                {
+                    if (ret != "null" && ret != "undefined" && ret != "")
+                    {
                         buttonElement.innerHTML = "Stop Training Capture";
                         buttonElement.disabled = false;
                         trainingStarted = true;
@@ -87,7 +99,8 @@ block headerAdditions
                     }
                 });
 
-                } catch(err) {
+                } catch(err)
+                {
                     alert("Action failed! Unable to connect to server. Try refreshing the page.");
                     console.log("Caught error was: " + err);
                 }

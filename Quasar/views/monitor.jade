@@ -52,37 +52,45 @@ block headerAdditions
     var gridLinesEnabled = false;
     var autoscale = false;
 
-    function redrawGraphs() {
-        for (var i = 0; i < 14; i++) {
+    function redrawGraphs()
+    {
+        for (var i = 0; i < 14; i++)
+        {
             drawGraph("chart" + i, "p" + i, data, i);
         }
     
         drawGraph("classificationChart", "classificationChartP", classificationData, 0); 
     }
 
-    function toggleGridLines() {
+    function toggleGridLines()
+    {
         gridLinesEnabled = document.getElementById("enableGridLines").checked;
         redrawGraphs();
     }
 
-    function toggleAutoscale() {
+    function toggleAutoscale()
+    {
         autoscale = document.getElementById("enableAutoScale").checked;
         redrawGraphs();
     }
 
-    function markClassificationAs(hostility) {
+    function markClassificationAs(hostility)
+    {
         "use strict";
         var hostilityString;
-        if (hostility == "1") {
+        if (hostility == "1")
+        {
             hostilityString = "hostile";
         } else {    
             hostilityString = "benign";
         }
 
-        if (!confirm("This will train the classifiaction engine to match all suspects looking like this one's current state as " + hostilityString + ". Are you sure you want to do this?")) {
+        if (!confirm("This will train the classifiaction engine to match all suspects looking like this one's current state as " + hostilityString + ". Are you sure you want to do this?"))
+        {
             return;
         }
-        if (lastSuspectObject == null) {
+        if (lastSuspectObject == null)
+        {
             alert("No data recieved for suspect yet");
             return;
         }
@@ -91,31 +99,38 @@ block headerAdditions
  
         try {
            now.addTrainingPoint(lastSuspectObject.GetIpString, lastSuspectObject.GetInterface, features, hostility, addedCb);
-        } catch (err) {
+        } catch (err)
+        {
             console.log("Error was: " + err);
             alert("Unable to contact server. Try refreshing the page");
         }
     }
 
-    function addedCb(err) {
-        if (err) {
+    function addedCb(err)
+    {
+        if (err)
+        {
             alert("There was and error adding the new training point: " + err);
         } else {
             alert("Added suspect point to training data");
         }
     }
     
-    function Init() {
+    function Init()
+    {
         now.sendSuspect("#{suspectIp}", "#{suspectInterface}", OnNewSuspect)
         now.reverseDNS("#{suspectIp}", reverseDNScb);
     };
 
-    function reverseDNScb(err, domains) {
+    function reverseDNScb(err, domains)
+    {
         var prefix = '';
         var suffix = '';
-        if (err != null) {
+        if (err != null)
+        {
             var errorString;
-            if (err.code == "ENOTFOUND") {
+            if (err.code == "ENOTFOUND")
+            {
                 errorString = "No domain name found";
             } else {
                 errorString = "Unable to get domain name because of error: " + err.code;
@@ -126,7 +141,8 @@ block headerAdditions
         }
     }
 
-    function OnNewSuspect(suspect) {
+    function OnNewSuspect(suspect)
+    {
         // We throw the first suspect in the graphs twice so it'll have a line instead of nothing
         if (initialized)
         {
@@ -134,7 +150,8 @@ block headerAdditions
             OnNewSuspect(suspect);
         }
         
-        if (suspect.GetIpString == "#{suspectIp}" && suspect.GetInterface == "#{suspectInterface}") {
+        if (suspect.GetIpString == "#{suspectIp}" && suspect.GetInterface == "#{suspectInterface}")
+        {
             lastSuspectObject = suspect;
             data.push(suspect.GetFeatures);
 
@@ -143,11 +160,13 @@ block headerAdditions
             classificationData.push(classificationArrayWrapper);
 
             // TODO Don't hard code
-            if (data.length > 100) {
+            if (data.length > 100)
+            {
                 data.shift();
             }
 
-            if (classificationData.length > 100) {
+            if (classificationData.length > 100)
+            {
                 classificationData.shift();
             }
 
@@ -177,7 +196,8 @@ block headerAdditions
 
     };
 
-    function drawGraph(canvas, pID, data, index) {
+    function drawGraph(canvas, pID, data, index)
+    {
         // TODO Don't hard code
         var m_width = 200;
         var m_height = 200;
@@ -195,7 +215,8 @@ block headerAdditions
 
         var minY;
         var maxY;
-        if (autoscale) {
+        if (autoscale)
+        {
             minY = data[0][index];
             maxY = data[0][index];
         } else {
@@ -208,7 +229,8 @@ block headerAdditions
             || canvas == "chart10"
             || canvas == "chart11"
             || canvas == "chart12"
-            || canvas == "chart13") {
+            || canvas == "chart13")
+            {
                 minY = 0;
                 maxY = 1;
             } else {
@@ -218,29 +240,35 @@ block headerAdditions
                 
         }
         
-        if (data.length == 1) {
+        if (data.length == 1)
+        {
             p.innerHTML = "<br> Current: " + data[0][index].toFixed(12);
             return;
         }
 
 
         var points = new Array();
-        for (var i = 0; i < data.length; i++) {
-            if (data[i][index] > maxY) {
+        for (var i = 0; i < data.length; i++)
+        {
+            if (data[i][index] > maxY)
+            {
                 maxY = data[i][index];
             }
 
-            if (data[i][index] < minY) {
+            if (data[i][index] < minY)
+            {
                 minY = data[i][index];
             }
         }
 
          
-        for (var i = 0; i < data.length; i++) {
+        for (var i = 0; i < data.length; i++)
+        {
             var point = new Object();
             point.x = (width/(data.length - 1))*i;
 
-            if (maxY == minY) {
+            if (maxY == minY)
+            {
                 point.y = height/2;
             } else {
                 point.y = border + height - ((1.0*data[i][index] - minY)/(maxY-minY) * height);
@@ -249,7 +277,8 @@ block headerAdditions
         }
        
         // Draw grid lines
-        if (gridLinesEnabled) {
+        if (gridLinesEnabled)
+        {
             ctx.strokeStyle="#A1A1A1";
             ctx.beginPath();
             ctx.moveTo(0, border);
@@ -259,7 +288,8 @@ block headerAdditions
             ctx.moveTo(0, height+border);
             ctx.lineTo(width, height+border);
             ctx.stroke();
-            for (var i = 0; i < points.length; i++) {
+            for (var i = 0; i < points.length; i++)
+            {
                 ctx.beginPath();
                 ctx.moveTo(points[i].x,border);
                 ctx.lineTo(points[i].x,height+border);
@@ -280,7 +310,8 @@ block headerAdditions
 
         
         ctx.strokeStyle="#FF0000";
-        for (var i = 1; i < points.length; i++) {
+        for (var i = 1; i < points.length; i++)
+        {
             ctx.beginPath();
             ctx.moveTo(points[i-1].x, points[i-1].y);
             ctx.lineTo(points[i].x, points[i].y);
@@ -288,7 +319,8 @@ block headerAdditions
         }
 
         ctx.fillStyle="#0000FF";
-        for (var i = 0; i < points.length; i++) {
+        for (var i = 0; i < points.length; i++)
+        {
             ctx.beginPath();
             ctx.arc(points[i].x,points[i].y,2,0,2*Math.PI);
             ctx.fill();
@@ -298,14 +330,18 @@ block headerAdditions
         var trendString = "";
         // TODO Don't hard code
         var trendStringCutoff = 25;
-        for (var i = points.length - 2; i >= 0; i--) {
-            if (trendString.length > trendStringCutoff) {
+        for (var i = points.length - 2; i >= 0; i--)
+        {
+            if (trendString.length > trendStringCutoff)
+            {
                 break;
             }
 
-            if (points[i].y > points[i+1].y) {
+            if (points[i].y > points[i+1].y)
+            {
                 trendString = "+" + trendString;
-            } else if (points[i].y < points[i+1].y) {
+            } else if (points[i].y < points[i+1].y)
+            {
                 trendString = "-" + trendString;
             } else {
                 trendString = "=" + trendString;
@@ -320,7 +356,8 @@ block headerAdditions
 
 
     function init(ready){
-        now.ready(function() {
+        now.ready(function()
+        {
             Init();
             now.OnNewSuspect = OnNewSuspect;
         });

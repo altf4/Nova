@@ -48,9 +48,11 @@ block headerAdditions
   script
     var profilesArray = {};
 
-    function ipTypeChanged() {
+    function ipTypeChanged()
+    {
       var ipEditEnabled;
-      if (document.getElementById("ipType").value == "DHCP") {
+      if (document.getElementById("ipType").value == "DHCP")
+      {
         ipEditEnabled = true;
       } else {
         ipEditEnabled = false;
@@ -61,20 +63,24 @@ block headerAdditions
       document.getElementById("ip4").disabled = ipEditEnabled;
      }
     
-    function deleteSelectedItems() {
+    function deleteSelectedItems()
+    {
       var names = GetSelectedProfiles();
      
       try {
         now.deleteProfiles(names, errorMessageCallback);
-       } catch(err) {
+       } catch(err)
+       {
          alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
          console.log("err was: " + err);
         }
     }
 
     
-    function errorMessageCallback(success, message) {
-      if(success != true) {
+    function errorMessageCallback(success, message)
+    {
+      if(success != true)
+      {
         var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
         dialog.show();
         return;
@@ -83,10 +89,13 @@ block headerAdditions
      now.IsHaystackUp(checkIfRestartNeeded); 
     }
 
-    function checkIfRestartNeeded(haystackUp) {
-      if (haystackUp) {
+    function checkIfRestartNeeded(haystackUp)
+    {
+      if (haystackUp)
+      {
         var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
-        if (restartHaystack) {
+        if (restartHaystack)
+        {
           now.RestartHaystack();
         }
       }
@@ -94,7 +103,8 @@ block headerAdditions
       location.reload(true);
     }
 
-    function editSelectedItem() {
+    function editSelectedItem()
+    {
       var items = GetSelectedProfiles();
       if (items.length != 1)
       {
@@ -105,7 +115,8 @@ block headerAdditions
       window.location.href = "editHoneydProfile?profile=" + items[0];
     }
 
-    function addChildSelectedItem() {
+    function addChildSelectedItem()
+    {
       var items = GetSelectedProfiles();
       if (items.length != 1)
       {
@@ -116,47 +127,59 @@ block headerAdditions
       window.location.href = "addHoneydProfile?parent=" + items[0];
     }
 
-    function SetHighlighted(element) {
+    function SetHighlighted(element)
+    {
         element.className = "selectedProfile";
     }
 
-    function UnsetHighlighted(element) {
+    function UnsetHighlighted(element)
+    {
         element.className = "unselectedProfile";
     }
 
-    function GetSelectedProfiles() {
+    function GetSelectedProfiles()
+    {
         var selected = new Array();
-        for (profile in profilesArray) {
-            if (profilesArray[profile].isSelected) {
+        for (profile in profilesArray)
+        {
+            if (profilesArray[profile].isSelected)
+            {
                 selected.push(profile);
             }
         }
         return selected;
     }
 
-    function configurationRestored() {
+    function configurationRestored()
+    {
         now.IsHaystackUp(checkIfRestartNeeded); 
     }
 
-    function onProfileClicked(profile) {
+    function onProfileClicked(profile)
+    {
         var ctrlKeyPressed = true;
-        if (typeof(event) !== 'undefined') {
-                if (!event.ctrlKey) {
+        if (typeof(event) !== 'undefined')
+        {
+                if (!event.ctrlKey)
+                {
                         ctrlKeyPressed = false;
                 } else {
                         ctrlKeyPressed = true;
                 }
         }
 
-        if (!ctrlKeyPressed) {
-            for (entry in profilesArray) {
+        if (!ctrlKeyPressed)
+        {
+            for (entry in profilesArray)
+            {
                 profilesArray[entry].isSelected = false;
                 UnsetHighlighted(profilesArray[entry].listElement);
             }
         }
 
         profilesArray[profile].isSelected = !profilesArray[profile].isSelected;
-        if (profilesArray[profile].isSelected) {
+        if (profilesArray[profile].isSelected)
+        {
             SetHighlighted(profilesArray[profile].listElement);
         } else {
             UnsetHighlighted(profilesArray[profile].listElement);
@@ -169,7 +192,8 @@ block headerAdditions
     function init(){
         var children = document.getElementById("profileTableBody").children;
 
-        for (var i = 0; i < children.length; i++) {
+        for (var i = 0; i < children.length; i++)
+        {
             var profile = {};
             profile.name = children[i].children[0].innerHTML;
             profile.parent = children[i].children[1].innerHTML;
@@ -180,9 +204,12 @@ block headerAdditions
         }
        
         // build it into a tree
-        for (i in profilesArray) {
-            for (j in profilesArray) {
-                if (profilesArray[j].parent == profilesArray[i].name) {
+        for (i in profilesArray)
+        {
+            for (j in profilesArray)
+            {
+                if (profilesArray[j].parent == profilesArray[i].name)
+                {
                     profilesArray[i].children.push(profilesArray[j].name);
                 }
              }
@@ -190,7 +217,8 @@ block headerAdditions
         
         var treeDiv = document.getElementById("treeDiv");
 
-        var drawNode = function(profile, parentDOMNode) {
+        var drawNode = function(profile, parentDOMNode)
+        {
             var li = document.createElement('li');
             var a = document.createElement('a');
             profilesArray[profile].listElement = a;
@@ -201,12 +229,14 @@ block headerAdditions
             li.appendChild(a); 
             parentDOMNode.appendChild(li);
            
-            if(profilesArray[profile].children.length) {
+            if(profilesArray[profile].children.length)
+            {
                 var ul = document.createElement('ul'); 
                 li.appendChild(ul);
             }
 
-            for(var i = 0; i < profilesArray[profile].children.length; i++) {
+            for(var i = 0; i < profilesArray[profile].children.length; i++)
+            {
                drawNode(profilesArray[profilesArray[profile].children[i]].name, ul);
             }
 

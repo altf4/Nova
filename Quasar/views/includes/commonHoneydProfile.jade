@@ -10,7 +10,8 @@ script
         var loaded = false;
 
         var currentName;
-        if (newProfile == "true") {
+        if (newProfile == "true")
+        {
                 currentName = "#{parentName}";
                 loadedName = currentName;
                 console.log("Creating child of profile " + currentName);
@@ -31,7 +32,8 @@ script
 
 
         // Make the HTML view reflect the internal model
-        var refreshVendorsView = function() {
+        var refreshVendorsView = function()
+        {
                 var vendorDiv = document.getElementById("ethernetVEndors");
                 dojo.empty(vendorDiv);
 
@@ -48,7 +50,8 @@ script
                 vendorDiv.appendChild(headerRow);
 
                 // Populate the table rows
-                for (var i in profile.ethernet) {
+                for (var i in profile.ethernet)
+                {
                         var vendorRow = document.createElement("tr");
 
                         // Vendor name cell
@@ -89,14 +92,18 @@ script
                 }
         }
 
-        var changedEthernetVendorCount = function(vendorIndex, vendorCount) {
+        var changedEthernetVendorCount = function(vendorIndex, vendorCount)
+        {
                 profile.ethernet[vendorIndex].count = vendorCount;
         }
 
-        var addEthernetVendor = function(vendorName, vendorCount) {
+        var addEthernetVendor = function(vendorName, vendorCount)
+        {
                 // Check for duplicates
-                for (var i in profile.ethernet) {
-                        if (profile.ethernet[i].vendor == vendorName) {
+                for (var i in profile.ethernet)
+                {
+                        if (profile.ethernet[i].vendor == vendorName)
+                        {
                                 alert("Vendor already exists. Can not have duplicates.");
                                 return;
                         }
@@ -105,12 +112,14 @@ script
                 refreshVendorsView();
         }
 
-        var deleteEthernetVendor = function(vendorIndex) {
+        var deleteEthernetVendor = function(vendorIndex)
+        {
                 profile.ethernet.splice(vendorIndex, 1); 
                 refreshVendorsView();
         }
 
-        var updatePortsModel = function() {
+        var updatePortsModel = function()
+        {
             var TCPExceptions = new Array();
             var UDPExceptions = new Array();
             ports.size = portIndexes.length;
@@ -129,7 +138,8 @@ script
                     case 5: port.behavior = "tarpit script"; break;
                 }
 
-                if (port.behavior == "script") {
+                if (port.behavior == "script")
+                {
                     port.scriptName = dojo.byId("portScriptDrop" + portIndexes[i]).value;
                 } else {
                     port.scriptName = "";
@@ -137,14 +147,17 @@ script
 
                 port.protocol = dojo.byId("portType" + portIndexes[i]).value;
 
-                if (port.protocol == "tcp") {
+                if (port.protocol == "tcp")
+                {
                     TCPExceptions.push(port);
                 } else {
                     UDPExceptions.push(port);
                 }
             }
-            for (var i in profile.portSets) {
-                if (profile.portSets[i].setName == lastPortSet) {
+            for (var i in profile.portSets)
+            {
+                if (profile.portSets[i].setName == lastPortSet)
+                {
                     profile.portSets[i].TCPExceptions = TCPExceptions;
                     profile.portSets[i].UDPExceptions = UDPExceptions;
                     profile.portSets[i].TCPBehavior = dojo.byId("defaultTCPAction").value;
@@ -156,12 +169,15 @@ script
 
         }
 
-        var updatePortSetLists = function() {
+        var updatePortSetLists = function()
+        {
             dojo.empty(document.getElementById("portSetSelection"));
-            if (profile.portSets.length != 0) {
+            if (profile.portSets.length != 0)
+            {
                 dojo.byId("portSetDiv").style.display = "block";
                 document.getElementById("portSetSelection").disabled = false;
-                for (var i in profile.portSets) {
+                for (var i in profile.portSets)
+                {
                     var option = document.createElement("option");
                     option.value = profile.portSets[i].setName;
                     option.innerHTML = profile.portSets[i].setName;
@@ -173,11 +189,14 @@ script
             portSetSelectionChanged();
         }
 
-        var deletePortset = function() {
+        var deletePortset = function()
+        {
             var setName = dojo.byId("portSetSelection").value;
             
-            for (var i in profile.portSets) {
-                if (profile.portSets[i].setName == setName) {
+            for (var i in profile.portSets)
+            {
+                if (profile.portSets[i].setName == setName)
+                {
                     profile.portSets.splice(i, 1);
                     break;
                 }
@@ -186,16 +205,20 @@ script
             updatePortSetLists();
         }
 
-        var addNewPortset = function addNewPortSet() {
+        var addNewPortset = function addNewPortSet()
+        {
             var setName = dojo.byId("newPortSetName").value;
 
-            if (setName == "") {
+            if (setName == "")
+            {
                 alert("Port sets must have a name.");
                 return;
             }
 
-            for (var i in profile.portSets) {
-                if (profile.portSets[i].setName == setName) {
+            for (var i in profile.portSets)
+            {
+                if (profile.portSets[i].setName == setName)
+                {
                     alert("A port set by that name already exists");
                     return;
                 }
@@ -222,8 +245,10 @@ script
             portSetSelectionChanged();
         }
         // Currently edited port set has changed
-        var portSetSelectionChanged = function() {
-            if (lastPortSet != "") {
+        var portSetSelectionChanged = function()
+        {
+            if (lastPortSet != "")
+            {
                 updatePortsModel();
             }
 
@@ -237,17 +262,21 @@ script
             dojo.empty("portTable");
 
             portIndexes = [];
-            for (var i in profile.portSets) {
-                if (profile.portSets[i].setName == newPortSet) {
+            for (var i in profile.portSets)
+            {
+                if (profile.portSets[i].setName == newPortSet)
+                {
                     dojo.byId("defaultICMPAction").value = profile.portSets[i].ICMPBehavior;
                     dojo.byId("defaultTCPAction").value = profile.portSets[i].TCPBehavior;
                     dojo.byId("defaultUDPAction").value = profile.portSets[i].UDPBehavior;
                         
-                    for (var port in profile.portSets[i].TCPExceptions) {
+                    for (var port in profile.portSets[i].TCPExceptions)
+                    {
                         addPort(profile.portSets[i].TCPExceptions[port]);
                     }
 
-                    for (var port in profile.portSets[i].UDPExceptions) {
+                    for (var port in profile.portSets[i].UDPExceptions)
+                    {
                         addPort(profile.portSets[i].UDPExceptions[port]);
                     }
                 }
@@ -255,18 +284,24 @@ script
         }
 
 
-        function selectItemByValue(elmnt, value) {
-                for(var i=0; i < elmnt.options.length; i++) {
-                        if(elmnt.options[i].value == value) {
+        function selectItemByValue(elmnt, value)
+        {
+                for(var i=0; i < elmnt.options.length; i++)
+                {
+                        if(elmnt.options[i].value == value)
+                        {
                         elmnt.selectedIndex = i;
                         }
                 }
         }
 
-        function init() {
-        require(["dijit/registry", "dijit/form/FilteringSelect"], function() {
+        function init()
+        {
+        require(["dijit/registry", "dijit/form/FilteringSelect"], function()
+        {
                 function obj() {};
-                saveChanges = function() {
+                saveChanges = function()
+                {
 
                         var ethVendorList = [];
 
@@ -279,7 +314,8 @@ script
                         profile.dropRate = dojo.byId("dropRate").value;
                         profile.uptimeMin = dojo.byId("uptimeMin").value;
 
-                        if (dojo.byId("uptimeType").selectedIndex == 0) {
+                        if (dojo.byId("uptimeType").selectedIndex == 0)
+                        {
                                 profile.uptimeMax = dojo.byId("uptimeMin").value;
                         }  else {
                                 profile.uptimeMax = dojo.byId("uptimeMax").value;
@@ -291,17 +327,21 @@ script
                         profile.isUptimeInherited = dojo.byId("inheritUptime").checked;
                         updatePortsModel();
 
-                        now.WouldProfileSaveDeleteNodes(profile, function(result) {
+                        now.WouldProfileSaveDeleteNodes(profile, function(result)
+                        {
                             var userConfirmed = true;
-                            if (result == true) {
+                            if (result == true)
+                            {
                                 userConfirmed = confirm("Warning: this will delete nodes that used deleted portsets");
                             }
 
-                                if (userConfirmed) {
+                                if (userConfirmed)
+                                {
                                     //need conditional here for add vs. edit, false == edit, true == add
                                     try {
                                         now.SaveProfile(profile, savedChanges);
-                                    } catch (err) {
+                                    } catch (err)
+                                    {
                                         alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
                                         console.log("err was: " + err);
                                     }
@@ -323,10 +363,13 @@ script
                 }
 
 
-                 checkIfRestartNeeded = function(haystackUp) {
-                    if (haystackUp) {
+                 checkIfRestartNeeded = function(haystackUp)
+                 {
+                    if (haystackUp)
+                    {
                         var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
-                        if (restartHaystack) {
+                        if (restartHaystack)
+                        {
                             now.RestartHaystack();
                         }
                     }
@@ -604,7 +647,8 @@ script
                         uptimeTypeChanged();
                 }
 
-                now.ready(function() {
+                now.ready(function()
+                {
                         if (loaded) 
                         {
                                 return;
@@ -662,7 +706,8 @@ script
                                 dojo.byId("uptimeMin").value = profile.uptimeMin;
                                 dojo.byId("uptimeMax").value = profile.uptimeMax;
 
-                                if (profile.uptimeMin != profile.uptimeMax) {
+                                if (profile.uptimeMin != profile.uptimeMax)
+                                {
                                         dojo.byId("uptimeType").selectedIndex = 1;
                                         uptimeTypeChanged();
                                 }
@@ -679,7 +724,8 @@ script
                                 inheritanceChanged();
                         });
 
-                        } catch(err) {
+                        } catch(err)
+                        {
                             alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
                             console.log("err was: " + err);
                         }  
