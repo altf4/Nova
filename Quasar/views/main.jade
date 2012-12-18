@@ -386,13 +386,21 @@ block headerAdditions
       var evt = (e ? e : window.event);
       var source = evt.target || evt.srcElement;
       
-      if(source.tagName != 'TD')
+      if(source.tagName != 'TD' && source.parentNode.tagName != 'TD')
       {
         evt.returnValue = false || evt.preventDefault();
         return false;
       }
       
-      source = source.parentNode;
+      if(source.tagName == 'TD')
+      {
+        source = source.parentNode;
+      }
+      else if(source.parentNode.tagName == 'TD')
+      {
+        source = source.parentNode;
+        source = source.parentNode;
+      }
       
       var ip = source.childNodes[1].childNodes[0].innerHTML;
       var iface = source.childNodes[0].innerHTML;

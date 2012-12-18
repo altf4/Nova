@@ -32,6 +32,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <csignal>
 
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
@@ -54,6 +55,11 @@ string localMachine;
 string nmapFileName;
 uint numNodes;
 double nodeRatio;
+string nodeRange;
+vector<pair<int, int> > nodeRangeVector;
+int nodeRangeStartInt;
+int nodeRangeEndInt;
+string group;
 
 enum NumberOfNodesType
 {
@@ -63,17 +69,24 @@ enum NumberOfNodesType
 };
 
 NumberOfNodesType numberOfNodesType;
-
 vector<Subnet> subnetsDetected;
-
 ScannedHostTable scannedHosts;
-
 string lockFilePath;
+
+void sig_handler(int x)
+{
+	if(!group.empty())
+	{
+		HoneydConfiguration::Inst()->RemoveConfiguration(group);
+	}
+}
 
 int main(int argc, char ** argv)
 {
 	//Seed any future random values
 	srand(time(NULL));
+
+	signal(SIGINT, sig_handler);
 
 	namespace po = boost::program_options;
 	po::options_description desc("Command line options");
@@ -83,7 +96,7 @@ int main(int argc, char ** argv)
 				("help,h", "Show command line options")
 				("num-nodes,n", po::value<uint>(&numNodes), "Number of nodes to create (can't be used with -r)")
 				("num-nodes-ratio,r", po::value<double>(&nodeRatio), "Ratio of haystack nodes to create vs real nodes (eg, 2 for 2x haystack nodes per real host or 0.5 for half the number of haystack nodes as real hosts)")
-				//("num-nodes-range,e", po::value<string>(), "Range of IPs which to assign nodes to; the range will be filled completely with haystack nodes.")
+				("num-nodes-range,e", po::value<string>(&nodeRange), "Range of IPs which to assign nodes to; the range will be filled completely with haystack nodes.")
 				("interface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
 				("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
 				("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
@@ -116,9 +129,11 @@ int main(int argc, char ** argv)
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 
-		if (vm.count("num-nodes-ratio") && vm.count("num-nodes"))
+		if((vm.count("num-nodes-ratio") && vm.count("num-nodes"))
+			|| (vm.count("num-nodes") && vm.count("num-nodes-range"))
+			|| (vm.count("num-nodes-ratio") && vm.count("num-nodes-range")))
 		{
-			cout << "ERROR: You can only use one of -r and -n to specify the number of nodes." << endl;
+			cout << "ERROR: You can only use one of -r, -n and -e to specify the number of nodes." << endl;
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			exit(HHC_CODE_BAD_ARG_VALUE);
@@ -127,6 +142,7 @@ int main(int argc, char ** argv)
 		if(vm.count("group"))
 		{
 			cout << "Creating new haystack group " << vm["group"].as<string>() << endl;
+			group = vm["group"].as<string>();
 			HoneydConfiguration::Inst()->AddNewConfiguration(vm["group"].as<string>(), false, "");
 			HoneydConfiguration::Inst()->SwitchToConfiguration(vm["group"].as<string>());
 		}
@@ -137,6 +153,7 @@ int main(int argc, char ** argv)
 			stringstream ss;
 			ss << timestamp;
 			defaultCreatedGroup += ss.str();
+			group = defaultCreatedGroup;
 			cout << "No group dictated, using default group name " << defaultCreatedGroup << endl;
 			HoneydConfiguration::Inst()->AddNewConfiguration(defaultCreatedGroup, false, "");
 			HoneydConfiguration::Inst()->SwitchToConfiguration(defaultCreatedGroup);
@@ -147,11 +164,18 @@ int main(int argc, char ** argv)
 			cout << "*** DEBUG *** Setting AutoConfig to append results to " << vm["append-to"].as<string>() << ", not working yet" << endl;
 		}
 
-		if (vm.count("num-nodes-ratio"))
+		if(vm.count("num-nodes-ratio"))
 		{
 			cout << "Number of nodes to create: " << nodeRatio << " * number of real hosts found" << endl;
 			numberOfNodesType = RATIO_BASED_NUMBER_OF_NODES;
 		}
+
+		if(vm.count("num-nodes-range"))
+		{
+			cout << "" << endl;
+			numberOfNodesType = RANGE_BASED_NUMBER_OF_NODES;
+		}
+
 		if(vm.count("num-nodes"))
 		{
 			cout << "Number of nodes to create: " << numNodes << '\n';
@@ -221,6 +245,7 @@ int main(int argc, char ** argv)
 
 		if((numberOfNodesType == FIXED_NUMBER_OF_NODES) && (numNodes < 0))
 		{
+			HoneydConfiguration::Inst()->RemoveConfiguration(group);
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			LOG(ERROR, "num-nodes argument takes an integer greater than or equal to 0. Aborting...", "");
@@ -229,16 +254,21 @@ int main(int argc, char ** argv)
 
 		if(numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES && nodeRatio < 0)
 		{
+			HoneydConfiguration::Inst()->RemoveConfiguration(group);
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			LOG(ERROR, "num-nodes ratio argument must be greater than or equal to 0. Aborting...", "");
 			exit(HHC_CODE_BAD_ARG_VALUE);
 		}
 
-		/*if(numberOfNodesType == RANGE_BASED_NUMBER_OF_NODES && nodeRange.empty())
+		if(numberOfNodesType == RANGE_BASED_NUMBER_OF_NODES && (nodeRange.empty() || false /* this will be a regular expression format */))
 		{
+			HoneydConfiguration::Inst()->RemoveConfiguration(group);
 			lockFile.close();
-		}*/
+			remove(lockFilePath.c_str());
+			LOG(ERROR, "num-nodes range argument was given no value or is in an incorrect format. Aborting...", "");
+			exit(HHC_CODE_BAD_ARG_VALUE);
+		}
 
 		HHC_ERR_CODE errVar = HHC_CODE_OKAY;
 
@@ -254,6 +284,7 @@ int main(int argc, char ** argv)
 
 			if(!LoadNmapXML(nmapFileName))
 			{
+				HoneydConfiguration::Inst()->RemoveConfiguration(group);
 				LOG(ERROR, "LoadNmapXML failed. Aborting...", "");
 				lockFile.close();
 				remove(lockFilePath.c_str());
@@ -268,6 +299,7 @@ int main(int argc, char ** argv)
 		}
 		else if(a_flag_empty && i_flag_empty)
 		{
+			HoneydConfiguration::Inst()->RemoveConfiguration(group);
 			errVar = HHC_CODE_REQUIRED_FLAGS_MISSING;
 			lockFile.close();
 			remove(lockFilePath.c_str());
@@ -303,6 +335,7 @@ int main(int argc, char ** argv)
 
 			if(errVar != HHC_CODE_OKAY)
 			{
+				HoneydConfiguration::Inst()->RemoveConfiguration(group);
 				lockFile.close();
 				remove(lockFilePath.c_str());
 				LOG(ERROR, "There was a problem loading the PersonalityTable. Aborting...", "");
@@ -1009,43 +1042,80 @@ void Nova::GenerateConfiguration()
 {
 	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
 
-	//Config::Inst()->SetGroup("Autoconfig");
-	//Config::Inst()->SaveUserConfig();
-
 	uint nodesToCreate = 0;
 	if(numberOfNodesType == FIXED_NUMBER_OF_NODES)
 	{
 		nodesToCreate = numNodes;
 	}
-	else
+	else if(numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES)
 	{
 		nodesToCreate = ((double)scannedHosts.m_num_of_hosts) * nodeRatio;
+	}
+	else
+	{
+		nodesToCreate = GetNumberOfIPsInRange(nodeRange);
+		if(nodesToCreate == -1)
+		{
+			HoneydConfiguration::Inst()->RemoveConfiguration(group);
+			LOG(ERROR, "There was a problem with the construction of the IP range.", "");
+			return;
+		}
 	}
 
 	stringstream ss;
 	ss << "Creating " << nodesToCreate << " new nodes";
 	LOG(DEBUG, ss.str(), "");
-
-	for(uint i = 0; i < nodesToCreate; i++)
+	if(numberOfNodesType == FIXED_NUMBER_OF_NODES || numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES)
 	{
-		//Pick a (leaf) profile at random
-		Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
-		if(winningPersonality == NULL)
+		for(uint i = 0; i < nodesToCreate; i++)
 		{
-			continue;
-		}
+			//Pick a (leaf) profile at random
+			Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
+			if(winningPersonality == NULL)
+			{
+				continue;
+			}
 
-		//Pick a random MAC vendor from this profile
-		string vendor = winningPersonality->GetRandomVendor();
+			//Pick a random MAC vendor from this profile
+			string vendor = winningPersonality->GetRandomVendor();
 
-		//Pick a MAC address for the node:
-		string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
+			//Pick a MAC address for the node:
+			string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
 
-		//Config::Inst()->SetGroup("Autoconfig");
-
-		//Make a node for that profile
-		HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, Config::Inst()->GetInterface(0),
+			//Make a node for that profile
+			HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, Config::Inst()->GetInterface(0),
 				winningPersonality->GetRandomPortSet());
+		}
+	}
+	else if(numberOfNodesType == RANGE_BASED_NUMBER_OF_NODES)
+	{
+		for(uint k = 0; k < nodeRangeVector.size(); k++)
+		{
+			do
+			{
+				//Pick a (leaf) profile at random
+				Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
+				if(winningPersonality == NULL)
+				{
+					continue;
+				}
+
+				//Pick a random MAC vendor from this profile
+				string vendor = winningPersonality->GetRandomVendor();
+
+				//Pick a MAC address for the node:
+				string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
+
+				//Make a node for that profile
+				struct sockaddr_in start;
+				start.sin_addr.s_addr = nodeRangeVector[k].first;
+				char startResult[INET_ADDRSTRLEN];
+				inet_ntop(AF_INET, &(start.sin_addr), startResult, INET_ADDRSTRLEN);
+				string startResultString(GetReverseIp(startResult));
+				HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, startResultString, macAddress, Config::Inst()->GetInterface(0),
+					winningPersonality->GetRandomPortSet());
+			}while((nodeRangeVector[k].first < nodeRangeVector[k].second) && nodeRangeVector[k].first++);
+		}
 	}
 
 	if(!HoneydConfiguration::Inst()->WriteNodesToXML())
@@ -1078,4 +1148,138 @@ bool Nova::CheckSubnet(vector<string> &hostAddrStrings, string matchStr)
 		}
 	}
 	return false;
+}
+
+int Nova::GetNumberOfIPsInRange(string ipRange)
+{
+	// TODO: Extend this method to take into account a comma-separated list of ranges
+	// i.e. "10.10.1.0-11.10.10.0,11.10.11.0-12.10.0.0"
+	int conditional = ipRange.find(',');
+	if(conditional == ipRange.npos)
+	{
+		int split = ipRange.find('-');
+		string nodeRangeStart = ipRange.substr(0, split);
+		string nodeRangeEnd = ipRange.substr(split + 1, ipRange.length());
+
+		vector<string> valueCheckStart;
+		vector<string> valueCheckEnd;
+		boost::split(valueCheckStart, nodeRangeStart, boost::is_any_of("."));
+		boost::split(valueCheckEnd, nodeRangeEnd, boost::is_any_of("."));
+
+		if(valueCheckEnd.size() != valueCheckStart.size())
+		{
+			LOG(ERROR, "Split ip vectors are of different length, aborting...", "");
+			return -1;
+		}
+
+		for(uint i = 0; i < valueCheckStart.size(); i++)
+		{
+			int startValueI = atoi(valueCheckStart[i].c_str());
+			int endValueI = atoi(valueCheckEnd[i].c_str());
+			if((startValueI > 255 || startValueI < 0) || (endValueI > 255 || endValueI < 0))
+			{
+				LOG(ERROR, "Value within IP address out of range within user-defined IP range, aborting...", "");
+				return -1;
+			}
+		}
+
+		struct sockaddr_in start;
+		struct sockaddr_in end;
+		string inetPtonSrcStart = GetReverseIp(nodeRangeStart);
+		string inetPtonSrcEnd = GetReverseIp(nodeRangeEnd);
+		int retCodeStart = inet_pton(AF_INET, inetPtonSrcStart.c_str(), &(start.sin_addr));
+		int retCodeEnd = inet_pton(AF_INET, inetPtonSrcEnd.c_str(), &(end.sin_addr));
+
+		if(retCodeStart < 1 || retCodeEnd < 1)
+		{
+			LOG(ERROR, "inet_pton returned an error, aborting...", "");
+			return -1;
+		}
+
+		pair<int, int> push;
+		push.first = start.sin_addr.s_addr;
+		push.second = end.sin_addr.s_addr;
+		nodeRangeVector.push_back(push);
+
+		if(start.sin_addr.s_addr > end.sin_addr.s_addr)
+		{
+			LOG(ERROR, "User-supplied IP range is invalid: range goes from high to low addresses", "");
+			return -1;
+		}
+	}
+	else
+	{
+		vector<string> ranges;
+		boost::split(ranges, ipRange, boost::is_any_of(","));
+		for(uint i = 0; i < ranges.size(); i++)
+		{
+			if(!ranges[i].empty())
+			{
+				int split = ranges[i].find('-');
+				string nodeRangeStart = ranges[i].substr(0, split);
+				string nodeRangeEnd = ranges[i].substr(split + 1, ranges[i].length());
+
+				vector<string> valueCheckStart;
+				vector<string> valueCheckEnd;
+				boost::split(valueCheckStart, nodeRangeStart, boost::is_any_of("."));
+				boost::split(valueCheckEnd, nodeRangeEnd, boost::is_any_of("."));
+
+				if(valueCheckEnd.size() != valueCheckStart.size())
+				{
+					LOG(ERROR, "Split ip vectors are of different length, aborting...", "");
+					return -1;
+				}
+
+				for(uint i = 0; i < valueCheckStart.size(); i++)
+				{
+					int startValueI = atoi(valueCheckStart[i].c_str());
+					int endValueI = atoi(valueCheckEnd[i].c_str());
+					if((startValueI > 255 || startValueI < 0) || (endValueI > 255 || endValueI < 0))
+					{
+						LOG(ERROR, "Value within IP address out of range within user-defined IP range, aborting...", "");
+						return -1;
+					}
+				}
+
+				struct sockaddr_in start;
+				struct sockaddr_in end;
+				string inetPtonSrcStart = GetReverseIp(nodeRangeStart);
+				string inetPtonSrcEnd = GetReverseIp(nodeRangeEnd);
+				int retCodeStart = inet_pton(AF_INET, inetPtonSrcStart.c_str(), &(start.sin_addr));
+				int retCodeEnd = inet_pton(AF_INET, inetPtonSrcEnd.c_str(), &(end.sin_addr));
+
+				if(retCodeStart < 1 || retCodeEnd < 1)
+				{
+					LOG(ERROR, "inet_pton returned an error, aborting...", "");
+					return -1;
+				}
+
+				pair<int, int> push;
+				push.first = start.sin_addr.s_addr;
+				push.second = end.sin_addr.s_addr;
+				nodeRangeVector.push_back(push);
+
+				if(start.sin_addr.s_addr > end.sin_addr.s_addr)
+				{
+					LOG(ERROR, "User-supplied IP range is invalid: range goes from high to low addresses", "");
+					return -1;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+string Nova::GetReverseIp(string ip)
+{
+	string ret = "";
+	vector<string> split;
+	boost::split(split, ip, boost::is_any_of("."));
+	reverse(split.begin(), split.end());
+	for(uint i = 0; i < split.size() - 1; i++)
+	{
+		ret += split[i] + ".";
+	}
+	ret += split[split.size() - 1];
+	return ret;
 }
