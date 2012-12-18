@@ -138,12 +138,6 @@ int RunNovaD()
 		LOG(ERROR, "Unable to connect to SQL database. " + string(e.what()), "");
 	}
 
-	// Set up our signal handlers
-	signal(SIGKILL, SaveAndExit);
-	signal(SIGINT, SaveAndExit);
-	signal(SIGTERM, SaveAndExit);
-	signal(SIGPIPE, SIG_IGN);
-
 	lastLoadTime = lastSaveTime = startTime = time(NULL);
 	if(lastLoadTime == ((time_t)-1))
 	{
@@ -162,6 +156,12 @@ int RunNovaD()
 
 	engine = ClassificationEngine::MakeEngine();
 	engine->LoadConfiguration();
+
+	// Set up our signal handlers
+	signal(SIGKILL, SaveAndExit);
+	signal(SIGINT, SaveAndExit);
+	signal(SIGTERM, SaveAndExit);
+	signal(SIGPIPE, SIG_IGN);
 
 	haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathConfigHoneydHS());
 	haystackDhcpAddresses = Config::GetHoneydIpAddresses(dhcpListFile);

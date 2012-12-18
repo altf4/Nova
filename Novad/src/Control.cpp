@@ -25,6 +25,7 @@
 #include "ClassificationEngine.h"
 
 extern Nova::ClassificationEngine *engine;
+extern pthread_t classificationLoopThread;;
 
 namespace Nova
 {
@@ -51,6 +52,15 @@ void SaveAndExit(int param)
 	}
 	if(engine != NULL)
 	{
+		void *res;
+		pthread_cancel(classificationLoopThread);
+		pthread_join(classificationLoopThread, &res);
+
+		if (res != PTHREAD_CANCELED)
+		{
+			LOG(WARNING, "Problem when attempting to cancel CE thread during SaveAndExit.", "");
+		}
+
 		delete engine;
 	}
 	annClose();
