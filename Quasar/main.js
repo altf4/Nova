@@ -1236,10 +1236,11 @@ app.post('/createInitialUser', passport.authenticate('basic', {session: false}),
 });
 
 app.get('/autoConfig', passport.authenticate('basic', {session: false}), function (req, res) {
-	res.render('hhautoconfig.jade', {
+	res.render('hhautoconfig.jade', {		
 		user: req.user,
 		INTERFACES: config.ListInterfaces().sort(),
-		SCANERROR: ""
+		SCANERROR: "",
+		GROUPS: honeydConfig.GetConfigurationsList()
 	});
 });
 
