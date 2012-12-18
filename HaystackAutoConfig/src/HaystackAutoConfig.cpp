@@ -56,6 +56,7 @@ string nmapFileName;
 uint numNodes;
 double nodeRatio;
 string nodeRange;
+vector<pair<int, int> > nodeRangeVector;
 int nodeRangeStartInt;
 int nodeRangeEndInt;
 string group;
@@ -1064,41 +1065,56 @@ void Nova::GenerateConfiguration()
 	stringstream ss;
 	ss << "Creating " << nodesToCreate << " new nodes";
 	LOG(DEBUG, ss.str(), "");
-
-	for(uint i = 0; i < nodesToCreate; i++)
+	if(numberOfNodesType == FIXED_NUMBER_OF_NODES || numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES)
 	{
-		//Pick a (leaf) profile at random
-		Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
-		if(winningPersonality == NULL)
+		for(uint i = 0; i < nodesToCreate; i++)
 		{
-			continue;
-		}
+			//Pick a (leaf) profile at random
+			Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
+			if(winningPersonality == NULL)
+			{
+				continue;
+			}
 
-		//Pick a random MAC vendor from this profile
-		string vendor = winningPersonality->GetRandomVendor();
+			//Pick a random MAC vendor from this profile
+			string vendor = winningPersonality->GetRandomVendor();
 
-		//Pick a MAC address for the node:
-		string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
+			//Pick a MAC address for the node:
+			string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
 
-		//Make a node for that profile
-		if(numberOfNodesType == FIXED_NUMBER_OF_NODES || numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES)
-		{
+			//Make a node for that profile
 			HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, Config::Inst()->GetInterface(0),
 				winningPersonality->GetRandomPortSet());
 		}
-		else if(numberOfNodesType == RANGE_BASED_NUMBER_OF_NODES)
+	}
+	else if(numberOfNodesType == RANGE_BASED_NUMBER_OF_NODES)
+	{
+		for(uint k = 0; k < nodeRangeVector.size(); k++)
 		{
-			struct sockaddr_in start;
-			start.sin_addr.s_addr = nodeRangeStartInt;
-			char startResult[INET_ADDRSTRLEN];
-			inet_ntop(AF_INET, &(start.sin_addr), startResult, INET_ADDRSTRLEN);
-			string startResultString(GetReverseIp(startResult));
-			if(nodeRangeStartInt <= nodeRangeEndInt)
+			do
 			{
-				nodeRangeStartInt++;
-			}
-			HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, startResultString, macAddress, Config::Inst()->GetInterface(0),
-				winningPersonality->GetRandomPortSet());
+				//Pick a (leaf) profile at random
+				Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
+				if(winningPersonality == NULL)
+				{
+					continue;
+				}
+
+				//Pick a random MAC vendor from this profile
+				string vendor = winningPersonality->GetRandomVendor();
+
+				//Pick a MAC address for the node:
+				string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
+
+				//Make a node for that profile
+				struct sockaddr_in start;
+				start.sin_addr.s_addr = nodeRangeVector[k].first;
+				char startResult[INET_ADDRSTRLEN];
+				inet_ntop(AF_INET, &(start.sin_addr), startResult, INET_ADDRSTRLEN);
+				string startResultString(GetReverseIp(startResult));
+				HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, startResultString, macAddress, Config::Inst()->GetInterface(0),
+					winningPersonality->GetRandomPortSet());
+			}while((nodeRangeVector[k].first < nodeRangeVector[k].second) && nodeRangeVector[k].first++);
 		}
 	}
 
@@ -1138,57 +1154,120 @@ int Nova::GetNumberOfIPsInRange(string ipRange)
 {
 	// TODO: Extend this method to take into account a comma-separated list of ranges
 	// i.e. "10.10.1.0-11.10.10.0,11.10.11.0-12.10.0.0"
-	int split = ipRange.find('-');
-	string nodeRangeStart = ipRange.substr(0, split);
-	string nodeRangeEnd = ipRange.substr(split + 1, ipRange.length());
-
-	vector<string> valueCheckStart;
-	vector<string> valueCheckEnd;
-	boost::split(valueCheckStart, nodeRangeStart, boost::is_any_of("."));
-	boost::split(valueCheckEnd, nodeRangeEnd, boost::is_any_of("."));
-
-	if(valueCheckEnd.size() != valueCheckStart.size())
+	int conditional = ipRange.find(',');
+	if(conditional == ipRange.npos)
 	{
-		LOG(ERROR, "Split ip vectors are of different length, aborting...", "");
-		return -1;
-	}
+		int split = ipRange.find('-');
+		string nodeRangeStart = ipRange.substr(0, split);
+		string nodeRangeEnd = ipRange.substr(split + 1, ipRange.length());
 
-	for(uint i = 0; i < valueCheckStart.size(); i++)
-	{
-		int startValueI = atoi(valueCheckStart[i].c_str());
-		int endValueI = atoi(valueCheckEnd[i].c_str());
-		if((startValueI > 255 || startValueI < 0) || (endValueI > 255 || endValueI < 0))
+		vector<string> valueCheckStart;
+		vector<string> valueCheckEnd;
+		boost::split(valueCheckStart, nodeRangeStart, boost::is_any_of("."));
+		boost::split(valueCheckEnd, nodeRangeEnd, boost::is_any_of("."));
+
+		if(valueCheckEnd.size() != valueCheckStart.size())
 		{
-			LOG(ERROR, "Value within IP address out of range within user-defined IP range, aborting...", "");
+			LOG(ERROR, "Split ip vectors are of different length, aborting...", "");
+			return -1;
+		}
+
+		for(uint i = 0; i < valueCheckStart.size(); i++)
+		{
+			int startValueI = atoi(valueCheckStart[i].c_str());
+			int endValueI = atoi(valueCheckEnd[i].c_str());
+			if((startValueI > 255 || startValueI < 0) || (endValueI > 255 || endValueI < 0))
+			{
+				LOG(ERROR, "Value within IP address out of range within user-defined IP range, aborting...", "");
+				return -1;
+			}
+		}
+
+		struct sockaddr_in start;
+		struct sockaddr_in end;
+		string inetPtonSrcStart = GetReverseIp(nodeRangeStart);
+		string inetPtonSrcEnd = GetReverseIp(nodeRangeEnd);
+		int retCodeStart = inet_pton(AF_INET, inetPtonSrcStart.c_str(), &(start.sin_addr));
+		int retCodeEnd = inet_pton(AF_INET, inetPtonSrcEnd.c_str(), &(end.sin_addr));
+
+		if(retCodeStart < 1 || retCodeEnd < 1)
+		{
+			LOG(ERROR, "inet_pton returned an error, aborting...", "");
+			return -1;
+		}
+
+		pair<int, int> push;
+		push.first = start.sin_addr.s_addr;
+		push.second = end.sin_addr.s_addr;
+		nodeRangeVector.push_back(push);
+
+		if(start.sin_addr.s_addr > end.sin_addr.s_addr)
+		{
+			LOG(ERROR, "User-supplied IP range is invalid: range goes from high to low addresses", "");
 			return -1;
 		}
 	}
-
-	struct sockaddr_in start;
-	struct sockaddr_in end;
-	string inetPtonSrcStart = GetReverseIp(nodeRangeStart);
-	string inetPtonSrcEnd = GetReverseIp(nodeRangeEnd);
-	int retCodeStart = inet_pton(AF_INET, inetPtonSrcStart.c_str(), &(start.sin_addr));
-	int retCodeEnd = inet_pton(AF_INET, inetPtonSrcEnd.c_str(), &(end.sin_addr));
-
-	if(retCodeStart < 1 || retCodeEnd < 1)
+	else
 	{
-		LOG(ERROR, "inet_pton returned an error, aborting...", "");
-		return -1;
+		vector<string> ranges;
+		boost::split(ranges, ipRange, boost::is_any_of(","));
+		for(uint i = 0; i < ranges.size(); i++)
+		{
+			if(!ranges[i].empty())
+			{
+				int split = ranges[i].find('-');
+				string nodeRangeStart = ranges[i].substr(0, split);
+				string nodeRangeEnd = ranges[i].substr(split + 1, ranges[i].length());
+
+				vector<string> valueCheckStart;
+				vector<string> valueCheckEnd;
+				boost::split(valueCheckStart, nodeRangeStart, boost::is_any_of("."));
+				boost::split(valueCheckEnd, nodeRangeEnd, boost::is_any_of("."));
+
+				if(valueCheckEnd.size() != valueCheckStart.size())
+				{
+					LOG(ERROR, "Split ip vectors are of different length, aborting...", "");
+					return -1;
+				}
+
+				for(uint i = 0; i < valueCheckStart.size(); i++)
+				{
+					int startValueI = atoi(valueCheckStart[i].c_str());
+					int endValueI = atoi(valueCheckEnd[i].c_str());
+					if((startValueI > 255 || startValueI < 0) || (endValueI > 255 || endValueI < 0))
+					{
+						LOG(ERROR, "Value within IP address out of range within user-defined IP range, aborting...", "");
+						return -1;
+					}
+				}
+
+				struct sockaddr_in start;
+				struct sockaddr_in end;
+				string inetPtonSrcStart = GetReverseIp(nodeRangeStart);
+				string inetPtonSrcEnd = GetReverseIp(nodeRangeEnd);
+				int retCodeStart = inet_pton(AF_INET, inetPtonSrcStart.c_str(), &(start.sin_addr));
+				int retCodeEnd = inet_pton(AF_INET, inetPtonSrcEnd.c_str(), &(end.sin_addr));
+
+				if(retCodeStart < 1 || retCodeEnd < 1)
+				{
+					LOG(ERROR, "inet_pton returned an error, aborting...", "");
+					return -1;
+				}
+
+				pair<int, int> push;
+				push.first = start.sin_addr.s_addr;
+				push.second = end.sin_addr.s_addr;
+				nodeRangeVector.push_back(push);
+
+				if(start.sin_addr.s_addr > end.sin_addr.s_addr)
+				{
+					LOG(ERROR, "User-supplied IP range is invalid: range goes from high to low addresses", "");
+					return -1;
+				}
+			}
+		}
 	}
-
-	nodeRangeStartInt = start.sin_addr.s_addr;
-	nodeRangeEndInt = end.sin_addr.s_addr;
-
-	if(start.sin_addr.s_addr > end.sin_addr.s_addr)
-	{
-		LOG(ERROR, "User-supplied IP range is invalid: range goes from high to low addresses", "");
-		return -1;
-	}
-
-	int returnValue = end.sin_addr.s_addr - start.sin_addr.s_addr + 1;
-
-	return returnValue;
+	return 0;
 }
 
 string Nova::GetReverseIp(string ip)
