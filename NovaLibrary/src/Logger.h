@@ -22,8 +22,10 @@
 #define Logger_H_
 
 #include "HashMapStructs.h"
-#include "Defines.h"
 #include "Config.h"
+
+/// Configs for openlog (first is with terminals, second is without
+#define OPEN_SYSL (LOG_CONS | LOG_PID | LOG_NDELAY | LOG_PERROR)
 
 // A macro to make logging prettier
 #define LOG(t,s,r) Nova::Logger::Inst()->Log(t, std::string(s).c_str(), std::string(r).c_str(), __FILE__ , __LINE__)

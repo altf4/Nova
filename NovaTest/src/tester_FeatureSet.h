@@ -4,10 +4,14 @@
 
 using namespace Nova;
 
-class FeatureSetTest : public ::testing::Test {
+#define LARGE_BUFFER_SIZE 65535
+
+class FeatureSetTest : public ::testing::Test
+{
 protected:
 	FeatureSet fset;
 	virtual void SetUp() {
+		fset = FeatureSet();
 		Config::Inst()->EnableAllFeatures();
 
 		// First test packet
@@ -34,13 +38,11 @@ protected:
 		p2.m_evidencePacket.ip_len = (uint16_t)256;
 		p2.m_evidencePacket.ts = 20;
 
-		fset.UpdateEvidence(&p1);
-		fset.UpdateEvidence(&p2);
+		fset.UpdateEvidence(p1);
+		fset.UpdateEvidence(p2);
 		fset.CalculateAll();
 	}
-
 };
-
 
 // Check copy constructor and equality operator
 TEST_F(FeatureSetTest, test_CopyAndAssignmentEquality)
@@ -52,18 +54,17 @@ TEST_F(FeatureSetTest, test_CopyAndAssignmentEquality)
 	EXPECT_TRUE(copy == fset);
 }
 
-
 // Check serialization/deserialization of the FeatureSet
 TEST_F(FeatureSetTest, test_Serialization)
 {
 	// Serialize our featureSet to a buffer
-	u_char buffer[MAX_MSG_SIZE];
-	bzero(buffer, MAX_MSG_SIZE);
-	EXPECT_NO_FATAL_FAILURE(fset.SerializeFeatureData(&buffer[0], MAX_MSG_SIZE));
+	u_char buffer[LARGE_BUFFER_SIZE];
+	bzero(buffer, LARGE_BUFFER_SIZE);
+	EXPECT_NO_FATAL_FAILURE(fset.SerializeFeatureData(&buffer[0], LARGE_BUFFER_SIZE));
 
 	// Deserialize it and see if we end up with an exact copy
 	FeatureSet deserializedCopy;
-	EXPECT_NO_FATAL_FAILURE(deserializedCopy.DeserializeFeatureData(buffer, MAX_MSG_SIZE));
+	EXPECT_NO_FATAL_FAILURE(deserializedCopy.DeserializeFeatureData(buffer, LARGE_BUFFER_SIZE));
 	EXPECT_NO_FATAL_FAILURE(deserializedCopy.CalculateAll());
 
 	// TODO: Make the FeatureSet equality operator compare the timestamps as well, see issue #73
@@ -74,12 +75,11 @@ TEST_F(FeatureSetTest, test_SerializationLength)
 {
 	int expectedLength = fset.GetFeatureDataLength();
 
-	u_char buffer[MAX_MSG_SIZE];
-	int actualLength = fset.SerializeFeatureData(&buffer[0], MAX_MSG_SIZE);
+	u_char buffer[LARGE_BUFFER_SIZE];
+	int actualLength = fset.SerializeFeatureData(&buffer[0], LARGE_BUFFER_SIZE);
 
 	EXPECT_EQ(expectedLength, actualLength);
 }
-
 
 // Check if the features got computed correctly
 TEST_F(FeatureSetTest, test_Calculate)

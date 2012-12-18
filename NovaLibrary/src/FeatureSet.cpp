@@ -416,28 +416,28 @@ void FeatureSet::CalculateTimeInterval()
 	}
 }
 
-void FeatureSet::UpdateEvidence(Evidence *evidence)
+void FeatureSet::UpdateEvidence(const Evidence &evidence)
 {
 	// Ensure our assumptions about valid packet fields are true
-	if(evidence->m_evidencePacket.ip_dst == 0)
+	if(evidence.m_evidencePacket.ip_dst == 0)
 	{
 		LOG(DEBUG, "Got packet with invalid source IP address of 0. Skipping.", "");
 		return;
 	}
-	switch(evidence->m_evidencePacket.ip_p)
+	switch(evidence.m_evidencePacket.ip_p)
 	{
 		//If UDP
 		case 17:
 		{
 			m_udpPacketCount++;
 			// TODO: This is bad. We should be able to handle port 0 (currently empty key)
-			if(evidence->m_evidencePacket.dst_port != 0)
+			if(evidence.m_evidencePacket.dst_port != 0)
 			{
-				m_PortUDPTable[evidence->m_evidencePacket.dst_port]++;
+				m_PortUDPTable[evidence.m_evidencePacket.dst_port]++;
 
 				IpPortCombination t;
-				t.m_ip = evidence->m_evidencePacket.ip_dst;
-				t.m_port = evidence->m_evidencePacket.dst_port;
+				t.m_ip = evidence.m_evidencePacket.ip_dst;
+				t.m_port = evidence.m_evidencePacket.dst_port;
 				if (!m_hasUdpPortIpBeenContacted.keyExists(t))
 				{
 					m_hasUdpPortIpBeenContacted[t] = true;
@@ -452,7 +452,7 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 				}
 			}
 
-			m_IPTable[evidence->m_evidencePacket.ip_dst]++;
+			m_IPTable[evidence.m_evidencePacket.ip_dst]++;
 			break;
 		}
 		//If TCP
@@ -461,19 +461,19 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 			m_tcpPacketCount++;
 
 			// Only count as an IP/port contacted if it looks like a scan (SYN or NULL packet)
-			if ((evidence->m_evidencePacket.tcp_hdr.syn && !evidence->m_evidencePacket.tcp_hdr.ack)
-					|| (!evidence->m_evidencePacket.tcp_hdr.syn && !evidence->m_evidencePacket.tcp_hdr.ack
-							&& !evidence->m_evidencePacket.tcp_hdr.rst))
+			if ((evidence.m_evidencePacket.tcp_hdr.syn && !evidence.m_evidencePacket.tcp_hdr.ack)
+					|| (!evidence.m_evidencePacket.tcp_hdr.syn && !evidence.m_evidencePacket.tcp_hdr.ack
+							&& !evidence.m_evidencePacket.tcp_hdr.rst))
 			{
-				m_IPTable[evidence->m_evidencePacket.ip_dst]++;
+				m_IPTable[evidence.m_evidencePacket.ip_dst]++;
 
-				if(evidence->m_evidencePacket.dst_port != 0)
+				if(evidence.m_evidencePacket.dst_port != 0)
 				{
-					m_PortTCPTable[evidence->m_evidencePacket.dst_port]++;
+					m_PortTCPTable[evidence.m_evidencePacket.dst_port]++;
 
 					IpPortCombination t;
-					t.m_ip = evidence->m_evidencePacket.ip_dst;
-					t.m_port = evidence->m_evidencePacket.dst_port;
+					t.m_ip = evidence.m_evidencePacket.ip_dst;
+					t.m_port = evidence.m_evidencePacket.dst_port;
 					if (!m_hasTcpPortIpBeenContacted.keyExists(t))
 					{
 						m_hasTcpPortIpBeenContacted[t] = true;
@@ -489,25 +489,25 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 				}
 			}
 
-			if(evidence->m_evidencePacket.tcp_hdr.syn && evidence->m_evidencePacket.tcp_hdr.ack)
+			if(evidence.m_evidencePacket.tcp_hdr.syn && evidence.m_evidencePacket.tcp_hdr.ack)
 			{
 				m_synAckCount++;
 			}
-			else if(evidence->m_evidencePacket.tcp_hdr.syn)
+			else if(evidence.m_evidencePacket.tcp_hdr.syn)
 			{
 				m_synCount++;
 			}
-			else if(evidence->m_evidencePacket.tcp_hdr.ack)
+			else if(evidence.m_evidencePacket.tcp_hdr.ack)
 			{
 				m_ackCount++;
 			}
 
-			if(evidence->m_evidencePacket.tcp_hdr.rst)
+			if(evidence.m_evidencePacket.tcp_hdr.rst)
 			{
 				m_rstCount++;
 			}
 
-			if(evidence->m_evidencePacket.tcp_hdr.fin)
+			if(evidence.m_evidencePacket.tcp_hdr.fin)
 			{
 				m_finCount++;
 			}
@@ -518,41 +518,41 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 		case 1:
 		{
 			m_icmpPacketCount++;
-			m_IPTable[evidence->m_evidencePacket.ip_dst]++;
+			m_IPTable[evidence.m_evidencePacket.ip_dst]++;
 			break;
 		}
 		//If untracked IP protocol or error case ignore it
 		default:
 		{
 			m_otherPacketCount++;
-			m_IPTable[evidence->m_evidencePacket.ip_dst]++;
+			m_IPTable[evidence.m_evidencePacket.ip_dst]++;
 			break;
 		}
 	}
 
 	m_packetCount++;
-	m_bytesTotal += evidence->m_evidencePacket.ip_len;
+	m_bytesTotal += evidence.m_evidencePacket.ip_len;
 
-	if(m_HaystackIPTable.keyExists(evidence->m_evidencePacket.ip_dst))
+	if(m_HaystackIPTable.keyExists(evidence.m_evidencePacket.ip_dst))
 	{
-		if (m_HaystackIPTable[evidence->m_evidencePacket.ip_dst] == 0)
+		if (m_HaystackIPTable[evidence.m_evidencePacket.ip_dst] == 0)
 		{
 			m_numberOfHaystackNodesContacted++;
-			m_HaystackIPTable[evidence->m_evidencePacket.ip_dst]++;
+			m_HaystackIPTable[evidence.m_evidencePacket.ip_dst]++;
 		}
 	}
 
-	m_packTable[evidence->m_evidencePacket.ip_len]++;
-	m_lastTime = evidence->m_evidencePacket.ts;
+	m_packTable[evidence.m_evidencePacket.ip_len]++;
+	m_lastTime = evidence.m_evidencePacket.ts;
 
 	//Accumulate to find the lowest Start time and biggest end time.
-	if(evidence->m_evidencePacket.ts < m_startTime)
+	if(evidence.m_evidencePacket.ts < m_startTime)
 	{
-		m_startTime = evidence->m_evidencePacket.ts;
+		m_startTime = evidence.m_evidencePacket.ts;
 	}
-	if(evidence->m_evidencePacket.ts > m_endTime)
+	if(evidence.m_evidencePacket.ts > m_endTime)
 	{
-		m_endTime =  evidence->m_evidencePacket.ts;
+		m_endTime =  evidence.m_evidencePacket.ts;
 		CalculateTimeInterval();
 	}
 }

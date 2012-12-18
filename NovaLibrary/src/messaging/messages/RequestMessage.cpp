@@ -20,7 +20,6 @@
 
 #include "../../SerializationHelper.h"
 #include "RequestMessage.h"
-#include "../../Defines.h"
 
 namespace Nova
 {

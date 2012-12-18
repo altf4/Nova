@@ -21,8 +21,13 @@
 
 #include "Suspect.h"
 
+#include <vector>
+
 namespace Nova
 {
+
+//Forward declaration to resolve circular include
+class Suspect;
 
 class ClassificationEngine
 {

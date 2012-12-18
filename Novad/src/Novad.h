@@ -21,7 +21,6 @@
 
 #include "HashMapStructs.h"
 #include "Evidence.h"
-#include "Defines.h"
 #include "Suspect.h"
 #include <arpa/inet.h>
 

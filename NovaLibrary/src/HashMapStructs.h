@@ -20,6 +20,7 @@
 #define HASHMAPSTRUCTS_H_
 
 #include "HashMap.h"
+
 #include <arpa/inet.h>
 #include <vector>
 #include <string>
