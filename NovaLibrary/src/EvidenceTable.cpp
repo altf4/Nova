@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : The EvidenceTable manages a series of EvidenceQueues paired with a suspect's
 //				host ordered ipv4 address
-//============================================================================/*
+//============================================================================
 
 #include "EvidenceTable.h"
 #include "Lock.h"
@@ -25,7 +25,6 @@ using namespace std;
 
 namespace Nova
 {
-
 	// Default Constructor for EvidenceTable
 	EvidenceTable::EvidenceTable()
 	{
@@ -82,5 +81,4 @@ namespace Nova
 		}
 		return ret;
 	}
-
 }

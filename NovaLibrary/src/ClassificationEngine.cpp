@@ -14,7 +14,7 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : 
-//============================================================================/*
+//============================================================================
 
 #include "ThresholdTriggerClassification.h"
 #include "ClassificationEngine.h"
@@ -53,5 +53,3 @@ vector<string> ClassificationEngine::GetSupportedEngines()
 
 	return supportedEngines;
 }
-
-

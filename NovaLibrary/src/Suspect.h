@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : A Suspect object with identifying information and traffic
 //					features so that each entity can be monitored and classified.
-//============================================================================/*
+//============================================================================
 
 #ifndef SUSPECT_H_
 #define SUSPECT_H_

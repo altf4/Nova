@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
+// Description : TODO: Place a description here
 //============================================================================/*
 
 #ifndef DATABASE_H_
@@ -25,7 +25,6 @@
 #include <string>
 #include <sqlite3.h>
 #include <stdexcept>
-
 
 namespace Nova
 {

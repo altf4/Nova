@@ -13,8 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
-//============================================================================/*
+// Description :  TODO: Description here
+//============================================================================
 
 #ifndef PACKETCAPTURE_H_
 #define PACKETCAPTURE_H_
@@ -66,20 +66,22 @@ protected:
 
 	// Work around for conversion of class method to C style function pointer for pcap
 	void (*m_packetCb)(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet);
-	static void * InternalThreadEntryFunc(void * This) {
+	static void * InternalThreadEntryFunc(void * This)
+	{
 		((PacketCapture*)This)->InternalThreadEntry();
 		return NULL;
 	}
 
 	// This is to signal the internal thread to stop sleeping
-	static void SleepStopper(int signum) {
+	static void SleepStopper(int signum)
+	{
 		return;
 	}
 
 };
 
-
-class PacketCaptureException : public std::exception {
+class PacketCaptureException : public std::exception
+{
 public:
 	std::string s;
 	PacketCaptureException(std::string ss) : s(ss) {}

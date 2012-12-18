@@ -127,6 +127,4 @@ bool StopPacketCapture();
 
 }
 
-
-
 #endif /* COMMANDS_H_ */

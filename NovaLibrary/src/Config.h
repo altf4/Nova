@@ -23,11 +23,13 @@
 #include "Defines.h"
 #include "ThresholdTriggerClassification.h"
 
-namespace Nova {
+namespace Nova
+{
 
 #define VERSION_FILE_NAME "version.txt"
 
-struct version {
+struct version
+{
 	std::string versionString;
 	int buildYear;
 	int buildMonth;
@@ -42,12 +44,12 @@ struct version {
 	}
 };
 
-class Config {
+class Config
+{
 
 public:
 	// This is a singleton class, use this to access it
 	static Config *Inst();
-
 
 	~Config();
 
@@ -68,7 +70,6 @@ public:
     // that you need.
     std::string ReadSetting(std::string key);
     bool WriteSetting(std::string key, std::string value);
-
 
     std::string ToString();
 

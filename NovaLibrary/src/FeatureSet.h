@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Maintains and calculates distinct features for individual Suspects
 //					for use in classification of the Suspect.
-//============================================================================/*
+//============================================================================
 
 #ifndef FEATURESET_H_
 #define FEATURESET_H_
@@ -60,7 +60,8 @@ typedef Nova::HashMap<in_port_t, uint64_t, std::hash<in_port_t>, eqport > Port_T
 //Table of packet sizes and a count
 typedef Nova::HashMap<uint16_t, uint64_t, std::hash<uint16_t>, eq_uint16_t > Packet_Table;
 
-struct IpPortCombination {
+struct IpPortCombination
+{
 	uint32_t m_ip;
 	uint16_t m_port;
 	uint16_t m_internal;
@@ -100,30 +101,31 @@ struct IpPortCombination {
 
 
 // Make a IpPortCombination hash and equals function for the Google hash maps
-namespace std {
-        template<>
-        struct hash< IpPortCombination > {
-        	// TODO: This should be passed by reference, doesn't compile though. Look into it.
-            std::size_t operator()( IpPortCombination c ) const
-            {
-            	  uint32_t a = c.m_ip;
+namespace std
+{
+	template<>
+	struct hash< IpPortCombination > {
+		// TODO: This should be passed by reference, doesn't compile though. Look into it.
+		std::size_t operator()( IpPortCombination c ) const
+		{
+			uint32_t a = c.m_ip;
 
-            	  // Thomas Wang's integer hash function
-            	  // http://www.cris.com/~Ttwang/tech/inthash.htm
-            	  a = (a ^ 61) ^ (a >> 16);
-            	  a = a + (a << 3);
-            	  a = a ^ (a >> 4);
-            	  a = a * 0x27d4eb2d;
-            	  a = a ^ (a >> 15);
+			// Thomas Wang's integer hash function
+			// http://www.cris.com/~Ttwang/tech/inthash.htm
+			a = (a ^ 61) ^ (a >> 16);
+			a = a + (a << 3);
+			a = a ^ (a >> 4);
+			a = a * 0x27d4eb2d;
+			a = a ^ (a >> 15);
 
-            	  const int SECRET_CONSTANT = 104729; // 1,000th prime number
+			const int SECRET_CONSTANT = 104729; // 1,000th prime number
 
-            	  // Map 16-bit port 1:1 to a random-looking number
-            	  a += ((uint32_t)c.m_port * (SECRET_CONSTANT*4 + 1)) & 0xffff;
+			// Map 16-bit port 1:1 to a random-looking number
+			a += ((uint32_t)c.m_port * (SECRET_CONSTANT*4 + 1)) & 0xffff;
 
-            	  return a;
-            }
-        };
+			return a;
+		}
+	};
 }
 
 struct IpPortCombinationEquals
@@ -154,7 +156,8 @@ enum featureIndex: uint8_t
 	HAYSTACK_PERCENT_CONTACTED = 13
 };
 
-namespace Nova{
+namespace Nova
+{
 
 ///A Feature Set represents a point in N dimensional space, which the Classification Engine uses to
 ///	determine a classification. Each member of the FeatureSet class represents one of these dimensions.
@@ -184,7 +187,6 @@ public:
 	FeatureSet& operator+=(FeatureSet &rhs);
 	bool operator ==(const FeatureSet &rhs) const;
 	bool operator !=(const FeatureSet &rhs) const;
-
 
 	// Calculates all features in the feature set
 	//		featuresEnabled - Bitmask of which features are enabled, e.g. 0b111 would enable the first 3
@@ -232,7 +234,6 @@ public:
 
 	void SetHaystackNodes(std::vector<uint32_t> nodes);
 
-
 	//FeatureSet(const FeatureSet &rhs);
 	//FeatureSet& operator=(FeatureSet &rhs);
 //private:
@@ -272,7 +273,6 @@ public:
 	// Maps IP/port to a bool, used for checking if m_portContactedPerIP needs incrementing for this IP
 	IpPortTable m_hasTcpPortIpBeenContacted;
 	IpPortTable m_hasUdpPortIpBeenContacted;
-
 
 	uint32_t m_numberOfHaystackNodesContacted;
 };

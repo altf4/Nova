@@ -27,7 +27,8 @@
 
 namespace Nova
 {
-	enum trainingMode {
+	enum trainingMode
+	{
 		trainingMode_capture,
 		trainingMode_convert,
 		trainingMode_save
@@ -43,13 +44,11 @@ namespace Nova
 
 	void SaveAndExit(int param);
 
-
 	std::string ConstructFilterString();
 
 	void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet);
-	void update(SuspectIdentifier key);
+	void Update(SuspectIdentifier key);
 	void UpdateHaystackFeatures();
-	//void UpdateAndStore(SuspectIdentifier key);
 }
 
 #endif /* NOVATRAINER_H_ */

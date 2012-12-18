@@ -29,24 +29,25 @@
 
 using namespace std;
 
-namespace Nova{
+namespace Nova
+{
 
 string FeatureSet::m_featureNames[] =
 {
-		"IP Traffic Distribution",
-		"Port Traffic Distribution",
-		"Packet Size Mean",
-		"Packet Size Deviation",
-		"Protected IPs Contacted",
-		"Distinct TCP Ports Contacted",
-		"Distinct UDP Ports Contacted",
-		"Average TCP Ports Per Host",
-		"Average UDP Ports Per Host",
-		"TCP Percent SYN",
-		"TCP Percent FIN",
-		"TCP Percent RST",
-		"TCP Percent SYN ACK",
-		"Haystack Percent Contacted",
+	"IP Traffic Distribution",
+	"Port Traffic Distribution",
+	"Packet Size Mean",
+	"Packet Size Deviation",
+	"Protected IPs Contacted",
+	"Distinct TCP Ports Contacted",
+	"Distinct UDP Ports Contacted",
+	"Average TCP Ports Per Host",
+	"Average UDP Ports Per Host",
+	"TCP Percent SYN",
+	"TCP Percent FIN",
+	"TCP Percent RST",
+	"TCP Percent SYN ACK",
+	"Haystack Percent Contacted",
 };
 
 FeatureSet::FeatureSet()
@@ -78,7 +79,6 @@ FeatureSet::FeatureSet()
 		m_features[i] = 0;
 	}
 }
-
 
 FeatureSet::~FeatureSet()
 {
@@ -139,26 +139,23 @@ string FeatureSet::toString()
 	}
 	ss << endl;
 
-
 	return ss.str();
 }
-
-
 
 void FeatureSet::CalculateAll()
 {
 	CalculateTimeInterval();
 	if(Config::Inst()->IsFeatureEnabled(IP_TRAFFIC_DISTRIBUTION))
 	{
-			Calculate(IP_TRAFFIC_DISTRIBUTION);
+		Calculate(IP_TRAFFIC_DISTRIBUTION);
 	}
 	if(Config::Inst()->IsFeatureEnabled(PORT_TRAFFIC_DISTRIBUTION))
 	{
-			Calculate(PORT_TRAFFIC_DISTRIBUTION);
+		Calculate(PORT_TRAFFIC_DISTRIBUTION);
 	}
 	if(Config::Inst()->IsFeatureEnabled(PACKET_SIZE_MEAN))
 	{
-			Calculate(PACKET_SIZE_MEAN);
+		Calculate(PACKET_SIZE_MEAN);
 	}
 	if(Config::Inst()->IsFeatureEnabled(PACKET_SIZE_DEVIATION))
 	{
@@ -170,50 +167,45 @@ void FeatureSet::CalculateAll()
 	}
 	if(Config::Inst()->IsFeatureEnabled(DISTINCT_IPS))
 	{
-			Calculate(DISTINCT_IPS);
+		Calculate(DISTINCT_IPS);
 	}
 	if(Config::Inst()->IsFeatureEnabled(DISTINCT_TCP_PORTS))
 	{
-			Calculate(DISTINCT_TCP_PORTS);
+		Calculate(DISTINCT_TCP_PORTS);
 	}
 	if(Config::Inst()->IsFeatureEnabled(DISTINCT_UDP_PORTS))
 	{
-			Calculate(DISTINCT_UDP_PORTS);
+		Calculate(DISTINCT_UDP_PORTS);
 	}
 	if(Config::Inst()->IsFeatureEnabled(AVG_TCP_PORTS_PER_HOST))
 	{
-			Calculate(AVG_TCP_PORTS_PER_HOST);
+		Calculate(AVG_TCP_PORTS_PER_HOST);
 	}
 	if(Config::Inst()->IsFeatureEnabled(AVG_UDP_PORTS_PER_HOST))
 	{
-			Calculate(AVG_UDP_PORTS_PER_HOST);
+		Calculate(AVG_UDP_PORTS_PER_HOST);
 	}
 	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYN))
 	{
 		Calculate(TCP_PERCENT_SYN);
 	}
-
 	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_FIN))
 	{
 		Calculate(TCP_PERCENT_FIN);
 	}
-
 	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_RST))
 	{
 		Calculate(TCP_PERCENT_RST);
 	}
-
 	if(Config::Inst()->IsFeatureEnabled(TCP_PERCENT_SYNACK))
 	{
 		Calculate(TCP_PERCENT_SYNACK);
 	}
-
 	if(Config::Inst()->IsFeatureEnabled(HAYSTACK_PERCENT_CONTACTED))
 	{
 		Calculate(HAYSTACK_PERCENT_CONTACTED);
 	}
 }
-
 
 void FeatureSet::Calculate(const uint32_t& featureDimension)
 {
@@ -272,7 +264,6 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 						portDivisor = it->second;
 					}
 				}
-
 
 				//Multiply the maximum entry with the size to get the divisor
 				portDivisor = portDivisor *((double)m_PortTCPTable.size() + (double)m_PortUDPTable.size());
@@ -389,7 +380,8 @@ void FeatureSet::Calculate(const uint32_t& featureDimension)
 		}
 		case TCP_PERCENT_SYNACK:
 		{
-			//cout << "TCP stats: synCount: " << synCount << " synAckCount: " << synAckCount << " ackCount: " << ackCount << " finCount: " << finCount << " rstCount" << rstCount << endl;
+			//cout << "TCP stats: synCount: " << synCount << " synAckCount: " << synAckCount << " ackCount: "
+			//	<< ackCount << " finCount: " << finCount << " rstCount" << rstCount << endl;
 			m_features[TCP_PERCENT_SYNACK] = ((double)m_synAckCount)/((double)m_tcpPacketCount + 1);
 			break;
 		}
@@ -470,7 +462,8 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 
 			// Only count as an IP/port contacted if it looks like a scan (SYN or NULL packet)
 			if ((evidence->m_evidencePacket.tcp_hdr.syn && !evidence->m_evidencePacket.tcp_hdr.ack)
-					|| (!evidence->m_evidencePacket.tcp_hdr.syn && !evidence->m_evidencePacket.tcp_hdr.ack && !evidence->m_evidencePacket.tcp_hdr.rst))
+					|| (!evidence->m_evidencePacket.tcp_hdr.syn && !evidence->m_evidencePacket.tcp_hdr.ack
+							&& !evidence->m_evidencePacket.tcp_hdr.rst))
 			{
 				m_IPTable[evidence->m_evidencePacket.ip_dst]++;
 
@@ -519,7 +512,6 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 				m_finCount++;
 			}
 
-
 			break;
 		}
 		//If ICMP
@@ -549,7 +541,6 @@ void FeatureSet::UpdateEvidence(Evidence *evidence)
 			m_HaystackIPTable[evidence->m_evidencePacket.ip_dst]++;
 		}
 	}
-
 
 	m_packTable[evidence->m_evidencePacket.ip_len]++;
 	m_lastTime = evidence->m_evidencePacket.ts;
@@ -595,6 +586,7 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 	{
 		m_tcpPortsContactedForIP[it->first] += rhs.m_tcpPortsContactedForIP[it->first];
 	}
+
 	for(IP_Table::iterator it = rhs.m_udpPortsContactedForIP.begin(); it != rhs.m_udpPortsContactedForIP.end(); it++)
 	{
 		m_udpPortsContactedForIP[it->first] += rhs.m_udpPortsContactedForIP[it->first];
@@ -704,8 +696,10 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 
 	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_tcpPortsContactedForIP, 0, bufferSize);
 	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_udpPortsContactedForIP, 0, bufferSize);
-	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted, IpPortCombination::GetEmptyKey(), bufferSize);
-	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted, IpPortCombination::GetEmptyKey(), bufferSize);
+	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted,
+			IpPortCombination::GetEmptyKey(), bufferSize);
+	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted,
+			IpPortCombination::GetEmptyKey(), bufferSize);
 
 	return offset;
 }
@@ -740,8 +734,10 @@ uint32_t FeatureSet::GetFeatureDataLength()
 	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint64_t>  (m_PortUDPTable, 0);
 	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_tcpPortsContactedForIP, 0);
 	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_udpPortsContactedForIP, 0);
-	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (m_hasTcpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
-	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (m_hasUdpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
+	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (
+			m_hasTcpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
+	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (
+			m_hasUdpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
 
 	return out;
 }
@@ -753,7 +749,6 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 
 	//Temporary variables to store and track data during deserialization
 	uint64_t temp = 0;
-
 
 	//Required, individual variables for calculation
 	DeserializeChunk(buf, &offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);

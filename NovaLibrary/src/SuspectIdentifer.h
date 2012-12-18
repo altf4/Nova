@@ -13,15 +13,14 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
-//============================================================================/*
+// Description : TODO: Description here
+//============================================================================
 
 #ifndef SUSPECTIDENTIFER_H_
 #define SUSPECTIDENTIFER_H_
 
 #include <string>
 #include <inttypes.h>
-
 
 namespace Nova
 {
@@ -38,7 +37,6 @@ public:
 	// Ethernet interface the suspect was seen on
 	std::string m_interface;
 
-
 	SuspectIdentifier();
 	SuspectIdentifier(uint32_t ip, std::string interface);
 	bool operator != (const SuspectIdentifier &rhs) const;
@@ -48,7 +46,6 @@ public:
 
 	uint32_t Serialize(u_char *buf, uint32_t bufferSize);
 	uint32_t Deserialize(u_char *buf, uint32_t bufferSize);
-
 };
 
 struct equalityChecker
@@ -60,4 +57,5 @@ struct equalityChecker
 };
 
 } /* namespace Nova */
+
 #endif /* SUSPECTIDENTIFER_H_ */

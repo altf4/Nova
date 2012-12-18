@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : A Suspect object with identifying information and traffic
 //					features so that each entity can be monitored and classified.
-//============================================================================/*
+//============================================================================
 
 #include "SerializationHelper.h"
 #include "FeatureSet.h"
@@ -28,8 +28,8 @@
 
 using namespace std;
 
-namespace Nova{
-
+namespace Nova
+{
 
 Suspect::Suspect()
 {
@@ -353,6 +353,7 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 			DeserializeChunk(buf, &offset,(char*)&m_features.m_udpPacketCount, sizeof m_features.m_udpPacketCount, bufferSize);
 			DeserializeChunk(buf, &offset,(char*)&m_features.m_icmpPacketCount, sizeof m_features.m_icmpPacketCount, bufferSize);
 			DeserializeChunk(buf, &offset,(char*)&m_features.m_otherPacketCount, sizeof m_features.m_otherPacketCount, bufferSize);
+			break;
 		default:
 		{
 			break;
@@ -409,7 +410,6 @@ void Suspect::SetHostileNeighbors(int i)
 	m_hostileNeighbors = i;
 }
 
-
 //Returns the hostility bool of the suspect
 bool Suspect::GetIsHostile()
 {
@@ -458,7 +458,6 @@ void Suspect::SetFeatureSet(FeatureSet *fs, FeatureMode whichFeatures)
 			break;
 		}
 	}
-
 }
 
 //Adds the feature set 'fs' to the suspect's feature set
@@ -478,7 +477,6 @@ void Suspect::AddFeatureSet(FeatureSet *fs, FeatureMode whichFeatures)
 			break;
 		}
 	}
-
 }
 
 //Returns the accuracy double of the feature using featureIndex 'fi'

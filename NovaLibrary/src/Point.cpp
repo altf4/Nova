@@ -15,14 +15,15 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Points paired with a classification for use in the Approximate
 //					Nearest Neighbor algorithm.
-//============================================================================/*
+//============================================================================
 
 #include "Point.h"
 #include "Defines.h"
 
 using namespace std;
 
-namespace Nova{
+namespace Nova
+{
 
 Point::Point()
 {
@@ -43,4 +44,5 @@ Point::~Point()
 	m_annPoint = NULL;
 	m_classification = 0;
 }
+
 }

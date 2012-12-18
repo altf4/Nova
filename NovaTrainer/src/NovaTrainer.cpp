@@ -160,7 +160,7 @@ void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u
 	}
 }
 
-void update(SuspectIdentifier key)
+void Update(SuspectIdentifier key)
 {
 	SuspectIdentifier foo = key;
 	suspects.ClassifySuspect(foo);
@@ -251,7 +251,6 @@ void ConvertCaptureToDump(std::string captureFolder)
 		LOG(CRITICAL, "Unable to change folder to " + Config::Inst()->GetPathHome(), "");
 	}
 
-
 	engine = ClassificationEngine::MakeEngine();
 	engine->LoadConfiguration();
 
@@ -261,7 +260,6 @@ void ConvertCaptureToDump(std::string captureFolder)
 
    	string haystackFile = captureFolder + "/haystackIps.txt";
 	UpdateHaystackFeatures(haystackFile);
-
 
 	trainingFileStream.open(dumpFile);
 	if(!trainingFileStream.is_open())
@@ -275,13 +273,12 @@ void ConvertCaptureToDump(std::string captureFolder)
 	capture.SetFilter(ConstructFilterString());
 	capture.StartCaptureBlocking();
 
-
 	LOG(DEBUG, "Done processing PCAP file.", "");
 
 	vector<SuspectIdentifier> ids = suspects.GetAllKeys();
 	for (uint i = 0; i < ids.size(); i++)
 	{
-		update(ids.at(i));
+		Update(ids.at(i));
 	}
 
 	trainingFileStream.close();
@@ -349,7 +346,6 @@ void SaveToDatabaseFile(string captureFolder, string databaseFile)
 	string hostilesFile = captureFolder + "/hostiles.txt";
 	vector<string> hostileIps = Config::GetIpAddresses(hostilesFile);
 
-
 	string dumpFile = captureFolder + "/nova.dump";
 
 	TrainingDump dump;
@@ -369,6 +365,5 @@ void SaveToDatabaseFile(string captureFolder, string databaseFile)
 	dump.MergeBenign("Benign IPs from capture: " + captureFolder);
 	dump.SaveToDb(databaseFile);
 }
-
 
 }

@@ -31,7 +31,6 @@ using namespace std;
 using namespace Nova;
 using namespace NovaCLI;
 
-
 int main(int argc, const char *argv[])
 {
 	// Fail if no arguments

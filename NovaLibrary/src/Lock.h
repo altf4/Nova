@@ -43,7 +43,7 @@ public:
 		if (!pthread_mutex_lock(m_mutex))
 		{
 			lockAquired = true;
-		} // TODO Throw exception?
+		}
 	}
 
 	Lock(pthread_rwlock_t *lock, lockType type)
@@ -58,18 +58,14 @@ public:
 			if (!pthread_rwlock_rdlock(m_rwlock))
 			{
 				lockAquired = true;
-			} // TODO Throw exception?
+			}
 		}
 		else if (type == WRITE_LOCK)
 		{
 			if (!pthread_rwlock_wrlock(m_rwlock))
 			{
 				lockAquired = true;
-			} // TODO Throw exception?
-		}
-		else
-		{
-			// TODO Throw exception?
+			}
 		}
 	}
 

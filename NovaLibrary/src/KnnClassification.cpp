@@ -27,7 +27,8 @@ using namespace Nova;
 
 // Normalization method to use on each feature
 // TODO: Make this a configuration var somewhere in Novaconfig.txt?
-normalizationType KnnClassification::m_normalization[] = {
+normalizationType KnnClassification::m_normalization[] =
+{
 		LINEAR_SHIFT, // Don't normalize IP traffic distribution, already between 0 and 1
 		LINEAR_SHIFT,
 		LOGARITHMIC,
