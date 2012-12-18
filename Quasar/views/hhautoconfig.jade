@@ -149,9 +149,9 @@ block headerAdditions
     {
       var checkGroupName = GetGroupName();
 
-        if(GetGroupName() == '*')
+        if(GetGroupName() == '*' && GetAppend() == '*')
         {
-          alert('Must enter a group name!');
+          alert('Must enter a group name, or select a group to append to if a group other than "default" has previously been created!');
           return;          
         }
         else if(GetGroupName() == '#')
@@ -192,7 +192,7 @@ block headerAdditions
           {
               var element = document.getElementById("nodeCountType");
               var count = element.options[element.selectedIndex].value;
-              now.ShowAutoConfig(count, GetNumNodes(), GetInterfaces(), GetSubnets(), GetGroupName(), autoscancb, routeToReview); 
+              now.ShowAutoConfig(count, GetNumNodes(), GetInterfaces(), GetSubnets(), GetGroupName(), GetAppend(), autoscancb, routeToReview); 
           } 
           catch(err) 
           {
@@ -306,8 +306,11 @@ block headerAdditions
     function GetGroupName()
     {
       var group = document.getElementById('newGroup').value;
-      
-      if(group == undefined || group == '')
+      if(document.getElementById('newGroupCheck').checked == false)
+      {
+        return '*';
+      }
+      if((group == undefined || group == '') && (document.getElementById('newGroupCheck').checked == true))
       {
         return '*';
       }
@@ -322,13 +325,35 @@ block headerAdditions
       }
     }
 
+    function GetAppend()
+    {
+      var appendToTemp = document.getElementById('groupSelect');
+      if(document.getElementById('newGroupCheck').checked == true)
+      {
+        return '*';
+      }
+      if(appendToTemp.options[appendToTemp.selectedIndex] == undefined)
+      {
+          alert('To append to a group, a group other than "default" must be created first!');
+          return '*';
+      }
+      var appendTo = appendToTemp.options[appendToTemp.selectedIndex].value;
+      if(appendTo != '' && appendTo != undefined && (document.getElementById('newGroupCheck').checked == false))
+      {
+        return appendTo;
+      }      
+      else
+      {
+        return '*';
+      }
+    }
+
     function autoscancb(text)
     {
         var p = document.createElement('p');
         p.value = text;
         p.innerHTML = text;
         document.getElementById('appendText').appendChild(p);
-        //document.getElementById('appendText').style.height = document.getElementById('appendText').scrollHeight;
         document.getElementById('appendText').scrollTop = document.getElementById('appendText').scrollHeight;
     }
     
@@ -376,6 +401,25 @@ block headerAdditions
       else
       {
         alert('*** DEBUG *** Error: now.CancelAutoScan not defined (should not see this)');
+      }
+    }
+
+    function newOrAppend()
+    {
+      var check = document.getElementById('newGroupCheck').checked;
+      if(check == true)
+      {
+        document.getElementById('newGroup').value = '';
+        document.getElementById('newGroup').style.display = 'block';
+        document.getElementById('groupSelect').style.display = 'none';
+        document.getElementById('nameLabel').innerHTML = 'New Haystack Group Name';
+      }
+      else
+      {
+        document.getElementById('newGroup').value = '';
+        document.getElementById('newGroup').style.display = 'none';
+        document.getElementById('groupSelect').style.display = 'block';
+        document.getElementById('nameLabel').innerHTML = 'Select Group to Append to:';
       }
     }
 
@@ -428,10 +472,18 @@ block content
   div#setup
     h1 Haystack Autoconfig
     br
-    label(style='font-weight: bold') New Haystack Group Name
+    input(id='newGroupCheck', type='checkbox', onclick='newOrAppend()', checked='true') 
+    label(style='font-weight: bold;') New Group?
     br
     br
-    input(type='text', id='newGroup', placeholder='Required Field')
+    label(id='nameLabel', style='font-weight: bold') New Haystack Group Name
+    br
+    br
+    input(type='text', id='newGroup', placeholder='Required Field', style='display: block;')
+    select(id='groupSelect', style='display: none;')
+      - for(var i = 0; i < GROUPS.length; i++)
+        - if(GROUPS[i] != '' && GROUPS[i] != undefined && GROUPS[i] != 'default')
+          option #{GROUPS[i]}
     br
     hidden(id="length", value=INTERFACES.length)
     br    

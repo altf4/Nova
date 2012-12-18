@@ -57,8 +57,6 @@ uint numNodes;
 double nodeRatio;
 string nodeRange;
 vector<pair<int, int> > nodeRangeVector;
-int nodeRangeStartInt;
-int nodeRangeEndInt;
 string group;
 
 enum NumberOfNodesType
@@ -123,7 +121,7 @@ int main(int argc, char ** argv)
 
 		if(vm.count("group") && vm.count("append-to"))
 		{
-			cout << "ERROR: You can use either -g to define a new group or -t to append to a specific group, not both." << endl;
+			cout << "ERROR: You can use either -g to define a new group or -t to append to a specific group, not both." << '\n';
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			exit(HHC_CODE_BAD_ARG_VALUE);
@@ -133,7 +131,7 @@ int main(int argc, char ** argv)
 			|| (vm.count("num-nodes") && vm.count("num-nodes-range"))
 			|| (vm.count("num-nodes-ratio") && vm.count("num-nodes-range")))
 		{
-			cout << "ERROR: You can only use one of -r, -n and -e to specify the number of nodes." << endl;
+			cout << "ERROR: You can only use one of -r, -n and -e to specify the number of nodes." << '\n';
 			lockFile.close();
 			remove(lockFilePath.c_str());
 			exit(HHC_CODE_BAD_ARG_VALUE);
@@ -141,12 +139,12 @@ int main(int argc, char ** argv)
 
 		if(vm.count("group"))
 		{
-			cout << "Creating new haystack group " << vm["group"].as<string>() << endl;
+			cout << "Creating new haystack group " << vm["group"].as<string>() << '\n';
 			group = vm["group"].as<string>();
 			HoneydConfiguration::Inst()->AddNewConfiguration(vm["group"].as<string>(), false, "");
 			HoneydConfiguration::Inst()->SwitchToConfiguration(vm["group"].as<string>());
 		}
-		else if(!vm.count("group"))
+		else if(!vm.count("group") && !vm.count("append-to"))
 		{
 			string defaultCreatedGroup = "autoconfig";
 			time_t timestamp = time(NULL);
@@ -154,19 +152,38 @@ int main(int argc, char ** argv)
 			ss << timestamp;
 			defaultCreatedGroup += ss.str();
 			group = defaultCreatedGroup;
-			cout << "No group dictated, using default group name " << defaultCreatedGroup << endl;
+			cout << "No group dictated, using default group name " << defaultCreatedGroup << '\n';
 			HoneydConfiguration::Inst()->AddNewConfiguration(defaultCreatedGroup, false, "");
 			HoneydConfiguration::Inst()->SwitchToConfiguration(defaultCreatedGroup);
 		}
 
 		if(vm.count("append-to"))
 		{
-			cout << "*** DEBUG *** Setting AutoConfig to append results to " << vm["append-to"].as<string>() << ", not working yet" << endl;
+			string configGroup = vm["append-to"].as<string>();
+			cout << "Appending Autoconfig results to haystack group " << configGroup << '\n';
+			vector<string> configList = HoneydConfiguration::Inst()->GetConfigurationsList();
+			bool exists = false;
+			for(uint i = 0; i < configList.size(); i++)
+			{
+				if(configList[i] == configGroup)
+				{
+					exists = true;
+				}
+			}
+			if(!exists)
+			{
+				LOG(ERROR, ("Desired group \"" + configGroup + "\" does not exist, aborting..."), "");
+				lockFile.close();
+				remove(lockFilePath.c_str());
+				exit(HHC_CODE_BAD_ARG_VALUE);
+			}
+			HoneydConfiguration::Inst()->SwitchToConfiguration(vm["append-to"].as<string>());
+			HoneydConfiguration::Inst()->ReadAllTemplatesXML();
 		}
 
 		if(vm.count("num-nodes-ratio"))
 		{
-			cout << "Number of nodes to create: " << nodeRatio << " * number of real hosts found" << endl;
+			cout << "Number of nodes to create: " << nodeRatio << " * number of real hosts found" << '\n';
 			numberOfNodesType = RATIO_BASED_NUMBER_OF_NODES;
 		}
 
@@ -238,7 +255,7 @@ int main(int argc, char ** argv)
 		}
 		if(vm.count("nmap-xml"))
 		{
-			cout << "file to parse is " << vm["nmap-xml"].as< string >() << endl;
+			cout << "file to parse is " << vm["nmap-xml"].as< string >() << '\n';
 			nmapFileName = vm["nmap-xml"].as<string>();
 			f_flag_set = true;
 		}
@@ -353,7 +370,7 @@ int main(int argc, char ** argv)
 	{
 		LOG(ERROR, "Uncaught exception: " + string(e.what()) + ".", "");
 
-		cout << endl << desc << endl;
+		cout << '\n' << desc << endl;
 	}
 }
 
@@ -1042,7 +1059,7 @@ void Nova::GenerateConfiguration()
 {
 	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
 
-	uint nodesToCreate = 0;
+	int nodesToCreate = 0;
 	if(numberOfNodesType == FIXED_NUMBER_OF_NODES)
 	{
 		nodesToCreate = numNodes;
@@ -1067,7 +1084,7 @@ void Nova::GenerateConfiguration()
 	LOG(DEBUG, ss.str(), "");
 	if(numberOfNodesType == FIXED_NUMBER_OF_NODES || numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES)
 	{
-		for(uint i = 0; i < nodesToCreate; i++)
+		for(int i = 0; i < nodesToCreate; i++)
 		{
 			//Pick a (leaf) profile at random
 			Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
@@ -1154,7 +1171,7 @@ int Nova::GetNumberOfIPsInRange(string ipRange)
 {
 	// TODO: Extend this method to take into account a comma-separated list of ranges
 	// i.e. "10.10.1.0-11.10.10.0,11.10.11.0-12.10.0.0"
-	int conditional = ipRange.find(',');
+	uint conditional = ipRange.find(',');
 	if(conditional == ipRange.npos)
 	{
 		int split = ipRange.find('-');

@@ -1363,7 +1363,8 @@ app.get('/autoConfig', passport.authenticate('basic', {session: false}), functio
 	res.render('hhautoconfig.jade', {
 		user: req.user,
 		INTERFACES: config.ListInterfaces().sort(),
-		SCANERROR: ""
+		SCANERROR: "",
+		GROUPS: honeydConfig.GetConfigurationsList()
 	});
 });
 
