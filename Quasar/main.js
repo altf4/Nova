@@ -2484,7 +2484,7 @@ everyone.now.GetCaptureSession = function (callback)
 	callback(ret);
 }
 
-everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subnets, groupName, callback, route)
+everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subnets, groupName, append, callback, route)
 {
 	var executionString = 'haystackautoconfig';
 	var nFlag = '-n';
@@ -2493,6 +2493,7 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	var aFlag = '-a';
 	var gFlag = '-g';
 	var eFlag = '-e';
+	var tFlag = '-t';
 
 	var hhconfigArgs = new Array();
 
@@ -2521,24 +2522,28 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 	  }
 	}
 	
-	if (interfaces !== undefined && interfaces.length > 0)
+	if(interfaces !== undefined && interfaces.length > 0)
 	{
 		hhconfigArgs.push(iFlag);
 		hhconfigArgs.push(interfaces);
 	}
-	if (subnets !== undefined && subnets.length > 0)
+	if(subnets !== undefined && subnets.length > 0)
 	{
 		hhconfigArgs.push(aFlag);
 		hhconfigArgs.push(subnets);
 	}
-	if (groupName !== undefined)
+	if(groupName !== undefined && groupName !== '*')
 	{
 	  hhconfigArgs.push(gFlag);
 	  hhconfigArgs.push(groupName);
+	  honeydConfig.AddConfiguration(groupName, 'false', '');
+    config.SetCurrentConfig(groupName);
 	}
-
-  honeydConfig.AddConfiguration(groupName, 'false', '');
-  config.SetCurrentConfig(groupName);
+	if(append !== undefined && append !== '*')
+	{
+	  hhconfigArgs.push(tFlag);
+	  hhconfigArgs.push(append);
+	}
 
 	var util = require('util');
 	var spawn = require('child_process').spawn;
