@@ -17,13 +17,13 @@
 //				IE: asynchronous messages received from Novad
 //============================================================================
 
-
 #ifndef CALLBACKHANDLER_H_
 #define CALLBACKHANDLER_H_
 
 #include "Suspect.h"
 
-namespace Nova {
+namespace Nova
+{
 
 enum CallbackChangeType: char
 {
@@ -62,6 +62,5 @@ private:
 
 
 }
-
 
 #endif /* CALLBACKHANDLER_H_ */

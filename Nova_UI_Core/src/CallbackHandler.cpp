@@ -33,7 +33,6 @@ CallbackHandler::CallbackHandler()
 	m_socketFD = IPCSocketFD;
 }
 
-
 struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 {
 	struct CallbackChange change;

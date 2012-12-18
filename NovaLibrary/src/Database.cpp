@@ -13,8 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
-//============================================================================/*
+// Description : TODO: Place a description here
+//============================================================================
 
 #include "Config.h"
 #include "Database.h"
@@ -23,7 +23,6 @@
 
 #include <iostream>
 #include <sstream>
-
 
 using namespace std;
 
@@ -101,6 +100,5 @@ void Database::InsertSuspectHostileAlert(Suspect *suspect)
 		throw DatabaseException(string(errorMessage));
 	}
 }
-
 
 }/* namespace Nova */

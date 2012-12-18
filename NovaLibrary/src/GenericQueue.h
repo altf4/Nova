@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : The GenericQueue object is a specialized linked-list
 //			 of elementType objects for high performance IP packet processing
-//============================================================================/*
+//============================================================================
 
 #ifndef GENERICQUEUE_H_
 #define GENERICQUEUE_H_

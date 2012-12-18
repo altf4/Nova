@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : The EvidenceTable manages a series of EvidenceQueues paired with a suspect's
 //				host ordered ipv4 address
-//============================================================================/*
+//============================================================================
 
 #ifndef EVIDENCETABLE_H_
 #define EVIDENCETABLE_H_

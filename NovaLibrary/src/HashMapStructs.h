@@ -14,7 +14,7 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Common hash map structure definitions for use with hashmap
-//============================================================================/*
+//============================================================================
 
 #ifndef HASHMAPSTRUCTS_H_
 #define HASHMAPSTRUCTS_H_
@@ -23,10 +23,6 @@
 #include <arpa/inet.h>
 #include <vector>
 #include <string>
-
-/************************************
- Equality operators used by hash maps
- ************************************/
 
 struct eqstr
 {
@@ -91,16 +87,5 @@ struct eq_uint16_t
 		return (k1 == k2);
 	}
 };
-
-/*
-template <class typeToCompare>
-struct equalityChecker
-{
-	bool operator()(typeToCompare k1, typeToCompare k2)
-	{
-		return (k1 == k2);
-	}
-};
-*/
 
 #endif /* HASHMAPSTRUCTS_H_ */

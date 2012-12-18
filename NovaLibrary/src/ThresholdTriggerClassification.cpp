@@ -13,8 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
-//============================================================================/*
+// Description : TODO: Description here
+//============================================================================
 
 #include "ThresholdTriggerClassification.h"
 #include "Config.h"
@@ -40,17 +40,17 @@ double ThresholdTriggerClassification::Classify(Suspect *suspect)
 		}
 
 		HostileThreshold threshold = thresholds.at(i);
-		if (threshold.hasMaxValueTrigger)
+		if (threshold.m_hasMaxValueTrigger)
 		{
-			if (suspect->m_features.m_features[i] >= threshold.maxValueTrigger)
+			if (suspect->m_features.m_features[i] >= threshold.m_maxValueTrigger)
 			{
 				classification = 1;
 			}
 		}
 
-		if (threshold.hasMinValueTrigger)
+		if (threshold.m_hasMinValueTrigger)
 		{
-			if (suspect->m_features.m_features[i] <= threshold.minValueTrigger)
+			if (suspect->m_features.m_features[i] <= threshold.m_minValueTrigger)
 			{
 				classification = 1;
 			}

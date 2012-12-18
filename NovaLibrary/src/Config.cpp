@@ -16,7 +16,10 @@
 // Description : Class to load and parse the NOVA configuration file
 //============================================================================
 
+#define BOOST_FILESYSTEM_VERSION 2
+
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ifaddrs.h>
@@ -31,9 +34,6 @@
 #include <pwd.h>
 #include <string>
 #include <iostream>
-
-#define BOOST_FILESYSTEM_VERSION 2
-#include <boost/filesystem.hpp>
 
 #include "Config.h"
 #include "Logger.h"
@@ -149,7 +149,8 @@ void Config::LoadConfig()
 vector<string> Config::GetPrefixes()
 {
 	vector<string> ret;
-	for (uint i = 0; i < sizeof(Config::Inst()->m_prefixes)/sizeof(Config::Inst()->m_prefixes[0]); i++) {
+	for (uint i = 0; i < sizeof(Config::Inst()->m_prefixes)/sizeof(Config::Inst()->m_prefixes[0]); i++)
+	{
 		ret.push_back(string(Config::Inst()->m_prefixes[i]));
 	}
 	return ret;
@@ -867,8 +868,8 @@ void Config::LoadConfig_Internal()
 					for (uint i = 0; i < thresholds.size(); i++)
 					{
 						HostileThreshold setting;
-						setting.hasMaxValueTrigger = false;
-						setting.hasMinValueTrigger = false;
+						setting.m_hasMaxValueTrigger = false;
+						setting.m_hasMinValueTrigger = false;
 
 						if (thresholds.at(i).at(0) == '-')
 						{
@@ -883,37 +884,37 @@ void Config::LoadConfig_Internal()
 							{
 								string maxValueString = parts.at(0).substr(1, string::npos);
 								istringstream s1(maxValueString);
-								if (!(s1 >> setting.maxValueTrigger))
+								if (!(s1 >> setting.m_maxValueTrigger))
 								{
 									LOG(ERROR, "Unable to parse max value for THRESHOLD_HOSTILE_TRIGGERS", "");
 								}
 								else
 								{
-									setting.hasMaxValueTrigger = true;
+									setting.m_hasMaxValueTrigger = true;
 								}
 
 
 								string minValueString = parts.at(1);
 								istringstream s2(minValueString);
-								if (!(s2 >> setting.minValueTrigger))
+								if (!(s2 >> setting.m_minValueTrigger))
 								{
 									LOG(ERROR, "Unable to parse min value for THRESHOLD_HOSTILE_TRIGGERS", "");
 								}
 								else
 								{
-									setting.hasMinValueTrigger = true;
+									setting.m_hasMinValueTrigger = true;
 								}
 							}
 							else
 							{
 								istringstream s(thresholds.at(i).substr(1, string::npos));
-								if (!(s >> setting.maxValueTrigger))
+								if (!(s >> setting.m_maxValueTrigger))
 								{
 									LOG(ERROR, "Unable to parse max value for THRESHOLD_HOSTILE_TRIGGERS", "");
 								}
 								else
 								{
-									setting.hasMaxValueTrigger = true;
+									setting.m_hasMaxValueTrigger = true;
 								}
 							}
 
@@ -921,13 +922,13 @@ void Config::LoadConfig_Internal()
 						else if (thresholds.at(i).at(0) == '<')
 						{
 							istringstream s(thresholds.at(i).substr(1, thresholds.at(i).npos));
-							if (!(s >> setting.minValueTrigger))
+							if (!(s >> setting.m_minValueTrigger))
 							{
 								LOG(ERROR, "Unable to parse min value for THRESHOLD_HOSTILE_TRIGGERS", "");
 							}
 							else
 							{
-								setting.hasMinValueTrigger = true;
+								setting.m_hasMinValueTrigger = true;
 							}
 						}
 

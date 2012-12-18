@@ -110,7 +110,6 @@ void CheckForDroppedPackets();
 // Call this to update the featuresets based on a haystack change
 void UpdateHaystackFeatures();
 
-
 }
 
 #endif /* NOVAD_H_ */

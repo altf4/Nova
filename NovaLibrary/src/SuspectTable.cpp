@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Wrapper class for the SuspectHashMap object used to maintain a
 // 		list of suspects.
-//============================================================================/*
+//============================================================================
 
 #include "ClassificationEngine.h"
 #include "SerializationHelper.h"
@@ -37,10 +37,6 @@ extern ClassificationEngine *engine;
 
 namespace Nova
 {
-
-//***************************************************************************//
-// - - - - - - - - - - - - - - SuspectTable - - - - - - - - - - - - - - - - -
-//***************************************************************************//
 
 // Default Constructor for SuspectTable
 SuspectTable::SuspectTable()

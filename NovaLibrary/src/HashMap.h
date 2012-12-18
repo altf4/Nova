@@ -36,7 +36,6 @@ class emptyKeyNotSetException: public hashMapException
 	}
 };
 
-
 template <class KeyType, class ValueType, class HashFcn, class EqualKey>
 class HashMap
 {

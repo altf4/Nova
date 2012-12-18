@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http:// www.gnu.org/licenses/>.
 // Description : Wrapper class for the SuspectHashMap object used to maintain a
 // 		list of suspects.
-// ============================================================================/*
+// ============================================================================
 
 #ifndef SUSPECTTABLE_H_
 #define SUSPECTTABLE_H_
@@ -29,16 +29,18 @@
 
 #define EMPTY_SUSPECT_CLASSIFICATION -1337
 
-namespace std {
-        template<>
-        struct hash< Nova::SuspectIdentifier > {
-        	// TODO: This should be passed by reference, doesn't compile though. Look into it.
-            //std::size_t operator()( Nova::SuspectIdentifier &c ) const
-            std::size_t operator()( Nova::SuspectIdentifier c ) const
-            {
-                return hash<uint32_t>()(c.m_ip);
-            }
-        };
+namespace std
+{
+	template<>
+	struct hash< Nova::SuspectIdentifier >
+	{
+		// TODO: This should be passed by reference, doesn't compile though. Look into it.
+		//std::size_t operator()( Nova::SuspectIdentifier &c ) const
+		std::size_t operator()( Nova::SuspectIdentifier c ) const
+		{
+			return hash<uint32_t>()(c.m_ip);
+		}
+	};
 }
 
 typedef Nova::HashMap<Nova::SuspectIdentifier, Nova::Suspect *, std::hash<Nova::SuspectIdentifier>, Nova::equalityChecker> SuspectHashTable;
@@ -52,7 +54,8 @@ struct SuspectLock
 
 typedef Nova::HashMap<Nova::SuspectIdentifier,SuspectLock, std::hash<Nova::SuspectIdentifier>, Nova::equalityChecker> SuspectLockTable;
 
-namespace Nova {
+namespace Nova
+{
 
 enum SuspectTableRet : int32_t
 {

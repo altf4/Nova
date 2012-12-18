@@ -63,5 +63,4 @@ void ReclassifySuspects();
 
 }
 
-
 #endif /* NOVACLI_H_ */

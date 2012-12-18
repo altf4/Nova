@@ -13,8 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
-//============================================================================/*
+// Description : TODO: Description here
+//============================================================================
 
 #include "PacketCapture.h"
 #include "Logger.h"
@@ -43,7 +43,8 @@ void PacketCapture::SetPacketCb(void (*cb)(unsigned char *index, const struct pc
 
 void PacketCapture::SetFilter(string filter)
 {
-	if (m_handle == NULL) {
+	if (m_handle == NULL)
+	{
 		return;
 	}
 
@@ -70,7 +71,8 @@ pcap_t* PacketCapture::GetPcapHandle()
 
 int PacketCapture::GetDroppedPackets()
 {
-	if (m_handle == NULL) {
+	if (m_handle == NULL)
+	{
 		return 0;
 	}
 
@@ -164,10 +166,8 @@ void PacketCapture::InternalThreadEntry()
 		}
 		else if (activationReturnValue == PCAP_ERROR_IFACE_NOT_UP)
 		{
-				LOG(ERROR, "Can't activate packet capture on: " + m_identifier + ". Error was: " + string(pcap_geterr(m_handle)), "");
-				sleep(10);
+			LOG(ERROR, "Can't activate packet capture on: " + m_identifier + ". Error was: " + string(pcap_geterr(m_handle)), "");
+			sleep(10);
 		}
 	}
 }
-
-

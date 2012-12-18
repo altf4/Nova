@@ -13,8 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
-//============================================================================/*
+// Description : TODO: Description here
+//============================================================================
 
 #ifndef THRESHOLDTRIGGERCLASSIFICATION_H_
 #define THRESHOLDTRIGGERCLASSIFICATION_H_
@@ -26,10 +26,10 @@ namespace Nova
 
 struct HostileThreshold
 {
-	double maxValueTrigger;
-	double minValueTrigger;
-	bool hasMinValueTrigger;
-	bool hasMaxValueTrigger;
+	double m_maxValueTrigger;
+	double m_minValueTrigger;
+	bool m_hasMinValueTrigger;
+	bool m_hasMaxValueTrigger;
 };
 
 class ThresholdTriggerClassification: public Nova::ClassificationEngine
@@ -41,4 +41,5 @@ public:
 };
 
 } /* namespace Nova */
+
 #endif /* THRESHOLDTRIGGERCLASSIFICATION_H_ */

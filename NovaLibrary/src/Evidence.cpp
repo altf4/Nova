@@ -80,8 +80,6 @@ Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 		m_evidencePacket.tcp_hdr.rst = ((tcphdr*)offset)->rst;
 		m_evidencePacket.tcp_hdr.syn = ((tcphdr*)offset)->syn;
 		m_evidencePacket.tcp_hdr.fin = ((tcphdr*)offset)->fin;
-
-
 	}
 }
 

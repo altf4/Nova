@@ -16,7 +16,7 @@
 // Description : Class to generate messages based on events inside the program,
 // and maintain information needed for the sending of those events, mostly
 // networking information that is not readily available
-//============================================================================/*
+//============================================================================
 
 #ifndef Logger_H_
 #define Logger_H_

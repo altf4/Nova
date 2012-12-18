@@ -127,4 +127,5 @@ bool IsHaystackUp()
 	pclose(out);
 	return retSuccess;
 }
+
 }

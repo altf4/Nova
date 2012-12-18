@@ -67,5 +67,4 @@ public:
 
 }
 
-
 #endif /* TRAININGDATA_H_ */

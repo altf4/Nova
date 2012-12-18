@@ -38,7 +38,6 @@
 #include "Point.h"
 #include "Novad.h"
 
-
 #include <vector>
 #include <math.h>
 #include <time.h>
@@ -131,9 +130,11 @@ int RunNovaD()
 	pthread_mutex_init(&packetCapturesLock, NULL);
 
 	db = new Database();
-	try {
+	try
+	{
 		db->Connect();
-	} catch (Nova::DatabaseException &e) {
+	} catch (Nova::DatabaseException &e)
+	{
 		LOG(ERROR, "Unable to connect to SQL database. " + string(e.what()), "");
 	}
 
@@ -185,7 +186,7 @@ int RunNovaD()
 	// If we're not reading from a pcap, monitor for IP changes in the honeyd file
 	if(!Config::Inst()->GetReadPcap())
 	{
-		honeydDHCPNotifyFd = inotify_init ();
+		honeydDHCPNotifyFd = inotify_init();
 
 		if(honeydDHCPNotifyFd > 0)
 		{
@@ -738,9 +739,11 @@ void UpdateAndClassify(SuspectIdentifier key)
 
 	if(suspectCopy.GetIsHostile() && (!oldIsHostile || Config::Inst()->GetClearAfterHostile()))
 	{
-		try {
+		try
+		{
 			db->InsertSuspectHostileAlert(&suspectCopy);
-		} catch (Nova::DatabaseException &e) {
+		} catch (Nova::DatabaseException &e)
+		{
 			LOG(ERROR, "Unable to insert hostile suspect event into database. " + string(e.what()), "");
 		}
 

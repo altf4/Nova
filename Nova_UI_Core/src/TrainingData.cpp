@@ -122,7 +122,8 @@ trainingSuspectMap *TrainingData::ParseTrainingDb(string dbPath)
 					suspect->description = line.substr(line.find_first_of('"'), line.length());
 					getHeader = false;
 				}
-				else {
+				else
+				{
 					suspect->points->push_back(line);
 				}
 			}
@@ -209,7 +210,9 @@ void TrainingData::ThinTrainingPoints(trainingDumpMap *suspects, double distance
 	uint numThinned = 0, numTotal = 0;
 	double maxValues[DIM];
 	for(uint i = 0; i < DIM; i++)
+	{
 		maxValues[i] = 0;
+	}
 
 	// Parse out the max values for normalization
 	for(trainingDumpMap::iterator it = suspects->begin(); it != suspects->end(); it++)
@@ -266,7 +269,9 @@ void TrainingData::ThinTrainingPoints(trainingDumpMap *suspects, double distance
 			}
 
 			for(uint d=0; d < DIM; d++)
+			{
 				distance += annDist(d, olderPoint,newerPoint);
+			}
 
 			// Should we throw this point away?
 			if(distance < distanceThreshhold)

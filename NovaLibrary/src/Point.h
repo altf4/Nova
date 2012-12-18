@@ -15,14 +15,13 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Points paired with a classification for use in the Approximate
 //					Nearest Neighbor Algorithm.
-//============================================================================/*
+//============================================================================
 
 #ifndef POINT_H_
 #define POINT_H_
 
 #include <ANN/ANN.h>
 #include <sys/types.h>
-
 
 namespace Nova
 {

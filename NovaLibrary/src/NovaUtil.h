@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Utility functions that are used by multiple components of nova
 //					but do not warrant an object
-//============================================================================/*
+//============================================================================
 
 #ifndef NOVAUTIL_H_
 #define NOVAUTIL_H_
@@ -37,11 +37,8 @@
 
 #include "sys/types.h"
 
-namespace Nova{
-
-// Encrpyts/decrypts a char buffer of size 'size' depending on mode
-// TODO: Comment more on this once it's written
-void CryptBuffer(u_char *buf, uint size, bool mode);
+namespace Nova
+{
 
 // Gets local IP address for interface
 //		dev - Device name, e.g. "eth0"
@@ -76,7 +73,6 @@ inline std::string GetEnvVariable( const std::string & var ) {
          return val;
      }
 }
-
 
 //Replaces all instances of the search character in the addressed string with the character specified
 //	str: the string to modify

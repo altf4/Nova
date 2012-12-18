@@ -63,7 +63,6 @@ public:
 	Evidence(Evidence *evidence);
 
 	Evidence();
-
 };
 
 }

@@ -14,12 +14,7 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Temporary Defines header during project reorganization
-//============================================================================/*
-
-
-/*********************************/
-/******** Common Defines *********/
-/*********************************/
+//============================================================================
 
 //The maximum message size, packets can only fragment up to this size
 #define MAX_MSG_SIZE 65535
