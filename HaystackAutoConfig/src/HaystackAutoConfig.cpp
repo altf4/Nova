@@ -1059,7 +1059,7 @@ void Nova::GenerateConfiguration()
 {
 	HoneydConfiguration::Inst()->m_profiles.LoadTable(&scannedHosts);
 
-	uint nodesToCreate = 0;
+	int nodesToCreate = 0;
 	if(numberOfNodesType == FIXED_NUMBER_OF_NODES)
 	{
 		nodesToCreate = numNodes;
@@ -1084,7 +1084,7 @@ void Nova::GenerateConfiguration()
 	LOG(DEBUG, ss.str(), "");
 	if(numberOfNodesType == FIXED_NUMBER_OF_NODES || numberOfNodesType == RATIO_BASED_NUMBER_OF_NODES)
 	{
-		for(uint i = 0; i < nodesToCreate; i++)
+		for(int i = 0; i < nodesToCreate; i++)
 		{
 			//Pick a (leaf) profile at random
 			Profile *winningPersonality = HoneydConfiguration::Inst()->m_profiles.GetRandomProfile();
