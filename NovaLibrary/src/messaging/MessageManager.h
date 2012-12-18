@@ -35,6 +35,9 @@
 namespace Nova
 {
 
+// Filename of the IPC file Novad will listen on
+#define NOVAD_LISTEN_FILENAME "/Novad_Listen"
+
 struct CallbackArg
 {
 	struct event_base *m_base;

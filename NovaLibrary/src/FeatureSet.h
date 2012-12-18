@@ -20,7 +20,6 @@
 #ifndef FEATURESET_H_
 #define FEATURESET_H_
 
-#include "Defines.h"
 #include "Evidence.h"
 #include "HashMapStructs.h"
 
@@ -49,9 +48,10 @@ struct _packet
 
 typedef struct _packet Packet;
 
-//boolean values for updateFeatureData()
-#define INCLUDE true
-#define REMOVE false
+//dimension
+#define DIM 14
+
+#define SANITY_CHECK 268435456 // 2 ^ 28
 
 //Table of IP destinations and a count;
 typedef Nova::HashMap<uint32_t, uint64_t, std::hash<time_t>, eqtime > IP_Table;
@@ -138,24 +138,6 @@ struct IpPortCombinationEquals
 
 
 typedef Nova::HashMap<IpPortCombination, uint8_t, std::hash<IpPortCombination>, IpPortCombinationEquals> IpPortTable;
-
-enum featureIndex: uint8_t
-{
-	IP_TRAFFIC_DISTRIBUTION = 0,
-	PORT_TRAFFIC_DISTRIBUTION = 1,
-	PACKET_SIZE_MEAN = 2,
-	PACKET_SIZE_DEVIATION = 3,
-	DISTINCT_IPS = 4,
-	DISTINCT_TCP_PORTS = 5,
-	DISTINCT_UDP_PORTS = 6,
-	AVG_TCP_PORTS_PER_HOST = 7,
-	AVG_UDP_PORTS_PER_HOST = 8,
-	TCP_PERCENT_SYN = 9,
-	TCP_PERCENT_FIN = 10,
-	TCP_PERCENT_RST = 11,
-	TCP_PERCENT_SYNACK = 12,
-	HAYSTACK_PERCENT_CONTACTED = 13
-};
 
 namespace Nova
 {

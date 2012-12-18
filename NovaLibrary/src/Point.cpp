@@ -18,7 +18,7 @@
 //============================================================================
 
 #include "Point.h"
-#include "Defines.h"
+#include "FeatureSet.h"
 
 using namespace std;
 

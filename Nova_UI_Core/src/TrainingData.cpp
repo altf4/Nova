@@ -25,7 +25,6 @@
 #include <ANN/ANN.h>
 
 #include "TrainingData.h"
-#include "Defines.h"
 #include "Logger.h"
 
 using namespace std;

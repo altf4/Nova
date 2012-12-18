@@ -19,6 +19,7 @@
 #include "KnnClassification.h"
 #include "Config.h"
 #include "Lock.h"
+#include "Suspect.h"
 
 #include <sstream>
 
@@ -80,7 +81,7 @@ double KnnClassification::Classify(Suspect *suspect)
 	double sqrtDIM = Config::Inst()->GetSqurtEnabledFeatures();
 	int k = Config::Inst()->GetK();
 	double d;
-	featureIndex fi;
+	FeatureIndex fi;
 
 	FeatureSet fs = suspect->m_features;
 	uint ai = 0;
@@ -166,7 +167,7 @@ double KnnClassification::Classify(Suspect *suspect)
 
 	for(int i = 0; i < DIM; i++)
 	{
-		fi = (featureIndex)i;
+		fi = (FeatureIndex)i;
 		suspect->SetFeatureAccuracy(fi, 0);
 	}
 	suspect->SetHostileNeighbors(0);
@@ -190,7 +191,7 @@ double KnnClassification::Classify(Suspect *suspect)
 					distance *= -1;
 				}
 
-				fi = (featureIndex)j;
+				fi = (FeatureIndex)j;
 				d  = suspect->GetFeatureAccuracy(fi) + distance;
 				suspect->SetFeatureAccuracy(fi, d);
 			}
@@ -231,7 +232,7 @@ double KnnClassification::Classify(Suspect *suspect)
 	}
 	for(int j = 0; j < DIM; j++)
 	{
-		fi = (featureIndex)j;
+		fi = (FeatureIndex)j;
 		d = suspect->GetFeatureAccuracy(fi) / k;
 		suspect->SetFeatureAccuracy(fi, d);
 	}

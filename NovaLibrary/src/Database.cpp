@@ -20,6 +20,8 @@
 #include "Database.h"
 #include "NovaUtil.h"
 #include "Logger.h"
+#include "ClassificationEngine.h"
+#include "FeatureSet.h"
 
 #include <iostream>
 #include <sstream>
