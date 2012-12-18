@@ -123,8 +123,8 @@ void Suspect::ReadEvidence(Evidence *evidence, bool deleteEvidence)
 	Evidence *curEvidence = evidence, *tempEv = NULL;
 	while(curEvidence != NULL)
 	{
-		m_unsentFeatures.UpdateEvidence(curEvidence);
-		m_features.UpdateEvidence(curEvidence);
+		m_unsentFeatures.UpdateEvidence(*curEvidence);
+		m_features.UpdateEvidence(*curEvidence);
 		m_id.m_interface = curEvidence->m_evidencePacket.interface;
 
 		if(m_lastPacketTime < evidence->m_evidencePacket.ts)

@@ -8,6 +8,7 @@ class FeatureSetTest : public ::testing::Test {
 protected:
 	FeatureSet fset;
 	virtual void SetUp() {
+		fset = FeatureSet();
 		Config::Inst()->EnableAllFeatures();
 
 		// First test packet
@@ -34,8 +35,8 @@ protected:
 		p2.m_evidencePacket.ip_len = (uint16_t)256;
 		p2.m_evidencePacket.ts = 20;
 
-		fset.UpdateEvidence(&p1);
-		fset.UpdateEvidence(&p2);
+		fset.UpdateEvidence(p1);
+		fset.UpdateEvidence(p2);
 		fset.CalculateAll();
 	}
 

@@ -136,6 +136,7 @@ struct IpPortCombinationEquals
 	}
 };
 
+
 typedef Nova::HashMap<IpPortCombination, uint8_t, std::hash<IpPortCombination>, IpPortCombinationEquals> IpPortTable;
 
 enum featureIndex: uint8_t
@@ -202,7 +203,7 @@ public:
 
 	// Processes incoming evidence before calculating the features
 	//		packet - packet headers of new packet
-	void UpdateEvidence(Evidence *evidence);
+	void UpdateEvidence(const Evidence &evidence);
 
 	// Serializes the contents of the global 'features' array
 	//		buf - Pointer to buffer where serialized feature set is to be stored
