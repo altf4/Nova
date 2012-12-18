@@ -123,8 +123,8 @@ void Suspect::ReadEvidence(Evidence *evidence, bool deleteEvidence)
 	Evidence *curEvidence = evidence, *tempEv = NULL;
 	while(curEvidence != NULL)
 	{
-		m_unsentFeatures.UpdateEvidence(curEvidence);
-		m_features.UpdateEvidence(curEvidence);
+		m_unsentFeatures.UpdateEvidence(*curEvidence);
+		m_features.UpdateEvidence(*curEvidence);
 		m_id.m_interface = curEvidence->m_evidencePacket.interface;
 
 		if(m_lastPacketTime < evidence->m_evidencePacket.ts)
@@ -480,12 +480,12 @@ void Suspect::AddFeatureSet(FeatureSet *fs, FeatureMode whichFeatures)
 }
 
 //Returns the accuracy double of the feature using featureIndex 'fi'
-double Suspect::GetFeatureAccuracy(featureIndex fi)
+double Suspect::GetFeatureAccuracy(FeatureIndex fi)
 {
 	return m_featureAccuracy[fi];
 }
 //Sets the accuracy double of the feature using featureIndex 'fi'
-void Suspect::SetFeatureAccuracy(featureIndex fi, double d)
+void Suspect::SetFeatureAccuracy(FeatureIndex fi, double d)
 {
 	m_featureAccuracy[fi] = d;
 }

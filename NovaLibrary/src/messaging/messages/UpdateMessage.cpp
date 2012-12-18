@@ -18,7 +18,9 @@
 //============================================================================
 
 #include "../../SerializationHelper.h"
+#include "../../FeatureSet.h"
 #include "UpdateMessage.h"
+
 #include <string.h>
 
 namespace Nova

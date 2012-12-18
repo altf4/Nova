@@ -22,8 +22,9 @@
 
 #include "SerializationHelper.h"
 #include "SuspectIdentifer.h"
-#include "FeatureSet.h"
 #include "Point.h"
+#include "Evidence.h"
+#include "FeatureSet.h"
 
 enum SerializeFeatureMode: uint8_t
 {
@@ -39,7 +40,26 @@ enum FeatureMode: bool
 	MAIN_FEATURES = false,
 };
 
-namespace Nova{
+namespace Nova
+{
+
+enum FeatureIndex: uint8_t
+{
+	IP_TRAFFIC_DISTRIBUTION = 0,
+	PORT_TRAFFIC_DISTRIBUTION,
+	PACKET_SIZE_MEAN,
+	PACKET_SIZE_DEVIATION,
+	DISTINCT_IPS,
+	DISTINCT_TCP_PORTS,
+	DISTINCT_UDP_PORTS,
+	AVG_TCP_PORTS_PER_HOST,
+	AVG_UDP_PORTS_PER_HOST,
+	TCP_PERCENT_SYN,
+	TCP_PERCENT_FIN,
+	TCP_PERCENT_RST,
+	TCP_PERCENT_SYNACK,
+	HAYSTACK_PERCENT_CONTACTED
+};
 
 // A Suspect represents a single actor on the network, whether good or bad.
 // Suspects are the target of classification and a major part of Nova.
@@ -126,12 +146,12 @@ public:
 	//Returns the accuracy double of the feature using featureIndex 'fi'
 	// 	fi: featureIndex enum of the feature you wish to set, (see FeatureSet.h for values)
 	// Returns the value of the feature accuracy for the feature specified
-	double GetFeatureAccuracy(featureIndex fi);
+	double GetFeatureAccuracy(FeatureIndex fi);
 
 	//Sets the accuracy double of the feature using featureIndex 'fi'
 	// 	fi: featureIndex enum of the feature you wish to set, (see FeatureSet.h for values)
 	// 	 d: the value you wish to set the feature accuracy to
-	void SetFeatureAccuracy(featureIndex fi, double d);
+	void SetFeatureAccuracy(FeatureIndex fi, double d);
 
 	// Get the last time we saw this suspect
 	long int GetLastPacketTime();

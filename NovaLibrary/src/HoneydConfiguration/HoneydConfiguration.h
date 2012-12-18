@@ -19,7 +19,6 @@
 #ifndef _HONEYDCONFIGURATION
 #define _HONEYDCONFIGURATION
 
-#include "../Defines.h"
 #include "VendorMacDb.h"
 #include "PortSet.h"
 #include "ProfileTree.h"

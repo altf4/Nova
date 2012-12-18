@@ -17,8 +17,6 @@
 //============================================================================
 
 #include "NovaNode.h"
-#include "ClassificationEngine.h"
-
 #include "SuspectTable.h"
 #include "Suspect.h"
 
@@ -86,6 +84,7 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 			s->SetIdentifier(cb.m_suspectIP);
 			LOG(DEBUG, "Got a clear callback request for a suspect on interface " + cb.m_suspectIP.m_interface, "");
 			HandleSuspectCleared(s);
+			break;
 
 		default:
 			break;

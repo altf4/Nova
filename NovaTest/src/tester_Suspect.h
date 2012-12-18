@@ -24,6 +24,8 @@
 using namespace Nova;
 using namespace std;
 
+#define LARGE_BUFFER_SIZE 65535
+
 namespace {
 // The test fixture for testing class Suspect.
 class SuspectTest : public ::testing::Test {
@@ -123,13 +125,13 @@ TEST_F(SuspectTest, Serialization)
 	suspect->ReadEvidence(t2, true);
 	suspect->CalculateFeatures();
 
-	u_char buffer[MAX_MSG_SIZE];
-	uint32_t bytesSerialized = suspect->Serialize(&buffer[0], MAX_MSG_SIZE, MAIN_FEATURE_DATA);
+	u_char buffer[LARGE_BUFFER_SIZE];
+	uint32_t bytesSerialized = suspect->Serialize(&buffer[0], LARGE_BUFFER_SIZE, MAIN_FEATURE_DATA);
 	EXPECT_EQ(bytesSerialized, suspect->GetSerializeLength(MAIN_FEATURE_DATA));
 
 
 	Suspect *suspectCopy = new Suspect();
-	suspectCopy->Deserialize(&buffer[0], MAX_MSG_SIZE, MAIN_FEATURE_DATA);
+	suspectCopy->Deserialize(&buffer[0], LARGE_BUFFER_SIZE, MAIN_FEATURE_DATA);
 
 	EXPECT_EQ(*suspect, *suspectCopy);
 
@@ -139,12 +141,12 @@ TEST_F(SuspectTest, Serialization)
 TEST_F(SuspectTest, SuspectIdSerialization)
 {
 	SuspectIdentifier id(42, "Hello");
-	u_char buffer[MAX_MSG_SIZE];
-	uint32_t bytesSerialized = id.Serialize(buffer, MAX_MSG_SIZE);
+	u_char buffer[LARGE_BUFFER_SIZE];
+	uint32_t bytesSerialized = id.Serialize(buffer, LARGE_BUFFER_SIZE);
 	EXPECT_EQ(bytesSerialized, id.GetSerializationLength());
 
 	SuspectIdentifier idCopy;
-	idCopy.Deserialize(buffer, MAX_MSG_SIZE);
+	idCopy.Deserialize(buffer, LARGE_BUFFER_SIZE);
 
 	EXPECT_EQ(idCopy, id);
 }

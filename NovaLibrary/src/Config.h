@@ -20,7 +20,6 @@
 #define NOVACONFIGURATION_H_
 
 #include "HashMapStructs.h"
-#include "Defines.h"
 #include "ThresholdTriggerClassification.h"
 
 namespace Nova
