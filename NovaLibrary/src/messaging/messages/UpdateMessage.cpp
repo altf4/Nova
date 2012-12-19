@@ -74,7 +74,7 @@ UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 			//		2) ControlMessage Type
 			//		3) Length of incoming serialized suspect
 			//		3) Serialized suspect
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_updateType) + sizeof(m_suspectLength);
+			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_updateType) + sizeof(m_suspectLength);
 			if(length <= expectedSize)
 			{
 				m_serializeError = true;
@@ -120,7 +120,7 @@ UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 		{
 			//Uses: 1) Message Header
 			//		2) Update Type
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_updateType);
+			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_updateType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -159,7 +159,7 @@ char *UpdateMessage::Serialize(uint32_t *length)
 				return NULL;
 			}
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_updateType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -183,7 +183,7 @@ char *UpdateMessage::Serialize(uint32_t *length)
 			//Uses: 1) Message Header
 			//		2) update Message Type
 			//		3) IP address of suspect cleared
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) +  m_IPAddress.GetSerializationLength() + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_updateType) +  m_IPAddress.GetSerializationLength() + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -205,7 +205,7 @@ char *UpdateMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) Message Header
 			//		2) Update Message Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_updateType) + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_updateType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 

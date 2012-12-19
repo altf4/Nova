@@ -44,7 +44,6 @@ struct CallbackArg
 	ServerCallback *m_callback;
 };
 
-
 class MessageManager
 {
 
@@ -105,13 +104,13 @@ public:
 	//	NOTE: Blocking function. Begins the server main loop. Does not return.
 	void StartServer(ServerCallback *callback);
 
-	//Function returns a read-locked MessageEndpoint
-	//	socketFD - The socket file descriptor of the endpoint you want
-	//	returns - An RAII MessageEndpointLock object that contains a read-locked MessageEndpoint
-	//		on error, the m_endpint  pointer will be NULL
-	MessageEndpointLock GetEndpoint(int socketFD);
-
+	//Function that gets called for every received packet
+	//	Deserializes the bytes into a message, pushes that message into the right MessageQueue,
+	//	and wakes up anyone waiting for the message.
 	static void MessageDispatcher(struct bufferevent *bev, void *ctx);
+
+	//Function that gets called for every socket meta-event, such as errors, shutdowns, and connections
+	//	Contains logic to clean up after a dead socket, and setup new connections, or print errors
 	static void ErrorDispatcher(struct bufferevent *bev, short error, void *ctx);
 
 private:
@@ -120,6 +119,12 @@ private:
 
 	//Constructor for MessageManager
 	MessageManager();
+
+	//Function returns a read-locked MessageEndpoint
+	//	socketFD - The socket file descriptor of the endpoint you want
+	//	returns - An RAII MessageEndpointLock object that contains a read-locked MessageEndpoint
+	//		on error, the m_endpint  pointer will be NULL
+	MessageEndpointLock GetEndpoint(int socketFD);
 
 	static void DoAccept(evutil_socket_t listener, short event, void *arg);
 
