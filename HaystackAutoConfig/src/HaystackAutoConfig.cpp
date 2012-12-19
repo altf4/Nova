@@ -296,7 +296,10 @@ int main(int argc, char ** argv)
 
 			if(!HoneydConfiguration::Inst()->ReadScriptsXML())
 			{
-				LOG(WARNING, "Problem reading script template XML from file", "");
+				LOG(ERROR, "Problem reading script template XML from file", "");
+				lockFile.close();
+				remove(lockFilePath.c_str());
+				exit(HHC_CODE_PARSING_ERROR);
 			}
 
 			if(!LoadNmapXML(nmapFileName))
@@ -331,7 +334,10 @@ int main(int argc, char ** argv)
 
 			if(!HoneydConfiguration::Inst()->ReadScriptsXML())
 			{
-				LOG(WARNING, "Problem reading script template XML from file", "");
+				LOG(ERROR, "Problem reading script template XML from file", "");
+				lockFile.close();
+				remove(lockFilePath.c_str());
+				exit(HHC_CODE_PARSING_ERROR);
 			}
 
 			if(!i_flag_empty)
@@ -746,7 +752,7 @@ Nova::HHC_ERR_CODE Nova::LoadPersonalityTable(vector<string> subnetNames)
 	for(uint16_t i = 0; i < subnetNames.size(); i++)
 	{
 		ss << i;
-		string executionString = "sudo nmap -O --osscan-guess --stats-every 1s -oX subnet" + ss.str() + ".xml " + subnetNames[i];
+		string executionString = "sudo nmap -O --osscan-guess --stats-every 1s -oX  " + Config::Inst()->GetPathHome() + "/data/subnet" + ss.str() + ".xml " + subnetNames[i];
 
 		//popen here for stdout of nmap
 		for(uint j = 0; j < 3; j++)
@@ -761,7 +767,7 @@ Nova::HHC_ERR_CODE Nova::LoadPersonalityTable(vector<string> subnetNames)
 			if(nmap == NULL)
 			{
 				LOG(ERROR, "Couldn't start Nmap.", "");
-				continue;
+				return HHC_CODE_NO_NMAP;
 			}
 			else
 			{
@@ -777,17 +783,19 @@ Nova::HHC_ERR_CODE Nova::LoadPersonalityTable(vector<string> subnetNames)
 			}
 
 			pclose(nmap);
-			LOG(INFO, "Nmap scan complete.", "");
 			j = 3;
 		}
 
 		try
 		{
-			string file = "subnet" + ss.str() + ".xml";
+			string file = Config::Inst()->GetPathHome() + "/data/subnet" + ss.str() + ".xml";
 			// Call LoadNmap on the generated filename so that we
 			// can add hosts to the personality table, provided they
 			// contain enough data.
-			LoadNmapXML(file);
+			if(!LoadNmapXML(file))
+			{
+				return HHC_CODE_PARSING_ERROR;
+			}
 		}
 		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
