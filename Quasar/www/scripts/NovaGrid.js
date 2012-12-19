@@ -89,7 +89,7 @@ NovaGrid.prototype = {
 
            // Used internally to generate the TH tags
            , GenerateTableHeader: function() {
-               this.headerHTML = "";
+               this.headerHTML = '<TABLE class="novaGrid">';
                this.headerHTML += '<TR class="novaGrid">';
                for (var c = 0; c < this.m_columns.length; c++) 
                {
@@ -228,6 +228,7 @@ NovaGrid.prototype = {
                     }
                     innerTableString += '</TR>';
                 }
+                innerTableString += "</TABLE>";
         
                 return innerTableString;
             }
@@ -369,23 +370,23 @@ NovaGrid.prototype = {
        var currentPage = this.GetCurrentPage();
 
        var temp = document.createElement('a');
-	   
-	   
-	   var startpageLink = document.createElement('a');
+           
+           
+           var startpageLink = document.createElement('a');
        startpageLink.setAttribute('href', '#');
        startpageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(0);');
-	   startpageLink.className += "pageNumberLink";
-	   startpageLink.title = "First page";
-	   var startpageLinkText = document.createTextNode("<<");
+           startpageLink.className += "pageNumberLink";
+           startpageLink.title = "First page";
+           var startpageLinkText = document.createTextNode("<<");
        startpageLink.appendChild(startpageLinkText);
        tablePages.appendChild(startpageLink);
 
        var pageLink = document.createElement('a');
        pageLink.setAttribute('href', '#');
        pageLink.setAttribute('onclick', this.m_name + '.PreviousPage();');
-	   pageLink.className += "pageNumberLink";
-	   pageLink.title = "Previous page";
-	   var pageLinkText = document.createTextNode(" < ");
+           pageLink.className += "pageNumberLink";
+           pageLink.title = "Previous page";
+           var pageLinkText = document.createTextNode(" < ");
        pageLink.appendChild(pageLinkText);
        tablePages.appendChild(pageLink);
        
@@ -415,7 +416,7 @@ NovaGrid.prototype = {
            var pageLink = document.createElement('a');
            pageLink.setAttribute('href', '#');
            pageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(' + i + ');');
-		   pageLink.className += "pageNumberLink";
+                   pageLink.className += "pageNumberLink";
 
            var pageLinkText = document.createTextNode(i + 1);
            pageLink.appendChild(pageLinkText);
@@ -433,17 +434,17 @@ NovaGrid.prototype = {
        var pageLink = document.createElement('a');
        pageLink.setAttribute('href', '#');
        pageLink.setAttribute('onclick', this.m_name + '.NextPage();');
-	   pageLink.className += "pageNumberLink";
-	   pageLink.title = "Next page";
+           pageLink.className += "pageNumberLink";
+           pageLink.title = "Next page";
        var pageLinkText = document.createTextNode(" > ");
        pageLink.appendChild(pageLinkText);
        tablePages.appendChild(pageLink);
-	   
-	   var lastpageLink = document.createElement('a');
+           
+           var lastpageLink = document.createElement('a');
        lastpageLink.setAttribute('href', '#');
        lastpageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(' + (this.GetNumberOfPages() - 1) + ');');
-	   lastpageLink.className += "pageNumberLink";
-	   lastpageLink.title = "Last page";
+           lastpageLink.className += "pageNumberLink";
+           lastpageLink.title = "Last page";
        var lastpageLinkText = document.createTextNode(">>");
        lastpageLink.appendChild(lastpageLinkText);
        tablePages.appendChild(lastpageLink);
