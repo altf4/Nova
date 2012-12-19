@@ -403,11 +403,13 @@ block headerAdditions
 
     function init()
     {
-      Init();
-      checkOnlyOne('if0');
-      profileChanged();
+      now.ready(function() {
+        Init();
+        checkOnlyOne('if0');
+        profileChanged();
+        now.GetHaystackDHCPStatus(dhcpStatusCallback);
+      });
 
-      now.GetHaystackDHCPStatus(dhcpStatusCallback);
     }
 
 block content
