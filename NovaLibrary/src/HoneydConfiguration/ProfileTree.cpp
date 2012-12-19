@@ -196,18 +196,12 @@ bool ProfileTree::InsertHost(ScannedHost *targetHost, Profile *parentItem, int p
 		loopProfile = loopProfile->m_parent;
 	}
 
-	//Set the uptimes
-	if(targetHost->m_uptime > childProfile->GetUptimeMaxNonRecursive())
-	{
-		childProfile->SetUptimeMax(targetHost->m_uptime);
-	}
-	if(targetHost->m_uptime < childProfile->GetUptimeMinNonRecursive())
-	{
-		childProfile->SetUptimeMin(targetHost->m_uptime);
-	}
+	childProfile->m_isUptimeInherited = true;
 
 	childProfile->m_portSets = targetHost->m_portSets;
 	childProfile->m_vendors = targetHost->m_vendors;
+
+	childProfile->m_isDropRateInherited = true;
 
 	if(!targetHost->m_personalityClass.empty())
 	{
