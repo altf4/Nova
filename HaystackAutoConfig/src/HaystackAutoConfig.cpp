@@ -33,6 +33,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <csignal>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
@@ -107,6 +109,12 @@ int main(int argc, char ** argv)
 		po::notify(vm);
 
 		lockFilePath = Config::Inst()->GetPathHome() + "/data/hhconfig.lock";
+		struct stat buf;
+		if(stat(lockFilePath.c_str(), &buf) == 0)
+		{
+			LOG(ERROR, "There is already an instance of Haystack Autoconfig running, aborting...", "");
+			return HHC_CODE_NO_MULTI_RUN;
+		}
 		ofstream lockFile(lockFilePath);
 
 		bool i_flag_empty = true;
