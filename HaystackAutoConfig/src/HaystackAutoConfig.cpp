@@ -329,6 +329,11 @@ int main(int argc, char ** argv)
 			LOG(ALERT, "Launching Honeyd Host Configuration Tool", "");
 			vector<string> subnetNames;
 
+			if(!HoneydConfiguration::Inst()->ReadScriptsXML())
+			{
+				LOG(WARNING, "Problem reading script template XML from file", "");
+			}
+
 			if(!i_flag_empty)
 			{
 				subnetNames = GetSubnetsToScan(&errVar, interfacesToMatch);
