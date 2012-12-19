@@ -396,7 +396,9 @@ block headerAdditions
        else if(count == 'ratio')
        {
          document.getElementById("numNodesLabel").innerHTML = "Ratio of nodes to create versus nodes found during scan";
-         document.getElementById('numNodes').type = 'number';
+         if (navigator.userAgent.indexOf("MSIE") == "-1") {
+                document.getElementById('numNodes').type = 'number';
+         }
          document.getElementById('numNodes').value = '1';
          document.getElementById('numNodes').placeholder = ''; 
          document.getElementById('numNodes').style.width = '170px';
