@@ -92,7 +92,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 		}
 		case REQUEST_SUSPECTLIST:
 		{
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_listType);
+			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_listType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -117,7 +117,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 		case REQUEST_SUSPECT_REPLY:
 		{
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength);
+			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength);
 			if(length < expectedSize)
 			{
 				m_serializeError = true;
@@ -160,7 +160,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 		case REQUEST_SUSPECT_WITHDATA_REPLY:
 		{
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength);
+			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength);
 			if(length < expectedSize)
 			{
 				m_serializeError = true;
@@ -194,7 +194,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 
 		case REQUEST_UPTIME_REPLY:
 		{
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime);
+			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -215,7 +215,7 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_requestType);
+			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_requestType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -250,7 +250,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//		5) List of suspect IPs
 
 			m_suspectListLength = m_suspectList.size();
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectListLength) + sizeof(m_listType) + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectListLength) + sizeof(m_listType) + sizeof(messageSize);
 			for (uint i = 0; i < m_suspectList.size(); i++)
 			{
 				messageSize += m_suspectList.at(i).GetSerializationLength();
@@ -285,7 +285,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) request Message Type
 			// 		3) Type of list we want (all, hostile, benign)
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_listType)+ sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_listType)+ sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -306,7 +306,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) Request Message Type
 			// 		3) Suspect ID
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + m_suspectAddress.GetSerializationLength() + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + m_suspectAddress.GetSerializationLength() + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -332,7 +332,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 				return NULL;
 			}
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -358,7 +358,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) Request Message Type
 			// 		3) Suspect ID
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + m_suspectAddress.GetSerializationLength() + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + m_suspectAddress.GetSerializationLength() + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -384,7 +384,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 				return NULL;
 			}
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -411,7 +411,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 			//		2) Request Message Type
 			//		3) The uptime
 
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime) + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -433,7 +433,7 @@ char *RequestMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_requestType) + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 

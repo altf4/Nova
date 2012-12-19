@@ -28,7 +28,7 @@
 #define REPLY_TIMEOUT 3
 
 //Currently, size is 2
-#define MESSADE_HDR_SIZE sizeof(m_messageType) + sizeof(m_ourSerialNumber) + sizeof(m_theirSerialNumber)
+#define MESSAGE_HDR_SIZE sizeof(m_messageType) + sizeof(m_ourSerialNumber) + sizeof(m_theirSerialNumber)
 
 namespace Nova
 {

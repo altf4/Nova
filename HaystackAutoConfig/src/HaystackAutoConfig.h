@@ -37,7 +37,9 @@ enum HHC_ERR_CODE : int
 	HHC_CODE_NON_INTEGER_ARG,
 	HHC_CODE_BAD_ARG_VALUE,
 	HHC_CODE_REQUIRED_FLAGS_MISSING,
-	HHC_CODE_BAD_FUNCTION_PARAM
+	HHC_CODE_BAD_FUNCTION_PARAM,
+	HHC_CODE_NO_NMAP,
+	HHC_CODE_NO_MULTI_RUN
 };
 
 // Loads the nmap xml output into a ptree and passes <host> child nodes to ParseHost

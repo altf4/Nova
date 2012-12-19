@@ -75,7 +75,7 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType);
+			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_controlType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -96,7 +96,7 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 			//		2) ControlMessage Type
 			//		3) Boolean success
 
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
+			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -125,7 +125,7 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_filePath);
+			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_filePath);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -169,7 +169,7 @@ char *ControlMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -191,7 +191,7 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) Boolean success
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success)+ sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success)+ sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -211,7 +211,7 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			//		3) IP of suspect to clear
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize) + m_suspectAddress.GetSerializationLength();
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize) + m_suspectAddress.GetSerializationLength();
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -231,7 +231,7 @@ char *ControlMessage::Serialize(uint32_t *length)
 			//Uses: 1) UI_Message Header
 			//		2) ControlMessage Type
 			// 		3) Path of file to save to
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_filePath) + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_filePath) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 

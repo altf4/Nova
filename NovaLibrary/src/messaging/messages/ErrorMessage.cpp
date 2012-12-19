@@ -67,7 +67,7 @@ ErrorMessage::ErrorMessage(char *buffer, uint32_t length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) Callback Type
-			uint32_t expectedSize = MESSADE_HDR_SIZE + sizeof(m_errorType);
+			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_errorType);
 			if(length != expectedSize)
 			{
 				m_serializeError = true;
@@ -95,8 +95,7 @@ char *ErrorMessage::Serialize(uint32_t *length)
 		{
 			//Uses: 1) UI_Message Header
 			//		2) ErrorMessage Type
-
-			messageSize = MESSADE_HDR_SIZE + sizeof(m_errorType) + sizeof(messageSize);
+			messageSize = MESSAGE_HDR_SIZE + sizeof(m_errorType) + sizeof(messageSize);
 			buffer = (char*)malloc(messageSize);
 			originalBuffer = buffer;
 
@@ -116,7 +115,4 @@ char *ErrorMessage::Serialize(uint32_t *length)
 	return originalBuffer;
 }
 
-
 }
-
-

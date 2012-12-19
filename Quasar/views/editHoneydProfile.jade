@@ -96,12 +96,12 @@ block content
     h3 Profile Ethernet Vendor Configuration
     table#ethernetVEndors
      
-     div(id="ethSelectDiv")
-       button(type="button", id="ethSelectButton", onclick="addEthernetVendor(document.getElementById('ethernet').value, 1)") Add New Vendor
+    div(id="ethSelectDiv")
+      button(type="button", id="ethSelectButton", onclick="addEthernetVendor(document.getElementById('ethernet').value, 1)") Add New Vendor
 
-       select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
-         each vendor in vendors
-           option(value="#{vendor}") #{vendor}
+      select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
+        each vendor in vendors
+          option(value="#{vendor}") #{vendor}
               
       
     label(id="errorEthernet", style="color:red;", value="")

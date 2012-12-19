@@ -282,12 +282,12 @@ var initLogWatch = function ()
 
 	novadLog.on("error", function (data)
 	{
-		LOG(ERROR, "Novad log watch error: " + data);
+		LOG("ERROR", "Novad log watch error: " + data);
 		try {
 			everyone.now.newLogLine(data)
 		} catch (err)
 		{
-			LOG(ERROR, "Novad log watch error: " + err);
+			LOG("ERROR", "Novad log watch error: " + err);
 		}
 	});
 
@@ -305,12 +305,12 @@ var initLogWatch = function ()
 
 	honeydLog.on("error", function (data)
 	{
-		LOG(ERROR, "Honeyd log watch error: " + data);
+		LOG("ERROR", "Honeyd log watch error: " + data);
 		try {
 			everyone.now.newHoneydLogLine(data)
 		} catch (err)
 		{
-			LOG(ERROR, "Honeyd log watch error: " + err);
+			LOG("ERROR", "Honeyd log watch error: " + err);
 
 		}
 	});
