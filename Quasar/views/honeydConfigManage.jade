@@ -575,6 +575,40 @@ block headerAdditions
       }
     }
     
+    function handleOnclick(e)
+    {
+      var evt = (e ? e : window.event);
+      var source = evt.target || evt.srcElement;
+      console.log('source.tagName == ' + source.tagName);
+      console.log('source.id == ' + source.id);
+      var loc = document.location.href;
+      if(loc.indexOf('/suspects') != -1)
+      {
+        removeContextMenu(); 
+      }
+      console.log('return value of checkIfLightboxChild(source) == ' + checkIfLightboxChild(source));
+      if(checkIfLightboxChild(source) == 'false' && (loc.indexOf('/autoConfig') == -1))
+      {
+        closeLightbox();
+      }
+    }
+    
+    function checkIfLightboxChild(source)
+    {
+      if(source.id != 'lightbox' && source.tagName != 'HTML')
+      {
+        return checkIfLightboxChild(source.parentNode);
+      }        
+      else if(source.id == 'lightbox')
+      {
+        return 'true';
+      }
+      else if(source.tagName == 'HTML')
+      {
+        return 'false';
+      }
+    }
+    
     function init(){
         now.ready(function()
         {
@@ -583,7 +617,7 @@ block headerAdditions
     };
   
 block content
-  div#setup
+  div#setup(onclick='handleOnclick(event);')
     h2 Edit Configurations
     div#addNewConfig
       button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch') Add Group
