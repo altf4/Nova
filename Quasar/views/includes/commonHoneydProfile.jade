@@ -149,8 +149,8 @@ script
 
                 switch (Number(dojo.byId("portBehavior" + portIndexes[i]).value)) 
                 {
-                    case 0: port.behavior = "reset"; break; 
-                    case 1: port.behavior = "block"; break;
+                    case 0: port.behavior = "closed"; break; 
+                    case 1: port.behavior = "filtered"; break;
                     case 2: port.behavior = "open"; break;
                     case 3: port.behavior = "script"; break;
                     case 4: port.behavior = "tarpit open"; break;
@@ -468,7 +468,7 @@ script
                         behaviorSelect.onchange = portBehaviorChanged;
                         
                          
-                        options = ["reset", "block", "open", "script", "tarpit open", "tarpit script"];
+                        options = ["closed", "filtered", "open", "script", "tarpit open", "tarpit script"];
                         longOptions = ["Closed: Respond with TCP RST or ICMP Port Error", "Filter: Drop packets and do not respond", "Open: Establish incoming connections", "Script: Emulate a service", "Open with tarpit", "Script with tarpit"];
                         
                         for (j = 0; j < options.length; j++) 
