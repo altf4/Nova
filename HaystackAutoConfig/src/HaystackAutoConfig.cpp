@@ -761,7 +761,7 @@ Nova::HHC_ERR_CODE Nova::LoadPersonalityTable(vector<string> subnetNames)
 			if(nmap == NULL)
 			{
 				LOG(ERROR, "Couldn't start Nmap.", "");
-				continue;
+				return HHC_CODE_NO_NMAP;
 			}
 			else
 			{
