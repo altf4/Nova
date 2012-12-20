@@ -37,7 +37,14 @@ var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection, ri
     this.m_relativePageNumbersToShow = 2;
     this.m_rowsPerPage = Number.MAX_VALUE;
     this.m_name = gridName;
-    this.m_rightClick = rightclick;
+    if(rightclick == undefined)
+    {
+      this.m_rightClick = false;
+    }
+    else
+    {
+      this.m_rightClick = rightclick;
+    }
 
     this.GenerateTableHeader();
 }
@@ -145,13 +152,11 @@ NovaGrid.prototype = {
            // Returns the HTML for the table
            , GetTable: function() {
                var innerTableString = this.headerHTML;
-
                var keys = Object.keys(this.m_elements);
                var arrayRep = new Array();
                for (var i = 0; i < keys.length; i++) {
-                   arrayRep.push(this.m_elements[keys[i]]);
+                 arrayRep.push(this.m_elements[keys[i]]);
                }
-
                // work around for scoping issues
                var so = this;
 
@@ -483,14 +488,16 @@ NovaGrid.prototype = {
   , SetRightClickEventListener: function(rightClickFunction) {
     this.m_rightClick = rightClickFunction.toString();
   }
-    // Renders the table
-    , Render: function() {
-        // Simple way (slow in Chrome, fine in FF)
-        //theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
-        
-        this.m_tableElement = replaceHtml(this.m_tableElement, this.GetTable());
-        this.m_renderCallback();
-    }
+  , SetKeyIndex: function(keyIndex) {
+    this.m_keyIndex = keyIndex;
+  }
+  // Renders the table
+  , Render: function() {
+      // Simple way (slow in Chrome, fine in FF)
+      //theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
+      this.m_tableElement = replaceHtml(this.m_tableElement, this.GetTable());
+      this.m_renderCallback();
+  }
 }
 
 // This is an ugly hack which happens to double performance in Chrome for the suspect grid. No diff in firefox
