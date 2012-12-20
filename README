@@ -30,6 +30,35 @@ The Installation Guide
   Any other distributions or versions should manually compile using the
   instructions below.
 
+=============================== 
+Getting the newest code
+===============================
+
+- Nova and Honeyd are stored as seperate Git repositories on github. Go to the
+  directory you wish to download the code to and run the following commands,
+
+    git clone git://github.com/DataSoft/Honeyd.git    
+    git clone git://github.com/DataSoft/Nova.git Nova
+    
+    # You also need to get the git submodules where training data is stored
+    # in it's own repo
+   
+    cd Nova 
+    git submodule init
+    git submodule update
+
+- This will create a "honeyd" and "Nova" folder with the source located inside.
+  From this point on they will be referred to as $HONEYD_SOURCE and
+  $NOVA_SOURCE. 
+
+- This will default to the "master" branch, which is the latest stable release.
+  If you want to use the latest unstable version, cd to the $NOVA_SOURCE and
+  $HONEYD_SOURCE and run the following,
+
+        git checkout integration
+
+- Beware that the integration branch changes on a daily basis and may be
+  unstable.
 
 =============================== 
 Getting Dependencies on Ubuntu
@@ -80,35 +109,6 @@ Getting Dependencies on Ubuntu
 
     sudo apt-get install dpkg-dev
 
-=============================== 
-Getting the newest code
-===============================
-
-- Nova and Honeyd are stored as seperate Git repositories on github. Go to the
-  directory you wish to download the code to and run the following commands,
-
-    git clone git://github.com/DataSoft/Honeyd.git    
-    git clone git://github.com/DataSoft/Nova.git Nova
-    
-    # You also need to get the git submodules where training data is stored
-    # in it's own repo
-   
-    cd Nova 
-    git submodule init
-    git submodule update
-
-- This will create a "honeyd" and "Nova" folder with the source located inside.
-  From this point on they will be referred to as $HONEYD_SOURCE and
-  $NOVA_SOURCE. 
-
-- This will default to the "master" branch, which is the latest stable release.
-  If you want to use the latest unstable version, cd to the $NOVA_SOURCE and
-  $HONEYD_SOURCE and run the following,
-
-        git checkout integration
-
-- Beware that the integration branch changes on a daily basis and may be
-  unstable.
 
 =============================== 
 Building Honeyd

@@ -225,7 +225,8 @@ block headerAdditions
 
     function MonitorSuspect(ip, interface, idString)
     {
-        window.open("/monitor?ip=" + ip + "&interface=" + interface, 'Monitoring ' + ip);
+        var path = "/monitor?ip=" + ip + "&interface=" + interface;
+        window.open(path);
     }
 
     function buildLink(ip, interface)
