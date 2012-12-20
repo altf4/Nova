@@ -77,6 +77,8 @@ block headerAdditions
       {
         theDoc.getElementById('cloneMe').removeChild(theDoc.getElementById('cloneMe').lastChild);
       }
+      
+      rmLb = false;
     }
     
     function newConfiguration(configName, cloneInfo)
@@ -575,21 +577,24 @@ block headerAdditions
       }
     }
     
+    var rmLb = false;
+    
     function handleOnclick(e)
     {
       var evt = (e ? e : window.event);
       var source = evt.target || evt.srcElement;
-      console.log('source.tagName == ' + source.tagName);
-      console.log('source.id == ' + source.id);
       var loc = document.location.href;
       if(loc.indexOf('/suspects') != -1)
       {
         removeContextMenu(); 
       }
-      console.log('return value of checkIfLightboxChild(source) == ' + checkIfLightboxChild(source));
-      if(checkIfLightboxChild(source) == 'false' && (loc.indexOf('/autoConfig') == -1))
+      if(rmLb && checkIfLightboxChild(source) == 'false' && (loc.indexOf('/autoConfig') == -1))
       {
         closeLightbox();
+      }
+      else if(document.getElementById('lightbox').style.display == 'block')
+      {
+        rmLb = true;
       }
     }
     

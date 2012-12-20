@@ -32,6 +32,45 @@ block headerAdditions
       {
         theDoc.getElementById('appendHook').removeChild(theDoc.getElementById('appendHook').lastChild); 
       }
+      
+      rmLb = false;
+    }
+
+    var rmLb = false;
+    
+    function handleOnclick(e)
+    {
+      var evt = (e ? e : window.event);
+      var source = evt.target || evt.srcElement;
+      var loc = document.location.href;
+      if(loc.indexOf('/suspects') != -1)
+      {
+        removeContextMenu(); 
+      }
+      if(rmLb && checkIfLightboxChild(source) == 'false' && (loc.indexOf('/autoConfig') == -1))
+      {
+        closeLightbox();
+      }
+      else if(document.getElementById('lightbox').style.display == 'block')
+      {
+        rmLb = true;
+      }
+    }
+    
+    function checkIfLightboxChild(source)
+    {
+      if(source.id != 'lightbox' && source.tagName != 'HTML')
+      {
+        return checkIfLightboxChild(source.parentNode);
+      }        
+      else if(source.id == 'lightbox')
+      {
+        return 'true';
+      }
+      else if(source.tagName == 'HTML')
+      {
+        return 'false';
+      }
     }
 
     function setUpScriptTable()
@@ -253,7 +292,7 @@ block headerAdditions
     function enableBackground()
     {
       var enableUs = document.getElementById('setup').childNodes;
-      for(var i in disableUs)
+      for(var i in enableUs)
       {
         enableUs[i].disabled = false;
       }
@@ -267,7 +306,7 @@ block headerAdditions
     }
 
 block content
-  div#setup
+  div#setup(onclick='handleOnclick(event)')
     h1 Honeyd Scripts
   
     button(onclick='showLightBox("0")') Add New Honeyd Script

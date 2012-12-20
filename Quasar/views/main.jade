@@ -19,7 +19,7 @@ extends layout
 block topPannelAdditions
 
 block content
-  div#setup
+  div#setup(onclick='handleOnclick(event)')
     div#nova_suspects_header(style="width:600px; display: none")
       br
       
@@ -84,6 +84,43 @@ block headerAdditions
 
     require(["dijit/form/TextBox"]);
 
+    var rmLb = false;
+    
+    function handleOnclick(e)
+    {
+      var evt = (e ? e : window.event);
+      var source = evt.target || evt.srcElement;
+      var loc = document.location.href;
+      if(loc.indexOf('/suspects') != -1)
+      {
+        removeContextMenu(); 
+      }
+      if(rmLb && checkIfLightboxChild(source) == 'false' && (loc.indexOf('/autoConfig') == -1))
+      {
+        closeLightbox();
+      }
+      else if(document.getElementById('lightbox').style.display == 'block')
+      {
+        rmLb = true;
+      }
+    }
+    
+    function checkIfLightboxChild(source)
+    {
+      if(source.id != 'lightbox' && source.tagName != 'HTML')
+      {
+        return checkIfLightboxChild(source.parentNode);
+      }        
+      else if(source.id == 'lightbox')
+      {
+        return 'true';
+      }
+      else if(source.tagName == 'HTML')
+      {
+        return 'false';
+      }
+    }
+
     function isNovadUpChanged(isNovadUp)
     {
         document.getElementById("nova_suspects_header").style.display = isNovadUp ? "block" : "none";
@@ -109,6 +146,7 @@ block headerAdditions
       document.getElementById('lightbox').style.display = 'none';
       document.getElementById('setup').style.opacity = '1';
       enableBackground(document.getElementById('setup'));
+      rmLb = false;
     }
 
     function disableBackground(source)
@@ -320,7 +358,7 @@ block headerAdditions
 
     var disableAdvancedFilter = function()
     {
-        theDoc.getElementById('advancedFiltering').style.display='none';
+        theDoc.getElementById('lightbox').style.display='none';
         
         advancedFilterEnabled = false;
         var advancedFilters = new Object();
