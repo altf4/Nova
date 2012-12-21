@@ -441,7 +441,7 @@ bool HoneydConfiguration::WriteScriptsToXML()
 		propTree.put<string>("path", m_scripts[i].m_path);
 		propTree.put<bool>("configurable", m_scripts[i].m_isConfigurable);
 
-		for (scriptConfigurationOptions::iterator it = m_scripts[i].options.begin(); it != m_scripts[i].options.end(); it++)
+		for (std::map<std::string, std::vector<std::string>>::iterator it = m_scripts[i].options.begin(); it != m_scripts[i].options.end(); it++)
 		{
 			ptree optionTree;
 			optionTree.put<string>("key", it->first);
@@ -581,7 +581,7 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 				port.put<string>("behavior", Port::PortBehaviorToString(root->m_portSets[i]->m_TCPexceptions[j].m_behavior));
 				port.put<string>("protocol", Port::PortProtocolToString(root->m_portSets[i]->m_TCPexceptions[j].m_protocol));
 
-				for (scriptConfiguration::iterator it = root->m_portSets[i]->m_TCPexceptions[j].m_scriptConfiguration.begin(); it != root->m_portSets[i]->m_TCPexceptions[j].m_scriptConfiguration.end(); it++)
+				for (map<string,string>::iterator it = root->m_portSets[i]->m_TCPexceptions[j].m_scriptConfiguration.begin(); it != root->m_portSets[i]->m_TCPexceptions[j].m_scriptConfiguration.end(); it++)
 				{
 					ptree option;
 					option.put<string>("key", it->first);
@@ -604,7 +604,7 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 				port.put<string>("behavior", Port::PortBehaviorToString(root->m_portSets[i]->m_UDPexceptions[j].m_behavior));
 				port.put<string>("protocol", Port::PortProtocolToString(root->m_portSets[i]->m_UDPexceptions[j].m_protocol));
 
-				for (scriptConfiguration::iterator it = root->m_portSets[i]->m_UDPexceptions[j].m_scriptConfiguration.begin(); it != root->m_portSets[i]->m_UDPexceptions[j].m_scriptConfiguration.end(); it++)
+				for (map<string,string>::iterator it = root->m_portSets[i]->m_UDPexceptions[j].m_scriptConfiguration.begin(); it != root->m_portSets[i]->m_UDPexceptions[j].m_scriptConfiguration.end(); it++)
 				{
 					ptree option;
 					option.put<string>("key", it->first);

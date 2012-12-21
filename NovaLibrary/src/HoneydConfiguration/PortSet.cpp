@@ -108,7 +108,7 @@ string PortSet::ToString(const string &profileName)
 
 				ofstream configFile;
 				configFile.open (scriptConfigPath);
-				for (scriptConfiguration::iterator it = m_TCPexceptions[i].m_scriptConfiguration.begin(); it != m_TCPexceptions[i].m_scriptConfiguration.end(); it++)
+				for (map<string, string>::iterator it = m_TCPexceptions[i].m_scriptConfiguration.begin(); it != m_TCPexceptions[i].m_scriptConfiguration.end(); it++)
 				{
 					cout << "Writing to file " << it->first << endl;
 					configFile << it->first << " " << it->second << endl;
@@ -145,7 +145,7 @@ string PortSet::ToString(const string &profileName)
 
 				ofstream configFile;
 				configFile.open (scriptConfigPath);
-				for (scriptConfiguration::iterator it = m_UDPexceptions[i].m_scriptConfiguration.begin(); it != m_UDPexceptions[i].m_scriptConfiguration.end(); it++)
+				for (map<string, string>::iterator it = m_UDPexceptions[i].m_scriptConfiguration.begin(); it != m_UDPexceptions[i].m_scriptConfiguration.end(); it++)
 				{
 					configFile << it->first << " " << it->second << endl;
 				}
