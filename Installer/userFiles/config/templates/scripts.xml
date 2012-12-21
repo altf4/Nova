@@ -4,108 +4,198 @@
 		<name>Linux Syslogd</name>
 		<service>syslog</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash /usr/share/honeyd/scripts/linux/syslogd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/syslogd.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>false</configurable>
 	</script>
 	<script>
 		<name>Linux Cyrus-Imapd</name>
 		<service>imap</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash /usr/share/honeyd/scripts/linux/cyrus-imapd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/cyrus-imapd.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>true</configurable>
+		<option>
+			<key>CYRUS_VERSION</key>
+			<value>Cyrus IMAP4 v1.3.1</value>
+			<value>Cyrus IMAP4 v2.0.16</value>
+		</option>
 	</script>
 	<script>
 		<name>Windows Telnet</name>
 		<service>telnet</service>
 		<osclass>Microsoft | Windows</osclass>
-		<path>bash /usr/share/honeyd/scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>true</configurable>
+		<option>
+			<key>TELNET_BANNER</key>
+			<value>Welcome to Microsoft Telnet Server.</value>
+		</option>
 	</script>
 	<script>
 		<name>Linux Telnet</name>
 		<service>telnet</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash /usr/share/honeyd/scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>true</configurable>
+		<option>
+			<key>TELNET_BANNER</key>
+			<value>Welcome to SuSE Linux 7.0 (i386) - Kernel 2.4.7 (0).</value>
+			<value>Welcome to SuSE Linux 8.0 (i386) - Kernel 2.4.18-64GB-SMP (8).</value>
+		</option>
 	</script>
 	<script>
 		<name>Windows FTP</name>
 		<service>ftp</service>
 		<osclass>Microsoft | Windows</osclass>
 		<path>sh /usr/share/honeyd/scripts/win32/win2k/msftp.sh</path>
+		<configurable>false</configurable>
 	</script>
 	<script>
 		<name>Linux Bportmapd</name>
 		<service>bmap</service>
 		<osclass>Linux | Linux</osclass>
 		<path>perl /usr/share/honeyd/scripts/unix/general/rpc/bportmapd --proto tcp --host scripts/unix/general/rpc/hosts/debian --srcip $ipsrc --dstip $ipdst --srcport $srcport --dstport $dport --logfile /var/log/h oneyd/bportmapd --logall</path>
+		<configurable>false</configurable>
 	</script>
 	<script>
 		<name>Linux FTP</name>
 		<service>ftp</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash /usr/share/honeyd/scripts/linux/ftp.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/ftp.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>true</configurable>
+		<option>
+			<key>FTPD_VERSION</key>
+			<value>FTP server (Version wu-2.6.0(5)</value>
+			<value>ProFTPD 1.2.4rc1 Server (SuSE)</value>
+		</option>
 	</script>
 	<script>
 		<name>Linux SSH</name>
 		<service>ssh</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash /usr/share/honeyd/scripts/linux/ssh.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/ssh.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>true</configurable>
+		<option>
+			<key>SSH_VERSION</key>
+			<value>SSH-1.99-OpenSSH_2.1.1</value>
+			<value>SSH-1.99-OpenSSH_3.0.2p1</value>
+		</option>
 	</script>
 	<script>
 		<name>Linux Qpop</name>
 		<service>pop3</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash /usr/share/honeyd/scripts/linux/qpop.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/qpop.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>true</configurable>
+		<option>
+			<key>QPOP_VERSION</key>
+			<value>QPOP (version 2.53)</value>
+			<value>QPOP (version 4.0.3)</value>
+		</option>
 	</script>
 	<script>
 		<name>Linux lpd</name>
 		<service>lpd</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/lpd.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>false</configurable>
 	</script>
 	<script>
 		<name>Windows httpd</name>
 		<service>http</service>
 		<osclass>Microsoft | Windows</osclass>
 		<path>bash /usr/share/honeyd/scripts/win32/web.sh</path>
+		<configurable>false</configurable>
 	</script>
 	<script>
 		<name>Linux Finger</name>
 		<service>finger</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash /usr/share/honeyd/scripts/linux/fingerd.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/fingerd.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>true</configurable>
+		<option>
+			<key>FINGERD_VERSION</key>
+			<value>Welcome to Linux version 2.4.7-4GB</value>
+			<value>Welcome to Linux version 2.4.7-4GB</value>
+		</option>
 	</script>
 	<script>
 		<name>Unix SNMP</name>
 		<service>snmp</service>
 		<osclass>HP | HP-UX</osclass>
 		<path>perl /usr/share/honeyd/scripts/unix/general/snmp/fake-snmp.pl public private --config=scripts/unix/general</path>
+		<configurable>false</configurable>
 	</script>
 	<script>
 		<name>Linux httpd</name>
 		<service>http</service>
 		<osclass>Linux | Linux</osclass>
-		<path>tclsh /usr/share/honeyd/scripts/linux/httpd/httpd.tcl $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>tclsh /usr/share/honeyd/scripts/linux/httpd/httpd.tcl $ipsrc $sport $ipdst $dport</path>
+		<configurable>true</configurable>
+		<option>
+			<key>HTTPD_RESPONSE_FOLDER</key>
+			<value>scripts/linux/httpd/responses/apache</value>
+			<value>scripts/linux/httpd/responses/netboot</value>
+		</option>
+		<option>
+			<key>HTTPD_SECURE_FILES</key>
+			<value>sysStatus.shtml synOpStatus.shtml sysCfg.shtml synNwCfg.shtml acctSetup.shtml serPortCfg.shtml pwrPortCfg.shtml pwrAutoPing.shtml log.shtml help_text.html</value>
+			<value/>
+		</option>
+		<option>
+			<key>HTTPD_SERVER_VERSION</key>
+			<value>Apache/1.3.23 (Unix) (SuSE/Linux) ApacheJServ/1.2.2 mod_fastcgi/2.2.2 mod_perl/1.34 PHP/4.1.0 mod_ssl/2.8.7 OpenSSL/0.9.6c</value>
+			<value>Apache/1.3.12 (Unix) (SuSE/Linux) ApacheJServ/1.1.2 mod_fastcgi/2.2.2 mod_perl/1.24 PHP/4.0.0 mod_ssl/2.6.5 OpenSSL/0.9.5a</value>
+			<value>Apache/2.2.20 (Ubuntu)</value>
+			<value>SonicWALL</value>
+			<value>Apache/2.2.17 (Win32)</value>
+			<value>Apache/2.2.6 (Win32) DAV/2 SVN/1.4.5 PHP/5.2.4 mod_python/3.2.10 Python/2.4.4</value>
+			<value>CANON HTTP Server Ver2.30</value>
+			<value>CANON HTTP Server Ver2.21</value>
+			<value>Synaccess</value>
+			<value>Microsoft-IIS/5.1</value>
+			<value>Apache/2.2.3 (Red Hat)</value>
+			<value>Apache</value>
+			<value>thttpd/2.25b 29dec2003</value>
+			<value>GoAhead-Webs</value>
+			<value>Virata-EmWeb/R6_0_3</value>
+		</option>
 	</script>
 	<script>
 		<name>Telnet Router</name>
 		<service>telnet</service>
 		<osclass/>
 		<path>perl /usr/share/honeyd/scripts/embedded/router-telnet.pl</path>
+		<configurable>false</configurable>
 	</script>
 	<script>
 		<name>Linux Sendmail</name>
 		<service>smtp</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash /usr/share/honeyd/scripts/linux/sendmail.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/sendmail.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>true</configurable>
+		<option>
+			<key>SENDMAIL_VERSION</key>
+			<value>Sendmail 8.10.2/8.10.2/SuSE Linux 8.10.0-0.3</value>
+			<value>Sendmail 8.12.2/8.12.2/SuSE Linux 8.12.0-0.3</value>
+		</option>
 	</script>
 	<script>
 		<name>Linux Squid</name>
 		<service>squid-snmp</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash /usr/share/honeyd/scripts/linux/squid.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/squid.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>true</configurable>
+		<option>
+			<key>SQUID_VERSION</key>
+			<value>Squid/2.2.STABLE2</value>
+			<value>Squid/2.4.STABLE3</value>
+		</option>
 	</script>
 	<script>
 		<name>Linux Echo</name>
 		<service>echo</service>
 		<osclass>Linux | Linux</osclass>
-		<path>bash /usr/share/honeyd/scripts/linux/echo.sh $ipsrc $sport $ipdst $dport scripts/strings/example.conf</path>
+		<path>bash /usr/share/honeyd/scripts/linux/echo.sh $ipsrc $sport $ipdst $dport</path>
+		<configurable>false</configurable>
 	</script>
 </scripts>

@@ -21,10 +21,16 @@
 #ifndef PORT_H_
 #define PORT_H_
 
-#include "string"
+#include <string>
+#include "../HashMap.h"
+#include "../HashMapStructs.h"
+
+
 
 namespace Nova
 {
+
+typedef Nova::HashMap<std::string, std::string,  std::hash<std::string>, eqstr > scriptConfiguration;
 
 enum PortBehavior
 {
@@ -87,6 +93,7 @@ public:
 
 	std::string m_scriptName;
 
+	scriptConfiguration m_scriptConfiguration;
 };
 
 }

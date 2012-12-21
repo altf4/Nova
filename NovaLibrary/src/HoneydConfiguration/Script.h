@@ -20,10 +20,16 @@
 #ifndef SCRIPT_H_
 #define SCRIPT_H_
 
-#include "string"
+#include "../HashMap.h"
+#include "../HashMapStructs.h"
+
+#include <string>
+#include <vector>
 
 namespace Nova
 {
+
+typedef Nova::HashMap<std::string, std::vector<std::string>,  std::hash<std::string>, eqstr > scriptConfigurationOptions;
 
 class Script
 {
@@ -36,6 +42,10 @@ public:
 	std::string m_service;
 	std::string m_osclass;
 	std::string m_path;
+
+	// Configuration options for the script
+	bool m_isConfigurable;
+	scriptConfigurationOptions options;
 
 };
 
