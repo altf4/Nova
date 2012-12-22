@@ -2376,6 +2376,7 @@ GetPortSets = function (profileName, callback)
 			portSet.TCPExceptions[j].behavior = portSet.TCPExceptions[j].GetBehavior();
 			portSet.TCPExceptions[j].scriptName = portSet.TCPExceptions[j].GetScriptName();
 			portSet.TCPExceptions[j].service = portSet.TCPExceptions[j].GetService();
+			portSet.TCPExceptions[j].scriptConfiguration = portSet.TCPExceptions[j].GetScriptConfiguration();
 		}
 
 		portSet.UDPExceptions = portSet.GetUDPPorts();
@@ -2385,7 +2386,7 @@ GetPortSets = function (profileName, callback)
 			portSet.UDPExceptions[j].protocol = portSet.UDPExceptions[j].GetProtocol();
 			portSet.UDPExceptions[j].behavior = portSet.UDPExceptions[j].GetBehavior();
 			portSet.UDPExceptions[j].scriptName = portSet.UDPExceptions[j].GetScriptName();
-			portSet.UDPExceptions[j].service = portSet.UDPExceptions[j].GetService();
+			portSet.UDPExceptions[j].scriptConfiguration = portSet.UDPExceptions[j].GetScriptConfiguration();
 		}
 		portSets.push(portSet);
 	}
