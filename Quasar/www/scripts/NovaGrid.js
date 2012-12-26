@@ -108,7 +108,7 @@ NovaGrid.prototype = {
                    {
                        title = '<div class="sortArrow">' + (this.m_sortDescending ? '&#8744;' : '&#8743;') + '</div>' + title;
                    }
-                   this.headerHTML += '<TH class="novaGrid><A HREF="javascript:void(0)" style="font-size: 12px;" onclick="' + this.m_name + '.SetSortByKey(' + c + ');">' + title + '</A></TH>';
+                   this.headerHTML += '<TH class="novaGrid"><A HREF="javascript:void(0)" style="font-size: 12px;" onclick="' + this.m_name + '.SetSortByKey(' + c + ');">' + title + '</A></TH>';
                }
                this.headerHTML += '</TR>';
            }
@@ -154,21 +154,28 @@ NovaGrid.prototype = {
                var innerTableString = this.headerHTML;
                var keys = Object.keys(this.m_elements);
                var arrayRep = new Array();
-               for (var i = 0; i < keys.length; i++) {
+               for (var i = 0; i < keys.length; i++) 
+               {
                  arrayRep.push(this.m_elements[keys[i]]);
                }
+               
                // work around for scoping issues
                var so = this;
 
                arrayRep.sort(function(a, b) {
-                       if (a[so.m_sortByKey] > b[so.m_sortByKey]) {
-                       return so.m_sortDescending == true ? -1 : 1;
-                       } else if (a[so.m_sortByKey] < b[so.m_sortByKey]) {
-                       return so.m_sortDescending == true ? 1 : -1;
-                       } else {
-                       return 0;
-                       }
-                       });
+                 if(a[so.m_sortByKey] > b[so.m_sortByKey]) 
+                 {
+                   return so.m_sortDescending == true ? -1 : 1;
+                 } 
+                 else if(a[so.m_sortByKey] < b[so.m_sortByKey])
+                 {
+                   return so.m_sortDescending == true ? 1 : -1;
+                 } 
+                 else 
+                 {
+                   return 0;
+                 }
+               });
 
                if (arrayRep.length < this.m_currentPage * this.m_rowsPerPage) {
                    return innerTableString; 
@@ -215,12 +222,26 @@ NovaGrid.prototype = {
                      if(this.m_rightClick != undefined)
                      {
                        innerTableString += '<TR class="novaGrid">';
-                       innerTableString += '<TR class="novaGrid" style="' + arrayRep[i].style + '" oncontextmenu="' + this.m_rightClick + '">';      
+                       if(arrayRep[i].style != undefined)
+                       {
+                         innerTableString += '<TR class="novaGrid" style="' + arrayRep[i].style + '" oncontextmenu="' + this.m_rightClick + '">';
+                       } 
+                       else
+                       {
+                         innerTableString += '<TR class="novaGrid" oncontextmenu="' + this.m_rightClick + '">';
+                       }     
                      }
                      else
                      {
                        innerTableString += '<TR class="novaGrid">';
-                       innerTableString += '<TR class="novaGrid" style="' + arrayRep[i].style + '">';                          
+                       if(arrayRep[i].style != undefined)
+                       {
+                         innerTableString += '<TR class="novaGrid" style="' + arrayRep[i].style + '">';
+                       } 
+                       else
+                       {
+                         innerTableString += '<TR class="novaGrid">';
+                       }                         
                      }
                    }
                      for (var c = 0; c < this.m_columns.length; c++) {
@@ -512,7 +533,6 @@ function replaceHtml(el, html) {
     newEl.innerHTML = html;
     oldEl.parentNode.replaceChild(newEl, oldEl);
     /* Since we just removed the old element from the DOM, return a reference
-       to the new element, which can be used to restore variable references. */
+       to the new element, which can be used to restore variable references. */      
     return newEl;
 };
-

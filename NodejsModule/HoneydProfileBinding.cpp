@@ -197,7 +197,6 @@ bool HoneydProfileBinding::SetIsUptimeInherited(bool val) {
 
 bool HoneydProfileBinding::Save() {
 	bool ret = HoneydConfiguration::Inst()->AddProfile(m_profile);
-	cout << "Added profile " << m_profile << endl;
 	m_profile = NULL;
 	return ret;
 }

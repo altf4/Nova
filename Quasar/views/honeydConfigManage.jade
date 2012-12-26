@@ -506,29 +506,25 @@ block headerAdditions
           var option = theDoc.createElement('option');
           option.value = portsets[i].setName;
           option.innerHTML = portsets[i].setName;
-          console.log('portsets[i].setName == ' + portsets[i].setName);
           if(!selectedSet)
           {
             option.selected = true;
             selectedSet = true;
             
             var add0 = [];
-            add0.push('n/a_default_tcp_' + portsets[i].TCPBehavior);
-            add0.push('n/a');
+            add0.push('default_tcp_' + portsets[i].TCPBehavior);
             add0.push('default');
             add0.push('tcp');
             add0.push(String(portsets[i].TCPBehavior));
             portsetGrid.PushEntry(add0);
             var add1 = [];
-            add1.push('n/a_default_udp_' + portsets[i].UDPBehavior);
-            add1.push('n/a');
+            add1.push('default_udp_' + portsets[i].UDPBehavior);
             add1.push('default');
             add1.push('udp');
             add1.push(String(portsets[i].UDPBehavior));
             portsetGrid.PushEntry(add1);
             var add2 = [];
-            add2.push('n/a_default_icmp_' + portsets[i].ICMPBehavior);
-            add2.push('n/a');
+            add2.push('default_icmp_' + portsets[i].ICMPBehavior);
             add2.push('default');
             add2.push('icmp');
             add2.push(String(portsets[i].ICMPBehavior));
@@ -541,7 +537,6 @@ block headerAdditions
                 var add = [];
                 var id = portsets[i].setName + '_' + portsets[i].TCPExceptions[port].portNum + '_' + portsets[i].TCPExceptions[port].protocol + '_' + portsets[i].TCPExceptions[port].behavior;
                 add.push(id);
-                add.push(portsets[i].setName);
                 add.push(portsets[i].TCPExceptions[port].portNum);
                 add.push(portsets[i].TCPExceptions[port].protocol);
                 add.push(portsets[i].TCPExceptions[port].behavior);
@@ -555,7 +550,6 @@ block headerAdditions
                 var add = [];
                 var id = portsets[i].setName + '_' + portsets[i].UDPExceptions[port].portNum + '_' + portsets[i].UDPExceptions[port].protocol + '_' + portsets[i].UDPExceptions[port].behavior;
                 add.push(id);
-                add.push(portsets[i].setName);
                 add.push(portsets[i].UDPExceptions[port].portNum);
                 add.push(portsets[i].UDPExceptions[port].protocol);
                 add.push(portsets[i].UDPExceptions[port].behavior);
@@ -564,6 +558,14 @@ block headerAdditions
             }
           }
           theDoc.getElementById('portsetSelect').appendChild(option);
+          for(var i in theDoc.getElementById('portsetSelect').childNodes)
+          {
+            if(theDoc.getElementById('portsetSelect').childNodes[i].value != undefined)
+            {
+              console.log('portsetSelect child value == ' + theDoc.getElementById('portsetSelect').childNodes[i].value);
+              console.log('portsetSelect child innerHTML == ' + theDoc.getElementById('portsetSelect').childNodes[i].innerHTML);
+            }
+          }
         }
         portsetGrid.Render();
       });
@@ -697,14 +699,12 @@ block headerAdditions
       theDoc = document;
       var gridStructure = [];
       gridStructure.push({name: "Id", isDisabled: true});
-      gridStructure.push({name: "Portset", isDisabled: false});
       gridStructure.push({name: "Port Number", isDisabled: false});
       gridStructure.push({name: "Protocol", isDisabled: false});
       gridStructure.push({name: "Behavior", isDisabled: false});
  
       portsetGrid = new NovaGrid(gridStructure, 0, theDoc.getElementById('portsetDiv'), 'portsetGrid', false);
       
-      portsetGrid.SetSortByKey(1);
       portsetGrid.SetRowsPerPage(20);
       portsetGrid.SetRenderCallback(onGridRendered);
     }
@@ -712,33 +712,34 @@ block headerAdditions
     function redoGrid()
     {
       var temp = theDoc.getElementById('portsetSelect');
+      for(var i in temp.childNodes)
+      {
+        if(temp.childNodes[i].value != undefined)
+        {
+          console.log('in redoGrid(), temp.childNodes[i].value == ' + temp.childNodes[i].value);
+        }
+      }
       var desiredPortset = temp.options[temp.selectedIndex].value; 
-      console.log('desiredPortset ' + desiredPortset);
       portsetGrid.Clear();
       now.GetPortSets(lightboxProfile, function(portsets){
         for(var i in portsets)
         {
-          console.log('portsets[i].setName == ' + portsets[i].setName);
           if(desiredPortset == portsets[i].setName)
           {
-            console.log('in conditional for redoGrid');
             var add0 = [];
-            add0.push('n/a_default_tcp_' + portsets[i].TCPBehavior);
-            add0.push('n/a');
+            add0.push('default_tcp_' + portsets[i].TCPBehavior);
             add0.push('default');
             add0.push('tcp');
             add0.push(portsets[i].TCPBehavior);
             portsetGrid.PushEntry(add0);
             var add1 = [];
-            add1.push('n/a_default_udp_' + portsets[i].UDPBehavior);
-            add1.push('n/a');
+            add1.push('default_udp_' + portsets[i].UDPBehavior);
             add1.push('default');
             add1.push('udp');
             add1.push(portsets[i].UDPBehavior);
             portsetGrid.PushEntry(add1);
             var add2 = [];
-            add2.push('n/a_default_icmp_' + portsets[i].ICMPBehavior);
-            add2.push('n/a');
+            add2.push('default_icmp_' + portsets[i].ICMPBehavior);
             add2.push('default');
             add2.push('icmp');
             add2.push(portsets[i].ICMPBehavior);
@@ -751,7 +752,6 @@ block headerAdditions
                 var add = [];
                 var id = portsets[i].setName + '_' + portsets[i].TCPExceptions[port].portNum + '_' + portsets[i].TCPExceptions[port].protocol + '_' + portsets[i].TCPExceptions[port].behavior;
                 add.push(id);
-                add.push(portsets[i].setName);
                 add.push(portsets[i].TCPExceptions[port].portNum);
                 add.push(portsets[i].TCPExceptions[port].protocol);
                 add.push(portsets[i].TCPExceptions[port].behavior);
@@ -765,17 +765,17 @@ block headerAdditions
                 var add = [];
                 var id = portsets[i].setName + '_' + portsets[i].UDPExceptions[port].portNum + '_' + portsets[i].UDPExceptions[port].protocol + '_' + portsets[i].UDPExceptions[port].behavior;
                 add.push(id);
-                add.push(portsets[i].setName);
                 add.push(portsets[i].UDPExceptions[port].portNum);
                 add.push(portsets[i].UDPExceptions[port].protocol);
                 add.push(portsets[i].UDPExceptions[port].behavior);
                 portsetGrid.PushEntry(add);
               }
             }
+            break;
           }
-        }
+        }        
+        portsetGrid.Render();
       });
-      portsetGrid.Render();
     }
     
     function init(){
@@ -872,7 +872,7 @@ block content
         tbody#vendors
       br
       h2 Port Sets
-      select#portsetSelect(onchange='redoGrid()')
+      select#portsetSelect(onchange='redoGrid();')
       br
       br
       div#tablePages(style="width: 100%;")
