@@ -588,6 +588,7 @@ script
                         configureButton.setAttribute('type', 'button');
                         configureButton.setAttribute('onclick', 'configureScript(' + portUID + ')');
                         configureButton.innerHTML = "Configure";
+                        configureButton.id = "configureButton" + portUID;
                         configureContainer.appendChild(configureButton);
                         row.appendChild(configureContainer);
 
@@ -682,10 +683,12 @@ script
                                 if (dojo.byId("portBehavior" + portIndexes[i]).value == "3" || dojo.byId("portBehavior" + portIndexes[i]).value == "5") 
                                 {
                                         dojo.byId("portScriptDrop" + portIndexes[i]).disabled = false;
+                                        dojo.byId("configureButton" + portIndexes[i]).style.display = "block";
                                 } 
                                 else 
                                 {
                                         dojo.byId("portScriptDrop" + portIndexes[i]).disabled = true;
+                                        dojo.byId("configureButton" + portIndexes[i]).style.display = "none";
                                 }
                         }
                 };
