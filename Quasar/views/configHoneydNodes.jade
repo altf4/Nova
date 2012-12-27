@@ -42,7 +42,17 @@ block headerAdditions
         var count = document.getElementById("nodeCount").value;
         var interface = currentInterface;
 
-        now.createHoneydNodes(ipType, ip1, ip2, ip3, ip4, profile, portset, vendor, interface, count, createNodesCallback);
+        try
+        {
+          now.createHoneydNodes(ipType, ip1, ip2, ip3, ip4, profile, portset, vendor, interface, count, createNodesCallback);
+        }
+        catch(err)
+        {
+          alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+          console.log("err was: " + err);
+          document.getElementById("createNewNodes").disabled = false;
+          document.getElementById("createNewNodes").value = "Create New Nodes";
+        }
     }
     
     function profileChanged()
