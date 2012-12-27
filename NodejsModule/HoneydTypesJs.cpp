@@ -74,6 +74,39 @@ Handle<Object> HoneydNodeJs::WrapPortSet(PortSet *portSet)
 	return scope.Close(result);
 }
 
+Handle<Object> HoneydNodeJs::WrapScript(Nova::Script *script)
+{
+	HandleScope scope;
+
+	if (scriptTemplate.IsEmpty()) {
+		Handle<FunctionTemplate> protoTemplate = FunctionTemplate::New();
+        protoTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+        scriptTemplate = Persistent<FunctionTemplate>::New(protoTemplate);
+
+        // Javascript methods
+        Local<Template> proto = scriptTemplate->PrototypeTemplate();
+        proto->Set("GetName",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Script, &Nova::Script::GetName>) );
+        proto->Set("GetService",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Script, &Nova::Script::GetService>) );
+        proto->Set("GetOsClass",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Script, &Nova::Script::GetOsClass>) );
+        proto->Set("GetPath",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Script, &Nova::Script::GetPath>) );
+        proto->Set("GetIsConfigurable",	FunctionTemplate::New(InvokeMethod<bool, Nova::Script, &Nova::Script::GetIsConfigurable>) );
+        proto->Set("GetOptions",	FunctionTemplate::New(InvokeMethod<std::map<std::string, std::vector<std::string>> , Nova::Script, &Nova::Script::GetOptions>) );
+
+
+    }
+
+    // Get the constructor from the template
+    Handle<Function> ctor = scriptTemplate->GetFunction();
+    // Instantiate the object with the constructor
+    Handle<Object> result = ctor->NewInstance();
+    // Wrap the native object in an handle and set it in the internal field to get at later.
+    Handle<External> scriptPtr = External::New(script);
+    result->SetInternalField(0,scriptPtr);
+
+    return scope.Close(result);
+	
+}
+
 
 Handle<Object> HoneydNodeJs::WrapPort(Port *port)
 {
@@ -93,6 +126,7 @@ Handle<Object> HoneydNodeJs::WrapPort(Port *port)
         proto->Set("GetBehavior",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Port, &Nova::Port::GetBehavior>) );
         proto->Set("GetScriptName",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Port, &Nova::Port::GetScriptName>) );
         proto->Set("GetService",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Port, &Nova::Port::GetService>) );
+        proto->Set("GetScriptConfiguration",	FunctionTemplate::New(InvokeMethod<std::map<std::string,std::string>, Nova::Port, &Nova::Port::GetScriptConfiguration>) );
     }
 
     // Get the constructor from the template
@@ -190,5 +224,6 @@ Handle<Object> HoneydNodeJs::WrapProfile(Profile *pfile)
 
 Persistent<FunctionTemplate> HoneydNodeJs::nodeTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::portTemplate;
+Persistent<FunctionTemplate> HoneydNodeJs::scriptTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::portSetTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::profileTemplate;

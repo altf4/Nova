@@ -173,6 +173,18 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 						port.m_behavior = Port::StringToPortBehavior(ports.second.get<string>("behavior"));
 						port.m_protocol = Port::StringToPortProtocol(ports.second.get<string>("protocol"));
 
+						for (ptree::const_iterator it = ports.second.begin(); it != ports.second.end(); ++it)
+						{
+							if (it->first == "option")
+							{
+								string key = it->second.get<string>("key");
+								string value = it->second.get<string>("value");
+
+								port.m_scriptConfiguration[key] = value;
+							}
+						}
+
+
 						portSet->AddPort(port);
 					}
 
@@ -323,6 +335,17 @@ bool HoneydConfiguration::ReadNodesXML()
 	return true;
 }
 
+void print(boost::property_tree::ptree const& pt)
+{
+    using boost::property_tree::ptree;
+    ptree::const_iterator end = pt.end();
+    for (ptree::const_iterator it = pt.begin(); it != end; ++it) {
+        std::cout << it->first << ": " << it->second.get_value<std::string>() << std::endl;
+        //print(it->second);
+    }
+}
+
+
 //Loads scripts from the xml template located relative to the currently set home path
 // Returns true if successful, false if not.
 bool HoneydConfiguration::ReadScriptsXML()
@@ -352,11 +375,38 @@ bool HoneydConfiguration::ReadScriptsXML()
 				script.m_service = value.second.get<string>("service");
 				script.m_osclass = value.second.get<string>("osclass");
 				script.m_path = value.second.get<string>("path");
+				script.m_isConfigurable = value.second.get<bool>("configurable");
+
+				//cout << "Configurable is " << script.m_isConfigurable << endl;
+
+				if (script.m_isConfigurable)
+				{
+					for (ptree::const_iterator it = value.second.begin(); it != value.second.end(); ++it)
+					{
+						if (it->first == "option")
+						{
+							vector<string> possibleValues;
+							string key = it->second.get<string>("key");
+							//cout << "Key is " << key << endl;
+
+							for (ptree::const_iterator valIt = it->second.begin(); valIt != it->second.end(); ++valIt) {
+								if (valIt->first == "value")
+								{
+									possibleValues.push_back(valIt->second.data());
+									//cout << "value is " << possibleValues.at(possibleValues.size() - 1) << endl;
+								}
+							}
+
+							script.options[key] = possibleValues;
+						}
+					}
+				}
+
 				AddScript(script);
 			}
 			catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 			{
-				LOG(DEBUG, "Could not read script: '" + script.m_name + "'.", "");
+				LOG(DEBUG, "Could not read script '" + script.m_name + "'" + " due to error " + e.what(), "");
 			};
 		}
 	}
@@ -389,6 +439,19 @@ bool HoneydConfiguration::WriteScriptsToXML()
 		propTree.put<string>("service", m_scripts[i].m_service);
 		propTree.put<string>("osclass", m_scripts[i].m_osclass);
 		propTree.put<string>("path", m_scripts[i].m_path);
+		propTree.put<bool>("configurable", m_scripts[i].m_isConfigurable);
+
+		for (std::map<std::string, std::vector<std::string>>::iterator it = m_scripts[i].options.begin(); it != m_scripts[i].options.end(); it++)
+		{
+			ptree optionTree;
+			optionTree.put<string>("key", it->first);
+			for(uint i = 0; i < it->second.size(); i++)
+			{
+				optionTree.add<string>("value", it->second[i]);
+			}
+
+			propTree.add_child("option", optionTree);
+		}
 		scriptsTopLevel.add_child("scripts.script", propTree);
 	}
 
@@ -518,6 +581,14 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 				port.put<string>("behavior", Port::PortBehaviorToString(root->m_portSets[i]->m_TCPexceptions[j].m_behavior));
 				port.put<string>("protocol", Port::PortProtocolToString(root->m_portSets[i]->m_TCPexceptions[j].m_protocol));
 
+				for (map<string,string>::iterator it = root->m_portSets[i]->m_TCPexceptions[j].m_scriptConfiguration.begin(); it != root->m_portSets[i]->m_TCPexceptions[j].m_scriptConfiguration.end(); it++)
+				{
+					ptree option;
+					option.put<string>("key", it->first);
+					option.put<string>("value", it->second);
+					port.add_child("option", option);
+				}
+
 				exceptions.add_child("port", port);
 			}
 
@@ -532,6 +603,14 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 				port.put<uint>("number", root->m_portSets[i]->m_UDPexceptions[j].m_portNumber);
 				port.put<string>("behavior", Port::PortBehaviorToString(root->m_portSets[i]->m_UDPexceptions[j].m_behavior));
 				port.put<string>("protocol", Port::PortProtocolToString(root->m_portSets[i]->m_UDPexceptions[j].m_protocol));
+
+				for (map<string,string>::iterator it = root->m_portSets[i]->m_UDPexceptions[j].m_scriptConfiguration.begin(); it != root->m_portSets[i]->m_UDPexceptions[j].m_scriptConfiguration.end(); it++)
+				{
+					ptree option;
+					option.put<string>("key", it->first);
+					option.put<string>("value", it->second);
+					port.add_child("option", option);
+				}
 
 				exceptions.add_child("port", port);
 			}

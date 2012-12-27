@@ -213,6 +213,7 @@ install: install-data
 	-chmod -R g+rw "$(DESTDIR)/usr/share/nova"
 	-chmod -R g+rw "$(DESTDIR)/var/log/honeyd"
 	-chmod g+rwx "$(DESTDIR)/var/log/nova"
+	-chmod a+x ~/.config
 
 install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-novatrainer install-quasar install-nodejsmodule
 	-sh debian/postinst

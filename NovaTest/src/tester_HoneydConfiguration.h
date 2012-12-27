@@ -37,13 +37,19 @@ protected:
 	{
 		EXPECT_TRUE(HC != NULL);
 		EXPECT_TRUE(HC->ReadAllTemplatesXML());
-		HC->ClearProfiles();
-		HC->ClearNodes();
 	}
 };
 
+TEST_F(HoneydConfigurationTest, test_ReadWrite)
+{
+	EXPECT_TRUE(HC->WriteAllTemplatesToXML());
+}
+
 TEST_F(HoneydConfigurationTest, test_WriteAllTemplatesXML)
 {
+	HC->ClearProfiles();
+	HC->ClearNodes();
+
 	Profile * p = new Profile("default", "TestProfile");
 	EXPECT_TRUE(HC->AddProfile(p));
 	EXPECT_TRUE(HC->WriteAllTemplatesToXML());
@@ -53,6 +59,9 @@ TEST_F(HoneydConfigurationTest, test_WriteAllTemplatesXML)
 
 TEST_F(HoneydConfigurationTest, test_RenameProfile)
 {
+	HC->ClearProfiles();
+	HC->ClearNodes();
+
 	// Create dummy profile
 	Profile * p = new Profile("default", "TestProfile");
 
@@ -70,6 +79,9 @@ TEST_F(HoneydConfigurationTest, test_RenameProfile)
 
 TEST_F(HoneydConfigurationTest, test_errorCases)
 {
+	HC->ClearProfiles();
+	HC->ClearNodes();
+
 	EXPECT_FALSE(HC->DeleteProfile(""));
 	EXPECT_FALSE(HC->DeleteProfile("aoeustnhaoesnuhaosenuht"));
 	EXPECT_FALSE(HC->DeleteNode(""));
@@ -83,6 +95,9 @@ TEST_F(HoneydConfigurationTest, test_errorCases)
 
 TEST_F(HoneydConfigurationTest, test_Profile)
 {
+	HC->ClearProfiles();
+	HC->ClearNodes();
+
 	//Create dummy profile
 	Profile * p = new Profile("default", "TestProfile");
 
@@ -109,6 +124,9 @@ TEST_F(HoneydConfigurationTest, test_Profile)
 
 TEST_F(HoneydConfigurationTest, test_GetProfileNames)
 {
+	HC->ClearProfiles();
+	HC->ClearNodes();
+
 	EXPECT_TRUE(HC->AddProfile(new Profile("default", "top")));
 	EXPECT_TRUE(HC->AddProfile(new Profile("default", "top")));
 	EXPECT_TRUE(HC->AddProfile(new Profile("top", "topChild")));
@@ -121,12 +139,18 @@ TEST_F(HoneydConfigurationTest, test_GetProfileNames)
 
 TEST_F(HoneydConfigurationTest, test_AddNodes)
 {
+	HC->ClearProfiles();
+	HC->ClearNodes();
+
 	EXPECT_TRUE(HC->AddNodes("default", "default", "Dell", "DHCP", "eth0", 10));
 	EXPECT_EQ(10, HC->GetNodeMACs().size());
 }
 
 TEST_F(HoneydConfigurationTest, test_AddNode)
 {
+	HC->ClearProfiles();
+	HC->ClearNodes();
+
 	Node node;
 	node.m_MAC = "FF:FF:BA:BE:CA:FE";
 	node.m_pfile = "default";
@@ -138,6 +162,9 @@ TEST_F(HoneydConfigurationTest, test_AddNode)
 
 TEST_F(HoneydConfigurationTest, test_WouldAddProfileCauseNodeDeletions)
 {
+	HC->ClearProfiles();
+	HC->ClearNodes();
+
 	Profile *p = new Profile("default", "testProfile");
 	p->m_portSets.push_back(new PortSet("test"));
 	EXPECT_TRUE(HC->AddProfile(p));

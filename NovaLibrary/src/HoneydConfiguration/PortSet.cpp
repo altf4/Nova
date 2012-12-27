@@ -21,8 +21,10 @@
 #include "PortSet.h"
 #include "Script.h"
 #include "HoneydConfiguration.h"
+#include "../Config.h"
 
-#include "sstream"
+#include <sstream>
+#include <fstream>
 
 using namespace std;
 
@@ -77,6 +79,10 @@ bool PortSet::SetTCPBehavior(const string &behavior)
 
 string PortSet::ToString(const string &profileName)
 {
+	// This is used to name the script specific config files. Sort of hacky, they should probably be named something
+	// based off the portset name and port, but that would require a bunch of filename sanitation and they're not really
+	// meant to be human read anyway
+	static int configFileIndex = 0;
 	stringstream out;
 
 	//Defaults
@@ -91,7 +97,29 @@ string PortSet::ToString(const string &profileName)
 		if((m_TCPexceptions[i].m_behavior == PORT_SCRIPT) || (m_TCPexceptions[i].m_behavior == PORT_TARPIT_SCRIPT))
 		{
 			Script script = HoneydConfiguration::Inst()->GetScript(m_TCPexceptions[i].m_scriptName);
-			out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << " \"" << script.m_path << "\"\n";
+
+			if (script.m_isConfigurable)
+			{
+
+				stringstream ss;
+				ss << Config::Inst()->GetPathHome() << "/config/haystackscripts/" << configFileIndex;
+				configFileIndex++;
+				string scriptConfigPath = ss.str();
+
+				ofstream configFile;
+				configFile.open (scriptConfigPath);
+				for (map<string, string>::iterator it = m_TCPexceptions[i].m_scriptConfiguration.begin(); it != m_TCPexceptions[i].m_scriptConfiguration.end(); it++)
+				{
+					configFile << it->first << " " << it->second << endl;
+				}
+				configFile.close();
+
+				out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << " \"" << script.m_path << " " << scriptConfigPath << "\"\n";
+			}
+			else
+			{
+				out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << " \"" << script.m_path << "\"\n";
+			}
 		}
 		else
 		{
@@ -106,7 +134,29 @@ string PortSet::ToString(const string &profileName)
 		//If it's a script then we need to print the script path, not "script"
 		if((m_UDPexceptions[i].m_behavior == PORT_SCRIPT) || (m_UDPexceptions[i].m_behavior == PORT_TARPIT_SCRIPT))
 		{
-			out << "add " << profileName << " udp port " << m_UDPexceptions[i].m_portNumber << " \"" << m_UDPexceptions[i].m_scriptName << "\"\n";
+			Script script = HoneydConfiguration::Inst()->GetScript(m_UDPexceptions[i].m_scriptName);
+			if (script.m_isConfigurable)
+			{
+				stringstream ss;
+				ss << Config::Inst()->GetPathHome() << "/config/haystackscripts/" << m_name << configFileIndex;
+				configFileIndex++;
+				string scriptConfigPath = ss.str();
+
+				ofstream configFile;
+				configFile.open (scriptConfigPath);
+				for (map<string, string>::iterator it = m_UDPexceptions[i].m_scriptConfiguration.begin(); it != m_UDPexceptions[i].m_scriptConfiguration.end(); it++)
+				{
+					configFile << it->first << " " << it->second << endl;
+				}
+				configFile.close();
+
+
+				out << "add " << profileName << " udp port " << m_UDPexceptions[i].m_portNumber << " \"" << script.m_path << " " << scriptConfigPath << "\"\n";
+			}
+			else
+			{
+				out << "add " << profileName << " udp port " << m_UDPexceptions[i].m_portNumber << " \"" << script.m_path << "\"\n";
+			}
 		}
 		else
 		{

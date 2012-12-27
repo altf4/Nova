@@ -21,10 +21,16 @@
 #ifndef PORT_H_
 #define PORT_H_
 
-#include "string"
+#include <string>
+#include <map>
+#include "../HashMap.h"
+#include "../HashMapStructs.h"
+
+
 
 namespace Nova
 {
+
 
 enum PortBehavior
 {
@@ -76,7 +82,7 @@ public:
 	std::string GetBehavior() { return PortBehaviorToString(m_behavior);}
 	std::string GetScriptName() { return m_scriptName;}
 	std::string GetService() { return m_service;}
-
+	std::map<std::string, std::string> GetScriptConfiguration() {return m_scriptConfiguration;}
 	std::string m_service;
 
 	enum PortProtocol m_protocol;
@@ -87,6 +93,9 @@ public:
 
 	std::string m_scriptName;
 
+	// TODO: The only reason this isn't an unordered_map is because cvv8 doesn't cast those to js,
+	// we should make a NativeToJs template specialization for doing that.
+	std::map<std::string, std::string> m_scriptConfiguration;
 };
 
 }
