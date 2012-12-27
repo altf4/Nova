@@ -21,7 +21,6 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaPiChart.js")
   script(type="text/javascript", src="scripts/NovaGrid.js")
-  script(type="text/javascript", src="scripts/portset.js")
 
   script
     var grid;
@@ -75,19 +74,85 @@ block headerAdditions
         portsetSelectionChanged();
     }
     
+    function generateDefaultRows(tcp, udp, icmp)
+    {
+      var tr0 = document.createElement('tr');
+      var td0 = document.createElement('td');
+      td0.innerHTML = 'default';
+      var td1 = document.createElement('td');
+      td1.innerHTML = 'tcp';
+      var td2 = document.createElement('td');
+      td2.innerHTML = tcp;
+      tr0.appendChild(td0);
+      tr0.appendChild(td1);
+      tr0.appendChild(td2);
+      document.getElementById('portsetHook').appendChild(tr0);
+      
+      var tr1 = document.createElement('tr');
+      var td3 = document.createElement('td');
+      td3.innerHTML = 'default';
+      var td4 = document.createElement('td');
+      td4.innerHTML = 'udp';
+      var td5 = document.createElement('td');
+      td5.innerHTML = udp;
+      tr1.appendChild(td3);
+      tr1.appendChild(td4);
+      tr1.appendChild(td5);
+      document.getElementById('portsetHook').appendChild(tr1);
+      
+      var tr2 = document.createElement('tr');
+      var td6 = document.createElement('td');
+      td6.innerHTML = 'default';
+      var td7 = document.createElement('td');
+      td7.innerHTML = 'icmp';
+      var td8 = document.createElement('td');
+      td8.innerHTML = icmp;
+      tr2.appendChild(td6);
+      tr2.appendChild(td7);
+      tr2.appendChild(td8);
+      document.getElementById('portsetHook').appendChild(tr2);
+    }
+    
+    function generateExceptionRow(num, proto, behav)
+    {
+      var tr0 = document.createElement('tr');
+      var td0 = document.createElement('td');
+      td0.innerHTML = num;
+      var td1 = document.createElement('td');
+      td1.innerHTML = proto;
+      var td2 = document.createElement('td');
+      td2.innerHTML = behav;
+      tr0.appendChild(td0);
+      tr0.appendChild(td1);
+      tr0.appendChild(td2);
+      document.getElementById('portsetHook').appendChild(tr0);
+    }
+    
     function portsetSelectionChanged()
     {
-        var portsetSelection = document.getElementById("portSetList");
-        dojo.empty("portSetTable");
-        var currentportset = portsetSelection.options[portsetSelection.selectedIndex].value;
-        for (var i in pfile.portSets)
+      while(document.getElementById('portsetHook').hasChildNodes())
+      {
+        document.getElementById('portsetHook').removeChild(document.getElementById('portsetHook').lastChild);
+      }
+      var desired = document.getElementById('portSetList').options[document.getElementById('portSetList').selectedIndex].value;
+      var lightboxProfile = document.getElementById('profile').options[document.getElementById('profile').selectedIndex].value;
+      now.GetPortSets(lightboxProfile, function(portset){
+        for(var i in portset)
         {
-            if (pfile.portSets[i].setName == currentportset)
+          if(desired == portset[i].setName)
+          {
+            generateDefaultRows(portset[i].TCPBehavior, portset[i].UDPBehavior, portset[i].ICMPBehavior);
+            for(var port in portset[i].TCPExceptions)
             {
-                generatePortSetTable(pfile.portSets[i], document.getElementById("portSetTable"));
-                break;
+              generateExceptionRow(portset[i].TCPExceptions[port].portNum, portset[i].TCPExceptions[port].protocol, portset[i].TCPExceptions[port].behavior);
             }
+            for(var port in portset[i].UDPExceptions)
+            {
+              generateExceptionRow(portset[i].TCPExceptions[port].portNum, portset[i].TCPExceptions[port].protocol, portset[i].TCPExceptions[port].behavior);
+            }
+          }
         }
+      });
     }
 
     function createNodesCallback(err)
@@ -443,7 +508,14 @@ block content
   label Portset
   select#portSetList(name="profile", onchange='portsetSelectionChanged()')
   br
-  div(style="margin-left: 300px")#portSetTable
+  br
+  div(style="margin-left: 300px; height: 200px; overflow-y: scroll;")
+    table(border='1')
+      thead
+        th(style='background-color: #d0e9fc;') Port Number
+        th(style='background-color: #d0e9fc;') Protocol
+        th(style='background-color: #d0e9fc;') Behavior
+      tbody#portsetHook
   br
   
   label Ethernet Vendor
