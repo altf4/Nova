@@ -308,6 +308,7 @@ script
             var newPortSet = document.getElementById("portSetSelection").value;
 
             dojo.empty("portTable");
+            scriptConfigurations = {};
 
             portIndexes = [];
             for (var i in profile.portSets)
@@ -450,7 +451,7 @@ script
                         }
 
                         portIndexes.push(portUID);
-                        scriptConfigurations[portUID] = {};
+                        scriptConfigurations[portUID] = port.scriptConfiguration;
 
                         var row = document.createElement("tr");
                         row.id = "portRow" + portUID;
@@ -638,6 +639,11 @@ script
                                     var selectOption = document.createElement("OPTION");
                                     selectOption.text = script.GetOptions[option][i];
                                     valueSelect.add(selectOption, null);
+
+                                    if (scriptConfigurations[portIndex][option] === script.GetOptions[option][i])
+                                    {
+                                        selectOption.selected = true;
+                                    }
                                 }
 
                                 
@@ -736,6 +742,19 @@ script
                 scriptSelectionChanged = function(portIndex) {
                     // Clear the port configuration options
                     scriptConfigurations[portIndex] = {};
+
+
+                    // TODO Internet Explore doesn't support select element .value
+                    var scriptName = document.getElementById("portScriptDrop" + portIndex).value;
+
+                    // Populate the defaults
+                    now.GetScript(scriptName, function(script)
+                    {
+                        for (var option in script.GetOptions)
+                        {
+                            scriptConfigurations[portIndex][option] = script.GetOptions[option][0];
+                        }
+                    });
                 };
 
                 now.ready(function()
