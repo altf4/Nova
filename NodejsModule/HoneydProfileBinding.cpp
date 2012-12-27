@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <map>
 #include "HoneydProfileBinding.h"
 #include "HoneydConfiguration/HoneydConfiguration.h"
 
@@ -79,9 +80,9 @@ Handle<Value> HoneydProfileBinding::SetVendors(const Arguments& args)
 
 Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 {
-	if( args.Length() != 5 )
+	if( args.Length() != 7 )
 	{
-		return ThrowException(Exception::TypeError(String::New("Must be invoked with five parameters")));
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with seven parameters")));
 	}
 
 	HandleScope scope;
@@ -94,10 +95,13 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 	string portProtcol = cvv8::CastFromJS<string>( args[2] );
 	uint portNumber = cvv8::CastFromJS<uint>( args[3] );
 	string portScriptName = cvv8::CastFromJS<string>( args[4] );
+	vector<string> scriptConfigurationKeys = cvv8::CastFromJS<vector<string>>( args[5] );
+	vector<string> scriptConfigurationValues = cvv8::CastFromJS<vector<string>>( args[6] );
 
 	PortSet *portSet = obj->m_profile->GetPortSet(portSetName);
 	if(portSet == NULL)
 	{
+		cout << "ERROR: Unable to get portset " << portSetName << endl;
 		return scope.Close(Boolean::New(false));
 	}
 
@@ -105,6 +109,18 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 	port.m_behavior = Port::StringToPortBehavior(portBehavior);
 	port.m_protocol = Port::StringToPortProtocol(portProtcol);
 	port.m_portNumber = portNumber;
+
+	if (scriptConfigurationKeys.size() != scriptConfigurationValues.size())
+	{
+		cout << "ERROR: Size of key array is not equal to size of value array in scriptConfiguration" << endl;
+		return scope.Close(Boolean::New(false));
+	}
+
+	for (uint i = 0; i < scriptConfigurationKeys.size(); i++)
+	{
+		port.m_scriptConfiguration[scriptConfigurationKeys[i]] = scriptConfigurationValues[i];
+	}
+
 	if(port.m_behavior == PORT_SCRIPT || port.m_behavior == PORT_TARPIT_SCRIPT)
 	{
 		port.m_scriptName = portScriptName;

@@ -23,6 +23,11 @@ script
         var portList = new function() {};
         var newProfile = "#{newProfile}";
         var portIndexes = [];
+
+        // Configuration details for the scripts
+        var scriptConfigurations = {};
+        var currentLightboxIndex = 0;
+
         var loaded = false;
 
         var currentName;
@@ -42,10 +47,34 @@ script
         var deletePort = function() {};
         var addPort = function(port) {};
         var portBehaviorChanged = function() {};
+        var configureScript = function() {};
         var saveChanges = function() {};
         var savedChanges = function() {};
         var checkIfRestartNeeded = function() {};
 
+        var openLightbox = function()
+        {
+            document.getElementById('setup').style.opacity = '0.5';
+            document.getElementById('lightbox').style.display = 'block';
+        }
+
+        var closeLightbox = function()
+        {
+            var table = document.getElementById("configureScriptTable")
+            console.log(table);
+            scriptConfigurations[currentLightboxIndex] = {};
+            for (var i = 0; i < table.children.length; i++)
+            {
+               if (table.children[i].tagName === "TR")
+               {
+                    scriptConfigurations[currentLightboxIndex][table.children[i].children[0].innerHTML] = table.children[i].children[1].children[0].value;
+               }
+            }
+
+
+            document.getElementById('lightbox').style.display = 'none';
+            document.getElementById('setup').style.opacity = '1';
+        }
 
         // Make the HTML view reflect the internal model
         var refreshVendorsView = function()
@@ -146,6 +175,8 @@ script
             {
                 var port = {};
                 port.portNum = dojo.byId("portNum" + portIndexes[i]).value;
+
+                port.scriptConfiguration = scriptConfigurations[portIndexes[i]];
 
                 switch (Number(dojo.byId("portBehavior" + portIndexes[i]).value)) 
                 {
@@ -404,7 +435,6 @@ script
                                 port.portNum = 0;
                                 port.protocol = "tcp";
                                 port.behavior = "open";
-                                port.isInherited = false;
                                 port.scriptName = "NA";
                                 port.scriptConfiguration = {};
                         }
@@ -422,6 +452,7 @@ script
                         }
 
                         portIndexes.push(portUID);
+                        scriptConfigurations[portUID] = {};
 
                         //var row = "<tr id='portRow" + portUID + "'>";
                         var row = document.createElement("tr");
@@ -551,34 +582,24 @@ script
                         
                         scriptContainer.appendChild(scriptSelect);
                         row.appendChild(scriptContainer);
-                        
-                        //row += "</td></select>"; 
+
+                        var configureContainer = document.createElement("td");
+                        var configureButton = document.createElement("button");
+                        configureButton.setAttribute('type', 'button');
+                        configureButton.setAttribute('onclick', 'configureScript(' + portUID + ')');
+                        configureButton.innerHTML = "Configure";
+                        configureContainer.appendChild(configureButton);
+                        row.appendChild(configureContainer);
 
                         // Delete button 
-                        if (port.isInherited) 
-                        {
-                                //row += "<td><button type='button' disabled = 'true'/> Inherited </td>";
-                                var buttonContainer = document.createElement("td");
-                                var inheritedDisabled = document.createElement("button");
-                                inheritedDisabled.setAttribute('type','button');
-                                inheritedDisabled.disabled = true;
-                                inheritedDisabled.innerHTML = 'Inherited';
-                                buttonContainer.appendChild(inheritedDisabled);
-                                row.appendChild(buttonContainer);
-                        } 
-                        else 
-                        {
-                                //row += "<td><button type='button' onClick='deletePort(" + portUID + ")'/> Delete </td>";
-                                var buttonContainer = document.createElement("td");
-                                var deleteButton = document.createElement("button");
-                                deleteButton.setAttribute('type', 'button');
-                                deleteButton.setAttribute('onclick', 'deletePort(' + portUID + ')');
-                                deleteButton.innerHTML = 'Delete';
-                                buttonContainer.appendChild(deleteButton);
-                                row.appendChild(buttonContainer);
-                        }
+                        var buttonContainer = document.createElement("td");
+                        var deleteButton = document.createElement("button");
+                        deleteButton.setAttribute('type', 'button');
+                        deleteButton.setAttribute('onclick', 'deletePort(' + portUID + ')');
+                        deleteButton.innerHTML = 'Delete';
+                        buttonContainer.appendChild(deleteButton);
+                        row.appendChild(buttonContainer);
 
-                        //row += "</tr>";
 
                         dojo.byId("portTable").appendChild(row);
 
@@ -598,6 +619,60 @@ script
                                 dojo.byId("uptimeMax").style.display = "block"; 
                                 document.getElementById("uptimeLabel").innerHTML = "Uptime Range";
                         }
+                };
+
+                configureScript = function(portIndex)
+                {
+                    currentLightboxIndex = portIndex;
+                    var scriptName = document.getElementById('portScriptDrop' + portIndex).value;
+                    if (scriptName === "NA")
+                    {
+                        return;
+                    }
+
+                    try {
+
+                        now.GetScript(scriptName, function(script)
+                        {
+                            dojo.empty("configureScript");
+                            var table = document.getElementById("configureScript").appendChild(document.createElement("TABLE"));
+                            table.id = "configureScriptTable";
+                            
+                            var optionCount = 0;
+                            for (var option in script.GetOptions)
+                            {
+                                var tr = table.appendChild(document.createElement("TR"));
+                                var keyData = tr.appendChild(document.createElement("TD"));
+                                var valueData = tr.appendChild(document.createElement("TD"));
+                                var valueSelect = valueData.appendChild(document.createElement("SELECT"));
+
+                                for (var i = 0; i < script.GetOptions[option].length; i++)
+                                {
+                                    var selectOption = document.createElement("OPTION");
+                                    selectOption.text = script.GetOptions[option][i];
+                                    valueSelect.add(selectOption, null);
+                                }
+
+                                
+                                keyData.innerHTML = option;
+                                
+
+                                optionCount++;
+
+                            }
+                            
+                            if (optionCount == 0)
+                            {
+                                alert("No configuration options for the selected script");
+                                return;
+                            }
+
+                            openLightbox();
+                        });
+
+                    } catch (err) {
+                        console.log("Error was: " + err);
+                    }
                 };
 
                 portBehaviorChanged = function()
