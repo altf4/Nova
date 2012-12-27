@@ -2392,9 +2392,9 @@ GetPortSets = function (profileName, callback)
 
 	if(typeof callback == 'function')
 	{
-        	callback(portSets, profileName);
-        }
-        return portSets;
+  	callback(portSets, profileName);
+  }
+  return portSets;
 }
 everyone.now.GetPortSets = GetPortSets;
 

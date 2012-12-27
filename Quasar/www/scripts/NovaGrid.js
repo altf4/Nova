@@ -97,6 +97,7 @@ NovaGrid.prototype = {
            // Used internally to generate the TH tags
            , GenerateTableHeader: function() {
                this.headerHTML = '<TABLE class="novaGrid">';
+               this.headerHTML += '<THEAD>';
                this.headerHTML += '<TR class="novaGrid">';
                for (var c = 0; c < this.m_columns.length; c++) 
                {
@@ -111,6 +112,7 @@ NovaGrid.prototype = {
                    this.headerHTML += '<TH class="novaGrid"><A HREF="javascript:void(0)" style="font-size: 12px;" onclick="' + this.m_name + '.SetSortByKey(' + c + ');">' + title + '</A></TH>';
                }
                this.headerHTML += '</TR>';
+               this.headerHTML += '</THEAD>';
            }
 
            , GetRenderCallback: function() {return this.m_renderCallback;}
@@ -151,7 +153,7 @@ NovaGrid.prototype = {
 
            // Returns the HTML for the table
            , GetTable: function() {
-               var innerTableString = this.headerHTML;
+               var innerTableString = this.headerHTML + '<TBODY>';
                var keys = Object.keys(this.m_elements);
                var arrayRep = new Array();
                for (var i = 0; i < keys.length; i++) 
@@ -254,7 +256,7 @@ NovaGrid.prototype = {
                     }
                     innerTableString += '</TR>';
                 }
-                innerTableString += "</TABLE>";
+                innerTableString += "</TBODY></TABLE>";
         
                 return innerTableString;
             }
@@ -397,22 +399,21 @@ NovaGrid.prototype = {
 
        var temp = document.createElement('a');
            
-           
-           var startpageLink = document.createElement('a');
+       var startpageLink = document.createElement('a');
        startpageLink.setAttribute('href', '#');
        startpageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(0);');
-           startpageLink.className += "pageNumberLink";
-           startpageLink.title = "First page";
-           var startpageLinkText = document.createTextNode("<<");
+       startpageLink.className += "pageNumberLink";
+       startpageLink.title = "First page";
+       var startpageLinkText = document.createTextNode("<<");
        startpageLink.appendChild(startpageLinkText);
        tablePages.appendChild(startpageLink);
 
        var pageLink = document.createElement('a');
        pageLink.setAttribute('href', '#');
        pageLink.setAttribute('onclick', this.m_name + '.PreviousPage();');
-           pageLink.className += "pageNumberLink";
-           pageLink.title = "Previous page";
-           var pageLinkText = document.createTextNode(" < ");
+       pageLink.className += "pageNumberLink";
+       pageLink.title = "Previous page";
+       var pageLinkText = document.createTextNode(" < ");
        pageLink.appendChild(pageLinkText);
        tablePages.appendChild(pageLink);
        
@@ -442,7 +443,7 @@ NovaGrid.prototype = {
            var pageLink = document.createElement('a');
            pageLink.setAttribute('href', '#');
            pageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(' + i + ');');
-                   pageLink.className += "pageNumberLink";
+           pageLink.className += "pageNumberLink";
 
            var pageLinkText = document.createTextNode(i + 1);
            pageLink.appendChild(pageLinkText);
@@ -450,7 +451,6 @@ NovaGrid.prototype = {
            if (i == currentPage) {
                var boldTag = document.createElement('b');
                boldTag.appendChild(pageLink);
-
                tablePages.appendChild(boldTag);
            } else {
                tablePages.appendChild(pageLink);
@@ -460,22 +460,20 @@ NovaGrid.prototype = {
        var pageLink = document.createElement('a');
        pageLink.setAttribute('href', '#');
        pageLink.setAttribute('onclick', this.m_name + '.NextPage();');
-           pageLink.className += "pageNumberLink";
-           pageLink.title = "Next page";
+       pageLink.className += "pageNumberLink";
+       pageLink.title = "Next page";
        var pageLinkText = document.createTextNode(" > ");
        pageLink.appendChild(pageLinkText);
        tablePages.appendChild(pageLink);
            
-           var lastpageLink = document.createElement('a');
+       var lastpageLink = document.createElement('a');
        lastpageLink.setAttribute('href', '#');
        lastpageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(' + (this.GetNumberOfPages() - 1) + ');');
-           lastpageLink.className += "pageNumberLink";
-           lastpageLink.title = "Last page";
+       lastpageLink.className += "pageNumberLink";
+       lastpageLink.title = "Last page";
        var lastpageLinkText = document.createTextNode(">>");
        lastpageLink.appendChild(lastpageLinkText);
        tablePages.appendChild(lastpageLink);
-
-
   }
   
   , PushKeyToSelected: function(key)
