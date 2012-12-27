@@ -156,6 +156,10 @@ public:
 
 	bool RenameProfile(std::string oldName, std::string newName);
 
+	bool RenamePortsetRecursive(Profile* start, std::string oldName, std::string newName);
+
+	Profile* GetRoot();
+
 	//Finds out if the given MAC address is in use
 	//	mac: the string representation of the MAC address
 	//	returns - true if the MAC is in use and false if it is not.

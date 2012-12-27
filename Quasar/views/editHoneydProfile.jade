@@ -118,6 +118,9 @@ block content
     select#portSetSelection(onchange='portSetSelectionChanged()')
     button(type="button", onclick = "deletePortset()") Delete Portset
     br
+    input#newPortsetName(type="text", placeholder="New Portset Name")
+    button(type="button", onclick = "renamePortset()") Rename Portset
+    br
 
     div#portSetDiv
       label Default TCP Action

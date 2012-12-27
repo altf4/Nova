@@ -59,6 +59,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveConfiguration"),FunctionTemplate::New(RemoveConfiguration)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SwitchConfiguration"),FunctionTemplate::New(SwitchConfiguration)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SetDoppelganger"),FunctionTemplate::New(SetDoppelganger)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("RenamePortset"),FunctionTemplate::New(RenamePortset)->GetFunction());
 
 	Persistent<Function> constructor = Persistent<Function>::New(tpl->GetFunction());
 	target->Set(String::NewSymbol("HoneydConfigBinding"), constructor);
@@ -74,6 +75,22 @@ Handle<Value> HoneydConfigBinding::New(const Arguments& args)
 	obj->Wrap(args.This());
 
 	return args.This();
+}
+
+Handle<Value> HoneydConfigBinding::RenamePortset(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 2)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 2 parameters")));
+	}
+
+	std::string oldName = cvv8::CastFromJS<string>(args[0]);
+	std::string newName = cvv8::CastFromJS<string>(args[1]);
+
+	return scope.Close(Boolean::New(obj->m_conf->RenamePortsetRecursive(obj->m_conf->GetRoot(), oldName, newName)));
 }
 
 Handle<Value> HoneydConfigBinding::GetPortSet(const Arguments& args)

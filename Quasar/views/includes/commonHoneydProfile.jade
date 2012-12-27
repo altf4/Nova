@@ -46,7 +46,6 @@ script
         var savedChanges = function() {};
         var checkIfRestartNeeded = function() {};
 
-
         // Make the HTML view reflect the internal model
         var refreshVendorsView = function()
         {
@@ -223,6 +222,15 @@ script
           
             updatePortSetLists();
         };
+
+        var renamePortset = function()
+        {
+          var oldName = dojo.byId('portSetSelection').value;
+          var newName = dojo.byId('newPortsetName').value;
+          now.RenamePortset(oldName, newName, function(){
+            location.reload(true);
+          });
+        }
 
         var addNewPortset = function addNewPortSet()
         {

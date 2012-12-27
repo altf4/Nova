@@ -83,13 +83,15 @@ block headerAdditions
     {
       var names = GetSelectedProfiles();
      
-      try {
+      try 
+      {
         now.deleteProfiles(names, errorMessageCallback);
-       } catch(err)
-       {
-         alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-         console.log("err was: " + err);
-        }
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }
     }
 
     
