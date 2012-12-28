@@ -21,129 +21,137 @@ block headerAdditions
   include includes/commonHoneydProfile
 
 block content
-  h2 Adding Child Profile
+  div#lightbox(class="white_content", style="display:none;")
+    div#configureScript
+    
+    br
+    button#closeLB(onclick='closeLightbox()') Close
+  
+  div#setup 
+    h2 Adding Profile
 
-  form
+    form
 
-    table(id="tableEditProfile")
-      col
-      col
-      col(style="width:200px")
-      col(style="width:300px")
-      
-      tr(id="row0")
-        td
-        td
-        td(style="text-align:right")
-          label Profile Name
-        td
-          input#name(type="text", name="name")
-      
-      tr(id="row1")
-        td
-        td
-        td(style="text-align:right")
-          label Parent Profile
-        td
-          input#parentName(type="text", name="name", disabled="true")
-      
- 
-      tr(id="row2")
-        td
-          input#inheritPersonality(type="checkbox", name="inheritPersonality", onclick="inheritanceChanged()") 
-        td
-          label Inherit?
-        td(style="text-align:right")
-          label Operating System Personality
-        td
-          select#personality(data-dojo-type="dijit.form.FilteringSelect", name="personality", autocomplete="true", pageSize=10)
-            each os in personalities
-              option(value="#{os}") #{os}
-      
-      tr(id="row4")
-        td
-          input#inheritDropRate(type="checkbox", name="inheritDropRate", onclick="inheritanceChanged()") 
-        td
-          label Inherit?
-        td(style="text-align:right")
-          label Packet Drop Percentage
-        td
-          input#dropRate(type="number", name="dropRate", min=0, max=100)
-
-
-      tr(id="row5")
-        td
-          input#inheritUptime(type="checkbox", name="inheritUptime", onclick="inheritanceChanged()") 
-        td
-          label Inherit?
-        td(style="text-align:right")
-          label Fixed uptime or uptime range?
-        td
-          select#uptimeType(name="uptimeType", onchange="uptimeTypeChanged()")
-            option Fixed
-            option Range
+      table(id="tableEditProfile")
+        col
+        col
+        col(style="width:200px")
+        col(style="width:300px")
         
-      tr(id="row6")
-        td
-        td
-        td(style="text-align:right")
-          label(id="uptimeLabel") Uptime Range
-        td
-          input#uptimeMin(type="number", name="uptimeMin", min=0)
-          input#uptimeMax(type="number", name="uptimeMax", min=0)
-    br
-    
-    h3 Profile Ethernet Vendor Configuration
-    table#ethernetVEndors
-     
-    div(id="ethSelectDiv")
-      button(type="button", id="ethSelectButton", onclick="addEthernetVendor(document.getElementById('ethernet').value, 1)") Add New Vendor
+        tr(id="row0")
+          td
+          td
+          td(style="text-align:right")
+            label Profile Name
+          td
+            input#name(type="text", name="name")
+        
+        tr(id="row1")
+          td
+          td
+          td(style="text-align:right")
+            label Parent Profile
+          td
+            input#parentName(type="text", name="name", disabled="true")
+        
+ 
+        tr(id="row2")
+          td
+            input#inheritPersonality(type="checkbox", name="inheritPersonality", onclick="inheritanceChanged()") 
+          td
+            label Inherit?
+          td(style="text-align:right")
+            label Operating System Personality
+          td
+            select#personality(data-dojo-type="dijit.form.FilteringSelect", name="personality", autocomplete="true", pageSize=10)
+              each os in personalities
+                option(value="#{os}") #{os}
+        
+        tr(id="row4")
+          td
+            input#inheritDropRate(type="checkbox", name="inheritDropRate", onclick="inheritanceChanged()") 
+          td
+            label Inherit?
+          td(style="text-align:right")
+            label Packet Drop Percentage
+          td
+            input#dropRate(type="number", name="dropRate", min=0, max=100)
 
-      select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
-        each vendor in vendors
-          option(value="#{vendor}") #{vendor}
-              
+
+        tr(id="row5")
+          td
+            input#inheritUptime(type="checkbox", name="inheritUptime", onclick="inheritanceChanged()") 
+          td
+            label Inherit?
+          td(style="text-align:right")
+            label Fixed uptime or uptime range?
+          td
+            select#uptimeType(name="uptimeType", onchange="uptimeTypeChanged()")
+              option Fixed
+              option Range
+          
+        tr(id="row6")
+          td
+          td
+          td(style="text-align:right")
+            label(id="uptimeLabel") Uptime Range
+          td
+            input#uptimeMin(type="number", name="uptimeMin", min=0)
+            input#uptimeMax(type="number", name="uptimeMax", min=0)
+      br
       
-    label(id="errorEthernet", style="color:red;", value="")
-    input(type='hidden', id='profDist', value='')
+      h3 Profile Ethernet Vendor Configuration
+      table#ethernetVEndors
+       
+      div(id="ethSelectDiv")
+        button(type="button", id="ethSelectButton", onclick="addEthernetVendor(document.getElementById('ethernet').value, 1)") Add New Vendor
+
+        select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
+          each vendor in vendors
+            option(value="#{vendor}") #{vendor}
+                
+        
+      label(id="errorEthernet", style="color:red;", value="")
+      input(type='hidden', id='profDist', value='')
+      
+      h3 Profile Port Configuration
+      label Create New Port Set
+      input#newPortSetName(type="text", placeholder="Name of new portset")
+      button(type="button", onclick = "addNewPortset()") Add Portset
+      br
+      br
+
+      label Edit Port Set
+      select#portSetSelection(onchange='portSetSelectionChanged()')
+      button(type="button", onclick = "deletePortset()") Delete Portset
+      br
+
+      div#portSetDiv
+        label Default TCP Action
+        select#defaultTCPAction
+          option(value="open") Open (respond with SYN/ACK)
+          option(value="closed") Closed (respond with RST)
+          option(value="filtered") Filtered (don't respond)
+        br
     
-    h3 Profile Port Configuration
-    label Create New Port Set
-    input#newPortSetName(type="text")
-    button(type="button", onclick = "addNewPortset()") Add Portset
-    br
-    br
-
-    label Edit Port Set
-    select#portSetSelection(onchange='portSetSelectionChanged()')
-    button(type="button", onclick = "deletePortset()") Delete Portset
-    br
-
-    div#portSetDiv
-      label Default TCP Action
-      select#defaultTCPAction
-        option(value="open") Open (respond with SYN/ACK)
-        option(value="closed") Closed (respond with RST)
-        option(value="filtered") Filtered (don't respond)
+        label Default UDP Action
+        select#defaultUDPAction
+          option(value="closed") Closed (respond with ICMP port unreach)
+          option(value="filtered") Filtered (don't respond)
+        br
+    
+        label Default ICMP Action
+        select#defaultICMPAction
+          option(value="open") Open (respond to pings)
+          option(value="filtered") Filtered (don't respond)
+        br
+    
+        table#portTable
+    
+        button(type="button", onClick="addPort()") Add New Port
+    
       br
-  
-      label Default UDP Action
-      select#defaultUDPAction
-        option(value="closed") Closed (respond with ICMP port unreach)
-        option(value="filtered") Filtered (don't respond)
       br
-  
-      label Default ICMP Action
-      select#defaultICMPAction
-        option(value="open") Open (respond to pings)
-        option(value="filtered") Filtered (don't respond)
       br
-    table#portTable
 
-    button(type="button", onClick="addPort()") Add New Port
-
-    br
-    br
-    br
-
-    button#saveButton(type="button", onclick="saveChanges()") Add Profile
+      button#saveButton(type="button", onclick="saveChanges()") Add Profile

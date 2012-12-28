@@ -20,7 +20,12 @@
 #ifndef SCRIPT_H_
 #define SCRIPT_H_
 
-#include "string"
+#include "../HashMap.h"
+#include "../HashMapStructs.h"
+
+#include <string>
+#include <map>
+#include <vector>
 
 namespace Nova
 {
@@ -37,6 +42,17 @@ public:
 	std::string m_osclass;
 	std::string m_path;
 
+	// Configuration options for the script
+	bool m_isConfigurable;
+	std::map<std::string, std::vector<std::string>> options;
+
+	// Getters for the binding code
+	std::string GetName() {return m_name;}
+	std::string GetService() {return m_service;}
+	std::string GetOsClass() {return m_osclass;}
+	std::string GetPath() {return m_path;}
+	bool GetIsConfigurable() {return m_isConfigurable;}
+	std::map<std::string, std::vector<std::string>> GetOptions() {return options;}
 };
 
 }

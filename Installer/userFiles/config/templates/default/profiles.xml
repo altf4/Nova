@@ -69,6 +69,10 @@
 								<number>23</number>
 								<behavior>script</behavior>
 								<protocol>tcp</protocol>
+								<option>
+									<key>TELNET_BANNER</key>
+									<value>Welcome to Microsoft Telnet Server.</value>
+								</option>
 							</port>
 							<port>
 								<service/>
@@ -138,6 +142,10 @@
 								<number>21</number>
 								<behavior>script</behavior>
 								<protocol>tcp</protocol>
+								<option>
+									<key>FTPD_VERSION</key>
+									<value>FTP server (Version wu-2.6.0(5)</value>
+								</option>
 							</port>
 							<port>
 								<service/>
@@ -145,6 +153,10 @@
 								<number>22</number>
 								<behavior>script</behavior>
 								<protocol>tcp</protocol>
+								<option>
+									<key>SSH_VERSION</key>
+									<value>SSH-1.99-OpenSSH_2.1.1</value>
+								</option>
 							</port>
 							<port>
 								<service/>
@@ -152,6 +164,18 @@
 								<number>80</number>
 								<behavior>script</behavior>
 								<protocol>tcp</protocol>
+								<option>
+									<key>HTTPD_SERVER_VERSION</key>
+									<value>Apache/1.3.23 (Unix) (SuSE/Linux) ApacheJServ/1.2.2 mod_fastcgi/2.2.2 mod_perl/1.34 PHP/4.1.0 mod_ssl/2.8.7 OpenSSL/0.9.6c</value>
+								</option>
+								<option>
+									<key>HTTPD_SECURE_FILES</key>
+									<value>sysStatus.shtml synOpStatus.shtml sysCfg.shtml synNwCfg.shtml acctSetup.shtml serPortCfg.shtml pwrPortCfg.shtml pwrAutoPing.shtml log.shtml help_text.html</value>
+								</option>
+								<option>
+									<key>HTTPD_RESPONSE_FOLDER</key>
+									<value>scripts/linux/httpd/responses/apache</value>
+								</option>
 							</port>
 						</exceptions>
 					</portset>

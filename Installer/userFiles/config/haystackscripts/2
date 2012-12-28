@@ -1,0 +1,3 @@
+HTTPD_RESPONSE_FOLDER scripts/linux/httpd/responses/apache
+HTTPD_SECURE_FILES sysStatus.shtml synOpStatus.shtml sysCfg.shtml synNwCfg.shtml acctSetup.shtml serPortCfg.shtml pwrPortCfg.shtml pwrAutoPing.shtml log.shtml help_text.html
+HTTPD_SERVER_VERSION Apache/1.3.23 (Unix) (SuSE/Linux) ApacheJServ/1.2.2 mod_fastcgi/2.2.2 mod_perl/1.34 PHP/4.1.0 mod_ssl/2.8.7 OpenSSL/0.9.6c

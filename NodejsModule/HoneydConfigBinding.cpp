@@ -46,6 +46,8 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNode"),FunctionTemplate::New(GetNode)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNode"),FunctionTemplate::New(AddNode)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfile"),FunctionTemplate::New(GetProfile)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetScript"),FunctionTemplate::New(GetScript)->GetFunction());
+
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddScript"),FunctionTemplate::New(AddScript)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveScript"),FunctionTemplate::New(RemoveScript)->GetFunction());
@@ -277,6 +279,31 @@ Handle<Value> HoneydConfigBinding::GetProfile(const Arguments& args)
 	if (ret != NULL)
 	{
 		return scope.Close(HoneydNodeJs::WrapProfile(ret));
+	}
+	else
+	{
+		return scope.Close( Null() );
+	}
+
+}
+
+Handle<Value> HoneydConfigBinding::GetScript(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if (args.Length() != 1)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with one parameter")));
+	}
+
+	string name = cvv8::CastFromJS<string>(args[0]);
+	Nova::Script *ret = new Nova::Script();
+	*ret = obj->m_conf->GetScript(name);
+
+	if (ret != NULL)
+	{
+		return scope.Close(HoneydNodeJs::WrapScript(ret));
 	}
 	else
 	{

@@ -2323,6 +2323,17 @@ everyone.now.GetProfile = function (profileName, callback)
 	callback(profile);
 }
 
+everyone.now.GetScript = function (scriptName, callback)
+{
+	var script = honeydConfig.GetScript(scriptName);
+	var methodlessScript = {};
+
+	objCopy(script, methodlessScript);
+
+	callback(methodlessScript);
+
+}
+
 everyone.now.GetVendors = function (profileName, callback)
 {
 	var profile = honeydConfig.GetProfile(profileName);
@@ -2376,6 +2387,7 @@ GetPortSets = function (profileName, callback)
 			portSet.TCPExceptions[j].behavior = portSet.TCPExceptions[j].GetBehavior();
 			portSet.TCPExceptions[j].scriptName = portSet.TCPExceptions[j].GetScriptName();
 			portSet.TCPExceptions[j].service = portSet.TCPExceptions[j].GetService();
+			portSet.TCPExceptions[j].scriptConfiguration = portSet.TCPExceptions[j].GetScriptConfiguration();
 		}
 
 		portSet.UDPExceptions = portSet.GetUDPPorts();
@@ -2385,7 +2397,7 @@ GetPortSets = function (profileName, callback)
 			portSet.UDPExceptions[j].protocol = portSet.UDPExceptions[j].GetProtocol();
 			portSet.UDPExceptions[j].behavior = portSet.UDPExceptions[j].GetBehavior();
 			portSet.UDPExceptions[j].scriptName = portSet.UDPExceptions[j].GetScriptName();
-			portSet.UDPExceptions[j].service = portSet.UDPExceptions[j].GetService();
+			portSet.UDPExceptions[j].scriptConfiguration = portSet.UDPExceptions[j].GetScriptConfiguration();
 		}
 		portSets.push(portSet);
 	}
@@ -2441,20 +2453,42 @@ function jsProfileToHoneydProfile(profile)
 
 		for (var j = 0; j < profile.portSets[i].TCPExceptions.length; j++)
 		{
+			var scriptConfigKeys = new Array();
+			var scriptConfigValues = new Array();
+
+			for (var key in profile.portSets[i].TCPExceptions[j].scriptConfiguration)
+			{
+				scriptConfigKeys.push(key);
+			    scriptConfigValues.push(profile.portSets[i].TCPExceptions[j].scriptConfiguration[key]);
+			}
+
 			honeydProfile.AddPort(profile.portSets[i].setName, 
 					profile.portSets[i].TCPExceptions[j].behavior, 
 					profile.portSets[i].TCPExceptions[j].protocol, 
 					Number(profile.portSets[i].TCPExceptions[j].portNum), 
-					profile.portSets[i].TCPExceptions[j].scriptName);
+					profile.portSets[i].TCPExceptions[j].scriptName,
+					scriptConfigKeys,
+					scriptConfigValues);
 		}
 
 		for (var j = 0; j < profile.portSets[i].UDPExceptions.length; j++)
 		{
+			var scriptConfigKeys = new Array();
+			var scriptConfigValues = new Array();
+
+			for (var key in profile.portSets[i].UDPExceptions[j].scriptConfiguration)
+			{
+				scriptConfigKeys.push(key);
+			    scriptConfigValues.push(profile.portSets[i].UDPExceptions[j].scriptConfiguration[key]);
+			}
+
 			honeydProfile.AddPort(profile.portSets[i].setName, 
 					profile.portSets[i].UDPExceptions[j].behavior, 
 					profile.portSets[i].UDPExceptions[j].protocol, 
 					Number(profile.portSets[i].UDPExceptions[j].portNum), 
-					profile.portSets[i].UDPExceptions[j].scriptName);
+					profile.portSets[i].UDPExceptions[j].scriptName,
+					scriptConfigKeys,
+					scriptConfigValues);
 		}
 
 	}
