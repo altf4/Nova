@@ -65,6 +65,7 @@ block headerAdditions
     var saveProfileObjs = {};
     var currentConfig = "#{current}";
     var lightboxProfile;
+    var getSummaryOrNot = true;
 
     function closeLightbox()
     {
@@ -143,6 +144,23 @@ block headerAdditions
     
     function GetConfigurationSummary(configArg)
     {
+      if(!getSummaryOrNot)
+      {
+        for(var i in theDoc.getElementById('configurations').childNodes)
+        {
+          console.log('currentConfig == ' + currentConfig);
+          console.log('theDoc.childNodes[i] == ' + theDoc.getElementById('configurations').childNodes[i].value);
+          if(currentConfig == theDoc.getElementById('configurations').childNodes[i].value)
+          {
+            theDoc.getElementById('configurations').selectedIndex = i;
+            break;
+          }
+        }
+        return;  
+      }
+      
+      getSummaryOrNot = false;
+      
       switchConfiguration();
       var config;
       profilesArray = {};
@@ -178,6 +196,7 @@ block headerAdditions
       
       if(typeof now.GetConfigSummary == 'function')
       {
+        currentConfig = configArg;
         now.GetConfigSummary(config, function(scriptProfileBindings, profileObj, profiles, nodes){
           // manipulate elements here (i.e. pi charts, text, tables, etc.)
           // Will all be contained in the object parseMe that will use the 
@@ -185,7 +204,6 @@ block headerAdditions
           // to do the calculations, and then send exactly the data required to
           // the browser.
           saveProfileObjs = profileObj;
-          current = configArg;
           for(var i in scriptProfileBindings)
           {
             var tr = theDoc.createElement('tr');
@@ -296,13 +314,15 @@ block headerAdditions
           var pi = new NovaPiChart('piChart', 200);
           pi.Render(piChartRender);
         });
-
       }
       else
       {
         console.log('now.GetConfigSummary(configName, callback) is not defined, doing nothing');
         return;
       }
+      setTimeout(function(){
+        getSummaryOrNot = true;
+      }, 2000);
     }
     
     function showLightBox(divIndex)
