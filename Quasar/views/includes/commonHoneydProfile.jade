@@ -227,7 +227,8 @@ script
         {
           var oldName = dojo.byId('portSetSelection').value;
           var newName = dojo.byId('newPortsetName').value;
-          now.RenamePortset(oldName, newName, function(){
+          var profile = dojo.byId('name').value;
+          now.RenamePortset(profile, oldName, newName, function(){
             location.reload(true);
           });
         }

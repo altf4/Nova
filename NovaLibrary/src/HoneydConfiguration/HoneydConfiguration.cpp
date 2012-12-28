@@ -1370,20 +1370,19 @@ Node HoneydConfiguration::GetDoppelganger()
 	return m_doppelganger;
 }
 
-bool HoneydConfiguration::RenamePortsetRecursive(Profile* start, string oldName, string newName)
+bool HoneydConfiguration::RenamePortset(std::string profile, string oldName, string newName)
 {
-	for(uint i = 0; i < start->m_portSets.size(); i++)
+	Profile* change = m_profiles.GetProfile(profile);
+	bool retValue = false;
+	for(uint i = 0; i < change->m_portSets.size(); i++)
 	{
-		if(!start->m_portSets[i]->m_name.compare(oldName))
+		if(!change->m_portSets[i]->m_name.compare(oldName))
 		{
-			start->m_portSets[i]->m_name = newName;
+			change->m_portSets[i]->m_name = newName;
+			retValue = true;
 		}
 	}
-	for(uint i = 0; i < start->m_children.size(); i++)
-	{
-		return RenamePortsetRecursive(start->m_children[i], oldName, newName);
-	}
-	return true;
+	return retValue;
 }
 
 Profile* HoneydConfiguration::GetRoot()

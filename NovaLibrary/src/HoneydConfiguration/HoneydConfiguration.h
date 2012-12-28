@@ -156,7 +156,7 @@ public:
 
 	bool RenameProfile(std::string oldName, std::string newName);
 
-	bool RenamePortsetRecursive(Profile* start, std::string oldName, std::string newName);
+	bool RenamePortset(std::string profile, std::string oldName, std::string newName);
 
 	Profile* GetRoot();
 

@@ -2490,6 +2490,15 @@ everyone.now.SaveProfile = function (profile, callback)
 	callback();
 }
 
+everyone.now.RenamePortset = function(profile, oldName, newName, callback)
+{
+  var result = honeydConfig.RenamePortset(oldName, newName, profile);
+  if(typeof callback == 'function')
+  {
+    callback();
+  }
+}
+
 everyone.now.WouldProfileSaveDeleteNodes = function (profile, callback)
 {
 	var honeydProfile = jsProfileToHoneydProfile(profile);
