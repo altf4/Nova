@@ -143,6 +143,7 @@ block headerAdditions
         // TODO Internet Explore Support
         var key = document.getElementById("optionKeys").value;
         var value = document.getElementById("newOptionName").value;
+        document.getElementById("newOptionName").value = "";
         now.addScriptOptionValue(currentlyEditedScript.GetName, key, value, function() {editOptions(currentlyEditedScript.GetName)});
     }
 
@@ -155,6 +156,7 @@ block headerAdditions
 
     function selectedKeyChanged()
     {
+        document.getElementById("newOptionName").value = "";
         dojo.empty("optionValues"); 
         // TODO Internet Explore Support
         var currentKey = document.getElementById("optionKeys").value;
