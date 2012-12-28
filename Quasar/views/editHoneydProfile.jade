@@ -114,29 +114,30 @@ block content
     br
     br
 
-    label Edit Port Set
+    label Edit Port Set 
     select#portSetSelection(onchange='portSetSelectionChanged()')
     button(type="button", onclick = "deletePortset()") Delete Portset
     br
+    label Rename Selected Port Set  
     input#newPortsetName(type="text", placeholder="New Portset Name")
     button(type="button", onclick = "renamePortset()") Rename Portset
     br
 
     div#portSetDiv
-      label Default TCP Action
+      label Default TCP Action 
       select#defaultTCPAction
         option(value="open") Open (respond with SYN/ACK)
         option(value="closed") Closed (respond with RST)
         option(value="filtered") Filtered (don't respond)
       br
   
-      label Default UDP Action
+      label Default UDP Action 
       select#defaultUDPAction
         option(value="closed") Closed (respond with ICMP port unreach)
         option(value="filtered") Filtered (don't respond)
       br
   
-      label Default ICMP Action
+      label Default ICMP Action 
       select#defaultICMPAction
         option(value="open") Open (respond to pings)
         option(value="filtered") Filtered (don't respond)
