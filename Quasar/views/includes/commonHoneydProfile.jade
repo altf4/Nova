@@ -261,9 +261,31 @@ script
           var oldName = dojo.byId('portSetSelection').value;
           var newName = dojo.byId('newPortsetName').value;
           var profile = dojo.byId('name').value;
-          now.RenamePortset(profile, oldName, newName, function(){
-            location.reload(true);
-          });
+          if(newName.length == 0)
+          {
+            alert('Cannot rename portset to empty string!');
+            return;
+          }
+          var check = dojo.byId('portSetSelection').childNodes;
+          for(var i in check)
+          {
+            if(check[i].value == newName)
+            {
+              alert('The name ' + newName + ' is taken by another portset');
+              return;
+            }
+          }
+          try
+          {
+            now.RenamePortset(profile, oldName, newName, function(){
+              location.reload(true);
+            });
+          }
+          catch(err)
+          {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
+          }
         }
 
         var addNewPortset = function addNewPortSet()
