@@ -1571,6 +1571,18 @@ app.post('/customizeTrainingSave', passport.authenticate('basic', {session: fals
 	})
 });
 
+everyone.now.addScriptOptionValue = function (script, key, value, callback) {
+	honeydConfig.AddScriptOptionValue(script, key, value);
+	honeydConfig.SaveAll();
+	callback();
+};
+
+everyone.now.deleteScriptOptionValue = function (script, key, value, callback) {
+	honeydConfig.DeleteScriptOptionValue(script, key, value);
+	honeydConfig.SaveAll();
+	callback();
+};
+
 everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, portSet, vendor, interface, count, callback)
 {
 	var ipAddress;

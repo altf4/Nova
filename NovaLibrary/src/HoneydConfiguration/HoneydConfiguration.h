@@ -185,6 +185,9 @@ public:
 	bool SetDoppelganger(Node doppelganger);
 	Node GetDoppelganger();
 
+	bool AddScriptOptionValue(std::string scriptName, std::string keyName, std::string value);
+	bool DeleteScriptOptionValue(std::string scriptName, std::string keyName, std::string value);
+
 	std::string GenerateRandomUnusedMAC(std::string vendor);
 
 	//A map structure for node storage

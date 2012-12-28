@@ -1197,6 +1197,49 @@ Script HoneydConfiguration::GetScript(string name)
 	return Script();
 }
 
+bool HoneydConfiguration::AddScriptOptionValue(string scriptName, string keyName, string value)
+{
+	for(uint i = 0; i < m_scripts.size(); i++)
+	{
+		if(m_scripts[i].m_name == scriptName)
+		{
+
+			// Check for duplicates
+			for (vector<string>::iterator it = m_scripts[i].options[keyName].begin(); it != m_scripts[i].options[keyName].end(); it++)
+			{
+				if ((*it) == value)
+				{
+					return false;
+				}
+			}
+
+			m_scripts[i].options[keyName].push_back(value);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool HoneydConfiguration::DeleteScriptOptionValue(string scriptName, string keyName, string value)
+{
+	for(uint i = 0; i < m_scripts.size(); i++)
+	{
+		if(m_scripts[i].m_name == scriptName)
+		{
+			for (vector<string>::iterator it = m_scripts[i].options[keyName].begin(); it != m_scripts[i].options[keyName].end(); it++)
+			{
+				if ((*it) == value)
+				{
+					m_scripts[i].options[keyName].erase(it);
+					return true;
+				}
+			}
+				break;
+		}
+	}
+	return false;
+}
+
 vector<Script> HoneydConfiguration::GetScripts(std::string service, std::string osclass)
 {
 	vector<Script> ret;
