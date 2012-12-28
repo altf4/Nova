@@ -17,6 +17,10 @@
 			<key>CYRUS_VERSION</key>
 			<value>Cyrus IMAP4 v1.3.1</value>
 			<value>Cyrus IMAP4 v2.0.16</value>
+			<value>Softalk IMAP Server ready</value>
+			<value>Welcome to Binc IMAP</value>
+			<value>Samsung Contact IMAP server</value>
+			<value> Welcome to Arvixe IMAP server</value>
 		</option>
 	</script>
 	<script>
@@ -28,6 +32,11 @@
 		<option>
 			<key>TELNET_BANNER</key>
 			<value>Welcome to Microsoft Telnet Server.</value>
+			<value>Microsoft Windows 2000 telnetd</value>
+			<value>Welcome to Microsoft Telnet Service</value>
+			<value>Welcome to GoodTech Telnet Server for Windows 95/98</value>
+			<value>Georgia SoftWorks Telnet Server for Windows NT/2000/XP/2003/Vista Ver 1</value>
+			<value>Windows for Workgroups telnetd</value>
 		</option>
 	</script>
 	<script>
@@ -40,6 +49,10 @@
 			<key>TELNET_BANNER</key>
 			<value>Welcome to SuSE Linux 7.0 (i386) - Kernel 2.4.7 (0).</value>
 			<value>Welcome to SuSE Linux 8.0 (i386) - Kernel 2.4.18-64GB-SMP (8).</value>
+			<value>Linux telnetd</value>
+			<value>PXES Linux Thin Client telnetd</value>
+			<value>DD-WRT telnetd</value>
+			<value>Picotux telnetd</value>
 		</option>
 	</script>
 	<script>
@@ -66,6 +79,8 @@
 			<key>FTPD_VERSION</key>
 			<value>FTP server (Version wu-2.6.0(5)</value>
 			<value>ProFTPD 1.2.4rc1 Server (SuSE)</value>
+			<value>FTP server ready</value>
+			<value>Welcome to the OpenDreambox FTP service</value>
 		</option>
 	</script>
 	<script>
@@ -78,6 +93,8 @@
 			<key>SSH_VERSION</key>
 			<value>SSH-1.99-OpenSSH_2.1.1</value>
 			<value>SSH-1.99-OpenSSH_3.0.2p1</value>
+			<value>SSH-2.0-OpenSSH_5.5p1 Debian-4ubuntu6 </value>
+			<value>SSH-2.0-OpenSSH_4.3</value>
 		</option>
 	</script>
 	<script>
@@ -90,6 +107,9 @@
 			<key>QPOP_VERSION</key>
 			<value>QPOP (version 2.53)</value>
 			<value>QPOP (version 4.0.3)</value>
+			<value>QPOP Modified by Compaq (version 3)</value>
+			<value>QPOP modified by SCO (version 2.42)</value>
+			<value>QPOP modified by ABN (version 2.42)</value>
 		</option>
 	</script>
 	<script>
@@ -115,7 +135,8 @@
 		<option>
 			<key>FINGERD_VERSION</key>
 			<value>Welcome to Linux version 2.4.7-4GB</value>
-			<value>Welcome to Linux version 2.4.7-4GB</value>
+			<value>Welcome to Linux version 2.6</value>
+			<value>Welcome to Linux version 3</value>
 		</option>
 	</script>
 	<script>
@@ -177,6 +198,8 @@
 			<key>SENDMAIL_VERSION</key>
 			<value>Sendmail 8.10.2/8.10.2/SuSE Linux 8.10.0-0.3</value>
 			<value>Sendmail 8.12.2/8.12.2/SuSE Linux 8.12.0-0.3</value>
+			<value>Welcome to the mail server.</value>
+			<value>SMTP Proxy Server Ready</value>
 		</option>
 	</script>
 	<script>
@@ -189,6 +212,7 @@
 			<key>SQUID_VERSION</key>
 			<value>Squid/2.2.STABLE2</value>
 			<value>Squid/2.4.STABLE3</value>
+			<value>Squid http proxy</value>
 		</option>
 	</script>
 	<script>
