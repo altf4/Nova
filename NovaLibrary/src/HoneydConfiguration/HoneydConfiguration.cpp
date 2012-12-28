@@ -1469,4 +1469,32 @@ Profile* HoneydConfiguration::GetRoot()
 	return m_profiles.m_root;
 }
 
+vector<string> HoneydConfiguration::GetLeafProfileNames()
+{
+	return GetLeafProfileNames_helper(m_profiles.m_root);
+}
+
+vector<string> HoneydConfiguration::GetLeafProfileNames_helper(Profile *item)
+{
+	if(item == NULL)
+	{
+		return vector<string>();
+	}
+
+	vector<string> ret;
+	if(item->m_children.size() == 0)
+	{
+		ret.push_back(item->m_name);
+		return ret;
+	}
+
+	for(uint i = 0; i < item->m_children.size(); i++)
+	{
+		vector<string> childVec = GetLeafProfileNames_helper(item->m_children[i]);
+		ret.insert(ret.end(), childVec.begin(), childVec.end());
+	}
+
+	return ret;
+}
+
 }

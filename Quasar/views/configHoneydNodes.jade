@@ -468,6 +468,65 @@ block headerAdditions
       pi.Render(piChartRender);
     }
     
+    function repopulateSelect(src)
+    {
+      var clear = document.getElementById('profile');
+      while(clear.hasChildNodes())
+      {
+        clear.removeChild(clear.lastChild);
+      }
+      if(src.checked)
+      {
+        populateProfileSelectLeaf();
+      }
+      else
+      {
+        populateProfileSelectAll();
+      }
+    }
+    
+    function populateProfileSelectAll()
+    {
+      try
+      {
+        now.GetProfileNames(function(names){
+          for(var i in names)
+          {
+            var option = document.createElement('option');
+            option.value = names[i];
+            option.innerHTML = names[i];
+            document.getElementById('profile').appendChild(option);
+          } 
+        });
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }
+    }
+    
+    function populateProfileSelectLeaf()
+    {
+      try
+      {
+        now.GetLeafProfileNames(function(names){
+          for(var i in names)
+          {
+            var option = document.createElement('option');
+            option.value = names[i];
+            option.innerHTML = names[i];
+            document.getElementById('profile').appendChild(option);
+          }
+        });
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }
+    }
+    
     window.onload = function()
     {
       document.onselectstart = function()
@@ -510,6 +569,10 @@ block content
   br
   br
   h2 Create Honeyd Nodes
+  label Show Only Leaf Profiles?
+  input(type='checkbox', checked=true, onclick='repopulateSelect(this)')
+  br
+  br
   label Profile
   select#profile(name="profile", onchange='profileChanged()')
     each profile, i in profiles

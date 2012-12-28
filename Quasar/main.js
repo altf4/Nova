@@ -931,7 +931,7 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
 		nodeList.push(push);
 	}
 	
-	var profiles = honeydConfig.GetProfileNames();
+	var profiles = honeydConfig.GetLeafProfileNames();
 	
 	var interfaces = config.ListInterfaces().sort();
 	
@@ -1119,6 +1119,16 @@ app.get('/importCapture', passport.authenticate('basic', {session: false}), func
 everyone.now.changeGroup = function(group, callback)
 {
 	callback(config.SetGroup(group));
+}
+
+everyone.now.GetProfileNames = function(callback)
+{
+  callback(honeydConfig.GetProfileNames());
+}
+
+everyone.now.GetLeafProfileNames = function(callback)
+{
+  callback(honeydConfig.GetLeafProfileNames());
 }
 
 app.post('/importCaptureSave', passport.authenticate('basic', {session: false}), function (req, res)
