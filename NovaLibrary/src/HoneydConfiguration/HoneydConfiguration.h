@@ -190,6 +190,8 @@ public:
 
 	std::string GenerateRandomUnusedMAC(std::string vendor);
 
+	std::vector<std::string> GetLeafProfileNames();
+
 	//A map structure for node storage
 	std::vector<std::string> m_configs;
 	NodeTable m_nodes;
@@ -208,6 +210,8 @@ private:
     Profile *ReadProfilesXML_helper(boost::property_tree::ptree &ptree, Profile *parent);
 
     void DeleteScriptFromPorts_helper(std::string scriptName, Profile *profile);
+
+    std::vector<std::string> GetLeafProfileNames_helper(Profile *profile);
 
 	static HoneydConfiguration *m_instance;
 

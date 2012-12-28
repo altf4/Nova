@@ -36,6 +36,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GenerateRandomUnusedMAC"),FunctionTemplate::New(InvokeWrappedMethod<string, HoneydConfigBinding, HoneydConfiguration, string, &HoneydConfiguration::GenerateRandomUnusedMAC>));
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfileNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetProfileNames>));
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetLeafProfileNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetLeafProfileNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNodeMACs"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetNodeMACs >));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetScriptNames"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetScriptNames>));
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetConfigurationsList"),FunctionTemplate::New(InvokeWrappedMethod<vector<string>, HoneydConfigBinding, HoneydConfiguration, &HoneydConfiguration::GetConfigurationsList>));
