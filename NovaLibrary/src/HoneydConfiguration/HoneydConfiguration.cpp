@@ -194,7 +194,7 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 		}
 		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
 		{
-			LOG(DEBUG, "Unable to parse PortSet settings for profile", "");
+			LOG(DEBUG, "Unable to parse PortSet settings for profile:" + string(e.what()), "");
 		};
 
 		//Recursively add children
