@@ -66,17 +66,13 @@ Getting Dependencies on Ubuntu
 
 - Install required dependencies with the following command:
 
-    sudo apt-get install git build-essential libcap2-bin libann-dev
-    libpcap0.8-dev libboost-program-options-dev libboost-serialization-dev
-    libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables
-    libxml2-dev libboost-system1.49-dev libboost-filesystem1.49-dev
+    sudo apt-get install git build-essential libcap2-bin libann-dev libpcap0.8-dev libboost-program-options-dev libboost-serialization-dev libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libxml2-dev libboost-system-dev libboost-filesystem-dev
 
 - Now, we'll have to take a quick detour to get another integral component of
   Nova: Honeyd. We will have to download some extra libraries for Honeyd as
   well; you can get them using this command:
 
-    sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev
-    libedit-dev bison flex libtool automake 
+    sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake 
 
 - For the Honeyd Autoconfiguration tool, we require Nmap 6.00 or higher. The
   current version in the apt repository is 5.21, so you'll have to go to the

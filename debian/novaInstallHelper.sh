@@ -25,7 +25,7 @@ mkdir -p ${BUILDDIR}
 echo "##############################################################################"
 echo "#                          NOVA DEPENDENCY CHECK                             #"
 echo "##############################################################################"
-apt-get -y install git build-essential libann-dev libpcap0.8-dev libboost-program-options-dev libboost-serialization-dev libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake libcap2-bin libxml2-dev libboost-system1.49-dev libboost-filesystem1.49-dev
+apt-get -y install git build-essential libann-dev libpcap0.8-dev libboost-program-options-dev libboost-serialization-dev libnotify-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake libcap2-bin libxml2-dev libboost-system-dev libboost-filesystem-dev
 check_err
 
 echo "##############################################################################"
