@@ -144,23 +144,6 @@ block headerAdditions
     
     function GetConfigurationSummary(configArg)
     {
-      if(!getSummaryOrNot)
-      {
-        for(var i in theDoc.getElementById('configurations').childNodes)
-        {
-          console.log('currentConfig == ' + currentConfig);
-          console.log('theDoc.childNodes[i] == ' + theDoc.getElementById('configurations').childNodes[i].value);
-          if(currentConfig == theDoc.getElementById('configurations').childNodes[i].value)
-          {
-            theDoc.getElementById('configurations').selectedIndex = i;
-            break;
-          }
-        }
-        return;  
-      }
-      
-      getSummaryOrNot = false;
-      
       switchConfiguration();
       var config;
       profilesArray = {};
@@ -182,6 +165,7 @@ block headerAdditions
       else
       {
         config = configArg;
+        currentConfig = configArg;
       }
       
       if(typeof now.SwitchConfigurationTo == 'function')
@@ -196,7 +180,6 @@ block headerAdditions
       
       if(typeof now.GetConfigSummary == 'function')
       {
-        currentConfig = configArg;
         now.GetConfigSummary(config, function(scriptProfileBindings, profileObj, profiles, nodes){
           // manipulate elements here (i.e. pi charts, text, tables, etc.)
           // Will all be contained in the object parseMe that will use the 
@@ -272,6 +255,31 @@ block headerAdditions
             a.setAttribute('onclick', 'onProfileClicked("' + profile + '")');
             
             li.appendChild(a);
+            
+            if(profilesArray[profile].children.length)
+            {
+              var ul = theDoc.createElement('ul');
+              li.appendChild(ul);  
+            }
+            
+            for(var i = 0; i < profilesArray[profile].children.length; i++)
+            {
+              drawNodeRec(profilesArray[profilesArray[profile].children[i]].name, ul);
+            }
+                        
+            parentDOMNode.appendChild(li);
+          }
+          
+          var drawNodeRec = function(profile, parentDOMNode){
+            var li = theDoc.createElement('li');
+            var a = theDoc.createElement('a');
+            
+            profilesArray[profile].listElement = a;
+            a.innerHTML = profile;
+            a.className = 'unselectedProfile';
+            a.setAttribute('onclick', 'onProfileClicked("' + profile + '")');
+            
+            li.appendChild(a);
             parentDOMNode.appendChild(li);
             
             if(profilesArray[profile].children.length)
@@ -282,7 +290,7 @@ block headerAdditions
             
             for(var i = 0; i < profilesArray[profile].children.length; i++)
             {
-              drawNode(profilesArray[profilesArray[profile].children[i]].name, ul);
+              drawNodeRec(profilesArray[profilesArray[profile].children[i]].name, ul);
             }
           }
           
