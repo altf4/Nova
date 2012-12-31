@@ -55,7 +55,13 @@ html(lang="en", onclick='removeContextMenu();')
       var StopNovad = function()
       {
           try {
-              now.StopNovad();
+              now.StopNovad(function(result){
+                if(result == 'false')
+                {
+                  var passwd = prompt('Novad is not responding to messages. Admin privileges are required to shut it down.', 'Admin password');
+                  now.HardStopNovad(passwd);   
+                }
+              });
             } catch(err)
             {
               alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");

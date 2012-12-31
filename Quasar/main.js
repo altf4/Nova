@@ -2117,7 +2117,7 @@ everyone.now.RestartHaystack = function(cb)
 	}
 }
 
-everyone.now.StartHaystack = function ()
+everyone.now.StartHaystack = function()
 {
 	if (!nova.IsHaystackUp())
 	{
@@ -2128,7 +2128,7 @@ everyone.now.StartHaystack = function ()
 	} catch (err) {};
 }
 
-everyone.now.StopHaystack = function ()
+everyone.now.StopHaystack = function()
 {
 	nova.StopHaystack();
 	try {
@@ -2136,34 +2136,52 @@ everyone.now.StopHaystack = function ()
 	} catch (err) {};
 }
 
-everyone.now.IsHaystackUp = function (callback)
+everyone.now.IsHaystackUp = function(callback)
 {
 	callback(nova.IsHaystackUp());
 }
 
-everyone.now.IsNovadUp = function (callback)
+everyone.now.IsNovadUp = function(callback)
 {
 	callback(nova.IsNovadUp(false));
 }
 
-everyone.now.StartNovad = function ()
+everyone.now.StartNovad = function()
 {
 	var result = nova.StartNovad(false);
 	result = nova.CheckConnection();
-	try {
+	try 
+	{
 		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
-	} catch (err) {};
+	}
+	catch(err){};
 }
 
-everyone.now.StopNovad = function ()
+everyone.now.StopNovad = function(cb)
 {
-	nova.StopNovad();
+	if(nova.StopNovad() == false)
+	{
+    cb('false');
+    return;
+	}
 	nova.CloseNovadConnection();
-	try {
+	try 
+	{
 		everyone.now.updateNovadStatus(nova.IsNovadUp(false));
-	} catch (err) {};
+	}
+	catch(err){};
 }
 
+everyone.now.HardStopNovad = function(passwd)
+{
+  nova.HardStopNovad(passwd);
+  nova.CloseNovadConnection();
+  try 
+  {
+    everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+  }
+  catch(err){};
+}
 
 everyone.now.sendAllSuspects = function (callback)
 {
@@ -2198,7 +2216,9 @@ everyone.now.deleteUserEntry = function (usernamesToDelete, callback)
 				console.log("Database error: " + err);
 				callback(false);
 				return;
-			} else {
+			}
+			else
+			{
 				callback(true);
 			}
 		});

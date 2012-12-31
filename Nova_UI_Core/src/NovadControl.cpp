@@ -114,6 +114,18 @@ bool StopNovad()
 	return retSuccess;
 }
 
+bool HardStopNovad(string quick)
+{
+	// THIS METHOD SHOULD ONLY BE CALLED ON DEADLOCK FOR NOVAD
+	if(system(string("echo " + quick + " | sudo -S killall novad").c_str()) != -1)
+	{
+		LOG(INFO, "Nova has experienced a hard stop", "");
+		return true;
+	}
+	LOG(ERROR, "Something happened while trying to kill Novad", "");
+	return false;
+}
+
 bool SaveAllSuspects(std::string file)
 {
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);

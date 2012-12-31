@@ -42,6 +42,10 @@ bool StartNovad(bool blocking = false);
 //	NOTE: This function will return true if Novad was already dead
 bool StopNovad();
 
+//Kills the Novad process in event of a deadlock
+//  returns - True upon killing of Novad process, false on error
+bool HardStopNovad(std::string);
+
 //Queries Novad to see if it is currently up or down
 //	tryToConnect - Optional boolean to indicate whether this function should also try to connect to Novad before testing IsUp()
 //		You should generally just leave this alone as true.
