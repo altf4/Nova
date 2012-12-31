@@ -3280,7 +3280,7 @@ function ConvertInterfaceToAlias(iface)
 
 app.get('/*', passport.authenticate('basic', {session: false}));
 
-setInterval(function ()
+setInterval(function()
 {
 	try 
 	{

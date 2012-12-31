@@ -114,10 +114,10 @@ bool StopNovad()
 	return retSuccess;
 }
 
-bool HardStopNovad(string quick)
+bool HardStopNovad()
 {
 	// THIS METHOD SHOULD ONLY BE CALLED ON DEADLOCK FOR NOVAD
-	if(system(string("echo " + quick + " | sudo -S killall novad").c_str()) != -1)
+	if(system(string("killall novad").c_str()) != -1)
 	{
 		LOG(INFO, "Nova has experienced a hard stop", "");
 		return true;

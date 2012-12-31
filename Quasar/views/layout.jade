@@ -63,8 +63,7 @@ html(lang="en", onclick='removeContextMenu();')
               now.StopNovad(function(result){
                 if(result == 'false')
                 {
-                  var passwd = prompt('Novad is not responding to messages. Admin privileges are required to shut it down.', 'Admin password');
-                  now.HardStopNovad(passwd);   
+                  now.HardStopNovad();   
                 }
               });
             } catch(err)
@@ -211,31 +210,31 @@ html(lang="en", onclick='removeContextMenu();')
       div.edgePanel(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'top', splitter: false", style="padding: 2px 2px 2px 2px")
         div(data-dojo-type="dijit.layout.BorderContainer",data-dojo-props="design: 'sidebar', splitter: false",style="height: 140px;")
           // Header center
-          div(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'center', splitter: false", style="padding: 2px 2px 2px 2px")    
-            a(href="/")
-              img#eyeIcon(src="images/novaIcon.png",class="align-left", width="100px", height="100px")
-              h1(style="margin-top: 6px; margin-bottom: 6px") DataSoft Nova Anti-reconnaissance System
-            block topPannelAdditions
+          div(data-dojo-type="dijit.layout.ContentPane", data-dojo-props="region: 'center', splitter: false", style="padding: 2px 2px 2px 2px")
+            div    
+              a(href="/", style='text-decoration: none; width: 530px; display: block;')
+                img#eyeIcon(src="images/novaIcon.png",class="align-left", width="100px", height="100px")
+                h1(style="margin-top: 6px; margin-bottom: 6px; width: 530px") DataSoft Nova Anti-reconnaissance System
             
             // This is so the browser will cache all 3 pics when it first loads
-            
-            table(style="float: left;")
+            br
+            table(style="float: left; font-size: 16px;")
               tr
-                td(style="text-align: right;") Packet Classifier:&nbsp 
+                td(style="text-align: right; font-weight: bold;") Packet Classifier:&nbsp 
                 td(style="padding: 0;")
-                  img#nova_status_icon_orange(src="/images/orangedot.png", width="15px", height="15px")
-                  img#nova_status_icon_red(src="/images/reddot.png", width="15px", height="15px", style="display: none;")
-                  img#nova_status_icon_green(src="/images/greendot.png", width="15px", height="15px", style="display: none;")
+                  img#nova_status_icon_orange(src="/images/orangedot.png", width="20px", height="20px")
+                  img#nova_status_icon_red(src="/images/reddot.png", width="20px", height="20px", style="display: none;")
+                  img#nova_status_icon_green(src="/images/greendot.png", width="20px", height="20px", style="display: none;")
                 td
-                  div#nova_status Checking
+                  div#nova_status(style='font-weight: bold;') Checking
               tr
-                td(style="text-align: right;") Haystack Status:&nbsp  
+                td(style="text-align: right; font-weight: bold;") Haystack&nbsp Status:&nbsp  
                 td(style="padding: 0;")
-                  img#haystack_status_icon_orange(src="/images/orangedot.png", width="15px", height="15px")
-                  img#haystack_status_icon_red(src="/images/reddot.png", width="15px", height="15px", style="display: none;")
-                  img#haystack_status_icon_green(src="/images/greendot.png", width="15px", height="15px", style="display: none;")
+                  img#haystack_status_icon_orange(src="/images/orangedot.png", width="20px", height="20px")
+                  img#haystack_status_icon_red(src="/images/reddot.png", width="20px", height="20px", style="display: none;")
+                  img#haystack_status_icon_green(src="/images/greendot.png", width="20px", height="20px", style="display: none;")
                 td
-                  div#haystack_status Checking
+                  div#haystack_status(style='font-weight: bold;') Checking
             table(style="float: right;")
               tr
                 td
