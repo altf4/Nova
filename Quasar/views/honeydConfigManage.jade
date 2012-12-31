@@ -45,7 +45,7 @@ block headerAdditions
     ul {
         margin-bottom: 20px;
         display: block; 
-        list-style-type:disc;
+        list-style-type: none;
     }
 
     #treeDiv {
@@ -55,6 +55,7 @@ block headerAdditions
     li {
         -moz-user-select: none;
         -webkit-user-select: none;
+        list-style-type: none;
     }
     
   script(type="text/javascript", src="scripts/NovaPiChart.js")
@@ -156,6 +157,18 @@ block headerAdditions
       {
         theDoc.getElementById('treeDiv').removeChild(theDoc.getElementById('treeDiv').lastChild);
       }
+      while(theDoc.getElementById('piChart').hasChildNodes())
+      {
+        theDoc.getElementById('piChart').removeChild(theDoc.getElementById('piChart').lastChild);
+      }
+      
+      var label = theDoc.createElement('label');
+      label.innerHTML = 'Loading...';
+      theDoc.getElementById('treeDiv').appendChild(label);
+      
+      var label1 = theDoc.createElement('label');
+      label1.innerHTML = 'Loading...';
+      theDoc.getElementById('piChart').appendChild(label1);
       
       if(configArg == undefined)
       {
@@ -245,6 +258,11 @@ block headerAdditions
           
           var treeDiv = theDoc.getElementById('treeDiv');
           
+          while(treeDiv.hasChildNodes())
+          {
+            treeDiv.removeChild(treeDiv.lastChild);
+          }
+          
           var drawNode = function(profile, parentDOMNode){
             var li = theDoc.createElement('li');
             var a = theDoc.createElement('a');
@@ -255,31 +273,6 @@ block headerAdditions
             a.setAttribute('onclick', 'onProfileClicked("' + profile + '")');
             
             li.appendChild(a);
-            
-            if(profilesArray[profile].children.length)
-            {
-              var ul = theDoc.createElement('ul');
-              li.appendChild(ul);  
-            }
-            
-            for(var i = 0; i < profilesArray[profile].children.length; i++)
-            {
-              drawNodeRec(profilesArray[profilesArray[profile].children[i]].name, ul);
-            }
-                        
-            parentDOMNode.appendChild(li);
-          }
-          
-          var drawNodeRec = function(profile, parentDOMNode){
-            var li = theDoc.createElement('li');
-            var a = theDoc.createElement('a');
-            
-            profilesArray[profile].listElement = a;
-            a.innerHTML = profile;
-            a.className = 'unselectedProfile';
-            a.setAttribute('onclick', 'onProfileClicked("' + profile + '")');
-            
-            li.appendChild(a);
             parentDOMNode.appendChild(li);
             
             if(profilesArray[profile].children.length)
@@ -290,7 +283,7 @@ block headerAdditions
             
             for(var i = 0; i < profilesArray[profile].children.length; i++)
             {
-              drawNodeRec(profilesArray[profilesArray[profile].children[i]].name, ul);
+              drawNode(profilesArray[profilesArray[profile].children[i]].name, ul);
             }
           }
           
@@ -298,6 +291,11 @@ block headerAdditions
           
           var nodesPerProfile = {};
           var piChartRender = [];
+          
+          while(theDoc.getElementById('piChart').hasChildNodes())
+          {
+            theDoc.getElementById('piChart').removeChild(theDoc.getElementById('piChart').lastChild);
+          }
           
           for(var i in nodes)
           {
@@ -778,6 +776,7 @@ block content
       br
       br
       div#treeDiv
+        label Loading...
     
       div(style="margin-top: 20px")
       hr
