@@ -227,7 +227,7 @@ void NovaNode::Init(Handle<Object> target)
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "StartNovad", (InvokeMethod<bool, bool, Nova::StartNovad>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "StopNovad", (InvokeMethod<bool, Nova::StopNovad>) );
-	NODE_SET_PROTOTYPE_METHOD(s_ct, "HardStopNovad", (InvokeMethod<bool, std::string, Nova::HardStopNovad>) );
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "HardStopNovad", (InvokeMethod<bool, Nova::HardStopNovad>) );
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "StartHaystack", (InvokeMethod<bool, bool, Nova::StartHaystack>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "StopHaystack", (InvokeMethod<bool, Nova::StopHaystack>) );
