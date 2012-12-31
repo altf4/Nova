@@ -2119,21 +2119,34 @@ everyone.now.RestartHaystack = function(cb)
 
 everyone.now.StartHaystack = function()
 {
-	if (!nova.IsHaystackUp())
+	if(!nova.IsHaystackUp())
 	{
 		nova.StartHaystack(false);
 	}
-	try {
-		everyone.now.updateHaystackStatus(nova.IsHaystackUp())
-	} catch (err) {};
+  if(!nova.IsHaystackUp())
+  {
+    everyone.now.HaystackStartFailed();
+  }
+  else
+  {
+  	try 
+  	{
+  		everyone.now.updateHaystackStatus(nova.IsHaystackUp())
+  	} 
+  	catch(err)
+  	{};
+	}
 }
 
 everyone.now.StopHaystack = function()
 {
 	nova.StopHaystack();
-	try {
+	try 
+	{
 		everyone.now.updateHaystackStatus(nova.IsHaystackUp());
-	} catch (err) {};
+	} 
+	catch(err)
+	{};
 }
 
 everyone.now.IsHaystackUp = function(callback)

@@ -31,6 +31,11 @@ html(lang="en", onclick='removeContextMenu();')
       // This function should be replaced
       function isNovadUpChanged(isNovadUp) {};
 
+      now.HaystackStartFailed = function()
+      {
+        alert('The haystack failed to start!');
+      }
+
       function removeContextMenu()
       {
         if(document.getElementById('contextMenu') != undefined)
@@ -130,27 +135,27 @@ html(lang="en", onclick='removeContextMenu();')
         document.getElementById("haystack_status").innerHTML = isHaystackUp ? "Online" : "Offline";
       };
 
-        function fixConsole(alertFallback)
-        {    
-            if (typeof console === "undefined")
-            {
-                    console = {}; // define it if it doesn't exist already
-            }
-            if (typeof console.log === "undefined") 
-            {
-                    if (alertFallback) { console.log = function(msg) { alert(msg); }; } 
-                    else { console.log = function() {}; }
-            }
-            if (typeof console.dir === "undefined") 
-            {
-                    if (alertFallback) 
-                    { 
-                            // THIS COULD BE IMPROVED. maybe list all the object properties?
-                            console.dir = function(obj) { alert("DIR: "+obj); }; 
-                    }
-                    else { console.dir = function() {}; }
-            }
-        }
+      function fixConsole(alertFallback)
+      {    
+          if (typeof console === "undefined")
+          {
+                  console = {}; // define it if it doesn't exist already
+          }
+          if (typeof console.log === "undefined") 
+          {
+                  if (alertFallback) { console.log = function(msg) { alert(msg); }; } 
+                  else { console.log = function() {}; }
+          }
+          if (typeof console.dir === "undefined") 
+          {
+                  if (alertFallback) 
+                  { 
+                          // THIS COULD BE IMPROVED. maybe list all the object properties?
+                          console.dir = function(obj) { alert("DIR: "+obj); }; 
+                  }
+                  else { console.dir = function() {}; }
+          }
+      }
     
     block headerAdditions
 
