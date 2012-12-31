@@ -99,7 +99,13 @@ block headerAdditions
         clearButton.innerHTML = 'Clear Profiles';
         clearButton.setAttribute('onclick', 'ClearScriptWrapper("' + scriptList[i].script + '")');
         clearButton.disabled = disable;
+        
         var td4 = theDoc.createElement('td');
+        var editButton = theDoc.createElement('button');
+        editButton.innerHTML = 'Edit Options';
+        editButton.setAttribute('onclick', 'editOptions("' + scriptList[i].script + '")');
+        
+        var td5 = theDoc.createElement('td');
         var removeButton = theDoc.createElement('button');
         removeButton.innerHTML = 'Remove Script';
         removeButton.setAttribute('onclick', 'RemoveScriptFromMap("' + scriptList[i].script + '")');
@@ -108,12 +114,14 @@ block headerAdditions
         td1.appendChild(label1);
         td2.appendChild(label2);
         td3.appendChild(clearButton);
-        td4.appendChild(removeButton);
+        td4.appendChild(editButton);
+        td5.appendChild(removeButton);
         tr.appendChild(td0);
         tr.appendChild(td1);
         tr.appendChild(td2);
         tr.appendChild(td3);
         tr.appendChild(td4);
+        tr.appendChild(td5);
         append.appendChild(tr);
       }
     }
@@ -128,6 +136,87 @@ block headerAdditions
           location.reload(true);
         });
       }
+    }
+
+    function addScriptOptionValue()
+    {
+        // TODO Internet Explore Support
+        var key = document.getElementById("optionKeys").value;
+        var value = document.getElementById("newOptionName").value;
+        document.getElementById("newOptionName").value = "";
+        now.addScriptOptionValue(currentlyEditedScript.GetName, key, value, function() {editOptions(currentlyEditedScript.GetName)});
+    }
+
+    function deleteScriptOptionValue(script, key, value)
+    {
+        console.log("Deleting " + script + " " + key + " " + value);
+        now.deleteScriptOptionValue(currentlyEditedScript.GetName, key, value, function() {editOptions(script)});
+
+    }
+
+    function selectedKeyChanged()
+    {
+        document.getElementById("newOptionName").value = "";
+        dojo.empty("optionValues"); 
+        // TODO Internet Explore Support
+        var currentKey = document.getElementById("optionKeys").value;
+        for (var i = 0; i < currentlyEditedScript.GetOptions[currentKey].length; i++)
+        {
+           var tr = document.createElement("tr");
+          
+          var td1 = document.createElement("td");
+           tr.appendChild(td1);
+           
+           var td2 = document.createElement("td");
+           tr.appendChild(td2);
+           
+           var value = currentlyEditedScript.GetOptions[currentKey][i];
+           td1.innerHTML = value;
+         
+           var deleteButton = document.createElement("button");
+           deleteButton.innerHTML = "Delete";
+           deleteButton.onclick = function()
+           {    
+                var key = currentKey;
+                var innerValue = value;
+                return function() {
+                    deleteScriptOptionValue(currentlyEditedScript.GetName, key, innerValue);
+                }
+           }();
+           td2.appendChild(deleteButton);
+           
+           document.getElementById("optionValues").appendChild(tr); 
+        }
+    }
+
+    function editOptions(scriptName)
+    {
+       dojo.empty("optionKeys"); 
+       dojo.empty("optionValues"); 
+       now.GetScript(scriptName, function(script)
+       {
+            currentlyEditedScript = script;
+            var count = 0;
+            for (var key in script.GetOptions)
+            {
+                var option = document.createElement("option");
+                option.innerHTML = key;
+                document.getElementById("optionKeys").add(option);
+                count++;
+            }
+
+            if (count == 0)
+            {
+                alert("No editable options for this script");         
+            }
+            else
+            {
+                showLightBox('2'); 
+            }
+
+
+            selectedKeyChanged();
+       });
     }
     
     function ClearScriptWrapper(scriptName)
@@ -238,11 +327,19 @@ block headerAdditions
       {
         theDoc.getElementById('addScriptForm').style.display='block';
         theDoc.getElementById('selectClearProfiles').style.display='none';
+        theDoc.getElementById('editScriptForm').style.display='none';
       }
       else if(divIndex == '1')
       {
         theDoc.getElementById('addScriptForm').style.display='none';
         theDoc.getElementById('selectClearProfiles').style.display='block';
+        theDoc.getElementById('editScriptForm').style.display='none';
+      }
+      else if (divIndex == '2')
+      {
+        theDoc.getElementById('addScriptForm').style.display='none';
+        theDoc.getElementById('selectClearProfiles').style.display='none';
+        theDoc.getElementById('editScriptForm').style.display='block';
       }
     }
     
@@ -319,12 +416,19 @@ block content
           th(style='background-color: #d0e9fc;') Name
           th(style='background-color: #d0e9fc;') Profiles
           th(style='background-color: #d0e9fc;') Path And Parameters
-          th(style='background-color: #d0e9fc;') 
-          th(style='background-color: #d0e9fc;') 
+          th(style='background-color: #d0e9fc;') Clear
+          th(style='background-color: #d0e9fc;') Edit
+          th(style='background-color: #d0e9fc;') Remove
       tbody#addAnchor
     br
   
   div(id='lightbox', class='white_content')
+    div(id='editScriptForm', style='display: none')
+      label Key
+      select#optionKeys(onchange='selectedKeyChanged()');
+      table#optionValues(style='border: 1px solid black')
+      input#newOptionName(type="text")
+      button(onclick='addScriptOptionValue()') Add
     div(id='addScriptForm', style='display: none')
       form(id='submitMe', method='post', enctype="multipart/form-data")
         table

@@ -22,6 +22,7 @@
 #include "Script.h"
 #include "HoneydConfiguration.h"
 #include "../Config.h"
+#include "../Logger.h"
 
 #include <sstream>
 #include <fstream>
@@ -108,6 +109,35 @@ string PortSet::ToString(const string &profileName)
 
 				ofstream configFile;
 				configFile.open (scriptConfigPath);
+
+				// Put default strings for anything that isn't set
+				for (map<string, vector<string>>::iterator optionIter = script.options.begin(); optionIter != script.options.end(); optionIter++)
+				{
+					bool found = false;
+					for (map<string, string>::iterator it = m_TCPexceptions[i].m_scriptConfiguration.begin(); it != m_TCPexceptions[i].m_scriptConfiguration.end(); it++)
+					{
+						if (it->first == optionIter->first)
+						{
+							found = true;
+							break;
+						}
+					}
+
+					if (!found)
+					{
+						if (script.options[optionIter->first].size() > 0)
+						{
+							LOG(DEBUG, "Writing default value because no user specified option for key " + optionIter->first, "");
+							configFile << optionIter->first << " " << script.options[optionIter->first].at(0) << endl;
+						}
+						else
+						{
+							LOG(ERROR, "Script contained no value options for the key " + optionIter->first, "");
+						}
+					}
+				}
+
+				// Put the values for any strings the user set
 				for (map<string, string>::iterator it = m_TCPexceptions[i].m_scriptConfiguration.begin(); it != m_TCPexceptions[i].m_scriptConfiguration.end(); it++)
 				{
 					configFile << it->first << " " << it->second << endl;
