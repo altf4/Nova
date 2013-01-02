@@ -17,7 +17,6 @@
 extends layout
 block headerAdditions
   //link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
-  
   include includes/commonHoneydProfile
 
 block content
@@ -27,7 +26,7 @@ block content
     br
     button#closeLB(onclick='closeLightbox()') Close
   
-  div#setup 
+  div#setup(onclick='handleOnclick(event);')
     h2 Editing Profile
 
     form
@@ -75,8 +74,9 @@ block content
             label Packet Drop Percentage
           td
             input#dropRate(type="number", name="dropRate", min=0, max=100)
-
-
+        tr
+          td
+            br
         tr(id="row5")
           td
             input#inheritUptime(type="checkbox", name="inheritUptime", onclick="inheritanceChanged()") 

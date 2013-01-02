@@ -53,16 +53,55 @@ script
         var savedChanges = function() {};
         var checkIfRestartNeeded = function() {};
 
+        var rmLb = false;
+
+        function handleOnclick(e)
+        {
+          var evt = (e ? e : window.event);
+          var source = evt.target || evt.srcElement;
+          var loc = document.location.href;
+          if(loc.indexOf('/suspects') != -1)
+          {
+            removeContextMenu(); 
+          }
+          if(rmLb && checkIfLightboxChild(source) == 'false' && (loc.indexOf('/autoConfig') == -1))
+          {
+            closeLightbox();
+          }
+          else if(document.getElementById('lightbox').style.display == 'block')
+          {
+            rmLb = true;
+          }
+        }
+        
+        function checkIfLightboxChild(source)
+        {
+          if(source.id != 'lightbox' && source.tagName != 'HTML')
+          {
+            return checkIfLightboxChild(source.parentNode);
+          }        
+          else if(source.id == 'lightbox')
+          {
+            return 'true';
+          }
+          else if(source.tagName == 'HTML')
+          {
+            return 'false';
+          }
+        }
+
         var openLightbox = function()
         {
+            disableBackground(document.getElementById('setup'));
             document.getElementById('setup').style.opacity = '0.5';
             document.getElementById('lightbox').style.display = 'block';
+            rmLb = true;
         }
 
         var closeLightbox = function()
         {
+            enableBackground(document.getElementById('setup'));
             var table = document.getElementById("configureScriptTable")
-            console.log(table);
             scriptConfigurations[currentLightboxIndex] = {};
             for (var i = 0; i < table.children.length; i++)
             {
@@ -72,11 +111,65 @@ script
                }
             }
 
-
             document.getElementById('lightbox').style.display = 'none';
             document.getElementById('setup').style.opacity = '1';
+            checkInheritedDisable();
+            rmLb = false;
         }
-
+        
+        function disableBackground(source)
+        {
+          var disableUs = source.childNodes;
+          for(var i in disableUs)
+          {
+            if(typeof disableUs[i] == 'object' && disableUs[i].tagName != undefined)
+            {
+              disableUs[i].disabled = true;
+              if(disableUs[i].hasChildNodes())
+              {
+                disableBackground(disableUs[i]);
+              }
+            }
+          }
+        }
+    
+        function enableBackground(source)
+        {
+          var enableUs = source.childNodes;
+          for(var i in enableUs)
+          {
+            if(typeof enableUs[i] == 'object' && enableUs[i].tagName != undefined)
+            {
+              enableUs[i].disabled = false;
+              if(enableUs[i].hasChildNodes())
+              {
+                enableBackground(enableUs[i]);
+              }
+            }
+          }
+        }
+        
+        function checkInheritedDisable()
+        {
+          var persIn = document.getElementById('inheritPersonality').checked;
+          var pdIn = document.getElementById('inheritDropRate').checked;
+          var uptimeIn = document.getElementById('inheritUptime').checked;
+          if(persIn == true)
+          {
+            document.getElementById('personality').disabled = true;
+          }
+          if(pdIn == true)
+          {
+            document.getElementById('dropRate').disabled = true;
+          }
+          if(uptimeIn == true)
+          {
+            document.getElementById('uptimeType').disabled = true;
+            document.getElementById('uptimeMin').disabled = true;
+            document.getElementById('uptimeMax').disabled = true;
+          }
+        }
+        
         // Make the HTML view reflect the internal model
         var refreshVendorsView = function()
         {
@@ -807,10 +900,6 @@ script
                                         alert("ERROR: Unable to fetch the requested profile information.");
                                         window.location="/configHoneydProfiles";
                                         return;
-                                }
-                                else
-                                {
-                                        console.log(pfile);
                                 }
 
                                 profile = pfile;
