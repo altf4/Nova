@@ -26,7 +26,8 @@ block headerAdditions
     var grid;
     var currentInterface;
     var pfile;
-
+    var interfaces = "#{INTERFACES}".split(',');
+    
     function createNodes()
     {
         document.getElementById("createNewNodes").disabled = true;
@@ -310,6 +311,45 @@ block headerAdditions
 
     }
 
+    function changeSelectedInterfaces()
+    {
+      var items = grid.GetSelected();
+      if(items != '' && items != undefined)
+      {
+        var newInterface = prompt("Change selected nodes' interface to ", 'new interface');
+        if(newInterface == '' || newInterface == undefined)
+        {
+          return;
+        }
+        else
+        {
+          var change = false;
+          for(var i in interfaces)
+          {
+            if(newInterface == interfaces[i])
+            {
+              change = true;
+            }
+          }
+          if(change == true)
+          {
+            now.ChangeNodeInterfaces(items, newInterface, function(){
+              location.reload(true);
+            }); 
+          }
+          else
+          {
+            alert('That is not a valid interface! The choices are ' + interfaces.join());
+            changeSelectedInterfaces();
+          }
+        }
+      }
+      else
+      {
+        alert('Must select some nodes first!');
+      }
+    }
+
     function editSelectedItem()
     {
       var items = grid.GetSelected();
@@ -526,6 +566,17 @@ block headerAdditions
         console.log("err was: " + err);
       }
     }
+
+    function checkForEditInterface()
+    {
+      if(interfaces.length > 1)
+      {
+        var button = document.createElement('button');
+        button.setAttribute('onclick', 'changeSelectedInterfaces()');
+        button.innerHTML = 'Change Node Interfaces';
+        document.getElementById('generateHook').appendChild(button);
+      }
+    }
     
     window.onload = function()
     {
@@ -542,6 +593,7 @@ block headerAdditions
         checkOnlyOne('if0');
         profileChanged();
         now.GetHaystackDHCPStatus(dhcpStatusCallback);
+        checkForEditInterface();
       });
 
     }
@@ -565,7 +617,8 @@ block content
 
   br
   br
-  a.button(href="/editHoneydNode?node=doppelganger") Edit Doppelganger
+  div#generateHook
+    a.button(href="/editHoneydNode?node=doppelganger") Edit Doppelganger
   br
   br
   h2 Create Honeyd Nodes

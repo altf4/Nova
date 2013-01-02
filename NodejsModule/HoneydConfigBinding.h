@@ -29,7 +29,7 @@ private:
 	static v8::Handle<v8::Value> RemoveConfiguration(const v8::Arguments& args);
 	static v8::Handle<v8::Value> SwitchConfiguration(const v8::Arguments& args);
 	static v8::Handle<v8::Value> RemoveScript(const v8::Arguments& args);
-
+	static v8::Handle<v8::Value> ChangeNodeInterfaces(const v8::Arguments& args);
 
 	static v8::Handle<v8::Value> GetNode(const v8::Arguments& args);
 	static v8::Handle<v8::Value> GetProfile(const v8::Arguments& args);

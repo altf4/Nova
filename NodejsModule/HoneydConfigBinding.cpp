@@ -48,6 +48,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNodes"),FunctionTemplate::New(AddNodes)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetNode"),FunctionTemplate::New(GetNode)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("ChangeNodeInterfaces"),FunctionTemplate::New(ChangeNodeInterfaces)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddNode"),FunctionTemplate::New(AddNode)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProfile"),FunctionTemplate::New(GetProfile)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetScript"),FunctionTemplate::New(GetScript)->GetFunction());
@@ -98,6 +99,31 @@ Handle<Value> HoneydConfigBinding::RenamePortset(const Arguments& args)
 	std::string profile = cvv8::CastFromJS<string>(args[2]);
 
 	return scope.Close(Boolean::New(obj->m_conf->RenamePortset(profile, oldName, newName)));
+}
+
+Handle<Value> HoneydConfigBinding::ChangeNodeInterfaces(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 2)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 2 parameters")));
+	}
+
+	std::vector<std::string> nodeNames = cvv8::CastFromJS<vector<string> >(args[0]);
+	std::string newInterface = cvv8::CastFromJS<string>(args[1]);
+
+	for(uint i = 0; i < nodeNames.size(); i++)
+	{
+		Node* node = obj->m_conf->GetNode(nodeNames[i]);
+		node->m_interface = newInterface;
+	}
+
+	obj->m_conf->WriteAllTemplatesToXML();
+	obj->m_conf->ReadAllTemplatesXML();
+
+	return scope.Close(Boolean::New(true));
 }
 
 Handle<Value> HoneydConfigBinding::GetPortSet(const Arguments& args)

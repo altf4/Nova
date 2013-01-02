@@ -1121,6 +1121,15 @@ everyone.now.changeGroup = function(group, callback)
 	callback(config.SetGroup(group));
 }
 
+everyone.now.ChangeNodeInterfaces = function(nodes, newIntf, cb)
+{
+  honeydConfig.ChangeNodeInterfaces(nodes, newIntf);
+  if(typeof cb == 'function')
+  {
+    cb();
+  }
+}
+
 everyone.now.GetProfileNames = function(callback)
 {
   callback(honeydConfig.GetProfileNames());
