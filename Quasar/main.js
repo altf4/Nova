@@ -113,10 +113,10 @@ var RenderError = function (res, err, link)
 	});
 }
 
-var HashPassword = function (password)
+var HashPassword = function (password, salt)
 {
 	var shasum = crypto.createHash('sha1');
-	shasum.update(password);
+	shasum.update(password + salt);
 	return shasum.digest('hex');
 };
 
@@ -148,8 +148,9 @@ var dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credential
 var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
 var dbqCredentialsGetUsers = db.prepare('SELECT user FROM credentials');
 var dbqCredentialsGetUser = db.prepare('SELECT user FROM credentials WHERE user = ?');
+var dbqCredentialsGetSalt = db.prepare('SELECT salt FROM credentials WHERE user = ?');
 var dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ? WHERE user = ?');
-var dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?)');
+var dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?, ?)');
 var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = ?');
 
 var dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
@@ -179,46 +180,56 @@ function (username, password, done)
 
 		dbqCredentialsRowCount.all(function (err, rowcount)
 		{
-			if (err)
+			if(err)
 			{
 				console.log("Database error: " + err);
 			}
 
 			// If there are no users, add default nova and log in
-			if (rowcount[0].rows === 0)
+			if(rowcount[0].rows === 0)
 			{
 				console.log("No users in user database. Creating default user.");
-				dbqCredentialsInsertUser.run('nova', HashPassword('toor'), function (err)
+				dbqCredentialsInsertUser.run('nova', HashPassword('toor', 'root'), 'root', function (err)
 				{
-					if (err)
+					if(err)
 					{
 						throw err;
 					}
 
 					switcher(err, user, true, done);
-
-				});
-			} else {
-				dbqCredentialsCheckLogin.all(user, HashPassword(password),
-
-				function selectCb(err, results)
-				{
-					if (err)
-					{
-						console.log("Database error: " + err);
-					}
-
-					if (results[0] === undefined)
-					{
-						switcher(err, user, false, done);
-					} else if (user === results[0].user)
-					{
-						switcher(err, user, true, done);
-					} else {
-						switcher(err, user, false, done);
-					}
 				});
 			}
+			else
+			{
+			  dbqCredentialsGetSalt.all(user, function cb(err, salt)
+			  {
+			    if(err)
+			    {
+			      console.log("Database error: " + err);
+			      switcher(err, user, false, done);
+			    }
+  				dbqCredentialsCheckLogin.all(user, HashPassword(password, salt[0].salt),
+    				function selectCb(err, results)
+    				{
+    					if(err)
+    					{
+    						console.log("Database error: " + err);
+    					}
+    					if(results[0] === undefined)
+    					{
+    						switcher(err, user, false, done);
+    					} 
+    					else if(user === results[0].user)
+    					{
+    						switcher(err, user, true, done);
+    					} 
+    					else
+    					{
+    						switcher(err, user, false, done);
+    					}
+    		  });
+			  });
+		  }
 		});
 	});
 }));
@@ -1348,7 +1359,13 @@ app.post('/createNewUser', passport.authenticate('basic', {session: false}), fun
 
 		if (results[0] == undefined)
 		{
-			dbqCredentialsInsertUser.run(userName, HashPassword(password), function ()
+		  var salt = '';
+		  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		  for(var i = 0; i < 8; i++)
+		  {
+		    salt += possible[Math.floor(Math.random() * possible.length)];
+		  }
+			dbqCredentialsInsertUser.run(userName, HashPassword(password, salt), salt, function ()
 			{
 				res.render('saveRedirect.jade', {
 					locals: {
@@ -1381,7 +1398,13 @@ app.post('/createInitialUser', passport.authenticate('basic', {session: false}),
 
 		if (results[0] == undefined)
 		{
-			dbqCredentialsInsertUser.run(userName, HashPassword(password));
+		  var salt = '';
+      var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      for(var i = 0; i < 8; i++)
+      {
+        salt += possible[Math.floor(Math.random() * possible.length)];
+      }
+			dbqCredentialsInsertUser.run(userName, HashPassword(password, salt), salt);
 			dbqCredentialsDeleteUser.run('nova');
 			res.render('saveRedirect.jade', {
 				locals: {

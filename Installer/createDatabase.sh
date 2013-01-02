@@ -47,7 +47,8 @@ CREATE TABLE firstrun(
 
 CREATE TABLE credentials(
 	user VARCHAR(100),
-	pass VARCHAR(100)
+	pass VARCHAR(100),
+	salt VARCHAR(100)
 );"
 
 
