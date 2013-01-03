@@ -127,7 +127,7 @@ string PortSet::ToString(const string &profileName)
 					{
 						if (script.options[optionIter->first].size() > 0)
 						{
-							LOG(DEBUG, "Writing default value because no user specified option for key " + optionIter->first, "");
+							//LOG(DEBUG, "Writing default value because no user specified option for key " + optionIter->first, "");
 							configFile << optionIter->first << " " << script.options[optionIter->first].at(0) << endl;
 						}
 						else
