@@ -61,7 +61,7 @@ block headerAdditions
             return;
         }
         
-        var user = grid.store.getValues(items[0], "users"); 
+        var user = String(grid.store.getValues(items[0], "users")); 
         var password = dojo.byId("newPassword").value;
         try {
             now.updateUserPassword(user, password, errorMessageCallback);

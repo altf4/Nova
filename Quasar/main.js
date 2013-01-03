@@ -150,7 +150,7 @@ var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WH
 var dbqCredentialsGetUsers = db.prepare('SELECT user FROM credentials');
 var dbqCredentialsGetUser = db.prepare('SELECT user FROM credentials WHERE user = ?');
 var dbqCredentialsGetSalt = db.prepare('SELECT salt FROM credentials WHERE user = ?');
-var dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ? AND salt = ? WHERE user = ?');
+var dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ?, salt = ? WHERE user = ?');
 var dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?, ?)');
 var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = ?');
 
@@ -2282,13 +2282,7 @@ everyone.now.updateUserPassword = function (username, newPassword, callback)
     salt += possible[Math.floor(Math.random() * possible.length)];
   }
   
-  console.log('newPassword ' + newPassword);
-  console.log('salt in updatePassword ' + salt);
-  console.log('HashPassword == ' + HashPassword(newPassword, salt));
-  console.log('userName == ' + username);
   //update credentials set pass=? and salt=? where user=?
-  var doop = dbqCredentialsChangePassword.bind(HashPassword(newPassword, salt), salt, username);
-  console.log('doop == ' + doop);
   dbqCredentialsChangePassword.run(HashPassword(newPassword, salt), salt, username, function(err){
     console.log('err ' + err);
     if(err)
