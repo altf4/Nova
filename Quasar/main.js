@@ -72,7 +72,7 @@ var express = require('express');
 var util = require('util');
 var passport = require('passport');
 var BasicStrategy = require('passport-http').BasicStrategy;
-var sql = require('sqlite3');
+var sql = require('sqlite3').verbose();
 var validCheck = require('validator').check;
 var sanitizeCheck = require('validator').sanitize;
 var crypto = require('crypto');
@@ -131,10 +131,12 @@ var DATABASE_PASS = config.ReadSetting("DATABASE_PASS");
 
 var databaseOpenResult = function (err)
 {
-	if (err === null)
+	if(err === null)
 	{
 		console.log("Opened sqlite3 database file.");
-	} else {
+	}
+	else
+	{
 		LOG("ERROR", "Error opening sqlite3 database file: " + err);
 	}
 }
@@ -142,14 +144,13 @@ var databaseOpenResult = function (err)
 var novaDb = new sql.Database(NovaHomePath + "/data/novadDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
 var db = new sql.Database(NovaHomePath + "/data/quasarDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
 
-
 // Prepare query statements
 var dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
 var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
 var dbqCredentialsGetUsers = db.prepare('SELECT user FROM credentials');
 var dbqCredentialsGetUser = db.prepare('SELECT user FROM credentials WHERE user = ?');
 var dbqCredentialsGetSalt = db.prepare('SELECT salt FROM credentials WHERE user = ?');
-var dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ? WHERE user = ?');
+var dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ? AND salt = ? WHERE user = ?');
 var dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?, ?)');
 var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = ?');
 
@@ -201,14 +202,16 @@ function (username, password, done)
 			}
 			else
 			{
+			  console.log('password ' + password);
 			  dbqCredentialsGetSalt.all(user, function cb(err, salt)
 			  {
-			    if(err)
+			    if(err || (salt[0] == undefined))
 			    {
-			      console.log("Database error: " + err);
 			      switcher(err, user, false, done);
 			    }
-  				dbqCredentialsCheckLogin.all(user, HashPassword(password, salt[0].salt),
+			    else
+			    {
+    				dbqCredentialsCheckLogin.all(user, HashPassword(password, salt[0].salt),
     				function selectCb(err, results)
     				{
     					if(err)
@@ -227,8 +230,8 @@ function (username, password, done)
     					{
     						switcher(err, user, false, done);
     					}
-    		  });
-			  });
+      		  });
+  			}});
 		  }
 		});
 	});
@@ -2272,18 +2275,32 @@ everyone.now.deleteUserEntry = function (usernamesToDelete, callback)
 
 everyone.now.updateUserPassword = function (username, newPassword, callback)
 {
-	dbqCredentialsChangePassword.run(HashPassword(newPassword), username,
-
-	function selectCb(err, results)
-	{
-		if (err)
-		{
-			callback(false, "Unable to access user database: " + err);
-			return;
-		}
-		callback(true);
-	});
-}
+  var salt = '';
+  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for(var i = 0; i < 8; i++)
+  {
+    salt += possible[Math.floor(Math.random() * possible.length)];
+  }
+  
+  console.log('newPassword ' + newPassword);
+  console.log('salt in updatePassword ' + salt);
+  console.log('HashPassword == ' + HashPassword(newPassword, salt));
+  console.log('userName == ' + username);
+  //update credentials set pass=? and salt=? where user=?
+  var doop = dbqCredentialsChangePassword.bind(HashPassword(newPassword, salt), salt, username);
+  console.log('doop == ' + doop);
+  dbqCredentialsChangePassword.run(HashPassword(newPassword, salt), salt, username, function(err){
+    console.log('err ' + err);
+    if(err)
+    {
+      callback(false);
+    }
+    else
+    {
+      callback(true);
+    }
+  });
+};
 
 // Deletes a honeyd node
 everyone.now.deleteNodes = function (nodeNames, callback)

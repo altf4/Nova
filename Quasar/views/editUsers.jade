@@ -73,9 +73,10 @@ block headerAdditions
     }
 
     
-    function errorMessageCallback(sucess, message)
+    function errorMessageCallback(success, message)
     {
-      if(sucess != true)
+      console.log('in errorMessageCallback');
+      if(success != true)
       {
         var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
         dialog.show();
@@ -114,11 +115,13 @@ block content
   div(style="height: 250px;")
     div#gridDiv(style="height: 250px")
 
+  br
   button(onClick="deleteSelectedItems()") Delete Selected Users
   
   br
   br
   input#newPassword(type="password")
+  br
   br
   button(onClick="updateUserPass()") Update User Password
  
