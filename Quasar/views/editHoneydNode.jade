@@ -249,6 +249,7 @@ block headerAdditions
         now.ready( function()
         {
             profileChanged();
+            checkOnlyOne(document.getElementById("if0"));
         });
     }
     
@@ -289,17 +290,17 @@ block content
     - if(INTERFACES.length == 1)
       tr 
         td
-          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne(if0)")
+          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onchange="checkOnlyOne(if0)")
           #{INTERFACES[0]}
     - else
       - for (var i = 0; i < INTERFACES.length; i++)
           tr 
             td
               - if (String(interface) == String(INTERFACES[i]))
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", checked, width=10, onclick="checkOnlyOne(if#{i})")
+                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", checked, width=10, onchange="checkOnlyOne(if#{i})")
                 #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
               - else
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne(if#{i})")
+                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onchange="checkOnlyOne(if#{i})")
                 #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
 
   hidden(id="length", value=INTERFACES.length)
