@@ -141,7 +141,7 @@ block headerAdditions
             }
             for(var port in portset[i].UDPExceptions)
             {
-              generateExceptionRow(portset[i].TCPExceptions[port].portNum, portset[i].TCPExceptions[port].protocol, portset[i].TCPExceptions[port].behavior);
+              generateExceptionRow(portset[i].UDPExceptions[port].portNum, portset[i].UDPExceptions[port].protocol, portset[i].UDPExceptions[port].behavior);
             }
           }
         }
