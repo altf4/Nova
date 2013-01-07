@@ -36,7 +36,7 @@ namespace Nova
 // may not need this, trying to determine if this is a good way to
 // tell the class how to allocate service use or if using the enum
 // below would be better
-enum Services {SYSLOG = 0, LIBNOTIFY, EMAIL};
+enum Services {SYSLOG = 0, EMAIL};
 // enum for NovaMessaging to use. May have to switch around the order to
 // make newer scheme make sense
 enum Levels {DEBUG = 0, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY};
@@ -103,13 +103,6 @@ protected:
 	Logger();
 
 private:
-
-	// Notify makes use of the libnotify methods to produce
-	// a notification with the desired level to the desktop.
-	// args: 	uint16_t level. The level of severity to print in the
-	//       	libNotify message.
-	//       	std::string message. The content of the libNotify message
-	void Notify(uint16_t level, std::string message);
 
 	// Log will be the method that calls syslog
 	// args: 	uint16_t level. The level of severity to tell syslog to log with.

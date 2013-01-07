@@ -31,7 +31,6 @@
 #include <syslog.h>
 #include <string.h>
 #include <curl/curl.h>
-#include <libnotify/notify.h>
 
 using namespace std;
 
@@ -82,11 +81,6 @@ void Logger::Log(Nova::Levels messageLevel, const char *messageBasic,  const cha
 	}
 	tempStr = messageBasic;
 
-	if(mask.at(LIBNOTIFY) == '1')
-	{
-		Notify(messageLevel, tempStr);
-	}
-
 	if(mask.at(SYSLOG) == '1')
 	{
 		LogToFile(messageLevel, ss.str());
@@ -96,26 +90,6 @@ void Logger::Log(Nova::Levels messageLevel, const char *messageBasic,  const cha
 	{
 		Mail(messageLevel, tempStr);
 	}
-}
-
-void Logger::Notify(uint16_t level, string message)
-{
-	NotifyNotification *note;
-	string notifyHeader = m_levels[level].second;
-	notify_init("Nova");
-	#ifdef NOTIFY_CHECK_VERSION
-	#if NOTIFY_CHECK_VERSION (0, 7, 0)
-	note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->GetPathIcon().c_str());
-	#else
-	note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->GetPathIcon().c_str(), NULL);
-	#endif
-	#else
-	note = notify_notification_new(notifyHeader.c_str(), message.c_str(), Config::Inst()->GetPathIcon().c_str(), NULL);
-	#endif
-	notify_notification_set_timeout(note, 3000);
-	notify_notification_show(note, NULL);
-	// Don't think this is needed. If it is, it won't compile in Fedora since it isn't defined symbol
-	// g_object_unref(G_OBJECT(note));
 }
 
 void Logger::LogToFile(uint16_t level, string message)
@@ -444,10 +418,7 @@ void Logger::SetUserLogPreferences(string logPrefString)
 			case '0': insert.first = SYSLOG;
 					insert.second = parseLevelFromChar(parse[2]);
 					break;
-			case '1': insert.first = LIBNOTIFY;
-					insert.second = parseLevelFromChar(parse[2]);
-					break;
-			case '2': insert.first = EMAIL;
+			case '1': insert.first = EMAIL;
 					insert.second = parseLevelFromChar(parse[2]);
 					break;
 		}
@@ -591,10 +562,7 @@ void Logger::SetUserLogPreferences(Nova::Services services, Nova::Levels message
 				case '0': insert.first = SYSLOG;
 						insert.second = parseLevelFromChar(parse[2]);
 						break;
-				case '1': insert.first = LIBNOTIFY;
-						insert.second = parseLevelFromChar(parse[2]);
-						break;
-				case '2': insert.first = EMAIL;
+				case '1': insert.first = EMAIL;
 						insert.second = parseLevelFromChar(parse[2]);
 						break;
 			}
@@ -639,25 +607,6 @@ string Logger::getBitmask(Nova::Levels level)
 		upDown = m_messageInfo.m_service_preferences[i].second;
 
 		if(m_messageInfo.m_service_preferences[i].first.first == SYSLOG)
-		{
-			if(m_messageInfo.m_service_preferences[i].first.second == level)
-			{
-				mask.append("1");
-			}
-			else if(m_messageInfo.m_service_preferences[i].first.second < level && upDown == '+')
-			{
-				mask.append("1");
-			}
-			else if(m_messageInfo.m_service_preferences[i].first.second > level && upDown == '-')
-			{
-				mask.append("1");
-			}
-			else
-			{
-				mask.append("0");
-			}
-		}
-		else if(m_messageInfo.m_service_preferences[i].first.first == LIBNOTIFY)
 		{
 			if(m_messageInfo.m_service_preferences[i].first.second == level)
 			{

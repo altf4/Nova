@@ -318,8 +318,7 @@ RECIPIENTS first@example.com, second@example.com
 ############################################
 #
 # SERVICE: 0 = SYSLOG
-#	       1 = LIBNOTIFY
-#		   2 = EMAIL
+#		   1 = EMAIL
 #
 # LEVELS:  0 = DEBUG 
 #          1 = INFO
@@ -334,7 +333,7 @@ RECIPIENTS first@example.com, second@example.com
 #          If you want to use a particular service for just one level,
 #          omit the + or - entirely.
 # SERVICE:LEVEL(+|-);
-SERVICE_PREFERENCES 0:1+;1:5+;2:6+;
+SERVICE_PREFERENCES 0:1+;1:6+;
 
 ############################################
 # HAYSTACK_STORAGE #

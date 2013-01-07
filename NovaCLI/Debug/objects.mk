@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lNova_UI_Core -lNovaLibrary -lboost_system -lboost_filesystem -levent -levent_pthreads -lpcap -lnotify -lann -lpthread -lcurl
+LIBS := -lNova_UI_Core -lNovaLibrary -lboost_system -lboost_filesystem -levent -levent_pthreads -lpcap -lann -lpthread -lcurl
 

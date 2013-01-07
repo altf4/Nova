@@ -1898,7 +1898,7 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
         break;
       */
 		case "SERVICE_PREFERENCES":
-			validator.check(req.body[configItems[item]], "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;2:[0-7](\\+|\\-)?;$');
+			validator.check(req.body[configItems[item]], "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;$');
 			break;
 
 		default:

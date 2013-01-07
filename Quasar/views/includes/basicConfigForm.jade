@@ -92,11 +92,9 @@ script
     arr = servicePrefs.split(':');
     
     var syslogLevel = arr[1][0];
-    var libnotifyLevel = arr[2][0];
-    var emailLevel = arr[3][0];
+    var emailLevel = arr[2][0];
     var sysMod = ((arr[1][1] == "-" || arr[1][1] == "+") ? arr[1][1] : "");
-    var notifyMod = ((arr[2][1] == "-" || arr[2][1] == "+") ? arr[2][1] : "");
-    var emailMod = ((arr[3][1] == "-" || arr[3][1] == "+") ? arr[3][1] : "");
+    var emailMod = ((arr[2][1] == "-" || arr[2][1] == "+") ? arr[2][1] : "");
     
     var syslogSection = document.createElement("div");
     syslogSection.id = "syslogDiv";
@@ -160,21 +158,6 @@ script
     syslogSection.appendChild(syslogLevelSelect);
     syslogSection.appendChild(syslogModSelect);
     
-    var notifySection = document.createElement("div");
-    notifySection.id = "notifyDiv";
-    
-    var notifyLabel = document.createElement("label");
-    notifyLabel.value = "notify";
-    notifyLabel.innerHTML = "Libnotify at";
-    
-    var notifyLevelSelect = document.createElement("select");
-    notifyLevelSelect.id = "notifyLevelSelect";
-    notifyLevelSelect.setAttribute('onchange', 'onValueChange()');
-    
-    var notifyModSelect = document.createElement("select");
-    notifyModSelect.id = 'notifyModSelect';
-    notifyModSelect.setAttribute('onchange', 'onValueChange()');
-    
     for(var i = 0; i < options.length; i++)
     {
       var option = document.createElement("option");
@@ -182,12 +165,6 @@ script
       option.id = options[i];
       option.innerHTML = options[i];
       
-      if((options.length - i - 1) == libnotifyLevel)
-      {
-        option.selected = true;
-      }
-      
-     notifyLevelSelect.appendChild(option);
     }
     
     for(var i = 0; i < mods.length; i++)
@@ -207,17 +184,7 @@ script
                   break;
       }
       
-      if(mods[i] == notifyMod)
-      {
-        option.selected = true;
-      }
-      
-      notifyModSelect.appendChild(option);
     }
-    
-    notifySection.appendChild(notifyLabel);
-    notifySection.appendChild(notifyLevelSelect);
-    notifySection.appendChild(notifyModSelect);
     
     var emailSection = document.createElement("div");
     emailSection.id = "emailDiv";
@@ -279,7 +246,6 @@ script
     emailSection.appendChild(emailModSelect);
     
     document.getElementById("servicePrefs").appendChild(syslogSection);
-    document.getElementById("servicePrefs").appendChild(notifySection);
     document.getElementById("servicePrefs").appendChild(emailSection);
   }
   
@@ -287,20 +253,15 @@ script
   {
     var element;
     var newServicePrefString = "0:";
+    
     element = document.getElementById("syslogLevelSelect");
     newServicePrefString += element.options[element.selectedIndex].value;
-   
     element = document.getElementById("syslogModSelect");
     var checkSysMod = element.options[element.selectedIndex].value;
+
     newServicePrefString += (checkSysMod != "NA" ? checkSysMod : "");
     newServicePrefString += ";1:";
-    element = document.getElementById("notifyLevelSelect");
-    newServicePrefString += element.options[element.selectedIndex].value;
-
-    element = document.getElementById("notifyModSelect");
-    var checkNotifyMod = element.options[element.selectedIndex].value;
-    newServicePrefString += (checkNotifyMod != "NA" ? checkNotifyMod : "");
-    newServicePrefString += ";2:";
+    
     element = document.getElementById("emailLevelSelect");
     newServicePrefString += element.options[element.selectedIndex].value;
     

@@ -42,7 +42,6 @@ int main(int argc, const char *argv[])
 	Config::Inst();
 
 	// Disable notifications and email in the CLI
-	Logger::Inst()->SetUserLogPreferences(LIBNOTIFY, EMERGENCY, '+');
 	Logger::Inst()->SetUserLogPreferences(EMAIL, EMERGENCY, '+');
 
 	// We parse the input arguments here,
