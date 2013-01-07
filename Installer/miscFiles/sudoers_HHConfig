@@ -11,4 +11,7 @@
 
 # Cmnd alias specification
 
-%nova ALL=(root) NOPASSWD:/usr/bin/nmap, /usr/local/bin/nmap
+# %nova ALL=(root) NOPASSWD:/usr/bin/nmap, /usr/local/bin/nmap
+Cmnd_Alias HHCMNDS = /usr/bin/nmap, /usr/local/bin/nmap
+
+Defaults!HHCMNDS exempt_group=nova
