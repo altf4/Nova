@@ -117,6 +117,8 @@ NovaLibrary/libNovaLibrary.a
 /Quasar/libv8-convert-20120219/*
 /Quasar/libv8-convert-20120219.tar.gz.1
 /Quasar/libv8-convert-20120219.tar.gz.2
+/Quasar/.project
+/Pulsar/.project
 /Installer/.nova/Config/doppelganger.config
 /Installer/.nova/Data/data.txt
 /Installer/.nova/Data/training.db
