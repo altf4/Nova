@@ -60,6 +60,7 @@ double nodeRatio;
 string nodeRange;
 vector<pair<int, int> > nodeRangeVector;
 string group;
+ofstream lockFile;
 
 enum NumberOfNodesType
 {
@@ -79,6 +80,8 @@ void sig_handler(int x)
 	{
 		HoneydConfiguration::Inst()->RemoveConfiguration(group);
 	}
+	lockFile.close();
+	remove(lockFilePath.c_str());
 }
 
 int main(int argc, char ** argv)
@@ -87,6 +90,8 @@ int main(int argc, char ** argv)
 	srand(time(NULL));
 
 	signal(SIGINT, sig_handler);
+	signal(SIGKILL, sig_handler);
+	signal(SIGTERM, sig_handler);
 
 	namespace po = boost::program_options;
 	po::options_description desc("Command line options");
@@ -115,7 +120,7 @@ int main(int argc, char ** argv)
 			LOG(ERROR, "There is already an instance of Haystack Autoconfig running, aborting...", "");
 			return HHC_CODE_NO_MULTI_RUN;
 		}
-		ofstream lockFile(lockFilePath);
+		lockFile.open(lockFilePath.c_str());
 
 		bool i_flag_empty = true;
 		bool a_flag_empty = true;
