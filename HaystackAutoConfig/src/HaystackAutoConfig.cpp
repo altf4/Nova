@@ -76,12 +76,14 @@ string lockFilePath;
 
 void sig_handler(int x)
 {
+	LOG(WARNING, "HaystackAutoconfig closing on signal received", "");
 	if(!group.empty())
 	{
 		HoneydConfiguration::Inst()->RemoveConfiguration(group);
 	}
 	lockFile.close();
 	remove(lockFilePath.c_str());
+	exit(HHC_CODE_RECV_SIG);
 }
 
 int main(int argc, char ** argv)

@@ -2749,18 +2749,18 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
 
 everyone.now.CancelAutoScan = function(groupName)
 {
-  if(autoconfig != undefined)
+  try
   {
     autoconfig.kill();
     autoconfig = undefined;
-    wrench.rmdirSyncRecursive(NovaHomePath + '/config/templates/' + groupName);
     everyone.now.RemoveConfiguration(groupName);
     
     everyone.now.SwitchConfigurationTo('default');
   }
-  // TODO: make sure that any changes that might've occurred to the xml
-  // files are revoked, the new configuration that was created gets 
-  // deleted, etc.
+  catch(e)
+  {
+    LOG("ERROR", "CancelAutoScan threw an error: " + e);
+  }
 }
 
 // TODO: Fix training
