@@ -1425,7 +1425,14 @@ bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
 	if(found)
 	{
 		boost::filesystem::path pathToDelete = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/";
-		boost::filesystem::remove_all(pathToDelete);
+		try
+		{
+			boost::filesystem::remove_all(pathToDelete);
+		}
+		catch(boost::filesystem::filesystem_error err)
+		{
+			LOG(INFO, "", "The name of the configuration to remove was in the m_configs array, but the folders haven't been created. Removing name from list.");
+		}
 		int oldSize = 0;
 		for(uint i = 0; i < m_configs.size(); i++)
 		{
