@@ -2051,35 +2051,16 @@ function GetPorts()
 }
 
 app.get('/scripts', passport.authenticate('basic', {session: false}), function(req, res){
-  var xml = fs.readFileSync(NovaHomePath + '/config/templates/scripts.xml', 'utf8');
-  
-  var libxml = require('libxmljs');
-  
-  try {
-  	var parser = libxml.parseXmlString(xml);
-  } catch (err)
-  {
-    res.render('scripts.jade', {
-	  locals: {
-	    scripts: []
-	    , bindings: {}
-	  }  
-    });
-	return;
-  }
-  
-  var nodesToParse = parser.root().childNodes();
-
   var namesAndPaths = [];
   
-  for(var i = 1; i < nodesToParse.length; i++)
-  {
-    if(nodesToParse[i].child(1) != null && nodesToParse[i].child(7) != null)
-    {
-      namesAndPaths.push({script: nodesToParse[i].child(1).text(), path: nodesToParse[i].child(7).text()});
-    }
+  var scriptNames = honeydConfig.GetScriptNames();
+
+  for (var i = 0; i < scriptNames.length; i++) {
+    var script = honeydConfig.GetScript(scriptNames[i]);
+    namesAndPaths.push({script: script.GetName(), path: script.GetPath()});
   }
   
+
   function cmp(a, b)
   {
     return a.script.localeCompare(b.script);
@@ -3004,12 +2985,6 @@ everyone.now.WriteHoneydConfig = function(cb)
 everyone.now.GetConfigSummary = function(configName, callback)
 { 
   honeydConfig.LoadAllTemplates();
-  // Scripts are kept at a higher level of the directory structure, to denote
-  // that regardless of configuration selected, all scripts are selectable; that is,
-  // scripts are configuration-agnostic.
-  var xml = fs.readFileSync(NovaHomePath + '/config/templates/scripts.xml', 'utf8');
-  var libxml = require('libxmljs');
-  var parser = libxml.parseXmlString(xml);
   
   var scriptProfileBindings = GetPorts();
   var profiles = honeydConfig.GetProfileNames();
