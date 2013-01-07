@@ -202,7 +202,6 @@ function (username, password, done)
 			}
 			else
 			{
-			  console.log('password ' + password);
 			  dbqCredentialsGetSalt.all(user, function cb(err, salt)
 			  {
 			    if(err || (salt[0] == undefined))
