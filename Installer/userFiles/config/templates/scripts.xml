@@ -222,4 +222,11 @@
 		<path>bash /usr/share/honeyd/scripts/linux/echo.sh $ipsrc $sport $ipdst $dport</path>
 		<configurable>false</configurable>
 	</script>
+	<script>
+		<name>IPP</name>
+		<service>ipp</service>
+		<osclass>Linux | Linux</osclass>
+		<path>python /home/addison/Code/Honeyd/scripts/WIP/ipp_wrap.py</path>
+		<configurable>false</configurable>
+	</script>
 </scripts>
