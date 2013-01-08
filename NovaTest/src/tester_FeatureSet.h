@@ -12,7 +12,6 @@ protected:
 	FeatureSet fset;
 	virtual void SetUp() {
 		fset = FeatureSet();
-		Config::Inst()->EnableAllFeatures();
 
 		// First test packet
 		Evidence p1;

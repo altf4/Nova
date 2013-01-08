@@ -63,9 +63,6 @@ protected:
 		p2.m_evidencePacket.ts = 20;
 		p2.m_evidencePacket.tcp_hdr.syn = true;
 		p2.m_evidencePacket.tcp_hdr.ack = false;
-
-
-		Config::Inst()->EnableAllFeatures();
 	}
 
 };

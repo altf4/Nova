@@ -4,6 +4,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/ClassificationAggregator.cpp \
 ../src/ClassificationEngine.cpp \
 ../src/Config.cpp \
 ../src/Database.cpp \
@@ -26,6 +27,7 @@ CPP_SRCS += \
 ../src/WhitelistConfiguration.cpp 
 
 OBJS += \
+./src/ClassificationAggregator.o \
 ./src/ClassificationEngine.o \
 ./src/Config.o \
 ./src/Database.o \
@@ -48,6 +50,7 @@ OBJS += \
 ./src/WhitelistConfiguration.o 
 
 CPP_DEPS += \
+./src/ClassificationAggregator.d \
 ./src/ClassificationEngine.d \
 ./src/Config.d \
 ./src/Database.d \

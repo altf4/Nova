@@ -34,7 +34,7 @@ class ClassificationEngine
 public:
 	// Factory method for classification engine creation. Creates instance of correct subclass based on config file settings.
 	// Returns NULL if the configuration file entry is invalid, otherwise a pointer to a new ClassificationEngine.
-	static ClassificationEngine* MakeEngine();
+	static ClassificationEngine* MakeEngine(std::string engine);
 	static std::vector<std::string> GetSupportedEngines();
 
 	virtual ~ClassificationEngine();
@@ -43,7 +43,7 @@ public:
 	virtual double Classify(Suspect *suspect) = 0;
 
 	// (Re)loads any configuration settings needed. Must be called before classification.
-	virtual void LoadConfiguration();
+	virtual void LoadConfiguration(string filePath);
 
 protected:
 	ClassificationEngine();

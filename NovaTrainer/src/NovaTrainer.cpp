@@ -251,8 +251,8 @@ void ConvertCaptureToDump(std::string captureFolder)
 		LOG(CRITICAL, "Unable to change folder to " + Config::Inst()->GetPathHome(), "");
 	}
 
-	engine = ClassificationEngine::MakeEngine();
-	engine->LoadConfiguration();
+	//engine = ClassificationEngine::MakeEngine();
+	//engine->LoadConfiguration();
 
 
 	string dumpFile = captureFolder + "/nova.dump";

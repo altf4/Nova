@@ -55,6 +55,82 @@ KnnClassification::KnnClassification()
 	m_kdTree = NULL;
 }
 
+void KnnClassification::LoadConfiguration(string filePath)
+{
+	ifstream *settings =  new ifstream(filePath);
+	string prefix, line;
+
+	if(settings->is_open())
+	{
+		while(settings->good())
+		{
+			getline(*settings,line);
+
+			prefix = "ENABLED_FEATURES";
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() == DIM)
+				{
+					string enabledFeatureMask = line;
+					m_enabledFeatureCount = 0;
+					for(uint i = 0; i < DIM; i++)
+					{
+						if('1' == enabledFeatureMask.at(i))
+						{
+							m_isFeatureEnabled[i] = true;
+							m_enabledFeatureCount++;
+						}
+						else
+						{
+							m_isFeatureEnabled[i] = false;
+						}
+					}
+
+					m_squrtEnabledFeatures = sqrt(m_enabledFeatureCount);
+				}
+				continue;
+			}
+
+			prefix = "FEATURE_WEIGHTS";
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+
+					istringstream is(line);
+					m_featureWeights.clear();
+					double n;
+					while (is >> n)
+					{
+						m_featureWeights.push_back(n);
+					}
+				}
+				continue;
+			}
+
+
+			prefix = "DATAFILE";
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0 && !line.substr(line.size() - 4,
+						line.size()).compare(".txt"))
+				{
+					m_pathTrainingFile = line;
+				}
+				continue;
+			}
+
+		}
+	}
+	settings->close();
+	delete settings;
+
+	LoadDataPointsFromFile(m_pathTrainingFile);
+}
+
 KnnClassification::~KnnClassification()
 {
 	for(uint i = 0; i < m_dataPtsWithClass.size(); i++)
@@ -78,7 +154,7 @@ KnnClassification::~KnnClassification()
 double KnnClassification::Classify(Suspect *suspect)
 {
 	Lock lock(&m_lock, READ_LOCK);
-	double sqrtDIM = Config::Inst()->GetSqurtEnabledFeatures();
+	double sqrtDIM = m_squrtEnabledFeatures;
 	int k = Config::Inst()->GetK();
 	double d;
 	FeatureIndex fi;
@@ -95,7 +171,7 @@ double KnnClassification::Classify(Suspect *suspect)
 	}
 
 	//Allocate the ANNpoint;
-	ANNpoint aNN = annAllocPt(Config::Inst()->GetEnabledFeatureCount());
+	ANNpoint aNN = annAllocPt(m_enabledFeatureCount);
 	if(aNN == NULL)
 	{
 		LOG(ERROR, "Classification engine has encountered an error.",
@@ -106,11 +182,10 @@ double KnnClassification::Classify(Suspect *suspect)
 	ANNidxArray nnIdx = new ANNidx[k];			// allocate near neigh indices
 	ANNdistArray dists = new ANNdist[k];		// allocate near neighbor dists
 
-	vector<double> weights = Config::Inst()->GetFeatureWeights();
 	//Iterate over the features, asserting the range is [min,max] and normalizing over that range
 	for(int i = 0;i < DIM;i++)
 	{
-		if(Config::Inst()->IsFeatureEnabled(i))
+		if(m_isFeatureEnabled[i])
 		{
 			if(fs.m_features[i] > m_maxFeatureValues[ai])
 			{
@@ -123,7 +198,7 @@ double KnnClassification::Classify(Suspect *suspect)
 			if(m_maxFeatureValues[ai] != 0)
 			{
 				aNN[ai] = Normalize(m_normalization[i], fs.m_features[i],
-					m_minFeatureValues[ai], m_maxFeatureValues[ai], weights[i]);
+					m_minFeatureValues[ai], m_maxFeatureValues[ai], m_featureWeights[i]);
 			}
 			else
 			{
@@ -149,14 +224,14 @@ double KnnClassification::Classify(Suspect *suspect)
 		classificationNotes << ":c=" << m_dataPtsWithClass[nnIdx[i]]->m_classification;
 		classificationNotes << ":i=" << nnIdx[i];
 		classificationNotes << "\n:o ";
-		for (uint j = 0; j < Config::Inst()->GetEnabledFeatureCount(); j++)
+		for (uint j = 0; j < m_enabledFeatureCount; j++)
 		{
 			classificationNotes << m_dataPtsWithClass[nnIdx[i]]->m_annPoint[j] << " ";
 		}
 
 		classificationNotes << "\n:n ";
 
-		for (uint j = 0; j < Config::Inst()->GetEnabledFeatureCount(); j++)
+		for (uint j = 0; j < m_enabledFeatureCount; j++)
 		{
 			classificationNotes << m_kdTree->thePoints()[nnIdx[i]][j] << " ";
 		}
@@ -182,7 +257,7 @@ double KnnClassification::Classify(Suspect *suspect)
 		dists[i] = sqrt(dists[i]);				// unsquare distance
 		for(int j = 0; j < DIM; j++)
 		{
-			if(Config::Inst()->IsFeatureEnabled(j))
+			if(m_isFeatureEnabled[j])
 			{
 				double distance = (aNN[j] - m_kdTree->thePoints()[nnIdx[i]][j]);
 
@@ -266,17 +341,11 @@ double KnnClassification::Classify(Suspect *suspect)
 	return suspect->GetClassification();
 }
 
-void KnnClassification::LoadConfiguration()
-{
-	this->LoadDataPointsFromFile(Config::Inst()->GetPathTrainingFile());
-}
-
 void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	ifstream myfile (inFilePath.data());
 	string line;
-	vector<double> weights = Config::Inst()->GetFeatureWeights();
 
 	// Clear max and min values
 	for(int i = 0; i < DIM; i++)
@@ -336,7 +405,7 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 	else
 	{
 		LOG(ERROR,"Classification Engine has encountered a problem",
-			"Unable to open the training data file at "+ Config::Inst()->GetPathTrainingFile()+".");
+			"Unable to open the training data file at "+ m_pathTrainingFile+".");
 	}
 
 	myfile.close();
@@ -344,8 +413,8 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 
 	//Open the file again, allocate the number of points and assign
 	myfile.open(inFilePath.data(), ifstream::in);
-	m_dataPts = annAllocPts(maxPts, Config::Inst()->GetEnabledFeatureCount()); // allocate data points
-	m_normalizedDataPts = annAllocPts(maxPts, Config::Inst()->GetEnabledFeatureCount());
+	m_dataPts = annAllocPts(maxPts, m_enabledFeatureCount); // allocate data points
+	m_normalizedDataPts = annAllocPts(maxPts, m_enabledFeatureCount);
 
 	if(myfile.is_open())
 	{
@@ -397,7 +466,7 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 			//if the line is valid, continue as normal
 			if(valid)
 			{
-				m_dataPtsWithClass.push_back(new Point(Config::Inst()->GetEnabledFeatureCount()));
+				m_dataPtsWithClass.push_back(new Point(m_enabledFeatureCount));
 
 				// Used for matching the 0->DIM index with the 0->Config::Inst()->getEnabledFeatureCount() index
 				int actualDimension = 0;
@@ -405,7 +474,7 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 				{
 					double temp = strtod(fieldsCheck[defaultDimension].data(), NULL);
 
-					if(Config::Inst()->IsFeatureEnabled(defaultDimension))
+					if(m_isFeatureEnabled[defaultDimension])
 					{
 						m_dataPtsWithClass[i]->m_annPoint[actualDimension] = temp;
 						m_dataPts[i][actualDimension] = temp;
@@ -458,12 +527,16 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 	uint ai = 0;
 	for (uint i = 0; i < DIM; i++)
 	{
-		if (Config::Inst()->IsFeatureEnabled(i))
+		if (m_isFeatureEnabled[i])
 		{
 			//Foreach data point
 			for(int point=0; point < m_nPts; point++)
 			{
-				m_normalizedDataPts[point][ai] = Normalize(m_normalization[ai], m_dataPts[point][ai], m_minFeatureValues[ai], m_maxFeatureValues[ai], weights[i]);
+				m_normalizedDataPts[point][ai] = Normalize(m_normalization[ai],
+						m_dataPts[point][ai],
+						m_minFeatureValues[ai],
+						m_maxFeatureValues[ai],
+						m_featureWeights[ai]);
 			}
 
 			ai++;
@@ -477,13 +550,12 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 	m_kdTree = new ANNkd_tree(					// build search structure
 			m_normalizedDataPts,					// the data points
 					m_nPts,						// number of points
-					Config::Inst()->GetEnabledFeatureCount());						// dimension of space
+					m_enabledFeatureCount);						// dimension of space
 }
 
 void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
-	vector<double> weights = Config::Inst()->GetFeatureWeights();
 	// Clear max and min values
 	for(int i = 0; i < DIM; i++)
 	{
@@ -518,13 +590,13 @@ void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 	m_dataPtsWithClass.clear();
 
 	//Open the file again, allocate the number of points and assign
-	m_dataPts = annAllocPts(points.size(), Config::Inst()->GetEnabledFeatureCount()); // allocate data points
-	m_normalizedDataPts = annAllocPts(points.size(), Config::Inst()->GetEnabledFeatureCount());
+	m_dataPts = annAllocPts(points.size(), m_enabledFeatureCount); // allocate data points
+	m_normalizedDataPts = annAllocPts(points.size(), m_enabledFeatureCount);
 
 
 	for(uint i = 0; i < points.size(); i++)
 	{
-		m_dataPtsWithClass.push_back(new Point(Config::Inst()->GetEnabledFeatureCount()));
+		m_dataPtsWithClass.push_back(new Point(m_enabledFeatureCount));
 
 		// Used for matching the 0->DIM index with the 0->Config::Inst()->getEnabledFeatureCount() index
 		int actualDimension = 0;
@@ -532,7 +604,7 @@ void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 		{
 			double temp = points.at(i)[defaultDimension];
 
-			if(Config::Inst()->IsFeatureEnabled(defaultDimension))
+			if(m_isFeatureEnabled[defaultDimension])
 			{
 				m_dataPtsWithClass[i]->m_annPoint[actualDimension] = temp;
 				m_dataPts[i][actualDimension] = temp;
@@ -567,12 +639,12 @@ void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 	uint ai = 0;
 	for (uint i = 0; i < DIM; i++)
 	{
-		if (Config::Inst()->IsFeatureEnabled(i))
+		if (m_isFeatureEnabled[i])
 		{
 			//Foreach data point
 			for(int point=0; point < m_nPts; point++)
 			{
-				m_normalizedDataPts[point][ai] = Normalize(m_normalization[ai], m_dataPts[point][ai], m_minFeatureValues[ai], m_maxFeatureValues[ai], weights[i]);
+				m_normalizedDataPts[point][ai] = Normalize(m_normalization[ai], m_dataPts[point][ai], m_minFeatureValues[ai], m_maxFeatureValues[ai], m_featureWeights[ai]);
 			}
 
 			ai++;
@@ -586,7 +658,7 @@ void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 	m_kdTree = new ANNkd_tree(					// build search structure
 			m_normalizedDataPts,					// the data points
 					m_nPts,						// number of points
-					Config::Inst()->GetEnabledFeatureCount());						// dimension of space
+					m_enabledFeatureCount);						// dimension of space
 }
 
 double KnnClassification::Normalize(normalizationType type, double value, double min, double max, double weight)

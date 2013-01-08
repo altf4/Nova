@@ -33,7 +33,7 @@
 using namespace std;
 using namespace Nova;
 
-extern ClassificationEngine *engine;
+extern ClassificationAggregator *engine;
 
 namespace Nova
 {

@@ -21,6 +21,7 @@
 
 #include "HashMapStructs.h"
 #include "ThresholdTriggerClassification.h"
+#include "ClassificationAggregator.h"
 
 namespace Nova
 {
@@ -42,6 +43,7 @@ struct version
 		minorVersion = 0;
 	}
 };
+
 
 class Config
 {
@@ -76,8 +78,6 @@ public:
     std::string GetConfigFilePath();
     std::string GetDoppelInterface();
     std::string GetDoppelIp();
-    std::string GetEnabledFeatures();
-    uint GetEnabledFeatureCount();
     std::string GetInterface(uint i);
     std::vector<std::string> GetInterfaces();
     std::vector<std::string> GetIPv4HostInterfaceList();
@@ -87,7 +87,6 @@ public:
     std::string GetPathConfigHoneydUser();
     std::string GetPathConfigHoneydHS();
     std::string GetPathPcapFile();
-    std::string GetPathTrainingFile();
     std::string GetPathWhitelistFile();
     std::string GetKey();
     std::vector<in_addr_t> GetNeighbors();
@@ -96,7 +95,6 @@ public:
     bool GetUseTerminals();
     bool GetIsDmEnabled();
     bool GetGotoLive();
-    bool IsFeatureEnabled(uint i);
 
     bool GetUseAllInterfaces();
     bool GetUseAnyLoopback();
@@ -133,8 +131,6 @@ public:
     void SetDataTTL(int dataTTL);
     void SetDoppelInterface(std::string doppelInterface);
     void SetDoppelIp(std::string doppelIp);
-    void SetEnabledFeatures(std::string enabledFeatureMask);
-    void EnableAllFeatures();
     void SetEps(double eps);
     void SetGotoLive(bool gotoLive);
     void SetIsDmEnabled(bool isDmEnabled);
@@ -143,7 +139,6 @@ public:
     void SetPathConfigHoneydUser(std::string pathConfigHoneydUser);
     void SetPathConfigHoneydHs(std::string pathConfigHoneydHs);
     void SetPathPcapFile(std::string pathPcapFile);
-    void SetPathTrainingFile(std::string pathTrainingFile);
     void SetPathWhitelistFile(std::string pathWhitelistFile);
     void SetReadPcap(bool readPcap);
     void SetSaveFreq(int saveFreq);
@@ -175,8 +170,6 @@ public:
 
 	bool GetSMTPSettings_FromFile();
 	bool SaveSMTPSettings();
-
-	double GetSqurtEnabledFeatures();
 
     // Set with a vector of email addresses
     void SetSMTPEmailRecipients(std::vector<std::string> SMTPEmailRecipients);
@@ -229,9 +222,11 @@ public:
 	int GetCaptureBufferSize();
 	void SetCaptureBufferSize(int bufferSize);
 
-	std::vector<double> GetFeatureWeights();
-	std::string GetClassificationEngineType();
-	std::vector<HostileThreshold> GetHostileThresholds();
+	std::vector<std::string> GetClassificationEngines();
+	std::vector<std::string> GetClassifierConfigs();
+	std::vector<CLASSIFIER_MODES> GetClassifierModes();
+	std::vector<int> GetClassifierWeights();
+
 	bool GetOnlyClassifyHoneypotTraffic();
 
 	void SetMasterUIPort(int newPort);
@@ -260,16 +255,9 @@ private:
 	// What the actual config file contains
 	std::string m_interfaceLine;
 
-	// Enabled feature stuff, we provide a few formats and helpers
-	std::string m_enabledFeatureMask;
-	bool m_isFeatureEnabled[DIM];
-	uint m_enabledFeatureCount;
-	double m_squrtEnabledFeatures;
-
 	std::string m_pathConfigHoneydHs;
 	std::string m_pathConfigHoneydUser;
 	std::string m_pathPcapFile;
-	std::string m_pathTrainingFile;
 	std::string m_pathWhitelistFile;
 	std::string m_pathCESaveFile;
 
@@ -342,7 +330,11 @@ private:
 
 	char m_haystackStorage;
 	std::string m_userPath;
-	std::string m_classificationType;
+
+	std::vector<std::string> m_classifierEngines;
+	std::vector<std::string> m_classifierConfigs;
+	std::vector<CLASSIFIER_MODES> m_classifierTypes;
+	std::vector<int> m_classifierWeights;
 
 	bool m_masterUIEnabled;
 	int m_masterUIReconnectTime;
@@ -352,8 +344,6 @@ private:
 	bool m_onlyClassifyHoneypotTraffic;
 
 	std::string m_currentConfig;
-
-	std::vector<double> m_featureWeights;
 
 	std::vector<HostileThreshold> m_hostileThresholds;
 
@@ -365,9 +355,6 @@ private:
 
 	// Used for loading the nova path file, resolves paths with env vars to full paths
 	static std::string ResolvePathVars(std::string path);
-
-	// Non-locking versions of some functions for internal use
-	void SetEnabledFeatures_noLocking(std::string enabledFeatureMask);
 
     // Set with a CSV std::string from the config file
     void SetSMTPEmailRecipients_noLocking(std::string SMTPEmailRecipients);

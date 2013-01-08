@@ -17,17 +17,6 @@
 INTERFACE default
 
 ############################################
-# DATAFILE #
-############################################
-#
-# Contains a path relative to the nova folder of where
-# the data points file can by located.
-#
-# EXAMPLE:
-#DATAFILE config/data.txt
-DATAFILE config/training/data.txt
-
-############################################
 # K #
 ############################################
 #
@@ -214,17 +203,6 @@ PCAP_FILE ../masterPcap
 # EXAMPLE:
 #GO_TO_LIVE 1
 GO_TO_LIVE 1
-
-############################################
-# ENABLED_FEATURES #
-############################################
-# 
-# Allows the ability to enable or disable features.
-# Each character represents a feature,
-# 	0: Disabled
-#	1: Enabled
-#
-ENABLED_FEATURES 11111111111111
 
 ############################################
 # SAVE_FREQUENCY #
@@ -458,25 +436,21 @@ MASTER_UI_CLIENT_ID nova1
 # Quasar instances using MASTER_UI_PORT + 1
 MASTER_UI_PORT 8082
 
-############################################
-# FEATURE_WEIGHTS #
-############################################
-FEATURE_WEIGHTS 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 
 ############################################
-# CLASSIFICATION_ENGINE
+# CLASSIFICATION_ENGINES
 ############################################
 # KNN: Machine learning classification based on training data
 #     See also DATAFILE, FEATURE_WEIGHTS, DATAFILE\
 #
 # THRESHOLD_TRIGGER: Simple hostility based on features being < or > a value
 # 	See also THRESHOLD_HOSTILE_TRIGGERS
-CLASSIFICATION_ENGINE KNN
 
-############################################
-# THRESHOLD_HOSTILE_TRIGGERS #
-############################################
-THRESHOLD_HOSTILE_TRIGGERS - - - - >6 >20 >20 - - - - - - >0.5
+CLASSIFICATION_ENGINES KNN;THRESHOLD_TRIGGER
+CLASSIFICATION_CONFIGS config/CE_knn.config;config/CE_threshold.config
+CLASSIFICATION_MODES WEIGHTED;HOSTILE_OVERRIDE
+CLASSIFICATION_WEIGHTS 1;0
+
 
 ############################################
 # ONLY_CLASSIFY_HONEYPOT_TRAFFIC
@@ -516,3 +490,4 @@ QUASAR_TETHER_TLS_ENABLED 1
 QUASAR_TETHER_TLS_CERT /config/keys/quasarTether.crt
 QUASAR_TETHER_TLS_KEY /config/keys/quasarTether.key
 QUASAR_TETHER_TLS_PASSPHRASE toor
+

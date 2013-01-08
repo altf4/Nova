@@ -102,10 +102,7 @@ string Suspect::ToString()
 
 	for(int i = 0; i < DIM; i++)
 	{
-		if(Config::Inst()->IsFeatureEnabled(i))
-		{
-			ss << FeatureSet::m_featureNames[i] << ": " << m_features.m_features[i] << "\n";
-		}
+		ss << FeatureSet::m_featureNames[i] << ": " << m_features.m_features[i] << "\n";
 	}
 
 	return ss.str();

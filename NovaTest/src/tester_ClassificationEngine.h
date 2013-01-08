@@ -49,7 +49,7 @@ TEST_F(KnnClassificationTest, test_someMethod)
 	Config::Inst()->SetIsDmEnabled(isDmEn);
 }
 
-
+/*
 TEST_F(KnnClassificationTest, DISABLED_test_kFoldCrossValidation)
 {
 	chdir(Config::Inst()->GetPathHome().c_str());
@@ -184,14 +184,15 @@ TEST_F(KnnClassificationTest, DISABLED_test_kFoldCrossValidation)
 		//falseNegativeRatio = (double)falseNegatives / (double)trainingData.size();
 		falseRatio = 1 - (double)(falseNegatives + falsePositives)/ (double)trainingData.size();
 
-		/*
+
 			cout << "False positives: " << falsePositives << endl;
 			cout << "False positives: " << falsePositiveRatio*100 << "%" << endl;
 			cout << "False negatives: " << falseNegatives << endl;
 			cout << "False negatives: " << falseNegativeRatio*100 << "%" << endl;
 			cout << "Overall classification accuracy: " << falseRatio*100 << endl;
 			cout << FeatureSet::m_featureNames[takeAwayDim] << " + " << FeatureSet::m_featureNames[takeAwayDim2] << " " << falseRatio*100  << endl;
-		 */
+
 		cout << "," << falseRatio*100  << endl;
 	}
 }
+*/

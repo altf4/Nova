@@ -62,7 +62,7 @@ public:
 	// Normalized a single value
 	static double Normalize(normalizationType type, double value, double min, double max, double weight);
 
-	void LoadConfiguration();
+	void LoadConfiguration(std::string filePath);
 
 private:
 	// Types of normalization to apply to our features
@@ -83,8 +83,12 @@ private:
 	double m_minFeatureValues[DIM];
 	double m_meanFeatureValues[DIM];
 
-	double m_weights;
+	bool m_isFeatureEnabled[DIM];
+	uint m_enabledFeatureCount;
+	double m_squrtEnabledFeatures;
+	string m_pathTrainingFile;
 
+	std::vector<double> m_featureWeights;
 };
 
 } // End namespace

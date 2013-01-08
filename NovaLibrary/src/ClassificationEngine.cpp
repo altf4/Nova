@@ -27,12 +27,13 @@ using namespace Nova;
 
 ClassificationEngine::ClassificationEngine() {}
 ClassificationEngine::~ClassificationEngine() {}
-void ClassificationEngine::LoadConfiguration() {}
+
+
+void ClassificationEngine::LoadConfiguration(string filePath){}
 
 // Factory method for classification engine creation
-ClassificationEngine * ClassificationEngine::MakeEngine()
+ClassificationEngine * ClassificationEngine::MakeEngine(std::string engine)
 {
-	string engine = Config::Inst()->GetClassificationEngineType();
 	if (engine == "KNN")
 	{
 		return new KnnClassification();

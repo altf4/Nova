@@ -61,12 +61,10 @@ string Config::m_prefixes[] =
 	"K",
 	"EPS",
 	"CLASSIFICATION_THRESHOLD",
-	"DATAFILE",
 	"USER_HONEYD_CONFIG",
 	"DOPPELGANGER_IP",
 	"DOPPELGANGER_INTERFACE",
 	"DM_ENABLED",
-	"ENABLED_FEATURES",
 	"THINNING_DISTANCE",
 	"SAVE_FREQUENCY",
 	"DATA_TTL",
@@ -91,9 +89,10 @@ string Config::m_prefixes[] =
 	"MASTER_UI_CLIENT_ID",
 	"MASTER_UI_ENABLED",
 	"MASTER_UI_PORT",
-	"FEATURE_WEIGHTS",
-	"CLASSIFICATION_ENGINE",
-	"THRESHOLD_HOSTILE_TRIGGERS",
+	"CLASSIFICATION_ENGINES",
+	"CLASSIFICATION_CONFIGS",
+	"CLASSIFICATION_MODES",
+	"CLASSIFICATION_WEIGHTS",
 	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC",
 	"CURRENT_CONFIG"
 };
@@ -335,21 +334,6 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
-			// DATAFILE
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0 && !line.substr(line.size() - 4,
-						line.size()).compare(".txt"))
-				{
-					m_pathTrainingFile = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
 			// USER_HONEYD_CONFIG
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -403,21 +387,6 @@ void Config::LoadConfig_Internal()
 				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
 				{
 					m_isDmEnabled = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-
-			}
-
-			// ENABLED_FEATURES
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() == DIM)
-				{
-					SetEnabledFeatures_noLocking(line);
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -806,7 +775,7 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
-			// FEATURE_WEIGHTS
+			// CLASSIFICATION_ENGINES
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
 			if(!line.substr(0, prefix.size()).compare(prefix))
@@ -814,25 +783,18 @@ void Config::LoadConfig_Internal()
 				line = line.substr(prefix.size() + 1, line.size());
 				if(line.size() > 0)
 				{
+					m_classifierEngines.clear();
+					boost::split(m_classifierEngines, line, boost::is_any_of(";"));
 
-					istringstream is(line);
-					m_featureWeights.clear();
-					double n;
-					while (is >> n)
-					{
-						m_featureWeights.push_back(n);
-					}
-
-					if (m_featureWeights.size() == DIM)
+					if (m_classifierEngines.size())
 					{
 						isValid[prefixIndex] = true;
 					}
-
 				}
 				continue;
 			}
 
-			// CLASSIFICATION_ENGINE
+			// CLASSIFICATION_CONFIGS
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
 			if(!line.substr(0, prefix.size()).compare(prefix))
@@ -840,13 +802,18 @@ void Config::LoadConfig_Internal()
 				line = line.substr(prefix.size() + 1, line.size());
 				if(line.size() > 0)
 				{
-					m_classificationType = line;
-					isValid[prefixIndex] = true;
+					m_classifierConfigs.clear();
+					boost::split(m_classifierConfigs, line, boost::is_any_of(";"));
+
+					if (m_classifierConfigs.size())
+					{
+						isValid[prefixIndex] = true;
+					}
 				}
 				continue;
 			}
 
-			// THRESHOLD_HOSTILE_TRIGGERS
+			// CLASSIFICATION_MODES
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
 			if(!line.substr(0, prefix.size()).compare(prefix))
@@ -854,103 +821,60 @@ void Config::LoadConfig_Internal()
 				line = line.substr(prefix.size() + 1, line.size());
 				if(line.size() > 0)
 				{
-					m_hostileThresholds.clear();
+					vector<string> classificationTypes;
+					boost::split(classificationTypes, line, boost::is_any_of(";"));
 
-					vector<string> thresholds;
-					boost::split(thresholds, line, boost::is_any_of("\t "));
-
-					if (thresholds.size() != DIM)
+					m_classifierTypes.clear();
+					if (classificationTypes.size())
 					{
-						cout << "ERROR: THRESHOLD_HOSTILE_TRIGGERS does not contain the correct number of entries" << endl;
-						continue;
-					}
-
-					for (uint i = 0; i < thresholds.size(); i++)
-					{
-						HostileThreshold setting;
-						setting.m_hasMaxValueTrigger = false;
-						setting.m_hasMinValueTrigger = false;
-
-						if (thresholds.at(i).at(0) == '-')
+						for (uint i = 0; i < classificationTypes.size(); i++)
 						{
-
-						}
-						else if (thresholds.at(i).at(0) == '>')
-						{
-							// Check if this has both a > and a < symbol
-							vector<string> parts;
-							boost::split(parts, thresholds.at(i), boost::is_any_of("<"));
-							if (parts.size() == 2)
+							if (classificationTypes[i] == "WEIGHTED")
 							{
-								string maxValueString = parts.at(0).substr(1, string::npos);
-								istringstream s1(maxValueString);
-								if (!(s1 >> setting.m_maxValueTrigger))
-								{
-									LOG(ERROR, "Unable to parse max value for THRESHOLD_HOSTILE_TRIGGERS", "");
-								}
-								else
-								{
-									setting.m_hasMaxValueTrigger = true;
-								}
-
-
-								string minValueString = parts.at(1);
-								istringstream s2(minValueString);
-								if (!(s2 >> setting.m_minValueTrigger))
-								{
-									LOG(ERROR, "Unable to parse min value for THRESHOLD_HOSTILE_TRIGGERS", "");
-								}
-								else
-								{
-									setting.m_hasMinValueTrigger = true;
-								}
+								m_classifierTypes.push_back(CLASSIFIER_WEIGHTED);
+							}
+							else if (classificationTypes[i] == "HOSTILE_OVERRIDE")
+							{
+								m_classifierTypes.push_back(CLASSIFIER_HOSTILE_OVERRIDE);
+							}
+							else if (classificationTypes[i] == "BENIGN_OVERRIDE")
+							{
+								m_classifierTypes.push_back(CLASSIFIER_BENIGN_OVERRIDE);
 							}
 							else
 							{
-								istringstream s(thresholds.at(i).substr(1, string::npos));
-								if (!(s >> setting.m_maxValueTrigger))
-								{
-									LOG(ERROR, "Unable to parse max value for THRESHOLD_HOSTILE_TRIGGERS", "");
-								}
-								else
-								{
-									setting.m_hasMaxValueTrigger = true;
-								}
-							}
-
-						}
-						else if (thresholds.at(i).at(0) == '<')
-						{
-							istringstream s(thresholds.at(i).substr(1, thresholds.at(i).npos));
-							if (!(s >> setting.m_minValueTrigger))
-							{
-								LOG(ERROR, "Unable to parse min value for THRESHOLD_HOSTILE_TRIGGERS", "");
-							}
-							else
-							{
-								setting.m_hasMinValueTrigger = true;
+								LOG(ERROR, "Bad classifier type in config file: " + classificationTypes[i], "");
+								continue;
 							}
 						}
 
-						m_hostileThresholds.push_back(setting);
+						isValid[prefixIndex] = true;
 					}
+				}
+				continue;
+			}
 
-					isValid[prefixIndex] = true;
+			// CLASSIFICATION_WEIGHTS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_classifierWeights.clear();
+					vector<string> weights;
+					boost::split(weights, line, boost::is_any_of(";"));
 
-					/*
-					for (uint i = 0; i < m_hostileThresholds.size(); i++)
+					if (weights.size())
 					{
-						if (m_hostileThresholds.at(i).hasMaxValueTrigger)
+						for (uint i = 0; i < weights.size(); i++)
 						{
-							cout << "Max value for feature " << i << " is " << m_hostileThresholds.at(i).maxValueTrigger << endl;
+							m_classifierWeights.push_back(atoi(weights[i].c_str()));
 						}
 
-						if (m_hostileThresholds.at(i).hasMinValueTrigger)
-						{
-							cout << "Min value for feature " << i << " is " << m_hostileThresholds.at(i).minValueTrigger << endl;
-						}
+						isValid[prefixIndex] = true;
 					}
-					*/
 				}
 				continue;
 			}
@@ -1395,13 +1319,6 @@ bool Config::SaveConfig()
 				continue;
 			}
 
-			prefix = "DATAFILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetPathTrainingFile() << endl;
-				continue;
-			}
-
 			prefix = "K";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -1482,13 +1399,6 @@ bool Config::SaveConfig()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				*out << prefix << " " <<  GetPathPcapFile() << endl;
-				continue;
-			}
-
-			prefix = "ENABLED_FEATURES";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetEnabledFeatures() << endl;
 				continue;
 			}
 
@@ -1605,7 +1515,6 @@ string Config::ToString()
 	ss << "GetConfigFilePath() " << GetConfigFilePath() << endl;
 	ss << "GetDoppelInterface() " << GetDoppelInterface() << endl;
 	ss << "GetDoppelIp() " << GetDoppelIp() << endl;
-	ss << "GetEnabledFeatures() " << GetEnabledFeatures() << endl;
 	ss << "GetInterfaces() :";
 	vector<string> ifList = GetInterfaces();
 	for(uint i = 0; i < ifList.size(); i++)
@@ -1620,7 +1529,6 @@ string Config::ToString()
 	ss << "GetPathConfigHoneydDm() " << GetPathConfigHoneydUser() << endl;
 	ss << "GetPathConfigHoneydHs() " << GetPathConfigHoneydHS() << endl;
 	ss << "GetPathPcapFile() " << GetPathPcapFile() << endl;
-	ss << "GetPathTrainingFile() " << GetPathTrainingFile() << endl;
 
 	ss << "GetReadPcap() " << GetReadPcap() << endl;
 	ss << "GetIsDmEnabled() " << GetIsDmEnabled() << endl;
@@ -1791,24 +1699,6 @@ string Config::GetDoppelIp()
 	return m_doppelIp;
 }
 
-string Config::GetEnabledFeatures()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_enabledFeatureMask;
-}
-
-uint Config::GetEnabledFeatureCount()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_enabledFeatureCount;
-}
-
-bool Config::IsFeatureEnabled(uint i)
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_isFeatureEnabled[i];
-}
-
 double Config::GetEps()
 {
 	Lock lock(&m_lock, READ_LOCK);
@@ -1932,12 +1822,6 @@ string Config::GetPathPcapFile()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_pathPcapFile;
-}
-
-string Config::GetPathTrainingFile()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathTrainingFile;
 }
 
 string Config::GetPathWhitelistFile()
@@ -2101,44 +1985,6 @@ void Config::SetDoppelIp(string doppelIp)
 	m_doppelIp = doppelIp;
 }
 
-void Config::SetEnabledFeatures_noLocking(string enabledFeatureMask)
-{
-	m_enabledFeatureCount = 0;
-	for(uint i = 0; i < DIM; i++)
-	{
-		if('1' == enabledFeatureMask.at(i))
-		{
-			m_isFeatureEnabled[i] = true;
-			m_enabledFeatureCount++;
-		}
-		else
-		{
-			m_isFeatureEnabled[i] = false;
-		}
-	}
-
-	m_squrtEnabledFeatures = sqrt(m_enabledFeatureCount);
-	m_enabledFeatureMask = enabledFeatureMask;
-}
-
-void Config::SetEnabledFeatures(string enabledFeatureMask)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	SetEnabledFeatures_noLocking(enabledFeatureMask);
-}
-
-void Config::EnableAllFeatures()
-{
-	Lock lock (&m_lock, WRITE_LOCK);
-
-	char mask[DIM];
-	for(int i = 0; i < DIM; i++)
-	{
-		mask[i] = '1';
-	}
-	SetEnabledFeatures_noLocking(string(mask));
-}
-
 void Config::SetEps(double eps)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -2284,12 +2130,6 @@ void Config::SetPathPcapFile(string pathPcapFile)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_pathPcapFile = pathPcapFile;
-}
-
-void Config::SetPathTrainingFile(string pathTrainingFile)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_pathTrainingFile = pathTrainingFile;
 }
 
 void Config::SetPathWhitelistFile(string pathWhitelistFile)
@@ -2477,12 +2317,6 @@ string Config::GetPathHome()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_pathHome;
-}
-
-double Config::GetSqurtEnabledFeatures()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_squrtEnabledFeatures;
 }
 
 char Config::GetHaystackStorage()
@@ -2711,22 +2545,30 @@ bool Config::GetSMTPUseAuth()
 	return m_SMTPUseAuth;
 }
 
-vector<double> Config::GetFeatureWeights()
+vector<string> Config::GetClassificationEngines()
 {
 	Lock lock(&m_lock, READ_LOCK);
-	return m_featureWeights;
+	return m_classifierEngines;
 }
 
-string Config::GetClassificationEngineType()
+
+vector<string> Config::GetClassifierConfigs()
 {
 	Lock lock(&m_lock, READ_LOCK);
-	return m_classificationType;
+	return m_classifierConfigs;
 }
 
-vector<HostileThreshold> Config::GetHostileThresholds()
+
+vector<CLASSIFIER_MODES> Config::GetClassifierModes()
 {
 	Lock lock(&m_lock, READ_LOCK);
-	return m_hostileThresholds;
+	return m_classifierTypes;
+}
+
+vector<int> Config::GetClassifierWeights()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_classifierWeights;
 }
 
 bool Config::GetOnlyClassifyHoneypotTraffic()

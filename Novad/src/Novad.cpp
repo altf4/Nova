@@ -19,7 +19,7 @@
 #include "messaging/MessageManager.h"
 #include "WhitelistConfiguration.h"
 #include "InterfacePacketCapture.h"
-#include "ClassificationEngine.h"
+#include "ClassificationAggregator.h"
 #include "HaystackControl.h"
 #include "FilePacketCapture.h"
 #include "ProtocolHandler.h"
@@ -98,7 +98,7 @@ int honeydDHCPWatch;
 int whitelistNotifyFd;
 int whitelistWatch;
 
-ClassificationEngine *engine = NULL;
+ClassificationAggregator *engine = NULL;
 
 pthread_t classificationLoopThread;
 pthread_t ipUpdateThread;
@@ -154,8 +154,7 @@ int RunNovaD()
 	doppel = new Doppelganger(suspects);
 	doppel->InitDoppelganger();
 
-	engine = ClassificationEngine::MakeEngine();
-	engine->LoadConfiguration();
+	engine = new ClassificationAggregator();
 
 	// Set up our signal handlers
 	signal(SIGKILL, SaveAndExit);
@@ -470,7 +469,8 @@ void Reload()
 {
 	// Reload the configuration file
 	Config::Inst()->LoadConfig();
-	engine->LoadConfiguration();
+	// TODO DTC renable the ability to start/stop classification
+	//engine->Init();
 	suspects.SetEveryoneNeedsClassificationUpdate();
 }
 

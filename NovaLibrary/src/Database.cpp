@@ -77,14 +77,8 @@ void Database::InsertSuspectHostileAlert(Suspect *suspect)
 	{
 		ss << ", ";
 
-		if (Config::Inst()->IsFeatureEnabled(i))
-		{
-			ss << features.m_features[i];
-		}
-		else
-		{
-			ss << "NULL";
-		}
+		ss << features.m_features[i];
+
 	}
 	ss << ");";
 

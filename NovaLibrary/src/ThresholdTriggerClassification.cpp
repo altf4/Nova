@@ -16,8 +16,13 @@
 // Description : TODO: Description here
 //============================================================================
 
-#include "ThresholdTriggerClassification.h"
+#include <boost/algorithm/string.hpp>
+#include <fstream>
+#include <sstream>
+
+#include "Logger.h"
 #include "Config.h"
+#include "ThresholdTriggerClassification.h"
 
 namespace Nova
 {
@@ -27,19 +32,121 @@ ThresholdTriggerClassification::ThresholdTriggerClassification()
 
 }
 
+void ThresholdTriggerClassification::LoadConfiguration(string filePath)
+{
+	ifstream *settings =  new ifstream(filePath);
+	string prefix, line;
+
+	if(settings->is_open())
+	{
+		while(settings->good())
+		{
+			getline(*settings,line);
+
+			prefix = "THRESHOLD_HOSTILE_TRIGGERS";
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_hostileThresholds.clear();
+
+					vector<string> thresholds;
+					boost::split(thresholds, line, boost::is_any_of("\t "));
+
+					if (thresholds.size() != DIM)
+					{
+						cout << "ERROR: THRESHOLD_HOSTILE_TRIGGERS does not contain the correct number of entries" << endl;
+						continue;
+					}
+
+					for (uint i = 0; i < thresholds.size(); i++)
+					{
+						HostileThreshold setting;
+						setting.m_hasMaxValueTrigger = false;
+						setting.m_hasMinValueTrigger = false;
+
+						if (thresholds.at(i).at(0) == '-')
+						{
+
+						}
+						else if (thresholds.at(i).at(0) == '>')
+						{
+							// Check if this has both a > and a < symbol
+							vector<string> parts;
+							boost::split(parts, thresholds.at(i), boost::is_any_of("<"));
+							if (parts.size() == 2)
+							{
+								string maxValueString = parts.at(0).substr(1, string::npos);
+								istringstream s1(maxValueString);
+								if (!(s1 >> setting.m_maxValueTrigger))
+								{
+									LOG(ERROR, "Unable to parse max value for THRESHOLD_HOSTILE_TRIGGERS", "");
+								}
+								else
+								{
+									setting.m_hasMaxValueTrigger = true;
+								}
+
+
+								string minValueString = parts.at(1);
+								istringstream s2(minValueString);
+								if (!(s2 >> setting.m_minValueTrigger))
+								{
+									LOG(ERROR, "Unable to parse min value for THRESHOLD_HOSTILE_TRIGGERS", "");
+								}
+								else
+								{
+									setting.m_hasMinValueTrigger = true;
+								}
+							}
+							else
+							{
+								istringstream s(thresholds.at(i).substr(1, string::npos));
+								if (!(s >> setting.m_maxValueTrigger))
+								{
+									LOG(ERROR, "Unable to parse max value for THRESHOLD_HOSTILE_TRIGGERS", "");
+								}
+								else
+								{
+									setting.m_hasMaxValueTrigger = true;
+								}
+							}
+
+						}
+						else if (thresholds.at(i).at(0) == '<')
+						{
+							istringstream s(thresholds.at(i).substr(1, thresholds.at(i).npos));
+							if (!(s >> setting.m_minValueTrigger))
+							{
+								LOG(ERROR, "Unable to parse min value for THRESHOLD_HOSTILE_TRIGGERS", "");
+							}
+							else
+							{
+								setting.m_hasMinValueTrigger = true;
+							}
+						}
+
+						m_hostileThresholds.push_back(setting);
+					}
+				}
+				continue;
+			}
+
+		}
+	}
+	settings->close();
+	delete settings;
+}
+
 double ThresholdTriggerClassification::Classify(Suspect *suspect)
 {
 	double classification = 0;
 
-	vector<HostileThreshold> thresholds = Config::Inst()->GetHostileThresholds();
+	//vector<HostileThreshold> thresholds = Config::Inst()->GetHostileThresholds();
 	for(uint i = 0; i < DIM; i++)
 	{
-		if (!Config::Inst()->IsFeatureEnabled(i))
-		{
-			continue;
-		}
-
-		HostileThreshold threshold = thresholds.at(i);
+		HostileThreshold threshold = m_hostileThresholds.at(i);
 		if (threshold.m_hasMaxValueTrigger)
 		{
 			if (suspect->m_features.m_features[i] >= threshold.m_maxValueTrigger)

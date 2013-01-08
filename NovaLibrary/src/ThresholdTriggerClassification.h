@@ -36,8 +36,12 @@ class ThresholdTriggerClassification: public Nova::ClassificationEngine
 {
 public:
 	ThresholdTriggerClassification();
+	void LoadConfiguration(std::string filePath);
 
 	double Classify(Suspect *suspect);
+
+	std::vector<HostileThreshold> m_hostileThresholds;
+
 };
 
 } /* namespace Nova */
