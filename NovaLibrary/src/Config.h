@@ -240,6 +240,8 @@ public:
 	//Attempts to detect and use intefaces returned by pcap_lookupdev
 	void LoadInterfaces();
 
+	bool GetAreEmailAlertsEnabled();
+
 protected:
 	Config();
 
@@ -298,6 +300,8 @@ private:
 	bool m_isDmEnabled;
 
 	bool m_overridePcapString;
+
+	bool m_emailAlertsEnabled;
 
 	version m_version;
 

@@ -335,6 +335,16 @@ RECIPIENTS first@example.com, second@example.com
 # SERVICE:LEVEL(+|-);
 SERVICE_PREFERENCES 0:1+;1:6+;
 
+
+############################################
+# EMAIL_ALERTS_ENABLED
+############################################
+# This will explicitly disable/enable email
+# alerts. You must also set SERVICE_PREFERENCES
+# and the SMTP settings to get email alerts.
+EMAIL_ALERTS_ENABLED 0
+
+
 ############################################
 # HAYSTACK_STORAGE #
 ############################################

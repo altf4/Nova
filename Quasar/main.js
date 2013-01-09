@@ -904,6 +904,7 @@ function renderBasicOptions(jadefile, res, req)
 			SMTP_USER: config.GetSMTPUser(),
 			SMTP_PASS: config.GetSMTPPass(),
 			SMTP_USEAUTH: config.GetSMTPUseAuth().toString(),
+			EMAIL_ALERTS_ENABLED: config.ReadSetting("EMAIL_ALERTS_ENABLED"),
 			SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES"),
 			RECIPIENTS: config.ReadSetting("RECIPIENTS")
 		}
@@ -1728,7 +1729,7 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
 	"SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", 
 	"CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", 
 	"MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", 
-	"THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC"];
+	"THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC", "EMAIL_ALERTS_ENABLED"];
 
 	Validator.prototype.error = function (msg)
 	{
@@ -1753,6 +1754,17 @@ app.post('/configureNovaSave', passport.authenticate('basic', {session: false}),
   {
     req.body["SMTP_USEAUTH"] = "1";
     config.SetSMTPUseAuth("true");
+  }
+  
+  if(req.body["EMAIL_ALERTS_ENABLED"] == undefined)
+  {
+    req.body["EMAIL_ALERTS_ENABLED"] = "0";
+    config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
+  }
+  else
+  {
+    req.body["EMAIL_ALERTS_ENABLED"] = "1";
+    config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
   }
 
   if(clientId != undefined && req.body["MASTER_UI_CLIENT_ID"] != clientId)

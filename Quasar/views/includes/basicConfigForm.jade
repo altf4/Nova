@@ -386,16 +386,21 @@ else
 br
 
 h2 Email Notifications
-if(SMTP_USEAUTH == "true")
-  label Use SMTP Authentication?
-  input(type="checkbox", id="SMTP_USEAUTH", name="SMTP_USEAUTH", value=SMTP_USEAUTH, onclick="changeSMTPAuth()", checked)
-  br
-  br
+label Enable email alerts?
+if(EMAIL_ALERTS_ENABLED == 1)
+  input(type="checkbox", id="EMAIL_ALERTS_ENABLED", name="EMAIL_ALERTS_ENABLED", value=EMAIL_ALERTS_ENABLED, checked)
 else
-  label Use SMTP Authentication?
+  input(type="checkbox", id="EMAIL_ALERTS_ENABLED", name="EMAIL_ALERTS_ENABLED", value=EMAIL_ALERTS_ENABLED)
+br
+br
+
+label Use SMTP Authentication?
+if(SMTP_USEAUTH == "true")
+  input(type="checkbox", id="SMTP_USEAUTH", name="SMTP_USEAUTH", value=SMTP_USEAUTH, onclick="changeSMTPAuth()", checked)
+else
   input(type="checkbox", id="SMTP_USEAUTH", name="SMTP_USEAUTH", value=SMTP_USEAUTH, onclick="changeSMTPAuth()")
-  br
-  br
+br
+br
 
 label SMTP Address
 input.wide(name="SMTP_ADDR", value=SMTP_ADDR)

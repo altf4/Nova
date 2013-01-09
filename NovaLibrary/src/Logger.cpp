@@ -101,6 +101,11 @@ void Logger::LogToFile(uint16_t level, string message)
 
 void Logger::Mail(uint16_t level, string message)
 {
+	if (!Config::Inst()->GetAreEmailAlertsEnabled())
+	{
+		return;
+	}
+
 	CURL *curl;
 	CURLM *mcurl;
 	int still_running = 1;
