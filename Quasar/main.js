@@ -1436,6 +1436,11 @@ app.get("/editTLSCerts", passport.authenticate('basic', {session: false}), funct
 	res.render('editTLSCerts.jade');	
 });
 
+app.get("/editClassifiers", passport.authenticate('basic', {session: false}), function (req, res)
+{
+	res.render('editClassifiers.jade');	
+});
+
 app.get("/interfaceAliases", passport.authenticate('basic', {session: false}), function (reg, res)
 {
     ReloadInterfaceAliasFile();

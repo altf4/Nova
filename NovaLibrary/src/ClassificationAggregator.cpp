@@ -72,9 +72,11 @@ double ClassificationAggregator::Classify(Suspect *s)
 		double engineVote = m_engines.at(i)->Classify(s);
 		cout << "Suspect: " << s->GetIpAddress() << " Engine: " << i << " Classification: " << engineVote << endl;
 
+		classification += engineVote * m_engineWeights.at(i);
+
 		if (m_modes[i] == CLASSIFIER_WEIGHTED)
 		{
-			classification += engineVote * m_engineWeights.at(i);
+			//
 		}
 		else if (m_modes[i] == CLASSIFIER_HOSTILE_OVERRIDE)
 		{
