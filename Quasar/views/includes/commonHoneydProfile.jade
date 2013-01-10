@@ -181,11 +181,8 @@ script
                 var headerName = document.createElement("th");
                 headerName.innerHTML = "Ethernet Vendor";
 
-                var headerCount = document.createElement("th");
-                headerCount.innerHTML = "Count";
 
                 headerRow.appendChild(headerName);
-                headerRow.appendChild(headerCount);
                 vendorDiv.appendChild(headerRow);
 
                 // Populate the table rows
@@ -202,21 +199,6 @@ script
                         vendorName.value = profile.ethernet[i].vendor;
                         vendorName.setAttribute('readonly', true);
 
-                        // Vendor count cell
-                        var vendorCountCell = document.createElement("td");
-                        var vendorCount = document.createElement("input");
-                        vendorCountCell.appendChild(vendorCount);
-                        vendorCount.onchange = function(i, vendorCount) {return function() {changedEthernetVendorCount(i, vendorCount.value)}}(i, vendorCount);
-                        
-                        vendorCount.id = "vendorCount" + i;
-                        
-                        if (navigator.userAgent.indexOf("MSIE") == "-1") {
-                                vendorCount.type = "number";
-                        }
-                        vendorCount.min = 0;
-                        vendorCount.value = profile.ethernet[i].count;
-                        
-                       
                         // Vendor delete button
                         var vendorDeleteCell = document.createElement("td");
                         var vendorDelete = document.createElement("button");
@@ -226,17 +208,11 @@ script
                         vendorDelete.onclick = function(i){return function(){deleteEthernetVendor(i);}}(i)
 
                         vendorRow.appendChild(vendorNameCell);
-                        vendorRow.appendChild(vendorCountCell);
                         vendorRow.appendChild(vendorDeleteCell);
                                 
                         vendorDiv.appendChild(vendorRow);
 
                 }
-        };
-
-        var changedEthernetVendorCount = function(vendorIndex, vendorCount)
-        {
-                profile.ethernet[vendorIndex].count = vendorCount;
         };
 
         var addEthernetVendor = function(vendorName, vendorCount)
