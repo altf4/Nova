@@ -257,9 +257,8 @@ if (config.ReadSetting("QUASAR_WEBUI_TLS_ENABLED") == "1")
 app.configure(function ()
 {
     app.use(passport.initialize());
+	app.use(passport.authenticate('basic', {session: false}));
     app.use(express.bodyParser());
-    app.use(express.cookieParser());
-    app.use(express.methodOverride());
     app.use(app.router);
     app.use(express.static(NovaSharedPath + '/Quasar/www'));
 });
@@ -650,7 +649,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
-app.get('/honeydConfigManage', passport.authenticate('basic', {session: false}), function(req, res){
+app.get('/honeydConfigManage', function(req, res){
   res.render('honeydConfigManage.jade', {
     locals: {
       configurations: honeydConfig.GetConfigurationsList(),
@@ -659,17 +658,17 @@ app.get('/honeydConfigManage', passport.authenticate('basic', {session: false}),
   });
 });
 
-app.get('/downloadNovadLog.log', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/downloadNovadLog.log', function (req, res)
 {
     res.download(novadLogPath, 'novadLog.log');
 });
 
-app.get('/downloadHoneydLog.log', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/downloadHoneydLog.log', function (req, res)
 {
     res.download(honeydLogPath, 'honeydLog.log');
 });
 
-app.get('/novaState.csv', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/novaState.csv', function (req, res)
 {
     exec('novacli get all csv > ' + NovaHomePath + "/state.csv",
     function(error, stdout, stderr)
@@ -689,7 +688,7 @@ app.get('/novaState.csv', passport.authenticate('basic', {session: false}), func
     });
 });
 
-app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/viewNovadLog', function (req, res)
 {
     fs.readFile(novadLogPath, 'utf8', function (err, data)
     {
@@ -707,7 +706,7 @@ app.get('/viewNovadLog', passport.authenticate('basic', {session: false}), funct
     });
 });
 
-app.get('/viewHoneydLog', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/viewHoneydLog', function (req, res)
 {
     fs.readFile(honeydLogPath, 'utf8', function (err, data)
     {
@@ -725,7 +724,7 @@ app.get('/viewHoneydLog', passport.authenticate('basic', {session: false}), func
     });
 });
 
-app.get('/advancedOptions', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/advancedOptions', function (req, res)
 {
     var all = config.ListInterfaces().sort();
     var used = config.GetInterfaces().sort();
@@ -911,18 +910,18 @@ function renderBasicOptions(jadefile, res, req)
     });
 }
 
-app.get('/error', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/error', function (req, res)
 {
     RenderError(res, req.query["errorDetails"], req.query["redirectLink"]);
     return;
 });
 
-app.get('/basicOptions', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/basicOptions', function (req, res)
 {
     renderBasicOptions('basicOptions.jade', res, req);
 });
 
-app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/configHoneydNodes', function (req, res)
 {
     if (!honeydConfig.LoadAllTemplates())
     {
@@ -960,7 +959,7 @@ app.get('/configHoneydNodes', passport.authenticate('basic', {session: false}), 
   });
 });
 
-app.get('/configHoneydProfiles', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/configHoneydProfiles', function (req, res)
 {
     if (!honeydConfig.LoadAllTemplates())
     {
@@ -983,7 +982,7 @@ app.get('/configHoneydProfiles', passport.authenticate('basic', {session: false}
     })
 });
 
-app.get('/GetSuspectDetails', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/GetSuspectDetails', function (req, res)
 {
     if (req.query["ip"] === undefined)
     {
@@ -1010,7 +1009,7 @@ app.get('/GetSuspectDetails', passport.authenticate('basic', {session: false}), 
     })
 });
 
-app.get('/editHoneydNode', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/editHoneydNode', function (req, res)
 {
     if (req.query["node"] === undefined)
     {
@@ -1050,7 +1049,7 @@ app.get('/editHoneydNode', passport.authenticate('basic', {session: false}), fun
     })
 });
 
-app.get('/editHoneydProfile', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/editHoneydProfile', function (req, res)
 {
     if (req.query["profile"] === undefined)
     {
@@ -1071,7 +1070,7 @@ app.get('/editHoneydProfile', passport.authenticate('basic', {session: false}), 
     })
 });
 
-app.get('/addHoneydProfile', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/addHoneydProfile', function (req, res)
 {
     if (req.query["parent"] === undefined)
     {
@@ -1092,7 +1091,7 @@ app.get('/addHoneydProfile', passport.authenticate('basic', {session: false}), f
     })
 });
 
-app.get('/customizeTraining', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/customizeTraining', function (req, res)
 {
     trainingDb = new novaconfig.CustomizeTrainingBinding();
     res.render('customizeTraining.jade', {
@@ -1104,7 +1103,7 @@ app.get('/customizeTraining', passport.authenticate('basic', {session: false}), 
     })
 });
 
-app.get('/importCapture', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/importCapture', function (req, res)
 {
     if (req.query["trainingSession"] === undefined)
     {
@@ -1154,7 +1153,7 @@ everyone.now.GetLeafProfileNames = function(callback)
   callback(honeydConfig.GetLeafProfileNames());
 }
 
-app.post('/importCaptureSave', passport.authenticate('basic', {session: false}), function (req, res)
+app.post('/importCaptureSave', function (req, res)
 {
     var hostileSuspects = new Array();
     var includedSuspects = new Array();
@@ -1210,7 +1209,7 @@ app.post('/importCaptureSave', passport.authenticate('basic', {session: false}),
 
 });
 
-app.get('/configWhitelist', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/configWhitelist', function (req, res)
 {
     res.render('configWhitelist.jade', {
         locals: {
@@ -1221,7 +1220,7 @@ app.get('/configWhitelist', passport.authenticate('basic', {session: false}), fu
     })
 });
 
-app.get('/editUsers', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/editUsers', function (req, res)
 {
     var usernames = new Array();
     dbqCredentialsGetUsers.all(
@@ -1247,7 +1246,7 @@ app.get('/editUsers', passport.authenticate('basic', {session: false}), function
     });
 });
 
-app.get('/configWhitelist', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/configWhitelist', function (req, res)
 {
     res.render('configWhitelist.jade', {
         locals: {
@@ -1257,7 +1256,7 @@ app.get('/configWhitelist', passport.authenticate('basic', {session: false}), fu
     })
 });
 
-app.get('/suspects', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/suspects', function (req, res)
 {
     res.render('main.jade', {
         user: req.user,
@@ -1266,7 +1265,7 @@ app.get('/suspects', passport.authenticate('basic', {session: false}), function 
     });
 });
 
-app.get('/monitor', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/monitor', function (req, res)
 {
     var suspectIp = req.query["ip"];
     var suspectInterface = req.query["interface"];
@@ -1278,14 +1277,14 @@ app.get('/monitor', passport.authenticate('basic', {session: false}), function (
     });
 });
 
-app.get('/events', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/events', function (req, res)
 {
     res.render('events.jade', {
         featureNames: nova.GetFeatureNames()
     });
 });
 
-app.get('/', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/', function (req, res)
 {
     dbqFirstrunCount.all(
 
@@ -1307,27 +1306,27 @@ app.get('/', passport.authenticate('basic', {session: false}), function (req, re
     });
 });
 
-app.get('/createNewUser', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/createNewUser', function (req, res)
 {
     res.render('createNewUser.jade');
 });
 
-app.get('/welcome', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/welcome', function (req, res)
 {
     res.render('welcome.jade');
 });
 
-app.get('/setup1', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/setup1', function (req, res)
 {
     res.render('setup1.jade');
 });
 
-app.get('/setup2', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/setup2', function (req, res)
 {
     renderBasicOptions('setup2.jade', res, req)
 });
 
-app.get('/setup3', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/setup3', function (req, res)
 {
     res.render('hhautoconfig.jade', {
         user: req.user,
@@ -1337,16 +1336,16 @@ app.get('/setup3', passport.authenticate('basic', {session: false}), function (r
 });
 
 // Training data capture via Quasar isn't currently supported
-//app.get('/CaptureTrainingData', passport.authenticate('basic', {session: false}), function (req, res)
+//app.get('/CaptureTrainingData', function (req, res)
 //{
 //  res.render('captureTrainingData.jade');
 //});
-app.get('/about', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/about', function (req, res)
 {
     res.render('about.jade');
 });
 
-app.post('/createNewUser', passport.authenticate('basic', {session: false}), function (req, res)
+app.post('/createNewUser', function (req, res)
 {
     var password = req.body["password"];
     var userName = req.body["username"];
@@ -1384,7 +1383,7 @@ app.post('/createNewUser', passport.authenticate('basic', {session: false}), fun
     });
 });
 
-app.post('/createInitialUser', passport.authenticate('basic', {session: false}), function (req, res)
+app.post('/createInitialUser', function (req, res)
 {
     var password = req.body["password"];
     var userName = req.body["username"];
@@ -1422,7 +1421,7 @@ app.post('/createInitialUser', passport.authenticate('basic', {session: false}),
     });
 });
 
-app.get('/autoConfig', passport.authenticate('basic', {session: false}), function (req, res)
+app.get('/autoConfig', function (req, res)
 {
     res.render('hhautoconfig.jade', {
         user: req.user,
@@ -1432,12 +1431,12 @@ app.get('/autoConfig', passport.authenticate('basic', {session: false}), functio
     });
 });
 
-app.get("/editTLSCerts", passport.authenticate('basic', {session: false}), function (req, res)
+app.get("/editTLSCerts", function (req, res)
 {
     res.render('editTLSCerts.jade');    
 });
 
-app.get("/interfaceAliases", passport.authenticate('basic', {session: false}), function (reg, res)
+app.get("/interfaceAliases", function (reg, res)
 {
     ReloadInterfaceAliasFile();
     res.render('interfaceAliases.jade', {
@@ -1448,7 +1447,7 @@ app.get("/interfaceAliases", passport.authenticate('basic', {session: false}), f
     });
 });
 
-app.post("/editTLSCerts", passport.authenticate('basic', {session: false}), function (req, res)
+app.post("/editTLSCerts", function (req, res)
 {
     if (req.files["cert"] == undefined || req.files["key"] == undefined)
     {
@@ -1485,7 +1484,7 @@ app.post("/editTLSCerts", passport.authenticate('basic', {session: false}), func
     });
 });
 
-app.post('/scripts', passport.authenticate('basic', {session: false}), function(req, res){
+app.post('/scripts', function(req, res){
   if(req.files['script'] == undefined || req.body['name'] == undefined)
   {
     RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.");
@@ -1544,7 +1543,7 @@ app.post('/scripts', passport.authenticate('basic', {session: false}), function(
   });
 });
 
-app.post('/honeydConfigManage', passport.authenticate('basic', {session: false}), function (req, res){
+app.post('/honeydConfigManage', function (req, res){
   var newName = (req.body['newName'] != undefined ? req.body['newName'] : req.body['newNameClone']);
   var configToClone = (req.body['cloneSelect'] != undefined ? req.body['cloneSelect'] : '');
   var cloneBool = false;
@@ -1600,7 +1599,7 @@ app.post('/honeydConfigManage', passport.authenticate('basic', {session: false})
   }
 });
 
-app.post('/customizeTrainingSave', passport.authenticate('basic', {session: false}), function (req, res)
+app.post('/customizeTrainingSave', function (req, res)
 {
     for (var uid in req.body)
     {
@@ -1718,7 +1717,7 @@ everyone.now.SaveHoneydNode = function(node, callback)
 
 };
 
-app.post('/configureNovaSave', passport.authenticate('basic', {session: false}), function (req, res)
+app.post('/configureNovaSave', function (req, res)
 {
     // TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
     var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
@@ -2062,7 +2061,7 @@ function GetPorts()
   return scriptBindings;
 }
 
-app.get('/scripts', passport.authenticate('basic', {session: false}), function(req, res){
+app.get('/scripts', function(req, res){
   var namesAndPaths = [];
   
   var scriptNames = honeydConfig.GetScriptNames();
@@ -3307,8 +3306,6 @@ function ConvertInterfaceToAlias(iface)
         return iface;
     }
 }
-
-app.get('/*', passport.authenticate('basic', {session: false}));
 
 setInterval(function()
 {
