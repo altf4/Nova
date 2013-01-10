@@ -257,11 +257,23 @@ block headerAdditions
       var ip = suspect.GetIpString;
     
       var suspectLink = buildLink(ip, suspect.GetInterface);
+
+      var imgSrc;
+      if (suspect.GetIsHostile)
+      {
+        imgSrc = "images/alert.png";
+      } 
+      else
+      {
+        imgSrc = "images/benign.png";
+      }
+
+      row.push("<img src='" + imgSrc + "' class='buttonIcon'/>");
       row.push(String(suspect.interfaceAlias));
       row.push(String(suspectLink));
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));
-      row.push(String(suspect.GetIsHostile));
+
       var enabledFeatures = "#{enabledFeatures}";
       for(var i in suspect.GetFeatures)
       {
@@ -432,11 +444,11 @@ block headerAdditions
         theDoc = document;
         var enabledFeatures = "#{enabledFeatures}";
         var gridStructure = [];
+        gridStructure.push({name: "Hostility", isDisabled: false});
         gridStructure.push({name: "Interface", isDisabled: false});
         gridStructure.push({name: "Address", isDisabled: false});
         gridStructure.push({name: "Classification", isDisabled: false, formatter: classificationFormatter});
         gridStructure.push({name: "Last Seen", isDisabled: false});
-        gridStructure.push({name: "Hostile", isDisabled: false});
    
         var featureNames = String("#{featureNames}").split(",");
         for (var i = 0; i < featureNames.length; i++)
@@ -444,12 +456,12 @@ block headerAdditions
             if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], isDisabled: true, formatter: featureFormatter});
         }
    
-        suspectGrid = new NovaGrid(gridStructure, 1, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
+        suspectGrid = new NovaGrid(gridStructure, 2, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
         
         suspectGrid.SetRightClickEventListener("replacementContextMenu(event);");
     
         // Sort by classification by default
-        suspectGrid.SetSortByKey(2);
+        suspectGrid.SetSortByKey(3);
         suspectGrid.SetRowsPerPage(20);
         suspectGrid.SetRenderCallback(onGridRendered);
 
@@ -490,8 +502,8 @@ block headerAdditions
         source = source.parentNode;
       }
       
-      var ip = source.childNodes[1].childNodes[1].innerHTML;
-      var iface = source.childNodes[0].innerHTML;
+      var ip = source.childNodes[2].childNodes[1].innerHTML;
+      var iface = source.childNodes[1].innerHTML;
       
       function trim(string)
       {
