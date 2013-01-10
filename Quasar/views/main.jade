@@ -238,16 +238,10 @@ block headerAdditions
 
     function buildLink(ip, interface)
     {
-      var res = "<a  href='javascript:void(0)' onclick='getSuspectDetails(";
-      res += '"' + ip + '","' + interface + '")' + "'" + '> ' + ip + '</a>';
+      var res = "<div style='display: none;'>" + interface + "</div><div>" + ip + "</div>";
       return res;
     }
 
-    function getSuspectDetails(ip, interface)
-    {
-        window.open('/GetSuspectDetails?ip=' + ip + '&interface=' + interface, 'Details for suspect ' + ip);
-    }
-    
     var OnNewSuspect = function(suspect){
        if(!document.getElementById("showUnclassified").checked)
        {
@@ -496,7 +490,7 @@ block headerAdditions
         source = source.parentNode;
       }
       
-      var ip = source.childNodes[1].childNodes[0].innerHTML;
+      var ip = source.childNodes[1].childNodes[1].innerHTML;
       var iface = source.childNodes[0].innerHTML;
       
       function trim(string)

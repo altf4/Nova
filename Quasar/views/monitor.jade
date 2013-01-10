@@ -53,6 +53,9 @@ block content
       canvas(id = "chart#{i}", width="200px", height="200px", style="border: 1px solid black")
       p(id = "p#{i}")     
   -}
+
+  br
+  a(href="GetSuspectDetails?ip=#{suspectIp}&interface=#{suspectInterface}") Get Debugging Information
    
 block headerAdditions
   script(type="text/javascript", src="scripts/NovaPiChart.js")
