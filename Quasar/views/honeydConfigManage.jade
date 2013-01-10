@@ -57,6 +57,68 @@ block headerAdditions
         -webkit-user-select: none;
         list-style-type: none;
     }
+
+    .selectedTab {
+        width: 100px;
+        background-color: #AFD9FF;
+        
+        border-width: 10px;
+        border-top-style: groove;
+        border-left-style: none;
+        border-right-style: none;
+        border-bottom-style: none;
+        border-radius: 0px;
+        
+        border-top-left-radius: 100px;
+        border-top-right-radius: 100px;
+        border-bottom-right-radius: 0px;
+        border-bottom-left-radius: 0px;
+        
+        padding-bottom: 0px;
+        margin-bottom: 0px;
+    }
+
+    .unselectedTab {
+        width: 100px;
+        background-color: #E4F2FF;
+        
+        border-width: 10px;
+        border-top-style: groove;
+        border-left-style: none;
+        border-right-style: none;
+        border-bottom-style: none;
+
+        border-top-left-radius: 100px;
+        border-top-right-radius: 100px;
+        border-bottom-right-radius: 0px;
+        border-bottom-left-radius: 0px;
+        
+        padding-bottom: 0px;
+        margin-bottom: 0px;
+    }
+
+    .tabDiv {
+        margin-right: 0;
+        margin-left: 0;
+        width: 90%;
+        
+        border: 10px;
+        margin-top: 0px;
+        border-style: solid;
+        border-color: #AFD9FF;
+    }
+
+    .tabBottom {
+        margin-right: 0;
+        margin-left: 0;
+        width: 90%;
+       
+        border: 0;
+        margin-top: 0px;
+        margin-bottom: 0px;
+        padding-top: 0px;
+        background-color: #AFD9FF;
+   }
     
   script(type="text/javascript", src="scripts/NovaPiChart.js")
   script
@@ -749,63 +811,82 @@ block headerAdditions
           populateConfigSelect(configurationList);
         });
     };
+
+    function showTab(tab) {
+        var tabNames = [];
+        tabNames.push("settingsGroups");
+        tabNames.push("settingsProfiles");
+        tabNames.push("settingsNodes");
+        tabNames.push("settingsScripts");
+
+        for (var i = 0; i < tabNames.length; i++) {
+            document.getElementById(tabNames[i]).style.display = "none";
+            document.getElementById("b" + tabNames[i]).className = "unselectedTab";
+        }
+        
+        
+
+        document.getElementById(tab).style.display = "block";
+        document.getElementById("b" + tab).className = "selectedTab";
+    }
   
 block content
   div#setup(onclick='handleOnclick(event);')
-    h2 Edit Configurations
-    div#addNewConfig
+    button.selectedTab#bsettingsGroups(onclick='showTab("settingsGroups")') Groups
+    button.unselectedTab#bsettingsProfiles(onclick='showTab("settingsProfiles")') Profiles
+    button.unselectedTab#bsettingsNodes(onclick='showTab("settingsNodes")') Nodes
+    button.unselectedTab#bsettingsScripts(onclick='showTab("settingsScripts")') Scripts
+
+    
+    div.tabDiv#settingsGroups
+      h1 Edit Configurations
       button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch')
         img.buttonIcon(src="images/add.png") 
         span.buttonSpan Add Group
       button#cloneConfig(onclick='showLightBox("1")', title='Create a new configuration group by cloning an existing configuration')
         img.buttonIcon(src="images/add.png") 
         span.buttonSpan Clone Group
-      br
-      br
+      
       button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') Create Group From Network Scan
-
+      
       br
       br
-
-    div#treeAndPiContainer(style="border: 3px solid black; display: inline-block; margin: 5px 5px 5px 5px; text-align: center")
-      h1 Current Group
+      h2 Current Group
       select#configurations(onchange='GetConfigurationSummary()')
       button#removeConfig(onclick='removeConfig()', title='Delete the currently selected group')
         img.buttonIcon(src="images/delete.png") 
         span.buttonSpan Delete Group
-      
-      div(style="margin-top: 20px")
-      hr
+
+
+    div.tabDiv#settingsProfiles(style="display: none;")
       h1 Current Profile Configuration
       button(onclick="window.location='/configHoneydProfiles'")
         img.buttonIcon(src="images/edit.png") 
         span.buttonSpan Edit Profiles
       br
       br
-      br
+
       div#treeDiv
         label Loading...
     
-      div(style="margin-top: 20px")
-      hr
+    div.tabDiv#settingsNodes(style="display: none;")
       h1 Current Node Configuration
       button(onclick="window.location='/configHoneydNodes'")
         img.buttonIcon(src="images/edit.png") 
         span.buttonSpan Edit Nodes
       br
       br
-      br
+      
       div#piChart
 
-      div(style="margin-top: 20px")
-      hr
+    div.tabDiv#settingsScripts(style="display: none;")
       h1 Current Script Usage
       button(onclick="window.location='/scripts'")
         img.buttonIcon(src="images/edit.png") 
         span.buttonSpan Edit Scripts
       br
       br
-      br
+      
       table(border='1', id='sizeAnchor')
         thead
           tr
