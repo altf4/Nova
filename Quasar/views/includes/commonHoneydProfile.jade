@@ -775,13 +775,12 @@ script
                                 if (dojo.byId("portBehavior" + portIndexes[i]).value == "3" || dojo.byId("portBehavior" + portIndexes[i]).value == "5") 
                                 {
                                         dojo.byId("portScriptDrop" + portIndexes[i]).disabled = false;
-                                        dojo.byId("configureButton" + portIndexes[i]).style.display = "block";
                                 } 
                                 else 
                                 {
                                         dojo.byId("portScriptDrop" + portIndexes[i]).disabled = true;
-                                        dojo.byId("configureButton" + portIndexes[i]).style.display = "none";
                                 }
+                                scriptSelectionChanged(i);
                         }
                 };
 
@@ -843,6 +842,12 @@ script
                     // Clear the port configuration options
                     scriptConfigurations[portIndex] = {};
 
+                    // Don't bother if the dropdown is disabled
+                    if(document.getElementById("portScriptDrop" + portIndex).disabled)
+                    {
+                      document.getElementById("configureButton" + portIndex).style.display = "none";
+                      return;
+                    }
 
                     // TODO Internet Explore doesn't support select element .value
                     var scriptName = document.getElementById("portScriptDrop" + portIndex).value;
@@ -850,9 +855,21 @@ script
                     // Populate the defaults
                     now.GetScript(scriptName, function(script)
                     {
+                        var optionCount = 0;
                         for (var option in script.GetOptions)
                         {
+                            optionCount++;
                             scriptConfigurations[portIndex][option] = script.GetOptions[option][0];
+                        }
+                        
+                        if (optionCount === 0)
+                        {
+                            document.getElementById("configureButton" + portIndex).style.display = "none";
+                        }
+                        else
+                        {
+                            document.getElementById("configureButton" + portIndex).style.display = "block";
+
                         }
                     });
                 };

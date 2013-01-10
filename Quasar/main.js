@@ -2069,7 +2069,7 @@ app.get('/scripts', passport.authenticate('basic', {session: false}), function(r
 
   for (var i = 0; i < scriptNames.length; i++) {
     var script = honeydConfig.GetScript(scriptNames[i]);
-    namesAndPaths.push({script: script.GetName(), path: script.GetPath()});
+    namesAndPaths.push({script: script.GetName(), path: script.GetPath(), configurable: script.GetIsConfigurable()});
   }
   
 

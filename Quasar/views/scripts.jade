@@ -94,11 +94,17 @@ block headerAdditions
         var td2 = theDoc.createElement('td');
         var label2 = theDoc.createElement('label');
         label2.innerHTML = scriptList[i].path;
-        
+
         var td4 = theDoc.createElement('td');
-        var editButton = theDoc.createElement('button');
-        editButton.innerHTML = '<span style="width: 50px; display: block" class="buttonSpan"><img class="buttonIcon" src="images/edit.png"/>Edit</span>';
-        editButton.setAttribute('onclick', 'editOptions("' + scriptList[i].script + '")');
+        
+        if (scriptList[i].configurable) {
+          var editButton = theDoc.createElement('button');
+          editButton.innerHTML = '<span style="width: 50px; display: block" class="buttonSpan"><img class="buttonIcon" src="images/edit.png"/>Edit</span>';
+          editButton.setAttribute('onclick', 'editOptions("' + scriptList[i].script + '")');
+
+          td4.appendChild(editButton);
+        }
+        
         
         var td5 = theDoc.createElement('td');
         var removeButton = theDoc.createElement('button');
@@ -109,7 +115,6 @@ block headerAdditions
         td0.appendChild(label0);
         td1.appendChild(label1);
         td2.appendChild(label2);
-        td4.appendChild(editButton);
         td5.appendChild(removeButton);
         tr.appendChild(td0);
         tr.appendChild(td1);
