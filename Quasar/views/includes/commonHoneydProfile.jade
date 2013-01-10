@@ -222,7 +222,7 @@ script
                         var vendorDelete = document.createElement("button");
                         vendorDeleteCell.appendChild(vendorDelete);
 
-                        vendorDelete.innerHTML = "Delete";
+                        vendorDelete.innerHTML = "<img class='buttonIcon' src='images/delete.png'/><span class='buttonSpan'>Delete</span>";
                         vendorDelete.onclick = function(i){return function(){deleteEthernetVendor(i);}}(i)
 
                         vendorRow.appendChild(vendorNameCell);
@@ -699,7 +699,7 @@ script
                         var configureButton = document.createElement("button");
                         configureButton.setAttribute('type', 'button');
                         configureButton.setAttribute('onclick', 'configureScript(' + portUID + ')');
-                        configureButton.innerHTML = "Configure";
+                        configureButton.innerHTML = "<img class='buttonIcon' src='images/edit.png'/><span class='buttonSpan'>Configure</span>";
                         configureButton.id = "configureButton" + portUID;
                         configureContainer.appendChild(configureButton);
                         row.appendChild(configureContainer);
@@ -709,7 +709,7 @@ script
                         var deleteButton = document.createElement("button");
                         deleteButton.setAttribute('type', 'button');
                         deleteButton.setAttribute('onclick', 'deletePort(' + portUID + ')');
-                        deleteButton.innerHTML = 'Delete';
+                        deleteButton.innerHTML = "<img class='buttonIcon' src='images/delete.png'/><span class='buttonSpan'>Delete</span>";
                         buttonContainer.appendChild(deleteButton);
                         row.appendChild(buttonContainer);
 

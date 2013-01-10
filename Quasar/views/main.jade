@@ -21,9 +21,16 @@ block content
     div#nova_suspects_header(style="width:600px; display: none")
       br
       
-      button(onclick="toggleFilterBlock()", title='Only show rows that match a certain specific criteria') Filtering Options
-      button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
-      button(onclick="window.location='/novaState.csv'") Save as CSV file
+      button(onclick="toggleFilterBlock()", title='Only show rows that match a certain specific criteria')
+        img.buttonIcon(src="images/edit.png")
+        span.buttonSpan Filtering Options
+      button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}')
+        img.buttonIcon(src="images/erase.png")
+        span.buttonSpan Clear All Suspects
+
+      button(onclick="window.location='/novaState.csv'")
+        img.buttonIcon(src="images/save.png")
+        span.buttonSpan Save as CSV file
   
       br
     div#nova_suspects(style="display: none;")      
@@ -64,7 +71,9 @@ block content
       br
       button(onclick='applyAdvancedFilter()') Apply Advanced Filters
       button(onclick='disableAdvancedFilter()') Disable Advanced Filters
-    button#closeLB(onclick='closeLightbox()') Close
+    button#closeLB(onclick='closeLightbox()')
+     img.buttonIcon(src="images/cancel.png")
+     span.buttonSpan Cancel
    
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")

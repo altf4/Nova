@@ -20,7 +20,9 @@ block content
   div#nova_suspects_header
     h1 Hostile Events
     br
-    input(type="button", onClick="now.ClearHostileEvents(finishedClearing)", value="Clear all events")
+    button.button(onClick="now.ClearHostileEvents(finishedClearing)")
+      img.buttonIcon(src="images/erase.png")
+      span.buttonSpan Clear All Events
     br
     br
     input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")

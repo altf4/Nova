@@ -106,7 +106,9 @@ block content
       table#ethernetVEndors
        
       div(id="ethSelectDiv")
-        button(type="button", id="ethSelectButton", onclick="addEthernetVendor(document.getElementById('ethernet').value, 1)") Add New Vendor
+        button.button(type="button", id="ethSelectButton", onclick="addEthernetVendor(document.getElementById('ethernet').value, 1)")
+          img.buttonIcon(src="images/add.png")
+          span.buttonSpan Add New Vendor
 
         select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
           each vendor in vendors
@@ -127,7 +129,9 @@ block content
           td
             input#newPortSetName(type="text", placeholder="Name of new portset", style="width: 95%")
           td
-            button(type="button", onclick = "addNewPortset()") Add Portset
+            button(type="button", onclick = "addNewPortset()")
+              img.buttonIcon(src="images/add.png")
+              span.buttonSpan Add Portset
 
         tr
           td
@@ -135,7 +139,9 @@ block content
           td
             select#portSetSelection(onchange='portSetSelectionChanged()', style="width: 95%")
           td
-            button(type="button", onclick = "deletePortset()") Delete Portset
+            button(type="button", onclick = "deletePortset()")
+              img.buttonIcon(src="images/delete.png")
+              span.buttonSpan Delete Portset
       
         tr
           td
@@ -143,7 +149,9 @@ block content
           td
             input#newPortsetName(type="text", placeholder="New Portset Name", style="width: 95%")
           td
-            button(type="button", onclick = "renamePortset()") Rename Portset
+            button(type="button", onclick = "renamePortset()") 
+              img.buttonIcon(src="images/edit.png")
+              span.buttonSpan Rename Portset
 
       br
       br
@@ -176,7 +184,9 @@ block content
         br
         table#portTable
     
-        button(type="button", onClick="addPort()") Add New Port
+        button(type="button", onClick="addPort()")
+          img.buttonIcon(src="images/add.png")
+          span.buttonSpan Add New Port
     
       br
       br

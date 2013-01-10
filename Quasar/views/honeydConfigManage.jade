@@ -754,8 +754,12 @@ block content
   div#setup(onclick='handleOnclick(event);')
     h2 Edit Configurations
     div#addNewConfig
-      button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch') Add Group
-      button#cloneConfig(onclick='showLightBox("1")', title='Create a new configuration group by cloning an existing configuration') Clone Group
+      button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch')
+        img.buttonIcon(src="images/add.png") 
+        span.buttonSpan Add Group
+      button#cloneConfig(onclick='showLightBox("1")', title='Create a new configuration group by cloning an existing configuration')
+        img.buttonIcon(src="images/add.png") 
+        span.buttonSpan Clone Group
       br
       br
       button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') Create Group From Network Scan
@@ -766,12 +770,16 @@ block content
     div#treeAndPiContainer(style="border: 3px solid black; display: inline-block; margin: 5px 5px 5px 5px; text-align: center")
       h1 Current Group
       select#configurations(onchange='GetConfigurationSummary()')
-      button#removeConfig(onclick='removeConfig()', title='Delete the currently selected group') Delete Group
+      button#removeConfig(onclick='removeConfig()', title='Delete the currently selected group')
+        img.buttonIcon(src="images/delete.png") 
+        span.buttonSpan Delete Group
       
       div(style="margin-top: 20px")
       hr
       h1 Current Profile Configuration
-      button(onclick="window.location='/configHoneydProfiles'") Edit Profiles
+      button(onclick="window.location='/configHoneydProfiles'")
+        img.buttonIcon(src="images/edit.png") 
+        span.buttonSpan Edit Profiles
       br
       br
       br
@@ -781,7 +789,9 @@ block content
       div(style="margin-top: 20px")
       hr
       h1 Current Node Configuration
-      button(onclick="window.location='/configHoneydNodes'") Edit Nodes
+      button(onclick="window.location='/configHoneydNodes'")
+        img.buttonIcon(src="images/edit.png") 
+        span.buttonSpan Edit Nodes
       br
       br
       br
@@ -790,7 +800,9 @@ block content
       div(style="margin-top: 20px")
       hr
       h1 Current Script Usage
-      button(onclick="window.location='/scripts'") Edit Scripts
+      button(onclick="window.location='/scripts'")
+        img.buttonIcon(src="images/edit.png") 
+        span.buttonSpan Edit Scripts
       br
       br
       br
@@ -852,4 +864,8 @@ block content
               th(style='background-color: #d0e9fc;') Behavior
           tbody#portsetHook
       br
-    button#closeLB(onclick='closeLightbox()') Close
+    button#closeLB(onclick='closeLightbox()')
+      img.buttonIcon(src="images/cancel.png")
+      span.buttonSpan Cancel
+
+
