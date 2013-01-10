@@ -1,6 +1,6 @@
 //============================================================================
 // Name        : NOVAConfiguration.h
-// Copyright   : DataSoft Corporation 2011-2012
+// Copyright   : DataSoft Corporation 2011-2013
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
@@ -235,6 +235,8 @@ public:
 	//Attempts to detect and use intefaces returned by pcap_lookupdev
 	void LoadInterfaces();
 
+	bool GetAreEmailAlertsEnabled();
+
 protected:
 	Config();
 
@@ -286,6 +288,8 @@ private:
 	bool m_isDmEnabled;
 
 	bool m_overridePcapString;
+
+	bool m_emailAlertsEnabled;
 
 	version m_version;
 

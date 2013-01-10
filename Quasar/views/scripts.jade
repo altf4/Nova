@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -94,32 +94,31 @@ block headerAdditions
         var td2 = theDoc.createElement('td');
         var label2 = theDoc.createElement('label');
         label2.innerHTML = scriptList[i].path;
-        var td3 = theDoc.createElement('td');
-        var clearButton = theDoc.createElement('button');
-        clearButton.innerHTML = 'Clear Profiles';
-        clearButton.setAttribute('onclick', 'ClearScriptWrapper("' + scriptList[i].script + '")');
-        clearButton.disabled = disable;
-        
+
         var td4 = theDoc.createElement('td');
-        var editButton = theDoc.createElement('button');
-        editButton.innerHTML = 'Edit Options';
-        editButton.setAttribute('onclick', 'editOptions("' + scriptList[i].script + '")');
+        
+        if (scriptList[i].configurable) {
+          var editButton = theDoc.createElement('button');
+          editButton.innerHTML = '<span style="width: 50px; display: block" class="buttonSpan"><img class="buttonIcon" src="images/edit.png"/>Edit</span>';
+          editButton.setAttribute('onclick', 'editOptions("' + scriptList[i].script + '")');
+
+          td4.appendChild(editButton);
+        }
+        
         
         var td5 = theDoc.createElement('td');
         var removeButton = theDoc.createElement('button');
-        removeButton.innerHTML = 'Remove Script';
+        removeButton.innerHTML = '<span style="width: 70px; display: block" class="buttonSpan"><img class="buttonIcon" src="images/delete.png"/>Remove</span>';
         removeButton.setAttribute('onclick', 'RemoveScriptFromMap("' + scriptList[i].script + '")');
+        removeButton.setAttribute('class', 'button');
         
         td0.appendChild(label0);
         td1.appendChild(label1);
         td2.appendChild(label2);
-        td3.appendChild(clearButton);
-        td4.appendChild(editButton);
         td5.appendChild(removeButton);
         tr.appendChild(td0);
         tr.appendChild(td1);
         tr.appendChild(td2);
-        tr.appendChild(td3);
         tr.appendChild(td4);
         tr.appendChild(td5);
         append.appendChild(tr);
@@ -406,7 +405,9 @@ block content
   div#setup(onclick='handleOnclick(event)')
     h1 Honeyd Scripts
   
-    button(onclick='showLightBox("0")') Add New Honeyd Script
+    button(onclick='showLightBox("0")')
+      img.buttonIcon(src="images/add.png")
+      span.buttonSpan Add New Honeyd Script
     br
     br
   
@@ -416,7 +417,6 @@ block content
           th(style='background-color: #d0e9fc;') Name
           th(style='background-color: #d0e9fc;') Profiles
           th(style='background-color: #d0e9fc;') Path And Parameters
-          th(style='background-color: #d0e9fc;') Clear
           th(style='background-color: #d0e9fc;') Edit
           th(style='background-color: #d0e9fc;') Remove
       tbody#addAnchor

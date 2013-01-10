@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +26,7 @@ block headerAdditions
 block content
   div
     h1 Choose Training Data to use when classifying suspects
-    form(method="post", action="/customizeTrainingSave")
+    form#trainingForm(method="post", action="/customizeTrainingSave")
       table(border = "1")
         thead
           tr
@@ -43,4 +43,7 @@ block content
               td #{uids[i]}
               td #{desc[i]}
       br
-      input(type="Submit", value="Confirm Training Data Selection")
+      button.button()
+        img.buttonIcon(src="images/ok.png")
+        span.buttonSpan Save
+

@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -17,6 +17,7 @@
 extends layout
 block headerAdditions
   //link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  
   include includes/commonHoneydProfile
 
 block content
@@ -27,9 +28,10 @@ block content
     button#closeLB(onclick='closeLightbox()') Close
   
   div#setup(onclick='handleOnclick(event);')
-    h2 Editing Profile
+    h1 Profile Options
 
     form
+
       table(id="tableEditProfile")
         col
         col
@@ -83,7 +85,7 @@ block content
           td
             label Inherit?
           td(style="text-align:right")
-            label Fixed uptime or uptime range?
+            label Fixed uptime or range?
           td
             select#uptimeType(name="uptimeType", onchange="uptimeTypeChanged()")
               option Fixed
@@ -99,12 +101,14 @@ block content
             input#uptimeMax(type="number", name="uptimeMax", min=0)
 
       br
-      
-      h3 Profile Ethernet Vendor Configuration
+      br
+      h1 Profile Ethernet Vendor Configuration
       table#ethernetVEndors
        
       div(id="ethSelectDiv")
-        button(type="button", id="ethSelectButton", onclick="addEthernetVendor(document.getElementById('ethernet').value, 1)") Add New Vendor
+        button.button(type="button", id="ethSelectButton", onclick="addEthernetVendor(document.getElementById('ethernet').value, 1)")
+          img.buttonIcon(src="images/add.png")
+          span.buttonSpan Add New Vendor
 
         select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
           each vendor in vendors
@@ -113,47 +117,81 @@ block content
         
       label(id="errorEthernet", style="color:red;", value="")
       input(type='hidden', id='profDist', value='')
+
+      br
+      br
       
-      h3 Profile Port Configuration
-      label Create New Port Set
-      input#newPortSetName(type="text", placeholder="Name of new portset")
-      button(type="button", onclick = "addNewPortset()") Add Portset
-      br
-      br
+      h1 Profile Port Configuration
+      table
+        tr
+          td
+            label Create New Port Set
+          td
+            input#newPortSetName(type="text", placeholder="Name of new portset", style="width: 95%")
+          td
+            button(type="button", onclick = "addNewPortset()")
+              img.buttonIcon(src="images/add.png")
+              span.buttonSpan Add Portset
 
-      label Edit Port Set
-      select#portSetSelection(onchange='portSetSelectionChanged()')
-      button(type="button", onclick = "deletePortset()") Delete Portset
-      br
-      label Rename Selected Port Set  
-      input#newPortsetName(type="text", placeholder="New Portset Name")
-      button(type="button", onclick = "renamePortset()") Rename Portset
-      br
+        tr
+          td
+            label Edit Port Set
+          td
+            select#portSetSelection(onchange='portSetSelectionChanged()', style="width: 95%")
+          td
+            button(type="button", onclick = "deletePortset()")
+              img.buttonIcon(src="images/delete.png")
+              span.buttonSpan Delete Portset
+      
+        tr
+          td
+            label Rename Selected Port Set  
+          td
+            input#newPortsetName(type="text", placeholder="New Portset Name", style="width: 95%")
+          td
+            button(type="button", onclick = "renamePortset()") 
+              img.buttonIcon(src="images/edit.png")
+              span.buttonSpan Rename Portset
 
+      br
+      br
       div#portSetDiv
-        label Default TCP Action
-        select#defaultTCPAction
-          option(value="open") Open (respond with SYN/ACK)
-          option(value="closed") Closed (respond with RST)
-          option(value="filtered") Filtered (don't respond)
+        table
+          tr
+            td
+              label Default TCP Action
+             td
+               select#defaultTCPAction(style="width: 100%")
+                 option(value="filtered") Filtered (don't respond)
+                 option(value="open") Open (respond with SYN/ACK)
+                 option(value="closed") Closed (respond with RST)
+
+           tr
+             td
+               label Default UDP Action
+             td
+               select#defaultUDPAction(style="width: 100%")
+                 option(value="filtered") Filtered (don't respond)
+                 option(value="closed") Closed (respond with ICMP port unreach)
+           tr
+             td
+               label Default ICMP Action
+             td
+               select#defaultICMPAction(style="width: 100%")
+                 option(value="filtered") Filtered (don't respond)
+                 option(value="open") Open (respond to pings)
+   
         br
-    
-        label Default UDP Action
-        select#defaultUDPAction
-          option(value="closed") Closed (respond with ICMP port unreach)
-          option(value="filtered") Filtered (don't respond)
-        br
-    
-        label Default ICMP Action
-        select#defaultICMPAction
-          option(value="open") Open (respond to pings)
-          option(value="filtered") Filtered (don't respond)
-        br
-    
         table#portTable
     
-        button(type="button", onClick="addPort()") Add New Port
+        button(type="button", onClick="addPort()")
+          img.buttonIcon(src="images/add.png")
+          span.buttonSpan Add New Port
+    
+      br
       br
       br
       
-      button#saveButton(type="button", onclick="saveChanges()") Save Changes
+      button#saveButton(type="button", onclick="saveChanges()")
+        img.buttonIcon(src="images/ok.png")
+        span.buttonSpan Save Changes

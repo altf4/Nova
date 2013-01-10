@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -116,13 +116,15 @@ block content
     div#gridDiv(style="height: 250px")
 
   br
-  button(onClick="deleteSelectedItems()") Delete Selected Users
+  button(onClick="deleteSelectedItems()")
+    img.buttonIcon(src="images/delete.png")
+    span.buttonSpan Delete Selected Users
   
   br
   br
   input#newPassword(type="password")
-  br
-  br
-  button(onClick="updateUserPass()") Update User Password
+  button(onClick="updateUserPass()") 
+    img.buttonIcon(src="images/edit.png")
+    span.buttonSpan Update User Password
  
 

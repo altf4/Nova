@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -19,7 +19,9 @@ extends layout
 block content
   h1 Watching Honeyd Log
   p
-    a.button(href="/downloadHoneydLog.log") Download Entire Log
+    a.button(href="/downloadHoneydLog.log")
+      img.buttonIcon(src="images/save.png")
+      span.buttonSpan Download Entire Log
   input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
   label Show Debugging Information
   br

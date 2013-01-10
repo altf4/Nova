@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -181,11 +181,8 @@ script
                 var headerName = document.createElement("th");
                 headerName.innerHTML = "Ethernet Vendor";
 
-                var headerCount = document.createElement("th");
-                headerCount.innerHTML = "Count";
 
                 headerRow.appendChild(headerName);
-                headerRow.appendChild(headerCount);
                 vendorDiv.appendChild(headerRow);
 
                 // Populate the table rows
@@ -202,41 +199,20 @@ script
                         vendorName.value = profile.ethernet[i].vendor;
                         vendorName.setAttribute('readonly', true);
 
-                        // Vendor count cell
-                        var vendorCountCell = document.createElement("td");
-                        var vendorCount = document.createElement("input");
-                        vendorCountCell.appendChild(vendorCount);
-                        vendorCount.onchange = function(i, vendorCount) {return function() {changedEthernetVendorCount(i, vendorCount.value)}}(i, vendorCount);
-                        
-                        vendorCount.id = "vendorCount" + i;
-                        
-                        if (navigator.userAgent.indexOf("MSIE") == "-1") {
-                                vendorCount.type = "number";
-                        }
-                        vendorCount.min = 0;
-                        vendorCount.value = profile.ethernet[i].count;
-                        
-                       
                         // Vendor delete button
                         var vendorDeleteCell = document.createElement("td");
                         var vendorDelete = document.createElement("button");
                         vendorDeleteCell.appendChild(vendorDelete);
 
-                        vendorDelete.innerHTML = "Delete";
+                        vendorDelete.innerHTML = "<img class='buttonIcon' src='images/delete.png'/><span class='buttonSpan'>Delete</span>";
                         vendorDelete.onclick = function(i){return function(){deleteEthernetVendor(i);}}(i)
 
                         vendorRow.appendChild(vendorNameCell);
-                        vendorRow.appendChild(vendorCountCell);
                         vendorRow.appendChild(vendorDeleteCell);
                                 
                         vendorDiv.appendChild(vendorRow);
 
                 }
-        };
-
-        var changedEthernetVendorCount = function(vendorIndex, vendorCount)
-        {
-                profile.ethernet[vendorIndex].count = vendorCount;
         };
 
         var addEthernetVendor = function(vendorName, vendorCount)
@@ -401,9 +377,9 @@ script
             }
 
             var portSet = {setName: setName
-                , ICMPBehavior: "filtered"
-                , TCPBehavior: "filtered"
-                , UDPBehavior: "filtered"
+                , ICMPBehavior: "open"
+                , TCPBehavior: "closed"
+                , UDPBehavior: "closed"
                 , TCPExceptions: []
                 , UDPExceptions: []
             }
@@ -699,7 +675,7 @@ script
                         var configureButton = document.createElement("button");
                         configureButton.setAttribute('type', 'button');
                         configureButton.setAttribute('onclick', 'configureScript(' + portUID + ')');
-                        configureButton.innerHTML = "Configure";
+                        configureButton.innerHTML = "<img class='buttonIcon' src='images/edit.png'/><span class='buttonSpan'>Configure</span>";
                         configureButton.id = "configureButton" + portUID;
                         configureContainer.appendChild(configureButton);
                         row.appendChild(configureContainer);
@@ -709,7 +685,7 @@ script
                         var deleteButton = document.createElement("button");
                         deleteButton.setAttribute('type', 'button');
                         deleteButton.setAttribute('onclick', 'deletePort(' + portUID + ')');
-                        deleteButton.innerHTML = 'Delete';
+                        deleteButton.innerHTML = "<img class='buttonIcon' src='images/delete.png'/><span class='buttonSpan'>Delete</span>";
                         buttonContainer.appendChild(deleteButton);
                         row.appendChild(buttonContainer);
 
@@ -799,13 +775,12 @@ script
                                 if (dojo.byId("portBehavior" + portIndexes[i]).value == "3" || dojo.byId("portBehavior" + portIndexes[i]).value == "5") 
                                 {
                                         dojo.byId("portScriptDrop" + portIndexes[i]).disabled = false;
-                                        dojo.byId("configureButton" + portIndexes[i]).style.display = "block";
                                 } 
                                 else 
                                 {
                                         dojo.byId("portScriptDrop" + portIndexes[i]).disabled = true;
-                                        dojo.byId("configureButton" + portIndexes[i]).style.display = "none";
                                 }
+                                scriptSelectionChanged(i);
                         }
                 };
 
@@ -867,6 +842,12 @@ script
                     // Clear the port configuration options
                     scriptConfigurations[portIndex] = {};
 
+                    // Don't bother if the dropdown is disabled
+                    if(document.getElementById("portScriptDrop" + portIndex).disabled)
+                    {
+                      document.getElementById("configureButton" + portIndex).style.display = "none";
+                      return;
+                    }
 
                     // TODO Internet Explore doesn't support select element .value
                     var scriptName = document.getElementById("portScriptDrop" + portIndex).value;
@@ -874,9 +855,21 @@ script
                     // Populate the defaults
                     now.GetScript(scriptName, function(script)
                     {
+                        var optionCount = 0;
                         for (var option in script.GetOptions)
                         {
+                            optionCount++;
                             scriptConfigurations[portIndex][option] = script.GetOptions[option][0];
+                        }
+                        
+                        if (optionCount === 0)
+                        {
+                            document.getElementById("configureButton" + portIndex).style.display = "none";
+                        }
+                        else
+                        {
+                            document.getElementById("configureButton" + portIndex).style.display = "block";
+
                         }
                     });
                 };

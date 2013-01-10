@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -21,9 +21,16 @@ block content
     div#nova_suspects_header(style="width:600px; display: none")
       br
       
-      button(onclick="toggleFilterBlock()", title='Only show rows that match a certain specific criteria') Filtering Options
-      button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}') Clear All Suspects
-      button(onclick="window.location='/novaState.csv'") Save as CSV file
+      button(onclick="toggleFilterBlock()", title='Only show rows that match a certain specific criteria')
+        img.buttonIcon(src="images/edit.png")
+        span.buttonSpan Filtering Options
+      button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}')
+        img.buttonIcon(src="images/erase.png")
+        span.buttonSpan Clear All Suspects
+
+      button(onclick="window.location='/novaState.csv'")
+        img.buttonIcon(src="images/save.png")
+        span.buttonSpan Save as CSV file
   
       br
     div#nova_suspects(style="display: none;")      
@@ -64,7 +71,9 @@ block content
       br
       button(onclick='applyAdvancedFilter()') Apply Advanced Filters
       button(onclick='disableAdvancedFilter()') Disable Advanced Filters
-    button#closeLB(onclick='closeLightbox()') Close
+    button#closeLB(onclick='closeLightbox()')
+     img.buttonIcon(src="images/cancel.png")
+     span.buttonSpan Cancel
    
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
@@ -229,16 +238,10 @@ block headerAdditions
 
     function buildLink(ip, interface)
     {
-      var res = "<a  href='javascript:void(0)' onclick='getSuspectDetails(";
-      res += '"' + ip + '","' + interface + '")' + "'" + '> ' + ip + '</a>';
+      var res = "<div style='display: none;'>" + interface + "</div><div>" + ip + "</div>";
       return res;
     }
 
-    function getSuspectDetails(ip, interface)
-    {
-        window.open('/GetSuspectDetails?ip=' + ip + '&interface=' + interface, 'Details for suspect ' + ip);
-    }
-    
     var OnNewSuspect = function(suspect){
        if(!document.getElementById("showUnclassified").checked)
        {
@@ -254,11 +257,23 @@ block headerAdditions
       var ip = suspect.GetIpString;
     
       var suspectLink = buildLink(ip, suspect.GetInterface);
+
+      var imgSrc;
+      if (suspect.GetIsHostile)
+      {
+        imgSrc = "images/alert.png";
+      } 
+      else
+      {
+        imgSrc = "images/benign.png";
+      }
+
+      row.push("<img src='" + imgSrc + "' class='buttonIcon'/>");
       row.push(String(suspect.interfaceAlias));
       row.push(String(suspectLink));
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));
-      row.push(String(suspect.GetIsHostile));
+
       var enabledFeatures = "#{enabledFeatures}";
       for(var i in suspect.GetFeatures)
       {
@@ -429,11 +444,11 @@ block headerAdditions
         theDoc = document;
         var enabledFeatures = "#{enabledFeatures}";
         var gridStructure = [];
+        gridStructure.push({name: "Hostility", isDisabled: false});
         gridStructure.push({name: "Interface", isDisabled: false});
         gridStructure.push({name: "Address", isDisabled: false});
         gridStructure.push({name: "Classification", isDisabled: false, formatter: classificationFormatter});
         gridStructure.push({name: "Last Seen", isDisabled: false});
-        gridStructure.push({name: "Hostile", isDisabled: false});
    
         var featureNames = String("#{featureNames}").split(",");
         for (var i = 0; i < featureNames.length; i++)
@@ -441,12 +456,12 @@ block headerAdditions
             if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], isDisabled: true, formatter: featureFormatter});
         }
    
-        suspectGrid = new NovaGrid(gridStructure, 1, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
+        suspectGrid = new NovaGrid(gridStructure, 2, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
         
         suspectGrid.SetRightClickEventListener("replacementContextMenu(event);");
     
         // Sort by classification by default
-        suspectGrid.SetSortByKey(2);
+        suspectGrid.SetSortByKey(3);
         suspectGrid.SetRowsPerPage(20);
         suspectGrid.SetRenderCallback(onGridRendered);
 
@@ -487,8 +502,8 @@ block headerAdditions
         source = source.parentNode;
       }
       
-      var ip = source.childNodes[1].childNodes[0].innerHTML;
-      var iface = source.childNodes[0].innerHTML;
+      var ip = source.childNodes[2].childNodes[1].innerHTML;
+      var iface = source.childNodes[1].innerHTML;
       
       function trim(string)
       {

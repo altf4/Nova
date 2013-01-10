@@ -1,6 +1,6 @@
 //============================================================================
 // Name        : NOVAConfiguration.h
-// Copyright   : DataSoft Corporation 2011-2012
+// Copyright   : DataSoft Corporation 2011-2013
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
@@ -94,7 +94,8 @@ string Config::m_prefixes[] =
 	"CLASSIFICATION_MODES",
 	"CLASSIFICATION_WEIGHTS",
 	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC",
-	"CURRENT_CONFIG"
+	"CURRENT_CONFIG",
+	"EMAIL_ALERTS_ENABLED"
 };
 
 Config *Config::m_instance = NULL;
@@ -905,6 +906,18 @@ void Config::LoadConfig_Internal()
 				}
 			}
 
+			// EMAIL_ALERTS_ENABLED
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_emailAlertsEnabled = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+			}
 		}
 	}
 	else
@@ -2594,6 +2607,12 @@ void Config::SetMasterUIPort(int newPort)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_masterUIPort = newPort;
+}
+
+bool Config::GetAreEmailAlertsEnabled()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_emailAlertsEnabled;
 }
 
 }

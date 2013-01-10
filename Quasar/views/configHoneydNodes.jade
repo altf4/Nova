@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -52,7 +52,6 @@ block headerAdditions
           alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
           console.log("err was: " + err);
           document.getElementById("createNewNodes").disabled = false;
-          document.getElementById("createNewNodes").value = "Create New Nodes";
         }
     }
     
@@ -571,9 +570,10 @@ block headerAdditions
     {
       if(interfaces.length > 1)
       {
-        var button = document.createElement('button');
+        var button = document.createElement('a');
         button.setAttribute('onclick', 'changeSelectedInterfaces()');
-        button.innerHTML = 'Change Node Interfaces';
+        button.setAttribute('class', 'button');
+        button.innerHTML = '<img src="images/edit.png" class="buttonIcon"/><span class="buttonSpan">Change Node Interfaces</span>';
         document.getElementById('generateHook').appendChild(button);
       }
     }
@@ -611,14 +611,24 @@ block content
   br
   br
 
-  button(onclick="deleteSelectedItems()") Delete Selected Nodes
-  button(onclick="deleteAllNodes()") Delete All Nodes 
-  button(onclick="editSelectedItem()") Edit Selected Node
+  button.button(onclick="deleteSelectedItems()") 
+    img.buttonIcon(src="images/delete.png")
+    span.buttonSpan Delete Selected Nodes
+  
+  button.button(onclick="deleteAllNodes()")
+    img.buttonIcon(src="images/delete.png")
+    span.buttonSpan Delete All Nodes
+
+  button.button(onclick="editSelectedItem()")
+    img.buttonIcon(src="images/edit.png")
+    span.buttonSpan Edit Selected Node
 
   br
   br
   div#generateHook
-    a.button(href="/editHoneydNode?node=doppelganger") Edit Doppelganger
+    a.button(href="/editHoneydNode?node=doppelganger")
+      img.buttonIcon(src="images/edit.png")
+      span Edit Doppelganger
   br
   br
   h2 Create Honeyd Nodes
@@ -688,4 +698,6 @@ block content
   
   br
   br
-  input#createNewNodes(type="Submit",value="Create New Nodes", onclick="createNodes()")
+  button#createNewNodes(onclick="createNodes()")
+    img.buttonIcon(src="images/ok.png")
+    span Create New Nodes

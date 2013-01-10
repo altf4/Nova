@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -56,6 +56,72 @@ block headerAdditions
         -moz-user-select: none;
         -webkit-user-select: none;
         list-style-type: none;
+    }
+
+    .selectedTab {
+        width: 100px;
+        background-color: #AFD9FF;
+        
+        border-width: 10px;
+        border-top-style: groove;
+        border-left-style: none;
+        border-right-style: none;
+        border-bottom-style: none;
+        border-radius: 0px;
+        
+        border-top-left-radius: 100px;
+        border-top-right-radius: 100px;
+        border-bottom-right-radius: 0px;
+        border-bottom-left-radius: 0px;
+        
+        padding-bottom: 0px;
+        margin-bottom: 0px;
+        margin-left: 0px;
+        margin-right: 10px;
+    }
+
+    .unselectedTab {
+        width: 100px;
+        background-color: #E4F2FF;
+        
+        border-width: 10px;
+        border-top-style: groove;
+        border-left-style: none;
+        border-right-style: none;
+        border-bottom-style: none;
+
+        border-top-left-radius: 100px;
+        border-top-right-radius: 100px;
+        border-bottom-right-radius: 0px;
+        border-bottom-left-radius: 0px;
+        
+        padding-bottom: 0px;
+        margin-bottom: 0px;
+        margin-left: 0px;
+        margin-right: 10px;
+    }
+
+    .tabDiv {
+        margin-right: 0;
+        margin-left: 0;
+        width: 90%;
+        
+        border: 10px;
+        margin-top: 0px;
+        border-style: solid;
+        border-color: #AFD9FF;
+    }
+
+    .tabBottom {
+        margin-right: 0;
+        margin-left: 0;
+        width: 90%;
+       
+        border: 0;
+        margin-top: 0px;
+        margin-bottom: 0px;
+        padding-top: 0px;
+        background-color: #AFD9FF;
     }
     
   script(type="text/javascript", src="scripts/NovaPiChart.js")
@@ -749,51 +815,82 @@ block headerAdditions
           populateConfigSelect(configurationList);
         });
     };
+
+    function showTab(tab) {
+        var tabNames = [];
+        tabNames.push("settingsGroups");
+        tabNames.push("settingsProfiles");
+        tabNames.push("settingsNodes");
+        tabNames.push("settingsScripts");
+
+        for (var i = 0; i < tabNames.length; i++) {
+            document.getElementById(tabNames[i]).style.display = "none";
+            document.getElementById("b" + tabNames[i]).className = "unselectedTab";
+        }
+        
+        
+
+        document.getElementById(tab).style.display = "block";
+        document.getElementById("b" + tab).className = "selectedTab";
+    }
   
 block content
   div#setup(onclick='handleOnclick(event);')
-    h2 Edit Configurations
-    div#addNewConfig
-      button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch') Add Group
-      button#cloneConfig(onclick='showLightBox("1")', title='Create a new configuration group by cloning an existing configuration') Clone Group
-      br
-      br
-      button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') Create Group From Network Scan
+    button.selectedTab#bsettingsGroups(onclick='showTab("settingsGroups")') Groups
+    button.unselectedTab#bsettingsProfiles(onclick='showTab("settingsProfiles")') Profiles
+    button.unselectedTab#bsettingsNodes(onclick='showTab("settingsNodes")') Nodes
+    button.unselectedTab#bsettingsScripts(onclick='showTab("settingsScripts")') Scripts
 
-      br
-      br
-
-    div#treeAndPiContainer(style="border: 3px solid black; display: inline-block; margin: 5px 5px 5px 5px; text-align: center")
-      h1 Current Group
-      select#configurations(onchange='GetConfigurationSummary()')
-      button#removeConfig(onclick='removeConfig()', title='Delete the currently selected group') Delete Group
+    
+    div.tabDiv#settingsGroups
+      h1 Edit Configurations
+      button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch')
+        img.buttonIcon(src="images/add.png") 
+        span.buttonSpan Add Group
+      button#cloneConfig(onclick='showLightBox("1")', title='Create a new configuration group by cloning an existing configuration')
+        img.buttonIcon(src="images/add.png") 
+        span.buttonSpan Clone Group
       
-      div(style="margin-top: 20px")
-      hr
+      button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') Create Group From Network Scan
+      
+      br
+      br
+      h2 Current Group
+      select#configurations(onchange='GetConfigurationSummary()')
+      button#removeConfig(onclick='removeConfig()', title='Delete the currently selected group')
+        img.buttonIcon(src="images/delete.png") 
+        span.buttonSpan Delete Group
+
+
+    div.tabDiv#settingsProfiles(style="display: none;")
       h1 Current Profile Configuration
-      button(onclick="window.location='/configHoneydProfiles'") Edit Profiles
+      button(onclick="window.location='/configHoneydProfiles'")
+        img.buttonIcon(src="images/edit.png") 
+        span.buttonSpan Edit Profiles
       br
       br
-      br
+
       div#treeDiv
         label Loading...
     
-      div(style="margin-top: 20px")
-      hr
+    div.tabDiv#settingsNodes(style="display: none;")
       h1 Current Node Configuration
-      button(onclick="window.location='/configHoneydNodes'") Edit Nodes
+      button(onclick="window.location='/configHoneydNodes'")
+        img.buttonIcon(src="images/edit.png") 
+        span.buttonSpan Edit Nodes
       br
       br
-      br
+      
       div#piChart
 
-      div(style="margin-top: 20px")
-      hr
+    div.tabDiv#settingsScripts(style="display: none;")
       h1 Current Script Usage
-      button(onclick="window.location='/scripts'") Edit Scripts
+      button(onclick="window.location='/scripts'")
+        img.buttonIcon(src="images/edit.png") 
+        span.buttonSpan Edit Scripts
       br
       br
-      br
+      
       table(border='1', id='sizeAnchor')
         thead
           tr
@@ -852,4 +949,8 @@ block content
               th(style='background-color: #d0e9fc;') Behavior
           tbody#portsetHook
       br
-    button#closeLB(onclick='closeLightbox()') Close
+    button#closeLB(onclick='closeLightbox()')
+      img.buttonIcon(src="images/cancel.png")
+      span.buttonSpan Cancel
+
+

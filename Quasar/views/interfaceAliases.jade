@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -59,7 +59,7 @@ block headerAdditions
             row.push(i);
             row.push(interfaceAliases[i]);
         
-            row.push("<button onclick='DeleteAlias(\\"" + i + "\\")'>Delete</button>");
+            row.push("<button class='button' onclick='DeleteAlias(\\"" + i + "\\")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Delete</span></button>");
             grid.PushEntry(row);
             
             
@@ -72,17 +72,24 @@ block content
   h1 Interface Aliases
 
   br
-  span(style="width:100px; display: inline-block;") Interface:
-  select#interfaceSelection
-    - each interface, i in INTERFACES
-      option(value=interface) #{interface}
- 
-  br
-  span(style="width:100px; display: inline-block;") Alias: 
-  input#aliasSelection(type="text", placeholder="Enter name of alias", onkeypress='if(event.keyCode == 13){AddNewAlias()}')
+  table
+    tr
+      td
+        span Interface
+      td
+        select#interfaceSelection(style="width: 98%; display: block")
+          - each interface, i in INTERFACES
+            option(value=interface) #{interface}
+    tr
+      td
+        span Alias
+      td
+        input#aliasSelection(type="text", placeholder="Enter name of alias", onkeypress='if(event.keyCode == 13){AddNewAlias()}')
 
   br
-  button#addNewAliasButton(onclick="AddNewAlias()") Add/Update Alias
+  button.button#addNewAliasButton(onclick="AddNewAlias()")
+    img.buttonIcon(src="images/add.png")
+    span.buttonSpan Add/Update Alias
   
   br
   br

@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -121,7 +121,9 @@ block content
   div(style="height: 250px;")
     div#gridDiv(style="height: 250px")
   br
-  button(onClick="deleteSelectedItems()") Delete Selected Entry
+  button.button(onClick="deleteSelectedItems()")
+    img.buttonIcon(src="images/delete.png")
+    span.buttonSpan Delete Selected Entry
   
   br
   br
@@ -138,6 +140,8 @@ block content
   input#newEntry(type="text", placeholder="x.x.x.x/xx", onkeypress='if(event.keyCode == 13){addNewItem()}')
   br
 
-  button(onClick="addNewItem()") Add to Whitelist
+  button.button(onClick="addNewItem()")
+    img.buttonIcon(src="images/add.png")
+    span.buttonSpan Add to Whitelist
  
 

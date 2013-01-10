@@ -50,6 +50,8 @@ input[type=button], input[type=submit], button, .button, .sideBarButton {
 	text-align: center;
 	text-decoration: none;
 	color: black;
+	margin-left: 2px;
+	margin-right: 2px;
 }
 
 .sideBarButton {
@@ -78,7 +80,7 @@ input {
     background-position: center top;
     background-repeat: repeat-x;
     border: 1px solid #769DC0;
-    padding: 2px 8px 4px;
+    padding: 2px 2px 4px 2px;
 }
 
 h1 {
@@ -192,3 +194,13 @@ html, body {
 }
 
 .align-left {float:left; margin: 0 15px 15px 0;}
+
+.buttonIcon {
+	margin-right: 2px;
+	height: 15px;
+	vertical-align:middle;
+}
+
+.buttonSpan {
+	vertical-align:middle;
+}
