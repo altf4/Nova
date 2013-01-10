@@ -93,7 +93,7 @@ coverageTests: test-prepare
 	$(MAKE) -C NovaTest/Coverage
 
 #Unit tests
-test: debug test-prepare
+test: test-prepare
 	$(MAKE) -C NovaTest/Debug
 
 test-prepare:
@@ -334,6 +334,7 @@ reset: uninstall-files
 
 reset-debug: 
 	$(MAKE) clean
+	$(MAKE) debug
 	$(MAKE) test
 	$(MAKE) reinstall-debug
 
