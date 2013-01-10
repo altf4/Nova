@@ -1,6 +1,6 @@
 //============================================================================
 // Name        : MacAddressDb.h
-// Copyright   : DataSoft Corporation 2011-2012
+// Copyright   : DataSoft Corporation 2011-2013
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
