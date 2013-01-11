@@ -209,7 +209,7 @@ block headerAdditions
         {
             var element = document.getElementById("nodeCountType");
             var count = element.options[element.selectedIndex].value;
-            now.ShowAutoConfig(count, GetNumNodes(), GetInterfaces(), GetSubnets(), GetGroupName(), GetAppend(), autoscancb, routeToReview); 
+            now.ShowAutoConfig(GetNodeInterface(), count, GetNumNodes(), GetInterfaces(), GetSubnets(), GetGroupName(), GetAppend(), autoscancb, routeToReview); 
         } 
         catch(err) 
         {
@@ -278,6 +278,11 @@ block headerAdditions
           }
         }
         return num;
+    }
+
+    function GetNodeInterface()
+    {
+        return document.getElementById("nodeInterface").value;
     }
     
     function GetInterfaces()
@@ -447,6 +452,11 @@ block headerAdditions
       var checked = true;
       for(var i in interfaceList)
       {
+
+        var option = document.createElement('option');
+        option.innerHTML = interfaceList[i];
+        document.getElementById("nodeInterface").appendChild(option);  
+
         now.GetSubnetFromInterface(interfaceList[i], i, function(iface, subnet, index){
           if(subnet == '')
           {
@@ -513,6 +523,12 @@ block content
       option(value="ratio") Ratio
       option(value="range") IP Range
     input(type="number", name="numNodes", id="numNodes", min="1", value="1")
+    br
+    br
+    label(style='font-weight: bold') Interface to create nodes on
+    br
+    select#nodeInterface
+    br
     br
     table
       thead

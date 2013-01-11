@@ -58,6 +58,7 @@ string nmapFileName;
 uint numNodes;
 double nodeRatio;
 string nodeRange;
+string nodeInterface;
 vector<pair<int, int> > nodeRangeVector;
 string group;
 ofstream lockFile;
@@ -104,7 +105,8 @@ int main(int argc, char ** argv)
 				("num-nodes,n", po::value<uint>(&numNodes), "Number of nodes to create (can't be used with -r)")
 				("num-nodes-ratio,r", po::value<double>(&nodeRatio), "Ratio of haystack nodes to create vs real nodes (eg, 2 for 2x haystack nodes per real host or 0.5 for half the number of haystack nodes as real hosts)")
 				("num-nodes-range,e", po::value<string>(&nodeRange), "Range of IPs which to assign nodes to; the range will be filled completely with haystack nodes.")
-				("interface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
+				("scaninterface,i", po::value<vector<string> >(), "Interface(s) to use for subnet selection.")
+				("nodeinterface", po::value<string>(&nodeInterface), "Interface to put newly created nodes on.")
 				("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
 				("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
 				("group,g", po::value<string>(), "Name for new haystack group created by the AutoConfig tool. Incompatible with (--append-to,-t) flag")
@@ -213,7 +215,14 @@ int main(int argc, char ** argv)
 			cout << "Number of nodes to create: " << numNodes << '\n';
 			numberOfNodesType = FIXED_NUMBER_OF_NODES;
 		}
-		if(vm.count("interface"))
+
+		if (!vm.count("nodeinterface"))
+		{
+			nodeInterface = Config::Inst()->GetInterface(0);
+		}
+
+		cout << "Creating nodes on interface " << nodeInterface << endl;
+		if(vm.count("scaninterface"))
 		{
 			vector<string> interfaces_flag = vm["interface"].as< vector<string> >();
 
@@ -1127,8 +1136,10 @@ void Nova::GenerateConfiguration()
 			//Pick a MAC address for the node:
 			string macAddress = HoneydConfiguration::Inst()->GenerateRandomUnusedMAC(vendor);
 
+
+
 			//Make a node for that profile
-			HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, Config::Inst()->GetInterface(0),
+			HoneydConfiguration::Inst()->AddNode(winningPersonality->m_name, "DHCP", macAddress, nodeInterface,
 				winningPersonality->GetRandomPortSet());
 		}
 	}

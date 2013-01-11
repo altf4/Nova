@@ -2652,24 +2652,21 @@ everyone.now.GetCaptureSession = function (callback)
     callback(ret);
 }
 
-everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subnets, groupName, append, callback, route)
+everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, interfaces, subnets, groupName, append, callback, route)
 {
     var executionString = 'haystackautoconfig';
-    var nFlag = '-n';
-    var rFlag = '-r';
-    var iFlag = '-i';
-    var aFlag = '-a';
-    var gFlag = '-g';
-    var eFlag = '-e';
-    var tFlag = '-t';
 
     var hhconfigArgs = new Array();
+
+
+	hhconfigArgs.push('--nodeinterface');
+	hhconfigArgs.push(nodeInterface);
 
     if(numNodesType == "fixed") 
     {
         if(numNodes !== undefined) 
         {
-            hhconfigArgs.push(nFlag);
+            hhconfigArgs.push('-n');
             hhconfigArgs.push(numNodes);
         }
     } 
@@ -2677,7 +2674,7 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
     {
         if(numNodes !== undefined) 
         {
-            hhconfigArgs.push(rFlag);
+            hhconfigArgs.push('-r');
             hhconfigArgs.push(numNodes);
         }
     }
@@ -2685,31 +2682,31 @@ everyone.now.ShowAutoConfig = function (numNodesType, numNodes, interfaces, subn
     {
       if(numNodes !== undefined)
       {
-        hhconfigArgs.push(eFlag);
+        hhconfigArgs.push('e');
         hhconfigArgs.push(numNodes);
       }
     }
     
     if(interfaces !== undefined && interfaces.length > 0)
     {
-        hhconfigArgs.push(iFlag);
+        hhconfigArgs.push('-i');
         hhconfigArgs.push(interfaces);
     }
     if(subnets !== undefined && subnets.length > 0)
     {
-        hhconfigArgs.push(aFlag);
+        hhconfigArgs.push('-a');
         hhconfigArgs.push(subnets);
     }
     if(groupName !== undefined && groupName !== '*')
     {
-      hhconfigArgs.push(gFlag);
+      hhconfigArgs.push('-g');
       hhconfigArgs.push(groupName);
       honeydConfig.AddConfiguration(groupName, 'false', '');
     config.SetCurrentConfig(groupName);
     }
     if(append !== undefined && append !== '*')
     {
-      hhconfigArgs.push(tFlag);
+      hhconfigArgs.push('t');
       hhconfigArgs.push(append);
     }
 
