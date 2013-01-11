@@ -650,10 +650,42 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
 }
 
 app.get('/honeydConfigManage', function(req, res){
+  var tab;
+  if (req.query["tab"] === undefined)
+  {
+    tab = "settingsGroups";
+  }
+  else
+  {
+    tab = req.query["tab"];
+  }
+
+
+  var nodeNames = honeydConfig.GetNodeMACs();
+  var nodeList = [];
+  
+  for (var i = 0; i < nodeNames.length; i++)
+  {
+      var node = honeydConfig.GetNode(nodeNames[i]);
+      var push = {};
+      push.enabled = node.IsEnabled();
+      push.pfile = node.GetProfile();
+      push.ip = node.GetIP();
+      push.mac = node.GetMAC();
+      push.interface = node.GetInterface();
+      nodeList.push(push);
+  }
+
+  var interfaces = config.ListInterfaces().sort();
+
   res.render('honeydConfigManage.jade', {
     locals: {
       configurations: honeydConfig.GetConfigurationsList(),
-      current: config.GetCurrentConfig()
+      current: config.GetCurrentConfig(),
+      nodes: nodeList,
+      INTERFACES: interfaces,
+      interfaceAliases: ConvertInterfacesToAliases(interfaces),
+      tab: tab
     }
   });
 });
@@ -929,21 +961,6 @@ app.get('/configHoneydNodes', function (req, res)
         return;
     }
 
-    var nodeNames = honeydConfig.GetNodeMACs();
-    var nodeList = [];
-    
-    for (var i = 0; i < nodeNames.length; i++)
-    {
-        var node = honeydConfig.GetNode(nodeNames[i]);
-        var push = {};
-        push.enabled = node.IsEnabled();
-        push.pfile = node.GetProfile();
-        push.ip = node.GetIP();
-        push.mac = node.GetMAC();
-        push.interface = node.GetInterface();
-        nodeList.push(push);
-    }
-    
     var profiles = honeydConfig.GetLeafProfileNames();
     
     var interfaces = config.ListInterfaces().sort();
@@ -953,7 +970,6 @@ app.get('/configHoneydNodes', function (req, res)
       INTERFACES: interfaces,
       interfaceAliases: ConvertInterfacesToAliases(interfaces),
       profiles: profiles,
-      nodes: nodeList,
       currentGroup: config.GetGroup()
     }
   });

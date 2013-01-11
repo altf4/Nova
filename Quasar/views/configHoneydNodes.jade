@@ -20,10 +20,8 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaPiChart.js")
-  script(type="text/javascript", src="scripts/NovaGrid.js")
 
   script
-    var grid;
     var currentInterface;
     var pfile;
     var interfaces = "#{INTERFACES}".split(',');
@@ -185,7 +183,7 @@ block headerAdditions
           now.RestartHaystack();
         }
       }
-      location.reload(true);
+      window.location = '/honeydConfigManage?tab=settingsNodes';
     }
     
     function ipTypeChanged()
@@ -203,57 +201,6 @@ block headerAdditions
       document.getElementById("ip4").disabled = ipEditEnabled;
      }
     
-    function deleteSelectedItems()
-    {
-      var items = grid.GetSelected();
-     
-      for(var i in items)
-      {
-        grid.DeleteRow(items[i]);
-      }
-     
-      try
-      {
-        now.deleteNodes(items, errorMessageCallback);
-      }
-      catch(err)
-      {
-        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-        console.log("err was: " + err);
-      }   
-      grid.Render();
-    }
-
-    function errorMessageCallback(success, message)
-    {
-      if(success != true)
-      {
-        alert("Unable to complete operation due to error: " + message);
-        location.reload(true);
-        return;
-      }
-      now.IsHaystackUp(checkIfRestartNeeded); 
-    }
-
-    function deleteAllNodes()
-    {
-      var gridElements = grid.GetElements();
-      var passToDeleteNodes = [];
-      
-      for(var i in gridElements)
-      {
-        passToDeleteNodes.push(i);
-      }
-      try
-      {
-        now.deleteNodes(passToDeleteNodes, errorMessageCallback);
-      }
-      catch(err)
-      {
-        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-        console.log("err was: " + err);
-      }
-    }
 
     function checkOnlyOne(checkedBox)
     {
@@ -310,201 +257,20 @@ block headerAdditions
 
     }
 
-    function changeSelectedInterfaces()
-    {
-      var items = grid.GetSelected();
-      if(items != '' && items != undefined)
-      {
-        var newInterface = prompt("Change selected nodes' interface to ", 'new interface');
-        if(newInterface == '' || newInterface == undefined)
-        {
-          return;
-        }
-        else
-        {
-          var change = false;
-          for(var i in interfaces)
-          {
-            if(newInterface == interfaces[i])
-            {
-              change = true;
-            }
-          }
-          if(change == true)
-          {
-            now.ChangeNodeInterfaces(items, newInterface, function(){
-              location.reload(true);
-            }); 
-          }
-          else
-          {
-            alert('That is not a valid interface! The choices are ' + interfaces.join());
-            changeSelectedInterfaces();
-          }
-        }
-      }
-      else
-      {
-        alert('Must select some nodes first!');
-      }
-    }
-
-    function editSelectedItem()
-    {
-      var items = grid.GetSelected();
-      if (items.length != 1)
-      {
-        alert('You can only edit one node at a time');
-        return;
-      }
-
-      var nodeName = items[0];
-
-      if (nodeName == "Doppelganger") 
-      {
-        alert('The Doppelganger node can not be edited here');
-        return; 
-      }
-      window.location.href = "editHoneydNode?node=" + nodeName;
-    }
-
     function configurationRestored()
     {
         now.IsHaystackUp(checkIfRestartNeeded); 
     }
     
-    function onGridRendered()
-    {
-       var tablePages = document.getElementById("tablePages");
-       tablePages.innerHTML = "";
-       grid.populateTablePages(tablePages);   
-    }
     
-    function deleteByProfile(profileName)
-    {
-      var gridElements = grid.GetElements();
-      var passToDeleteNodes = [];
-      for(var i in gridElements)
-      {
-        if(gridElements[i][2] === profileName)
-        {
-          passToDeleteNodes.push(gridElements[i][1]);
-          grid.DeleteRow(gridElements[i][1]);
-        }
-      }
-      try
-      {
-        now.deleteNodes(passToDeleteNodes, errorMessageCallback);
-      }
-      catch(err)
-      {
-        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-        console.log("err was: " + err);
-      }
-    }
-
-    function dhcpStatusCallback(dhcpNodes)
-    {
-        for (var i in dhcpNodes)
-        {
-            var mac = dhcpNodes[i].mac.replace(/ /, '');
-            if (grid.GetElements()[mac] !== undefined)
-            {
-                var oldRow = grid.m_elements[mac];
-                oldRow[1] = "DHCP (currently " + dhcpNodes[i].ip + ")";
-                grid.PushEntry(oldRow);
-                grid.Render();
-            }
-        }
-    }
     
     function Init()
     {
-      var gridStructure = [];
-      gridStructure.push({name: "Enabled"});
-      gridStructure.push({name: "IP"});
-      gridStructure.push({name: "Interface"});
-      gridStructure.push({name: "MAC"});
-      gridStructure.push({name: "Profile"});
       
-      grid = new NovaGrid(gridStructure, 3, document.getElementById('nodeTable'), 'grid', true);
-      
-      grid.SetSortByKey(1);
-      grid.SetRowsPerPage(50);
-      grid.SetRenderCallback(onGridRendered);
-      
-      var nodeList = !{JSON.stringify(nodes)};
       var interfaces = !{JSON.stringify(INTERFACES)};
       var interfaceAliases = !{JSON.stringify(interfaceAliases)}
 
-      for(var i in nodeList)
-      {
-        var row = [];
-        row.push(String(nodeList[i].enabled));
-        
-        if(nodeList[i].ip != "DHCP") 
-        {
-          row.push(String(nodeList[i].ip));
-        } 
-        else 
-        {
-          row.push("DHCP");
-        }
-        
-        var alias = "";
-        for(var j = 0; j < interfaces.length; j++) 
-        {
-          if(interfaces[j] == nodeList[i].interface) 
-          {
-            alias = interfaceAliases[j];
-          }
-        }
-
-        if(alias != "" && alias != nodeList[i].interface) 
-        {
-          row.push(nodeList[i].interface + " (alias: " + alias + ")"); 
-        } 
-        else 
-        {
-          row.push(nodeList[i].interface); 
-        }
-
-        row.push(String(nodeList[i].mac));
-        row.push(String(nodeList[i].pfile));
-
-        grid.PushEntry(row);
-      }
       
-      grid.Render();
-      
-      var gridElements = grid.GetElements();
-      
-      var nodesPerProfile = {};
-      var piChartRender = [];
-      
-      for(var i in gridElements)
-      {
-        var pfile = gridElements[i][4];
-        if(nodesPerProfile[pfile] === undefined)
-        {
-          nodesPerProfile[pfile] = 1;
-        }
-        else
-        {
-          nodesPerProfile[pfile]++;
-        }
-      }
-      
-      for(var pfile in nodesPerProfile)
-      {
-        var p = {};
-        p.name = pfile;
-        p.value = nodesPerProfile[pfile];
-        piChartRender.push(p);
-      }
-      
-      var pi = new NovaPiChart('piChart', 200, 'deleteByProfile');
-      pi.Render(piChartRender);
     }
     
     function repopulateSelect(src)
@@ -566,17 +332,6 @@ block headerAdditions
       }
     }
 
-    function checkForEditInterface()
-    {
-      if(interfaces.length > 1)
-      {
-        var button = document.createElement('a');
-        button.setAttribute('onclick', 'changeSelectedInterfaces()');
-        button.setAttribute('class', 'button');
-        button.innerHTML = '<img src="images/edit.png" class="buttonIcon"/><span class="buttonSpan">Change Node Interfaces</span>';
-        document.getElementById('generateHook').appendChild(button);
-      }
-    }
     
     window.onload = function()
     {
@@ -592,45 +347,12 @@ block headerAdditions
         Init();
         checkOnlyOne('if0');
         profileChanged();
-        now.GetHaystackDHCPStatus(dhcpStatusCallback);
-        checkForEditInterface();
       });
 
     }
 
 block content
   h1 Current Haystack Node Configuration
-  div#piChart
-  br
-  div#node_header
-    br
-    div#tablePages
-    br
-  div.novaGrid
-    div#nodeTable
-  br
-  br
-
-  button.button(onclick="deleteSelectedItems()") 
-    img.buttonIcon(src="images/delete.png")
-    span.buttonSpan Delete Selected Nodes
-  
-  button.button(onclick="deleteAllNodes()")
-    img.buttonIcon(src="images/delete.png")
-    span.buttonSpan Delete All Nodes
-
-  button.button(onclick="editSelectedItem()")
-    img.buttonIcon(src="images/edit.png")
-    span.buttonSpan Edit Selected Node
-
-  br
-  br
-  div#generateHook
-    a.button(href="/editHoneydNode?node=doppelganger")
-      img.buttonIcon(src="images/edit.png")
-      span Edit Doppelganger
-  br
-  br
   h2 Create Honeyd Nodes
   label Show Only Leaf Profiles?
   input(type='checkbox', checked=true, onclick='repopulateSelect(this)')
