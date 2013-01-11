@@ -1,5 +1,5 @@
 //- ============================================================================
-//-  Copyright   : DataSoft Corporation 2011-2012
+//-  Copyright   : DataSoft Corporation 2011-2013
 //-  Nova is free software: you can redistribute it and/or modify
 //-   it under the terms of the GNU General Public License as published by
 //-   the Free Software Foundation, either version 3 of the License, or
@@ -16,5 +16,66 @@
 
 extends layout
 
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
+  script(type="text/javascript", src="scripts/NovaGrid.js")
+  
+  script
+    var grid;
+
+    function init(){
+        var columns = new Array();
+        columns.push({name: "Index"});
+        columns.push({name: "Type"});
+        columns.push({name: "Mode"});
+        columns.push({name: "Weight"});
+
+        grid = new NovaGrid(columns, 0, aliasTable, 'grid', false);
+
+        var interfaceAliases = !{JSON.stringify(interfaceAliases)};
+        for (i in interfaceAliases)
+        {
+            var row = new Array();
+            row.push(i);
+            row.push(interfaceAliases[i]);
+        
+            row.push("<button class='button' onclick='DeleteAlias(\\"" + i + "\\")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Delete</span></button>");
+            grid.PushEntry(row);
+            
+            
+        }
+    
+        grid.Render();
+    };
+  
 block content
-	h1 Classifier Configuration
+  h1 Interface Aliases
+
+  br
+  table
+    tr
+      td
+        span Interface
+      td
+        select#interfaceSelection(style="width: 98%; display: block")
+          - each interface, i in INTERFACES
+            option(value=interface) #{interface}
+    tr
+      td
+        span Alias
+      td
+        input#aliasSelection(type="text", placeholder="Enter name of alias", onkeypress='if(event.keyCode == 13){AddNewAlias()}')
+
+  br
+  button.button#addNewAliasButton(onclick="AddNewAlias()")
+    img.buttonIcon(src="images/add.png")
+    span.buttonSpan Add/Update Alias
+  
+  br
+  br
+  h1 Current Aliases
+  div.novaGrid
+    div#aliasTable
+

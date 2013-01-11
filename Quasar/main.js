@@ -82,6 +82,9 @@ var Validator = require('validator').Validator;
 var dns = require('dns');
 var wrench = require('wrench');
 
+var classifiersConstructor = new require('./classifiers.js');
+var classifiers = new classifiersConstructor(config);
+
 var Tail = require('tail').Tail;
 var NovaHomePath = config.GetPathHome();
 var NovaSharedPath = config.GetPathShared();
