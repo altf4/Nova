@@ -17,6 +17,7 @@
 extends layout
 
 block headerAdditions
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
   style(type="text/css")
     a.selectedProfile, a.unselectedProfile {
@@ -104,6 +105,7 @@ block headerAdditions
     .tabDiv {
         margin-right: 0;
         margin-left: 0;
+        padding: 5px 50px 20px 50px;
         width: 90%;
         
         border: 10px;
@@ -124,8 +126,13 @@ block headerAdditions
         background-color: #AFD9FF;
     }
     
+  script(type="text/javascript", src="scripts/NovaGrid.js")
   script(type="text/javascript", src="scripts/NovaPiChart.js")
   script
+    var grid;
+    var interfaces = !{JSON.stringify(INTERFACES)};
+    var interfaceAliases = !{JSON.stringify(interfaceAliases)}
+    var nodeList = !{JSON.stringify(nodes)};
     var configurationList = !{JSON.stringify(configurations)};
     var theDoc = document;
     var profilesArray = {};
@@ -161,6 +168,13 @@ block headerAdditions
       {
         console.log('Creating clone configuration ' + configName + ' based on ' + cloneInfo);
       }
+    }
+    
+    function onGridRendered()
+    {
+       var tablePages = document.getElementById("tablePages");
+       tablePages.innerHTML = "";
+       grid.populateTablePages(tablePages);   
     }
     
     function populateConfigSelect(configs)
@@ -383,8 +397,8 @@ block headerAdditions
             piChartRender.push(p);
           }
           
-          var pi = new NovaPiChart('piChart', 200);
-          pi.Render(piChartRender);
+           var pi = new NovaPiChart('piChart', 200, 'deleteByProfile');
+           pi.Render(piChartRender);
         });
       }
       else
@@ -809,11 +823,270 @@ block headerAdditions
       });
     }
     
-    function init(){
-        now.ready(function()
+    function checkIfRestartNeeded(haystackUp)
+    {
+      if (haystackUp)
+      {
+        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
+        if (restartHaystack)
         {
-          populateConfigSelect(configurationList);
-        });
+          now.RestartHaystack();
+        }
+      }
+      location.reload(true);
+    }
+    
+    function errorMessageCallback(success, message)
+    {
+      if(success != true)
+      {
+        alert("Unable to complete operation due to error: " + message);
+        location.reload(true);
+        return;
+      }
+      now.IsHaystackUp(checkIfRestartNeeded); 
+    }
+
+    function deleteAllNodes()
+    {
+      var gridElements = grid.GetElements();
+      var passToDeleteNodes = [];
+      
+      for(var i in gridElements)
+      {
+        passToDeleteNodes.push(i);
+      }
+      try
+      {
+        now.deleteNodes(passToDeleteNodes, errorMessageCallback);
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }
+    }
+    
+    function deleteSelectedItems()
+    {
+      var items = grid.GetSelected();
+     
+      for(var i in items)
+      {
+        grid.DeleteRow(items[i]);
+      }
+     
+      try
+      {
+        now.deleteNodes(items, errorMessageCallback);
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }   
+      grid.Render();
+    }
+
+    function deleteByProfile(profileName)
+    {
+      var gridElements = grid.GetElements();
+      var passToDeleteNodes = [];
+      for(var i in gridElements)
+      {
+        if(gridElements[i][4] === profileName)
+        {
+          passToDeleteNodes.push(gridElements[i][3]);
+          grid.DeleteRow(gridElements[i][3]);
+        }
+      }
+      try
+      {
+        now.deleteNodes(passToDeleteNodes, errorMessageCallback);
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }
+    }
+    
+
+    function changeSelectedInterfaces()
+    {
+      var items = grid.GetSelected();
+      if(items != '' && items != undefined)
+      {
+        var newInterface = prompt("Change selected nodes' interface to ", 'new interface');
+        if(newInterface == '' || newInterface == undefined)
+        {
+          return;
+        }
+        else
+        {
+          var change = false;
+          for(var i in interfaces)
+          {
+            if(newInterface == interfaces[i])
+            {
+              change = true;
+            }
+          }
+          if(change == true)
+          {
+            now.ChangeNodeInterfaces(items, newInterface, function(){
+              location.reload(true);
+            }); 
+          }
+          else
+          {
+            alert('That is not a valid interface! The choices are ' + interfaces.join());
+            changeSelectedInterfaces();
+          }
+        }
+      }
+      else
+      {
+        alert('Must select some nodes first!');
+      }
+    }
+    function dhcpStatusCallback(dhcpNodes)
+    {
+        for (var i in dhcpNodes)
+        {
+            var mac = dhcpNodes[i].mac.replace(/ /, '');
+            if (grid.GetElements()[mac] !== undefined)
+            {
+                var oldRow = grid.m_elements[mac];
+                oldRow[1] = "DHCP (currently " + dhcpNodes[i].ip + ")";
+                grid.PushEntry(oldRow);
+                grid.Render();
+            }
+        }
+    }
+    
+    function checkForEditInterface()
+    {
+      if(interfaces.length > 1)
+      {
+        var button = document.createElement('a');
+        button.setAttribute('onclick', 'changeSelectedInterfaces()');
+        button.setAttribute('class', 'button');
+        button.innerHTML = '<img src="images/edit.png" class="buttonIcon"/><span class="buttonSpan">Change Node Interfaces</span>';
+        document.getElementById('generateHook').appendChild(button);
+      }
+    }
+    
+    function editSelectedItem()
+    {
+      var items = grid.GetSelected();
+      if (items.length != 1)
+      {
+        alert('You can only edit one node at a time');
+        return;
+      }
+
+      var nodeName = items[0];
+
+      if (nodeName == "Doppelganger") 
+      {
+        alert('The Doppelganger node can not be edited here');
+        return; 
+      }
+      window.location.href = "editHoneydNode?node=" + nodeName;
+    }
+    
+    function init(){
+      now.ready(function()
+      {
+        populateConfigSelect(configurationList);
+
+
+        var gridStructure = [];
+        gridStructure.push({name: "Enabled"});
+        gridStructure.push({name: "IP"});
+        gridStructure.push({name: "Interface"});
+        gridStructure.push({name: "MAC"});
+        gridStructure.push({name: "Profile"});
+        
+        grid = new NovaGrid(gridStructure, 3, document.getElementById('nodeTable'), 'grid', true);
+        
+        grid.SetSortByKey(1);
+        grid.SetRowsPerPage(50);
+        grid.SetRenderCallback(onGridRendered);
+      
+         for(var i in nodeList)
+         {
+           var row = [];
+           row.push(String(nodeList[i].enabled));
+           
+           if(nodeList[i].ip != "DHCP") 
+           {
+             row.push(String(nodeList[i].ip));
+           } 
+           else 
+           {
+             row.push("DHCP");
+           }
+           
+           var alias = "";
+           for(var j = 0; j < interfaces.length; j++) 
+           {
+             if(interfaces[j] == nodeList[i].interface) 
+             {
+               alias = interfaceAliases[j];
+             }
+           }
+
+           if(alias != "" && alias != nodeList[i].interface) 
+           {
+             row.push(nodeList[i].interface + " (alias: " + alias + ")"); 
+           } 
+           else 
+           {
+             row.push(nodeList[i].interface); 
+           }
+
+           row.push(String(nodeList[i].mac));
+           row.push(String(nodeList[i].pfile));
+
+           grid.PushEntry(row);
+         }
+         
+         grid.Render();
+      
+         var gridElements = grid.GetElements();
+         
+         var nodesPerProfile = {};
+         var piChartRender = [];
+         
+         for(var i in gridElements)
+         {
+           var pfile = gridElements[i][4];
+           if(nodesPerProfile[pfile] === undefined)
+           {
+             nodesPerProfile[pfile] = 1;
+           }
+           else
+           {
+             nodesPerProfile[pfile]++;
+           }
+         }
+         
+         for(var pfile in nodesPerProfile)
+         {
+           var p = {};
+           p.name = pfile;
+           p.value = nodesPerProfile[pfile];
+           piChartRender.push(p);
+         }
+         
+          
+          now.GetHaystackDHCPStatus(dhcpStatusCallback);
+          checkForEditInterface();
+          });
+
+      showTab("#{tab}");
     };
 
     function showTab(tab) {
@@ -875,13 +1148,45 @@ block content
     
     div.tabDiv#settingsNodes(style="display: none;")
       h1 Current Node Configuration
-      button(onclick="window.location='/configHoneydNodes'")
-        img.buttonIcon(src="images/edit.png") 
-        span.buttonSpan Edit Nodes
+      div#piChart
+      br
+      div#node_header
+        br
+        div#tablePages
+        br
+      div.novaGrid
+        div#nodeTable
       br
       br
       
-      div#piChart
+      button.button(onclick="window.location = '/configHoneydNodes'")
+        img.buttonIcon(src="images/add.png")
+        span.buttonSpan Add New Nodes
+      br
+      
+      button.button(onclick="editSelectedItem()")
+        img.buttonIcon(src="images/edit.png")
+        span.buttonSpan Edit Selected Node
+      br
+
+      button.button(onclick="deleteSelectedItems()") 
+        img.buttonIcon(src="images/delete.png")
+        span.buttonSpan Delete Selected Nodes
+      br
+
+      br
+      button.button(onclick="deleteAllNodes()")
+        img.buttonIcon(src="images/delete.png")
+        span.buttonSpan Delete All Nodes
+
+
+      br
+      div#generateHook
+        button.button(onclick="window.location='/editHoneydNode?node=doppelganger'")
+          img.buttonIcon(src="images/edit.png")
+          span Edit Doppelganger
+      br
+      br
 
     div.tabDiv#settingsScripts(style="display: none;")
       h1 Current Script Usage
