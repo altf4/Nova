@@ -87,6 +87,17 @@ describe('classifiers', function(){
 			assert.deepEqual(classifierObjects[1], initial[1]);
 		});
 	});
+	
+	describe('#getClassifier(index)', function(){
+		it('should return default configuration of the classifier', function(){
+			resetClassifierConfig();
+		
+			assert.equal(classifiers.getClassifier(9), undefined);
+			assert.deepEqual(classifiers.getClassifier(0), initial[0]);
+			assert.deepEqual(classifiers.getClassifier(1), initial[1]);
+		});
+	});
+
 
 	describe('#addClassifier()', function() {
 		it('should add a classifier to the end of the list', function() {

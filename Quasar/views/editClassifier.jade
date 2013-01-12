@@ -1,0 +1,91 @@
+//- ============================================================================
+//-  Copyright   : DataSoft Corporation 2011-2013
+//-  Nova is free software: you can redistribute it and/or modify
+//-   it under the terms of the GNU General Public License as published by
+//-   the Free Software Foundation, either version 3 of the License, or
+//-   (at your option) any later version.
+//-
+//-   Nova is distributed in the hope that it will be useful,
+//-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//-   GNU General Public License for more details.
+//-
+//-   You should have received a copy of the GNU General Public License
+//-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
+//- ============================================================================
+
+extends layout
+
+block headerAdditions
+  script
+    var features = [];
+    var classifier = {};
+
+    function init() {
+      classifier = !{JSON.stringify(classifier)}; 
+      
+      var featureNames = !{JSON.stringify(featureNames)};
+      for (var i = 0; i < featureNames.length; i++) {
+        var feature = {
+          name: featureNames[i]
+          , enabled: false
+          , weight: 1
+          , threshold: ""
+        };
+
+
+        features.push(feature);
+      }
+
+      console.log(classifier);
+
+      ko.applyBindings(classifier);
+    }
+
+block content
+  h1 Classifier Editing
+
+  table
+    tr
+      td
+        span Classifier Type
+      td
+        select(data-bind="value: type")
+          option KNN
+          option THRESHOLD_TRIGGER
+    tr
+      td
+        span Mode
+      td
+        select(data-bind="value: mode")
+          option WEIGHTED
+          option HOSTILE_OVERRIDE
+          option BENIGN_OVERRIDE
+    tr
+      td
+        span Weight
+      td
+        input(type="number", data-bind="value: weight")
+
+  br
+
+  table
+    theader
+      td Feature Name
+      td Enabled
+      td Weight
+      td Hostile Threshold
+    tbody(data-bind="foreach: features")
+      tr
+        td(data-bind="text: name")
+        td
+          input(type="checkbox", data-bind="value: enabled")
+        td
+          input(type="text", data-bind="value: weight")
+        td
+          input(type="text", data-bind="value: threshold")
+
+  br
+  button.button
+    img.buttonIcon(src="/images/ok.png")
+    span.buttonSpan Submit

@@ -1457,8 +1457,48 @@ app.get("/editTLSCerts", function (req, res)
 
 app.get("/editClassifiers", function (req, res)
 {
-	res.render('editClassifiers.jade');	
+	res.render('editClassifiers.jade', {
+		locals: {
+        	classifiers: classifiers.getClassifiers()
+		}
+	});	
 });
+
+app.get("/editClassifier", function (req, res)
+{
+    if(req.query['classifierIndex'] == undefined)
+    {
+		var classifier = {
+			type: "THRESHOLD_TRIGGER"
+			, mode: "HOSTILE_OVERRIDE"
+			, config: "/config/newClassifier.config"
+			, weight: "0"
+			, strings: {}
+		};
+  	} else {
+		var index = req.query['classifierIndex'];
+		var classifier = classifiers.getClassifier(index);
+	}
+
+	res.render('editClassifier.jade', {
+		locals: {
+        	classifier: classifier
+			, featureNames: nova.GetFeatureNames()
+		}
+	});	
+});
+
+everyone.now.deleteClassifier = function(index, callback)
+{
+	classifiers.deleteClassifier(index);
+	if (callback) callback();
+}
+
+everyone.now.addClassifier = function(classifier, callback)
+{
+	classifiers.addClassifier(classifier);
+	if (callback) callback();
+}
 
 app.get("/interfaceAliases", function (req, res)
 {

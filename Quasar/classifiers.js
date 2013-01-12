@@ -44,7 +44,7 @@ Classifiers.prototype = {
 		}
 
 		try {
-			fs.writeFileSync(this.config.GetPathHome() + classifierObjects[i].config, stringsData, 'utf8');
+			fs.writeFileSync(this.config.GetPathHome() + '/' + classifierObjects[i].config, stringsData, 'utf8');
 		} catch (err) {
 			console.log("ERROR WRITING: " + err);
 		}
@@ -78,7 +78,7 @@ Classifiers.prototype = {
 		obj.strings = {};
 
 		try {
-			var stringsData = fs.readFileSync(this.config.GetPathHome() + obj.config, 'utf8').split("\n");
+			var stringsData = fs.readFileSync(this.config.GetPathHome() + '/' + obj.config, 'utf8').split("\n");
 		} catch (err) {
 			console.log("ERROR: " + err);
 		}
@@ -97,7 +97,17 @@ Classifiers.prototype = {
   	}
 	
 	return engineObjects;
-  }
+  },
+
+
+	getClassifier: function(index) {
+		var classifiers = this.getClassifiers();
+		if (classifiers.length > index) {
+			return classifiers[index];
+		} else {
+			return;
+		}
+	}
 };
 
 module.exports = Classifiers;
