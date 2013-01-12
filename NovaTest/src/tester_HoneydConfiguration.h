@@ -20,9 +20,12 @@
 #include "HoneydConfiguration/HoneydConfiguration.h"
 #include "HoneydConfiguration/Profile.h"
 #include "HoneydConfiguration/Node.h"
+#include <stdlib.h>
+#include <pwd.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-
-#define HC HoneydConfiguration::Inst()
+#define HC HoneydConfiguration::Inst()//this is the instantiation of the honeyd singleton config class
 
 using namespace Nova;
 
@@ -42,9 +45,58 @@ protected:
 	}
 };
 
+//create a false profile of random crap and write it
+//then read it back in and confirm that the structure is correct
 TEST_F(HoneydConfigurationTest, test_WriteAllTemplatesXML)
 {
 	Profile * p = new Profile("default", "TestProfile");
+	Profile * l = new Profile("p","TestProfile2");
+	p->SetDropRate("15");
+	p->SetPersonality("Linux 3.53");
+	p->SetUptimeMax(400000);
+	p->SetUptimeMin(0);
+	l->SetPersonality("Linux 3.53");
+	cout<<p->GetDropRate()<<endl;
+	EXPECT_EQ(p->GetDropRate(),"15");
+	cout<<p->GetPersonality()<<endl;
+	EXPECT_EQ(p->GetPersonality(),"Linux 3.53");
+	cout<<p->GetUptimeMax()<<endl;
+	EXPECT_EQ(p->GetUptimeMax(),400000);
+	cout<<p->GetUptimeMin()<<endl;
+	EXPECT_EQ(p->GetUptimeMin(),0);
+	cout<<p->GetCount()<<endl;
+
+	//if this of these 4 then its public and we need to set manually
+	p->SetDropRate();
+	p->SetPersonality();
+	p->SetUptimeMax();
+	p->SetUptimeMin();
+	p->m_avgPortCount = 15;
+	p->m_children.size();//contains the number of children that this node has, it should be 0
+	/*
+	attributes to test:
+	std::string GetRandomVendor();
+	PortSet *GetRandomPortSet();
+	PortSet *GetPortSet(std::string name);
+	uint GetVendorCount(std::string vendorName);
+	void RecalculateChildDistributions();
+	bool Copy(Profile *source);
+	std::string GetPersonality();
+	std::string GetName();
+	uint32_t GetCount();
+	std::string GetParentProfile();
+	std::vector<std::string> GetVendors();
+	std::vector<uint> GetVendorCounts();
+	bool IsPersonalityInherited();
+	bool IsUptimeInherited();
+	double m_distribution;
+
+	*/
+
+
+	//here the plan is to make profile p a custom profile and we want to
+	//verify that the custom profile p actually contains what we give it
+	//now the only question is how do we customize p ?!?!?
 	EXPECT_TRUE(HC->AddProfile(p));
 	EXPECT_TRUE(HC->WriteAllTemplatesToXML());
 	EXPECT_TRUE(HC->ReadAllTemplatesXML());
@@ -80,6 +132,30 @@ TEST_F(HoneydConfigurationTest, test_errorCases)
 	EXPECT_EQ(NULL, HC->GetNode("aouhaosnuheaonstuh"));
 
 }
+//test read/write permissions and also if the file is installed in the correct location and exists
+/*TEST_F(HoneydConfigurationTest,test_WriteProfilesToXML)
+{
+	//ls -l /etc/passwd
+	///home/rami/Code/Nova/Installer/userFiles/config/templates/default/profiles.xml
+	struct stat sb;
+	char a[100];
+	string rename1 = "cd " + home + "; mv profiles.xml profile.xml";
+	string rename2 = "cd " + home + "; mv profile.xml profiles.xml";
+	string readWriteStatus = "cd " + home + "/profiles.xml";//used to check
+	int TempNumOne = readWriteStatus.size();
+	for (int l=0;l<=TempNumOne;l++)
+		        {
+		            a[l]=readWriteStatus[l];
+		        }
+
+	 if( stat(a, &sb) == -1 ) {
+	        std::cout << "Couldn't stat(). Cannot access file, could assume it doesn't exist\n" << std::endl;
+	        //return 1;
+	}
+
+	    std::cout << "Permissions: " << std::oct << (unsigned long) sb.st_mode << std::endl;
+
+}*/
 
 TEST_F(HoneydConfigurationTest, test_Profile)
 {
@@ -154,3 +230,33 @@ TEST_F(HoneydConfigurationTest, test_WouldAddProfileCauseNodeDeletions)
 	p2->m_portSets.push_back(new PortSet("test"));
 	EXPECT_FALSE(HC->WouldAddProfileCauseNodeDeletions(p2));
 }
+
+//new test to move file location for bool HoneydConfiguration::ReadScriptsXML()
+//	function it should return false and then move it back and run it again and it should return true
+
+TEST_F(HoneydConfigurationTest, test_ReadScriptsXML)
+{
+	string home = Config::Inst()->GetPathHome() + "/config/templates";
+	string command1 = "cd " + home + "; mv scripts.xml script.xml";//change script name from original
+	string command2 = "cd " + home + "; mv script.xml scripts.xml";//change script name back to original
+	int TempNumOne=command1.size();
+	char a[100];
+	char b[100];
+	for (int l=0;l<=TempNumOne;l++)
+	        {
+	            a[l]=command1[l];
+	        }
+	TempNumOne = command2.size();
+	for (int l=0;l<=TempNumOne;l++)
+		        {
+		            b[l]=command2[l];
+		        }
+	//should return true initially since the xml file should exist in its proper location
+	EXPECT_TRUE(HC->ReadScriptsXML());//should pass
+	system(a);
+	//should confirm that the function returns false because the system command was executed and the file name was changed
+	EXPECT_FALSE(HC->ReadScriptsXML());//should pass
+	system(b);
+	EXPECT_TRUE(HC->ReadScriptsXML());//should pass
+}
+

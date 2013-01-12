@@ -325,8 +325,8 @@ bool HoneydConfiguration::ReadNodesXML()
 
 //Loads scripts from the xml template located relative to the currently set home path
 // Returns true if successful, false if not.
-bool HoneydConfiguration::ReadScriptsXML()
-{
+bool HoneydConfiguration::ReadScriptsXML()//write complex test that moves the xml scripts to different locations b4 attempting to read
+{//
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
 	ptree scriptsTopLevel;
