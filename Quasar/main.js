@@ -1496,6 +1496,42 @@ everyone.now.deleteClassifier = function(index, callback)
 
 everyone.now.addClassifier = function(classifier, callback)
 {
+	// Convert the model instance settings to strings for config file
+	var enabledFeaturesString = "";
+	var weightString = "";
+	var thresholdString = "";
+	for (var i = 0; i < classifier.features.length; i++)
+	{
+		if (classifier.features[i].enabled
+		{
+			enabledFeaturesString += "1";
+		}
+		else
+		{
+			enabledFeaturesString += "0";
+		}
+
+		if (classifier.type == "KNN")
+		{
+			weightString += " " + classifier.features[i].weight;
+		}
+		else if (classifier.type == "THRESHOLD_TRIGGER")
+		{
+			thresholdString += " " + classifier.features[i].threshold;
+		}
+	}
+	
+	classifier.strings = {};
+	classifier.strings["ENABLED_FEATURES"] = enabledFeaturesString;
+	if (classifier.type == "KNN")
+	{
+		classifier.strings["THRESHOLD_TRIGGER"] = thresholdString;
+	}
+	else if (classifier.type == "THRESHOLD_TRIGGER")
+	{
+		classifier.strings["FEATURE_WEIGHTS"] = weightString;
+	}
+
 	classifiers.addClassifier(classifier);
 	if (callback) callback();
 }

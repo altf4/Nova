@@ -18,28 +18,35 @@ extends layout
 
 block headerAdditions
   script
-    var features = [];
     var classifier = {};
 
     function init() {
-      classifier = !{JSON.stringify(classifier)}; 
+      classifier = !{JSON.stringify(classifier)};
+      classifier.type = ko.observable("THRESHOLD_TRIGGER");
       
       var featureNames = !{JSON.stringify(featureNames)};
+      var features = [];
       for (var i = 0; i < featureNames.length; i++) {
         var feature = {
           name: featureNames[i]
-          , enabled: false
+          , enabled: ko.observable(true)
           , weight: 1
-          , threshold: ""
+          , threshold: "-"
         };
-
 
         features.push(feature);
       }
 
+      classifier.features = features;
+
       console.log(classifier);
 
       ko.applyBindings(classifier);
+    }
+
+
+    function submit() {
+
     }
 
 block content
@@ -73,19 +80,19 @@ block content
     theader
       td Feature Name
       td Enabled
-      td Weight
-      td Hostile Threshold
-    tbody(data-bind="foreach: features")
+      td(data-bind="visible: classifier.type() == 'KNN'") Weight
+      td(data-bind="visible: classifier.type() == 'THRESHOLD_TRIGGER'") Hostile Threshold
+    tbody(data-bind="foreach: classifier.features")
       tr
         td(data-bind="text: name")
         td
-          input(type="checkbox", data-bind="value: enabled")
-        td
-          input(type="text", data-bind="value: weight")
-        td
-          input(type="text", data-bind="value: threshold")
+          input(type="checkbox", data-bind="checked: enabled")
+        td(data-bind="visible: classifier.type() == 'KNN'")
+          input(type="text", data-bind="value: weight, visible: classifier.type() == 'KNN', enable: (classifier.type() == 'KNN' && classifier.features[$index()].enabled())")
+        td(data-bind="visible: classifier.type() == 'THRESHOLD_TRIGGER'")
+          input(type="text", data-bind="value: threshold, visible: classifier.type() == 'THRESHOLD_TRIGGER', enable: (classifier.type() == 'THRESHOLD_TRIGGER' && classifier.features[$index()].enabled())")
 
   br
-  button.button
+  button.button(onclick='submit()')
     img.buttonIcon(src="/images/ok.png")
     span.buttonSpan Submit
