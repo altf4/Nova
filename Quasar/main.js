@@ -257,8 +257,8 @@ if (config.ReadSetting("QUASAR_WEBUI_TLS_ENABLED") == "1")
 app.configure(function ()
 {
     app.use(passport.initialize());
-	app.use(passport.authenticate('basic', {session: false}));
     app.use(express.bodyParser());
+	app.use(passport.authenticate('basic', {session: false}));
     app.use(app.router);
     app.use(express.static(NovaSharedPath + '/Quasar/www'));
 });
