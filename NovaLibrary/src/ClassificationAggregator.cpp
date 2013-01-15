@@ -23,6 +23,11 @@ void ClassificationAggregator::Init()
 	vector<string> configs = Config::Inst()->GetClassifierConfigs();
 	m_modes = Config::Inst()->GetClassifierModes();
 
+	if (engines.size() == 0) {
+		LOG(CRITICAL, "No classifications engines present! Unable to start.", "");
+		exit(EXIT_FAILURE);
+	}
+
 	if (engines.size() != configs.size())
 	{
 		LOG(CRITICAL, "Invalid classification configuration!", "");

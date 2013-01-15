@@ -128,5 +128,17 @@ describe('classifiers', function(){
 		});
 	});
 
+	describe('Check empty behavior', function() {
+		it('should return empty list if no classifiers present', function() {
+			resetClassifierConfig();
+
+			classifiers.deleteClassifier(0);
+			classifiers.deleteClassifier(0);
+
+			var classifierObjects = classifiers.getClassifiers();
+			assert.equal(0, classifierObjects.length);
+		});
+	});
+
 
 })

@@ -51,12 +51,16 @@ void ThresholdTriggerClassification::LoadConfiguration(string filePath)
 				{
 					m_hostileThresholds.clear();
 
+					boost::algorithm::trim(line);
 					vector<string> thresholds;
 					boost::split(thresholds, line, boost::is_any_of("\t "));
 
 					if (thresholds.size() != DIM)
 					{
-						cout << "ERROR: THRESHOLD_HOSTILE_TRIGGERS does not contain the correct number of entries" << endl;
+						stringstream ss;
+						ss << "THRESHOLD_HOSTILE_TRIGGERS does not contain the correct number of entries. Should have " << DIM << " but has " << thresholds.size();
+						LOG(CRITICAL, ss.str(), "");
+						exit(EXIT_FAILURE);
 						continue;
 					}
 

@@ -74,6 +74,11 @@ Classifiers.prototype = {
 
   
   	var engineObjects = [];
+
+	// Split returns an array with an empty string if empty string is passed in (wtf Javascript)
+	if (engines.length === 1 && engines[0] === "") {
+		return engineObjects;
+	}
   
   	for (var i = 0; i < engines.length; i++) {
   		var obj = {};

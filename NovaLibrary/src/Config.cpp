@@ -783,15 +783,11 @@ void Config::LoadConfig_Internal()
 			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
+				isValid[prefixIndex] = true;
 				if(line.size() > 0)
 				{
 					m_classifierEngines.clear();
 					boost::split(m_classifierEngines, line, boost::is_any_of(";"));
-
-					if (m_classifierEngines.size())
-					{
-						isValid[prefixIndex] = true;
-					}
 				}
 				continue;
 			}
@@ -802,15 +798,11 @@ void Config::LoadConfig_Internal()
 			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
+				isValid[prefixIndex] = true;
 				if(line.size() > 0)
 				{
 					m_classifierConfigs.clear();
 					boost::split(m_classifierConfigs, line, boost::is_any_of(";"));
-
-					if (m_classifierConfigs.size())
-					{
-						isValid[prefixIndex] = true;
-					}
 				}
 				continue;
 			}
@@ -821,6 +813,8 @@ void Config::LoadConfig_Internal()
 			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
+				isValid[prefixIndex] = true;
+
 				if(line.size() > 0)
 				{
 					vector<string> classificationTypes;
@@ -846,12 +840,13 @@ void Config::LoadConfig_Internal()
 							else
 							{
 								LOG(ERROR, "Bad classifier type in config file: " + classificationTypes[i], "");
+								isValid[prefixIndex] = false;
 								continue;
 							}
 						}
 
-						isValid[prefixIndex] = true;
 					}
+
 				}
 				continue;
 			}
@@ -862,6 +857,7 @@ void Config::LoadConfig_Internal()
 			if(!line.substr(0, prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size() + 1, line.size());
+				isValid[prefixIndex] = true;
 				if(line.size() > 0)
 				{
 					m_classifierWeights.clear();
@@ -875,7 +871,6 @@ void Config::LoadConfig_Internal()
 							m_classifierWeights.push_back(atoi(weights[i].c_str()));
 						}
 
-						isValid[prefixIndex] = true;
 					}
 				}
 				continue;
