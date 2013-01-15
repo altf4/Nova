@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : ClassificationEngine.h
+// Name        : ClassificationEngine.cpp
 // Copyright   : DataSoft Corporation 2011-2013
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -16,34 +16,15 @@
 // Description : 
 //============================================================================
 
-#ifndef CLASSIFICATIONENGINE_H_
-#define CLASSIFICATIONENGINE_H_
+#include "ClassificationEngine.h"
+#include "Config.h"
 
-#include "Suspect.h"
+#include <string>
 
-#include <vector>
+using namespace Nova;
 
-namespace Nova
-{
+ClassificationEngine::ClassificationEngine() {}
+ClassificationEngine::~ClassificationEngine() {}
 
-//Forward declaration to resolve circular include
-class Suspect;
 
-class ClassificationEngine
-{
-public:
-	virtual ~ClassificationEngine();
-
-	// Classify a suspect, returns the classification and also sets the suspect's classification
-	virtual double Classify(Suspect *suspect) = 0;
-
-	// (Re)loads any configuration settings needed. Must be called before classification.
-	virtual void LoadConfiguration(string filePath);
-
-protected:
-	ClassificationEngine();
-
-};
-
-} /* namespace Nova */
-#endif /* CLASSIFICATIONENGINE_H_ */
+void ClassificationEngine::LoadConfiguration(string filePath){}

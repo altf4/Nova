@@ -19,6 +19,7 @@
 #include "NovaNode.h"
 #include "SuspectTable.h"
 #include "Suspect.h"
+#include "Config.h"
 
 using namespace node;
 using namespace v8;
@@ -312,7 +313,7 @@ Handle<Value> NovaNode::GetSupportedEngines(const Arguments &)
 {
 	HandleScope scope;
 
-	return scope.Close(cvv8::CastToJS(ClassificationEngine::GetSupportedEngines()));
+	return scope.Close(cvv8::CastToJS(Nova::Config::Inst()->GetSupportedEngines()));
 }
 
 Handle<Value> NovaNode::GetDIM(const Arguments &)

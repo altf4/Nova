@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : ClassificationEngine.cpp
+// Name        : ClassificationEngineFactory.cpp
 // Copyright   : DataSoft Corporation 2011-2013
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,26 +13,18 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : 
+// Description :
 //============================================================================
 
+#include "ClassificationEngineFactory.h"
 #include "ThresholdTriggerClassification.h"
-#include "ClassificationEngine.h"
 #include "KnnClassification.h"
-#include "Config.h"
 
-#include <string>
-
+using namespace std;
 using namespace Nova;
 
-ClassificationEngine::ClassificationEngine() {}
-ClassificationEngine::~ClassificationEngine() {}
-
-
-void ClassificationEngine::LoadConfiguration(string filePath){}
-
 // Factory method for classification engine creation
-ClassificationEngine * ClassificationEngine::MakeEngine(std::string engine)
+ClassificationEngine * MakeEngine(std::string engine)
 {
 	if (engine == "KNN")
 	{
@@ -44,13 +36,4 @@ ClassificationEngine * ClassificationEngine::MakeEngine(std::string engine)
 	}
 
 	return NULL;
-}
-
-vector<string> ClassificationEngine::GetSupportedEngines()
-{
-	vector<string> supportedEngines;
-	supportedEngines.push_back("KNN");
-	supportedEngines.push_back("THRESHOLD_TRIGGER");
-
-	return supportedEngines;
 }

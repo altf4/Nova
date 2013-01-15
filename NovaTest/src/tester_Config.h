@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 
+#include "ThresholdTriggerClassification.h"
 #include "Config.h"
 #include "math.h"
 

@@ -98,7 +98,7 @@ int honeydDHCPWatch;
 int whitelistNotifyFd;
 int whitelistWatch;
 
-ClassificationAggregator *engine = NULL;
+ClassificationEngine *engine = NULL;
 
 pthread_t classificationLoopThread;
 pthread_t ipUpdateThread;

@@ -4,28 +4,43 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/ClassificationAggregator.cpp \
+../src/ClassificationEngine.cpp \
+../src/ClassificationEngineFactory.cpp \
 ../src/Control.cpp \
+../src/KnnClassification.cpp \
 ../src/Main.cpp \
 ../src/Novad.cpp \
 ../src/NovadCallback.cpp \
 ../src/ProtocolHandler.cpp \
-../src/Threads.cpp 
+../src/Threads.cpp \
+../src/ThresholdTriggerClassification.cpp 
 
 OBJS += \
+./src/ClassificationAggregator.o \
+./src/ClassificationEngine.o \
+./src/ClassificationEngineFactory.o \
 ./src/Control.o \
+./src/KnnClassification.o \
 ./src/Main.o \
 ./src/Novad.o \
 ./src/NovadCallback.o \
 ./src/ProtocolHandler.o \
-./src/Threads.o 
+./src/Threads.o \
+./src/ThresholdTriggerClassification.o 
 
 CPP_DEPS += \
+./src/ClassificationAggregator.d \
+./src/ClassificationEngine.d \
+./src/ClassificationEngineFactory.d \
 ./src/Control.d \
+./src/KnnClassification.d \
 ./src/Main.d \
 ./src/Novad.d \
 ./src/NovadCallback.d \
 ./src/ProtocolHandler.d \
-./src/Threads.d 
+./src/Threads.d \
+./src/ThresholdTriggerClassification.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

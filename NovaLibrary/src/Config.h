@@ -20,8 +20,7 @@
 #define NOVACONFIGURATION_H_
 
 #include "HashMapStructs.h"
-#include "ThresholdTriggerClassification.h"
-#include "ClassificationAggregator.h"
+#include "ClassificationEngine.h"
 
 namespace Nova
 {
@@ -44,6 +43,11 @@ struct version
 	}
 };
 
+enum CLASSIFIER_MODES {
+	CLASSIFIER_WEIGHTED,
+	CLASSIFIER_HOSTILE_OVERRIDE,
+	CLASSIFIER_BENIGN_OVERRIDE
+};
 
 class Config
 {
@@ -238,6 +242,8 @@ public:
 	bool GetAreEmailAlertsEnabled();
 	std::string GetPathTrainingData();
 
+	vector<string> GetSupportedEngines();
+
 protected:
 	Config();
 
@@ -350,8 +356,6 @@ private:
 	bool m_onlyClassifyHoneypotTraffic;
 
 	std::string m_currentConfig;
-
-	std::vector<HostileThreshold> m_hostileThresholds;
 
 	static std::string m_pathPrefix;
 

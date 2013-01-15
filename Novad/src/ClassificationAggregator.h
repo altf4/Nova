@@ -2,17 +2,12 @@
 #define CLASSIFICATIONAGGREGATOR_H_
 
 #include "ClassificationEngine.h"
+#include "Config.h"
 
 namespace Nova
 {
 
-enum CLASSIFIER_MODES {
-	CLASSIFIER_WEIGHTED,
-	CLASSIFIER_HOSTILE_OVERRIDE,
-	CLASSIFIER_BENIGN_OVERRIDE
-};
-
-class ClassificationAggregator
+class ClassificationAggregator : public ClassificationEngine
 {
 public:
 	ClassificationAggregator();
@@ -25,7 +20,7 @@ public:
 	double Classify(Suspect *s);
 
 private:
-	void Init();
+	void LoadConfiguration(std::string filePath);
 
 };
 

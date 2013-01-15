@@ -4,8 +4,6 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/ClassificationAggregator.cpp \
-../src/ClassificationEngine.cpp \
 ../src/Config.cpp \
 ../src/Database.cpp \
 ../src/Doppelganger.cpp \
@@ -15,7 +13,6 @@ CPP_SRCS += \
 ../src/FilePacketCapture.cpp \
 ../src/HaystackControl.cpp \
 ../src/InterfacePacketCapture.cpp \
-../src/KnnClassification.cpp \
 ../src/Logger.cpp \
 ../src/NovaUtil.cpp \
 ../src/PacketCapture.cpp \
@@ -23,12 +20,9 @@ CPP_SRCS += \
 ../src/Suspect.cpp \
 ../src/SuspectIdentifer.cpp \
 ../src/SuspectTable.cpp \
-../src/ThresholdTriggerClassification.cpp \
 ../src/WhitelistConfiguration.cpp 
 
 OBJS += \
-./src/ClassificationAggregator.o \
-./src/ClassificationEngine.o \
 ./src/Config.o \
 ./src/Database.o \
 ./src/Doppelganger.o \
@@ -38,7 +32,6 @@ OBJS += \
 ./src/FilePacketCapture.o \
 ./src/HaystackControl.o \
 ./src/InterfacePacketCapture.o \
-./src/KnnClassification.o \
 ./src/Logger.o \
 ./src/NovaUtil.o \
 ./src/PacketCapture.o \
@@ -46,12 +39,9 @@ OBJS += \
 ./src/Suspect.o \
 ./src/SuspectIdentifer.o \
 ./src/SuspectTable.o \
-./src/ThresholdTriggerClassification.o \
 ./src/WhitelistConfiguration.o 
 
 CPP_DEPS += \
-./src/ClassificationAggregator.d \
-./src/ClassificationEngine.d \
 ./src/Config.d \
 ./src/Database.d \
 ./src/Doppelganger.d \
@@ -61,7 +51,6 @@ CPP_DEPS += \
 ./src/FilePacketCapture.d \
 ./src/HaystackControl.d \
 ./src/InterfacePacketCapture.d \
-./src/KnnClassification.d \
 ./src/Logger.d \
 ./src/NovaUtil.d \
 ./src/PacketCapture.d \
@@ -69,7 +58,6 @@ CPP_DEPS += \
 ./src/Suspect.d \
 ./src/SuspectIdentifer.d \
 ./src/SuspectTable.d \
-./src/ThresholdTriggerClassification.d \
 ./src/WhitelistConfiguration.d 
 
 

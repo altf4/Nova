@@ -1,3 +1,4 @@
+#include "ClassificationEngineFactory.h"
 #include "ClassificationAggregator.h"
 #include "Config.h"
 #include "Logger.h"
@@ -14,10 +15,10 @@ namespace Nova
 
 ClassificationAggregator::ClassificationAggregator()
 {
-	Init();
+	LoadConfiguration("");
 }
 
-void ClassificationAggregator::Init()
+void ClassificationAggregator::LoadConfiguration(std::string filePath)
 {
 	vector<string> engines = Config::Inst()->GetClassificationEngines();
 	vector<string> configs = Config::Inst()->GetClassifierConfigs();
@@ -62,7 +63,7 @@ void ClassificationAggregator::Init()
 	for (uint i = 0; i < engines.size(); i++)
 	{
 		//cout << "Loading engine " << i << " " << engines[i] << endl;
-		ClassificationEngine *engine = ClassificationEngine::MakeEngine(engines[i]);
+		ClassificationEngine *engine = MakeEngine(engines[i]);
 		engine->LoadConfiguration(Config::Inst()->GetPathHome() + "/" + configs[i]);
 
 		m_engines.push_back(engine);

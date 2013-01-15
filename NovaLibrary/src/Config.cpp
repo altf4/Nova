@@ -157,6 +157,15 @@ vector<string> Config::GetPrefixes()
 	return ret;
 }
 
+vector<string> Config::GetSupportedEngines()
+{
+	vector<string> supportedEngines;
+	supportedEngines.push_back("KNN");
+	supportedEngines.push_back("THRESHOLD_TRIGGER");
+
+	return supportedEngines;
+}
+
 // Loads the configuration file into the class's state data
 void Config::LoadConfig_Internal()
 {
