@@ -55,16 +55,16 @@ TEST_F(ConfigTest, test_classificationSettings)
 TEST_F(ConfigTest, test_classificationLoading)
 {
 	ThresholdTriggerClassification engine;
-	engine.LoadConfiguration(Config::Inst()->GetPathHome() + "/config/CE_threshold.config");
+	engine.LoadConfiguration(Config::Inst()->GetPathHome() + "/config/CE_1.config");
 
 	// Random spot check on our current default values. Be sure to update this if config changes.
 	ASSERT_EQ(DIM, engine.m_hostileThresholds.size());
 	EXPECT_FALSE(engine.m_hostileThresholds[0].m_hasMaxValueTrigger);
 	EXPECT_FALSE(engine.m_hostileThresholds[0].m_hasMinValueTrigger);
 
-	EXPECT_TRUE(engine.m_hostileThresholds[4].m_hasMaxValueTrigger);
-	EXPECT_FALSE(engine.m_hostileThresholds[4].m_hasMinValueTrigger);
-	EXPECT_EQ(6, engine.m_hostileThresholds[4].m_maxValueTrigger);
+	EXPECT_TRUE(engine.m_hostileThresholds[DISTINCT_TCP_PORTS].m_hasMaxValueTrigger);
+	EXPECT_FALSE(engine.m_hostileThresholds[DISTINCT_TCP_PORTS].m_hasMinValueTrigger);
+	EXPECT_EQ(100, engine.m_hostileThresholds[DISTINCT_TCP_PORTS].m_maxValueTrigger);
 
 }
 
