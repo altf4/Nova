@@ -1006,10 +1006,12 @@ void Config::LoadConfig_Internal()
 
 	GetSMTPSettings_FromFile();
 
+	bool failAndExit = false;
 	for(uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
 	{
 		if(!isValid[i])
 		{
+			failAndExit = true;
 			stringstream ss;
 			ss << "ERROR File: " << __FILE__ << "at line: " << __LINE__ << "Configuration option '"
 				<< m_prefixes[i] << "' is invalid.";
@@ -1017,6 +1019,11 @@ void Config::LoadConfig_Internal()
 			syslog(ERROR, "%s %s", "ERROR", ss.str().c_str());
 			closelog();
 		}
+	}
+
+	if (failAndExit)
+	{
+		exit(EXIT_FAILURE);
 	}
 }
 
