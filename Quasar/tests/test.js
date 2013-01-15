@@ -66,7 +66,7 @@ describe('classifiers', function(){
 		, mode: "HOSTILE_OVERRIDE"
 		, weight: "0"
 		, strings: {
-		  	THRESHOLD_HOSTILE_TRIGGERS: "- - - - >6 >20 >20 - - - - - - >0.5"
+		  	THRESHOLD_HOSTILE_TRIGGERS: "- - - - - >100 - - - - - - - -"
 		  }
 		}
 	];
