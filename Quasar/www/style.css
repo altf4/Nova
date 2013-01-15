@@ -204,3 +204,7 @@ html, body {
 .buttonSpan {
 	vertical-align:middle;
 }
+
+.pieLegendElementDiv {
+	text-align: left;
+}

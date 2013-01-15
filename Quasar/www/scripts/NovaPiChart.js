@@ -22,10 +22,16 @@
 // items: Array of objects with each object consisting of,
 //     name: String name of the item
 //     value: Number of this item present
-var NovaPiChart = function(divId, size, deleteButtonFunction) {
-    this.m_id = divId;
+var NovaPiChart = function(divId, title, size, deleteButtonFunction) {
+	this.m_title = title;
     this.m_deleteFunction = deleteButtonFunction;
     this.SetSize(size);
+	
+	var mainDiv = document.createElement("div");
+	mainDiv.setAttribute("style", "text-align: center");
+	var div = document.getElementById(divId);
+	div.appendChild(mainDiv);
+	this.m_id = mainDiv;
 }
 
 NovaPiChart.prototype = {
@@ -47,13 +53,18 @@ NovaPiChart.prototype = {
            this.m_numberOfItems += items[i].value;
         }
         // Reset the div
-        document.getElementById(this.m_id).innerHTML = "";
+        this.m_id.innerHTML = "";
+
+		var title = document.createElement("h2");
+		title.innerHTML = this.m_title;
+		title.setAttribute("class", "novaGridTitle");
+		this.m_id.appendChild(title);
 
         // Make a canvas
         var canvas = document.createElement("canvas");
         canvas.setAttribute("width", this.m_size + "px");
         canvas.setAttribute("height", this.m_size + "px");
-        document.getElementById(this.m_id).appendChild(canvas);
+        this.m_id.appendChild(canvas);
         
         // Draw the pi chart on the canvas
         var ctx = canvas.getContext("2d");
@@ -71,11 +82,12 @@ NovaPiChart.prototype = {
 
             for (var i = 0; i < this.m_items.length; i++) {
                 var legend = document.createElement("div");
+				legend.setAttribute("class", "pieLegendElementDiv");
                 var text = document.createElement("p");
                 text.setAttribute('style', 'display: inline-block; margin: 0px');
                 text.innerHTML = "<span style='background-color: " + "#A1A1A1" + ";'>&nbsp &nbsp &nbsp</span>&nbsp 0% " + this.m_items[i].name;
                 legend.appendChild(text);
-                document.getElementById(this.m_id).appendChild(legend);
+                this.m_id.appendChild(legend);
             }
             return;
         }
@@ -104,6 +116,7 @@ NovaPiChart.prototype = {
 
             // Draw the legend and values
             var legend = document.createElement("div");
+			legend.setAttribute("class", "pieLegendElementDiv");
             var text = document.createElement("p");
             text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
             text.setAttribute('style', 'display: inline-block; margin: 0px');
@@ -115,7 +128,7 @@ NovaPiChart.prototype = {
                 legend.appendChild(deleteButton);
             }
             legend.appendChild(text);
-            document.getElementById(this.m_id).appendChild(legend);
+            this.m_id.appendChild(legend);
         }
         
     }

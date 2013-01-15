@@ -63,3 +63,10 @@ div.sortArrow
 	padding-left: 0;
 }
 
+.novaGridTitle {
+	align-text: center;
+}
+
+.piLegendElementDiv {
+	text-align: left;
+}

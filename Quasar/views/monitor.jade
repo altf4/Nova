@@ -60,13 +60,12 @@ block content
 block headerAdditions
   script(type="text/javascript", src="scripts/NovaPiChart.js")
   script
+    var tcpChart;
+    var protocolChart;
     var lastSuspectObject = null;
     var initialized = true;
     var data = new Array();
     var classificationData = new Array();
-    var tcpChart = new NovaPiChart("tcpPiChart", 200);
-    var protocolChart = new NovaPiChart("ProtocolPiChart", 200);
-    var classificationPieChart = new NovaPiChart("classificationPieChart", 200);
 
     var gridLinesEnabled = false;
     var autoscale = false;
@@ -135,12 +134,6 @@ block headerAdditions
         }
     }
     
-    function Init()
-    {
-        now.sendSuspect("#{suspectIp}", "#{suspectInterface}", OnNewSuspect)
-        now.reverseDNS("#{suspectIp}", reverseDNScb);
-    };
-
     function reverseDNScb(err, domains)
     {
         var prefix = '';
@@ -375,10 +368,14 @@ block headerAdditions
 
 
     function init(ready){
+        tcpChart = new NovaPiChart("tcpPiChart", "TCP Flags", 200);
+        protocolChart = new NovaPiChart("ProtocolPiChart", "Protocols Used", 200);
+        
         now.ready(function()
         {
-            Init();
             now.OnNewSuspect = OnNewSuspect;
+            now.sendSuspect("#{suspectIp}", "#{suspectInterface}", OnNewSuspect)
+            now.reverseDNS("#{suspectIp}", reverseDNScb);
         });
     };
 

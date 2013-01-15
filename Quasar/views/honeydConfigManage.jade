@@ -397,7 +397,7 @@ block headerAdditions
             piChartRender.push(p);
           }
           
-           var pi = new NovaPiChart('piChart', 200, 'deleteByProfile');
+           var pi = new NovaPiChart('piChart', "Nodes by Profile", 200, 'deleteByProfile');
            pi.Render(piChartRender);
         });
       }
@@ -1148,7 +1148,7 @@ block content
     
     div.tabDiv#settingsNodes(style="display: none;")
       h1 Current Node Configuration
-      div#piChart
+      div#piChart(style="display: inline-block")
       br
       div#node_header
         br
