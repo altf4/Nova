@@ -110,7 +110,7 @@ NovaPiChart.prototype = {
             if(this.m_deleteFunction != undefined) {
                 var deleteButton = document.createElement("button");
                 deleteButton.setAttribute('style', 'display: inline-block;');
-                deleteButton.innerHTML = "Delete All";
+                deleteButton.innerHTML = "<img src='images/delete.png' class='buttonIcon'/><span class='buttonSpan'>Delete All</span>";
                 deleteButton.setAttribute('onclick', this.m_deleteFunction + '("' + this.m_items[pfile].name + '")');
                 legend.appendChild(deleteButton);
             }
