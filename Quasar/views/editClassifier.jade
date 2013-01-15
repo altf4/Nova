@@ -22,22 +22,13 @@ block headerAdditions
 
     function init() {
       classifier = !{JSON.stringify(classifier)};
-      classifier.type = ko.observable("THRESHOLD_TRIGGER");
+      classifier.type = ko.observable(classifier.type);
       
-      var featureNames = !{JSON.stringify(featureNames)};
-      var features = [];
-      for (var i = 0; i < featureNames.length; i++) {
-        var feature = {
-          name: featureNames[i]
-          , enabled: ko.observable(true)
-          , weight: 1
-          , threshold: "-"
-        };
 
-        features.push(feature);
+      for (var i = 0; i < classifier.features.length; i++) {
+        // Make the enabled state observable so we can update things when enabled checkboxes change
+        classifier.features[i].enabled = ko.observable(classifier.features[i].enabled);
       }
-
-      classifier.features = features;
 
       console.log(classifier);
 
@@ -46,7 +37,15 @@ block headerAdditions
 
 
     function submit() {
+        now.saveClassifier(ko.toJS(classifier), classifier.index , finished);
+    }
 
+    function cancel() {
+        finished();
+    }
+
+    function finished() {
+        window.location = '/editClassifiers';
     }
 
 block content
@@ -96,3 +95,7 @@ block content
   button.button(onclick='submit()')
     img.buttonIcon(src="/images/ok.png")
     span.buttonSpan Submit
+  
+  button.button(onclick='cancel()')
+    img.buttonIcon(src="/images/cancel.png")
+    span.buttonSpan Cancel

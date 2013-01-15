@@ -62,12 +62,11 @@ block content
       p Use 'x' in expressions to denote the specified feature value. Example: "x > 0 && x != 17"
       -var count = 0;
       each feature in featureNames
-        if enabledFeatures.charAt(count) == '1'
-          label #{feature}
-          br
-          input(type="text", id="advancedFilter#{count}")
-          br
-        - count++;
+        label #{feature}
+        br
+        input(type="text", id="advancedFilter#{count}")
+        br
+      - count++;
       br
       button(onclick='applyAdvancedFilter()') Apply Advanced Filters
       button(onclick='disableAdvancedFilter()') Disable Advanced Filters
@@ -274,11 +273,10 @@ block headerAdditions
       row.push(suspect.GetClassification);
       row.push(String(suspect.LastPacketString));
 
-      var enabledFeatures = "#{enabledFeatures}";
       for(var i in suspect.GetFeatures)
       {
         suspect[i] = suspect.GetFeatures[i];
-        if(enabledFeatures.charAt(i) == "1") row.push(Number(suspect.GetFeatures[i])); 
+        row.push(Number(suspect.GetFeatures[i])); 
       }
        
       if(advancedFilterEnabled)
@@ -442,7 +440,6 @@ block headerAdditions
     function Init()
     {
         theDoc = document;
-        var enabledFeatures = "#{enabledFeatures}";
         var gridStructure = [];
         gridStructure.push({name: "Hostility", isDisabled: false});
         gridStructure.push({name: "Interface", isDisabled: false});
@@ -453,7 +450,7 @@ block headerAdditions
         var featureNames = String("#{featureNames}").split(",");
         for (var i = 0; i < featureNames.length; i++)
         {
-            if (enabledFeatures.charAt(i) == "1") gridStructure.push({name:featureNames[i], isDisabled: true, formatter: featureFormatter});
+            gridStructure.push({name:featureNames[i], isDisabled: true, formatter: featureFormatter});
         }
    
         suspectGrid = new NovaGrid(gridStructure, 2, theDoc.getElementById('suspectTable'), 'suspectGrid', false);

@@ -95,7 +95,8 @@ string Config::m_prefixes[] =
 	"CLASSIFICATION_WEIGHTS",
 	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC",
 	"CURRENT_CONFIG",
-	"EMAIL_ALERTS_ENABLED"
+	"EMAIL_ALERTS_ENABLED",
+	"TRAINING_DATA_PATH"
 };
 
 Config *Config::m_instance = NULL;
@@ -918,6 +919,20 @@ void Config::LoadConfig_Internal()
 					isValid[prefixIndex] = true;
 				}
 			}
+
+			// TRAINING_DATA_PATH
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_pathTrainingData = line;
+					isValid[prefixIndex] = true;
+				}
+			}
+
 		}
 	}
 	else
@@ -2613,6 +2628,12 @@ bool Config::GetAreEmailAlertsEnabled()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_emailAlertsEnabled;
+}
+
+string Config::GetPathTrainingData()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_pathTrainingData;
 }
 
 }

@@ -34,14 +34,14 @@ ThresholdTriggerClassification::ThresholdTriggerClassification()
 
 void ThresholdTriggerClassification::LoadConfiguration(string filePath)
 {
-	ifstream *settings =  new ifstream(filePath);
+	ifstream settings(filePath);
 	string prefix, line;
 
-	if(settings->is_open())
+	if(settings.is_open())
 	{
-		while(settings->good())
+		while(settings.good())
 		{
-			getline(*settings,line);
+			getline(settings,line);
 
 			prefix = "THRESHOLD_HOSTILE_TRIGGERS";
 			if(!line.substr(0, prefix.size()).compare(prefix))
@@ -134,9 +134,12 @@ void ThresholdTriggerClassification::LoadConfiguration(string filePath)
 			}
 
 		}
+	} else {
+		LOG(CRITICAL, "Unable to load configuration file for classification engine at " + filePath, "");
+		exit(EXIT_FAILURE);
 	}
-	settings->close();
-	delete settings;
+
+	settings.close();
 }
 
 double ThresholdTriggerClassification::Classify(Suspect *suspect)

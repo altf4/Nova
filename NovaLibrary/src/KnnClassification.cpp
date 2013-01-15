@@ -50,6 +50,8 @@ KnnClassification::KnnClassification()
 {
 	pthread_rwlock_init(&m_lock, NULL);
 
+	m_pathTrainingFile = Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathTrainingData();
+
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
 	m_kdTree = NULL;
@@ -57,14 +59,14 @@ KnnClassification::KnnClassification()
 
 void KnnClassification::LoadConfiguration(string filePath)
 {
-	ifstream *settings =  new ifstream(filePath);
+	ifstream settings(filePath);
 	string prefix, line;
 
-	if(settings->is_open())
+	if(settings.is_open())
 	{
-		while(settings->good())
+		while(settings.good())
 		{
-			getline(*settings,line);
+			getline(settings,line);
 
 			prefix = "ENABLED_FEATURES";
 			if(!line.substr(0, prefix.size()).compare(prefix))
@@ -124,9 +126,13 @@ void KnnClassification::LoadConfiguration(string filePath)
 			}
 
 		}
+	} else {
+		LOG(CRITICAL, "Unable to load configuration file for classification engine at " + filePath, "");
+		exit(EXIT_FAILURE);
 	}
-	settings->close();
-	delete settings;
+
+
+	settings.close();
 
 	LoadDataPointsFromFile(m_pathTrainingFile);
 }

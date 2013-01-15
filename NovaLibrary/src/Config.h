@@ -236,6 +236,7 @@ public:
 	void LoadInterfaces();
 
 	bool GetAreEmailAlertsEnabled();
+	std::string GetPathTrainingData();
 
 protected:
 	Config();
@@ -262,6 +263,7 @@ private:
 	std::string m_pathPcapFile;
 	std::string m_pathWhitelistFile;
 	std::string m_pathCESaveFile;
+	std::string m_pathTrainingData;
 
 	std::string m_customPcapString;
 

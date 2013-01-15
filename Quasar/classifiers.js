@@ -6,9 +6,15 @@ var Classifiers = function(configIn) {
 }
 
 Classifiers.prototype = {
-  addClassifier: function(c) {
+  saveClassifier: function(c, index) {
   	var classifiers = this.getClassifiers();
-	classifiers.push(c);
+    if (index < classifiers.length && index >= 0) {
+        // If this is editin an existing index
+        classifiers[index] = c;
+    } else {
+        // Otherwise it's a new classifier
+        classifiers.push(c);
+    }
 	this.setClassifiers(classifiers);
   },
 
@@ -25,6 +31,7 @@ Classifiers.prototype = {
 	var engineWeights = "";
 
 	for (var i = 0; i < classifierObjects.length; i++) {
+		var config = '/config/CE_' + i + '.config';
 		if (i != 0) {
 			engines += ';';
 			engineConfigs += ';';
@@ -33,7 +40,7 @@ Classifiers.prototype = {
 		}
 
 		engines += classifierObjects[i].type;
-		engineConfigs += classifierObjects[i].config;
+		engineConfigs += config;
 		engineModes += classifierObjects[i].mode;
 		engineWeights += classifierObjects[i].weight;
 	
@@ -44,7 +51,7 @@ Classifiers.prototype = {
 		}
 
 		try {
-			fs.writeFileSync(this.config.GetPathHome() + '/' + classifierObjects[i].config, stringsData, 'utf8');
+			fs.writeFileSync(this.config.GetPathHome() + '/' + config, stringsData, 'utf8');
 		} catch (err) {
 			console.log("ERROR WRITING: " + err);
 		}
@@ -72,13 +79,13 @@ Classifiers.prototype = {
   		var obj = {};
 
 		obj.type = engines[i];
-		obj.config = engineConfigs[i];
+		var configInstance = engineConfigs[i];
 		obj.mode = engineModes[i];
 		obj.weight = engineWeights[i];
 		obj.strings = {};
 
 		try {
-			var stringsData = fs.readFileSync(this.config.GetPathHome() + '/' + obj.config, 'utf8').split("\n");
+			var stringsData = fs.readFileSync(this.config.GetPathHome() + '/' + configInstance, 'utf8').split("\n");
 		} catch (err) {
 			console.log("ERROR: " + err);
 		}

@@ -840,6 +840,7 @@ app.get('/advancedOptions', function (req, res)
             , CLASSIFICATION_ENGINE: config.ReadSetting("CLASSIFICATION_ENGINE")
             , THRESHOLD_HOSTILE_TRIGGERS: config.ReadSetting("THRESHOLD_HOSTILE_TRIGGERS")
             , ONLY_CLASSIFY_HONEYPOT_TRAFFIC: config.ReadSetting("ONLY_CLASSIFY_HONEYPOT_TRAFFIC")
+			, TRAINING_DATA_PATH: config.ReadSetting("TRAINING_DATA_PATH")
       , RSYSLOG_IP: getRsyslogIp()
             , supportedEngines: nova.GetSupportedEngines()
         }
@@ -1279,7 +1280,6 @@ app.get('/suspects', function (req, res)
 {
     res.render('main.jade', {
         user: req.user,
-        enabledFeatures: config.ReadSetting("ENABLED_FEATURES"),
         featureNames: nova.GetFeatureNames(),
     });
 });
@@ -1466,6 +1466,7 @@ app.get("/editClassifiers", function (req, res)
 
 app.get("/editClassifier", function (req, res)
 {
+	var featureNames = nova.GetFeatureNames();
     if(req.query['classifierIndex'] == undefined)
     {
 		var classifier = {
@@ -1474,11 +1475,56 @@ app.get("/editClassifier", function (req, res)
 			, config: "/config/newClassifier.config"
 			, weight: "0"
 			, strings: {}
+			, index: '-1'
 		};
+        
+		var features = [];
+        for (var i = 0; i < featureNames.length; i++) {
+          var feature = {
+            name: featureNames[i]
+            , enabled: true
+            , weight: 1
+            , threshold: "-"
+          };
+  
+          features.push(feature);
+        }
+
+		classifier.features = features;
   	} else {
 		var index = req.query['classifierIndex'];
 		var classifier = classifiers.getClassifier(index);
+     
+		var enabledFeatures = String(classifier.strings["ENABLED_FEATURES"]);
+		var weightString = classifier.strings["FEATURE_WEIGHTS"];
+		var thresholdString = classifier.strings["THRESHOLD_HOSTILE_TRIGGERS"];
+		var features = [];
+        for (var i = 0; i < featureNames.length; i++)
+		{
+        	var feature = {
+            	name: featureNames[i]
+            	, enabled: enabledFeatures.charAt(i) == '1'
+				, weight: 1
+				, threshold: "-"
+		  	}
+           
+		  	if (classifier.type == "KNN")
+		  	{
+		 		feature.weight = weightString.split(" ")[i];	 
+		  	} 
+		  	else if (classifier.type == "THRESHOLD_TRIGGER")
+		  	{
+		 		feature.threshold = thresholdString.split(" ")[i];
+		  	}
+		  
+            features.push(feature);
+        }
+		
+		classifier.index = index;
 	}
+  
+	classifier.features = features;
+
 
 	res.render('editClassifier.jade', {
 		locals: {
@@ -1494,15 +1540,16 @@ everyone.now.deleteClassifier = function(index, callback)
 	if (callback) callback();
 }
 
-everyone.now.addClassifier = function(classifier, callback)
+everyone.now.saveClassifier = function(classifier, index, callback)
 {
 	// Convert the model instance settings to strings for config file
 	var enabledFeaturesString = "";
 	var weightString = "";
 	var thresholdString = "";
+
 	for (var i = 0; i < classifier.features.length; i++)
 	{
-		if (classifier.features[i].enabled
+		if (classifier.features[i].enabled)
 		{
 			enabledFeaturesString += "1";
 		}
@@ -1513,11 +1560,11 @@ everyone.now.addClassifier = function(classifier, callback)
 
 		if (classifier.type == "KNN")
 		{
-			weightString += " " + classifier.features[i].weight;
+			weightString += String(classifier.features[i].weight) + " ";
 		}
 		else if (classifier.type == "THRESHOLD_TRIGGER")
 		{
-			thresholdString += " " + classifier.features[i].threshold;
+			thresholdString += classifier.features[i].threshold + " ";
 		}
 	}
 	
@@ -1525,14 +1572,14 @@ everyone.now.addClassifier = function(classifier, callback)
 	classifier.strings["ENABLED_FEATURES"] = enabledFeaturesString;
 	if (classifier.type == "KNN")
 	{
-		classifier.strings["THRESHOLD_TRIGGER"] = thresholdString;
+		classifier.strings["FEATURE_WEIGHTS"] = weightString;
 	}
 	else if (classifier.type == "THRESHOLD_TRIGGER")
 	{
-		classifier.strings["FEATURE_WEIGHTS"] = weightString;
+		classifier.strings["THRESHOLD_HOSTILE_TRIGGERS"] = thresholdString;
 	}
 
-	classifiers.addClassifier(classifier);
+	classifiers.saveClassifier(classifier, index);
 	if (callback) callback();
 }
 
@@ -1828,7 +1875,7 @@ app.post('/configureNovaSave', function (req, res)
     "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", 
     "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", 
     "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", 
-    "THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC", "EMAIL_ALERTS_ENABLED"];
+    "THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC", "EMAIL_ALERTS_ENABLED", "TRAINING_DATA_PATH"];
 
     Validator.prototype.error = function (msg)
     {

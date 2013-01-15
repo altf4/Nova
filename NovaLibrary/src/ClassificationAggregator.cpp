@@ -56,9 +56,9 @@ void ClassificationAggregator::Init()
 
 	for (uint i = 0; i < engines.size(); i++)
 	{
-		cout << "Loading engine " << i << " " << engines[i] << endl;
+		//cout << "Loading engine " << i << " " << engines[i] << endl;
 		ClassificationEngine *engine = ClassificationEngine::MakeEngine(engines[i]);
-		engine->LoadConfiguration(configs[i]);
+		engine->LoadConfiguration(Config::Inst()->GetPathHome() + "/" + configs[i]);
 
 		m_engines.push_back(engine);
 	}
@@ -70,7 +70,7 @@ double ClassificationAggregator::Classify(Suspect *s)
 	for (uint i = 0; i < m_engines.size(); i++)
 	{
 		double engineVote = m_engines.at(i)->Classify(s);
-		cout << "Suspect: " << s->GetIpAddress() << " Engine: " << i << " Classification: " << engineVote << endl;
+		//cout << "Suspect: " << s->GetIpAddress() << " Engine: " << i << " Classification: " << engineVote << endl;
 
 		classification += engineVote * m_engineWeights.at(i);
 
@@ -97,8 +97,8 @@ double ClassificationAggregator::Classify(Suspect *s)
 
 
 	}
-    cout << "Suspect: " << s->GetIpAddress() << " Engine: aggrigated" << " Classification: " << classification << endl;
-    cout << endl;
+    //cout << "Suspect: " << s->GetIpAddress() << " Engine: aggrigated" << " Classification: " << classification << endl;
+    //cout << endl;
     s->SetClassification(classification);
 
 	return classification;

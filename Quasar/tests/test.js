@@ -54,7 +54,6 @@ describe('classifiers', function(){
 	// Our initial configuration
 	var initial = [{
 		type: "KNN"
-		, config: "/config/foo.config"
 		, mode: "WEIGHTED"
 		, weight: "1"
 		, strings: {
@@ -64,7 +63,6 @@ describe('classifiers', function(){
 		  }
 	}, {
 		type: "THRESHOLD_TRIGGER"
-		, config: "/config/bar.config"
 		, mode: "HOSTILE_OVERRIDE"
 		, weight: "0"
 		, strings: {
@@ -99,7 +97,7 @@ describe('classifiers', function(){
 	});
 
 
-	describe('#addClassifier()', function() {
+	describe('#saveClassifier()', function() {
 		it('should add a classifier to the end of the list', function() {
 			resetClassifierConfig();
 
@@ -107,11 +105,10 @@ describe('classifiers', function(){
 				type: "KNN"
 				, mode: "HOSTILE_OVERRIDE"
 				, weight: "42"
-				, config: "/config/classifierTest.config"
 				, strings: {FOO: "BAR"}
 			};
 
-			classifiers.addClassifier(c);
+			classifiers.saveClassifier(c, '-1');
 			
 			var classifierObjects = classifiers.getClassifiers();
 
