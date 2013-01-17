@@ -2681,11 +2681,12 @@ function jsProfileToHoneydProfile(profile)
     for (var i = 0; i < profile.portSets.length; i++) 
     {
         //Make a new port set
-        honeydProfile.AddPortSet(profile.portSets[i].setName);
+		var encodedName = sanitizeCheck(profile.portSets[i].setName).entityEncode();
+        honeydProfile.AddPortSet(encodedName);
 
-        honeydProfile.SetPortSetBehavior(profile.portSets[i].setName, "tcp", profile.portSets[i].TCPBehavior);
-        honeydProfile.SetPortSetBehavior(profile.portSets[i].setName, "udp", profile.portSets[i].UDPBehavior);
-        honeydProfile.SetPortSetBehavior(profile.portSets[i].setName, "icmp", profile.portSets[i].ICMPBehavior);
+        honeydProfile.SetPortSetBehavior(encodedName, "tcp", profile.portSets[i].TCPBehavior);
+        honeydProfile.SetPortSetBehavior(encodedName, "udp", profile.portSets[i].UDPBehavior);
+        honeydProfile.SetPortSetBehavior(encodedName, "icmp", profile.portSets[i].ICMPBehavior);
 
         for (var j = 0; j < profile.portSets[i].TCPExceptions.length; j++)
         {
@@ -2698,7 +2699,7 @@ function jsProfileToHoneydProfile(profile)
                 scriptConfigValues.push(profile.portSets[i].TCPExceptions[j].scriptConfiguration[key]);
             }
 
-            honeydProfile.AddPort(profile.portSets[i].setName, 
+            honeydProfile.AddPort(encodedName,
                     profile.portSets[i].TCPExceptions[j].behavior, 
                     profile.portSets[i].TCPExceptions[j].protocol, 
                     Number(profile.portSets[i].TCPExceptions[j].portNum), 
@@ -2718,7 +2719,7 @@ function jsProfileToHoneydProfile(profile)
                 scriptConfigValues.push(profile.portSets[i].UDPExceptions[j].scriptConfiguration[key]);
             }
 
-            honeydProfile.AddPort(profile.portSets[i].setName, 
+            honeydProfile.AddPort(encodedName, 
                     profile.portSets[i].UDPExceptions[j].behavior, 
                     profile.portSets[i].UDPExceptions[j].protocol, 
                     Number(profile.portSets[i].UDPExceptions[j].portNum), 
@@ -2762,7 +2763,8 @@ everyone.now.SaveProfile = function (profile, callback)
 
 everyone.now.RenamePortset = function(profile, oldName, newName, callback)
 {
-  var result = honeydConfig.RenamePortset(oldName, newName, profile);
+  var encodedName = sanitizeCheck(newName).entityEncode();
+  var result = honeydConfig.RenamePortset(oldName, encodedName, profile);
   honeydConfig.SaveAll();
   if(typeof callback == 'function')
   {
@@ -3390,7 +3392,7 @@ everyone.now.AddInterfaceAlias = function(iface, alias, callback)
 {
     if (alias != "") 
     {
-        interfaceAliases[iface] = alias;
+        interfaceAliases[iface] = sanitizeCheck(alias).entityEncode();
     } 
     else 
     {
