@@ -469,8 +469,7 @@ void Reload()
 {
 	// Reload the configuration file
 	Config::Inst()->LoadConfig();
-	// TODO DTC renable the ability to start/stop classification
-	//engine->Init();
+	engine->Reload();
 	suspects.SetEveryoneNeedsClassificationUpdate();
 }
 

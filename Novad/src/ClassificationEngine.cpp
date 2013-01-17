@@ -25,6 +25,7 @@ using namespace Nova;
 
 ClassificationEngine::ClassificationEngine() {}
 ClassificationEngine::~ClassificationEngine() {}
+void ClassificationEngine::Reload() {}
 
 
 void ClassificationEngine::LoadConfiguration(string filePath){}

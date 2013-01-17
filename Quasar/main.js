@@ -3086,6 +3086,11 @@ everyone.now.addTrainingPoint = function(ip, interface, features, hostility, cal
         callback("Error: Invalid hostility. Should be 0 or 1");
         return;
     }
+	
+	if (features.toString().split(" ").length != nova.GetDIM()) {
+		callback("Error: Invalid number of features!")
+		return;
+	}
 
     var point = features.toString() + " " + hostility + "\n";
     fs.appendFile(NovaHomePath + "/config/training/data.txt", point, function(err)

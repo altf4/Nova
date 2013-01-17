@@ -1,6 +1,8 @@
 #ifndef CLASSIFICATIONAGGREGATOR_H_
 #define CLASSIFICATIONAGGREGATOR_H_
 
+#include <pthread.h>
+
 #include "ClassificationEngine.h"
 #include "Config.h"
 
@@ -18,9 +20,12 @@ public:
 	std::vector<double> m_engineWeights;
 
 	double Classify(Suspect *s);
+	void Reload();
 
 private:
 	void LoadConfiguration(std::string filePath);
+
+	pthread_mutex_t lock;
 
 };
 

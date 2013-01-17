@@ -2,6 +2,7 @@
 #include "ClassificationAggregator.h"
 #include "Config.h"
 #include "Logger.h"
+#include "Lock.h"
 
 #include <stdlib.h>
 
@@ -15,6 +16,21 @@ namespace Nova
 
 ClassificationAggregator::ClassificationAggregator()
 {
+	pthread_mutex_init(&lock, NULL);
+	LoadConfiguration("");
+}
+
+void ClassificationAggregator::Reload()
+{
+	Lock(&this->lock);
+	for (uint i = 0; i < m_engines.size(); i++) {
+		delete m_engines[i];
+	}
+
+	m_engines.clear();
+	m_modes.clear();
+	m_engineWeights.clear();
+
 	LoadConfiguration("");
 }
 
@@ -72,6 +88,7 @@ void ClassificationAggregator::LoadConfiguration(std::string filePath)
 
 double ClassificationAggregator::Classify(Suspect *s)
 {
+	Lock(&this->lock);
 	double classification = 0;
 	for (uint i = 0; i < m_engines.size(); i++)
 	{

@@ -40,6 +40,8 @@ public:
 	// (Re)loads any configuration settings needed. Must be called before classification.
 	virtual void LoadConfiguration(string filePath);
 
+	virtual void Reload();
+
 protected:
 	ClassificationEngine();
 
