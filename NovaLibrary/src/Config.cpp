@@ -1115,6 +1115,7 @@ bool Config::LoadPaths()
 		m_pathHome = string(pw->pw_dir);
 	}
 
+	m_pathHomeConfig = m_pathHome + "/.config";
 	m_pathHome += "/.config/nova";
 
 	//Get locations of nova files
@@ -1524,6 +1525,7 @@ bool Config::InitUserConfigs()
 	//check for home folder
 	if(!stat(m_pathHome.c_str(), &fileAttr ) == 0)
 	{
+		boost::filesystem::create_directories(m_pathHomeConfig);
 		boost::filesystem::path fromPath = m_pathPrefix + "/usr/share/nova/userFiles/";
 		boost::filesystem::path toPath = m_pathHome + "/";
 

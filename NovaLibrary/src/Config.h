@@ -335,6 +335,7 @@ private:
 
 	// Options from the PATHS file (currently /etc/nova/paths)
 	std::string m_pathReadFolder;
+	std::string m_pathHomeConfig;
 	std::string m_pathHome;
 	std::string m_pathIcon;
 
