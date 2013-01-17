@@ -8,7 +8,7 @@ Homepage: https://github.com/DataSoft/Nova
 
 Package: nova
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libnotify4, honeyd, libcap2-bin, mysql-server
+Depends: ${shlibs:Depends}, ${misc:Depends}, nmap (>= 6.00-0.1), libcap2-bin
 Description: Anti-Reconnaissance System
  Use Nova to prevent and detect hostile reconnaissance on your private network. 
  Create a large array of decoy honeypots to obfuscate the network, and use  
