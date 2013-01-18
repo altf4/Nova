@@ -93,6 +93,9 @@ public:
 	bool IsPersonalityInherited();
 	bool IsUptimeInherited();
 	bool IsDropRateInherited();
+	//checks to see if the passed profile is equivalent to "this" profile
+	bool IsEqual(Profile *profile);
+	bool IsEqualRecursive(Profile *profile);
 
 	// Number of hosts that have this personality
 	uint32_t m_count;

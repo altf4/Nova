@@ -45,64 +45,124 @@ protected:
 	}
 };
 
-//create a false profile of random crap and write it
-//then read it back in and confirm that the structure is correct
-TEST_F(HoneydConfigurationTest, test_WriteAllTemplatesXML)
+TEST_F(HoneydConfigurationTest, test_ConfigFunctions)
 {
-	Profile * p = new Profile("default", "TestProfile");
-	Profile * l = new Profile("p","TestProfile2");
-	p->SetDropRate("15");
-	p->SetPersonality("Linux 3.53");
-	p->SetUptimeMax(400000);
-	p->SetUptimeMin(0);
-	l->SetPersonality("Linux 3.53");
-	cout<<p->GetDropRate()<<endl;
-	EXPECT_EQ(p->GetDropRate(),"15");
-	cout<<p->GetPersonality()<<endl;
-	EXPECT_EQ(p->GetPersonality(),"Linux 3.53");
-	cout<<p->GetUptimeMax()<<endl;
-	EXPECT_EQ(p->GetUptimeMax(),400000);
-	cout<<p->GetUptimeMin()<<endl;
-	EXPECT_EQ(p->GetUptimeMin(),0);
-	cout<<p->GetCount()<<endl;
-
-	//if this of these 4 then its public and we need to set manually
-	p->SetDropRate();
-	p->SetPersonality();
-	p->SetUptimeMax();
-	p->SetUptimeMin();
-	p->m_avgPortCount = 15;
-	p->m_children.size();//contains the number of children that this node has, it should be 0
-	/*
-	attributes to test:
-	std::string GetRandomVendor();
-	PortSet *GetRandomPortSet();
-	PortSet *GetPortSet(std::string name);
-	uint GetVendorCount(std::string vendorName);
-	void RecalculateChildDistributions();
-	bool Copy(Profile *source);
-	std::string GetPersonality();
-	std::string GetName();
-	uint32_t GetCount();
-	std::string GetParentProfile();
-	std::vector<std::string> GetVendors();
-	std::vector<uint> GetVendorCounts();
-	bool IsPersonalityInherited();
-	bool IsUptimeInherited();
-	double m_distribution;
-
-	*/
-
-
-	//here the plan is to make profile p a custom profile and we want to
-	//verify that the custom profile p actually contains what we give it
-	//now the only question is how do we customize p ?!?!?
-	EXPECT_TRUE(HC->AddProfile(p));
+	Node *node = new Node();
+	node->m_enabled = true;
+	Profile * defaultProfile = new Profile("default", "DefaultProfile");
+	Profile * child1 = new Profile(defaultProfile, "child1");
+	Profile * child2 = new Profile(defaultProfile, "child2");
+	Profile * child3 = new Profile(child1, "child3, child of child1");
+	defaultProfile->SetDropRate("15");
+	defaultProfile->SetPersonality("Linux 3.53");
+	defaultProfile->SetUptimeMax(400000);
+	defaultProfile->SetUptimeMin(0);
+	child1->SetDropRate("20");
+	child1->SetPersonality("Windows 8");
+	child1->SetUptimeMax(100000);
+	child1->SetUptimeMin(0);
+	child2->SetDropRate("15");
+	child2->SetPersonality("Ubuntu 12");
+	child2->SetUptimeMax(200000);
+	child2->SetUptimeMin(0);
+	child3->SetDropRate("13");
+	child3->SetPersonality("Fedora");
+	child3->SetUptimeMax(300000);
+	child3->SetUptimeMin(0);
+	EXPECT_TRUE(HC->AddProfile(defaultProfile));
+	EXPECT_TRUE(HC->AddProfile(child1));
+	EXPECT_TRUE(HC->AddProfile(child2));
+	EXPECT_TRUE(HC->AddProfile(child3));
 	EXPECT_TRUE(HC->WriteAllTemplatesToXML());
 	EXPECT_TRUE(HC->ReadAllTemplatesXML());
-	EXPECT_TRUE(HC->GetProfile("TestProfile") != NULL);
+	node->m_MAC= "FF:FF:BA:BE:CA:FE";
+	node->m_pfile = "Fedora";
+	node->m_enabled = true;
+	HC->ReadNodesXML();
+	HC->AddNode(*node);
+	HC->WriteHoneydConfiguration();
+	HC->WriteNodesToXML();
+	HC->ReadNodesXML();
 }
-
+//creates 4 profiles, one of which is the root and the root
+//has 2 children and 1 grandchild, the test then writes
+//all of the profiles to the xml and reads them
+//and ensures that they are correct
+TEST_F(HoneydConfigurationTest, test_WriteAllTemplatesXML)
+{
+	Profile * defaultProfile = new Profile("default", "DefaultProfile");
+	Profile * child1 = new Profile(defaultProfile, "child1");
+	Profile * child2 = new Profile(defaultProfile, "child2");
+	Profile * child3 = new Profile(child1, "child3, child of child1");
+	defaultProfile->SetDropRate("15");
+	defaultProfile->SetPersonality("Linux 3.53");
+	defaultProfile->SetUptimeMax(400000);
+	defaultProfile->SetUptimeMin(0);
+	child1->SetDropRate("20");
+	child1->SetPersonality("Windows 8");
+	child1->SetUptimeMax(100000);
+	child1->SetUptimeMin(0);
+	child2->SetDropRate("15");
+	child2->SetPersonality("Ubuntu 12");
+	child2->SetUptimeMax(200000);
+	child2->SetUptimeMin(0);
+	child3->SetDropRate("13");
+	child3->SetPersonality("Fedora");
+	child3->SetUptimeMax(300000);
+	child3->SetUptimeMin(0);
+	EXPECT_TRUE(HC->AddProfile(defaultProfile));
+	EXPECT_TRUE(HC->AddProfile(child1));
+	EXPECT_TRUE(HC->AddProfile(child2));
+	EXPECT_TRUE(HC->AddProfile(child3));
+	EXPECT_TRUE(HC->WriteAllTemplatesToXML());
+	EXPECT_TRUE(HC->ReadAllTemplatesXML());
+	EXPECT_TRUE(HC->GetProfile("DefaultProfile")!=NULL);
+	EXPECT_TRUE(HC->GetProfile("DefaultProfile")->GetDropRate().compare("15") == 0);
+	EXPECT_TRUE(HC->GetProfile("DefaultProfile")->GetPersonality().compare("Linux 3.53") == 0);
+	EXPECT_EQ(400000,HC->GetProfile("DefaultProfile")->GetUptimeMax());
+	EXPECT_EQ(0,HC->GetProfile("DefaultProfile")->GetUptimeMin());
+	EXPECT_TRUE(HC->GetProfile("child1")!=NULL);
+	EXPECT_TRUE(HC->GetProfile("child1")->GetDropRate().compare("20") == 0);
+	EXPECT_TRUE(HC->GetProfile("child1")->GetPersonality().compare("Windows 8") == 0);
+	EXPECT_EQ(100000,HC->GetProfile("child1")->GetUptimeMax());
+	EXPECT_EQ(0,HC->GetProfile("child1")->GetUptimeMin());
+	EXPECT_TRUE(HC->GetProfile("child2")!=NULL);
+	EXPECT_TRUE(HC->GetProfile("child2")->GetDropRate().compare("15") == 0);
+	EXPECT_TRUE(HC->GetProfile("child2")->GetPersonality().compare("Ubuntu 12") == 0);
+	EXPECT_EQ(200000,HC->GetProfile("child2")->GetUptimeMax());
+	EXPECT_EQ(0,HC->GetProfile("child2")->GetUptimeMin());
+	EXPECT_TRUE(HC->GetProfile("child3, child of child1")!=NULL);
+	EXPECT_TRUE(HC->GetProfile("child3, child of child1")->GetDropRate().compare("13") == 0);
+	EXPECT_TRUE(HC->GetProfile("child3, child of child1")->GetPersonality().compare("Fedora") == 0);
+	EXPECT_EQ(300000,HC->GetProfile("child3, child of child1")->GetUptimeMax());
+	EXPECT_EQ(0,HC->GetProfile("child3, child of child1")->GetUptimeMin());
+	EXPECT_TRUE(HC->GetProfile("DefaultProfile")->m_children[0]->m_name.compare("child1")==0);
+	EXPECT_TRUE(HC->GetProfile("DefaultProfile")->m_children[1]->m_name.compare("child2")==0);
+	EXPECT_TRUE(HC->GetProfile("child1")->m_children[0]->m_name.compare("child3, child of child1")==0);
+}
+//checks to see if profiles are added and then deletes them and checks if the deletion actually works
+TEST_F(HoneydConfigurationTest, test_profileWriteDelete)
+{
+		Profile * profileDefault = new Profile("default", "TestProfile");
+		Profile * profileChild1 = new Profile(profileDefault,"Child1");
+		Profile * profileChild2 = new Profile(profileDefault,"Child2");
+		Profile * profileChild3 = new Profile(profileDefault,"Child3");
+		Profile * profileChild4 = new Profile(profileDefault,"Child4");
+		Profile * profileChild5 = new Profile(profileChild4,"Child5");
+		EXPECT_TRUE(HC->AddProfile(profileDefault));
+		EXPECT_TRUE(HC->AddProfile(profileChild1));
+		EXPECT_TRUE(HC->AddProfile(profileChild2));
+		EXPECT_TRUE(HC->AddProfile(profileChild3));
+		EXPECT_TRUE(HC->AddProfile(profileChild4));
+		EXPECT_TRUE(HC->AddProfile(profileChild5));
+		EXPECT_TRUE(HC->WriteAllTemplatesToXML());
+		EXPECT_TRUE(HC->ReadAllTemplatesXML());
+		EXPECT_TRUE(HC->GetProfile("Child1")!=NULL);
+		EXPECT_TRUE(HC->DeleteProfile("Child1"));
+		EXPECT_TRUE(HC->WriteAllTemplatesToXML());
+		EXPECT_TRUE(HC->ReadAllTemplatesXML());
+		EXPECT_TRUE(HC->GetProfile("Child1")==NULL);
+}
 TEST_F(HoneydConfigurationTest, test_RenameProfile)
 {
 	// Create dummy profile
@@ -132,30 +192,6 @@ TEST_F(HoneydConfigurationTest, test_errorCases)
 	EXPECT_EQ(NULL, HC->GetNode("aouhaosnuheaonstuh"));
 
 }
-//test read/write permissions and also if the file is installed in the correct location and exists
-/*TEST_F(HoneydConfigurationTest,test_WriteProfilesToXML)
-{
-	//ls -l /etc/passwd
-	///home/rami/Code/Nova/Installer/userFiles/config/templates/default/profiles.xml
-	struct stat sb;
-	char a[100];
-	string rename1 = "cd " + home + "; mv profiles.xml profile.xml";
-	string rename2 = "cd " + home + "; mv profile.xml profiles.xml";
-	string readWriteStatus = "cd " + home + "/profiles.xml";//used to check
-	int TempNumOne = readWriteStatus.size();
-	for (int l=0;l<=TempNumOne;l++)
-		        {
-		            a[l]=readWriteStatus[l];
-		        }
-
-	 if( stat(a, &sb) == -1 ) {
-	        std::cout << "Couldn't stat(). Cannot access file, could assume it doesn't exist\n" << std::endl;
-	        //return 1;
-	}
-
-	    std::cout << "Permissions: " << std::oct << (unsigned long) sb.st_mode << std::endl;
-
-}*/
 
 TEST_F(HoneydConfigurationTest, test_Profile)
 {

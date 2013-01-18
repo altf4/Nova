@@ -19,9 +19,9 @@
 
 #include "Profile.h"
 #include "HoneydConfiguration.h"
-
+#include <map>
 #include <sstream>
-
+#define EQUALITY_THRESHOLD 0.00001
 using namespace std;
 
 namespace Nova
@@ -77,7 +77,6 @@ Profile::~Profile()
 string Profile::ToString(const std::string &portSetName, const std::string &nodeName)
 {
 	stringstream out;
-
 
 	if(!nodeName.compare("default"))
 	{
@@ -387,6 +386,106 @@ std::vector<uint> Profile::GetVendorCounts()
 		list.push_back(m_vendors[i].second);
 	}
 	return list;
+}
+//checks to see if two profiles are equal
+bool Profile::IsEqual(Profile *profile)
+{
+	if(profile == NULL)
+		return false;
+	if(this->m_avgPortCount != profile->m_avgPortCount)
+	{
+		return false;
+	}
+	if(this->m_count != profile->m_count)
+	{
+		return false;
+	}
+	if(std::abs(this->m_distribution - profile->m_distribution) > EQUALITY_THRESHOLD)
+	{
+		return false;
+	}
+	if(this->m_name.compare(profile->m_name) != 0)
+	{
+		return false;
+	}
+	if(this->m_osclass.compare(profile->m_osclass) != 0)
+	{
+		return false;
+	}
+	if(profile->IsDropRateInherited() != this->IsDropRateInherited())
+	{
+		return false;
+	}
+	if(profile->IsPersonalityInherited() != this->IsPersonalityInherited())
+	{
+		return false;
+	}
+	if(profile->IsUptimeInherited() != this->IsUptimeInherited())
+	{
+		return false;
+	}
+	if(profile->GetParentProfile() != this->GetParentProfile())
+	{
+		return false;
+	}
+	if(this->GetPersonality().compare(profile->GetPersonality()) != 0 )
+	{
+		return false;
+	}
+	if(this->GetDropRate().compare(profile->GetDropRate()) != 0)
+	{
+		return false;
+	}
+	if(this->GetUptimeMax() != profile->GetUptimeMax())
+	{
+		return false;
+	}
+	if(this->GetUptimeMaxNonRecursive() != profile->GetUptimeMaxNonRecursive())
+	{
+		return false;
+	}
+	if(this->GetUptimeMin() != profile->GetUptimeMin())
+	{
+		return false;
+	}
+	if(this->GetUptimeMinNonRecursive() != profile->GetUptimeMinNonRecursive())
+	{
+		return false;
+	}
+	return true;
+}
+//are these sub trees equal beginning from this profile and the passed profile
+bool Profile::IsEqualRecursive(Profile *profile)
+{
+	if(profile == NULL)
+		return false;
+	//if the 2 are equal then check their children
+	if(this->IsEqual(profile))
+	{
+		if(this->m_children.size() == profile->m_children.size())
+		{
+		for (vector<Profile *>::iterator i = this->m_children.begin(); i != this->m_children.end();++i)
+			{
+			for(vector<Profile *>::iterator j = this->m_children.begin(); j != this->m_children.end();++j)
+				{
+					if((*i)->IsEqual(*j))
+					{
+						break;
+					}
+					if(j == this->m_children.end())
+					{
+						return false;
+					}
+				}
+			}
+		}
+		else
+			return false;
+	}
+	else
+		return false;
+
+	return true;
 }
 
 bool Profile::IsPersonalityInherited()
