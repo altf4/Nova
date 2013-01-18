@@ -208,3 +208,23 @@ html, body {
 .pieLegendElementDiv {
 	text-align: left;
 }
+
+.classification_entry {
+	width: 300px;
+	height: 20px;
+	border: 1px solid #759DC0;
+}
+
+.progressBar {
+	background-image: url('images/gradient.jpg');
+	height: 20px;
+	background-repeat: repeat-x;
+	background-color: #ABD6FF;
+	border: 1px solid #759DC0;
+}
+
+.progressText {
+	top: -20px;
+	position: relative;
+	left: 0;
+}

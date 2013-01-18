@@ -31,7 +31,16 @@ td.novaGrid
 	text-align:center;
 	padding-top:4px;
 	padding-bottom:4px;
-	background-color: #d0e9fc;
+	background-repeat: repeat-x;
+	background-color: #ABD6FF;
+	background-image: url('images/gradient.jpg');
+	border: 1px solid #759DC0;
+}
+
+.novaGrid a
+{
+	color: black;
+	text-decoration: none;
 }
 
 tr.novaGrid:hover {
