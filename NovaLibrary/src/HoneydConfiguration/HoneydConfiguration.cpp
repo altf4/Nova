@@ -950,7 +950,10 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 		duplicate->Copy(profile);
 
 		//We don't need this new profile anymore, so get rid of it
-		delete profile;
+		if(profile != NULL)
+		{
+			delete profile;
+		}
 		return true;
 	}
 
