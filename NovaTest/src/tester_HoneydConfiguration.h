@@ -89,10 +89,6 @@ TEST_F(HoneydConfigurationTest, test_configFunctions)
 	EXPECT_TRUE(HC->ReadNodesXML());
 }
 
-//creates 4 profiles, one of which is the root and the root
-//has 2 children and 1 grandchild, the test then writes
-//all of the profiles to the xml and reads them
-//and ensures that they are correct
 TEST_F(HoneydConfigurationTest, test_writeAllTemplatesXML)
 {
 	Profile * defaultProfile = new Profile("default", "DefaultProfile");
@@ -147,15 +143,17 @@ TEST_F(HoneydConfigurationTest, test_writeAllTemplatesXML)
 }
 TEST_F(HoneydConfigurationTest, test_isEquals)
 {
-
+	Profile *defaultProfile = new Profile("default","DefaultProfile");
+	EXPECT_TRUE(HC->AddProfile(defaultProfile));
+	EXPECT_TRUE(defaultProfile->IsEqual(*defaultProfile));
+	EXPECT_TRUE(HC->WriteAllTemplatesToXML());
+	EXPECT_TRUE(HC->ReadAllTemplatesXML());
 }
 
 TEST_F(HoneydConfigurationTest, test_isEqualsRecursive)
 {
-	//for profiles always do heap allocation
-	//tree 1
-	Profile *defaultProfile = new Profile("default","DefaultProfile"); //= new Profile("default", "DefaultProfile");
-	Profile *child1 = new Profile(defaultProfile,"child1"); // = new Profile(defaultProfile, "child1");
+	Profile *defaultProfile = new Profile("default","DefaultProfile");
+	Profile *child1 = new Profile(defaultProfile,"child1");
 	Profile *child2 = new Profile(defaultProfile,"child2");
 	Profile *child3 = new Profile(defaultProfile,"child3");
 	Profile *child4 = new Profile(child3,"child4");
@@ -216,14 +214,39 @@ TEST_F(HoneydConfigurationTest, test_isEqualsRecursive)
 	EXPECT_TRUE(HC->AddProfile(child7));
 	EXPECT_TRUE(HC->WriteAllTemplatesToXML());
 	EXPECT_TRUE(HC->ReadAllTemplatesXML());
-	//Profile  child2; //= new Profile(defaultProfile, "child2");
-	//Profile  child3; //= new Profile(child1, "child3, child of child1");
-	EXPECT_TRUE(defaultProfile->IsEqual(*defaultProfile));
 	EXPECT_TRUE(defaultProfile->IsEqualRecursive(*defaultProfile));
-	//EXPECT_TRUE(child6.IsEqualRecursive(&child6));
 
 }
-//checks to see if profiles are added and then deletes them and checks if the deletion actually works
+
+TEST_F(HoneydConfigurationTest, test_toString)
+{
+	Profile *defaultProfile = new Profile("default","DefaultProfile");
+	EXPECT_TRUE(HC->AddProfile(defaultProfile));
+	//EXPECT_TRUE(HC->WriteAllTemplatesToXML());
+	EXPECT_TRUE(HC->ReadAllTemplatesXML());
+	EXPECT_TRUE(defaultProfile->ToString().compare(""));
+}
+
+TEST_F(HoneydConfigurationTest, test_getRandomVendor)
+{
+	Node node1,node2,node3,node4;
+	node1.m_IP = "184.185.173.186";
+	node2.m_IP = "184.185.173.185";
+	node3.m_IP = "184.185.173.184";
+	node4.m_IP = "184.185.173.183";
+	HC->AddNode(node1);
+	HC->AddNode(node2);
+	HC->AddNode(node3);
+	HC->AddNode(node4);
+	Profile *defaultProfile = new Profile("default","DefaultProfile");
+	EXPECT_TRUE(HC->AddProfile(defaultProfile));
+	EXPECT_TRUE(HC->WriteAllTemplatesToXML());
+	EXPECT_TRUE(HC->ReadAllTemplatesXML());
+	HC->WriteHoneydConfiguration();
+	cout<<"random vendor: "<<defaultProfile->GetRandomVendor()<<endl;
+	//EXPECT_TRUE(defaultProfile->GetRandomVendor());
+}
+
 TEST_F(HoneydConfigurationTest, test_profileWriteDelete)
 {
 		Profile * profileDefault = new Profile("default", "TestProfile");

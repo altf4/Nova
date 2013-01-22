@@ -111,7 +111,7 @@ string Profile::ToString(const std::string &portSetName, const std::string &node
 	}
 
 	//Use the recursive personality, here
-	string personality = GetPersonality();
+	string personality = this->GetPersonality();
 
 	if((personality != "") && (personality != "NULL"))
 	{
