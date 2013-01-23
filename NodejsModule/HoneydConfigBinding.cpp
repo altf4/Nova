@@ -379,6 +379,7 @@ Handle<Value> HoneydConfigBinding::AddScript(const Arguments& args)
 	Nova::Script script;
 	script.m_name = cvv8::CastFromJS<string>(args[0]);
 	script.m_path = cvv8::CastFromJS<string>(args[1]);
+	script.m_isConfigurable = false;
 
 	if(args.Length() == 4)
 	{
