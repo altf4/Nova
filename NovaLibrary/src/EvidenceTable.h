@@ -24,7 +24,7 @@
 #include "GenericQueue.h"
 #include "Evidence.h"
 
-typedef Nova::HashMap<uint64_t, Nova::GenericQueue<Nova::Evidence>*, std::hash<uint64_t>, eqkey > EvidenceHashTable;
+typedef Nova::HashMap<uint64_t, Nova::GenericQueue<Nova::Evidence>, std::hash<uint64_t>, eqkey > EvidenceHashTable;
 
 namespace Nova
 {

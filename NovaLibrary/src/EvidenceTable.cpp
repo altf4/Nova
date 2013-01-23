@@ -47,10 +47,10 @@ namespace Nova
 		Lock lock(&m_lock);
 		if(m_table.find(evidence->m_evidencePacket.ip_src) == m_table.end())
 		{
-			m_table[evidence->m_evidencePacket.ip_src] = new GenericQueue<Evidence>();
+			m_table[evidence->m_evidencePacket.ip_src] = GenericQueue<Evidence>();
 		}
 		//Pushes the evidence and enters the conditional if it's the first piece of evidence
-		if(m_table[evidence->m_evidencePacket.ip_src]->Push(evidence))
+		if(m_table[evidence->m_evidencePacket.ip_src].Push(evidence))
 		{
 			Evidence *temp = new Evidence(evidence);
 			m_processingList.Push(temp);
@@ -75,7 +75,7 @@ namespace Nova
 		if(lookup != NULL)
 		{
 			//This should never be invalid unless the workflow of this class is modified or bypassed
-			ret = m_table[lookup->m_evidencePacket.ip_src]->PopAll();
+			ret = m_table[lookup->m_evidencePacket.ip_src].PopAll();
 			delete lookup;
 			lookup = NULL;
 		}
