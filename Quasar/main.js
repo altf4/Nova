@@ -1676,6 +1676,8 @@ app.post('/scripts', function(req, res){
     
     fs.writeFileSync(pathToSave, data);
     
+    fs.chmodSync(pathToSave, '775');
+    
     pathToSave = req.body['shell'] + ' ' + pathToSave + ' ' + req.body['args'];
   
     honeydConfig.AddScript(req.body['name'], pathToSave);
