@@ -156,6 +156,41 @@ block headerAdditions
       rmLb = false;
     }
     
+    function GetSelectedProfiles()
+    {
+        var selected = new Array();
+        for (profile in profilesArray)
+        {
+            if (profilesArray[profile].isSelected)
+            {
+                selected.push(profile);
+            }
+        }
+        return selected;
+    }
+    
+    function UnsetHighlighted(element)
+    {
+        element.className = "unselectedProfile";
+    }
+    
+    function addChildSelectedItem()
+    {
+      var items = GetSelectedProfiles();
+      if (items.length != 1)
+      {
+        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 profile for parenting"});
+        dialog.show();
+        return;
+      }
+      window.location.href = "addHoneydProfile?parent=" + items[0];
+    }
+
+    function SetHighlighted(element)
+    {
+        element.className = "selectedProfile";
+    }
+    
     function newConfiguration(configName, cloneInfo)
     {
       var cloneConfig = cloneInfo;
@@ -558,90 +593,35 @@ block headerAdditions
     
     function onProfileClicked(profile)
     {
-      while(theDoc.getElementById('vendors').hasChildNodes())
-      {
-        theDoc.getElementById('vendors').removeChild(theDoc.getElementById('vendors').lastChild);
-      }
-      
-      while(theDoc.getElementById('portsetHook').hasChildNodes())
-      {
-        theDoc.getElementById('portsetHook').removeChild(theDoc.getElementById('portsetHook').lastChild);
-      }
-      
-      lightboxProfile = saveProfileObjs[profile].name;
-      
-      showLightBox('2');
-      
-      theDoc.getElementById('profileName').innerHTML = saveProfileObjs[profile].name + ' (OS: ' + saveProfileObjs[profile].os + ')';
-      theDoc.getElementById('dropPercent').innerHTML = 'Packet Drop Percentage: ' + saveProfileObjs[profile].packetDrop;
-      
-      for(var i in saveProfileObjs[profile].vendors)
-      {
-        var tr = theDoc.createElement('tr');
-        var td0 = theDoc.createElement('td');
-        var td1 = theDoc.createElement('td');
-        
-        td0.innerHTML = saveProfileObjs[profile].vendors[i].name;
-        td1.innerHTML = saveProfileObjs[profile].vendors[i].count;
-        
-        tr.appendChild(td0);
-        tr.appendChild(td1);
-        theDoc.getElementById('vendors').appendChild(tr);
-      }
+        var ctrlKeyPressed = true;
+        if (typeof(event) !== 'undefined')
+        {
+                if (!event.ctrlKey)
+                {
+                        ctrlKeyPressed = false;
+                } else {
+                        ctrlKeyPressed = true;
+                }
+        }
 
-      var selectedSet = false;
+        if (!ctrlKeyPressed)
+        {
+            for (entry in profilesArray)
+            {
+                profilesArray[entry].isSelected = false;
+                UnsetHighlighted(profilesArray[entry].listElement);
+            }
+        }
 
-      while(theDoc.getElementById('portsetSelect').hasChildNodes())
-      {
-        theDoc.getElementById('portsetSelect').removeChild(theDoc.getElementById('portsetSelect').lastChild); 
-      }
-      now.GetPortSets(profile, function(portset){
-        for(var i in portset)
+        profilesArray[profile].isSelected = !profilesArray[profile].isSelected;
+        if (profilesArray[profile].isSelected)
         {
-          var option = theDoc.createElement('option');
-          option.value = portset[i].setName;
-          option.innerHTML = portset[i].setName;
-          theDoc.getElementById('portsetSelect').appendChild(option);
-          if(!selectedSet)
-          {
-            option.selected = true;
-            selectedSet = true;
-            generateDefaultRows(portset[i].TCPBehavior, portset[i].UDPBehavior, portset[i].ICMPBehavior);
-            for(var port in portset[i].TCPExceptions)
-            {
-              generateExceptionRow(portset[i].TCPExceptions[port].portNum, portset[i].TCPExceptions[port].protocol, portset[i].TCPExceptions[port].behavior);
-            }
-            for(var port in portset[i].UDPExceptions)
-            {
-              generateExceptionRow(portset[i].UDPExceptions[port].portNum, portset[i].UDPExceptions[port].protocol, portset[i].UDPExceptions[port].behavior);
-            }
-          }
+            SetHighlighted(profilesArray[profile].listElement);
+        } else {
+            UnsetHighlighted(profilesArray[profile].listElement);
         }
-      });
-      
-      if(saveProfileObjs[profile].fixedOrRange == 'fixed')
-      {
-        if(saveProfileObjs[profile].uptimeValue != '')
-        {
-          theDoc.getElementById('fixedOrUptime').innerHTML = 'Fixed Uptime Value: ' + saveProfileObjs[profile].uptimeValue;
-        }
-        else
-        {
-          theDoc.getElementById('fixedOrUptime').innerHTML = 'Fixed Uptime Value: None';
-        }
-      }
-      else if(saveProfileObjs[profile].fixedOrRange == 'range')
-      {
-        theDoc.getElementById('fixedOrUptime').innerHTML = 'Uptime Value Range: ' + saveProfileObjs[profile].uptimeValueMin + ' to ' + saveProfileObjs[profile].uptimeValueMax;
-      }
-      else
-      {
-        console.log('fixedOrRange not found');
-        closeLightbox();
-        return;
-      }
-      
     }
+    
     
     function getConfig()
     {
@@ -977,6 +957,32 @@ block headerAdditions
       }
     }
     
+    function editSelectedProfileItem()
+    {
+      var items = GetSelectedProfiles();
+      if (items.length != 1)
+      {
+        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 profile for editing"});
+        dialog.show();
+        return;
+      }
+      window.location.href = "editHoneydProfile?profile=" + items[0];
+    }
+    function deleteSelectedProfileItems()
+    {
+      var names = GetSelectedProfiles();
+     
+      try 
+      {
+        now.deleteProfiles(names, errorMessageCallback);
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }
+    }
+    
     function editSelectedItem()
     {
       var items = grid.GetSelected();
@@ -1136,15 +1142,24 @@ block content
 
 
     div.tabDiv#settingsProfiles(style="display: none;")
-      h1 Current Profile Configuration
-      button(onclick="window.location='/configHoneydProfiles'")
-        img.buttonIcon(src="images/edit.png") 
-        span.buttonSpan Edit Profiles
-      br
-      br
+      h1 Profiles
 
       div#treeDiv
-        label Loading...
+      br
+      br
+     
+
+      button(onClick="deleteSelectedProfileItems()")
+        img.buttonIcon(src="images/delete.png")
+        span.buttonSpan Delete Selected Profiles 
+      
+      button(onClick="editSelectedProfileItem()")
+        img.buttonIcon(src="images/edit.png")
+        span.buttonSpan Edit Selected Profile
+      
+      button(onClick="addChildSelectedItem()") 
+        img.buttonIcon(src="images/add.png")
+        span.buttonSpan Add Child Profile
     
     div.tabDiv#settingsNodes(style="display: none;")
       h1 Current Node Configuration

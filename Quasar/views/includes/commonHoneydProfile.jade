@@ -505,7 +505,7 @@ script
                 {
                     if (err == null)
                     {
-                        window.location="/configHoneydProfiles";
+                        window.location="/honeydConfigManage?tab=settingsProfiles";
                         now.IsHaystackUp(checkIfRestartNeeded); 
                     } else {
                         alert("Unable to save profile: " + err);
@@ -524,7 +524,7 @@ script
                         }
                     }
 
-                    window.location="/configHoneydProfiles";
+                    window.location="/honeydConfigManage?tab=settingsProfiles";
                 };
 
                 addPort = function(port) 
@@ -891,7 +891,7 @@ script
                                 if (pfile == undefined)
                                 {
                                         alert("ERROR: Unable to fetch the requested profile information.");
-                                        window.location="/configHoneydProfiles";
+                                        window.location="/honeydConfigManage?tab=settingsProfiles";
                                         return;
                                 }
 

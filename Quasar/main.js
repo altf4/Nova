@@ -979,29 +979,6 @@ app.get('/configHoneydNodes', function (req, res)
   });
 });
 
-app.get('/configHoneydProfiles', function (req, res)
-{
-    if (!honeydConfig.LoadAllTemplates())
-    {
-        RenderError(res, "Unable to load honeyd configuration XML files")
-        return;
-    }
-    
-    var profileNames = honeydConfig.GetProfileNames();
-    var profiles = {};
-    for (var i = 0; i < profileNames.length; i++)
-    {
-        profiles[profileNames[i]] = honeydConfig.GetProfile(profileNames[i]);
-    }
-
-    res.render('configHoneydProfiles.jade', {
-        locals: {
-            profileNames: honeydConfig.GetProfileNames(),
-            profiles: profiles
-        }
-    })
-});
-
 app.get('/GetSuspectDetails', function (req, res)
 {
     if (req.query["ip"] === undefined)
@@ -2155,7 +2132,7 @@ app.post('/configureNovaSave', function (req, res)
             route = req.body['route'];
             if (route == 'manconfig')
             {
-                route = 'configHoneydProfiles';
+                route = 'honeydConfigManage';
             } else {
                 route = 'autoConfig';
             }
