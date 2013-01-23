@@ -703,6 +703,28 @@ app.get('/downloadHoneydLog.log', function (req, res)
     res.download(honeydLogPath, 'honeydLog.log');
 });
 
+app.get('/nodeState.csv', function(req, res)
+{
+  var nodeNames = honeydConfig.GetNodeMACs();
+  var nodeList = [];
+
+  var csvString = "ENABLED,IP,INTERFACE,MAC,PROFILE\n";
+  
+  for (var i = 0; i < nodeNames.length; i++)
+  {
+      var node = honeydConfig.GetNode(nodeNames[i]);
+      csvString += node.IsEnabled() + ",";
+      csvString += node.GetIP() + ",";
+      csvString += node.GetInterface() + ",";
+      csvString += node.GetMAC() + ",";
+      csvString += node.GetProfile();
+      csvString += "\n";
+  }
+
+  res.header('Content-Type', 'text/csv');
+  res.send(csvString);
+});
+
 app.get('/novaState.csv', function (req, res)
 {
     exec('novacli get all csv > ' + NovaHomePath + "/state.csv",
