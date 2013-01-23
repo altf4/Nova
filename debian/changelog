@@ -1,6 +1,6 @@
-nova (12.12-1) stable; urgency=low
+nova (12.12-1) unstable; urgency=low
 
-  * Beta Release: 12.12, December 2012 release.
+  * December 2012 release.
   * Assorted UI improvements
 
  -- Dan Petro <dan.petro@datasoft.com>  Fri, 05 Sept 2012 14:58:16 -0700
