@@ -1,4 +1,4 @@
-nova (12.12-1) unstable; urgency=low
+nova (12.12-1) quantal; urgency=low
 
   * December 2012 release.
   * Assorted UI improvements
