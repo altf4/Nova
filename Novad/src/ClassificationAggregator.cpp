@@ -20,6 +20,18 @@ ClassificationAggregator::ClassificationAggregator()
 	LoadConfiguration("");
 }
 
+ClassificationAggregator::~ClassificationAggregator()
+{
+	Lock(&this->lock);
+	for (uint i = 0; i < m_engines.size(); i++) {
+		delete m_engines[i];
+	}
+
+	m_engines.clear();
+	m_modes.clear();
+	m_engineWeights.clear();
+}
+
 void ClassificationAggregator::Reload()
 {
 	Lock(&this->lock);

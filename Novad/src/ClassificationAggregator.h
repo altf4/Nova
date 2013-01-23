@@ -13,6 +13,7 @@ class ClassificationAggregator : public ClassificationEngine
 {
 public:
 	ClassificationAggregator();
+	~ClassificationAggregator();
 
 	// TODO: Make this a single struct/class
 	std::vector<ClassificationEngine*> m_engines;
