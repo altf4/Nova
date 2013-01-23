@@ -40,6 +40,14 @@ protected:
 	}
 };
 
+
+// This was written to check the existence of a bug that segfaulted when deleting profiles
+TEST_F(HoneydConfigurationTest, test_deleteProfile){
+	HC->DeleteProfile("WinServer");
+	HC->DeleteProfile("BSDServer");
+	HC->DeleteProfile("LinuxServer");
+}
+
 TEST_F(HoneydConfigurationTest, test_ReadWrite)
 {
 	EXPECT_TRUE(HC->WriteAllTemplatesToXML());

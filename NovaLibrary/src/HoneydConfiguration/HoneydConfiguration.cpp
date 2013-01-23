@@ -1144,11 +1144,19 @@ bool HoneydConfiguration::DeleteProfile(string profileName)
 	}
 
 	// Delete any nodes that use this profile
-	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	NodeTable::iterator it = m_nodes.begin();
+	while (it != m_nodes.end())
 	{
 		if(it->second.m_pfile == profile->m_name)
 		{
-			m_nodes.erase(it->first);
+			// Note: you need to increment it before deleting it,
+			// since it becomes invalidated once erased. it++ increments
+			// it but returns the original iterrator value for .erase();
+			m_nodes.erase(it++);
+		}
+		else
+		{
+			++it;
 		}
 	}
 
