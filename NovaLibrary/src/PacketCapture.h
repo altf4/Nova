@@ -29,6 +29,7 @@ class PacketCapture
 {
 public:
 	PacketCapture();
+	virtual ~PacketCapture();
 
 	void SetPacketCb(void (*cb)(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet));
 	void SetFilter(std::string filter);

@@ -36,6 +36,12 @@ PacketCapture::PacketCapture()
 	pthread_mutex_init(&this->stoppingMutex, NULL);
 }
 
+PacketCapture::~PacketCapture()
+{
+
+}
+
+
 void PacketCapture::SetPacketCb(void (*cb)(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet))
 {
 	m_packetCb = cb;
@@ -124,6 +130,8 @@ void PacketCapture::StopCapture()
 		Lock(&this->stoppingMutex);
 		stoppingCapture = false;
 	}
+
+	pthread_mutex_destroy(&this->stoppingMutex);
 }
 
 void PacketCapture::InternalThreadEntry()
