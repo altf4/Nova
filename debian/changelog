@@ -1,3 +1,9 @@
+nova (12.12.3) quantal; urgency=low
+
+  * Bump version, trying to get accepted into PPA
+
+ -- Dan Petro <dan.petro@datasoft.com>  Thu, 24 Jan 2012 14:58:16 -0700
+
 nova (12.12-2) quantal; urgency=low
 
   * Fix missing build dependencies
