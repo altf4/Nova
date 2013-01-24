@@ -42,7 +42,6 @@ fi
 
 # Checks for libraries.
 AC_CHECK_LIB([pcap], [pcap_create], [], [foundLibFailed 'pcap'])
-AC_CHECK_LIB([notify], [notify_init], [], [foundLibFailed 'notify'])
 AC_CHECK_LIB([ann], [main], [], [foundLibFailed 'ann'])
 AC_CHECK_LIB([pthread], [pthread_create], [], [foundLibFailed 'pthread'])
 AC_CHECK_LIB([curl], [curl_easy_init], [], [foundLibFailed 'curl'])
