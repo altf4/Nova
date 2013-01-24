@@ -78,7 +78,7 @@ string Profile::ToString(const std::string &portSetName, const std::string &node
 {
 	stringstream out;
 
-	if(!nodeName.compare("default"))
+	if(!nodeName.compare("default"))//this is saying that if the name is default do something else do soemthign else
 	{
 		out << "create " << nodeName << '\n';
 	}

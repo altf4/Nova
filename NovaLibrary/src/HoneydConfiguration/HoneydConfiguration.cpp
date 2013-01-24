@@ -807,6 +807,7 @@ vector<string> HoneydConfiguration::GetProfileNames()
 	return GetProfileNames_helper(m_profiles.m_root);
 }
 
+
 vector<string> HoneydConfiguration::GetScriptNames()
 {
 	vector<string> scriptNames;
