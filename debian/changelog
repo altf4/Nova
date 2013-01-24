@@ -1,3 +1,9 @@
+nova (12.12-2) quantal; urgency=low
+
+  * Fix missing build dependencies
+
+ -- Dan Petro <dan.petro@datasoft.com>  Fri, 05 Sept 2012 14:58:16 -0700
+
 nova (12.12-1) quantal; urgency=low
 
   * December 2012 release.
