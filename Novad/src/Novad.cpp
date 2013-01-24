@@ -550,7 +550,6 @@ void StopCapture_noLocking()
 	{
 		packetCaptures.at(i)->StopCapture();
 		delete packetCaptures.at(i);
-		cout << "Deleted packet capture!" << endl;
 	}
 
 	packetCaptures.clear();
