@@ -222,4 +222,15 @@
 		<path>bash /usr/share/honeyd/scripts/linux/echo.sh $ipsrc $sport $ipdst $dport</path>
 		<configurable>false</configurable>
 	</script>
+	<script>
+		<name>Netbios Name Service</name>
+		<service>nbns</service>
+		<osclass>Microsoft | Windows</osclass>
+		<path>python /usr/share/honeyd/scripts/win32/nbns.py $ipdst</path>
+		<configurable>true</configurable>
+		<option>
+			<key>NAMES_PATH</key>
+			<value>/usr/share/honeyd/scripts/names</value>
+		</option>
+	</script>
 </scripts>
