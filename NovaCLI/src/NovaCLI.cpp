@@ -16,6 +16,7 @@
 // Description : Command line interface for Nova
 //============================================================================
 
+#include "HoneydConfiguration/HoneydConfiguration.h"
 #include "NovaCLI.h"
 #include "nova_ui_core.h"
 #include "Logger.h"
@@ -40,6 +41,8 @@ int main(int argc, const char *argv[])
 	}
 
 	Config::Inst();
+	HoneydConfiguration::Inst();
+
 
 	// Disable notifications and email in the CLI
 	Logger::Inst()->SetUserLogPreferences(EMAIL, EMERGENCY, '+');

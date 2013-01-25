@@ -16,6 +16,7 @@
 // Description : Nova Daemon to perform network anti-reconnaissance
 //============================================================================
 
+#include "HoneydConfiguration/HoneydConfiguration.h"
 #include "messaging/MessageManager.h"
 #include "WhitelistConfiguration.h"
 #include "InterfacePacketCapture.h"
@@ -112,6 +113,7 @@ int RunNovaD()
 {
 	Config::Inst();
 	Logger::Inst();
+	HoneydConfiguration::Inst();
 
 	if(!LockNovad())
 	{

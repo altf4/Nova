@@ -51,6 +51,8 @@ HoneydConfiguration *HoneydConfiguration::Inst()
 	{
 		m_instance = new HoneydConfiguration();
 		m_instance->LoadConfigurations();
+		m_instance->ReadAllTemplatesXML();
+		m_instance->WriteHoneydConfiguration();
 	}
 	return m_instance;
 }
