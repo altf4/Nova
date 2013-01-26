@@ -1163,7 +1163,7 @@ string HoneydConfiguration::SanitizeProfileName(std::string oldName)
 	string newname = "pfile" + oldName;
 	ReplaceString(newname, " ", "-");
 	ReplaceString(newname, ",", "COMMA");
-	ReplaceString(newname, ";", "COLON");
+	ReplaceString(newname, ";", "SEMICOLON");
 	ReplaceString(newname, "@", "AT");
 	return newname;
 }

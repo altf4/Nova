@@ -49,9 +49,13 @@ TEST_F(HoneydConfigurationTest, test_WriteConfig)
 {
 	EXPECT_TRUE(HC->WriteHoneydConfiguration(Config::Inst()->GetPathHome()));
 }
+
+//need to finish
 TEST_F(HoneydConfigurationTest, test_ConfigFunctions)
 {
 	Node node;
+	node.m_MAC= "FF:FF:BA:BE:CA:FE";
+	node.m_pfile = "Fedora";
 	node.m_enabled = true;
 	Profile *defaultProfile = new Profile("default", "DefaultProfile");
 	Profile *child1 = new Profile(defaultProfile, "child1");
@@ -79,8 +83,6 @@ TEST_F(HoneydConfigurationTest, test_ConfigFunctions)
 	EXPECT_TRUE(HC->AddProfile(child3));
 	EXPECT_TRUE(HC->WriteAllTemplatesToXML());
 	EXPECT_TRUE(HC->ReadAllTemplatesXML());
-	node.m_MAC= "FF:FF:BA:BE:CA:FE";
-	node.m_pfile = "Fedora";
 	EXPECT_TRUE(HC->ReadNodesXML());
 	EXPECT_TRUE(HC->AddNode(node));
 	EXPECT_TRUE(HC->WriteHoneydConfiguration());
@@ -150,15 +152,198 @@ TEST_F(HoneydConfigurationTest, test_GetRandomVendor)
 	EXPECT_TRUE(defaultProfile->GetRandomVendor().compare("") > 0);
 }
 
+TEST_F(HoneydConfigurationTest, test_GetPortSet)
+{
+	Profile *defaultProfile = new Profile("default","DefaultProfile");
+	EXPECT_TRUE(HC->AddProfile(defaultProfile));
+	EXPECT_TRUE(defaultProfile->GetRandomVendor().compare("") > 0);
+}
+
+TEST_F(HoneydConfigurationTest, test_GetScript)
+{
+	Script script;
+	script.m_name = "script1";
+	EXPECT_TRUE(HC->AddScript(script));
+	EXPECT_TRUE(HC->GetScript(script.m_name).m_name.compare(script.m_name) == 0);
+	EXPECT_TRUE(HC->DeleteScript(script.m_name));
+	EXPECT_TRUE(HC->WriteScriptsToXML());
+}
+TEST_F(HoneydConfigurationTest, test_GetScripts)
+{
+	std::vector<Script> receivedScripts;
+	Script script1;
+	Script script2;
+	Script script3;
+	Script script4;
+	Script script5;
+	script1.m_name = "script1";
+	script1.m_service = "syslog";
+	script2.m_name = "script2";
+	script2.m_service = "syslog";
+	script3.m_name = "script3";
+	script3.m_service = "syslog";
+	script4.m_name = "script4";
+	script4.m_service = "syslog";
+	script5.m_name = "script5";
+	EXPECT_TRUE(HC->AddScript(script1));
+	EXPECT_TRUE(HC->AddScript(script2));
+	EXPECT_TRUE(HC->AddScript(script3));
+	EXPECT_TRUE(HC->AddScript(script4));
+	EXPECT_TRUE(HC->AddScript(script5));
+	receivedScripts = HC->GetScripts("syslog","");
+	EXPECT_TRUE(receivedScripts[0].m_service.compare("syslog")==0);
+	EXPECT_TRUE(receivedScripts[1].m_service.compare("syslog")==0);
+	EXPECT_TRUE(receivedScripts[2].m_service.compare("syslog")==0);
+	EXPECT_TRUE(receivedScripts[3].m_service.compare("syslog")==0);
+	EXPECT_TRUE(HC->DeleteScript(script1.m_name));
+	EXPECT_TRUE(HC->DeleteScript(script2.m_name));
+	EXPECT_TRUE(HC->DeleteScript(script3.m_name));
+	EXPECT_TRUE(HC->DeleteScript(script4.m_name));
+	EXPECT_TRUE(HC->DeleteScript(script5.m_name));
+	EXPECT_TRUE(HC->WriteScriptsToXML());
+}
+
+TEST_F(HoneydConfigurationTest, test_GetScriptNames)
+{
+	std::vector<std::string> scriptNames;
+	std::vector<string>::iterator it;
+	Script script1;
+	Script script2;
+	Script script3;
+	Script script4;
+	Script script5;
+	script1.m_name = "script1";
+	script2.m_name = "script2";
+	script3.m_name = "script3";
+	script4.m_name = "script4";
+	script5.m_name = "script5";
+	EXPECT_TRUE(HC->AddScript(script1));
+	EXPECT_TRUE(HC->AddScript(script2));
+	EXPECT_TRUE(HC->AddScript(script3));
+	EXPECT_TRUE(HC->AddScript(script4));
+	EXPECT_TRUE(HC->AddScript(script5));
+	EXPECT_TRUE(HC->WriteScriptsToXML());
+	EXPECT_TRUE(HC->ReadScriptsXML());
+	scriptNames = HC->GetScriptNames();
+	it = std::find(scriptNames.begin(), scriptNames.end(), "script1");
+	EXPECT_TRUE(it->compare("script1")==0);
+	it = std::find(scriptNames.begin(), scriptNames.end(), "script2");
+	EXPECT_TRUE(it->compare("script2")==0);
+	it = std::find(scriptNames.begin(), scriptNames.end(), "script3");
+	EXPECT_TRUE(it->compare("script3")==0);
+	it = std::find(scriptNames.begin(), scriptNames.end(), "script4");
+	EXPECT_TRUE(it->compare("script4")==0);
+	EXPECT_TRUE(HC->DeleteScript(script1.m_name));
+	EXPECT_TRUE(HC->DeleteScript(script2.m_name));
+	EXPECT_TRUE(HC->DeleteScript(script3.m_name));
+	EXPECT_TRUE(HC->DeleteScript(script4.m_name));
+	EXPECT_TRUE(HC->DeleteScript(script5.m_name));
+	EXPECT_TRUE(HC->WriteScriptsToXML());
+	EXPECT_TRUE(HC->ReadScriptsXML());
+}
+
+TEST_F(HoneydConfigurationTest, test_DeleteProfile)
+{
+	Profile *defaultProfile = new Profile("default","DefaultProfile");
+	EXPECT_TRUE(HC->AddProfile(defaultProfile));
+	EXPECT_TRUE(HC->DeleteProfile(defaultProfile->m_name));
+
+}
+
+TEST_F(HoneydConfigurationTest, test_DeleteNode)
+{
+	Node node;
+	EXPECT_TRUE(HC->AddNode(node));
+	EXPECT_TRUE(HC->DeleteNode(node.m_MAC));
+}
+
+TEST_F(HoneydConfigurationTest, test_DeleteScript)
+{
+	Script script;
+	EXPECT_TRUE(HC->AddScript(script));
+	EXPECT_TRUE(HC->DeleteScript(script.m_name));
+}
+
+/*TEST_F(HoneydConfigurationTest, test_DeleteScriptFromPorts)
+{
+	Script script;
+	script.m_name = "script";
+	EXPECT_TRUE(HC->AddScript(script));
+	HC->DeleteScriptFromPorts(script.m_name);
+	//still has script delete isnt working
+	EXPECT_TRUE(HC->GetScript(script.m_name).m_name.compare("script")>0);
+}*/
+
+TEST_F(HoneydConfigurationTest, test_IsMACUsed)
+{
+	string mac = "FF:FF:BA:BE:CA:F2";
+	Node node;
+	node.m_MAC = "FF:FF:BA:BE:CA:FF";
+	EXPECT_TRUE(HC->AddNode(node));
+	EXPECT_TRUE(HC->IsMACUsed(node.m_MAC));
+	EXPECT_FALSE(HC->IsMACUsed(mac));
+}
+
+TEST_F(HoneydConfigurationTest, test_SanitizeProfileName)
+{
+	Profile *defaultProfile = new Profile("default","defaultProfile , ; @");
+	string sanitizedProfileName;
+	sanitizedProfileName = HC->SanitizeProfileName(defaultProfile->m_name);
+	EXPECT_TRUE(sanitizedProfileName.compare(defaultProfile->m_name)>0);
+}
+
+TEST_F(HoneydConfigurationTest, test_ClearProfiles)
+{
+	Profile *defaultProfile = new Profile("default","defaultProfile , ; @");
+	Profile *child1 = new Profile(defaultProfile,"child1");
+	EXPECT_TRUE(HC->AddProfile(defaultProfile));
+	HC->ClearProfiles();
+	EXPECT_TRUE(HC->GetProfile(child1->m_name)==NULL);
+}
+
+TEST_F(HoneydConfigurationTest, test_ClearNodes)
+{
+	Node node;
+	node.m_MAC = "FF:AA:BA:BE:CA:F2";
+	EXPECT_TRUE(HC->AddNode(node));
+	HC->ClearNodes();
+	EXPECT_TRUE(HC->GetNode(node.m_MAC) == NULL);
+}
+
+TEST_F(HoneydConfigurationTest, test_SwitchToConfiguration)
+{
+	EXPECT_TRUE(HC->AddNewConfiguration("NewConfig",false,""));
+	EXPECT_TRUE(HC->SwitchToConfiguration("NewConfig"));
+	EXPECT_TRUE(HC->RemoveConfiguration("NewConfig"));
+	EXPECT_TRUE(HC->SwitchToConfiguration("default"));
+}
+
+TEST_F(HoneydConfigurationTest, test_GetPortSets)
+{
+	std::vector<PortSet*> vectorOfPorts;
+	Profile *defaultProfile = new Profile("default","DefaultProfile");
+	defaultProfile->m_portSets.push_back(new PortSet("test1"));
+	defaultProfile->m_portSets.push_back(new PortSet("test2"));
+	defaultProfile->m_portSets.push_back(new PortSet("test3"));
+	defaultProfile->m_portSets.push_back(new PortSet("test4"));
+	defaultProfile->m_portSets.push_back(new PortSet("test5"));
+	EXPECT_TRUE(HC->AddProfile(defaultProfile));
+	vectorOfPorts = HC->GetPortSets(defaultProfile->m_name);
+	PortSet* singlePort = HC->GetPortSet(defaultProfile->m_name,"test1");
+	EXPECT_TRUE(vectorOfPorts.size() == 5);
+	EXPECT_TRUE(singlePort->m_name.compare("test1") == 0);
+}
+
 TEST_F(HoneydConfigurationTest, test_WriteScriptsToXML)
 {
 	Script script1;
+	std::vector<std::string> scriptsInitial;
+	std::vector<std::string> scriptsFinal;
 	script1.m_name = "script1";
 	script1.m_osclass = "Linux";
 	script1.m_path	=	Config::Inst()->GetPathHome()+ "/config/templates/default";
 	script1.m_service = "N/A";
-	std::vector<std::string> scriptsInitial = HC->GetScriptNames();
-	std::vector<std::string> scriptsFinal;
+	scriptsInitial = HC->GetScriptNames();
 	EXPECT_TRUE(HC->AddScript(script1));
 	EXPECT_TRUE(HC->WriteScriptsToXML());
 	EXPECT_TRUE(HC->ReadScriptsXML());
@@ -169,6 +354,7 @@ TEST_F(HoneydConfigurationTest, test_WriteScriptsToXML)
 	EXPECT_TRUE(HC->ReadScriptsXML());
 	scriptsFinal = HC->GetScriptNames();
 	EXPECT_TRUE(scriptsInitial == scriptsFinal);
+	EXPECT_TRUE(HC->WriteScriptsToXML());
 }
 
 TEST_F(HoneydConfigurationTest, test_WriteProfilesToXML)
@@ -187,11 +373,12 @@ TEST_F(HoneydConfigurationTest, test_WriteProfilesToXML)
 TEST_F(HoneydConfigurationTest, test_WriteNodesToXML)
 {
 	Node node1;
+	std::vector<std::string> NodeMACsInitial;
+	std::vector<std::string> NodeMACsFinal;
 	node1.m_IP = "198.2.3.2.1";
 	node1.m_MAC = "FF:FF:BA:BE:CA:FF";
 	node1.m_pfile = "";
-	std::vector<std::string> NodeMACsInitial = HC->GetNodeMACs();
-	std::vector<std::string> NodeMACsFinal;
+	NodeMACsInitial = HC->GetNodeMACs();
 	EXPECT_TRUE(HC->AddNode(node1));
 	EXPECT_TRUE(HC->WriteNodesToXML());
 	EXPECT_TRUE(HC->ReadNodesXML());
