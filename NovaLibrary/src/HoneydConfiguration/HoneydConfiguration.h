@@ -130,6 +130,7 @@ public:
 	// Returns a vector of strings containing the names of all profiles
 	std::vector<std::string> GetProfileNames();
 
+
 	//TODO Function contract
 	Script GetScript(std::string name);
 	std::vector<Script> GetScripts(std::string service, std::string osclass = "");

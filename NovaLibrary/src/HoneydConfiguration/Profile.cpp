@@ -19,9 +19,9 @@
 
 #include "Profile.h"
 #include "HoneydConfiguration.h"
-
+#include <map>
 #include <sstream>
-
+#define EQUALITY_THRESHOLD 0.00001
 using namespace std;
 
 namespace Nova
@@ -78,8 +78,7 @@ string Profile::ToString(const std::string &portSetName, const std::string &node
 {
 	stringstream out;
 
-
-	if(!nodeName.compare("default"))
+	if(!nodeName.compare("default"))//this is saying that if the name is default do something else do soemthign else
 	{
 		out << "create " << nodeName << '\n';
 	}
@@ -112,7 +111,7 @@ string Profile::ToString(const std::string &portSetName, const std::string &node
 	}
 
 	//Use the recursive personality, here
-	string personality = GetPersonality();
+	string personality = this->GetPersonality();
 
 	if((personality != "") && (personality != "NULL"))
 	{
@@ -280,6 +279,18 @@ std::string Profile::GetParentProfile()
 	}
 }
 
+const std::string Profile::GetParentProfile() const
+{
+	if(m_parent != NULL)
+	{
+		return m_parent->m_name;
+	}
+	else
+	{
+		return "";
+	}
+}
+
 uint Profile::GetUptimeMin()
 {
 	if(m_isUptimeInherited && (m_parent != NULL))
@@ -289,7 +300,21 @@ uint Profile::GetUptimeMin()
 	return m_uptimeMin;
 }
 
+const uint Profile::GetUptimeMin() const
+{
+	if(m_isUptimeInherited && (m_parent != NULL))
+	{
+		return m_parent->GetUptimeMin();
+	}
+	return m_uptimeMin;
+}
+
 uint Profile::GetUptimeMinNonRecursive()
+{
+	return m_uptimeMin;
+}
+
+const uint Profile::GetUptimeMinNonRecursive() const
 {
 	return m_uptimeMin;
 }
@@ -308,8 +333,21 @@ uint Profile::GetUptimeMax()
 	}
 	return m_uptimeMax;
 }
+const uint Profile::GetUptimeMax() const
+{
+	if(m_isUptimeInherited && (m_parent != NULL))
+	{
+		return m_parent->GetUptimeMax();
+	}
+	return m_uptimeMax;
+}
 
 uint Profile::GetUptimeMaxNonRecursive()
+{
+	return m_uptimeMax;
+}
+
+const uint Profile::GetUptimeMaxNonRecursive()const
 {
 	return m_uptimeMax;
 }
@@ -328,8 +366,21 @@ std::string Profile::GetDropRate()
 	}
 	return m_dropRate;
 }
+const std::string Profile::GetDropRate()const
+{
+	if(m_isDropRateInherited && (m_parent != NULL))
+	{
+		return m_parent->GetDropRate();
+	}
+	return m_dropRate;
+}
 
 std::string Profile::GetDropRateNonRecursive()
+{
+	return m_dropRate;
+}
+
+const std::string Profile::GetDropRateNonRecursive() const
 {
 	return m_dropRate;
 }
@@ -354,7 +405,21 @@ std::string Profile::GetPersonality()
 	return m_personality;
 }
 
+const std::string Profile::GetPersonality() const
+{
+	if(m_isPersonalityInherited && (m_parent != NULL))
+	{
+		return m_parent->GetPersonality();
+	}
+	return m_personality;
+}
+
 std::string Profile::GetPersonalityNonRecursive()
+{
+	return m_personality;
+}
+
+const std::string Profile::GetPersonalityNonRecursive() const
 {
 	return m_personality;
 }
@@ -388,8 +453,112 @@ std::vector<uint> Profile::GetVendorCounts()
 	}
 	return list;
 }
+//checks to see if two profiles are equal
+bool Profile::IsEqual(const Profile &profile)
+{
+	if(this->m_avgPortCount != profile.m_avgPortCount)
+	{
+		return false;
+	}
+	if(this->m_count != profile.m_count)
+	{
+		return false;
+	}
+	if(std::abs(this->m_distribution - profile.m_distribution) > EQUALITY_THRESHOLD)
+	{
+		return false;
+	}
+	if(this->m_name.compare(profile.m_name) != 0)
+	{
+		return false;
+	}
+	if(this->m_osclass.compare(profile.m_osclass) != 0)
+	{
+		return false;
+	}
+	if(this->IsDropRateInherited() !=profile.IsDropRateInherited())
+	{
+		return false;
+	}
+	if(this->IsPersonalityInherited() != profile.IsPersonalityInherited())
+	{
+		return false;
+	}
+	if(this->IsUptimeInherited() !=profile.IsUptimeInherited())
+	{
+		return false;
+	}
+	if(this->GetParentProfile() !=profile.GetParentProfile())
+	{
+		return false;
+	}
+	if(this->GetPersonality().compare(profile.GetPersonality()) != 0 )
+	{
+		return false;
+	}
+	if(this->GetDropRate().compare(profile.GetDropRate()) != 0)
+	{
+		return false;
+	}
+	if(this->GetUptimeMax() != profile.GetUptimeMax())
+	{
+		return false;
+	}
+	if(this->GetUptimeMaxNonRecursive() != profile.GetUptimeMaxNonRecursive())
+	{
+		return false;
+	}
+	if(this->GetUptimeMin() != profile.GetUptimeMin())
+	{
+		return false;
+	}
+	if(this->GetUptimeMinNonRecursive() != profile.GetUptimeMinNonRecursive())
+	{
+		return false;
+	}
+	return true;
+}
+//pass a constant reference as opposed to a pointer
+//it is faster and safer no unintended modification of the pointer
+//make it a constant reference
+//are these sub trees equal beginning from this profile and the passed profile
+bool Profile::IsEqualRecursive(const Profile &profile)
+{
+	bool childNotFound = false;
+	if(this->m_children.size() != profile.m_children.size())
+	{
+		return false;
+	}
+	if(this->IsEqual(profile))
+	{
+		for(uint i = 0; i < this->m_children.size(); i++)
+		{
+			for(uint j = 0; j < profile.m_children.size(); j++)
+			{
+				if((*this->m_children[i]).IsEqualRecursive(*profile.m_children[j]))
+				{
+					childNotFound = false;
+					break;
+				}
+				else
+					childNotFound = true;
+			}
+			if(childNotFound == true)
+				return false;
+		}
+	}
+	else
+		return false;
+
+	return true;
+}
 
 bool Profile::IsPersonalityInherited()
+{
+	return m_isPersonalityInherited;
+}
+
+const bool Profile::IsPersonalityInherited() const
 {
 	return m_isPersonalityInherited;
 }
@@ -399,9 +568,17 @@ bool Profile::IsUptimeInherited()
 	return m_isUptimeInherited;
 }
 
+const bool Profile::IsUptimeInherited() const
+{
+	return m_isUptimeInherited;
+}
+
 bool Profile::IsDropRateInherited()
 {
 	return m_isDropRateInherited;
 }
-
+const bool Profile::IsDropRateInherited() const
+{
+	return m_isDropRateInherited;
+}
 }

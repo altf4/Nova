@@ -66,21 +66,29 @@ public:
 	//Recursively looks up what the personality of this profile should be according to
 	//	Inheritance rules
 	std::string GetPersonality();
+	const std::string GetPersonality() const;
 	//Used when you really want the personality string of this profile, ignoring whether
 	//	or not it is inherited
 	std::string GetPersonalityNonRecursive();
+	const std::string GetPersonalityNonRecursive() const;
 	void SetPersonality(std::string personality);
 
 	uint GetUptimeMin();
+	const uint GetUptimeMin() const;
 	uint GetUptimeMinNonRecursive();
+	const uint GetUptimeMinNonRecursive()const;
 	bool SetUptimeMin(uint uptime);
 
 	uint GetUptimeMax();
+	const uint GetUptimeMax() const;
 	uint GetUptimeMaxNonRecursive();
+	const uint GetUptimeMaxNonRecursive() const;
 	bool SetUptimeMax(uint uptime);
 
 	std::string GetDropRate();
+	const std::string GetDropRate() const;
 	std::string GetDropRateNonRecursive();
+	const std::string GetDropRateNonRecursive() const;
 	bool SetDropRate(std::string droprate);
 
 	//Javascript compatibility functions
@@ -88,11 +96,18 @@ public:
 	std::string GetName();
 	uint32_t GetCount();
 	std::string GetParentProfile();
+	const std::string GetParentProfile() const;
 	std::vector<std::string> GetVendors();
 	std::vector<uint> GetVendorCounts();
 	bool IsPersonalityInherited();
+	const bool IsPersonalityInherited() const;
 	bool IsUptimeInherited();
+	const bool IsUptimeInherited() const;
 	bool IsDropRateInherited();
+	const bool IsDropRateInherited() const;
+	//checks to see if the passed profile is equivalent to "this" profile
+	bool IsEqual(const Profile &profile);
+	bool IsEqualRecursive(const Profile &profile);
 
 	// Number of hosts that have this personality
 	uint32_t m_count;

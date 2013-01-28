@@ -13,6 +13,7 @@
 #include "tester_WhitelistConfiguration.h"
 #include "tester_Database.h"
 #include "tester_messageSerialization.h"
+#include "tester_Profile.h"
 
 int main(int argc, char **argv)
 {

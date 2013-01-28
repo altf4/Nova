@@ -350,8 +350,8 @@ void print(boost::property_tree::ptree const& pt)
 
 //Loads scripts from the xml template located relative to the currently set home path
 // Returns true if successful, false if not.
-bool HoneydConfiguration::ReadScriptsXML()
-{
+bool HoneydConfiguration::ReadScriptsXML()//write complex test that moves the xml scripts to different locations b4 attempting to read
+{//
 	using boost::property_tree::ptree;
 	using boost::property_tree::xml_parser::trim_whitespace;
 	ptree scriptsTopLevel;
@@ -888,6 +888,7 @@ vector<string> HoneydConfiguration::GetProfileNames()
 	return GetProfileNames_helper(m_profiles.m_root);
 }
 
+
 vector<string> HoneydConfiguration::GetScriptNames()
 {
 	vector<string> scriptNames;
@@ -1031,7 +1032,10 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 		duplicate->Copy(profile);
 
 		//We don't need this new profile anymore, so get rid of it
-		delete profile;
+		if(profile != NULL)
+		{
+			delete profile;
+		}
 		return true;
 	}
 
@@ -1291,7 +1295,7 @@ string HoneydConfiguration::SanitizeProfileName(std::string oldName)
 	string newname = "pfile" + oldName;
 	ReplaceString(newname, " ", "-");
 	ReplaceString(newname, ",", "COMMA");
-	ReplaceString(newname, ";", "COLON");
+	ReplaceString(newname, ";", "SEMICOLON");
 	ReplaceString(newname, "@", "AT");
 	return newname;
 }
@@ -1391,6 +1395,7 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 
 		boost::filesystem::copy_file(fromString, toString);
 		Config::Inst()->SetCurrentConfig(oldName);
+		return true;
 	}
 	else if(clone && found)
 	{
@@ -1407,6 +1412,7 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 
 		addfile << configName << '\n';
 		addfile.close();
+		return true;
 	}
 	return false;
 }
