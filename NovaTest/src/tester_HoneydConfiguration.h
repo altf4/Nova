@@ -264,16 +264,6 @@ TEST_F(HoneydConfigurationTest, test_DeleteScript)
 	EXPECT_TRUE(HC->DeleteScript(script.m_name));
 }
 
-/*TEST_F(HoneydConfigurationTest, test_DeleteScriptFromPorts)
-{
-	Script script;
-	script.m_name = "script";
-	EXPECT_TRUE(HC->AddScript(script));
-	HC->DeleteScriptFromPorts(script.m_name);
-	//still has script delete isnt working
-	EXPECT_TRUE(HC->GetScript(script.m_name).m_name.compare("script")>0);
-}*/
-
 TEST_F(HoneydConfigurationTest, test_IsMACUsed)
 {
 	string mac = "FF:FF:BA:BE:CA:F2";
@@ -316,6 +306,20 @@ TEST_F(HoneydConfigurationTest, test_SwitchToConfiguration)
 	EXPECT_TRUE(HC->SwitchToConfiguration("NewConfig"));
 	EXPECT_TRUE(HC->RemoveConfiguration("NewConfig"));
 	EXPECT_TRUE(HC->SwitchToConfiguration("default"));
+}
+
+TEST_F(HoneydConfigurationTest, test_RemoveConfiguration)
+{
+	std::vector<string>::iterator it;
+	std::vector<std::string> ConfigurationList;
+	uint configSize = HC->GetConfigurationsList().size();
+	EXPECT_TRUE(HC->AddNewConfiguration("NewConfig",false,""));
+	ConfigurationList = HC->GetConfigurationsList();
+	it = std::find(ConfigurationList.begin(), ConfigurationList.end(), "NewConfig");
+	EXPECT_TRUE(ConfigurationList.size()>configSize);
+	EXPECT_TRUE(HC->RemoveConfiguration("NewConfig"));
+	ConfigurationList = HC->GetConfigurationsList();
+	EXPECT_TRUE(ConfigurationList.size()==configSize);
 }
 
 TEST_F(HoneydConfigurationTest, test_GetPortSets)

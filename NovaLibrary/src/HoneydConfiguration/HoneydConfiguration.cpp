@@ -1263,6 +1263,7 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 
 		boost::filesystem::copy_file(fromString, toString);
 		Config::Inst()->SetCurrentConfig(oldName);
+		return true;
 	}
 	else if(clone && found)
 	{
@@ -1279,6 +1280,7 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 
 		addfile << configName << '\n';
 		addfile.close();
+		return true;
 	}
 	return false;
 }
