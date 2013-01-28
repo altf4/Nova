@@ -1,3 +1,9 @@
+nova (12.12.4) quantal; urgency=low
+
+  * Remove ./configure file, bump version for PPA
+
+ -- David Clark <david.clark@datasoft.com>  Mon, 28 Jan 2012 14:58:16 -0700
+
 nova (12.12.3) quantal; urgency=low
 
   * Bump version, trying to get accepted into PPA

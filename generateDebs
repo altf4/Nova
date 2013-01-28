@@ -17,12 +17,6 @@ set -e
 
 trap cleanup SIGINT
 
-#Assert root user
-if [ $USER != "root" ]; then
-	echo "Execute with root privileges: sudo $0"
-	exit 1
-fi
-
 echo -e "Remember to update debian/changelog with current version and notes."
 
 if [ -z $1 ]; then
@@ -34,8 +28,9 @@ fi
 
 PACKAGE="nova_$VERSION"
 
-echo $PACKAGE
+echo "Package name is $PACKAGE"
 
+rm -f configure
 make clean
 
 #cd into the directory where the script is
