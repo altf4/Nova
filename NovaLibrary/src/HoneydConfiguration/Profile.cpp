@@ -21,6 +21,7 @@
 #include "HoneydConfiguration.h"
 #include <map>
 #include <sstream>
+#include <cmath>
 #define EQUALITY_THRESHOLD 0.00001
 using namespace std;
 
@@ -464,7 +465,7 @@ bool Profile::IsEqual(const Profile &profile)
 	{
 		return false;
 	}
-	if(std::abs(this->m_distribution - profile.m_distribution) > EQUALITY_THRESHOLD)
+	if(abs(this->m_distribution - profile.m_distribution) > EQUALITY_THRESHOLD)
 	{
 		return false;
 	}
