@@ -675,8 +675,6 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		path = Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathConfigHoneydHS();
 	}
 
-	LOG(DEBUG, "Writing honeyd configuration to " + path, "");
-
 	stringstream out;
 
 	//Print the "default" profile
