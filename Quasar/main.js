@@ -1705,7 +1705,7 @@ app.post('/honeydConfigManage', function (req, res){
     if((new RegExp('^[a-zA-Z0-9]+$')).test(newName))
     {
       honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
-      
+      honeydConfig.SwitchConfiguration(newName);
       honeydConfig.LoadAllTemplates();
     
       res.render('saveRedirect.jade', {
