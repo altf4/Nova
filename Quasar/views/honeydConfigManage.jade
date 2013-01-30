@@ -411,7 +411,8 @@ block headerAdditions
           {
             theDoc.getElementById('piChart').removeChild(theDoc.getElementById('piChart').lastChild);
           }
-          
+         
+          nodeList = nodes;
           for(var i in nodes)
           {
             if(nodesPerProfile[nodes[i].pfile] === undefined)
@@ -434,6 +435,8 @@ block headerAdditions
           
            var pi = new NovaPiChart('piChart', "Nodes by Profile", 200, 'deleteByProfile');
            pi.Render(piChartRender);
+
+           LoadNodeGrid();
         });
       }
       else
@@ -1001,13 +1004,9 @@ block headerAdditions
       }
       window.location.href = "editHoneydNode?node=" + nodeName;
     }
-    
-    function init(){
-      now.ready(function()
-      {
-        populateConfigSelect(configurationList);
 
-
+    function LoadNodeGrid()
+    {
         var gridStructure = [];
         gridStructure.push({name: "Enabled"});
         gridStructure.push({name: "IP"});
@@ -1063,30 +1062,15 @@ block headerAdditions
       
          var gridElements = grid.GetElements();
          
-         var nodesPerProfile = {};
-         var piChartRender = [];
-         
-         for(var i in gridElements)
-         {
-           var pfile = gridElements[i][4];
-           if(nodesPerProfile[pfile] === undefined)
-           {
-             nodesPerProfile[pfile] = 1;
-           }
-           else
-           {
-             nodesPerProfile[pfile]++;
-           }
-         }
-         
-         for(var pfile in nodesPerProfile)
-         {
-           var p = {};
-           p.name = pfile;
-           p.value = nodesPerProfile[pfile];
-           piChartRender.push(p);
-         }
-         
+    }
+    
+    function init(){
+      now.ready(function()
+      {
+        populateConfigSelect(configurationList);
+
+        LoadNodeGrid();
+ 
           
           now.GetHaystackDHCPStatus(dhcpStatusCallback);
           checkForEditInterface();

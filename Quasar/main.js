@@ -652,6 +652,17 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
+function cNodeToJs(node)
+{
+	var ret = {};
+    ret.enabled = node.IsEnabled();
+    ret.pfile = node.GetProfile();
+    ret.ip = node.GetIP();
+    ret.mac = node.GetMAC();
+    ret.interface = node.GetInterface();
+	return ret;
+}
+
 app.get('/honeydConfigManage', function(req, res){
   var tab;
   if (req.query["tab"] === undefined)
@@ -670,12 +681,7 @@ app.get('/honeydConfigManage', function(req, res){
   for (var i = 0; i < nodeNames.length; i++)
   {
       var node = honeydConfig.GetNode(nodeNames[i]);
-      var push = {};
-      push.enabled = node.IsEnabled();
-      push.pfile = node.GetProfile();
-      push.ip = node.GetIP();
-      push.mac = node.GetMAC();
-      push.interface = node.GetInterface();
+      var push = cNodeToJs(node);
       nodeList.push(push);
   }
 
@@ -3176,9 +3182,7 @@ everyone.now.GetConfigSummary = function(configName, callback)
   for (var i = 0; i < nodeNames.length; i++)
   {
     var node = honeydConfig.GetNode(nodeNames[i]);
-    var push = {};
-    
-    push.pfile = node.GetProfile();
+    var push = cNodeToJs(node);
     nodeList.push(push);
   }
   
