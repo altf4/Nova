@@ -1373,6 +1373,12 @@ app.post('/createNewUser', function (req, res)
 {
     var password = req.body["password"];
     var userName = req.body["username"];
+	
+	if (password.length == 0 || userName.length == 0) {
+      RenderError(res, "Can not have blank username or password!", "/setup1");
+      return;
+	}
+
     dbqCredentialsGetUser.all(userName,
 
     function selectCb(err, results, fields)
@@ -1411,6 +1417,11 @@ app.post('/createInitialUser', function (req, res)
 {
     var password = req.body["password"];
     var userName = req.body["username"];
+
+	if (password.length == 0 || userName.length == 0) {
+      RenderError(res, "Can not have blank username or password!", "/setup1");
+      return;
+	}
 
     dbqCredentialsGetUser.all(userName,
 
