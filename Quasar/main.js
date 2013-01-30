@@ -1441,9 +1441,11 @@ app.post('/createInitialUser', function (req, res)
 
 app.get('/autoConfig', function (req, res)
 {
+	var interfaces = config.ListInterfaces().sort();
     res.render('hhautoconfig.jade', {
         user: req.user,
-        INTERFACES: config.ListInterfaces().sort(),
+        INTERFACES: interfaces,
+        interfaceAliases: ConvertInterfacesToAliases(interfaces),
         SCANERROR: "",
         GROUPS: honeydConfig.GetConfigurationsList()
     });

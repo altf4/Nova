@@ -21,8 +21,10 @@ block headerAdditions
   script
     var subnetsArray = [];
     var Interfaces = "#{INTERFACES}";
+    var InterfaceAliases = "#{interfaceAliases}";
    
     var interfaceList = Interfaces.split(',');
+    var interfaceAliasList = InterfaceAliases.split(',');
     
     var interfaceLength;
     if(interfaceList[0].length == 1)
@@ -454,7 +456,8 @@ block headerAdditions
       {
 
         var option = document.createElement('option');
-        option.innerHTML = interfaceList[i];
+        option.value = interfaceList[i];
+        option.innerHTML = interfaceList[i] + " (Alias: " + interfaceAliasList[i] + ")";
         document.getElementById("nodeInterface").appendChild(option);  
 
         now.GetSubnetFromInterface(interfaceList[i], i, function(iface, subnet, index){
@@ -472,13 +475,8 @@ block headerAdditions
           input.value = iface;
           input.name = 'interfaces';
           input.style.width = 10;
-          if(checked)
-          {
-            input.checked = checked;
-            checked = false;
-          }
           input.id = 'if' + index;
-          label.innerHTML = iface + ' (' + subnet + ')';
+          label.innerHTML = iface + ' (Alias: ' + interfaceAliasList[i] + ', subnet: ' + subnet + ')';
                     
           td.appendChild(input);
           td.appendChild(label);
