@@ -110,8 +110,7 @@ int main(int argc, char ** argv)
 				("additional-subnet,a", po::value<vector<string> >(), "Additional subnets to scan. Must be subnets that will return Nmap results from the AutoConfig tool's location, and of the form XXX.XXX.XXX.XXX/##")
 				("nmap-xml,f", po::value<string>(), "Nmap 6.00+ XML output file to parse instead of scanning. Selecting this option skips the subnet identification and scanning phases, thus the INTERFACE and ADDITIONAL-SUBNET options will do nothing.")
 				("group,g", po::value<string>(), "Name for new haystack group created by the AutoConfig tool. Incompatible with (--append-to,-t) flag")
-				("append-to,t", po::value<string>(), "Name of haystack group to append AutoConfig results to. Incompatible with (--group,-g) flag")
-		;
+				("append-to,t", po::value<string>(), "Name of haystack group to append AutoConfig results to. Incompatible with (--group,-g) flag");
 
 		po::variables_map vm;
 		po::store(po::parse_command_line(argc, argv, desc), vm);

@@ -69,6 +69,7 @@ TEST_F(ConfigTest, test_classificationLoading)
 
 }
 
+
 // Tests that changing the enabled features sets all needed config options
 /*
 TEST_F(ConfigTest, test_setEnabledFeatures) {

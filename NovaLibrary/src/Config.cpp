@@ -147,6 +147,7 @@ void Config::LoadConfig()
 	LoadInterfaces();
 }
 
+
 vector<string> Config::GetPrefixes()
 {
 	vector<string> ret;
