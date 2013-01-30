@@ -337,7 +337,7 @@ block headerAdditions
       {
         return '*';
       }
-      if((new RegExp('^[a-zA-Z0-9]+$')).test(group))
+      if((new RegExp('^[a-zA-Z0-9 -_]+$')).test(group))
       {
         return group;
       }
@@ -485,9 +485,14 @@ block headerAdditions
         });
       } 
     }
-    
+   
+    var initialized = false;
     now.ready(function(){
-      populateTable();
+      if (!initialized)
+      {
+        initialized = true;
+        populateTable();
+      }
     });
 
 block content

@@ -1702,50 +1702,21 @@ app.post('/honeydConfigManage', function (req, res){
     cloneBool = true;
   }
   
-  if(!cloneBool)
+  if((new RegExp('^[a-zA-Z0-9 -_]+$')).test(newName))
   {
-    if((new RegExp('^[a-zA-Z0-9]+$')).test(newName))
-    {
-      honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
-      honeydConfig.SwitchConfiguration(newName);
-      honeydConfig.LoadAllTemplates();
-    
-      res.render('saveRedirect.jade', {
-       locals: {
-         redirectLink: '/honeydConfigManage'
-       }
-      });
-    } 
-    else
-    {
-      RenderError(res, 'Unacceptable characters in new configuration name', '/honeydConfigManage');
-    }
-  }
+    honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
+    honeydConfig.SwitchConfiguration(newName);
+    honeydConfig.LoadAllTemplates();
+  
+    res.render('saveRedirect.jade', {
+     locals: {
+       redirectLink: '/honeydConfigManage'
+     }
+    });
+  } 
   else
   {
-    if((new RegExp('^[a-zA-Z0-9]+$')).test(newName))
-    {
-      if((new RegExp('^[a-zA-Z0-9]+$')).test(configToClone))
-      {
-        honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
-        
-        honeydConfig.LoadAllTemplates();
-      
-        res.render('saveRedirect.jade', {
-         locals: {
-           redirectLink: '/honeydConfigManage'
-         }
-        });
-      }
-      else
-      {
-        RenderError(res, 'Unacceptable characters in clone configuration name', '/honeydConfigManage');  
-      }
-    } 
-    else
-    {
-      RenderError(res, 'Unacceptable characters in new configuration name', '/honeydConfigManage');
-    }
+    RenderError(res, 'Unacceptable characters in new configuration name', '/honeydConfigManage');
   }
 });
 
@@ -3221,15 +3192,8 @@ everyone.now.GetConfigSummary = function(configName, callback)
 
 everyone.now.SwitchConfigurationTo = function(configName)
 {
-  if((new RegExp('^[a-zA-Z0-9]+$')).test(configName))
-  {
-    honeydConfig.SwitchConfiguration(configName); 
+	honeydConfig.SwitchConfiguration(configName); 
     config.WriteSetting('CURRENT_CONFIG', configName);
-  }
-  else
-  {
-    console.log('regular expression detected irregular characters in configName');
-  }
 }
 
 everyone.now.RemoveConfiguration = function(configName, callback)
