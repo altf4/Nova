@@ -1,3 +1,10 @@
+nova (12.12.7) quantal; urgency=low
+
+  * Try building without the node_modules folder
+
+ -- David Clark <david.clark@datasoft.com>  Mon, 29 Jan 2012 14:58:17 -0700
+
+
 nova (12.12.6) quantal; urgency=low
 
   * Add nodejs and npm to Build-dependencies
