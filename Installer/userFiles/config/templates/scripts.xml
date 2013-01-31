@@ -230,7 +230,7 @@
 		<configurable>true</configurable>
 		<option>
 			<key>NAMES_PATH</key>
-			<value>/usr/share/honeyd/scripts/names</value>
+			<value>names</value>
 		</option>
 	</script>
 </scripts>
