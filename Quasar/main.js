@@ -551,7 +551,9 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
             
               var util = require('util');
               var spawn = require('child_process').spawn;
-            
+           
+		   	  console.log("Running: " + executionString.toString());
+		   	  console.log("Args: " + hhconfigArgs);
               autoconfig = spawn(executionString.toString(), hhconfigArgs);
             
               autoconfig.stdout.on('data', function (data){
@@ -2787,7 +2789,7 @@ everyone.now.GetCaptureSession = function (callback)
     callback(ret);
 }
 
-everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, interfaces, subnets, groupName, append, callback, route)
+everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, subnets, groupName, append, callback, route)
 {
     var executionString = 'haystackautoconfig';
 
@@ -2822,31 +2824,27 @@ everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, i
       }
     }
     
-    if(interfaces !== undefined && interfaces.length > 0)
-    {
-        hhconfigArgs.push('-i');
-        hhconfigArgs.push(interfaces);
-    }
     if(subnets !== undefined && subnets.length > 0)
     {
         hhconfigArgs.push('-a');
         hhconfigArgs.push(subnets);
     }
-    if(groupName !== undefined && groupName !== '*')
-    {
-      hhconfigArgs.push('-g');
+
+	if (!append) {
+		hhconfigArgs.push('-g');
+		hhconfigArgs.push(groupName);
+		honeydConfig.AddConfiguration(groupName, 'false', '');
+		config.SetCurrentConfig(groupName);
+	} else {
+      hhconfigArgs.push('-t');
       hhconfigArgs.push(groupName);
-      honeydConfig.AddConfiguration(groupName, 'false', '');
-    config.SetCurrentConfig(groupName);
-    }
-    if(append !== undefined && append !== '*')
-    {
-      hhconfigArgs.push('t');
-      hhconfigArgs.push(append);
-    }
+	}
 
     var util = require('util');
     var spawn = require('child_process').spawn;
+    
+	console.log("Running: " + executionString.toString());
+    console.log("Args: " + hhconfigArgs);
 
     autoconfig = spawn(executionString.toString(), hhconfigArgs);
 
