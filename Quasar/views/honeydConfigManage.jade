@@ -515,7 +515,7 @@ block headerAdditions
     {
       if(theDoc.getElementById('newName').value == '')
       {
-        alert('Must give a new name for New Configurations');
+        alert('Must give a new name for New Haystacks');
         return false;
       }
       else if(checkExistingName(theDoc.getElementById('newName').value) == true)
@@ -533,7 +533,7 @@ block headerAdditions
     { 
       if(theDoc.getElementById('newNameClone').value == '')
       {
-        alert('Must give a new name for Cloned Configurations');
+        alert('Must give a new name for Cloned Haystacks');
         return false;
       }
       else if(checkExistingName(theDoc.getElementById('newNameClone').value) == true)
@@ -1210,18 +1210,18 @@ block content
   div#lightbox(class='white_content')
     div#addConfigForm
       form(method='post', id='addConfig', onsubmit='return checkParametersAdd();')
-        label Name For New Configuration 
+        label Name For New Haystack
         br
         input#newName(name='newName', onkeypress='if(event.keyCode == 13){document.getElementById("addConfig").submit()}')
         br
         button#submitAdd Submit
     div#cloneConfigForm
       form(method='post', id='cloneConfig', onsubmit='return checkParametersClone();')
-        label Select Configuration to Clone:
+        label Select Haystack to Clone:
         br
         select#cloneMe(name='cloneSelect')
         br
-        label Name For Cloned Configuration
+        label Name For Cloned Haystack
         br
         input#newNameClone(name='newNameClone', onkeypress='if(event.keyCode == 13){document.getElementById("cloneConfig").submit()}')
         br
