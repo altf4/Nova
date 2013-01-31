@@ -1903,6 +1903,17 @@ app.post('/configureNovaSave', function (req, res)
     req.body["EMAIL_ALERTS_ENABLED"] = "1";
     config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
   }
+  
+  if(req.body["DM_ENABLED"] == undefined)
+  {
+    req.body["DM_ENABLED"] = "0";
+    config.WriteSetting("DM_ENABLED", "0");
+  }
+  else
+  {
+    req.body["DM_ENABLED"] = "1";
+    config.WriteSetting("DM_ENABLED", "1");
+  }
 
   if(clientId != undefined && req.body["MASTER_UI_CLIENT_ID"] != clientId)
   {
