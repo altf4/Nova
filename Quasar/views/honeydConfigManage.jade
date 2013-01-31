@@ -1106,23 +1106,23 @@ block content
 
     
     div.tabDiv#settingsGroups
-      h1 Edit Configurations
+      h1 Edit Haystacks
       button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch')
         img.buttonIcon(src="images/add.png") 
-        span.buttonSpan Add Group
+        span.buttonSpan Add Haystack
       button#cloneConfig(onclick='showLightBox("1")', title='Create a new configuration group by cloning an existing configuration')
         img.buttonIcon(src="images/add.png") 
-        span.buttonSpan Clone Group
+        span.buttonSpan Clone Haystack
       
-      button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') Create Group From Network Scan
+      button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') Create Haystack From Network Scan
       
       br
       br
-      h2 Current Group
+      h2 Current Haystack
       select#configurations(onchange='GetConfigurationSummary()')
       button#removeConfig(onclick='removeConfig()', title='Delete the currently selected group')
         img.buttonIcon(src="images/delete.png") 
-        span.buttonSpan Delete Group
+        span.buttonSpan Delete Haystack
 
 
     div.tabDiv#settingsProfiles(style="display: none;")
