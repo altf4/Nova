@@ -76,7 +76,7 @@ block headerAdditions
         
         var deleteButton = document.createElement("button");
         deleteButton.setAttribute("onclick", 'deleteSubnet("' + toValidate + '")');
-        deleteButton.innerHTML = 'Remove Subnet';
+        deleteButton.innerHTML = '<img class="buttonIcon" src="images/delete.png"/><span class="buttonSpan">Remove Subnet</span>';
         
         td0.appendChild(input);
         td1.appendChild(deleteButton);
@@ -543,7 +543,9 @@ block content
     label(id="errorLabel", style="color:red;")  
     br
     input(type="text", style="width:200px", id="subnetToAdd", width="20", onkeydown="if(event.keyCode == 13){document.getElementById('addSubnet').click(); document.getElementById('subnetToAdd').value=''; event.returnValue=false; event.cancel=true; }", placeholder="xxx.xxx.xxx.xxx/##") 
-    button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet  
+    button(type="button", id="addSubnet", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");")
+     img.buttonIcon(src="images/add.png")
+     span.buttonSpan Add Subnet
     br
     table(id='showTable', style='display:none;')
       thead
@@ -554,7 +556,9 @@ block content
       
     br
     br
-    input(type="submit", id="startScan", value="Start Scanning", onclick="RunScan()")
+    button(id="startScan", onclick="RunScan()")
+      img.buttonIcon(src="images/ok.png")
+      span.buttonSpan Start Scan
     
   div(id="lightbox", class="white_content")
     label(style="font-size: 1.2em;") Scan Commencing...
