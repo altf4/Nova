@@ -475,7 +475,7 @@ block headerAdditions
           input.name = 'interfaces';
           input.style.width = 10;
           input.id = 'if' + index;
-          label.innerHTML = iface + ' (Alias: ' + interfaceAliasList[i] + ', subnet: ' + subnet + ')';
+          label.innerHTML = subnet + ' (' + iface + " (Alias: " + interfaceAliasList[i] + '))';
                     
           td.appendChild(input);
           td.appendChild(label);
@@ -532,10 +532,9 @@ block content
     select#nodeInterface
     br
     br
+    label(style="font-weight: bold;") Subnets to Scan
+    br
     table
-      thead
-        tr 
-          th Interfaces connected to Server
       tbody(id='appendHook')
     
     br
