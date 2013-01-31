@@ -88,7 +88,7 @@ void Logger::Log(Nova::Levels messageLevel, const char *messageBasic,  const cha
 
 	if(mask.at(EMAIL) == '1')
 	{
-		Mail(messageLevel, tempStr);
+		Mail(messageLevel, ss.str());
 	}
 }
 
