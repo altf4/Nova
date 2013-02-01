@@ -228,3 +228,9 @@ html, body {
 	position: relative;
 	left: 0;
 }
+
+button::-moz-focus-inner {
+  border: 0;
+}
+
+
