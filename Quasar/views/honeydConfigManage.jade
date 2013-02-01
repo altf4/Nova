@@ -1091,7 +1091,7 @@ block headerAdditions
             document.getElementById("b" + tabNames[i]).className = "unselectedTab";
         }
         
-        
+        window.history.replaceState("", "", "/honeydConfigManage?tab=" + tab);
 
         document.getElementById(tab).style.display = "block";
         document.getElementById("b" + tab).className = "selectedTab";
