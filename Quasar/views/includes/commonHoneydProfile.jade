@@ -258,7 +258,7 @@ script
                     case 5: port.behavior = "tarpit script"; break;
                 }
 
-                if (port.behavior == "script")
+                if (port.behavior == "script" || port.behavior == "tarpit script")
                 {
                     port.scriptName = dojo.byId("portScriptDrop" + portIndexes[i]).value;
                 } else {
