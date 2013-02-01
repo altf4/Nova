@@ -32,6 +32,7 @@ echo "Package name is $PACKAGE"
 
 rm -f configure
 make clean
+rm -fr Quasar/node_modules
 
 #cd into the directory where the script is
 cd "$(dirname "$PACKAGE")"
