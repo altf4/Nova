@@ -27,9 +27,11 @@ block headerAdditions
     
     function viewModelApp() {
         var self = this;
-        self.isNewHaystack = ko.observable(true);
         self.newHaystackName = ko.observable("");
         self.oldHaystackName = ko.observable("");
+
+        self.isNewHaystackSelection = ko.observable("1");
+        self.isNewHaystack = ko.computed(function() {return parseInt(self.isNewHaystackSelection())}, self);
         self.groupName = ko.computed(function() {
            if (self.isNewHaystack()) {
             return self.newHaystackName();
@@ -52,6 +54,33 @@ block headerAdditions
                 self.subnetsToScan.push(subnet);
             }
         }
+
+        self.nodeCreationType = ko.observable();
+        self.nodeCountFixed = ko.observable(1);
+        self.nodeCountRatio = ko.observable(1);
+        self.nodeCountRange = ko.observable("");
+
+        self.nodeCount = ko.computed(function() {
+          var num = -1;
+          if(self.nodeCreationType() == 'fixed') 
+          {
+            num = self.nodeCountFixed();
+          } 
+          else if(self.nodeCreationType() == 'ratio')
+          {
+            num = self.nodeCountRatio();
+          }
+          else if(self.nodeCreationType() == 'range')
+          {
+            num = self.nodeCountRange();
+            var regex = new RegExp('^([0-255]\\.){3}([0-255])\\-([0-255]\\.){3}([0-255])$');
+            if(regex.test(num) == 'false')
+            {
+              num = -1;
+            }
+          }
+          return num;
+        }, self);
     };
 
     var viewModel = new viewModelApp();
@@ -102,7 +131,7 @@ block headerAdditions
     
     function RunScan()
     {
-      if(GetNumNodes() == -1)
+      if(viewModel.nodeCount() == -1)
       {
         alert('There is a problem with your value for number of nodes!');
         return;
@@ -145,9 +174,7 @@ block headerAdditions
         document.getElementById('appendText').style.width = divWidth + 'px';
         try 
         {
-            var element = document.getElementById("nodeCountType");
-            var count = element.options[element.selectedIndex].value;
-            now.ShowAutoConfig(GetNodeInterface(), count, GetNumNodes(), GetSubnets(), GetHaystackName(), !viewModel.isNewHaystack(), autoscancb, routeToReview); 
+            now.ShowAutoConfig(GetNodeInterface(), viewModel.nodeCreationType(), viewModel.nodeCount(), GetSubnets(), GetHaystackName(), !viewModel.isNewHaystack(), autoscancb, routeToReview); 
         } 
         catch(err) 
         {
@@ -194,31 +221,6 @@ block headerAdditions
       }
     }
 
-    function GetNumNodes()
-    {
-        var num;
-        var element = document.getElementById("nodeCountType");
-        var count = element.options[element.selectedIndex].value;
-        if(count == "fixed") 
-        {
-          num = parseInt(document.getElementById("numNodes").value);
-        } 
-        else if(count == 'ratio')
-        {
-          num = parseFloat(document.getElementById("numNodes").value);
-        }
-        else if(count == 'range')
-        {
-          num = document.getElementById('numNodes').value;
-          var regex = new RegExp('^([0-255]\\.){3}([0-255])\\-([0-255]\\.){3}([0-255])$');
-          if(regex.test(num) == 'false')
-          {
-            num = -1;
-          }
-        }
-        return num;
-    }
-
     function GetNodeInterface()
     {
         return document.getElementById("nodeInterface").value;
@@ -263,37 +265,6 @@ block headerAdditions
     function routeToReview(redirect)
     {
       window.location = redirect.toString();
-    }
-
-    function nodeNumberTypeChanged()
-    {
-       var element = document.getElementById("nodeCountType");
-       var count = element.options[element.selectedIndex].value;
-       if(count == "fixed") 
-       {
-         document.getElementById("numNodesLabel").innerHTML = "Number of Haystack Nodes to create";
-         document.getElementById('numNodes').value = '1';
-         document.getElementById('numNodes').placeholder = ''; 
-         document.getElementById('numNodes').style.width = '170px';
-       } 
-       else if(count == 'ratio')
-       {
-         document.getElementById("numNodesLabel").innerHTML = "Ratio of nodes to create versus nodes found during scan";
-         if (navigator.userAgent.indexOf("MSIE") == "-1") {
-                document.getElementById('numNodes').type = 'number';
-         }
-         document.getElementById('numNodes').value = '1';
-         document.getElementById('numNodes').placeholder = ''; 
-         document.getElementById('numNodes').style.width = '170px';
-       }
-       else if(count == 'range')
-       {
-         document.getElementById("numNodesLabel").innerHTML = "Range of IP Addresses to fill";
-         document.getElementById('numNodes').type = 'text';
-         document.getElementById('numNodes').value = '';
-         document.getElementById('numNodes').placeholder = '###.###.###.###-###.###.###.###'; 
-         document.getElementById('numNodes').style.width = '205px';
-       }
     }
 
     function cancelScan()
@@ -346,35 +317,49 @@ block content
     
   div#setup
     h1 Haystack Autoconfig
-    br
-    input(data-bind="checked: isNewHaystack", type='checkbox') 
-    label(style='font-weight: bold;') New Haystack?
-    br
-    br
-    label(id='nameLabel', style='font-weight: bold') Haystack Name
-    br
-    br
-    input(data-bind="visible: isNewHaystack, value: newHaystackName, valueUpdate: 'afterkeydown'", type='text', placeholder='Required Field')
-    select(data-bind="visible: !isNewHaystack(), value: oldHaystackName")
-      - for(var i = 0; i < GROUPS.length; i++)
-        - if(GROUPS[i] != '' && GROUPS[i] != undefined && GROUPS[i] != 'default')
-          option #{GROUPS[i]}
-    br
-    hidden(id="length", value=INTERFACES.length)
-    br    
-    label#numNodesLabel(style='font-weight: bold') Number of Haystack Nodes to create
-    br
-    br
-    select#nodeCountType(onchange="nodeNumberTypeChanged()")
-      option(value="fixed", selected='selected') Fixed
-      option(value="ratio") Ratio
-      option(value="range") IP Range
-    input(type="number", name="numNodes", id="numNodes", min="1", value="1")
-    br
-    br
-    label(style='font-weight: bold') Interface to create nodes on
-    br
-    select#nodeInterface(data-bind="options: interfaceList")
+    
+    table
+      tr
+        td
+          label(style='font-weight: bold;') New Haystack?
+        td
+          input(data-bind="checked: isNewHaystackSelection", value='1', type='radio')
+          label Create new haystack
+          br
+          input(data-bind="checked: isNewHaystackSelection", value='0', type='radio')
+          label Append to haystack
+
+      tr
+        td
+          label(id='nameLabel', style='font-weight: bold') Haystack Name
+        td
+          input(data-bind="visible: isNewHaystack, value: newHaystackName, valueUpdate: 'afterkeydown'", type='text')
+          select(data-bind="visible: !isNewHaystack(), value: oldHaystackName")
+            - for(var i = 0; i < GROUPS.length; i++)
+              - if(GROUPS[i] != '' && GROUPS[i] != undefined && GROUPS[i] != 'default')
+                option #{GROUPS[i]}
+      tr
+        td
+          label#numNodesLabel(style='font-weight: bold') How to create nodes&nbsp&nbsp
+        td
+          select(data-bind="value: nodeCreationType")
+            option(value="fixed", selected='selected') Fixed number of nodes
+            option(value="ratio") Ratio to number found in scan
+            option(value="range") Place nodes in range of IPs
+
+       tr
+         td
+           label(style='font-weight: bold') Nodes to create
+         td
+           input(data-bind='visible: nodeCreationType() == "fixed", value: nodeCountFixed, valueUpdate: "afterkeydown"', type="number", min="1")
+           input(data-bind='visible: nodeCreationType() == "ratio", value: nodeCountRatio, valueUpdate: "afterkeydown"', type="number", min="0")
+           input(data-bind='visible: nodeCreationType() == "range", value: nodeCountRange, valueUpdate: "afterkeydown"', type="text", placeholder='###.###.###.###-###.###.###.###', style="width: 210px")
+
+        tr
+          td
+            label(style='font-weight: bold') Interface to create nodes on
+          td
+            select#nodeInterface(data-bind="options: interfaceList")
     br
     br
     label(style="font-weight: bold;") Subnets to Scan
@@ -403,7 +388,7 @@ block content
       thead
         tr
           th
-            label Subnets to be scanned
+            label Subnets that will be scanned
       tbody(data-bind="foreach: subnetsToScan")
         tr
           td(data-bind="text: subnet", style="width: 200px")
