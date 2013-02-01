@@ -1735,7 +1735,7 @@ app.post('/honeydConfigManage', function (req, res){
   } 
   else
   {
-    RenderError(res, 'Unacceptable characters in new configuration name', '/honeydConfigManage');
+    RenderError(res, 'Unacceptable characters in new haystack name', '/honeydConfigManage');
   }
 });
 
@@ -3224,7 +3224,7 @@ everyone.now.RemoveConfiguration = function(configName, callback)
 {
   if(configName == 'default')
   {
-    console.log('Cannot delete default configuration');
+    console.log('Cannot delete default haystack');
   }
   
   honeydConfig.RemoveConfiguration(configName);
