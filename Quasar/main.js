@@ -2831,13 +2831,13 @@ everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, s
     }
 
 	if (!append) {
-		hhconfigArgs.push('-g');
+		hhconfigArgs.push('-t');
 		hhconfigArgs.push(groupName);
 		honeydConfig.AddConfiguration(groupName, 'false', '');
 		config.SetCurrentConfig(groupName);
 	} else {
-      hhconfigArgs.push('-t');
-      hhconfigArgs.push(groupName);
+		hhconfigArgs.push('-t');
+		hhconfigArgs.push(groupName);
 	}
 
     var util = require('util');
