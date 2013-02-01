@@ -43,6 +43,11 @@ form(method="post", action="/configureNovaSave")
   a(href="/editTLSCerts")
     label Click to upload new TLS certificates
   br
+  br
+
+  a(href="#", onclick="if (confirm('Are you sure you want to do this? This will shutdown the Quasar web UI. If upstart is configured, it may be restarted.')) {now.shutdownQuasar(); window.location = '/';}")
+    label Shut down Quasar
+  br
 
   h2 File Paths
   label Path to state save file
@@ -272,7 +277,4 @@ form(method="post", action="/configureNovaSave")
   label Master UI Reconnect Time
   input(name="MASTER_UI_RECONNECT_TIME",  value=MASTER_UI_RECONNECT_TIME)
   br
-
-
-
 

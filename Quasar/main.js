@@ -3421,6 +3421,11 @@ everyone.now.GetHaystackDHCPStatus = function(callback)
     });
 }
 
+everyone.now.shutdownQuasar = function() {
+        LOG("ALERT", "Quasar is exiting due to user issued shutdown command on the web interface");
+    	process.exit(1);
+};
+
 function ReloadInterfaceAliasFile() 
 {
     var aliasFileData = fs.readFileSync(NovaHomePath + "/config/interface_aliases.txt");
