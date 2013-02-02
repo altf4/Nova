@@ -1645,7 +1645,7 @@ bool Config::WriteSetting(std::string key, std::string value)
 
 	if (!validKey)
 	{
-		LOG(WARNING, "WriteSetting was called with invalid setting key", "");
+		LOG(WARNING, "WriteSetting was called with invalid setting key of " + key, "");
 		return false;
 	}
 

@@ -1,8 +1,8 @@
 var fs = require('fs');
 
 // Constructor should be passed the honeyd config binding object
-var Classifiers = function(configIn) {
-  this.config = configIn;
+var Classifiers = function(config) {
+    this.config = config
 }
 
 Classifiers.prototype = {

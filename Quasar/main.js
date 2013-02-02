@@ -16,7 +16,6 @@
 // Description : Main node.js file for the Quasar web interface of Nova
 //============================================================================
 
-
 // Used for debugging. Download the node-segfault-handler to use
 //var segvhandler = require('./node_modules/segvcatcher/lib/segvhandler')
 //segvhandler.registerHandler();
@@ -45,49 +44,32 @@ memwatch.on('stats', function(stats)
 */
 
 // Modules that provide bindings to C++ code in NovaLibrary and Nova_UI_Core
-var novaconfig = require('novaconfig.node');
 
-var nova = new novaconfig.Instance();
-nova.CheckConnection();
-
-var config = new novaconfig.NovaConfigBinding();
-var honeydConfig = new novaconfig.HoneydConfigBinding();
-var vendorToMacDb = new novaconfig.VendorMacDbBinding();
-var osPersonalityDb = new novaconfig.OsPersonalityDbBinding();
-var trainingDb = new novaconfig.CustomizeTrainingBinding();
-var whitelistConfig = new novaconfig.WhitelistConfigurationBinding();
+var NovaCommon = require('./NovaCommon.js');
+NovaCommon.nova.CheckConnection();
 
 // Modules from NodejsModule/Javascript
-var LOG = require("../NodejsModule/Javascript/Logger").LOG;
+var LOG = NovaCommon.LOG;
 
-if (!honeydConfig.LoadAllTemplates())
+if (!NovaCommon.honeydConfig.LoadAllTemplates())
 {
     LOG("ERROR", "Call to initial LoadAllTemplates failed!");
 }
 
 var fs = require('fs');
-var path = require('path');
 var jade = require('jade');
 var express = require('express');
-var util = require('util');
 var passport = require('passport');
 var BasicStrategy = require('passport-http').BasicStrategy;
 var sql = require('sqlite3').verbose();
-var validCheck = require('validator').check;
-var sanitizeCheck = require('validator').sanitize;
 var crypto = require('crypto');
 var exec = require('child_process').exec;
 var nowjs = require("now");
 var Validator = require('validator').Validator;
-var dns = require('dns');
-var wrench = require('wrench');
-
-var classifiersConstructor = new require('./classifiers.js');
-var classifiers = new classifiersConstructor(config);
 
 var Tail = require('tail').Tail;
-var NovaHomePath = config.GetPathHome();
-var NovaSharedPath = config.GetPathShared();
+var NovaHomePath = NovaCommon.config.GetPathHome();
+var NovaSharedPath = NovaCommon.config.GetPathShared();
 var novadLogPath = "/var/log/nova/Nova.log";
 var novadLog = new Tail(novadLogPath);
 
@@ -123,14 +105,14 @@ var HashPassword = function (password, salt)
     return shasum.digest('hex');
 };
 
-LOG("ALERT", "Starting QUASAR version " + config.GetVersionString());
+LOG("ALERT", "Starting QUASAR version " + NovaCommon.config.GetVersionString());
 
 
 process.chdir(NovaHomePath);
 
-var DATABASE_HOST = config.ReadSetting("DATABASE_HOST");
-var DATABASE_USER = config.ReadSetting("DATABASE_USER");
-var DATABASE_PASS = config.ReadSetting("DATABASE_PASS");
+var DATABASE_HOST = NovaCommon.config.ReadSetting("DATABASE_HOST");
+var DATABASE_USER = NovaCommon.config.ReadSetting("DATABASE_USER");
+var DATABASE_PASS = NovaCommon.config.ReadSetting("DATABASE_PASS");
 
 var databaseOpenResult = function (err)
 {
@@ -241,12 +223,12 @@ function (username, password, done)
 
 // Setup TLS
 var app;
-if (config.ReadSetting("QUASAR_WEBUI_TLS_ENABLED") == "1")
+if (NovaCommon.config.ReadSetting("QUASAR_WEBUI_TLS_ENABLED") == "1")
 {
-    var keyPath = config.ReadSetting("QUASAR_WEBUI_TLS_KEY");
-    var certPath = config.ReadSetting("QUASAR_WEBUI_TLS_CERT");
-    var passPhrase = config.ReadSetting("QUASAR_WEBUI_TLS_PASSPHRASE");
-    express_options = {
+    var keyPath = NovaCommon.config.ReadSetting("QUASAR_WEBUI_TLS_KEY");
+    var certPath = NovaCommon.config.ReadSetting("QUASAR_WEBUI_TLS_CERT");
+    var passPhrase = NovaCommon.config.ReadSetting("QUASAR_WEBUI_TLS_PASSPHRASE");
+    var express_options = {
         key: fs.readFileSync(NovaHomePath + keyPath),
         cert: fs.readFileSync(NovaHomePath + certPath),
         passphrase: passPhrase
@@ -261,7 +243,7 @@ app.configure(function ()
 {
     app.use(passport.initialize());
     app.use(express.bodyParser());
-	app.use(passport.authenticate('basic', {session: false}));
+    app.use(passport.authenticate('basic', {session: false}));
     app.use(app.router);
     app.use(express.static(NovaSharedPath + '/Quasar/www'));
 });
@@ -277,10 +259,14 @@ console.info("Logging to ./serverLog.log");
 var logFile = fs.createWriteStream('./serverLog.log', {flags: 'a'});
 app.use(express.logger({stream: logFile}));
 
-var WEB_UI_PORT = config.ReadSetting("WEB_UI_PORT");
+var WEB_UI_PORT = NovaCommon.config.ReadSetting("WEB_UI_PORT");
 console.info("Listening on port " + WEB_UI_PORT);
 app.listen(WEB_UI_PORT);
+
+
 var everyone = nowjs.initialize(app);
+var NowjsMethods = require('./NowjsMethods.js');
+var initEveryone = new NowjsMethods(everyone);
 
 var initLogWatch = function ()
 {
@@ -333,7 +319,7 @@ var initLogWatch = function ()
 
 initLogWatch();
 
-if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
+if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
 {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // SOCKET STUFF FOR PULSAR 
@@ -347,28 +333,28 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
   // The reason for the + 1 at the end is because that's the port in use for the 
   // server-to-server component of wbsockets on Pulsar. Have to do something in case 
   // the port gets changed on the Pulsar machine
-  var connected = config.ReadSetting('MASTER_UI_IP') + ':' + (parseInt(config.ReadSetting('MASTER_UI_PORT')) + 1);
+  var connected = NovaCommon.config.ReadSetting('MASTER_UI_IP') + ':' + (parseInt(NovaCommon.config.ReadSetting('MASTER_UI_PORT')) + 1);
   
   var WebSocketClient = require('websocket').client;
   var client;
   
-  if (config.ReadSetting("QUASAR_TETHER_TLS_ENABLED"))
+  if (NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_ENABLED"))
   {
     client = new WebSocketClient({
       tlsOptions: {
-        cert: fs.readFileSync(NovaHomePath + config.ReadSetting("QUASAR_TETHER_TLS_CERT")),
-        key: fs.readFileSync(NovaHomePath + config.ReadSetting("QUASAR_TETHER_TLS_KEY")),
-        passphrase: config.ReadSetting("QUASAR_TETHER_TLS_PASSPHRASE")
+        cert: fs.readFileSync(NovaHomePath + NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_CERT")),
+        key: fs.readFileSync(NovaHomePath + NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_KEY")),
+        passphrase: NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_PASSPHRASE")
       }
     });
   } else {
     client = new WebSocketClient();
   }
   // TODO: Make configurable
-  var clientId = config.ReadSetting('MASTER_UI_CLIENT_ID');
+  var clientId = NovaCommon.config.ReadSetting('MASTER_UI_CLIENT_ID');
   var reconnecting = false;
   var clearReconnect;
-  var reconnectTimer = parseInt(config.ReadSetting('MASTER_UI_RECONNECT_TIME')) * 1000;
+  var reconnectTimer = parseInt(NovaCommon.config.ReadSetting('MASTER_UI_RECONNECT_TIME')) * 1000;
   
   // If the connection fails, print an error message
   client.on('connectFailed', function(error)
@@ -397,8 +383,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
     var quick = {};
     quick.type = 'addId';
     quick.id = clientId;
-    quick.nova = nova.IsNovadUp(false).toString();
-    quick.haystack = nova.IsHaystackUp(false).toString();
+    quick.nova = NovaCommon.nova.IsNovadUp(false).toString();
+    quick.haystack = NovaCommon.nova.IsHaystackUp(false).toString();
     quick.benignRequest = (benignRequest == true ? 'true' : 'false');
     // I don't know that we HAVE to use UTF8 here, there's a send() method as 
     // well as a 'data' member inside the message objects instead of utf8Data.
@@ -418,7 +404,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
     interfaceSend.type = 'registerClientInterfaces';
     interfaceSend.id = clientId;
     interfaceSend.filename = 'iflist@' + clientId + '.txt';
-    interfaceSend.file = config.ListInterfaces().sort().join();
+    interfaceSend.file = NovaCommon.config.ListInterfaces().sort().join();
     pulsar.sendUTF(JSON.stringify(interfaceSend));
     console.log('Registering interfaces with pulsar');
   
@@ -436,8 +422,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
           switch(json_args.type)
           {
             case 'startNovad':
-              nova.StartNovad(false);
-              nova.CheckConnection();
+              NovaCommon.nova.StartNovad(false);
+              NovaCommon.nova.CheckConnection();
               var response = {};
               response.id = clientId;
               response.type = 'response';
@@ -445,8 +431,8 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'stopNovad':
-              nova.StopNovad();
-              nova.CloseNovadConnection();
+              NovaCommon.nova.StopNovad();
+              NovaCommon.nova.CloseNovadConnection();
               var response = {};
               response.id = clientId;
               response.type = 'response';
@@ -454,9 +440,9 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'startHaystack':
-              if(!nova.IsHaystackUp())
+              if(!NovaCommon.nova.IsHaystackUp())
               {
-                nova.StartHaystack(false);
+                NovaCommon.nova.StartHaystack(false);
                 var response = {};
                 response.id = clientId;
                 response.type = 'response';
@@ -473,7 +459,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               }
               break;
             case 'stopHaystack':
-              nova.StopHaystack();
+              NovaCommon.nova.StopHaystack();
               var response = {};
               response.id = clientId;
               response.type = 'response';
@@ -486,7 +472,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               // implicit specificity when creating and parsing the object
               var setting = json_args.setting;
               var value = json_args.value;
-              config.WriteSetting(setting, value);
+              NovaCommon.config.WriteSetting(setting, value);
               var response = {};
               response.id = clientId;
               response.type = 'response';
@@ -494,11 +480,11 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'getHostileSuspects':
-              nova.sendSuspectList(distributeSuspect);
+              NovaCommon.nova.sendSuspectList(distributeSuspect);
               break;
             case 'requestBenign':
               benignRequest = true;
-              nova.sendSuspectList(distributeSuspect);
+              NovaCommon.nova.sendSuspectList(distributeSuspect);
               break;
             case 'cancelRequestBenign':
               benignRequest = false;
@@ -508,7 +494,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               {
                 if(i !== 'type' && i !== 'id')
                 {
-                  config.WriteSetting(i, json_args[i]);
+                  NovaCommon.config.WriteSetting(i, json_args[i]);
                 }
               }
               var response = {};
@@ -543,17 +529,16 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
                   hhconfigArgs.push(json_args.numNodes);
                 }
               }
-              if(json_args.interface !== undefined && json_args.interface.length > 0)
+              if(json_args.ethinterface !== undefined && json_args.ethinterface.length > 0)
               {
                 hhconfigArgs.push(iFlag);
-                hhconfigArgs.push(json_args.interface);
+                hhconfigArgs.push(json_args.ethinterface);
               }
             
-              var util = require('util');
               var spawn = require('child_process').spawn;
            
-		   	  console.log("Running: " + executionString.toString());
-		   	  console.log("Args: " + hhconfigArgs);
+              console.log("Running: " + executionString.toString());
+              console.log("Args: " + hhconfigArgs);
               autoconfig = spawn(executionString.toString(), hhconfigArgs);
             
               autoconfig.stdout.on('data', function (data){
@@ -590,7 +575,7 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
               pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'suspectDetails':
-              var suspectString = nova.GetSuspectDetailsString(json_args.ip, json_args.iface);
+              var suspectString = NovaCommon.nova.GetSuspectDetailsString(json_args.ip, json_args.iface);
               suspectString = suspectString.replace(/(\r\n|\r|\n)/gm, "<br>");
               var response = {};
               response.id = clientId;
@@ -640,29 +625,18 @@ if(config.ReadSetting('MASTER_UI_ENABLED') === '1')
       message1.id = clientId;
       message1.type = 'statusChange';
       message1.component = 'nova';
-      message1.status = nova.IsNovadUp(false).toString();
+      message1.status = NovaCommon.nova.IsNovadUp(false).toString();
       var message2 = {};
       message2.id = clientId;
       message2.type = 'statusChange';
       message2.component = 'haystack';
-      message2.status = nova.IsHaystackUp().toString();
+      message2.status = NovaCommon.nova.IsHaystackUp().toString();
       pulsar.sendUTF(JSON.stringify(message1));
       pulsar.sendUTF(JSON.stringify(message2));
     }
   }, 5000);
   //
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-}
-
-function cNodeToJs(node)
-{
-	var ret = {};
-    ret.enabled = node.IsEnabled();
-    ret.pfile = node.GetProfile();
-    ret.ip = node.GetIP();
-    ret.mac = node.GetMAC();
-    ret.interface = node.GetInterface();
-	return ret;
 }
 
 app.get('/honeydConfigManage', function(req, res){
@@ -677,22 +651,22 @@ app.get('/honeydConfigManage', function(req, res){
   }
 
 
-  var nodeNames = honeydConfig.GetNodeMACs();
+  var nodeNames = NovaCommon.honeydConfig.GetNodeMACs();
   var nodeList = [];
   
   for (var i = 0; i < nodeNames.length; i++)
   {
-      var node = honeydConfig.GetNode(nodeNames[i]);
-      var push = cNodeToJs(node);
+      var node = NovaCommon.honeydConfig.GetNode(nodeNames[i]);
+      var push = NovaCommon.cNodeToJs(node);
       nodeList.push(push);
   }
 
-  var interfaces = config.ListInterfaces().sort();
+  var interfaces = NovaCommon.config.ListInterfaces().sort();
 
   res.render('honeydConfigManage.jade', {
     locals: {
-      configurations: honeydConfig.GetConfigurationsList(),
-      current: config.GetCurrentConfig(),
+      configurations: NovaCommon.honeydConfig.GetConfigurationsList(),
+      current: NovaCommon.config.GetCurrentConfig(),
       nodes: nodeList,
       INTERFACES: interfaces,
       interfaceAliases: ConvertInterfacesToAliases(interfaces),
@@ -713,14 +687,14 @@ app.get('/downloadHoneydLog.log', function (req, res)
 
 app.get('/nodeState.csv', function(req, res)
 {
-  var nodeNames = honeydConfig.GetNodeMACs();
+  var nodeNames = NovaCommon.honeydConfig.GetNodeMACs();
   var nodeList = [];
 
   var csvString = "ENABLED,IP,INTERFACE,MAC,PROFILE\n";
   
   for (var i = 0; i < nodeNames.length; i++)
   {
-      var node = honeydConfig.GetNode(nodeNames[i]);
+      var node = NovaCommon.honeydConfig.GetNode(nodeNames[i]);
       csvString += node.IsEnabled() + ",";
       csvString += node.GetIP() + ",";
       csvString += node.GetInterface() + ",";
@@ -791,8 +765,8 @@ app.get('/viewHoneydLog', function (req, res)
 
 app.get('/advancedOptions', function (req, res)
 {
-    var all = config.ListInterfaces().sort();
-    var used = config.GetInterfaces().sort();
+    var all = NovaCommon.config.ListInterfaces().sort();
+    var used = NovaCommon.config.GetInterfaces().sort();
 
     var pass = [];
 
@@ -825,62 +799,62 @@ app.get('/advancedOptions', function (req, res)
 
     res.render('advancedOptions.jade', {
         locals: {
-            INTERFACES: config.ListInterfaces().sort()
-            , DEFAULT: config.GetUseAllInterfacesBinding()
-            , HS_HONEYD_CONFIG: config.ReadSetting("HS_HONEYD_CONFIG")
-            , TCP_TIMEOUT: config.ReadSetting("TCP_TIMEOUT")
-            , TCP_CHECK_FREQ: config.ReadSetting("TCP_CHECK_FREQ")
-            , READ_PCAP: config.ReadSetting("READ_PCAP")
-            , PCAP_FILE: config.ReadSetting("PCAP_FILE")
-            , GO_TO_LIVE: config.ReadSetting("GO_TO_LIVE")
-            , CLASSIFICATION_TIMEOUT: config.ReadSetting("CLASSIFICATION_TIMEOUT")
-            , K: config.ReadSetting("K")
-            , EPS: config.ReadSetting("EPS")
-            , CLASSIFICATION_THRESHOLD: config.ReadSetting("CLASSIFICATION_THRESHOLD")
-            , DATAFILE: config.ReadSetting("DATAFILE")
-            , USER_HONEYD_CONFIG: config.ReadSetting("USER_HONEYD_CONFIG")
-            , DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP")
-            , DOPPELGANGER_INTERFACE: config.ReadSetting("DOPPELGANGER_INTERFACE")
-            , DM_ENABLED: config.ReadSetting("DM_ENABLED")
-            , ENABLED_FEATURES: config.ReadSetting("ENABLED_FEATURES")
-            , FEATURE_NAMES: nova.GetFeatureNames()
-            , THINNING_DISTANCE: config.ReadSetting("THINNING_DISTANCE")
-            , SAVE_FREQUENCY: config.ReadSetting("SAVE_FREQUENCY")
-            , DATA_TTL: config.ReadSetting("DATA_TTL")
-            , CE_SAVE_FILE: config.ReadSetting("CE_SAVE_FILE")
-            , SMTP_ADDR: config.ReadSetting("SMTP_ADDR")
-            , SMTP_PORT: config.ReadSetting("SMTP_PORT")
-            , SMTP_DOMAIN: config.ReadSetting("SMTP_DOMAIN")
-            , SMTP_USER: config.GetSMTPUser()
-            , SMTP_PASS: config.GetSMTPPass()
-            , RECIPIENTS: config.ReadSetting("RECIPIENTS")
-            , SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES")
-            , HAYSTACK_STORAGE: config.ReadSetting("HAYSTACK_STORAGE")
-            , CAPTURE_BUFFER_SIZE: config.ReadSetting("CAPTURE_BUFFER_SIZE")
-            , MIN_PACKET_THRESHOLD: config.ReadSetting("MIN_PACKET_THRESHOLD")
-            , CUSTOM_PCAP_FILTER: config.ReadSetting("CUSTOM_PCAP_FILTER")
-            , CUSTOM_PCAP_MODE: config.ReadSetting("CUSTOM_PCAP_MODE")
-            , WEB_UI_PORT: config.ReadSetting("WEB_UI_PORT")
-            , CLEAR_AFTER_HOSTILE_EVENT: config.ReadSetting("CLEAR_AFTER_HOSTILE_EVENT")
-            , MASTER_UI_IP: config.ReadSetting("MASTER_UI_IP")
-            , MASTER_UI_RECONNECT_TIME: config.ReadSetting("MASTER_UI_RECONNECT_TIME")
-            , MASTER_UI_CLIENT_ID: config.ReadSetting("MASTER_UI_CLIENT_ID")
-            , MASTER_UI_ENABLED: config.ReadSetting("MASTER_UI_ENABLED") 
-            , FEATURE_WEIGHTS: config.ReadSetting("FEATURE_WEIGHTS")
-            , CLASSIFICATION_ENGINE: config.ReadSetting("CLASSIFICATION_ENGINE")
-            , THRESHOLD_HOSTILE_TRIGGERS: config.ReadSetting("THRESHOLD_HOSTILE_TRIGGERS")
-            , ONLY_CLASSIFY_HONEYPOT_TRAFFIC: config.ReadSetting("ONLY_CLASSIFY_HONEYPOT_TRAFFIC")
-			, TRAINING_DATA_PATH: config.ReadSetting("TRAINING_DATA_PATH")
+            INTERFACES: NovaCommon.config.ListInterfaces().sort()
+            , DEFAULT: NovaCommon.config.GetUseAllInterfacesBinding()
+            , HS_HONEYD_CONFIG: NovaCommon.config.ReadSetting("HS_HONEYD_CONFIG")
+            , TCP_TIMEOUT: NovaCommon.config.ReadSetting("TCP_TIMEOUT")
+            , TCP_CHECK_FREQ: NovaCommon.config.ReadSetting("TCP_CHECK_FREQ")
+            , READ_PCAP: NovaCommon.config.ReadSetting("READ_PCAP")
+            , PCAP_FILE: NovaCommon.config.ReadSetting("PCAP_FILE")
+            , GO_TO_LIVE: NovaCommon.config.ReadSetting("GO_TO_LIVE")
+            , CLASSIFICATION_TIMEOUT: NovaCommon.config.ReadSetting("CLASSIFICATION_TIMEOUT")
+            , K: NovaCommon.config.ReadSetting("K")
+            , EPS: NovaCommon.config.ReadSetting("EPS")
+            , CLASSIFICATION_THRESHOLD: NovaCommon.config.ReadSetting("CLASSIFICATION_THRESHOLD")
+            , DATAFILE: NovaCommon.config.ReadSetting("DATAFILE")
+            , USER_HONEYD_CONFIG: NovaCommon.config.ReadSetting("USER_HONEYD_CONFIG")
+            , DOPPELGANGER_IP: NovaCommon.config.ReadSetting("DOPPELGANGER_IP")
+            , DOPPELGANGER_INTERFACE: NovaCommon.config.ReadSetting("DOPPELGANGER_INTERFACE")
+            , DM_ENABLED: NovaCommon.config.ReadSetting("DM_ENABLED")
+            , ENABLED_FEATURES: NovaCommon.config.ReadSetting("ENABLED_FEATURES")
+            , FEATURE_NAMES: NovaCommon.nova.GetFeatureNames()
+            , THINNING_DISTANCE: NovaCommon.config.ReadSetting("THINNING_DISTANCE")
+            , SAVE_FREQUENCY: NovaCommon.config.ReadSetting("SAVE_FREQUENCY")
+            , DATA_TTL: NovaCommon.config.ReadSetting("DATA_TTL")
+            , CE_SAVE_FILE: NovaCommon.config.ReadSetting("CE_SAVE_FILE")
+            , SMTP_ADDR: NovaCommon.config.ReadSetting("SMTP_ADDR")
+            , SMTP_PORT: NovaCommon.config.ReadSetting("SMTP_PORT")
+            , SMTP_DOMAIN: NovaCommon.config.ReadSetting("SMTP_DOMAIN")
+            , SMTP_USER: NovaCommon.config.GetSMTPUser()
+            , SMTP_PASS: NovaCommon.config.GetSMTPPass()
+            , RECIPIENTS: NovaCommon.config.ReadSetting("RECIPIENTS")
+            , SERVICE_PREFERENCES: NovaCommon.config.ReadSetting("SERVICE_PREFERENCES")
+            , HAYSTACK_STORAGE: NovaCommon.config.ReadSetting("HAYSTACK_STORAGE")
+            , CAPTURE_BUFFER_SIZE: NovaCommon.config.ReadSetting("CAPTURE_BUFFER_SIZE")
+            , MIN_PACKET_THRESHOLD: NovaCommon.config.ReadSetting("MIN_PACKET_THRESHOLD")
+            , CUSTOM_PCAP_FILTER: NovaCommon.config.ReadSetting("CUSTOM_PCAP_FILTER")
+            , CUSTOM_PCAP_MODE: NovaCommon.config.ReadSetting("CUSTOM_PCAP_MODE")
+            , WEB_UI_PORT: NovaCommon.config.ReadSetting("WEB_UI_PORT")
+            , CLEAR_AFTER_HOSTILE_EVENT: NovaCommon.config.ReadSetting("CLEAR_AFTER_HOSTILE_EVENT")
+            , MASTER_UI_IP: NovaCommon.config.ReadSetting("MASTER_UI_IP")
+            , MASTER_UI_RECONNECT_TIME: NovaCommon.config.ReadSetting("MASTER_UI_RECONNECT_TIME")
+            , MASTER_UI_CLIENT_ID: NovaCommon.config.ReadSetting("MASTER_UI_CLIENT_ID")
+            , MASTER_UI_ENABLED: NovaCommon.config.ReadSetting("MASTER_UI_ENABLED") 
+            , FEATURE_WEIGHTS: NovaCommon.config.ReadSetting("FEATURE_WEIGHTS")
+            , CLASSIFICATION_ENGINE: NovaCommon.config.ReadSetting("CLASSIFICATION_ENGINE")
+            , THRESHOLD_HOSTILE_TRIGGERS: NovaCommon.config.ReadSetting("THRESHOLD_HOSTILE_TRIGGERS")
+            , ONLY_CLASSIFY_HONEYPOT_TRAFFIC: NovaCommon.config.ReadSetting("ONLY_CLASSIFY_HONEYPOT_TRAFFIC")
+            , TRAINING_DATA_PATH: NovaCommon.config.ReadSetting("TRAINING_DATA_PATH")
       , RSYSLOG_IP: getRsyslogIp()
-            , supportedEngines: nova.GetSupportedEngines()
+            , supportedEngines: NovaCommon.nova.GetSupportedEngines()
         }
     });
 });
 
 function renderBasicOptions(jadefile, res, req)
 {
-    var all = config.ListInterfaces().sort();
-    var used = config.GetInterfaces().sort();
+    var all = NovaCommon.config.ListInterfaces().sort();
+    var used = NovaCommon.config.GetInterfaces().sort();
 
     var pass = [];
 
@@ -913,8 +887,8 @@ function renderBasicOptions(jadefile, res, req)
 
     var doppelPass = [];
 
-    all = config.ListLoopbacks().sort();
-    used = config.GetDoppelInterface();
+    all = NovaCommon.config.ListLoopbacks().sort();
+    used = NovaCommon.config.GetDoppelInterface();
 
     for (var i in all)
     {
@@ -959,19 +933,19 @@ function renderBasicOptions(jadefile, res, req)
         locals: {
             INTERFACES: pass,
             INTERFACE_ALIASES: ConvertInterfacesToAliases(ifaceForConversion),
-            DEFAULT: config.GetUseAllInterfacesBinding(),
-            DOPPELGANGER_IP: config.ReadSetting("DOPPELGANGER_IP"),
+            DEFAULT: NovaCommon.config.GetUseAllInterfacesBinding(),
+            DOPPELGANGER_IP: NovaCommon.config.ReadSetting("DOPPELGANGER_IP"),
             DOPPELGANGER_INTERFACE: doppelPass,
-            DM_ENABLED: config.ReadSetting("DM_ENABLED"),
-            SMTP_ADDR: config.ReadSetting("SMTP_ADDR"),
-            SMTP_PORT: config.ReadSetting("SMTP_PORT"),
-            SMTP_DOMAIN: config.ReadSetting("SMTP_DOMAIN"),
-            SMTP_USER: config.GetSMTPUser(),
-            SMTP_PASS: config.GetSMTPPass(),
-            SMTP_USEAUTH: config.GetSMTPUseAuth().toString(),
-            EMAIL_ALERTS_ENABLED: config.ReadSetting("EMAIL_ALERTS_ENABLED"),
-            SERVICE_PREFERENCES: config.ReadSetting("SERVICE_PREFERENCES"),
-            RECIPIENTS: config.ReadSetting("RECIPIENTS")
+            DM_ENABLED: NovaCommon.config.ReadSetting("DM_ENABLED"),
+            SMTP_ADDR: NovaCommon.config.ReadSetting("SMTP_ADDR"),
+            SMTP_PORT: NovaCommon.config.ReadSetting("SMTP_PORT"),
+            SMTP_DOMAIN: NovaCommon.config.ReadSetting("SMTP_DOMAIN"),
+            SMTP_USER: NovaCommon.config.GetSMTPUser(),
+            SMTP_PASS: NovaCommon.config.GetSMTPPass(),
+            SMTP_USEAUTH: NovaCommon.config.GetSMTPUseAuth().toString(),
+            EMAIL_ALERTS_ENABLED: NovaCommon.config.ReadSetting("EMAIL_ALERTS_ENABLED"),
+            SERVICE_PREFERENCES: NovaCommon.config.ReadSetting("SERVICE_PREFERENCES"),
+            RECIPIENTS: NovaCommon.config.ReadSetting("RECIPIENTS")
         }
     });
 }
@@ -989,22 +963,22 @@ app.get('/basicOptions', function (req, res)
 
 app.get('/configHoneydNodes', function (req, res)
 {
-    if (!honeydConfig.LoadAllTemplates())
+    if (!NovaCommon.honeydConfig.LoadAllTemplates())
     {
         RenderError(res, "Unable to load honeyd configuration XML files");
         return;
     }
 
-    var profiles = honeydConfig.GetLeafProfileNames();
+    var profiles = NovaCommon.honeydConfig.GetLeafProfileNames();
     
-    var interfaces = config.ListInterfaces().sort();
+    var interfaces = NovaCommon.config.ListInterfaces().sort();
     
   res.render('configHoneydNodes.jade', {
     locals: {
       INTERFACES: interfaces,
       interfaceAliases: ConvertInterfacesToAliases(interfaces),
       profiles: profiles,
-      currentGroup: config.GetGroup()
+      currentGroup: NovaCommon.config.GetGroup()
     }
   });
 });
@@ -1025,7 +999,7 @@ app.get('/GetSuspectDetails', function (req, res)
     
     var suspectIp = req.query["ip"];
     var suspectInterface = req.query["interface"];
-    var suspectString = nova.GetSuspectDetailsString(suspectIp, suspectInterface);
+    var suspectString = NovaCommon.nova.GetSuspectDetailsString(suspectIp, suspectInterface);
 
     res.render('suspectDetails.jade', {
         locals: {
@@ -1045,7 +1019,7 @@ app.get('/editHoneydNode', function (req, res)
     }
     
     var nodeName = req.query["node"];
-    var node = honeydConfig.GetNode(nodeName);
+    var node = NovaCommon.honeydConfig.GetNode(nodeName);
 
     if (node == null)
     {
@@ -1056,9 +1030,9 @@ app.get('/editHoneydNode', function (req, res)
     var interfaces;
     if (nodeName == "doppelganger")
     {
-        interfaces = config.ListLoopbacks().sort();
+        interfaces = NovaCommon.config.ListLoopbacks().sort();
     } else {
-        interfaces = config.ListInterfaces().sort();
+        interfaces = NovaCommon.config.ListInterfaces().sort();
     }
 
     res.render('editHoneydNode.jade', {
@@ -1066,7 +1040,7 @@ app.get('/editHoneydNode', function (req, res)
             oldName: nodeName,
             INTERFACES: interfaces,
             interfaceAliases: ConvertInterfacesToAliases(interfaces),
-            profiles: honeydConfig.GetProfileNames(),
+            profiles: NovaCommon.honeydConfig.GetProfileNames(),
             profile: node.GetProfile(),
             interface: node.GetInterface(),
             ip: node.GetIP(),
@@ -1083,16 +1057,16 @@ app.get('/editHoneydProfile', function (req, res)
         RenderError(res, "Invalid GET arguements. You most likely tried to refresh a page that you shouldn't.", "/configHoneydNodes");
         return;
     }
-    profileName = req.query["profile"];
+    var profileName = req.query["profile"];
 
     res.render('editHoneydProfile.jade', {
         locals: {
             oldName: profileName,
             parentName: "",
             newProfile: false,
-            vendors: vendorToMacDb.GetVendorNames(),
-            scripts: honeydConfig.GetScriptNames(),
-            personalities: osPersonalityDb.GetPersonalityOptions()
+            vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
+            scripts: NovaCommon.honeydConfig.GetScriptNames(),
+            personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
         }
     })
 });
@@ -1111,21 +1085,21 @@ app.get('/addHoneydProfile', function (req, res)
             oldName: parentName,
             parentName: parentName,
             newProfile: true,
-            vendors: vendorToMacDb.GetVendorNames(),
-            scripts: honeydConfig.GetScriptNames(),
-            personalities: osPersonalityDb.GetPersonalityOptions()
+            vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
+            scripts: NovaCommon.honeydConfig.GetScriptNames(),
+            personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
         }
     })
 });
 
 app.get('/customizeTraining', function (req, res)
 {
-    trainingDb = new novaconfig.CustomizeTrainingBinding();
+    NovaCommon.trainingDb = new NovaCommon.novaconfig.CustomizeTrainingBinding();
     res.render('customizeTraining.jade', {
         locals: {
-            desc: trainingDb.GetDescriptions(),
-            uids: trainingDb.GetUIDs(),
-            hostiles: trainingDb.GetHostile()
+            desc: NovaCommon.trainingDb.GetDescriptions(),
+            uids: NovaCommon.trainingDb.GetUIDs(),
+            hostiles: NovaCommon.trainingDb.GetHostile()
         }
     })
 });
@@ -1140,7 +1114,7 @@ app.get('/importCapture', function (req, res)
 
     var trainingSession = req.query["trainingSession"];
     trainingSession = NovaHomePath + "/data/" + trainingSession + "/nova.dump";
-    var ips = trainingDb.GetCaptureIPs(trainingSession);
+    var ips = NovaCommon.trainingDb.GetCaptureIPs(trainingSession);
 
     if (ips === undefined)
     {
@@ -1149,36 +1123,12 @@ app.get('/importCapture', function (req, res)
     } else {
         res.render('importCapture.jade', {
             locals: {
-                ips: trainingDb.GetCaptureIPs(trainingSession),
+                ips: NovaCommon.trainingDb.GetCaptureIPs(trainingSession),
                 trainingSession: req.query["trainingSession"]
             }
         })
     }
 });
-
-everyone.now.changeGroup = function(group, callback)
-{
-    callback(config.SetGroup(group));
-}
-
-everyone.now.ChangeNodeInterfaces = function(nodes, newIntf, cb)
-{
-  honeydConfig.ChangeNodeInterfaces(nodes, newIntf);
-  if(typeof cb == 'function')
-  {
-    cb();
-  }
-}
-
-everyone.now.GetProfileNames = function(callback)
-{
-  callback(honeydConfig.GetProfileNames());
-}
-
-everyone.now.GetLeafProfileNames = function(callback)
-{
-  callback(honeydConfig.GetLeafProfileNames());
-}
 
 app.post('/importCaptureSave', function (req, res)
 {
@@ -1189,7 +1139,7 @@ app.post('/importCaptureSave', function (req, res)
     var trainingSession = req.query["trainingSession"];
     trainingSession = NovaHomePath + "/data/" + trainingSession + "/nova.dump";
 
-    var trainingDump = new novaconfig.TrainingDumpBinding();
+    var trainingDump = new NovaCommon.novaconfig.TrainingDumpBinding();
     if (!trainingDump.LoadCaptureFile(trainingSession))
     {
         ReadSetting(res, "Unable to parse dump file: " + trainingSession);
@@ -1240,9 +1190,9 @@ app.get('/configWhitelist', function (req, res)
 {
     res.render('configWhitelist.jade', {
         locals: {
-            whitelistedIps: whitelistConfig.GetIps(),
-            whitelistedRanges: whitelistConfig.GetIpRanges(),
-            INTERFACES: config.ListInterfaces().sort()
+            whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
+            whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
+            INTERFACES: NovaCommon.config.ListInterfaces().sort()
         }
     })
 });
@@ -1277,8 +1227,8 @@ app.get('/configWhitelist', function (req, res)
 {
     res.render('configWhitelist.jade', {
         locals: {
-            whitelistedIps: whitelistConfig.GetIps(),
-            whitelistedRanges: whitelistConfig.GetIpRanges()
+            whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
+            whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges()
         }
     })
 });
@@ -1287,7 +1237,7 @@ app.get('/suspects', function (req, res)
 {
     res.render('main.jade', {
         user: req.user,
-        featureNames: nova.GetFeatureNames(),
+        featureNames: NovaCommon.nova.GetFeatureNames(),
     });
 });
 
@@ -1297,7 +1247,7 @@ app.get('/monitor', function (req, res)
     var suspectInterface = req.query["interface"];
     
     res.render('monitor.jade', {
-        featureNames: nova.GetFeatureNames()
+        featureNames: NovaCommon.nova.GetFeatureNames()
         , suspectIp: suspectIp
         , suspectInterface: suspectInterface
     });
@@ -1306,7 +1256,7 @@ app.get('/monitor', function (req, res)
 app.get('/events', function (req, res)
 {
     res.render('events.jade', {
-        featureNames: nova.GetFeatureNames()
+        featureNames: NovaCommon.nova.GetFeatureNames()
     });
 });
 
@@ -1356,16 +1306,11 @@ app.get('/setup3', function (req, res)
 {
     res.render('hhautoconfig.jade', {
         user: req.user,
-        INTERFACES: config.ListInterfaces().sort(),
+        INTERFACES: NovaCommon.config.ListInterfaces().sort(),
         SCANERROR: ""
     });
 });
 
-// Training data capture via Quasar isn't currently supported
-//app.get('/CaptureTrainingData', function (req, res)
-//{
-//  res.render('captureTrainingData.jade');
-//});
 app.get('/about', function (req, res)
 {
     res.render('about.jade');
@@ -1375,11 +1320,11 @@ app.post('/createNewUser', function (req, res)
 {
     var password = req.body["password"];
     var userName = req.body["username"];
-	
-	if (password.length == 0 || userName.length == 0) {
+    
+    if (password.length == 0 || userName.length == 0) {
       RenderError(res, "Can not have blank username or password!", "/setup1");
       return;
-	}
+    }
 
     dbqCredentialsGetUser.all(userName,
 
@@ -1420,10 +1365,10 @@ app.post('/createInitialUser', function (req, res)
     var password = req.body["password"];
     var userName = req.body["username"];
 
-	if (password.length == 0 || userName.length == 0) {
+    if (password.length == 0 || userName.length == 0) {
       RenderError(res, "Can not have blank username or password!", "/setup1");
       return;
-	}
+    }
 
     dbqCredentialsGetUser.all(userName,
 
@@ -1460,13 +1405,13 @@ app.post('/createInitialUser', function (req, res)
 
 app.get('/autoConfig', function (req, res)
 {
-	var interfaces = config.ListInterfaces().sort();
+    var interfaces = NovaCommon.config.ListInterfaces().sort();
     res.render('hhautoconfig.jade', {
         user: req.user,
         INTERFACES: interfaces,
         interfaceAliases: ConvertInterfacesToAliases(interfaces),
         SCANERROR: "",
-        GROUPS: honeydConfig.GetConfigurationsList()
+        GROUPS: NovaCommon.honeydConfig.GetConfigurationsList()
     });
 });
 
@@ -1477,28 +1422,28 @@ app.get("/editTLSCerts", function (req, res)
 
 app.get("/editClassifiers", function (req, res)
 {
-	res.render('editClassifiers.jade', {
-		locals: {
-        	classifiers: classifiers.getClassifiers()
-		}
-	});	
+    res.render('editClassifiers.jade', {
+        locals: {
+            classifiers: NovaCommon.classifiers.getClassifiers()
+        }
+    }); 
 });
 
 app.get("/editClassifier", function (req, res)
 {
-	var featureNames = nova.GetFeatureNames();
+    var featureNames = NovaCommon.nova.GetFeatureNames();
     if(req.query['classifierIndex'] == undefined)
     {
-		var classifier = {
-			type: "THRESHOLD_TRIGGER"
-			, mode: "HOSTILE_OVERRIDE"
-			, config: "/config/newClassifier.config"
-			, weight: "0"
-			, strings: {}
-			, index: '-1'
-		};
+        var classifier = {
+            type: "THRESHOLD_TRIGGER"
+            , mode: "HOSTILE_OVERRIDE"
+            , config: "/config/newClassifier.config"
+            , weight: "0"
+            , strings: {}
+            , index: '-1'
+        };
         
-		var features = [];
+        var features = [];
         for (var i = 0; i < featureNames.length; i++) {
           var feature = {
             name: featureNames[i]
@@ -1510,98 +1455,49 @@ app.get("/editClassifier", function (req, res)
           features.push(feature);
         }
 
-		classifier.features = features;
-  	} else {
-		var index = req.query['classifierIndex'];
-		var classifier = classifiers.getClassifier(index);
+        classifier.features = features;
+    } else {
+        var index = req.query['classifierIndex'];
+        var classifier = NovaCommon.classifiers.getClassifier(index);
      
-		var enabledFeatures = String(classifier.strings["ENABLED_FEATURES"]);
-		var weightString = classifier.strings["FEATURE_WEIGHTS"];
-		var thresholdString = classifier.strings["THRESHOLD_HOSTILE_TRIGGERS"];
-		var features = [];
+        var enabledFeatures = String(classifier.strings["ENABLED_FEATURES"]);
+        var weightString = classifier.strings["FEATURE_WEIGHTS"];
+        var thresholdString = classifier.strings["THRESHOLD_HOSTILE_TRIGGERS"];
+        var features = [];
         for (var i = 0; i < featureNames.length; i++)
-		{
-        	var feature = {
-            	name: featureNames[i]
-            	, enabled: enabledFeatures.charAt(i) == '1'
-				, weight: 1
-				, threshold: "-"
-		  	}
+        {
+            var feature = {
+                name: featureNames[i]
+                , enabled: enabledFeatures.charAt(i) == '1'
+                , weight: 1
+                , threshold: "-"
+            }
            
-		  	if (classifier.type == "KNN")
-		  	{
-		 		feature.weight = weightString.split(" ")[i];	 
-		  	} 
-		  	else if (classifier.type == "THRESHOLD_TRIGGER")
-		  	{
-		 		feature.threshold = thresholdString.split(" ")[i];
-		  	}
-		  
+            if (classifier.type == "KNN")
+            {
+                feature.weight = weightString.split(" ")[i];     
+            } 
+            else if (classifier.type == "THRESHOLD_TRIGGER")
+            {
+                feature.threshold = thresholdString.split(" ")[i];
+            }
+          
             features.push(feature);
         }
-		
-		classifier.index = index;
-	}
+        
+        classifier.index = index;
+    }
   
-	classifier.features = features;
+    classifier.features = features;
 
 
-	res.render('editClassifier.jade', {
-		locals: {
-        	classifier: classifier
-			, featureNames: nova.GetFeatureNames()
-		}
-	});	
+    res.render('editClassifier.jade', {
+        locals: {
+            classifier: classifier
+            , featureNames: NovaCommon.nova.GetFeatureNames()
+        }
+    }); 
 });
-
-everyone.now.deleteClassifier = function(index, callback)
-{
-	classifiers.deleteClassifier(index);
-	if (callback) callback();
-}
-
-everyone.now.saveClassifier = function(classifier, index, callback)
-{
-	// Convert the model instance settings to strings for config file
-	var enabledFeaturesString = "";
-	var weightString = "";
-	var thresholdString = "";
-
-	for (var i = 0; i < classifier.features.length; i++)
-	{
-		if (classifier.features[i].enabled)
-		{
-			enabledFeaturesString += "1";
-		}
-		else
-		{
-			enabledFeaturesString += "0";
-		}
-
-		if (classifier.type == "KNN")
-		{
-			weightString += String(classifier.features[i].weight) + " ";
-		}
-		else if (classifier.type == "THRESHOLD_TRIGGER")
-		{
-			thresholdString += classifier.features[i].threshold + " ";
-		}
-	}
-	
-	classifier.strings = {};
-	classifier.strings["ENABLED_FEATURES"] = enabledFeaturesString;
-	if (classifier.type == "KNN")
-	{
-		classifier.strings["FEATURE_WEIGHTS"] = weightString;
-	}
-	else if (classifier.type == "THRESHOLD_TRIGGER")
-	{
-		classifier.strings["THRESHOLD_HOSTILE_TRIGGERS"] = thresholdString;
-	}
-
-	classifiers.saveClassifier(classifier, index);
-	if (callback) callback();
-}
 
 app.get("/interfaceAliases", function (req, res)
 {
@@ -1609,7 +1505,7 @@ app.get("/interfaceAliases", function (req, res)
     res.render('interfaceAliases.jade', {
         locals: {
             interfaceAliases: interfaceAliases
-            , INTERFACES: config.ListInterfaces().sort(),
+            , INTERFACES: NovaCommon.config.ListInterfaces().sort(),
         }
     });
 });
@@ -1700,9 +1596,9 @@ app.post('/scripts', function(req, res){
     
     pathToSave = req.body['shell'] + ' ' + pathToSave + ' ' + req.body['args'];
   
-    honeydConfig.AddScript(req.body['name'], pathToSave);
+    NovaCommon.honeydConfig.AddScript(req.body['name'], pathToSave);
   
-    honeydConfig.SaveAllTemplates();
+    NovaCommon.honeydConfig.SaveAllTemplates();
   });
   
   res.render('saveRedirect.jade', {
@@ -1723,9 +1619,9 @@ app.post('/honeydConfigManage', function (req, res){
   
   if((new RegExp('^[a-zA-Z0-9 -_]+$')).test(newName))
   {
-    honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
-    honeydConfig.SwitchConfiguration(newName);
-    honeydConfig.LoadAllTemplates();
+    NovaCommon.honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
+    NovaCommon.honeydConfig.SwitchConfiguration(newName);
+    NovaCommon.honeydConfig.LoadAllTemplates();
   
     res.render('saveRedirect.jade', {
      locals: {
@@ -1735,7 +1631,7 @@ app.post('/honeydConfigManage', function (req, res){
   } 
   else
   {
-    RenderError(res, 'Unacceptable characters in new haystack name', '/honeydConfigManage');
+    RenderError(res, 'Unacceptable characters in new haystack name', 'honeydConfigManage');
   }
 });
 
@@ -1743,10 +1639,10 @@ app.post('/customizeTrainingSave', function (req, res)
 {
     for (var uid in req.body)
     {
-        trainingDb.SetIncluded(uid, true);
+        NovaCommon.trainingDb.SetIncluded(uid, true);
     }
 
-    trainingDb.Save();
+    NovaCommon.trainingDb.Save();
 
     res.render('saveRedirect.jade', {
         locals: {
@@ -1755,107 +1651,7 @@ app.post('/customizeTrainingSave', function (req, res)
     })
 });
 
-everyone.now.addScriptOptionValue = function (script, key, value, callback) {
-    honeydConfig.AddScriptOptionValue(script, key, value);
-    honeydConfig.SaveAll();
-    callback();
-};
 
-everyone.now.deleteScriptOptionValue = function (script, key, value, callback) {
-    honeydConfig.DeleteScriptOptionValue(script, key, value);
-    honeydConfig.SaveAll();
-    callback();
-};
-
-everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, portSet, vendor, interface, count, callback)
-{
-    var ipAddress;
-    if (ipType == "DHCP")
-    {
-        ipAddress = "DHCP";
-    } else {
-        ipAddress = ip1 + "." + ip2 + "." + ip3 + "." + ip4;
-    }
-
-    var result = null;
-    if (!honeydConfig.AddNodes(profile, portSet, vendor, ipAddress, interface, Number(count)))
-    {
-        result = "Unable to create new nodes";  
-    }
-
-    if (!honeydConfig.SaveAll())
-    {
-        result = "Unable to save honeyd configuration";
-    }
-
-    callback(result);
-};
-
-
-everyone.now.SaveDoppelganger = function(node, callback)
-{
-    var ipAddress = node.ip;
-    if (node.ipType == "DHCP")
-    {
-        ipAddress = "DHCP";
-    }
-
-    if (!honeydConfig.SaveDoppelganger(node.profile, node.portSet, ipAddress, node.mac, node.intface))
-    {
-        callback("SaveDoppelganger Failed");
-        return;
-    } else {
-        if (!honeydConfig.SaveAll())
-        {
-            callback("Unable to save honeyd configuration");
-        } else {
-            callback(null);
-        }
-    }
-}
-
-everyone.now.SaveHoneydNode = function(node, callback)
-{
-    var ipAddress = node.ip;
-    if (node.ipType == "DHCP")
-    {
-        ipAddress = "DHCP";
-    }
-
-    // Delete the old node and then add the new one 
-    honeydConfig.DeleteNode(node.oldName);
-
-    if (node.oldName == "doppelganger")
-    {
-        if (!honeydConfig.SetDoppelganger(node.profile, node.portSet, ipAddress, node.mac, node.intface))
-        {
-            callback("doppelganger Failed");
-            return;
-        } else {
-            if (!honeydConfig.SaveAll())
-            {
-                callback("Unable to save honeyd configuration");
-            } else {
-                callback(null);
-            }
-        }
-
-    } else {
-        if (!honeydConfig.AddNode(node.profile, node.portSet, ipAddress, node.mac, node.intface))
-        {
-            callback("AddNode Failed");
-            return;
-        } else {
-            if (!honeydConfig.SaveAll())
-            {
-                callback("Unable to save honeyd configuration");
-            } else {
-                callback(null);
-            }
-        }
-    }
-
-};
 
 app.post('/configureNovaSave', function (req, res)
 {
@@ -1882,39 +1678,39 @@ app.post('/configureNovaSave', function (req, res)
 
     var validator = new Validator();
 
-    config.ClearInterfaces();
+    NovaCommon.config.ClearInterfaces();
 
   if(req.body["SMTP_USEAUTH"] == undefined)
   {
     req.body["SMTP_USEAUTH"] = "0";
-    config.SetSMTPUseAuth("false");
+    NovaCommon.config.SetSMTPUseAuth("false");
   }
   else
   {
     req.body["SMTP_USEAUTH"] = "1";
-    config.SetSMTPUseAuth("true");
+    NovaCommon.config.SetSMTPUseAuth("true");
   }
   
   if(req.body["EMAIL_ALERTS_ENABLED"] == undefined)
   {
     req.body["EMAIL_ALERTS_ENABLED"] = "0";
-    config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
+    NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
   }
   else
   {
     req.body["EMAIL_ALERTS_ENABLED"] = "1";
-    config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
+    NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
   }
   
   if(req.body["DM_ENABLED"] == undefined)
   {
     req.body["DM_ENABLED"] = "0";
-    config.WriteSetting("DM_ENABLED", "0");
+    NovaCommon.config.WriteSetting("DM_ENABLED", "0");
   }
   else
   {
     req.body["DM_ENABLED"] = "1";
-    config.WriteSetting("DM_ENABLED", "1");
+    NovaCommon.config.WriteSetting("DM_ENABLED", "1");
   }
 
   if(clientId != undefined && req.body["MASTER_UI_CLIENT_ID"] != clientId)
@@ -1935,7 +1731,7 @@ app.post('/configureNovaSave', function (req, res)
 
     if(req.body["DOPPELGANGER_INTERFACE"] !== undefined) 
     {
-        config.SetDoppelInterface(req.body["DOPPELGANGER_INTERFACE"]);
+        NovaCommon.config.SetDoppelInterface(req.body["DOPPELGANGER_INTERFACE"]);
     }
 
     if(req.body["INTERFACE"] !== undefined) 
@@ -1945,7 +1741,7 @@ app.post('/configureNovaSave', function (req, res)
             if(req.body["INTERFACE"][item].length > 1) 
             {
                 interfaces += " " + req.body["INTERFACE"][item];
-                config.AddIface(req.body["INTERFACE"][item]);
+                NovaCommon.config.AddIface(req.body["INTERFACE"][item]);
             } 
             else 
             {
@@ -1956,7 +1752,7 @@ app.post('/configureNovaSave', function (req, res)
 
         if (oneIface) 
         {
-            config.AddIface(interfaces);
+            NovaCommon.config.AddIface(interfaces);
         }
 
         req.body["INTERFACE"] = interfaces;
@@ -1979,7 +1775,7 @@ app.post('/configureNovaSave', function (req, res)
             break;
 
         case "ENABLED_FEATURES":
-            validator.check(req.body[configItems[item]], 'Enabled Features mask must be ' + nova.GetDIM() + 'characters long').len(nova.GetDIM(), nova.GetDIM());
+            validator.check(req.body[configItems[item]], 'Enabled Features mask must be ' + NovaCommon.nova.GetDIM() + 'characters long').len(NovaCommon.nova.GetDIM(), NovaCommon.nova.GetDIM());
             validator.check(req.body[configItems[item]], 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{9}');
             break;
 
@@ -2074,7 +1870,6 @@ app.post('/configureNovaSave', function (req, res)
 
   if(writeIP != undefined && writeIP != getRsyslogIp() && writeIP != 'NULL')
   {
-    var util = require('util');
     var spawn = require('sudo');
     var options = {
       cachePassword: true
@@ -2098,7 +1893,6 @@ app.post('/configureNovaSave', function (req, res)
   }
   else if(writeIP == 'NULL')
   {
-    var util = require('util');
     var spawn = require('sudo');
     var options = {
       cachePassword: true
@@ -2121,25 +1915,25 @@ app.post('/configureNovaSave', function (req, res)
         if (req.body["INTERFACE"] !== undefined && req.body["DEFAULT"] === undefined)
         {
             req.body["DEFAULT"] = false;
-            config.UseAllInterfaces(false);
-            config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
+            NovaCommon.config.UseAllInterfaces(false);
+            NovaCommon.config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
         } else if (req.body["INTERFACE"] === undefined)
         {
             req.body["DEFAULT"] = true;
-            config.UseAllInterfaces(true);
-            config.WriteSetting("INTERFACE", "default");
+            NovaCommon.config.UseAllInterfaces(true);
+            NovaCommon.config.WriteSetting("INTERFACE", "default");
         } else {
-            config.UseAllInterfaces(req.body["DEFAULT"]);
-            config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
+            NovaCommon.config.UseAllInterfaces(req.body["DEFAULT"]);
+            NovaCommon.config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
         }
 
         if (req.body["SMTP_USER"] !== undefined)
         {
-            config.SetSMTPUser(req.body["SMTP_USER"]);
+            NovaCommon.config.SetSMTPUser(req.body["SMTP_USER"]);
         }
         if (req.body["SMTP_PASS"] !== undefined)
         {
-            config.SetSMTPPass(req.body["SMTP_PASS"]);
+            NovaCommon.config.SetSMTPPass(req.body["SMTP_PASS"]);
         }
 
         //if no errors, send the validated form data to the WriteSetting method
@@ -2147,7 +1941,7 @@ app.post('/configureNovaSave', function (req, res)
         {
             if (req.body[configItems[item]] != undefined)
             {
-                config.WriteSetting(configItems[item], req.body[configItems[item]]);
+                NovaCommon.config.WriteSetting(configItems[item], req.body[configItems[item]]);
             }
         }
 
@@ -2171,54 +1965,13 @@ app.post('/configureNovaSave', function (req, res)
     }
 });
 
-function GetPorts()
-{
-  var scriptBindings = {};
-  
-  var profiles = honeydConfig.GetProfileNames();
-  
-  for(var i in profiles)
-  {
-    var profileName = profiles[i];
-
-    var portSets = honeydConfig.GetPortSetNames(profiles[i]);
-    for (var portSetName in portSets)
-    {
-        var portSet = honeydConfig.GetPortSet(profiles[i], portSets[portSetName]);
-        var ports = [];
-        for (var p in portSet.GetTCPPorts())
-        {
-            ports.push(portSet.GetTCPPorts()[p]);
-        }
-        for (var p in portSet.GetUDPPorts())
-        {
-            ports.push(portSet.GetUDPPorts()[p]);
-        }
-        for(var p in ports)
-        {
-            if(ports[p].GetScriptName() != undefined && ports[p].GetScriptName() != '')
-            {
-                if(scriptBindings[ports[p].GetScriptName()] == undefined)
-                {
-                    scriptBindings[ports[p].GetScriptName()] = profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
-                } else {
-                    scriptBindings[ports[p].GetScriptName()] += '<br>' + profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
-                }
-            }
-        }
-    }
-  }
-
-  return scriptBindings;
-}
-
 app.get('/scripts', function(req, res){
   var namesAndPaths = [];
   
-  var scriptNames = honeydConfig.GetScriptNames();
+  var scriptNames = NovaCommon.honeydConfig.GetScriptNames();
 
   for (var i = 0; i < scriptNames.length; i++) {
-    var script = honeydConfig.GetScript(scriptNames[i]);
+    var script = NovaCommon.honeydConfig.GetScript(scriptNames[i]);
     namesAndPaths.push({script: script.GetName(), path: script.GetPath(), configurable: script.GetIsConfigurable()});
   }
   
@@ -2229,7 +1982,7 @@ app.get('/scripts', function(req, res){
   }
   
   namesAndPaths.sort(cmp);
-  var scriptBindings = GetPorts(); 
+  var scriptBindings = NovaCommon.GetPorts(); 
   
   res.render('scripts.jade', {
     locals: {
@@ -2238,784 +1991,6 @@ app.get('/scripts', function(req, res){
     }
   });
 });
-
-everyone.now.ClearAllSuspects = function (callback)
-{
-    nova.CheckConnection();
-    if (!nova.ClearAllSuspects())
-    {
-        console.log("Manually deleting CE state file:" + NovaHomePath + "/" + config.ReadSetting("CE_SAVE_FILE"));
-        // If we weren't able to tell novad to clear the suspects, at least delete the CEStateFile
-        try {
-            fs.unlinkSync(NovaHomePath + "/" + config.ReadSetting("CE_SAVE_FILE"));
-        } catch (err)
-        {
-            // this is probably because the file doesn't exist. Just ignore.
-        }
-    }
-}
-
-everyone.now.ClearSuspect = function (suspectIp, interface, callback)
-{
-    nova.CheckConnection();
-    var result = nova.ClearSuspect(suspectIp, interface);
-
-    if (callback != undefined)
-    {
-        callback(result);
-    }
-}
-
-everyone.now.GetInheritedEthernetList = function (parent, callback)
-{
-    var prof = honeydConfig.GetProfile(parent);
-
-    if (prof == null)
-    {
-        console.log("ERROR Getting profile " + parent);
-        callback(null);
-    } else {
-        callback(prof.GetVendors(), prof.GetVendorCounts());
-    }
-
-}
-
-everyone.now.RestartHaystack = function(cb)
-{
-    nova.StopHaystack();
-
-    // Note: the other honeyd may be shutting down still,
-    // but the slight overlap doesn't cause problems
-    nova.StartHaystack(false);
-
-    if(typeof callback == 'function')
-    {
-        cb();
-    }
-}
-
-everyone.now.StartHaystack = function()
-{
-    if(!nova.IsHaystackUp())
-    {
-        nova.StartHaystack(false);
-    }
-  if(!nova.IsHaystackUp())
-  {
-    everyone.now.HaystackStartFailed();
-  }
-  else
-  {
-    try 
-    {
-        everyone.now.updateHaystackStatus(nova.IsHaystackUp())
-    } 
-    catch(err)
-    {};
-    }
-}
-
-everyone.now.StopHaystack = function()
-{
-    nova.StopHaystack();
-    try 
-    {
-        everyone.now.updateHaystackStatus(nova.IsHaystackUp());
-    } 
-    catch(err)
-    {};
-}
-
-everyone.now.IsHaystackUp = function(callback)
-{
-    callback(nova.IsHaystackUp());
-}
-
-everyone.now.IsNovadUp = function(callback)
-{
-    callback(nova.IsNovadUp(false));
-}
-
-everyone.now.StartNovad = function()
-{
-    var result = nova.StartNovad(false);
-    result = nova.CheckConnection();
-    try 
-    {
-        everyone.now.updateNovadStatus(nova.IsNovadUp(false));
-    }
-    catch(err){};
-}
-
-everyone.now.StopNovad = function(cb)
-{
-    if(nova.StopNovad() == false)
-    {
-    cb('false');
-    return;
-    }
-    nova.CloseNovadConnection();
-    try 
-    {
-        everyone.now.updateNovadStatus(nova.IsNovadUp(false));
-    }
-    catch(err){};
-}
-
-everyone.now.HardStopNovad = function(passwd)
-{
-  nova.HardStopNovad(passwd);
-  nova.CloseNovadConnection();
-  try 
-  {
-    everyone.now.updateNovadStatus(nova.IsNovadUp(false));
-  }
-  catch(err){};
-}
-
-everyone.now.sendAllSuspects = function (callback)
-{
-    nova.CheckConnection();
-    nova.sendSuspectList(callback);
-}
-
-everyone.now.sendSuspect = function (interface, ip, callback)
-{
-    var suspect = nova.sendSuspect(interface, ip);
-    if (suspect.GetIdString === undefined)
-    {
-        console.log("Failed to get suspect");
-        return;
-    }
-    var s = new Object();
-    objCopy(suspect, s);
-    callback(s);
-}
-
-
-everyone.now.deleteUserEntry = function (usernamesToDelete, callback)
-{
-    var username;
-    for (var i = 0; i < usernamesToDelete.length; i++)
-    {
-        username = String(usernamesToDelete[i]);
-        dbqCredentialsDeleteUser.run(username, function (err)
-        {
-            if (err)
-            {
-                console.log("Database error: " + err);
-                callback(false);
-                return;
-            }
-            else
-            {
-                callback(true);
-            }
-        });
-    }
-}
-
-everyone.now.updateUserPassword = function (username, newPassword, callback)
-{
-  var salt = '';
-  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for(var i = 0; i < 8; i++)
-  {
-    salt += possible[Math.floor(Math.random() * possible.length)];
-  }
-  
-  //update credentials set pass=? and salt=? where user=?
-  dbqCredentialsChangePassword.run(HashPassword(newPassword, salt), salt, username, function(err){
-    console.log('err ' + err);
-    if(err)
-    {
-      callback(false);
-    }
-    else
-    {
-      callback(true);
-    }
-  });
-};
-
-// Deletes a honeyd node
-everyone.now.deleteNodes = function (nodeNames, callback)
-{
-    var nodeName;
-    for (var i = 0; i < nodeNames.length; i++)
-    {
-        nodeName = nodeNames[i];
-        if (nodeName != null && !honeydConfig.DeleteNode(nodeName))
-        {
-            callback(false, "Failed to delete node " + nodeName);
-            return;
-        }
-
-    }
-
-    if (!honeydConfig.SaveAll())
-    {
-        callback(false, "Failed to save XML templates");
-        return;
-    }
-
-    callback(true, "");
-}
-
-everyone.now.deleteProfiles = function (profileNames, callback)
-{
-    var profileName;
-    for (var i = 0; i < profileNames.length; i++)
-    {
-        profileName = profileNames[i];
-
-        if (!honeydConfig.DeleteProfile(profileName))
-        {
-            callback(false, "Failed to delete profile " + profileName);
-            return;
-        }
-
-
-        if (!honeydConfig.SaveAll())
-        {
-            callback(false, "Failed to save XML templates");
-            return;
-        }
-    }
-
-    callback(true, "");
-}
-
-everyone.now.addWhitelistEntry = function (interface, entry, callback)
-{
-    // TODO: Input validation. Should be IP address or 'IP/netmask'
-    // Should also be sanitized for newlines/trailing whitespace
-    if (whitelistConfig.AddEntry(interface + "," + entry))
-    {
-        callback(true, "");
-    } else {
-        callback(true, "Attempt to add whitelist entry failed");
-    }
-}
-
-everyone.now.deleteWhitelistEntry = function (whitelistEntryNames, callback)
-{
-    var whitelistEntryName;
-    for (var i = 0; i < whitelistEntryNames.length; i++)
-    {
-        whitelistEntryName = whitelistEntryNames[i];
-
-        if (!whitelistConfig.DeleteEntry(whitelistEntryName))
-        {
-            callback(false, "Failed to delete whitelistEntry " + whitelistEntryName);
-            return;
-        }
-    }
-
-    callback(true, "");
-}
-
-everyone.now.GetProfile = function (profileName, callback)
-{
-    var profile = honeydConfig.GetProfile(profileName);
-
-    
-    if (profile == null)
-    {
-        callback(null);
-        return;
-    }
-
-    // Nowjs can't pass the object with methods, they need to be member vars
-    profile.name = profile.GetName();
-    profile.personality = profile.GetPersonality();
-
-    profile.uptimeMin = profile.GetUptimeMin();
-    profile.uptimeMax = profile.GetUptimeMax();
-    profile.dropRate = profile.GetDropRate();
-    profile.parentProfile = profile.GetParentProfile();
-
-    profile.isPersonalityInherited = profile.IsPersonalityInherited();
-    profile.isUptimeInherited = profile.IsUptimeInherited();
-    profile.isDropRateInherited = profile.IsDropRateInherited();
-
-    profile.count = profile.GetCount();
-
-        profile.portSets = GetPortSets(profileName);
-
-
-    var ethVendorList = [];
-
-    var profVendors = profile.GetVendors();
-    var profCounts = profile.GetVendorCounts();
-
-    for (var i = 0; i < profVendors.length; i++)
-    {
-        var element = {};
-        element.vendor = profVendors[i];
-        element.count = profCounts[i];
-        ethVendorList.push(element);
-    }
-
-    profile.ethernet = ethVendorList;
-
-
-    callback(profile);
-}
-
-everyone.now.GetScript = function (scriptName, callback)
-{
-    var script = honeydConfig.GetScript(scriptName);
-    var methodlessScript = {};
-
-    objCopy(script, methodlessScript);
-
-    callback(methodlessScript);
-
-}
-
-everyone.now.GetVendors = function (profileName, callback)
-{
-    var profile = honeydConfig.GetProfile(profileName);
-
-    if (profile == null)
-    {
-        console.log("ERROR Getting profile " + profileName);
-        callback(null);
-        return;
-    }
-
-
-    var ethVendorList = [];
-
-    var profVendors = profile.GetVendors();
-    var profDists = profile.GetVendorCounts();
-
-    for (var i = 0; i < profVendors.length; i++)
-    {
-        var element = {
-            vendor: "",
-            count: ""
-        };
-        element.vendor = profVendors[i];
-        element.count = parseFloat(profDists[i]);
-        ethVendorList.push(element);
-    }
-
-    callback(profVendors, profDists);
-}
-
-GetPortSets = function (profileName, callback)
-{
-    var portSetNames = honeydConfig.GetPortSetNames(profileName);
-    
-    var portSets = [];  
-
-    for (var i = 0; i < portSetNames.length; i++)
-    {
-        var portSet = honeydConfig.GetPortSet( profileName, portSetNames[i] );
-        portSet.setName = portSet.GetName();
-        portSet.TCPBehavior = portSet.GetTCPBehavior();
-        portSet.UDPBehavior = portSet.GetUDPBehavior();
-        portSet.ICMPBehavior = portSet.GetICMPBehavior();
-
-        portSet.TCPExceptions = portSet.GetTCPPorts();
-        for (var j = 0; j < portSet.TCPExceptions.length; j++)
-        {
-            portSet.TCPExceptions[j].portNum = portSet.TCPExceptions[j].GetPortNum();
-            portSet.TCPExceptions[j].protocol = portSet.TCPExceptions[j].GetProtocol();
-            portSet.TCPExceptions[j].behavior = portSet.TCPExceptions[j].GetBehavior();
-            portSet.TCPExceptions[j].scriptName = portSet.TCPExceptions[j].GetScriptName();
-            portSet.TCPExceptions[j].service = portSet.TCPExceptions[j].GetService();
-            portSet.TCPExceptions[j].scriptConfiguration = portSet.TCPExceptions[j].GetScriptConfiguration();
-        }
-
-        portSet.UDPExceptions = portSet.GetUDPPorts();
-        for (var j = 0; j < portSet.UDPExceptions.length; j++)
-        {
-            portSet.UDPExceptions[j].portNum = portSet.UDPExceptions[j].GetPortNum();
-            portSet.UDPExceptions[j].protocol = portSet.UDPExceptions[j].GetProtocol();
-            portSet.UDPExceptions[j].behavior = portSet.UDPExceptions[j].GetBehavior();
-            portSet.UDPExceptions[j].scriptName = portSet.UDPExceptions[j].GetScriptName();
-            portSet.UDPExceptions[j].scriptConfiguration = portSet.UDPExceptions[j].GetScriptConfiguration();
-        }
-        portSets.push(portSet);
-    }
-
-    if(typeof callback == 'function')
-    {
-    callback(portSets, profileName);
-  }
-  return portSets;
-}
-everyone.now.GetPortSets = GetPortSets;
-
-
-function jsProfileToHoneydProfile(profile)
-{
-    var honeydProfile = new novaconfig.HoneydProfileBinding(profile.parentProfile, profile.name);
-    
-        //Set Ethernet vendors
-    var ethVendors = [];
-    var ethDists = [];
-
-    for (var i in profile.ethernet)
-    {
-        ethVendors.push(profile.ethernet[i].vendor);
-        ethDists.push(parseFloat(Number(profile.ethernet[i].count)));
-    }
-    honeydProfile.SetVendors(ethVendors, ethDists);
-    
-
-    // Move the Javascript object values to the C++ object
-    honeydProfile.SetUptimeMin(Number(profile.uptimeMin));
-    honeydProfile.SetUptimeMax(Number(profile.uptimeMax));
-    honeydProfile.SetDropRate(Number(profile.dropRate));
-    honeydProfile.SetPersonality(profile.personality);
-    honeydProfile.SetCount(profile.count);
-
-    honeydProfile.SetIsPersonalityInherited(Boolean(profile.isPersonalityInherited));
-    honeydProfile.SetIsDropRateInherited(Boolean(profile.isDropRateInherited));
-    honeydProfile.SetIsUptimeInherited(Boolean(profile.isUptimeInherited));
-
-
-    // Add new ports
-    honeydProfile.ClearPorts();
-    var portName;
-    for (var i = 0; i < profile.portSets.length; i++) 
-    {
-        //Make a new port set
-		var encodedName = sanitizeCheck(profile.portSets[i].setName).entityEncode();
-        honeydProfile.AddPortSet(encodedName);
-
-        honeydProfile.SetPortSetBehavior(encodedName, "tcp", profile.portSets[i].TCPBehavior);
-        honeydProfile.SetPortSetBehavior(encodedName, "udp", profile.portSets[i].UDPBehavior);
-        honeydProfile.SetPortSetBehavior(encodedName, "icmp", profile.portSets[i].ICMPBehavior);
-
-        for (var j = 0; j < profile.portSets[i].TCPExceptions.length; j++)
-        {
-            var scriptConfigKeys = new Array();
-            var scriptConfigValues = new Array();
-
-            for (var key in profile.portSets[i].TCPExceptions[j].scriptConfiguration)
-            {
-                scriptConfigKeys.push(key);
-                scriptConfigValues.push(profile.portSets[i].TCPExceptions[j].scriptConfiguration[key]);
-            }
-
-            honeydProfile.AddPort(encodedName,
-                    profile.portSets[i].TCPExceptions[j].behavior, 
-                    profile.portSets[i].TCPExceptions[j].protocol, 
-                    Number(profile.portSets[i].TCPExceptions[j].portNum), 
-                    profile.portSets[i].TCPExceptions[j].scriptName,
-                    scriptConfigKeys,
-                    scriptConfigValues);
-        }
-
-        for (var j = 0; j < profile.portSets[i].UDPExceptions.length; j++)
-        {
-            var scriptConfigKeys = new Array();
-            var scriptConfigValues = new Array();
-
-            for (var key in profile.portSets[i].UDPExceptions[j].scriptConfiguration)
-            {
-                scriptConfigKeys.push(key);
-                scriptConfigValues.push(profile.portSets[i].UDPExceptions[j].scriptConfiguration[key]);
-            }
-
-            honeydProfile.AddPort(encodedName, 
-                    profile.portSets[i].UDPExceptions[j].behavior, 
-                    profile.portSets[i].UDPExceptions[j].protocol, 
-                    Number(profile.portSets[i].UDPExceptions[j].portNum), 
-                    profile.portSets[i].UDPExceptions[j].scriptName,
-                    scriptConfigKeys,
-                    scriptConfigValues);
-        }
-
-    }
-
-    return honeydProfile;
-}
-
-
-//portSets = A 2D array. (array of portSets, which are arrays of Ports)
-everyone.now.SaveProfile = function (profile, callback)
-{
-    // Check input
-    var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
-    var match = profileNameRegexp.exec(profile.name);
-    
-    if (match == null) 
-    {
-        var err = "ERROR: Attempt to save a profile with an invalid name. Must be alphanumeric and not begin with a number.";
-        callback(err);
-        return;
-    }
-
-
-    var honeydProfile = jsProfileToHoneydProfile(profile);
-    honeydProfile.Save();
-
-    // Save the profile
-    if (!honeydConfig.SaveAll())
-    {
-        result = "Unable to save honeyd configuration";
-    }
-
-    callback();
-}
-
-everyone.now.RenamePortset = function(profile, oldName, newName, callback)
-{
-  var encodedName = sanitizeCheck(newName).entityEncode();
-  var result = honeydConfig.RenamePortset(oldName, encodedName, profile);
-  honeydConfig.SaveAll();
-  if(typeof callback == 'function')
-  {
-    callback();
-  }
-}
-
-everyone.now.WouldProfileSaveDeleteNodes = function (profile, callback)
-{
-    var honeydProfile = jsProfileToHoneydProfile(profile);
-
-    callback(honeydProfile.WouldAddProfileCauseNodeDeletions());
-}
-
-everyone.now.GetCaptureSession = function (callback)
-{
-    var ret = config.ReadSetting("TRAINING_SESSION");
-    callback(ret);
-}
-
-everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, subnets, groupName, append, callback, route)
-{
-    var executionString = 'haystackautoconfig';
-
-    var hhconfigArgs = new Array();
-
-
-	hhconfigArgs.push('--nodeinterface');
-	hhconfigArgs.push(nodeInterface);
-
-    if(numNodesType == "fixed") 
-    {
-        if(numNodes !== undefined) 
-        {
-            hhconfigArgs.push('-n');
-            hhconfigArgs.push(numNodes);
-        }
-    } 
-    else if(numNodesType == "ratio") 
-    {
-        if(numNodes !== undefined) 
-        {
-            hhconfigArgs.push('-r');
-            hhconfigArgs.push(numNodes);
-        }
-    }
-    else if(numNodesType == 'range')
-    {
-      if(numNodes !== undefined)
-      {
-        hhconfigArgs.push('e');
-        hhconfigArgs.push(numNodes);
-      }
-    }
-    
-    if(subnets !== undefined && subnets.length > 0)
-    {
-        hhconfigArgs.push('-a');
-        hhconfigArgs.push(subnets);
-    }
-
-	if (!append) {
-		hhconfigArgs.push('-t');
-		hhconfigArgs.push(groupName);
-		honeydConfig.AddConfiguration(groupName, 'false', '');
-		config.SetCurrentConfig(groupName);
-	} else {
-		hhconfigArgs.push('-t');
-		hhconfigArgs.push(groupName);
-	}
-
-    var util = require('util');
-    var spawn = require('child_process').spawn;
-    
-	console.log("Running: " + executionString.toString());
-    console.log("Args: " + hhconfigArgs);
-
-    autoconfig = spawn(executionString.toString(), hhconfigArgs);
-
-    autoconfig.stdout.on('data', function (data)
-    {
-      if(typeof callback == 'function')
-      {
-          callback('' + data);
-        }
-    });
-
-    autoconfig.stderr.on('data', function (data)
-    {
-        if (/^execvp\(\)/.test(data))
-        {
-            console.log("haystackautoconfig failed to start.");
-            var response = "haystackautoconfig failed to start.";
-            everyone.now.SwitchConfigurationTo('default');
-            if(typeof route == 'function')
-            {
-              route("/autoConfig", response);
-            }
-        }
-    });
-
-    autoconfig.on('exit', function (code, signal)
-    {
-        console.log("autoconfig exited with code " + code);
-        var response = "autoconfig exited with code " + code;
-      if(typeof route == 'function' && signal != 'SIGTERM')
-    {
-      route("/honeydConfigManage", response);
-    }
-    if(signal == 'SIGTERM')
-    {
-      response = "autoconfig scan terminated early";
-      route("/autoConfig", response);
-    }
-    });
-}
-
-everyone.now.CancelAutoScan = function(groupName)
-{
-  try
-  {
-    autoconfig.kill();
-    autoconfig = undefined;
-    everyone.now.RemoveConfiguration(groupName);
-    
-    everyone.now.SwitchConfigurationTo('default');
-  }
-  catch(e)
-  {
-    LOG("ERROR", "CancelAutoScan threw an error: " + e);
-  }
-}
-
-// TODO: Fix training
-everyone.now.StartTrainingCapture = function (trainingSession, callback)
-{
-    callback("Training mode is currently not supported");
-    return;
-
-    //config.WriteSetting("IS_TRAINING", "1");
-    config.WriteSetting("TRAINING_SESSION", trainingSession.toString());
-
-    // Check if training folder already exists
-    //console.log(Object.keys(fs));
-    path.exists(NovaHomePath + "/data/" + trainingSession, function (exists)
-    {
-        if (exists)
-        {
-            callback("Training session folder already exists for session name of '" + trainingSession + "'");
-            return;
-        } else {
-            // Start the haystack
-            if (!nova.IsHaystackUp())
-            {
-                nova.StartHaystack(false);
-            }
-
-            // (Re)start NOVA
-            nova.StopNovad();
-            nova.StartNovad(false);
-
-            nova.CheckConnection();
-
-            callback();
-        }
-    });
-}
-
-// TODO: Fix training
-everyone.now.StopTrainingCapture = function (trainingSession, callback)
-{
-    callback("Training mode is currently not supported");
-    return;
-    //config.WriteSetting("IS_TRAINING", "0");
-    //config.WriteSetting("TRAINING_SESSION", "null");
-    nova.StopNovad();
-
-    exec('novatrainer ' + NovaHomePath + '/data/' + trainingSession + ' ' + NovaHomePath + '/data/' + trainingSession + '/nova.dump',
-
-    function (error, stdout, stderr)
-    {
-        callback(stderr);
-    });
-}
-
-everyone.now.GetCaptureIPs = function (trainingSession, callback)
-{
-    return trainingDb.GetCaptureIPs(NovaHomePath + "/data/" + trainingSession + "/nova.dump");
-}
-
-everyone.now.WizardHasRun = function (callback)
-{
-    dbqFirstrunInsert.run(callback);
-}
-
-
-everyone.now.GetHostileEvents = function (callback)
-{
-    dbqSuspectAlertsGet.all(
-
-    function (err, results)
-    {
-        if (err)
-        {
-            console.log("Database error: " + err);
-            // TODO implement better error handling callbacks
-            callback();
-            return;
-        }
-
-        callback(results);
-    });
-}
-
-everyone.now.ClearHostileEvents = function (callback)
-{
-    dbqSuspectAlertsDeleteAll.run(
-
-    function (err)
-    {
-        if (err)
-        {
-            console.log("Database error: " + err);
-            // TODO implement better error handling callbacks
-            return;
-        }
-
-        callback("true");
-    });
-}
-
-everyone.now.ClearHostileEvent = function (id, callback)
-{
-    dbqSuspectAlertsDeleteAlert(id,
-
-    function (err)
-    {
-        if (err)
-        {
-            console.log("Database error: " + err);
-            // TODO implement better error handling callbacks
-            return;
-        }
-
-        callback("true");
-    });
-}
 
 var SendHostileEventToPulsar  = function(suspect)
 {
@@ -3038,202 +2013,6 @@ var SendBenignSuspectToPulsar = function(suspect)
   }
 };
 everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
-
-everyone.now.GetLocalIP = function (iface, callback)
-{
-    callback(nova.GetLocalIP(iface));
-}
-
-everyone.now.GetSubnetFromInterface = function (iface, index, callback)
-{
-  callback(iface, nova.GetSubnetFromInterface(iface), index);
-}
-
-everyone.now.RemoveScriptFromProfiles = function(script, callback)
-{
-    honeydConfig.DeleteScriptFromPorts(script);
-
-    honeydConfig.SaveAllTemplates();
-
-    if(typeof callback == 'function')
-    {
-        callback();
-    }
-}
-
-everyone.now.GenerateMACForVendor = function(vendor, callback)
-{
-    callback(honeydConfig.GenerateRandomUnusedMAC(vendor));
-}
-
-everyone.now.restoreDefaultSettings = function(callback)
-{
-    var source = NovaSharedPath + "/../userFiles/config/NOVAConfig.txt";
-    var destination = NovaHomePath + "/config/NOVAConfig.txt";
-    exec('cp -f ' + source + ' ' + destination, function(err)
-    {
-        callback();
-    }); 
-}
-
-everyone.now.reverseDNS = function(ip, callback)
-{
-    dns.reverse(ip, callback);
-}
-
-everyone.now.addTrainingPoint = function(ip, interface, features, hostility, callback)
-{
-    if (hostility != '0' && hostility != '1')
-    {
-        callback("Error: Invalid hostility. Should be 0 or 1");
-        return;
-    }
-	
-	if (features.toString().split(" ").length != nova.GetDIM()) {
-		callback("Error: Invalid number of features!")
-		return;
-	}
-
-    var point = features.toString() + " " + hostility + "\n";
-    fs.appendFile(NovaHomePath + "/config/training/data.txt", point, function(err)
-    {
-        if (err)
-        {
-            console.log("Error: " + err);
-            callback(err);
-            return;
-        }
-
-        var d = new Date();
-        var trainingDbString = "";
-        trainingDbString += hostility + ' "User customized training point for suspect ' + ip + " added on " + d.toString() + '"\n';
-        trainingDbString += "\t" + features.toString();
-        trainingDbString += "\n\n";
-
-        fs.appendFile(NovaHomePath + "/config/training/training.db", trainingDbString, function(err)
-        {
-            if (!nova.ReclassifyAllSuspects())
-            {
-                callback("Error: Unable to reclassify suspects with new training data");
-                return;
-            }
-            callback();
-        });
-
-    }); 
-}
-
-everyone.now.RemoveScript = function(scriptName, callback)
-{
-  honeydConfig.RemoveScript(scriptName);
-  
-  honeydConfig.SaveAllTemplates();
-  
-  if(typeof callback == 'function')
-  {
-    callback();
-  }
-}
-
-everyone.now.WriteHoneydConfig = function(cb)
-{
-   honeydConfig.WriteHoneydConfiguration(config.GetPathConfigHoneydHS());
-   
-   if(typeof cb == 'function')
-   {
-     cb(); 
-   }
-}
-
-everyone.now.GetConfigSummary = function(configName, callback)
-{ 
-  honeydConfig.LoadAllTemplates();
-  
-  var scriptProfileBindings = GetPorts();
-  var profiles = honeydConfig.GetProfileNames();
-  var profileObj = {};
-  
-  for (var i = 0; i < profiles.length; i++) 
-  {
-    if(profiles[i] != undefined && profiles[i] != '')
-    {
-      var prof = honeydConfig.GetProfile(profiles[i]);
-      var obj = {};
-      var vendorNames = prof.GetVendors();
-      var vendorDist = prof.GetVendorCounts();
-      
-      obj.name = prof.GetName();
-      obj.parent = prof.GetParentProfile();
-      obj.os = prof.GetPersonality();
-      obj.packetDrop = prof.GetDropRate();
-      obj.vendors = [];
-      
-      for(var j = 0; j < vendorNames.length; j++)
-      {
-        var push = {};
-        
-        push.name = vendorNames[j];
-        push.count = vendorDist[j];
-        obj.vendors.push(push);
-      }
-      
-      if(prof.GetUptimeMin() == prof.GetUptimeMax())
-      {
-        obj.fixedOrRange = 'fixed';
-        obj.uptimeValue = prof.GetUptimeMin();
-      }
-      else
-      {
-        obj.fixedOrRange = 'range';
-        obj.uptimeValueMin = prof.GetUptimeMin();
-        obj.uptimeValueMax = prof.GetUptimeMax();        
-      }
-      
-      //obj.defaultTCP = prof.GetTcpAction();
-      //obj.defaultUDP = prof.GetUdpAction();
-      //obj.defaultICMP = prof.GetIcmpAction();
-      profileObj[profiles[i]] = obj;
-    }
-  }
-  
-  var nodeNames = honeydConfig.GetNodeMACs();
-  var nodeList = [];
-  
-  for (var i = 0; i < nodeNames.length; i++)
-  {
-    var node = honeydConfig.GetNode(nodeNames[i]);
-    var push = cNodeToJs(node);
-    nodeList.push(push);
-  }
-  
-  nodeNames = null;
-  
-  if(typeof callback == 'function')
-  {
-    callback(scriptProfileBindings, profileObj, profiles, nodeList);
-  }
-}
-
-everyone.now.SwitchConfigurationTo = function(configName)
-{
-	honeydConfig.SwitchConfiguration(configName); 
-    config.WriteSetting('CURRENT_CONFIG', configName);
-}
-
-everyone.now.RemoveConfiguration = function(configName, callback)
-{
-  if(configName == 'default')
-  {
-    console.log('Cannot delete default haystack');
-  }
-  
-  honeydConfig.RemoveConfiguration(configName);
-  
-  if(typeof callback == 'function')
-  {
-    callback(configName);
-  }
-}
 
 var distributeSuspect = function (suspect)
 {
@@ -3304,14 +2083,14 @@ var distributeSuspectCleared = function (suspect)
     everyone.now.SuspectCleared(s);
 }
 
-nova.registerOnAllSuspectsCleared(distributeAllSuspectsCleared);
-nova.registerOnSuspectCleared(distributeSuspectCleared);
-nova.registerOnNewSuspect(distributeSuspect);
+NovaCommon.nova.registerOnAllSuspectsCleared(distributeAllSuspectsCleared);
+NovaCommon.nova.registerOnSuspectCleared(distributeSuspectCleared);
+NovaCommon.nova.registerOnNewSuspect(distributeSuspect);
 
 
 process.on('SIGINT', function ()
 {
-    nova.Shutdown();
+    NovaCommon.nova.Shutdown();
     process.exit();
 });
 
@@ -3379,53 +2158,6 @@ function getRsyslogIp()
   return ret;
 }
 
-everyone.now.AddInterfaceAlias = function(iface, alias, callback)
-{
-    if (alias != "") 
-    {
-        interfaceAliases[iface] = sanitizeCheck(alias).entityEncode();
-    } 
-    else 
-    {
-        delete interfaceAliases[iface];
-    }
-
-    var fileString = JSON.stringify(interfaceAliases);
-    fs.writeFile(NovaHomePath + "/config/interface_aliases.txt", fileString, callback);
-}
-
-everyone.now.GetHaystackDHCPStatus = function(callback)
-{
-    fs.readFile("/var/log/honeyd/ipList", 'utf8', function (err, data)
-    {
-        var DHCPIps = new Array();
-        if (err)
-        {
-            RenderError(res, "Unable to open Honeyd status file for reading due to error: " + err);
-            return;
-        } else {
-
-            data = data.toString().split("\n");
-            for(var i = 0; i < data.length; i++)
-            {
-                if (data[i] == "") {continue};
-                var entry = {
-                    ip: data[i].toString().split(",")[0],
-                    mac: data[i].toString().split(",")[1]
-                };
-                DHCPIps.push(entry);
-            }   
-
-            callback(DHCPIps);
-        }
-    });
-}
-
-everyone.now.shutdownQuasar = function() {
-        LOG("ALERT", "Quasar is exiting due to user issued shutdown command on the web interface");
-    	process.exit(1);
-};
-
 function ReloadInterfaceAliasFile() 
 {
     var aliasFileData = fs.readFileSync(NovaHomePath + "/config/interface_aliases.txt");
@@ -3458,11 +2190,88 @@ setInterval(function()
 {
     try 
     {
-        everyone.now.updateHaystackStatus(nova.IsHaystackUp());
-        everyone.now.updateNovadStatus(nova.IsNovadUp(false));
+        everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp());
+        everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadUp(false));
     } 
     catch(err) 
     {
 
     }
 }, 5000);
+
+
+
+
+// TODO: These need some more work to move over to NowjsMethods.js
+everyone.now.GetHostileEvents = function (cb)
+{
+    dbqSuspectAlertsGet.all(
+
+    function (err, results)
+    {
+        if (err)
+        {
+            console.log("Database error: " + err);
+            // TODO implement better error handling cbs
+            cb();
+            return;
+        }
+
+        cb(results);
+    });
+};
+
+everyone.now.ClearHostileEvents = function (cb)
+{
+    dbqSuspectAlertsDeleteAll.run(
+
+    function (err)
+    {
+        if (err)
+        {
+            console.log("Database error: " + err);
+            // TODO implement better error handling cbs
+            return;
+        }
+
+        cb("true");
+    });
+};
+
+everyone.now.ClearHostileEvent = function (id, cb)
+{
+    dbqSuspectAlertsDeleteAlert(id,
+
+    function (err)
+    {
+        if (err)
+        {
+            console.log("Database error: " + err);
+            // TODO implement better error handling cbs
+            return;
+        }
+
+        cb("true");
+    });
+};
+
+everyone.now.WizardHasRun = function (cb)
+{
+    dbqFirstrunInsert.run(cb);
+};
+
+everyone.now.AddInterfaceAlias = function(iface, alias, callback)
+{
+    if (alias != "") 
+    {
+        interfaceAliases[iface] = sanitizeCheck(alias).entityEncode();
+    } 
+    else 
+    {
+        delete interfaceAliases[iface];
+    }
+
+    var fileString = JSON.stringify(interfaceAliases);
+    fs.writeFile(NovaHomePath + "/config/interface_aliases.txt", fileString, callback);
+};
+
