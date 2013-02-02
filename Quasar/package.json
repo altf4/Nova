@@ -1,6 +1,6 @@
 {
 	"name" : "nova"
-	, "version" : "12.12"
+	, "version" : "0.1.0"
 	, "author"	: "Datasoft"
 	, "dependencies" : {
 		"express" 		: 	"2.5.x"
