@@ -521,10 +521,9 @@ block headerAdditions
         
         for(var i in iter)
         {
-          var split0 = parseInt(i.toString().indexOf(">")) + 2;
-          var split1 = parseInt(i.toString().lastIndexOf("<"));
-          check = i.toString().substring(split0, split1);
-          
+          check = i;
+          check = check.substring(0, i.lastIndexOf("<"));
+          check = check.substring(check.lastIndexOf(">") + 1);
           if(check == ip)
           {
             ret = iter[i][5];
@@ -574,7 +573,7 @@ block headerAdditions
       monitor.setAttribute('onclick', 'MonitorSuspect("' + ip + '", "' + iface + '")');
       monitor.setAttribute('oncontextmenu', 'MonitorSuspect("' + ip + '", "' + iface + '"); removeContextMenu(); return false;');
       contextMenuDiv.appendChild(monitor);
-      
+     
       var markAsHostile = document.createElement('div');
       markAsHostile.setAttribute('class', 'middlecontainer');
       markAsHostile.innerHTML = '<img class="buttonIcon" src="images/alert.png"/> Mark ' + ip + ' as Hostile';
