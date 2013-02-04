@@ -592,6 +592,24 @@ everyone.now.SaveProfile = function (profile, cb)
         return;
     }
 
+    // Check that we have the scriptnames set for profiles that need scripts
+    for (var i = 0; i < profile.portSets.length; i++) 
+    {
+        for (var j = 0; j < profile.portSets[i].TCPExceptions.length; j++)
+        {
+            var port = profile.portSets[i].TCPExceptions[j];
+
+            if (port.behavior == "script" || port.behavior == "tarpit script") {
+                if (port.scriptName == "" || port.scriptName == "NA") {
+                    var err = "ERROR: Attempt to save a profile with an invalid port script value.";
+                    cb && cb(err);
+                    return;
+                }
+            }
+
+        }
+    }
+
 
     var honeydProfile = jsProfileToHoneydProfile(profile);
     honeydProfile.Save();

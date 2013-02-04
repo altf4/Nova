@@ -775,6 +775,9 @@ script
                                 if (dojo.byId("portBehavior" + portIndexes[i]).value == "3" || dojo.byId("portBehavior" + portIndexes[i]).value == "5") 
                                 {
                                         dojo.byId("portScriptDrop" + portIndexes[i]).disabled = false;
+                                        if (dojo.byId("portScriptDrop" + portIndexes[i]).value == "NA") {
+                                            dojo.byId("portScriptDrop" + portIndexes[i]).selectedIndex = 0;
+                                        }
                                 } 
                                 else 
                                 {
