@@ -1,3 +1,9 @@
+nova (12.12.12) quantal; urgency=low
+
+  * Bump version, fighting with the npm and ppa
+
+ -- David Clark <david.clark@datasoft.com>  Fri, 1 Feb 2012 14:58:17 -0700
+
 nova (12.12.11) quantal; urgency=low
 
   * Bump version, fighting with the PPA
