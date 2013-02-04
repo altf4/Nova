@@ -68,8 +68,15 @@ block content
         br
       - count++;
       br
-      button(onclick='applyAdvancedFilter()') Apply Advanced Filters
-      button(onclick='disableAdvancedFilter()') Disable Advanced Filters
+      button(onclick='applyAdvancedFilter()')
+        img.buttonIcon(src="images/benign.png")
+        span.buttonSpan Apply Advanced Filters
+      br
+      button(onclick='disableAdvancedFilter()')
+        img.buttonIcon(src="images/alert.png")
+        span.buttonSpan Disable Advanced Filters
+    br
+    br
     button#closeLB(onclick='closeLightbox()')
      img.buttonIcon(src="images/cancel.png")
      span.buttonSpan Cancel

@@ -332,7 +332,9 @@ block content
   br
   br
   label &nbsp
-  a(class="button", href="#", onclick="GenerateMac()") Generate new MAC
+  button(onclick="GenerateMac()") 
+    img(class="buttonIcon", src="images/dice.png")
+    span(class="buttonSpan") Generate new MAC
   br
   br
   label Ethernet Vendor
@@ -349,4 +351,6 @@ block content
 
   br
   br
-  input(type="Submit",value="Confirm Node Edits", onclick="SaveNode();")
+  button(onclick="SaveNode();")
+    img(src="images/ok.png", class="buttonIcon")
+    span(class="buttonSpan") Save Changes
