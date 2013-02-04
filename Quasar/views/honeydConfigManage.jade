@@ -179,8 +179,7 @@ block headerAdditions
       var items = GetSelectedProfiles();
       if (items.length != 1)
       {
-        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 profile for parenting"});
-        dialog.show();
+        alert("Invalid Selection: Please select only 1 profile for parenting");
         return;
       }
       window.location.href = "addHoneydProfile?parent=" + items[0];
@@ -965,8 +964,7 @@ block headerAdditions
       var items = GetSelectedProfiles();
       if (items.length != 1)
       {
-        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 profile for editing"});
-        dialog.show();
+        alert("Invalid Selection: Please select only 1 profile for editing");
         return;
       }
       window.location.href = "editHoneydProfile?profile=" + items[0];
