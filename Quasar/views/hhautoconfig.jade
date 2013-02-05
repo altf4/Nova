@@ -19,164 +19,131 @@ extends layout
 block headerAdditions
   script(src="scripts/spin.js")
   script
-    var subnetsArray = [];
     var Interfaces = "#{INTERFACES}";
+    var InterfaceAliases = "#{interfaceAliases}";
    
     var interfaceList = Interfaces.split(',');
+    var interfaceAliasList = InterfaceAliases.split(',');
     
-    var interfaceLength;
-    if(interfaceList[0].length == 1)
-    {
-        interfaceLength = parseInt("1");
-    }
-    else if(interfaceList[0].length > 1)
-    {
-        interfaceLength = parseInt(interfaceList.length);
-    }
-  
-    function validateAndAdd(id, errLabel, dest)
+    function viewModelApp() {
+        var self = this;
+        self.newHaystackName = ko.observable("");
+        self.oldHaystackName = ko.observable("");
+
+        self.isNewHaystackSelection = ko.observable("1");
+        self.isNewHaystack = ko.computed(function() {return parseInt(self.isNewHaystackSelection())}, self);
+        self.groupName = ko.computed(function() {
+           if (self.isNewHaystack()) {
+            return self.newHaystackName();
+           } else {
+            return self.oldHaystackName();
+           }
+        }, self);
+
+        self.subnetsToScan = ko.observableArray();
+        self.interfaceSubnets = ko.observableArray();
+
+        self.interfaceList = interfaceList;
+
+        self.removeSubnet = function(subnet) {
+            self.subnetsToScan.remove(subnet);
+        }
+        
+        self.addSubnet = function(subnet) {
+            if (!isSubnetScanned(subnet.subnet)) {
+                self.subnetsToScan.push(subnet);
+            }
+        }
+
+        self.nodeCreationType = ko.observable();
+        self.nodeCountFixed = ko.observable(1);
+        self.nodeCountRatio = ko.observable(1);
+        self.nodeCountRange = ko.observable("");
+
+        self.nodeCount = ko.computed(function() {
+          var num = -1;
+          if(self.nodeCreationType() == 'fixed') 
+          {
+            num = self.nodeCountFixed();
+          } 
+          else if(self.nodeCreationType() == 'ratio')
+          {
+            num = self.nodeCountRatio();
+          }
+          else if(self.nodeCreationType() == 'range')
+          {
+            num = self.nodeCountRange();
+            var regex = new RegExp('^([0-255]\\.){3}([0-255])\\-([0-255]\\.){3}([0-255])$');
+            if(regex.test(num) == 'false')
+            {
+              num = -1;
+            }
+          }
+          return num;
+        }, self);
+    };
+
+    var viewModel = new viewModelApp();
+
+    function validateAndAdd(id)
     {
       var toValidate = document.getElementById(id).value;
     
       var regex = new RegExp("^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\/[1-3]?[0-9]$");
     
+      document.getElementById("errorLabel").style.color = 'red';
       if((toValidate[toValidate.length - 2] >= 3 && toValidate[toValidate.length - 1] > 2)
         || (toValidate[toValidate.length - 3] != '/' && toValidate[toValidate.length - 2] != '/'))
       {
-        document.getElementById(errLabel).style.color = 'red';
-        document.getElementById(errLabel).innerHTML = "Invalid subnet bit value (e.g. 33 or higher)";
+        document.getElementById("errorLabel").innerHTML = "Invalid subnet bit value (e.g. 33 or higher)";
         return;
       }
     
-      if(noSubnetRepeats(toValidate) == 'false')
+      if(isSubnetScanned(toValidate))
       {
-        document.getElementById(errLabel).style.color = 'red';
-        document.getElementById(errLabel).innerHTML = "That subnet is already in the subnets list";
+        document.getElementById("errorLabel").innerHTML = "That subnet is already in the subnets list";
         return;
       }
     
       if(regex.test(toValidate))
       {
-        document.getElementById(errLabel).style.color = 'green';
-        document.getElementById(errLabel).innerHTML = "Valid subnet found!";
-        // add here
-        var tr = document.createElement("tr");
-        tr.id = toValidate;
-        var td0 = document.createElement("td");
-        var td1 = document.createElement("td");
-        
-        var input = document.createElement("input");
-        input.setAttribute("type", "text");
-        input.setAttribute("readonly", "true");
-        input.setAttribute("name", "subnets");
-        input.setAttribute("value", toValidate);
-        input.innerHTML = toValidate;
-        
-        var deleteButton = document.createElement("button");
-        deleteButton.setAttribute("onclick", 'deleteSubnet("' + toValidate + '")');
-        deleteButton.innerHTML = 'Remove Subnet';
-        
-        td0.appendChild(input);
-        td1.appendChild(deleteButton);
-        tr.appendChild(td0);
-        tr.appendChild(td1);
-        
-        document.getElementById(dest).appendChild(tr);
-        
-        document.getElementById(id).value = 'Format: XXX.XXX.XXX.XXX/##';
-        document.getElementById(id).blur();
-        
-        subnetsArray.push(toValidate);
-        
-        document.getElementById('showTable').style.display = 'block';
+        document.getElementById("errorLabel").style.color = 'green';
+        document.getElementById("errorLabel").innerHTML = "Valid subnet found!";
+        viewModel.subnetsToScan.push({subnet: toValidate});
+        document.getElementById(id).value = '';
       }
       else
       {
-        document.getElementById(errLabel).innerHTML = "That is not a valid subnet.";
+        document.getElementById("errorLabel").innerHTML = "That is not a valid subnet.";
         return;
       }
     }
     
-    function deleteSubnet(source)
+    function isSubnetScanned(test)
     {
-      if(document.getElementById(source) != undefined)
-      {
-        for(var i in subnetsArray)
-        {
-          if(subnetsArray[i] == source)
-          {
-            subnetsArray.splice(i, 1);
-          }
-        }
-        document.getElementById('subnetsList').removeChild(document.getElementById(source));
-        if(subnetsArray.length == 0)
-        {
-          document.getElementById('showTable').style.display = 'none';
+      for (var i in viewModel.subnetsToScan()) {
+        if (test == viewModel.subnetsToScan()[i].subnet) {
+            return true;
         }
       }
+      return false;
     }
     
-    function noSubnetRepeats(test)
-    {
-      for(var i in subnetsArray)
-      {
-        if(subnetsArray[i] == test)
-        {
-          return 'false';
-        }
-      }
-      return 'true';
-    }
-    
-    function checkAtLeastOne()
-    {
-      var atLeastOneChecked = false;
-      
-      // check that there is at least one subnet or one interface selected here
-      for(var i = 0; i < document.getElementById("length").getAttribute("value"); i++)
-      {
-        if(document.getElementById('if' + i) != undefined && document.getElementById('if' + i) != null)
-        {
-          if(document.getElementById("if" + i).checked)
-          {
-            atLeastOneChecked = true;
-          }
-        }
-      }
-      
-      if(document.getElementById("subnetsList").childNodes["length"] > 0)
-      {
-        atLeastOneChecked = true;
-      }
-      
-      if(!atLeastOneChecked)
-      {
-        document.getElementById("errorLabel").innerHTML = "Must select at least one interface or add one subnet.";
-      }
-      
-      return atLeastOneChecked;
-    }
-
     function RunScan()
     {
-      var checkGroupName = GetGroupName();
-
-      if(GetNumNodes() == -1)
+      if(viewModel.nodeCount() == -1)
       {
         alert('There is a problem with your value for number of nodes!');
         return;
       }
-      if(GetGroupName() == '*' && GetAppend() == '*')
-      {
-        alert('Must enter a group name, or select a group to append to if a group other than "default" has previously been created!');
-        return;          
-      }
-      else if(GetGroupName() == '#')
+      
+      if(GetHaystackName() == '#')
       {
         alert('No special characters in group name! Alphanumeric only.');
         return;
       }
-      if(checkAtLeastOne())
+      
+      if(viewModel.subnetsToScan().length != 0)
       { 
         disableBackground(document.getElementById('setup'));
         document.getElementById("startScan").value='Scanning...'; 
@@ -207,9 +174,7 @@ block headerAdditions
         document.getElementById('appendText').style.width = divWidth + 'px';
         try 
         {
-            var element = document.getElementById("nodeCountType");
-            var count = element.options[element.selectedIndex].value;
-            now.ShowAutoConfig(GetNodeInterface(), count, GetNumNodes(), GetInterfaces(), GetSubnets(), GetGroupName(), GetAppend(), autoscancb, routeToReview); 
+            now.ShowAutoConfig(GetNodeInterface(), viewModel.nodeCreationType(), viewModel.nodeCount(), GetSubnets(), GetHaystackName(), !viewModel.isNewHaystack(), autoscancb, routeToReview); 
         } 
         catch(err) 
         {
@@ -219,6 +184,7 @@ block headerAdditions
       } 
       else
       {
+          alert("Must have at least one subnet for scanning");
           return false;
       }
     }
@@ -255,68 +221,19 @@ block headerAdditions
       }
     }
 
-    function GetNumNodes()
-    {
-        var num;
-        var element = document.getElementById("nodeCountType");
-        var count = element.options[element.selectedIndex].value;
-        if(count == "fixed") 
-        {
-          num = parseInt(document.getElementById("numNodes").value);
-        } 
-        else if(count == 'ratio')
-        {
-          num = parseFloat(document.getElementById("numNodes").value);
-        }
-        else if(count == 'range')
-        {
-          num = document.getElementById('numNodes').value;
-          var regex = new RegExp('^([0-255]\\.){3}([0-255])\\-([0-255]\\.){3}([0-255])$');
-          if(regex.test(num) == 'false')
-          {
-            num = -1;
-          }
-        }
-        return num;
-    }
-
     function GetNodeInterface()
     {
         return document.getElementById("nodeInterface").value;
     }
     
-    function GetInterfaces()
-    {
-        var length = interfaceLength;
-        
-        var returnString = "";
-        
-        for(var i = 0; i < length; i++)
-        {
-          if(document.getElementById("if" + i) != undefined && document.getElementById('if' + i) != null)
-          {
-            if(document.getElementById("if" + i).checked)
-            {
-                returnString += document.getElementById("if" + i).value;
-                if(i != (length - 1))
-                {
-                    returnString += ",";
-                }
-            }
-          }
-        }
-        
-        return returnString;
-    }
-    
     function GetSubnets()
     {
         var returnString = "";
-        
-        for(var i in subnetsArray)
+       
+        for(var i in viewModel.subnetsToScan())
         {
-            returnString += subnetsArray[i];
-            if(subnetsArray[i + 1] != undefined)
+            returnString += viewModel.subnetsToScan()[i].subnet;
+            if(viewModel.subnetsToScan()[i + 1] != undefined)
             {
                 returnString += ",";
             }
@@ -325,47 +242,14 @@ block headerAdditions
         return returnString;
     }
 
-    function GetGroupName()
+    function GetHaystackName()
     {
-      var group = document.getElementById('newGroup').value;
-      if(document.getElementById('newGroupCheck').checked == false)
-      {
-        return '*';
-      }
-      if((group == undefined || group == '') && (document.getElementById('newGroupCheck').checked == true))
-      {
-        return '*';
-      }
-      if((new RegExp('^[a-zA-Z0-9]+$')).test(group))
+      var group = viewModel.groupName();
+      if((new RegExp('^[a-zA-Z0-9 -_]+$')).test(group))
       {
         return group;
-      }
-      else
-      {
-        alert('Unacceptable characters in group name!');
+      } else {
         return '#';
-      }
-    }
-
-    function GetAppend()
-    {
-      var appendToTemp = document.getElementById('groupSelect');
-      if(document.getElementById('newGroupCheck').checked == true)
-      {
-        return '*';
-      }
-      if(appendToTemp.options[appendToTemp.selectedIndex] == undefined)
-      {
-          return '*';
-      }
-      var appendTo = appendToTemp.options[appendToTemp.selectedIndex].value;
-      if(appendTo != '' && appendTo != undefined && (document.getElementById('newGroupCheck').checked == false))
-      {
-        return appendTo;
-      }      
-      else
-      {
-        return '*';
       }
     }
 
@@ -383,43 +267,11 @@ block headerAdditions
       window.location = redirect.toString();
     }
 
-    function nodeNumberTypeChanged()
-    {
-       var element = document.getElementById("nodeCountType");
-       var count = element.options[element.selectedIndex].value;
-       if(count == "fixed") 
-       {
-         document.getElementById("numNodesLabel").innerHTML = "Number of Haystack Nodes to create";
-         document.getElementById('numNodes').value = '1';
-         document.getElementById('numNodes').placeholder = ''; 
-         document.getElementById('numNodes').style.width = '170px';
-       } 
-       else if(count == 'ratio')
-       {
-         document.getElementById("numNodesLabel").innerHTML = "Ratio of nodes to create versus nodes found during scan";
-         if (navigator.userAgent.indexOf("MSIE") == "-1") {
-                document.getElementById('numNodes').type = 'number';
-         }
-         document.getElementById('numNodes').value = '1';
-         document.getElementById('numNodes').placeholder = ''; 
-         document.getElementById('numNodes').style.width = '170px';
-       }
-       else if(count == 'range')
-       {
-         document.getElementById("numNodesLabel").innerHTML = "Range of IP Addresses to fill";
-         document.getElementById('numNodes').type = 'text';
-         document.getElementById('numNodes').value = '';
-         document.getElementById('numNodes').placeholder = '###.###.###.###-###.###.###.###'; 
-         document.getElementById('numNodes').style.width = '205px';
-       }
-    }
-
     function cancelScan()
     {
       if(typeof now.CancelAutoScan == 'function')
       {
-        var group = document.getElementById("newGroup").value;
-        now.CancelAutoScan(group);
+        now.CancelAutoScan(viewModel.groupName());
       }
       else
       {
@@ -427,35 +279,11 @@ block headerAdditions
       }
     }
 
-    function newOrAppend()
-    {
-      var check = document.getElementById('newGroupCheck').checked;
-      if(check == true)
-      {
-        document.getElementById('newGroup').value = '';
-        document.getElementById('newGroup').style.display = 'block';
-        document.getElementById('groupSelect').style.display = 'none';
-        document.getElementById('nameLabel').innerHTML = 'New Haystack Group Name';
-      }
-      else
-      {
-        document.getElementById('newGroup').value = '';
-        document.getElementById('newGroup').style.display = 'none';
-        document.getElementById('groupSelect').style.display = 'block';
-        document.getElementById('nameLabel').innerHTML = 'Select Group to Append to:';
-      }
-    }
-
     function populateTable()
     {
-      var table = document.getElementById('appendHook');
       var checked = true;
       for(var i in interfaceList)
       {
-
-        var option = document.createElement('option');
-        option.innerHTML = interfaceList[i];
-        document.getElementById("nodeInterface").appendChild(option);  
 
         now.GetSubnetFromInterface(interfaceList[i], i, function(iface, subnet, index){
           if(subnet == '')
@@ -463,35 +291,25 @@ block headerAdditions
             console.log('subnet string is empty; failed to get IP/netmask for interface ' + iface);
             return;
           }
-          var tr = document.createElement('tr');
-          var td = document.createElement('td');
-          var div = document.createElement('div');
-          var input = document.createElement('input');
-          var label = document.createElement('label');
-          input.type = 'checkbox';
-          input.value = iface;
-          input.name = 'interfaces';
-          input.style.width = 10;
-          if(checked)
-          {
-            input.checked = checked;
-            checked = false;
-          }
-          input.id = 'if' + index;
-          label.innerHTML = iface + ' (' + subnet + ')';
-                    
-          td.appendChild(input);
-          td.appendChild(label);
-          div.appendChild(td);
-          tr.appendChild(div);
-          table.appendChild(tr);
+        
+          var text = subnet + ' (' + iface + " (Alias: " + interfaceAliasList[i] + '))';
+          viewModel.interfaceSubnets.push({text: text, subnet: subnet});
         });
       } 
     }
-    
-    now.ready(function(){
-      populateTable();
-    });
+   
+
+    function init() {
+      var initialized = false;
+      now.ready(function(){
+        if (!initialized)
+        {
+          initialized = true;
+          ko.applyBindings(viewModel);
+          populateTable();
+        }
+      });
+    }
 
 block content
   if(SCANERROR !== undefined)
@@ -499,42 +317,61 @@ block content
     
   div#setup
     h1 Haystack Autoconfig
+    
+    table
+      tr
+        td
+          label(style='font-weight: bold;') New Haystack?
+        td
+          input(data-bind="checked: isNewHaystackSelection", value='1', type='radio')
+          label Create new haystack
+          br
+          input(data-bind="checked: isNewHaystackSelection", value='0', type='radio')
+          label Append to haystack
+
+      tr
+        td
+          label(id='nameLabel', style='font-weight: bold') Haystack Name
+        td
+          input(data-bind="visible: isNewHaystack, value: newHaystackName, valueUpdate: 'afterkeydown'", type='text')
+          select(data-bind="visible: !isNewHaystack(), value: oldHaystackName")
+            - for(var i = 0; i < GROUPS.length; i++)
+              - if(GROUPS[i] != '' && GROUPS[i] != undefined && GROUPS[i] != 'default')
+                option #{GROUPS[i]}
+      tr
+        td
+          label#numNodesLabel(style='font-weight: bold') How to create nodes&nbsp&nbsp
+        td
+          select(data-bind="value: nodeCreationType")
+            option(value="fixed", selected='selected') Fixed number of nodes
+            option(value="ratio") Ratio to number found in scan
+            option(value="range") Place nodes in range of IPs
+
+       tr
+         td
+           label(style='font-weight: bold') Nodes to create
+         td
+           input(data-bind='visible: nodeCreationType() == "fixed", value: nodeCountFixed, valueUpdate: "afterkeydown"', type="number", min="1")
+           input(data-bind='visible: nodeCreationType() == "ratio", value: nodeCountRatio, valueUpdate: "afterkeydown"', type="number", min="0")
+           input(data-bind='visible: nodeCreationType() == "range", value: nodeCountRange, valueUpdate: "afterkeydown"', type="text", placeholder='###.###.###.###-###.###.###.###', style="width: 210px")
+
+        tr
+          td
+            label(style='font-weight: bold') Interface to create nodes on
+          td
+            select#nodeInterface(data-bind="options: interfaceList")
     br
-    input(id='newGroupCheck', type='checkbox', onclick='newOrAppend()', checked='true') 
-    label(style='font-weight: bold;') New Group?
     br
-    br
-    label(id='nameLabel', style='font-weight: bold') New Haystack Group Name
-    br
-    br
-    input(type='text', id='newGroup', placeholder='Required Field', style='display: block;')
-    select(id='groupSelect', style='display: none;')
-      - for(var i = 0; i < GROUPS.length; i++)
-        - if(GROUPS[i] != '' && GROUPS[i] != undefined && GROUPS[i] != 'default')
-          option #{GROUPS[i]}
-    br
-    hidden(id="length", value=INTERFACES.length)
-    br    
-    label#numNodesLabel(style='font-weight: bold') Number of Haystack Nodes to create
-    br
-    br
-    select#nodeCountType(onchange="nodeNumberTypeChanged()")
-      option(value="fixed", selected='selected') Fixed
-      option(value="ratio") Ratio
-      option(value="range") IP Range
-    input(type="number", name="numNodes", id="numNodes", min="1", value="1")
-    br
-    br
-    label(style='font-weight: bold') Interface to create nodes on
-    br
-    select#nodeInterface
-    br
+    label(style="font-weight: bold;") Subnets to Scan
     br
     table
-      thead
-        tr 
-          th Interfaces connected to Server
-      tbody(id='appendHook')
+      tbody(data-bind="foreach: interfaceSubnets")
+        tr
+          td(data-bind="text: text", style="width: 200px")
+          td
+            button(data-bind="click: $root.addSubnet")
+              img.buttonIcon(src="images/add.png")
+              span.buttonSpan Add Subnet
     
     br
     label(style="font-weight: bold;") Additional Subnets to Scan
@@ -542,18 +379,30 @@ block content
     label(id="errorLabel", style="color:red;")  
     br
     input(type="text", style="width:200px", id="subnetToAdd", width="20", onkeydown="if(event.keyCode == 13){document.getElementById('addSubnet').click(); document.getElementById('subnetToAdd').value=''; event.returnValue=false; event.cancel=true; }", placeholder="xxx.xxx.xxx.xxx/##") 
-    button(type="button", id="addSubnet", style="width:160px", onclick="validateAndAdd(\"subnetToAdd\", \"errorLabel\", \"subnetsList\");") Add Subnet  
+    button(type="button", id="addSubnet", onclick="validateAndAdd(\"subnetToAdd\");")
+     img.buttonIcon(src="images/add.png")
+     span.buttonSpan Add Subnet
     br
-    table(id='showTable', style='display:none;')
+    br
+    table(id='showTable')
       thead
         tr
           th
-            label Subnets
-      tbody(id="subnetsList")
+            label Subnets that will be scanned
+      tbody(data-bind="foreach: subnetsToScan")
+        tr
+          td(data-bind="text: subnet", style="width: 200px")
+          td
+            button(data-bind="click: $root.removeSubnet")
+              img.buttonIcon(src="images/delete.png")
+              span.buttonSpan Delete
+            
       
     br
     br
-    input(type="submit", id="startScan", value="Start Scanning", onclick="RunScan()")
+    button(id="startScan", onclick="RunScan()")
+      img.buttonIcon(src="images/ok.png")
+      span.buttonSpan Start Scan
     
   div(id="lightbox", class="white_content")
     label(style="font-size: 1.2em;") Scan Commencing...

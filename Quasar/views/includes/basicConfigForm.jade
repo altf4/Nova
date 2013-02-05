@@ -317,74 +317,6 @@ script
   });
   }
 
-h2 Basic Configuration
-    
-label Interfaces
-br
-- if (DEFAULT == "true")
-  div
-    input(type="checkbox", value="default", id="default", onclick="changeDisabled()", checked, width=10)
-    span Listen on all available interfaces
-  - for (var i = 0; i < INTERFACES.length; i++)
-    - if(INTERFACES[i].checked == 1)
-      div
-        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, disabled=true, onclick="checkAtLeastOne()", checked)
-        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
-    - else
-      div
-        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", disabled=true)
-        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
-- else
-  div
-    input(type="checkbox", value="default", id="default", onclick="changeDisabled()", width=10)
-    span Listen on all available interfaces
-  - for (var i = 0; i < INTERFACES.length; i++)
-    - if(INTERFACES[i].checked == 1)
-      div
-        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", checked)
-        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
-    - else
-      div
-        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()")
-        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
-        
- hidden(id="length", value=INTERFACES.length) 
- input(type="hidden", name="DEFAULT", id="DEFAULT", value=DEFAULT)
-
-br
-Label Doppelganger Interface
-br
-- for (var i = 0; i < DOPPELGANGER_INTERFACE.length; i++)
-  - if(DOPPELGANGER_INTERFACE[i].checked == 1)
-    div    
-      input(type="checkbox", value=DOPPELGANGER_INTERFACE[i].iface, id="dif#{i}", name="DOPPELGANGER_INTERFACE", width=10, onclick="checkOnlyOne('dif#{i}')", checked) 
-      #{DOPPELGANGER_INTERFACE[i].iface}
-  - else
-    div 
-      input(type="checkbox", value=DOPPELGANGER_INTERFACE[i].iface, id="dif#{i}", name="DOPPELGANGER_INTERFACE", width=10, onclick="checkOnlyOne('dif#{i}')") 
-      #{DOPPELGANGER_INTERFACE[i].iface}
-          
-hidden(id="doppel_length", value=DOPPELGANGER_INTERFACE.length)
-br
-
-label Doppelganger Enabled?
-br
-if DM_ENABLED != "0"
-  input(type="radio", name="DM_ENABLED", value="1", checked)
-  |Yes
-  br
-  input(type="radio", name="DM_ENABLED", value="0")
-  |No
-  br
-else
-  input(type="radio", name="DM_ENABLED", value="1")
-  |Yes
-  br
-  input(type="radio", name="DM_ENABLED", value="0", checked)
-  |No
-  br
-br
-
 h2 Email Notifications
 label Enable email alerts?
 if(EMAIL_ALERTS_ENABLED == 1)
@@ -432,5 +364,59 @@ div(id="servicePrefs")
   input(id="sp", name="SERVICE_PREFERENCES", value="", readonly=true, type="hidden")
 br
 
+    
+h2 Ethernet Interfaces
+- if (DEFAULT == "true")
+  div
+    input(type="checkbox", value="default", id="default", onclick="changeDisabled()", checked, width=10)
+    span Listen on all available interfaces
+  - for (var i = 0; i < INTERFACES.length; i++)
+    - if(INTERFACES[i].checked == 1)
+      div
+        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, disabled=true, onclick="checkAtLeastOne()", checked)
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
+    - else
+      div
+        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", disabled=true)
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
+- else
+  div
+    input(type="checkbox", value="default", id="default", onclick="changeDisabled()", width=10)
+    span Listen on all available interfaces
+  - for (var i = 0; i < INTERFACES.length; i++)
+    - if(INTERFACES[i].checked == 1)
+      div
+        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()", checked)
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
+    - else
+      div
+        input(type="checkbox", value=INTERFACES[i].iface, id="if#{i}", name="INTERFACE", width=10, onclick="checkAtLeastOne()")
+        #{INTERFACES[i].iface} (Alias: #{INTERFACE_ALIASES[i]})
+        
+ hidden(id="length", value=INTERFACES.length) 
+ input(type="hidden", name="DEFAULT", id="DEFAULT", value=DEFAULT)
 
+br
+label Enable Doppelganger?
+if(DM_ENABLED == 1)
+  input(type="checkbox", id="DM_ENABLED", name="DM_ENABLED", value=DM_ENABLED, checked)
+else
+  input(type="checkbox", id="DM_ENABLED", name="DM_ENABLED", value=DM_ENABLED)
+br
+
+br
+Label Doppelganger Interface
+br
+- for (var i = 0; i < DOPPELGANGER_INTERFACE.length; i++)
+  - if(DOPPELGANGER_INTERFACE[i].checked == 1)
+    div    
+      input(type="checkbox", value=DOPPELGANGER_INTERFACE[i].iface, id="dif#{i}", name="DOPPELGANGER_INTERFACE", width=10, onclick="checkOnlyOne('dif#{i}')", checked) 
+      #{DOPPELGANGER_INTERFACE[i].iface}
+  - else
+    div 
+      input(type="checkbox", value=DOPPELGANGER_INTERFACE[i].iface, id="dif#{i}", name="DOPPELGANGER_INTERFACE", width=10, onclick="checkOnlyOne('dif#{i}')") 
+      #{DOPPELGANGER_INTERFACE[i].iface}
+          
+hidden(id="doppel_length", value=DOPPELGANGER_INTERFACE.length)
+br
 

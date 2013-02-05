@@ -17,12 +17,6 @@ set -e
 
 trap cleanup SIGINT
 
-#Assert root user
-if [ $USER != "root" ]; then
-	echo "Execute with root privileges: sudo $0"
-	exit 1
-fi
-
 echo -e "Remember to update debian/changelog with current version and notes."
 
 if [ -z $1 ]; then
@@ -34,9 +28,11 @@ fi
 
 PACKAGE="nova_$VERSION"
 
-echo $PACKAGE
+echo "Package name is $PACKAGE"
 
+rm -f configure
 make clean
+rm -fr Quasar/node_modules
 
 #cd into the directory where the script is
 cd "$(dirname "$PACKAGE")"
@@ -59,10 +55,10 @@ tar -zcf ../$PACKAGE.orig.tar.gz $PACKAGE
 rm -rf $PACKAGE
 
 #Produce the debian package
-dpkg-buildpackage -us -uc
+#dpkg-buildpackage -us -uc
 
 # Use this to make a signed source package for the PPA
-#debuild -S -k7F9F2E1F
+debuild -S -k7F9F2E1F
 
 #put the old makefile back in place
 rm Makefile

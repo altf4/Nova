@@ -66,7 +66,7 @@ Getting Dependencies on Ubuntu
 
 - Install required dependencies with the following command:
 
-    sudo apt-get install git build-essential libcap2-bin libann-dev libpcap0.8-dev libboost-program-options-dev libboost-serialization-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libboost-system-dev libboost-filesystem-dev
+    sudo apt-get install git build-essential libcap2-bin libann-dev libpcap0.8-dev libboost-program-options-dev libboost-serialization-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libboost-system-dev libboost-filesystem-dev libevent-dev
 
 - Now, we'll have to take a quick detour to get another integral component of
   Nova: Honeyd. We will have to download some extra libraries for Honeyd as

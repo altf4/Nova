@@ -182,6 +182,7 @@ clean-nodejsmodule:
 	-cd NodejsModule; node-waf clean
 
 clean-quasar: clean-nodejsmodule
+	-rm -rf NodejsModule/build
 
 clean-quasar-modules:
 	-rm -rf Quasar/node_modules

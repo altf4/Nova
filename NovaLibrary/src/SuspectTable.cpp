@@ -367,7 +367,9 @@ void SuspectTable::EraseAllSuspects()
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_keys.clear();
-	for(SuspectLockTable::iterator it = m_lockTable.begin(); it != m_lockTable.end(); it++)
+
+	SuspectLockTable::iterator it = m_lockTable.begin();
+	while (it != m_lockTable.end())
 	{
 		m_lockTable[it->first].deleted = true;
 		//If no threads are blocking on the lock we can destroy it.
@@ -375,9 +377,14 @@ void SuspectTable::EraseAllSuspects()
 		{
 			m_lockTable[it->first].ref_cnt = 0;
 			pthread_mutex_destroy(&m_lockTable[it->first].lock);
-			m_lockTable.erase(it->first);
+			m_lockTable.erase(it++);
+		}
+		else
+		{
+			it++;
 		}
 	}
+
 	for(SuspectHashTable::iterator it = m_suspectTable.begin(); it != m_suspectTable.end(); it++)
 	{
 		delete m_suspectTable[it->first];

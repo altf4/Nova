@@ -47,7 +47,7 @@ block content
       br
       br
       div#tablePages(style="width: 100%;")
-      br
+      p Right click suspects for more options
       div.novaGrid
         div#suspectTable
     div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: block; width: 600px; margin: 0 auto; text-align: center")
@@ -68,8 +68,15 @@ block content
         br
       - count++;
       br
-      button(onclick='applyAdvancedFilter()') Apply Advanced Filters
-      button(onclick='disableAdvancedFilter()') Disable Advanced Filters
+      button(onclick='applyAdvancedFilter()')
+        img.buttonIcon(src="images/benign.png")
+        span.buttonSpan Apply Advanced Filters
+      br
+      button(onclick='disableAdvancedFilter()')
+        img.buttonIcon(src="images/alert.png")
+        span.buttonSpan Disable Advanced Filters
+    br
+    br
     button#closeLB(onclick='closeLightbox()')
      img.buttonIcon(src="images/cancel.png")
      span.buttonSpan Cancel
@@ -521,10 +528,9 @@ block headerAdditions
         
         for(var i in iter)
         {
-          var split0 = parseInt(i.toString().indexOf(">")) + 2;
-          var split1 = parseInt(i.toString().lastIndexOf("<"));
-          check = i.toString().substring(split0, split1);
-          
+          check = i;
+          check = check.substring(0, i.lastIndexOf("<"));
+          check = check.substring(check.lastIndexOf(">") + 1);
           if(check == ip)
           {
             ret = iter[i][5];
@@ -565,33 +571,33 @@ block headerAdditions
       }
       
       var contextMenuDiv = document.createElement('div');
-      contextMenuDiv.setAttribute('style', 'border-radius: 5px; box-shadow: 0 0 5px #AAA; width: 200px; z-index: 1002; position: absolute; top: ' + clickY + 'px; left:' + clickX + 'px; opacity: 1;');
+      contextMenuDiv.setAttribute('style', 'border-radius: 5px; box-shadow: 0 0 5px #AAA; width: 250px; z-index: 1002; position: absolute; top: ' + clickY + 'px; left:' + clickX + 'px; opacity: 1;');
       contextMenuDiv.id = 'contextMenu';
       
       var monitor = document.createElement('div');
       monitor.setAttribute('class', 'topcontainer');
-      monitor.innerHTML = 'Monitor ' + ip;
+      monitor.innerHTML = '<img class="buttonIcon" src="images/details.png"/> Monitor ' + ip;
       monitor.setAttribute('onclick', 'MonitorSuspect("' + ip + '", "' + iface + '")');
       monitor.setAttribute('oncontextmenu', 'MonitorSuspect("' + ip + '", "' + iface + '"); removeContextMenu(); return false;');
       contextMenuDiv.appendChild(monitor);
-      
+     
       var markAsHostile = document.createElement('div');
       markAsHostile.setAttribute('class', 'middlecontainer');
-      markAsHostile.innerHTML = 'Mark ' + ip + ' as Hostile';
+      markAsHostile.innerHTML = '<img class="buttonIcon" src="images/alert.png"/> Mark ' + ip + ' as Hostile';
       markAsHostile.setAttribute('onclick', 'if(confirm("This will train the classification engine to match all suspects looking like this one as hostile. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "1" , addedCb)}');
       markAsHostile.setAttribute('oncontextmenu', 'if(confirm("This will train the classification engine to match all suspects looking like this one as hostile. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "1" , addedCb)}; removeContextMenu(); return false;');
       contextMenuDiv.appendChild(markAsHostile);
       
       var markAsBenign = document.createElement('div');
       markAsBenign.setAttribute('class', 'middlecontainer');
-      markAsBenign.innerHTML = 'Mark ' + ip + ' as Benign';
+      markAsBenign.innerHTML = '<img class="buttonIcon" src="images/benign.png"/> Mark ' + ip + ' as Benign';
       markAsBenign.setAttribute('onclick', 'if(confirm("This will train the classification engine to match all suspects looking like this one as benign. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "0" , addedCb)}');
       markAsBenign.setAttribute('oncontextmenu', 'if(confirm("This will train the classification engine to match all suspects looking like this one as benign. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "0" , addedCb)}; removeContextMenu(); return false;');
       contextMenuDiv.appendChild(markAsBenign);
 
       var clearSuspect = document.createElement('div');
       clearSuspect.setAttribute('class', 'bottomcontainer');
-      clearSuspect.innerHTML = 'Clear Suspect ' + ip;
+      clearSuspect.innerHTML = '<img src="images/erase.png" class="buttonIcon"/>Clear Suspect ' + ip;
       clearSuspect.setAttribute('onclick', 'ClearSuspect("' + ip + '", "' + iface + '")');
       clearSuspect.setAttribute('oncontextmenu', 'ClearSuspect("' + ip + '", "' + iface + '"); removeContextMenu(); return false;');
       contextMenuDiv.appendChild(clearSuspect);

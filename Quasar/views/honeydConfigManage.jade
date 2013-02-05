@@ -179,8 +179,7 @@ block headerAdditions
       var items = GetSelectedProfiles();
       if (items.length != 1)
       {
-        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 profile for parenting"});
-        dialog.show();
+        alert("Invalid Selection: Please select only 1 profile for parenting");
         return;
       }
       window.location.href = "addHoneydProfile?parent=" + items[0];
@@ -411,7 +410,8 @@ block headerAdditions
           {
             theDoc.getElementById('piChart').removeChild(theDoc.getElementById('piChart').lastChild);
           }
-          
+         
+          nodeList = nodes;
           for(var i in nodes)
           {
             if(nodesPerProfile[nodes[i].pfile] === undefined)
@@ -434,6 +434,8 @@ block headerAdditions
           
            var pi = new NovaPiChart('piChart', "Nodes by Profile", 200, 'deleteByProfile');
            pi.Render(piChartRender);
+
+           LoadNodeGrid();
         });
       }
       else
@@ -512,7 +514,7 @@ block headerAdditions
     {
       if(theDoc.getElementById('newName').value == '')
       {
-        alert('Must give a new name for New Configurations');
+        alert('Must give a new name for New Haystacks');
         return false;
       }
       else if(checkExistingName(theDoc.getElementById('newName').value) == true)
@@ -530,7 +532,7 @@ block headerAdditions
     { 
       if(theDoc.getElementById('newNameClone').value == '')
       {
-        alert('Must give a new name for Cloned Configurations');
+        alert('Must give a new name for Cloned Haystacks');
         return false;
       }
       else if(checkExistingName(theDoc.getElementById('newNameClone').value) == true)
@@ -962,8 +964,7 @@ block headerAdditions
       var items = GetSelectedProfiles();
       if (items.length != 1)
       {
-        var dialog = new dijit.Dialog({title: "Invalid Selection", content: "Please select only 1 profile for editing"});
-        dialog.show();
+        alert("Invalid Selection: Please select only 1 profile for editing");
         return;
       }
       window.location.href = "editHoneydProfile?profile=" + items[0];
@@ -1001,13 +1002,9 @@ block headerAdditions
       }
       window.location.href = "editHoneydNode?node=" + nodeName;
     }
-    
-    function init(){
-      now.ready(function()
-      {
-        populateConfigSelect(configurationList);
 
-
+    function LoadNodeGrid()
+    {
         var gridStructure = [];
         gridStructure.push({name: "Enabled"});
         gridStructure.push({name: "IP"});
@@ -1063,30 +1060,15 @@ block headerAdditions
       
          var gridElements = grid.GetElements();
          
-         var nodesPerProfile = {};
-         var piChartRender = [];
-         
-         for(var i in gridElements)
-         {
-           var pfile = gridElements[i][4];
-           if(nodesPerProfile[pfile] === undefined)
-           {
-             nodesPerProfile[pfile] = 1;
-           }
-           else
-           {
-             nodesPerProfile[pfile]++;
-           }
-         }
-         
-         for(var pfile in nodesPerProfile)
-         {
-           var p = {};
-           p.name = pfile;
-           p.value = nodesPerProfile[pfile];
-           piChartRender.push(p);
-         }
-         
+    }
+    
+    function init(){
+      now.ready(function()
+      {
+        populateConfigSelect(configurationList);
+
+        LoadNodeGrid();
+ 
           
           now.GetHaystackDHCPStatus(dhcpStatusCallback);
           checkForEditInterface();
@@ -1107,7 +1089,7 @@ block headerAdditions
             document.getElementById("b" + tabNames[i]).className = "unselectedTab";
         }
         
-        
+        window.history.replaceState("", "", "/honeydConfigManage?tab=" + tab);
 
         document.getElementById(tab).style.display = "block";
         document.getElementById("b" + tab).className = "selectedTab";
@@ -1115,30 +1097,30 @@ block headerAdditions
   
 block content
   div#setup(onclick='handleOnclick(event);')
-    button.selectedTab#bsettingsGroups(onclick='showTab("settingsGroups")') Groups
+    button.selectedTab#bsettingsGroups(onclick='showTab("settingsGroups")') Haystacks
     button.unselectedTab#bsettingsProfiles(onclick='showTab("settingsProfiles")') Profiles
     button.unselectedTab#bsettingsNodes(onclick='showTab("settingsNodes")') Nodes
     button.unselectedTab#bsettingsScripts(onclick='showTab("settingsScripts")') Scripts
 
     
     div.tabDiv#settingsGroups
-      h1 Edit Configurations
+      h1 Edit Haystacks
       button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch')
         img.buttonIcon(src="images/add.png") 
-        span.buttonSpan Add Group
+        span.buttonSpan Add Haystack
       button#cloneConfig(onclick='showLightBox("1")', title='Create a new configuration group by cloning an existing configuration')
         img.buttonIcon(src="images/add.png") 
-        span.buttonSpan Clone Group
+        span.buttonSpan Clone Haystack
       
-      button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') Create Group From Network Scan
+      button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') Create Haystack From Network Scan
       
       br
       br
-      h2 Current Group
+      h2 Current Haystack
       select#configurations(onchange='GetConfigurationSummary()')
       button#removeConfig(onclick='removeConfig()', title='Delete the currently selected group')
         img.buttonIcon(src="images/delete.png") 
-        span.buttonSpan Delete Group
+        span.buttonSpan Delete Haystack
 
 
     div.tabDiv#settingsProfiles(style="display: none;")
@@ -1226,18 +1208,18 @@ block content
   div#lightbox(class='white_content')
     div#addConfigForm
       form(method='post', id='addConfig', onsubmit='return checkParametersAdd();')
-        label Name For New Configuration 
+        label Name For New Haystack
         br
         input#newName(name='newName', onkeypress='if(event.keyCode == 13){document.getElementById("addConfig").submit()}')
         br
         button#submitAdd Submit
     div#cloneConfigForm
       form(method='post', id='cloneConfig', onsubmit='return checkParametersClone();')
-        label Select Configuration to Clone:
+        label Select Haystack to Clone:
         br
         select#cloneMe(name='cloneSelect')
         br
-        label Name For Cloned Configuration
+        label Name For Cloned Haystack
         br
         input#newNameClone(name='newNameClone', onkeypress='if(event.keyCode == 13){document.getElementById("cloneConfig").submit()}')
         br

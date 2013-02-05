@@ -258,7 +258,7 @@ script
                     case 5: port.behavior = "tarpit script"; break;
                 }
 
-                if (port.behavior == "script")
+                if (port.behavior == "script" || port.behavior == "tarpit script")
                 {
                     port.scriptName = dojo.byId("portScriptDrop" + portIndexes[i]).value;
                 } else {
@@ -269,9 +269,22 @@ script
 
                 if (port.protocol == "tcp")
                 {
+
+                    for (var j = 0; j < TCPExceptions.length; j++) {
+                        if (TCPExceptions[j].portNum == port.portNum) {
+                            alert("Error: Port " + port.portNum + " is used more than once!");
+                            return false;
+                        }
+                    }
                     TCPExceptions.push(port);
                 } else {
-                    UDPExceptions.push(port);
+                    for (var j = 0; j < UDPExceptions.length; j++) {
+                        if (UDPExceptions[j].portNum == port.portNum) {
+                            alert("Error: Port " + port.portNum + " is used more than once!");
+                            return false;
+                        }
+                     }
+                     UDPExceptions.push(port);
                 }
             }
             for (var i in profile.portSets)
@@ -286,7 +299,7 @@ script
                     break;
                 }
             }
-
+            return true;
         };
 
         var updatePortSetLists = function()
@@ -387,10 +400,10 @@ script
             // Push to the profile object
             profile.portSets.push(portSet);
 
-            updatePortsModel();
-
             // Add into the port set dropdown box
             updatePortSetLists();
+            
+            if (!updatePortsModel()) {return};
 
             // Set is as the current portset
             document.getElementById("portSetSelection").value = setName;
@@ -475,7 +488,7 @@ script
                         profile.isPersonalityInherited = dojo.byId("inheritPersonality").checked;
                         profile.isDropRateInherited = dojo.byId("inheritDropRate").checked;
                         profile.isUptimeInherited = dojo.byId("inheritUptime").checked;
-                        updatePortsModel();
+                        if (!updatePortsModel()) {return};
 
                         now.WouldProfileSaveDeleteNodes(profile, function(result)
                         {
@@ -775,12 +788,15 @@ script
                                 if (dojo.byId("portBehavior" + portIndexes[i]).value == "3" || dojo.byId("portBehavior" + portIndexes[i]).value == "5") 
                                 {
                                         dojo.byId("portScriptDrop" + portIndexes[i]).disabled = false;
+                                        if (dojo.byId("portScriptDrop" + portIndexes[i]).value == "NA") {
+                                            dojo.byId("portScriptDrop" + portIndexes[i]).selectedIndex = 0;
+                                        }
                                 } 
                                 else 
                                 {
                                         dojo.byId("portScriptDrop" + portIndexes[i]).disabled = true;
                                 }
-                                scriptSelectionChanged(i);
+                                scriptSelectionChanged(portIndexes[i]);
                         }
                 };
 

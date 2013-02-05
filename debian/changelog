@@ -1,3 +1,55 @@
+nova (12.12.12) quantal; urgency=low
+
+  * Bump version, fighting with the npm and ppa
+
+ -- David Clark <david.clark@datasoft.com>  Fri, 1 Feb 2012 14:58:17 -0700
+
+nova (12.12.11) quantal; urgency=low
+
+  * Bump version, fighting with the PPA
+
+ -- David Clark <david.clark@datasoft.com>  Fri, 1 Feb 2012 14:58:17 -0700
+
+nova (12.12.10) quantal; urgency=low
+
+  * Bump version, fighting with the PPA
+
+ -- David Clark <david.clark@datasoft.com>  Fri, 1 Feb 2012 14:58:17 -0700
+
+
+nova (12.12.9) quantal; urgency=low
+
+  * Bump version, fighting with the PPA
+
+ -- David Clark <david.clark@datasoft.com>  Mon, 29 Jan 2012 14:58:17 -0700
+
+nova (12.12.7) quantal; urgency=low
+
+  * Try building without the node_modules folder
+
+ -- David Clark <david.clark@datasoft.com>  Mon, 29 Jan 2012 14:58:17 -0700
+
+
+nova (12.12.6) quantal; urgency=low
+
+  * Add nodejs and npm to Build-dependencies
+
+ -- David Clark <david.clark@datasoft.com>  Mon, 29 Jan 2012 14:58:17 -0700
+
+
+nova (12.12.5) quantal; urgency=low
+
+  * Add libevent-dev to debian/control and try PPA
+
+ -- David Clark <david.clark@datasoft.com>  Mon, 28 Jan 2012 14:58:17 -0700
+
+
+nova (12.12.4) quantal; urgency=low
+
+  * Remove ./configure file, bump version for PPA
+
+ -- David Clark <david.clark@datasoft.com>  Mon, 28 Jan 2012 14:58:16 -0700
+
 nova (12.12.3) quantal; urgency=low
 
   * Bump version, trying to get accepted into PPA
