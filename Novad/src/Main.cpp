@@ -19,9 +19,7 @@
 #include "Novad.h"
 #include "Config.h"
 #include "Logger.h"
-#include <boost/program_options.hpp>
 #include <stdio.h>
-//define NC Config::Inst()//nova config static object
 
 using namespace Nova;
 
@@ -29,39 +27,11 @@ using namespace Nova;
 
 int main(int argc, char ** argv)
 {
-	string pCAPFilePath;
-	namespace po = boost::program_options;
-	po::options_description desc("Command line options");
-		try
-		{
-			desc.add_options()
-					("help,h", "Show command line options")
-					("pcap-file,p", po::value<string>(&pCAPFilePath), "specify Different Config Path");
-			po::variables_map vm;
-			po::store(po::parse_command_line(argc, argv, desc), vm);
-			po::notify(vm);
-
-			if(vm.count("help"))
-			{
-				std::cout << desc << std::endl;
-				return 0;//should say return success
-			}
-			if(vm.count("pcap-file"))
-			{
-				Config::Inst()->SetPathPcapFile(pCAPFilePath);
-				Config::Inst()->SetReadPcap(true);
-				//change the configuration file path to the command line argument
-			}
-		}
-			///usr/share/nova/userFiles/config/NOVAConfig.txt
-		catch(exception &e)
-				{
-					LOG(ERROR, "Uncaught exception: " + string(e.what()) + ".", "");
-
-					std::cout << '\n' << desc << std::endl;
-				}
-
-
+	if(argc > 0)//we have arguments
+	{
+		Config::Inst()->LoadCustomSettings(argc,argv);
+		//call the config load arg options
+	}
 
 	return RunNovaD();
 }
