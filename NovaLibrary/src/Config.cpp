@@ -144,33 +144,33 @@ Config::~Config()
 void Config::LoadCustomSettings(int argc,  char** argv)
 {
 	string pCAPFilePath;
-		namespace po = boost::program_options;
-		po::options_description desc("Command line options");
-			try
-			{
-				desc.add_options()
-						("help,h", "Show command line options")
-						("pcap-file,p", po::value<string>(&pCAPFilePath), "specify Different Config Path");
-				po::variables_map vm;
-				po::store(po::parse_command_line(argc, argv, desc), vm);
-				po::notify(vm);
+	namespace po = boost::program_options;
+	po::options_description desc("Command line options");
+	try
+	{
+		desc.add_options()
+				("help,h", "Show command line options")
+				("pcap-file,p", po::value<string>(&pCAPFilePath), "specify Different Config Path");
+		po::variables_map vm;
+		po::store(po::parse_command_line(argc, argv, desc), vm);
+		po::notify(vm);
 
-				if(vm.count("help"))
-				{
-					std::cout << desc << std::endl;
-					//return EXIT_SUCCESS;//should say return success
-				}
-				if(vm.count("pcap-file"))
-				{
-					Config::Inst()->SetPathPcapFile(pCAPFilePath);
-					Config::Inst()->SetReadPcap(true);
-				}
-			}
-			catch(exception &e)
-					{
-						LOG(ERROR, "Uncaught exception: " + string(e.what()) + ".", "");
-						std::cout << '\n' << desc << std::endl;
-					}
+		if(vm.count("help"))
+		{
+			std::cout << desc << std::endl;
+			//return EXIT_SUCCESS;//should say return success
+		}
+		if(vm.count("pcap-file"))
+		{
+			Config::Inst()->SetPathPcapFile(pCAPFilePath);
+			Config::Inst()->SetReadPcap(true);
+		}
+	}
+	catch(exception &e)
+	{
+		LOG(ERROR, "Uncaught exception: " + string(e.what()) + ".", "");
+		std::cout << '\n' << desc << std::endl;
+	}
 }
 
 void Config::LoadConfig()

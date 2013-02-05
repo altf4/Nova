@@ -40,6 +40,7 @@
 								<option id="gnu.cpp.link.option.libs.1357746932" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="Nova_UI_Core"/>
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
+									<listOptionValue builtIn="false" value="boost_program_options"/>
 									<listOptionValue builtIn="false" value="boost_system"/>
 									<listOptionValue builtIn="false" value="boost_filesystem"/>
 									<listOptionValue builtIn="false" value="curl"/>
@@ -110,6 +111,7 @@
 								<option id="gnu.cpp.link.option.libs.99451372" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="Nova_UI_Core"/>
 									<listOptionValue builtIn="false" value="NovaLibrary"/>
+									<listOptionValue builtIn="false" value="boost_program_options"/>
 									<listOptionValue builtIn="false" value="boost_system"/>
 									<listOptionValue builtIn="false" value="boost_filesystem"/>
 									<listOptionValue builtIn="false" value="curl"/>

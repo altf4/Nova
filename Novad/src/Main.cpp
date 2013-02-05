@@ -23,14 +23,11 @@
 
 using namespace Nova;
 
-
-
 int main(int argc, char ** argv)
 {
-	if(argc > 0)//we have arguments
+	if(argc > 1)
 	{
 		Config::Inst()->LoadCustomSettings(argc,argv);
-		//call the config load arg options
 	}
 
 	return RunNovaD();
