@@ -197,18 +197,18 @@ Handle<Object> HoneydNodeJs::WrapProfile(Profile *pfile)
 		// Javascript methods
 		Local<Template> proto = profileTemplate->PrototypeTemplate();
 		proto->Set("GetName",			FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetName>));
-		proto->Set("GetPersonality",	FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetPersonality>));
-		proto->Set("GetUptimeMin",		FunctionTemplate::New(InvokeMethod<uint, Profile, &Nova::Profile::GetUptimeMin>));
-		proto->Set("GetUptimeMax",		FunctionTemplate::New(InvokeMethod<uint, Profile, &Nova::Profile::GetUptimeMax>));
-		proto->Set("GetDropRate",		FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetDropRate>));
+		proto->Set("GetPersonality",	FunctionTemplate::New(InvokeMethod<std::string, const Profile, &Nova::Profile::GetPersonality>));
+		proto->Set("GetUptimeMin",		FunctionTemplate::New(InvokeMethod<uint, const Profile, &Nova::Profile::GetUptimeMin>));
+		proto->Set("GetUptimeMax",		FunctionTemplate::New(InvokeMethod<uint, const Profile, &Nova::Profile::GetUptimeMax>));
+		proto->Set("GetDropRate",		FunctionTemplate::New(InvokeMethod<std::string, const Profile, &Nova::Profile::GetDropRate>));
 		proto->Set("GetCount",			FunctionTemplate::New(InvokeMethod<uint32_t, Profile, &Nova::Profile::GetCount>));
-		proto->Set("GetParentProfile",	FunctionTemplate::New(InvokeMethod<std::string, Profile, &Nova::Profile::GetParentProfile>));
+		proto->Set("GetParentProfile",	FunctionTemplate::New(InvokeMethod<std::string, const Profile, &Nova::Profile::GetParentProfile>));
 		proto->Set("GetVendors",		FunctionTemplate::New(InvokeMethod<std::vector<std::string>, Profile, &Nova::Profile::GetVendors>));
 		proto->Set("GetVendorCounts",	FunctionTemplate::New(InvokeMethod<std::vector<uint>, Profile, &Nova::Profile::GetVendorCounts>));
 
-		proto->Set("IsPersonalityInherited",FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::IsPersonalityInherited>));
-		proto->Set("IsUptimeInherited",     FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::IsUptimeInherited>));
-		proto->Set("IsDropRateInherited",   FunctionTemplate::New(InvokeMethod<bool, Profile, &Nova::Profile::IsDropRateInherited>));
+		proto->Set("IsPersonalityInherited",FunctionTemplate::New(InvokeMethod<bool, const Profile, &Nova::Profile::IsPersonalityInherited>));
+		proto->Set("IsUptimeInherited",     FunctionTemplate::New(InvokeMethod<bool, const Profile, &Nova::Profile::IsUptimeInherited>));
+		proto->Set("IsDropRateInherited",   FunctionTemplate::New(InvokeMethod<bool, const Profile, &Nova::Profile::IsDropRateInherited>));
 	}
 
 	// Get the constructor from the template
