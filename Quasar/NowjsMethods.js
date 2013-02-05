@@ -592,6 +592,14 @@ everyone.now.SaveProfile = function (profile, cb)
         return;
     }
 
+	// Check we have ethernet vendors
+	if (profile.ethernet.length == 0)
+	{
+        var err = "ERROR: Must have at least one ethernet vendor!";
+        cb && cb(err);
+        return;
+	}
+
     // Check that we have the scriptnames set for profiles that need scripts
     for (var i = 0; i < profile.portSets.length; i++) 
     {
