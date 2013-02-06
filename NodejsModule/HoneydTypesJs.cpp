@@ -59,8 +59,7 @@ Handle<Object> HoneydNodeJs::WrapPortSet(PortSet *portSet)
 		proto->Set("GetUDPBehavior",	FunctionTemplate::New(InvokeMethod<std::string, Nova::PortSet, &Nova::PortSet::GetUDPBehavior>) );
 		proto->Set("GetICMPBehavior",	FunctionTemplate::New(InvokeMethod<std::string, Nova::PortSet, &Nova::PortSet::GetICMPBehavior>) );
 
-		proto->Set(String::NewSymbol("GetTCPPorts"),FunctionTemplate::New(GetTCPPorts)->GetFunction());
-		proto->Set(String::NewSymbol("GetUDPPorts"),FunctionTemplate::New(GetUDPPorts)->GetFunction());
+		proto->Set(String::NewSymbol("GetPorts"),FunctionTemplate::New(GetPorts)->GetFunction());
 	}
 
 	// Get the constructor from the template
@@ -140,7 +139,7 @@ Handle<Object> HoneydNodeJs::WrapPort(Port *port)
     return scope.Close(result);
 }
 
-Handle<Value> HoneydNodeJs::GetTCPPorts(const Arguments& args)
+Handle<Value> HoneydNodeJs::GetPorts(const Arguments& args)
 {
 	HandleScope scope;
 
@@ -152,32 +151,10 @@ Handle<Value> HoneydNodeJs::GetTCPPorts(const Arguments& args)
 		return scope.Close(portArray);
 	}
 
-	for(uint i = 0; i < portSet->m_TCPexceptions.size(); i++)
+	for(uint i = 0; i < portSet->m_portExceptions.size(); i++)
 	{
 		Port *copy = new Port();
-		*copy = portSet->m_TCPexceptions[i];
-		portArray->Set(v8::Number::New(i), HoneydNodeJs::WrapPort(copy));
-	}
-
-	return scope.Close(portArray);
-}
-
-Handle<Value> HoneydNodeJs::GetUDPPorts(const Arguments& args)
-{
-	HandleScope scope;
-
-	v8::Local<v8::Array> portArray = v8::Array::New();
-
-	PortSet *portSet = ObjectWrap::Unwrap<PortSet>(args.This());
-	if(portSet == NULL)
-	{
-		return scope.Close(portArray);
-	}
-
-	for(uint i = 0; i < portSet->m_UDPexceptions.size(); i++)
-	{
-		Port *copy = new Port();
-		*copy = portSet->m_UDPexceptions[i];
+		*copy = portSet->m_portExceptions[i];
 		portArray->Set(v8::Number::New(i), HoneydNodeJs::WrapPort(copy));
 	}
 

@@ -57,13 +57,11 @@ var NovaCommon = new function() {
         {
             var portSet = this.honeydConfig.GetPortSet(profiles[i], portSets[portSetName]);
             var ports = [];
-            for (var p in portSet.GetTCPPorts())
+
+			var tmp = portSet.GetPorts();
+            for (var p in tmp)
             {
-                ports.push(portSet.GetTCPPorts()[p]);
-            }
-            for (var p in portSet.GetUDPPorts())
-            {
-                ports.push(portSet.GetUDPPorts()[p]);
+                ports.push(tmp[p]);
             }
             for(var p in ports)
             {

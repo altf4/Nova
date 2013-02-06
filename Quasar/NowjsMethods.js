@@ -488,46 +488,25 @@ function jsProfileToHoneydProfile(profile)
         honeydProfile.SetPortSetBehavior(encodedName, "udp", profile.portSets[i].UDPBehavior);
         honeydProfile.SetPortSetBehavior(encodedName, "icmp", profile.portSets[i].ICMPBehavior);
 
-        for (var j = 0; j < profile.portSets[i].TCPExceptions.length; j++)
+        for (var j = 0; j < profile.portSets[i].PortExceptions.length; j++)
         {
             var scriptConfigKeys = new Array();
             var scriptConfigValues = new Array();
 
-            for (var key in profile.portSets[i].TCPExceptions[j].scriptConfiguration)
+            for (var key in profile.portSets[i].PortExceptions[j].scriptConfiguration)
             {
                 scriptConfigKeys.push(key);
-                scriptConfigValues.push(profile.portSets[i].TCPExceptions[j].scriptConfiguration[key]);
+                scriptConfigValues.push(profile.portSets[i].PortExceptions[j].scriptConfiguration[key]);
             }
 
             honeydProfile.AddPort(encodedName,
-                    profile.portSets[i].TCPExceptions[j].behavior, 
-                    profile.portSets[i].TCPExceptions[j].protocol, 
-                    Number(profile.portSets[i].TCPExceptions[j].portNum), 
-                    profile.portSets[i].TCPExceptions[j].scriptName,
+                    profile.portSets[i].PortExceptions[j].behavior, 
+                    profile.portSets[i].PortExceptions[j].protocol, 
+                    Number(profile.portSets[i].PortExceptions[j].portNum), 
+                    profile.portSets[i].PortExceptions[j].scriptName,
                     scriptConfigKeys,
                     scriptConfigValues);
         }
-
-        for (var j = 0; j < profile.portSets[i].UDPExceptions.length; j++)
-        {
-            var scriptConfigKeys = new Array();
-            var scriptConfigValues = new Array();
-
-            for (var key in profile.portSets[i].UDPExceptions[j].scriptConfiguration)
-            {
-                scriptConfigKeys.push(key);
-                scriptConfigValues.push(profile.portSets[i].UDPExceptions[j].scriptConfiguration[key]);
-            }
-
-            honeydProfile.AddPort(encodedName, 
-                    profile.portSets[i].UDPExceptions[j].behavior, 
-                    profile.portSets[i].UDPExceptions[j].protocol, 
-                    Number(profile.portSets[i].UDPExceptions[j].portNum), 
-                    profile.portSets[i].UDPExceptions[j].scriptName,
-                    scriptConfigKeys,
-                    scriptConfigValues);
-        }
-
     }
 
     return honeydProfile;
@@ -559,9 +538,9 @@ everyone.now.SaveProfile = function (profile, cb)
     // Check that we have the scriptnames set for profiles that need scripts
     for (var i = 0; i < profile.portSets.length; i++) 
     {
-        for (var j = 0; j < profile.portSets[i].TCPExceptions.length; j++)
+        for (var j = 0; j < profile.portSets[i].PortExceptions.length; j++)
         {
-            var port = profile.portSets[i].TCPExceptions[j];
+            var port = profile.portSets[i].PortExceptions[j];
 
             if (port.behavior == "script" || port.behavior == "tarpit script") {
                 if (port.scriptName == "" || port.scriptName == "NA") {
@@ -1052,25 +1031,14 @@ var GetPortSets = function (profileName, cb)
         portSet.UDPBehavior = portSet.GetUDPBehavior();
         portSet.ICMPBehavior = portSet.GetICMPBehavior();
 
-        portSet.TCPExceptions = portSet.GetTCPPorts();
-        for (var j = 0; j < portSet.TCPExceptions.length; j++)
+        portSet.PortExceptions = portSet.GetPorts();
+        for (var j = 0; j < portSet.PortExceptions.length; j++)
         {
-            portSet.TCPExceptions[j].portNum = portSet.TCPExceptions[j].GetPortNum();
-            portSet.TCPExceptions[j].protocol = portSet.TCPExceptions[j].GetProtocol();
-            portSet.TCPExceptions[j].behavior = portSet.TCPExceptions[j].GetBehavior();
-            portSet.TCPExceptions[j].scriptName = portSet.TCPExceptions[j].GetScriptName();
-            portSet.TCPExceptions[j].service = portSet.TCPExceptions[j].GetService();
-            portSet.TCPExceptions[j].scriptConfiguration = portSet.TCPExceptions[j].GetScriptConfiguration();
-        }
-
-        portSet.UDPExceptions = portSet.GetUDPPorts();
-        for (var j = 0; j < portSet.UDPExceptions.length; j++)
-        {
-            portSet.UDPExceptions[j].portNum = portSet.UDPExceptions[j].GetPortNum();
-            portSet.UDPExceptions[j].protocol = portSet.UDPExceptions[j].GetProtocol();
-            portSet.UDPExceptions[j].behavior = portSet.UDPExceptions[j].GetBehavior();
-            portSet.UDPExceptions[j].scriptName = portSet.UDPExceptions[j].GetScriptName();
-            portSet.UDPExceptions[j].scriptConfiguration = portSet.UDPExceptions[j].GetScriptConfiguration();
+            portSet.PortExceptions[j].portNum = portSet.PortExceptions[j].GetPortNum();
+            portSet.PortExceptions[j].protocol = portSet.PortExceptions[j].GetProtocol();
+            portSet.PortExceptions[j].behavior = portSet.PortExceptions[j].GetBehavior();
+            portSet.PortExceptions[j].scriptName = portSet.PortExceptions[j].GetScriptName();
+            portSet.PortExceptions[j].scriptConfiguration = portSet.PortExceptions[j].GetScriptConfiguration();
         }
         portSets.push(portSet);
     }
