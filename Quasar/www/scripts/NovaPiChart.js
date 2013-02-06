@@ -28,7 +28,7 @@ var NovaPiChart = function(divId, title, size, deleteButtonFunction) {
     this.SetSize(size);
 	
 	var mainDiv = document.createElement("div");
-	mainDiv.setAttribute("style", "text-align: center");
+	mainDiv.setAttribute("style", "text-align: left");
 	var div = document.getElementById(divId);
 	div.appendChild(mainDiv);
 	this.m_id = mainDiv;
@@ -84,7 +84,7 @@ NovaPiChart.prototype = {
                 var legend = document.createElement("div");
 				legend.setAttribute("class", "pieLegendElementDiv");
                 var text = document.createElement("p");
-                text.setAttribute('style', 'display: inline-block; margin: 0px');
+                text.setAttribute('style', 'display: inline-block; margin: 2px');
                 text.innerHTML = "<span style='background-color: " + "#A1A1A1" + ";'>&nbsp &nbsp &nbsp</span>&nbsp 0% " + this.m_items[i].name;
                 legend.appendChild(text);
                 this.m_id.appendChild(legend);
@@ -119,7 +119,7 @@ NovaPiChart.prototype = {
 			legend.setAttribute("class", "pieLegendElementDiv");
             var text = document.createElement("p");
             text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
-            text.setAttribute('style', 'display: inline-block; margin: 0px');
+            text.setAttribute('style', 'display: inline-block; margin: 2px');
             if(this.m_deleteFunction != undefined) {
                 var deleteButton = document.createElement("button");
                 deleteButton.setAttribute('style', 'display: inline-block;');
