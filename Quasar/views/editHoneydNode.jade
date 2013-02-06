@@ -352,5 +352,9 @@ block content
   br
   br
   button(onclick="SaveNode();")
-    img(src="images/ok.png", class="buttonIcon")
-    span(class="buttonSpan") Save Changes
+    img.buttonIcon(src="images/ok.png")
+    span.buttonSpan Save Changes
+  
+  button(onclick="window.location='/honeydConfigManage?tab=settingsNodes'")
+    img.buttonIcon(src="images/cancel.png")
+    span.buttonSpan Cancel
