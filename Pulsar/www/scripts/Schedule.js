@@ -90,7 +90,7 @@ function setTarget(source, target, group)
     {
       var regex = new RegExp(target + ':', 'i');
       message.id = message.id.replace(regex, '');
-      document.getElementById('elementHook').removeChild(document.getElementById('schedule' + target));
+      document.getElementById('elementHook').removeChild(document.getElementById(target));
     }
   }
 }
@@ -98,7 +98,7 @@ function setTarget(source, target, group)
 function createScheduledEventElement(clientId)
 {
   var borderDiv = document.createElement('div');
-  borderDiv.id = 'schedule' + clientId;
+  borderDiv.id = clientId;
   borderDiv.setAttribute('style', 'border: 2px solid; background: #E8A02F; width: 370px;');
   
   var label0 = document.createElement('h1');
@@ -200,7 +200,7 @@ function createScheduledEventElement(clientId)
   minute.min = '0';
   minute.max = '59';
   minute.id = clientId + 'minute';
-  minute.value = infoHook.getMinutes();
+  minute.value = (infoHook.getMinutes().toString().length == 2 ? infoHook.getMinutes() : '0' + infoHook.getMinutes());
   minute.placeholder = 'M';
   milTd.appendChild(minute);
   tr1.appendChild(milTd);
@@ -256,70 +256,31 @@ function recurringChanged(source)
     dayLabel.innerHTML = 'Day Of Week: ';
     dlTd.appendChild(dayLabel);
     var dTd = document.createElement('td');
-    var day = document.createElement('select');
-    day.setAttribute('style', 'width: 100px;');
-    day.id = source + 'dayOfWeek';
     var options = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     for(var i in options)
     {
-      var option = document.createElement('option');
-      option.id = options[i];
-      option.innerHTML = options[i];
-      option.value = infoHook.getDay().toString();
-      switch(infoHook.getDay().toString())
+      var check = document.createElement('input');
+      check.setAttribute('type', 'checkbox');
+      check.setAttribute('value', i);
+      check.setAttribute('id', i + 'day');
+      var label = document.createElement('label');
+      if(i == 0 || i == 6)
       {
-        case '0': selectedTest = 'Sunday';
-                  if(selectedTest == options[i])
-                  {
-                    option.selected = true;
-                  }
-                  break;
-        case '1': selectedTest = 'Monday';
-                  if(selectedTest == options[i])
-                  {
-                    option.selected = true;
-                  }
-                  break;
-        case '2': selectedTest = 'Tuesday';
-                  if(selectedTest == options[i])
-                  {
-                    option.selected = true;
-                  }
-                  break;
-        case '3': selectedTest = 'Wednesday';
-                  if(selectedTest == options[i])
-                  {
-                    option.selected = true;
-                  }
-                  break;
-        case '4': selectedTest = 'Thursday';
-                  if(selectedTest == options[i])
-                  {
-                    option.selected = true;
-                  }
-                  break;
-        case '5': selectedTest = 'Friday';
-                  if(selectedTest == options[i])
-                  {
-                    option.selected = true;
-                  }
-                  break;
-        case '6': selectedTest = 'Saturday';
-                  if(selectedTest == options[i])
-                  {
-                    option.selected = true;
-                  }
-                  break;
-        default:  console.log('infoHook.getDay() ' + infoHook.getDay());
-                  break;
+        label.innerHTML = options[i][0] + options[i][1];
       }
-      day.appendChild(option);
+      else
+      {
+        label.innerHTML = options[i][0];
+      }
+      dTd.appendChild(label);
+      dTd.appendChild(check);
     }
-    dTd.appendChild(day);
     tr0.appendChild(dlTd);
     tr0.appendChild(dTd);
     
     var tr1 = document.createElement('tr');
+    var tlabel = document.createElement('label');
+    tlabel.innerHTML = 'Time: ';
     var hlTd = document.createElement('td');
     var hour = document.createElement('input');
     hour.setAttribute('style', 'width: 30px;');
@@ -343,7 +304,7 @@ function recurringChanged(source)
     minute.min = '0';
     minute.max = '59';
     minute.id = source + 'minute';
-    minute.value = infoHook.getMinutes();
+    minute.value = (infoHook.getMinutes().toString().length == 2 ? infoHook.getMinutes() : '0' + infoHook.getMinutes());
     minute.placeholder = 'M';
     milTd.appendChild(minute);
     tr1.appendChild(milTd);
@@ -419,7 +380,7 @@ function recurringChanged(source)
     minute.min = '0';
     minute.max = '59';
     minute.id = source + 'minute';
-    minute.value = infoHook.getMinutes();
+    minute.value = (infoHook.getMinutes().toString().length == 2 ? infoHook.getMinutes() : '0' + infoHook.getMinutes());
     minute.placeholder = 'M';
     milTd.appendChild(minute);
     tr1.appendChild(milTd);
@@ -453,11 +414,21 @@ function submitSchedule()
         alert('Scheduled event names must consist of 2-10 alphanumeric characters');
         return;
       }
+      
       var name = document.getElementById(id + 'name').value;
       if(document.getElementById(id + 'recurring').checked)
       {
         var recurrenceValues = {};
-        var dayOfWeek = (document.getElementById(id + 'dayOfWeek').value != '' ? document.getElementById(id + 'dayOfWeek').value : '0');
+        var dayOfWeek = [];
+        
+        for(var i = 0; i < 7; i++)
+        {
+          if(document.getElementById(i + 'day').checked)
+          {
+            dayOfWeek.push(i);
+          }
+        }
+        
         var hour = (document.getElementById(id + 'hour').value != '' ? document.getElementById(id + 'hour').value : '0');
         var minute = (document.getElementById(id + 'minute').value != '' ? document.getElementById(id + 'minute').value : '0');
         recurrenceValues.dayOfWeek = dayOfWeek;
@@ -488,24 +459,16 @@ function submitSchedule()
       {
         if(clients[i] != '')
         {
-          console.log('clients[i] == ' + clients[i]);
           document.getElementById('client' + clients[i]).checked = false;
         }
       }
       
-      j = 0;
-      element = document.getElementById('groupcheck' + j);
-      
-      while(element == undefined)
+      hook = document.getElementById('groupsList');
+      for(var i = 0; i < hook.children.length; i++)
       {
-        j++;
-        element = document.getElementById('groupcheck' + j);
+        checkbox = hook.children[0].id.substring(0, hook.children[0].id.length - 3);
+        document.getElementById('groupcheck' + checkbox).checked = false;
       }
-      
-      do
-      {
-        document.getElementById('groupcheck' + j).checked = false;
-      }while(document.getElementById('groupcheck' + j) != undefined && j++);
     }
   }
   while(document.getElementById('elementHook').hasChildNodes())

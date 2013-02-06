@@ -9,6 +9,16 @@ function updateConfiguration()
   now.UpdateConfiguration();
 }
  
+function manualConfigure()
+{
+  var clientContainer = document.getElementById('selectClient');
+  var client = clientContainer.options[clientContainer.selectedIndex].value;
+  var clientHost = now.GetClientHost(client, function(host){
+    // need to get the right port, not hardcoded ':8080'
+    window.open('https://' + host);
+  });
+}
+ 
 function checkInt(source)
 {
   var check = parseFloat(document.getElementById(source).value);

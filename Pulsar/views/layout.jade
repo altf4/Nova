@@ -530,6 +530,21 @@ html(lang='en')
             dojo.fadeOut({node:'splash', delay:0}).play();
             dojo.style('appLayout', 'visibility', 'visible');
             dojo.fadeIn({node:'appLayout', delay:0}).play();
+            
+            var sideBarButtons = document.getElementsByClassName("sideBarButton");
+            for (var i in sideBarButtons)
+            {
+                if (!sideBarButtons[i].pathname)
+                {
+                    continue;
+                }
+                
+                if (sideBarButtons[i].pathname == window.location.pathname)
+                {
+                    sideBarButtons[i].className += ' active';
+                    console.log("Enabled button " + sideBarButtons[i]);
+                }
+            }
           });
         }
       );
@@ -560,29 +575,20 @@ html(lang='en')
       
        
         div(style='text-align:center; font-weight:bold; font-size: 150%;') Status
-        a(class='button', id='hostileButton', href='/hostile') Hostile Events
-        br
+        a.sideBarButton(id='hostileButton', href='/hostile') Hostile Events
         br
         div(style='text-align:center; font-weight:bold; font-size: 150%;') Configuration
-        a(class='button', href='/config') Client Configuration Options
-        br
-        a(class='button', href='/haystack') Client Haystack Autoconfiguration
-        br
-        a(class='button', href='/groups') Group Configuration Options
-        br
-        a(class='button', href='/schedule') New Scheduled Event
-        br
-        a(class='button', href='/listschedule') View Scheduled Events
-        br
+        a.sideBarButton(href='/config') Client Configuration Options
+        a.sideBarButton(href='/haystack') Client Haystack Autoconfiguration
+        a.sideBarButton(href='/groups') Group Configuration Options
+        a.sideBarButton(href='/schedule') New Scheduled Event
+        a.sideBarButton(href='/listschedule') View Scheduled Events
         br
         div(style='text-align:center; font-weight:bold; font-size: 150%;') Documentation
-        a(class='button', href='/about') About Nova
-        br
-        a(class='button', id='notify', href='/notifications') Notifications (0) 
-        br
-        br
+        a.sideBarButton(href='/about') About Nova
+        a.sideBarButton(id='notify', href='/notifications') Notifications (0)
+        br 
         div(style='text-align:center; font-weight:bold; font-size: 150%;') Connected Clients
-        br
         table(style='border: 2px solid black; width: 156px; height: 4px; background: #E8A02F;')
           tbody(id='connectionsList')
         //a(class="button", href= "logout") Log Out
