@@ -229,14 +229,16 @@ block headerAdditions
     function GetSubnets()
     {
         var returnString = "";
-       
+      
+        var index = 0;
         for(var i in viewModel.subnetsToScan())
         {
-            returnString += viewModel.subnetsToScan()[i].subnet;
-            if(viewModel.subnetsToScan()[i + 1] != undefined)
+            if (index != 0)
             {
                 returnString += ",";
             }
+            index++;
+            returnString += viewModel.subnetsToScan()[i].subnet;
         }       
         
         return returnString;
