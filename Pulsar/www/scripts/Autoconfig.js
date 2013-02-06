@@ -105,11 +105,29 @@ function changeLabel(type, index)
 {
   if(type == 'ratio')
   {
+    document.getElementById('label' + index).innerHTML = ': Create ';
     document.getElementById('change' + index).innerHTML = ' times the amount of real nodes found on ';
+    document.getElementById('input' + index).type = 'number';
+    document.getElementById('input' + index).min = '0';
+    document.getElementById('input' + index).max = '1024';
+    document.getElementById('input' + index).value = '0';
   }
-  else
+  else if(type == 'number')
   {
+    document.getElementById('label' + index).innerHTML = ': Create ';
     document.getElementById('change' + index).innerHTML = ' nodes on '; 
+    document.getElementById('input' + index).type = 'number';
+    document.getElementById('input' + index).min = '0';
+    document.getElementById('input' + index).max = '1024';
+    document.getElementById('input' + index).value = '0';
+  }
+  else if(type == 'range')
+  {
+    document.getElementById('label' + index).innerHTML = ': Create nodes on IP ';
+    document.getElementById('change' + index).innerHTML = ' on interface '; 
+    document.getElementById('input' + index).type = 'text';
+    document.getElementById('input' + index).value = '';
+    document.getElementById('input' + index).placeholder = '##.##.##.##-##.##.##.##';
   }
 }
 
@@ -126,11 +144,12 @@ function createAutoconfigElement(clientName, group)
   labelBold.setAttribute('style', 'font-weight: bold;');
   var label = document.createElement('label');
   label.innerHTML = ': Create ';
+  label.id = 'label' + elementCount;
   var inputType = document.createElement('select');
   inputType.id = 'type' + elementCount;
-  var types = ['number', 'ratio'];
+  var types = ['number', 'ratio', 'range'];
   
-  for(var i = 0; i < 2; i++)
+  for(var i = 0; i < types.length; i++)
   {
     var option = document.createElement('option');
     option.value = types[i];
@@ -140,6 +159,7 @@ function createAutoconfigElement(clientName, group)
   inputType.setAttribute('onclick', 'changeLabel(document.getElementById("type' + elementCount + '").value, ' + elementCount + ')');
   
   var input = document.createElement('input');
+  input.id = 'input' + elementCount;
   input.type = 'number';
   input.min = '0';
   //This needs to be found dynamically
@@ -208,7 +228,7 @@ function removeAutoconfigElement(target)
 function processAutoconfigElements()
 {
   var loopIter = document.getElementById('autoconfElements');
-  do 
+  while(loopIter.hasChildNodes()) 
   {
     if(loopIter.lastChild != undefined)
     {
@@ -229,7 +249,7 @@ function processAutoconfigElements()
       now.MessageSend(autoconfMessage);
     }
     loopIter.removeChild(loopIter.lastChild);
-  }while(loopIter.hasChildNodes());
+  }
   var uncheck = document.getElementById('clientsList');
   var count = 0;
   for(var i in uncheck.children)

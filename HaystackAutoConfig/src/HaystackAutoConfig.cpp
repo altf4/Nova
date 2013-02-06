@@ -84,6 +84,7 @@ void sig_handler(int x)
 	}
 	lockFile.close();
 	remove(lockFilePath.c_str());
+	Config::Inst()->SetCurrentConfig("default");
 	exit(HHC_CODE_RECV_SIG);
 }
 

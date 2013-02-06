@@ -36,6 +36,8 @@ var BasicStrategy = require('passport-http').BasicStrategy;
 var NovaHomePath = config.GetPathHome();
 var NovaSharedPath = config.GetPathShared();
 
+var matchHostToConnection = {};
+
 // Setup TLS
 var app;
 if(config.ReadSetting("PULSAR_WEBUI_TLS_ENABLED") == "1") 
@@ -77,7 +79,7 @@ var DATABASE_HOST = config.ReadSetting('DATABASE_HOST');
 var DATABASE_USER = config.ReadSetting('DATABASE_USER');
 var DATABASE_PASS = config.ReadSetting('DATABASE_PASS');
 
-var databaseOpenResult = function (err) {
+var databaseOpenResult = function(err){
   if (err == null) 
   {
     console.log('Opened sqlite3 database file.');
@@ -88,72 +90,85 @@ var databaseOpenResult = function (err) {
   }
 }
 
-var db = new sql.Database(NovaHomePath + '/data/quasarDatabase.db', sql.OPEN_READWRITE, databaseOpenResult);
+var db = new sql.Database(NovaHomePath + '/data/pulsarDatabase.db', sql.OPEN_READWRITE, databaseOpenResult);
 
 var dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
 var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
 var dbqCredentialsGetUsers = db.prepare('SELECT user FROM credentials');
 var dbqCredentialsGetUser = db.prepare('SELECT user FROM credentials WHERE user = ?');
-var dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ? WHERE user = ?');
-var dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?)');
+var dbqCredentialsGetSalt = db.prepare('SELECT salt FROM credentials WHERE user = ?');
+var dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ?, salt = ? WHERE user = ?');
+var dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?, ?)');
 var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = ?');
 
-var HashPassword = function (password) {
+var HashPassword = function(password, salt){
   var shasum = crypto.createHash('sha1');
-  shasum.update(password);
+  shasum.update(password + salt);
   return shasum.digest('hex');
 }
 
-passport.serializeUser(function(user, done) {
+passport.serializeUser(function(user, done){
   done(null, user);
 });
 
-passport.deserializeUser(function(user, done) {
+passport.deserializeUser(function(user, done){
   done(null, user);
 });
 
-passport.use(new BasicStrategy(function(username, password, done) {
+passport.use(new BasicStrategy(function(username, password, done){
   var user = username;
   
-  process.nextTick(function() {
-    dbqCredentialsRowCount.all(function(err, rowcount) {
-      if (err) 
+  process.nextTick(function(){
+    dbqCredentialsRowCount.all(function(err, rowcount){
+      if(err) 
       {
         console.log('Database error: ' + err);
       }
 
       // If there are no users, add default nova and log in
-      if (rowcount[0].rows == 0) {
+      if(rowcount[0].rows == 0)
+      {
         console.log('No users in user database. Creating default user.');
-        dbqCredentialsInsertUser.run('nova', HashPassword('toor'), function(err) {
+        dbqCredentialsInsertUser.run('nova', HashPassword('toor', 'root'), 'root', function(err) {
           if (err) 
           {
             throw err;
           }
 
           switcher(err, user, true, done);
-
         });
-      } else {
-        dbqCredentialsCheckLogin.all(user, HashPassword(password),
-
-        function selectCb(err, results) {
-          if (err) 
+      } 
+      else
+      {
+        dbqCredentialsGetSalt.all(user, function cb(err, salt)
+        {
+          if(err || (salt[0] == undefined))
           {
-            console.log('Database error: ' + err);
+            switcher(err, user, false, done);
           }
-
-          if (results[0] === undefined) 
+          else
           {
-            switcher(err, user, false, done);
-          } 
-          else if (user === results[0].user) 
-          {
-            switcher(err, user, true, done);
-          } 
-          else 
-          {
-            switcher(err, user, false, done);
+            dbqCredentialsCheckLogin.all(user, HashPassword(password, salt[0].salt),
+    
+            function selectCb(err, results){
+              if (err) 
+              {
+                console.log('Database error: ' + err);
+              }
+    
+              if (results[0] === undefined) 
+              {
+                switcher(err, user, false, done);
+              } 
+              else if (user === results[0].user) 
+              {
+                switcher(err, user, true, done);
+              } 
+              else 
+              {
+                switcher(err, user, false, done);
+              }
+            });
           }
         });
       }
@@ -457,47 +472,37 @@ SetScheduledMessage = function(clientId, name, message, eventObj, cb)
   {
     newSchedule.eventType = 'recurring';
     var passObj = new schedule.RecurrenceRule();
-    passObj.dayOfWeek = parseInt(eventObj.dayOfWeek);
+    passObj.dayOfWeek = eventObj.dayOfWeek;
     passObj.hour = parseInt(eventObj.hour);
     passObj.minute = parseInt(eventObj.minute);
     newSchedule.dayOfWeek = passObj.dayOfWeek;
     newSchedule.hour = passObj.hour;
-    newSchedule.minute = passObj.minute;
+    newSchedule.minute = (passObj.minute.toString().length == 2 ? passObj.minute : '0' + passObj.minute);
     newSchedule.job = schedule.scheduleJob(newSchedule.id, passObj, function(){
       MessageSend(message);
     });
     var recurringString = '';
-    for(var i in eventObj)
+    for(var i in eventObj.dayOfWeek)
     {
-      switch(i)
+      switch(eventObj.dayOfWeek[i])
       {
-        case 'dayOfWeek': switch(eventObj.dayOfWeek)
-                          {
-                            case '0': recurringString += 'Sundays at ';
-                                      break;
-                            case '1': recurringString += 'Mondays at ';
-                                      break;
-                            case '2': recurringString += 'Tuesdays at ';
-                                      break;
-                            case '3': recurringString += 'Wednesdays at ';
-                                      break;
-                            case '4': recurringString += 'Thursdays at ';
-                                      break;
-                            case '5': recurringString += 'Fridays at ';
-                                      break;
-                            case '6': recurringString += 'Saturdays at ';
-                                      break;
-                          }
-                          break;
-        case 'hour': recurringString += eventObj.hour + ':';
-                     break;
-        case 'minute': recurringString += eventObj.minute;
-                       break;
-        default: console.log('Unidentified index ' + i + ', doing nothing');
-                 break;
+        case 0: recurringString += 'Su ';
+                  break;
+        case 1: recurringString += 'M ';
+                  break;
+        case 2: recurringString += 'Tu ';
+                  break;
+        case 3: recurringString += 'W ';
+                  break;
+        case 4: recurringString += 'Th ';
+                  break;
+        case 5: recurringString += 'F ';
+                  break;
+        case 6: recurringString += 'Sa ';
+                  break;
       }
     }
-    newSchedule.recurring = recurringString;
+    newSchedule.recurring = recurringString + newSchedule.hour + ':' + newSchedule.minute;
     newSchedule.date = '';
   }
   else if(typeof eventObj == 'string')
@@ -983,7 +988,7 @@ function populateNovaClients()
   }
   catch(err)
   {
-    console.log('clientIds.txt does not exist, it will be created when quasar next goes down'); 
+    console.log('clientIds.txt does not exist, it will be created when Pulsar next goes down'); 
   } 
 }
 
@@ -1056,6 +1061,7 @@ wsServer.on('request', function(request)
 {
 	console.log('connection accepted');
 	var connection = request.accept(null, request.origin);
+  matchHostToConnection[connection] = request.remoteAddress;
   // The most important directive, if we have a message, we need to parse it out
   // and determine what to do from there
 	connection.on('message', function(message){
@@ -1097,8 +1103,13 @@ wsServer.on('request', function(request)
 						     everyone.now.RenderBenignRequests(); 
 						   }
 						}
-						
-						novaClients[json_args.id.toString()] = {statusNova: json_args.nova, statusHaystack: json_args.haystack, connection: connection};
+						console.log('json_args.port == ' + json_args.port);
+						novaClients[json_args.id.toString()] = {statusNova: json_args.nova, 
+						                                        statusHaystack: json_args.haystack, 
+						                                        connection: connection, 
+						                                        url: matchHostToConnection[connection] + ':' + json_args.port};
+            console.log('host: ' + novaClients[json_args.id.toString()].url);
+            delete matchHostToConnection[connection]
 						var date = new Date();
 						WriteNotification(json_args.id + ' connected at ' + date);
 						if(typeof everyone.now.UpdateNotificationsButton == 'function')
@@ -1404,6 +1415,13 @@ function getClients()
 	return ret;
 }
 
+everyone.now.GetClientHost = function(client, cb)
+{
+  if(typeof(cb) == 'function')
+  {
+    cb(novaClients[client].url);
+  }
+}
 
 // A function that reads the file client_groups.txt that contains user-created groups names
 // that have an associated list of last-known clientIds. 

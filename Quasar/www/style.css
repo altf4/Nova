@@ -1,14 +1,14 @@
 * {
-    font-family: Lucida Sans,Lucida Grande,Arial !important;
-    outline: none !important;
+  font-family: Lucida Sans,Lucida Grande,Arial !important;
+  outline: none !important;
 }
 
 body {
-    margin: 0;
-    padding: 2em;
-    font-size: 13px !important;
-    background: white;
-    color: #333;
+  margin: 0;
+  padding: 2em;
+  font-size: 13px !important;
+  background: white;
+  color: #333;
 }
 p {
 }
@@ -42,11 +42,11 @@ div.sideBarHeader {
 }
 
 input[type=button], input[type=submit], button, .button, .sideBarButton {
-    font-size:13px;
-    background-color: #E4F2FF;
-    border: 1px solid #769DC0;
-    border-radius:4px;
-    padding: 2px 4px 4px;
+  font-size:13px;
+  background-color: #E4F2FF;
+  border: 1px solid #769DC0;
+  border-radius:4px;
+  padding: 2px 4px 4px;
 	text-align: center;
 	text-decoration: none;
 	color: black;
@@ -66,59 +66,56 @@ input[type=button], input[type=submit], button, .button, .sideBarButton {
 .sideBarButton, .button:link{color: black;}
 .sideBarButton, .button:visited {color:black;}
 
-
-
 input[type=button]:hover, input[type=submit]:hover, .sideBarButton:hover, button:hover, .button:hover {
-    background-color: #AFD9FF;
-    color: #000000;
+  background-color: #AFD9FF;
+  color: #000000;
 }
 
-
 input {
-    border-radius:4px;
-    background-color: #E4F2FF;
-    background-position: center top;
-    background-repeat: repeat-x;
-    border: 1px solid #769DC0;
-    padding: 2px 2px 4px 2px;
+  border-radius:4px;
+  background-color: #E4F2FF;
+  background-position: center top;
+  background-repeat: repeat-x;
+  border: 1px solid #769DC0;
+  padding: 2px 2px 4px 2px;
 }
 
 h1 {
-    font-size:1.5em;
+  font-size:1.5em;
 }
 
 h2 {
-    font-size:1.2em;
+  font-size:1.2em;
 }
 
 html, body {
-    height: 100%;
-    margin: 0;
-    overflow: hidden;
-    padding: 0;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
 }
  
 #appLayout {
-    height: 100%;
+  height: 100%;
 }
 #leftCol {
-    width: 12em;
+  width: 12em;
 }
 
 .claro .demoLayout .edgePanel {
-    background-color: #D0E9FC;
+  background-color: #D0E9FC;
 }
 
 #viewsChart {
-    width: 550px;
-    height: 550px;
+  width: 550px;
+  height: 550px;
 }
 
 #clientsList {
-    border: 2px solid;
-    border-radius: 12px;
-    background: #E8A02F;
-    width: 250px;
+  border: 2px solid;
+  border-radius: 12px;
+  background: #E8A02F;
+  width: 250px;
 }
 
 .topcontainer {

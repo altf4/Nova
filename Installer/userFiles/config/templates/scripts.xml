@@ -160,7 +160,6 @@
 		<option>
 			<key>HTTPD_SECURE_FILES</key>
 			<value>sysStatus.shtml synOpStatus.shtml sysCfg.shtml synNwCfg.shtml acctSetup.shtml serPortCfg.shtml pwrPortCfg.shtml pwrAutoPing.shtml log.shtml help_text.html</value>
-			<value/>
 		</option>
 		<option>
 			<key>HTTPD_SERVER_VERSION</key>

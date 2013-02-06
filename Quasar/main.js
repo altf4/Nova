@@ -386,6 +386,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
     quick.nova = NovaCommon.nova.IsNovadUp(false).toString();
     quick.haystack = NovaCommon.nova.IsHaystackUp(false).toString();
     quick.benignRequest = (benignRequest == true ? 'true' : 'false');
+    quick.port = NovaCommon.config.ReadSetting("WEB_UI_PORT");
     // I don't know that we HAVE to use UTF8 here, there's a send() method as 
     // well as a 'data' member inside the message objects instead of utf8Data.
     // But, as it was in the Websockets tutorial Pherric found, we'll use it for now
@@ -509,7 +510,8 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
               var executionString = 'haystackautoconfig';
               var nFlag = '-n';
               var rFlag = '-r';
-              var iFlag = '-i';
+              var iFlag = '--nodeinterface';
+              var eFlag = '-e';
             
               var hhconfigArgs = new Array();
             
@@ -526,6 +528,14 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
                 if(json_args.numNodes !== undefined) 
                 {
                   hhconfigArgs.push(rFlag);
+                  hhconfigArgs.push(json_args.numNodes);
+                }
+              }
+              else if(json_args.numNodesType == "range")
+              {
+                if(json_args.numNodes !== undefined)
+                {
+                  hhconfigArgs.push(eFlag);
                   hhconfigArgs.push(json_args.numNodes);
                 }
               }
