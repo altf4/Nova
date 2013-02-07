@@ -268,7 +268,7 @@ bool Profile::Copy(Profile *source)
 	return true;
 }
 
-std::string Profile::GetParentProfile()
+std::string Profile::GetParentProfile() const
 {
 	if(m_parent != NULL)
 	{
@@ -280,19 +280,7 @@ std::string Profile::GetParentProfile()
 	}
 }
 
-const std::string Profile::GetParentProfile() const
-{
-	if(m_parent != NULL)
-	{
-		return m_parent->m_name;
-	}
-	else
-	{
-		return "";
-	}
-}
-
-uint Profile::GetUptimeMin()
+uint Profile::GetUptimeMin() const
 {
 	if(m_isUptimeInherited && (m_parent != NULL))
 	{
@@ -301,21 +289,7 @@ uint Profile::GetUptimeMin()
 	return m_uptimeMin;
 }
 
-const uint Profile::GetUptimeMin() const
-{
-	if(m_isUptimeInherited && (m_parent != NULL))
-	{
-		return m_parent->GetUptimeMin();
-	}
-	return m_uptimeMin;
-}
-
-uint Profile::GetUptimeMinNonRecursive()
-{
-	return m_uptimeMin;
-}
-
-const uint Profile::GetUptimeMinNonRecursive() const
+uint Profile::GetUptimeMinNonRecursive() const
 {
 	return m_uptimeMin;
 }
@@ -326,15 +300,7 @@ bool Profile::SetUptimeMin(uint uptime)
 	return true;
 }
 
-uint Profile::GetUptimeMax()
-{
-	if(m_isUptimeInherited && (m_parent != NULL))
-	{
-		return m_parent->GetUptimeMax();
-	}
-	return m_uptimeMax;
-}
-const uint Profile::GetUptimeMax() const
+uint Profile::GetUptimeMax() const
 {
 	if(m_isUptimeInherited && (m_parent != NULL))
 	{
@@ -343,12 +309,7 @@ const uint Profile::GetUptimeMax() const
 	return m_uptimeMax;
 }
 
-uint Profile::GetUptimeMaxNonRecursive()
-{
-	return m_uptimeMax;
-}
-
-const uint Profile::GetUptimeMaxNonRecursive()const
+uint Profile::GetUptimeMaxNonRecursive() const
 {
 	return m_uptimeMax;
 }
@@ -359,15 +320,7 @@ bool Profile::SetUptimeMax(uint uptime)
 	return true;
 }
 
-std::string Profile::GetDropRate()
-{
-	if(m_isDropRateInherited && (m_parent != NULL))
-	{
-		return m_parent->GetDropRate();
-	}
-	return m_dropRate;
-}
-const std::string Profile::GetDropRate()const
+std::string Profile::GetDropRate() const
 {
 	if(m_isDropRateInherited && (m_parent != NULL))
 	{
@@ -377,11 +330,6 @@ const std::string Profile::GetDropRate()const
 }
 
 std::string Profile::GetDropRateNonRecursive()
-{
-	return m_dropRate;
-}
-
-const std::string Profile::GetDropRateNonRecursive() const
 {
 	return m_dropRate;
 }
@@ -397,16 +345,7 @@ std::string Profile::GetName()
 	return m_name;
 }
 
-std::string Profile::GetPersonality()
-{
-	if(m_isPersonalityInherited && (m_parent != NULL))
-	{
-		return m_parent->GetPersonality();
-	}
-	return m_personality;
-}
-
-const std::string Profile::GetPersonality() const
+std::string Profile::GetPersonality() const
 {
 	if(m_isPersonalityInherited && (m_parent != NULL))
 	{
@@ -416,11 +355,6 @@ const std::string Profile::GetPersonality() const
 }
 
 std::string Profile::GetPersonalityNonRecursive()
-{
-	return m_personality;
-}
-
-const std::string Profile::GetPersonalityNonRecursive() const
 {
 	return m_personality;
 }
@@ -554,31 +488,18 @@ bool Profile::IsEqualRecursive(const Profile &profile)
 	return true;
 }
 
-bool Profile::IsPersonalityInherited()
+bool Profile::IsPersonalityInherited() const
 {
 	return m_isPersonalityInherited;
 }
 
-const bool Profile::IsPersonalityInherited() const
-{
-	return m_isPersonalityInherited;
-}
-
-bool Profile::IsUptimeInherited()
+bool Profile::IsUptimeInherited() const
 {
 	return m_isUptimeInherited;
 }
 
-const bool Profile::IsUptimeInherited() const
-{
-	return m_isUptimeInherited;
-}
 
-bool Profile::IsDropRateInherited()
-{
-	return m_isDropRateInherited;
-}
-const bool Profile::IsDropRateInherited() const
+bool Profile::IsDropRateInherited() const
 {
 	return m_isDropRateInherited;
 }

@@ -20,7 +20,7 @@
 			<value>Softalk IMAP Server ready</value>
 			<value>Welcome to Binc IMAP</value>
 			<value>Samsung Contact IMAP server</value>
-			<value> Welcome to Arvixe IMAP server</value>
+			<value>Welcome to Arvixe IMAP server</value>
 		</option>
 	</script>
 	<script>
@@ -93,7 +93,7 @@
 			<key>SSH_VERSION</key>
 			<value>SSH-1.99-OpenSSH_2.1.1</value>
 			<value>SSH-1.99-OpenSSH_3.0.2p1</value>
-			<value>SSH-2.0-OpenSSH_5.5p1 Debian-4ubuntu6 </value>
+			<value>SSH-2.0-OpenSSH_5.5p1 Debian-4ubuntu6</value>
 			<value>SSH-2.0-OpenSSH_4.3</value>
 		</option>
 	</script>
@@ -160,7 +160,6 @@
 		<option>
 			<key>HTTPD_SECURE_FILES</key>
 			<value>sysStatus.shtml synOpStatus.shtml sysCfg.shtml synNwCfg.shtml acctSetup.shtml serPortCfg.shtml pwrPortCfg.shtml pwrAutoPing.shtml log.shtml help_text.html</value>
-			<value/>
 		</option>
 		<option>
 			<key>HTTPD_SERVER_VERSION</key>
@@ -227,6 +226,17 @@
 		<service>nbns</service>
 		<osclass>Microsoft | Windows</osclass>
 		<path>python /usr/share/honeyd/scripts/win32/nbns.py $ipdst</path>
+		<configurable>true</configurable>
+		<option>
+			<key>NAMES_PATH</key>
+			<value>names</value>
+		</option>
+	</script>
+	<script>
+		<name>mDNS</name>
+		<service>mdns</service>
+		<osclass>Linux | Linux</osclass>
+		<path>python /usr/share/honeyd/scripts/linux/mdns/mdns.py $ipdst</path>
 		<configurable>true</configurable>
 		<option>
 			<key>NAMES_PATH</key>

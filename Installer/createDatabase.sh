@@ -58,4 +58,10 @@ sqlite3 "$quasarDbFilePath" <<< $QUERY2
 chgrp nova "$quasarDbFilePath"
 chmod g+rw "$quasarDbFilePath"
 
+pulsarDbFilePath="$DESTDIR/usr/share/nova/userFiles/data/pulsarDatabase.db"
+rm -fr "$pulsarDbFilePath"
+sqlite3 "$pulsarDbFilePath" <<< $QUERY2
+chgrp nova "$pulsarDbFilePath"
+chmod g+rw "$pulsarDbFilePath"
+
 echo "SQL schema has been set up for nova."

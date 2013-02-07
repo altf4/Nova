@@ -405,12 +405,21 @@ block headerAdditions
           
           var nodesPerProfile = {};
           var piChartRender = [];
+          var piChartRender2 = [];
           
           while(theDoc.getElementById('piChart').hasChildNodes())
           {
             theDoc.getElementById('piChart').removeChild(theDoc.getElementById('piChart').lastChild);
           }
+          
+          while(theDoc.getElementById('piChart2').hasChildNodes())
+          {
+            theDoc.getElementById('piChart2').removeChild(theDoc.getElementById('piChart2').lastChild);
+          }
          
+
+          var nodesPerInterface = {};
+
           nodeList = nodes;
           for(var i in nodes)
           {
@@ -422,6 +431,16 @@ block headerAdditions
             {
               nodesPerProfile[nodes[i].pfile]++;
             }
+
+
+            if (nodesPerInterface[nodes[i].interface] == undefined)
+            {
+                nodesPerInterface[nodes[i].interface] = 1;
+            }
+            else
+            {
+                nodesPerInterface[nodes[i].interface]++;
+            }
           }
           
           for(var pfile in nodesPerProfile)
@@ -431,9 +450,18 @@ block headerAdditions
             p.value = nodesPerProfile[pfile];
             piChartRender.push(p);
           }
+
+          for (var ethinterface in nodesPerInterface)
+          {
+            var p = {name: ethinterface, value: nodesPerInterface[ethinterface]};
+            piChartRender2.push(p);
+          }
           
            var pi = new NovaPiChart('piChart', "Nodes by Profile", 200, 'deleteByProfile');
            pi.Render(piChartRender);
+           
+           var pi2 = new NovaPiChart('piChart2', "Nodes by Interface", 200, 'deleteByInterface');
+           pi2.Render(piChartRender2);
 
            LoadNodeGrid();
         });
@@ -792,13 +820,9 @@ block headerAdditions
           if(desired == portset[i].setName)
           {
             generateDefaultRows(portset[i].TCPBehavior, portset[i].UDPBehavior, portset[i].ICMPBehavior);
-            for(var port in portset[i].TCPExceptions)
+            for(var port in portset[i].PortExceptions)
             {
-              generateExceptionRow(portset[i].TCPExceptions[port].portNum, portset[i].TCPExceptions[port].protocol, portset[i].TCPExceptions[port].behavior);
-            }
-            for(var port in portset[i].UDPExceptions)
-            {
-              generateExceptionRow(portset[i].TCPExceptions[port].portNum, portset[i].TCPExceptions[port].protocol, portset[i].TCPExceptions[port].behavior);
+              generateExceptionRow(portset[i].PortExceptions[port].portNum, portset[i].PortExceptions[port].protocol, portset[i].PortExceptions[port].behavior);
             }
           }
         }
@@ -877,6 +901,29 @@ block headerAdditions
       for(var i in gridElements)
       {
         if(gridElements[i][4] === profileName)
+        {
+          passToDeleteNodes.push(gridElements[i][3]);
+          grid.DeleteRow(gridElements[i][3]);
+        }
+      }
+      try
+      {
+        now.deleteNodes(passToDeleteNodes, errorMessageCallback);
+      }
+      catch(err)
+      {
+        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+        console.log("err was: " + err);
+      }
+    }
+    
+    function deleteByInterface(interfaceName)
+    {
+      var gridElements = grid.GetElements();
+      var passToDeleteNodes = [];
+      for(var i in gridElements)
+      {
+        if(gridElements[i][2] === interfaceName)
         {
           passToDeleteNodes.push(gridElements[i][3]);
           grid.DeleteRow(gridElements[i][3]);
@@ -1015,7 +1062,7 @@ block headerAdditions
         grid = new NovaGrid(gridStructure, 3, document.getElementById('nodeTable'), 'grid', true);
         
         grid.SetSortByKey(1);
-        grid.SetRowsPerPage(50);
+        grid.SetRowsPerPage(25);
         grid.SetRenderCallback(onGridRendered);
       
          for(var i in nodeList)
@@ -1112,7 +1159,9 @@ block content
         img.buttonIcon(src="images/add.png") 
         span.buttonSpan Clone Haystack
       
-      button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') Create Haystack From Network Scan
+      button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') 
+        img.buttonIcon(src="images/details.png")
+        span.buttonSpan Create Haystack From Network Scan
       
       br
       br
@@ -1121,6 +1170,12 @@ block content
       button#removeConfig(onclick='removeConfig()', title='Delete the currently selected group')
         img.buttonIcon(src="images/delete.png") 
         span.buttonSpan Delete Haystack
+      br
+      br
+      br
+      div#piChart(style="display: inline-block; margin: 10px")
+      div#piChart2(style="display: inline-block; margin: 10px; float: left")
+      br
 
 
     div.tabDiv#settingsProfiles(style="display: none;")
@@ -1145,8 +1200,6 @@ block content
     
     div.tabDiv#settingsNodes(style="display: none;")
       h1 Current Node Configuration
-      div#piChart(style="display: inline-block")
-      br
       div#node_header
         br
         div#tablePages
@@ -1156,38 +1209,41 @@ block content
       br
       br
       
+      
+      button.button(onclick="window.location = '/configHoneydNodes'")
+        img.buttonIcon(src="images/add.png")
+        span.buttonSpan Add New Nodes
+      
+      button.button(onclick="editSelectedItem()")
+        img.buttonIcon(src="images/edit.png")
+        span.buttonSpan Edit Selected Node
+
+      button.button(onclick="deleteSelectedItems()") 
+        img.buttonIcon(src="images/delete.png")
+        span.buttonSpan Delete Selected Nodes
+
+
+      br
+      br
+      
       button.button(onclick="window.location = '/nodeState.csv'")
         img.buttonIcon(src="images/save.png")
         span.buttonSpan Save as CSV
       br
       
-      button.button(onclick="window.location = '/configHoneydNodes'")
-        img.buttonIcon(src="images/add.png")
-        span.buttonSpan Add New Nodes
-      br
-      
-      button.button(onclick="editSelectedItem()")
+      button.button(onclick="window.location='/editHoneydNode?node=doppelganger'")
         img.buttonIcon(src="images/edit.png")
-        span.buttonSpan Edit Selected Node
-      br
-
-      button.button(onclick="deleteSelectedItems()") 
-        img.buttonIcon(src="images/delete.png")
-        span.buttonSpan Delete Selected Nodes
-      br
+        span Edit Doppelganger
 
       br
       button.button(onclick="deleteAllNodes()")
         img.buttonIcon(src="images/delete.png")
         span.buttonSpan Delete All Nodes
-
-
+      br
+      
       br
       div#generateHook
-        button.button(onclick="window.location='/editHoneydNode?node=doppelganger'")
-          img.buttonIcon(src="images/edit.png")
-          span Edit Doppelganger
-      br
+
       br
 
     div.tabDiv#settingsScripts(style="display: none;")

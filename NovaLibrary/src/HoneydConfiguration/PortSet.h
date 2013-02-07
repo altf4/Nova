@@ -56,13 +56,10 @@ public:
 	//A unique identifier
 	std::string m_name;
 
-	//TCP set
 	enum PortBehavior m_defaultTCPBehavior;
-	std::vector <Port> m_TCPexceptions;
-
-	//UDP set
 	enum PortBehavior m_defaultUDPBehavior;
-	std::vector <Port> m_UDPexceptions;
+
+	std::vector <Port> m_portExceptions;
 
 	//ICMP set
 	enum PortBehavior m_defaultICMPBehavior;

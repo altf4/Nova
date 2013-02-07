@@ -135,6 +135,9 @@ block content
   //appropriate response from all of the clients that were targeted, notify
   //the user and redirect to main page
   button(id='updateButton', onclick='updateConfiguration();') Submit Configuration
+  br
+  button(id='manualConfigure', onclick='manualConfigure();') Manually Configure
+  select(id='selectClient') 
   
 block headerAdditions
   script(type='text/javascript', src='scripts/Config.js')
@@ -154,8 +157,36 @@ block headerAdditions
         {
           if(list[i] != '')
           {
-            now.UpdateConnectionsList(list[i], 'updateStatus');  
+            now.UpdateConnectionsList(list[i], 'updateStatus');
+            var option = document.createElement('option');
+            option.value = list[i];
+            option.id = list[i];
+            option.innerHTML = list[i];
+            document.getElementById('selectClient').appendChild(option);
           } 
         }
       });
+      setInterval(function(){
+        if(typeof(now.GetClients) == 'function')
+        {
+          now.GetClients(function(list){
+            var element = document.getElementById('selectClient');
+            while(element.hasChildNodes())
+            {
+              element.removeChild(element.lastChild);            
+            }
+            for(var i in list)
+            {
+              if(list[i] != '')
+              {
+                var option = document.createElement('option');
+                option.value = list[i];
+                option.id = list[i];
+                option.innerHTML = list[i];
+                document.getElementById('selectClient').appendChild(option);
+              } 
+            }
+          });
+        }
+      }, 5000);
     });

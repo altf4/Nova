@@ -976,6 +976,7 @@ void Config::LoadConfig_Internal()
 	{
 		// Do not call LOG here, Config and Logger are not yet initialized
 		cout << "CRITICAL ERROR: No configuration file found! Could not open: " << m_configFilePath << endl;
+		exit(EXIT_FAILURE);
 	}
 
 	config.close();

@@ -243,21 +243,12 @@ void HoneydConfiguration::DeleteScriptFromPorts_helper(string scriptName, Profil
 	for(uint i = 0; i < profile->m_portSets.size(); i++)
 	{
 		//And all the ports inside the port set
-		for(uint j = 0; j < profile->m_portSets[i]->m_TCPexceptions.size(); j++)
+		for(uint j = 0; j < profile->m_portSets[i]->m_portExceptions.size(); j++)
 		{
-			if(profile->m_portSets[i]->m_TCPexceptions[j].m_scriptName == scriptName)
+			if(profile->m_portSets[i]->m_portExceptions[j].m_scriptName == scriptName)
 			{
-				profile->m_portSets[i]->m_TCPexceptions[j].m_behavior = PORT_OPEN;
-				profile->m_portSets[i]->m_TCPexceptions[j].m_scriptName = "";
-			}
-		}
-		//And all the ports inside the port set
-		for(uint j = 0; j < profile->m_portSets[i]->m_UDPexceptions.size(); j++)
-		{
-			if(profile->m_portSets[i]->m_UDPexceptions[j].m_scriptName == scriptName)
-			{
-				profile->m_portSets[i]->m_UDPexceptions[j].m_behavior = PORT_OPEN;
-				profile->m_portSets[i]->m_UDPexceptions[j].m_scriptName = "";
+				profile->m_portSets[i]->m_portExceptions[j].m_behavior = PORT_OPEN;
+				profile->m_portSets[i]->m_portExceptions[j].m_scriptName = "";
 			}
 		}
 	}
@@ -571,42 +562,19 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 
 			//A new subtree for the exceptions
 			ptree exceptions;
-			//Foreach TCP exception
-			for(uint j = 0; j < root->m_portSets[i]->m_TCPexceptions.size(); j++)
+			//Foreach exception
+			for(uint j = 0; j < root->m_portSets[i]->m_portExceptions.size(); j++)
 			{
 				//Make a sub-tree for this Port
 				ptree port;
 
-				port.put<string>("service", root->m_portSets[i]->m_TCPexceptions[j].m_service);
-				port.put<string>("script", root->m_portSets[i]->m_TCPexceptions[j].m_scriptName);
-				port.put<uint>("number", root->m_portSets[i]->m_TCPexceptions[j].m_portNumber);
-				port.put<string>("behavior", Port::PortBehaviorToString(root->m_portSets[i]->m_TCPexceptions[j].m_behavior));
-				port.put<string>("protocol", Port::PortProtocolToString(root->m_portSets[i]->m_TCPexceptions[j].m_protocol));
+				port.put<string>("service", root->m_portSets[i]->m_portExceptions[j].m_service);
+				port.put<string>("script", root->m_portSets[i]->m_portExceptions[j].m_scriptName);
+				port.put<uint>("number", root->m_portSets[i]->m_portExceptions[j].m_portNumber);
+				port.put<string>("behavior", Port::PortBehaviorToString(root->m_portSets[i]->m_portExceptions[j].m_behavior));
+				port.put<string>("protocol", Port::PortProtocolToString(root->m_portSets[i]->m_portExceptions[j].m_protocol));
 
-				for (map<string,string>::iterator it = root->m_portSets[i]->m_TCPexceptions[j].m_scriptConfiguration.begin(); it != root->m_portSets[i]->m_TCPexceptions[j].m_scriptConfiguration.end(); it++)
-				{
-					ptree option;
-					option.put<string>("key", it->first);
-					option.put<string>("value", it->second);
-					port.add_child("option", option);
-				}
-
-				exceptions.add_child("port", port);
-			}
-
-			//Foreach UDP exception
-			for(uint j = 0; j < root->m_portSets[i]->m_UDPexceptions.size(); j++)
-			{
-				//Make a sub-tree for this Port
-				ptree port;
-
-				port.put<string>("service", root->m_portSets[i]->m_UDPexceptions[j].m_service);
-				port.put<string>("script", root->m_portSets[i]->m_UDPexceptions[j].m_scriptName);
-				port.put<uint>("number", root->m_portSets[i]->m_UDPexceptions[j].m_portNumber);
-				port.put<string>("behavior", Port::PortBehaviorToString(root->m_portSets[i]->m_UDPexceptions[j].m_behavior));
-				port.put<string>("protocol", Port::PortProtocolToString(root->m_portSets[i]->m_UDPexceptions[j].m_protocol));
-
-				for (map<string,string>::iterator it = root->m_portSets[i]->m_UDPexceptions[j].m_scriptConfiguration.begin(); it != root->m_portSets[i]->m_UDPexceptions[j].m_scriptConfiguration.end(); it++)
+				for (map<string,string>::iterator it = root->m_portSets[i]->m_portExceptions[j].m_scriptConfiguration.begin(); it != root->m_portSets[i]->m_portExceptions[j].m_scriptConfiguration.end(); it++)
 				{
 					ptree option;
 					option.put<string>("key", it->first);
