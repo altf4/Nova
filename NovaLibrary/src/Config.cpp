@@ -158,7 +158,6 @@ void Config::LoadCustomSettings(int argc,  char** argv)
 		if(vm.count("help"))
 		{
 			std::cout << desc << std::endl;
-			//return EXIT_SUCCESS;//should say return success
 		}
 		if(vm.count("pcap-file"))
 		{
