@@ -97,6 +97,7 @@ public:
     std::vector<in_addr_t> GetNeighbors();
 
     bool GetReadPcap();
+    bool GetCustomReadPcap();
     bool GetUseTerminals();
     bool GetIsDmEnabled();
     bool GetGotoLive();
@@ -146,6 +147,7 @@ public:
     void SetPathPcapFile(std::string pathPcapFile);
     void SetPathWhitelistFile(std::string pathWhitelistFile);
     void SetReadPcap(bool readPcap);
+    void SetReadCustomPcap(bool readCustomPcap);
     void SetSaveFreq(int saveFreq);
     void SetTcpCheckFreq(int tcpCheckFreq);
     void SetTcpTimout(int tcpTimout);
@@ -202,6 +204,7 @@ public:
 
 	std::string GetCustomPcapString();
 	void SetCustomPcapString(std::string customPcapString);
+
 	bool GetOverridePcapString();
 	void SetOverridePcapString(bool overridePcapString);
 
@@ -293,6 +296,7 @@ private:
 	double m_classificationThreshold;
 
 	bool m_readPcap;
+	bool m_readCustomPcap;
 	bool m_gotoLive;
 	bool m_isDmEnabled;
 
