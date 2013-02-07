@@ -19,8 +19,7 @@ public:
     static v8::Handle<v8::Object> WrapScript(Nova::Script *script);
     static v8::Handle<v8::Object> WrapPortSet(Nova::PortSet *portSet);
 
-    static v8::Handle<v8::Value> GetTCPPorts(const v8::Arguments& args);
-    static v8::Handle<v8::Value> GetUDPPorts(const v8::Arguments& args);
+    static v8::Handle<v8::Value> GetPorts(const v8::Arguments& args);
 
 private:
 

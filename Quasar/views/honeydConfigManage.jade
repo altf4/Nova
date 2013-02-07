@@ -820,13 +820,9 @@ block headerAdditions
           if(desired == portset[i].setName)
           {
             generateDefaultRows(portset[i].TCPBehavior, portset[i].UDPBehavior, portset[i].ICMPBehavior);
-            for(var port in portset[i].TCPExceptions)
+            for(var port in portset[i].PortExceptions)
             {
-              generateExceptionRow(portset[i].TCPExceptions[port].portNum, portset[i].TCPExceptions[port].protocol, portset[i].TCPExceptions[port].behavior);
-            }
-            for(var port in portset[i].UDPExceptions)
-            {
-              generateExceptionRow(portset[i].TCPExceptions[port].portNum, portset[i].TCPExceptions[port].protocol, portset[i].TCPExceptions[port].behavior);
+              generateExceptionRow(portset[i].PortExceptions[port].portNum, portset[i].PortExceptions[port].protocol, portset[i].PortExceptions[port].behavior);
             }
           }
         }

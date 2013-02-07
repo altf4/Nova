@@ -238,8 +238,7 @@ script
 
         var updatePortsModel = function()
         {
-            var TCPExceptions = new Array();
-            var UDPExceptions = new Array();
+            var PortExceptions = new Array();
             ports.size = portIndexes.length;
             for (var i = 0; i < portIndexes.length; i++) 
             {
@@ -267,32 +266,20 @@ script
 
                 port.protocol = dojo.byId("portType" + portIndexes[i]).value;
 
-                if (port.protocol == "tcp")
-                {
 
-                    for (var j = 0; j < TCPExceptions.length; j++) {
-                        if (TCPExceptions[j].portNum == port.portNum) {
+                    for (var j = 0; j < PortExceptions.length; j++) {
+                        if (PortExceptions[j].portNum == port.portNum && port.protocol == PortExceptions[j].protocol) {
                             alert("Error: Port " + port.portNum + " is used more than once!");
                             return false;
                         }
                     }
-                    TCPExceptions.push(port);
-                } else {
-                    for (var j = 0; j < UDPExceptions.length; j++) {
-                        if (UDPExceptions[j].portNum == port.portNum) {
-                            alert("Error: Port " + port.portNum + " is used more than once!");
-                            return false;
-                        }
-                     }
-                     UDPExceptions.push(port);
-                }
+                    PortExceptions.push(port);
             }
             for (var i in profile.portSets)
             {
                 if (profile.portSets[i].setName == lastPortSet)
                 {
-                    profile.portSets[i].TCPExceptions = TCPExceptions;
-                    profile.portSets[i].UDPExceptions = UDPExceptions;
+                    profile.portSets[i].PortExceptions = PortExceptions;
                     profile.portSets[i].TCPBehavior = dojo.byId("defaultTCPAction").value;
                     profile.portSets[i].UDPBehavior = dojo.byId("defaultUDPAction").value;
                     profile.portSets[i].ICMPBehavior = dojo.byId("defaultICMPAction").value;
@@ -393,8 +380,7 @@ script
                 , ICMPBehavior: "open"
                 , TCPBehavior: "closed"
                 , UDPBehavior: "closed"
-                , TCPExceptions: []
-                , UDPExceptions: []
+                , PortExceptions: []
             }
 
             // Push to the profile object
@@ -433,14 +419,9 @@ script
                     dojo.byId("defaultTCPAction").value = profile.portSets[i].TCPBehavior;
                     dojo.byId("defaultUDPAction").value = profile.portSets[i].UDPBehavior;
                         
-                    for (var port in profile.portSets[i].TCPExceptions)
+                    for (var port in profile.portSets[i].PortExceptions)
                     {
-                        addPort(profile.portSets[i].TCPExceptions[port]);
-                    }
-
-                    for (var port in profile.portSets[i].UDPExceptions)
-                    {
-                        addPort(profile.portSets[i].UDPExceptions[port]);
+                        addPort(profile.portSets[i].PortExceptions[port]);
                     }
                 }
             }

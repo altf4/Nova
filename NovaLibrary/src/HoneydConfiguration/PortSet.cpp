@@ -42,13 +42,9 @@ PortSet::PortSet(string name)
 
 bool PortSet::AddPort(Port port)
 {
-	if(port.m_protocol == PROTOCOL_TCP)
+	if(port.m_protocol == PROTOCOL_TCP || port.m_protocol == PROTOCOL_UDP)
 	{
-		m_TCPexceptions.push_back(port);
-	}
-	else if(port.m_protocol == PROTOCOL_UDP)
-	{
-		m_UDPexceptions.push_back(port);
+		m_portExceptions.push_back(port);
 	}
 	else
 	{
@@ -92,12 +88,12 @@ string PortSet::ToString(const string &profileName)
 	out << "set " << profileName << " default icmp action " << Port::PortBehaviorToString(m_defaultICMPBehavior) << '\n';
 
 	//TCP Exceptions
-	for(uint i = 0; i < m_TCPexceptions.size(); i++)
+	for(uint i = 0; i < m_portExceptions.size(); i++)
 	{
 		//If it's a script then we need to print the script path, not "script"
-		if((m_TCPexceptions[i].m_behavior == PORT_SCRIPT) || (m_TCPexceptions[i].m_behavior == PORT_TARPIT_SCRIPT))
+		if((m_portExceptions[i].m_behavior == PORT_SCRIPT) || (m_portExceptions[i].m_behavior == PORT_TARPIT_SCRIPT))
 		{
-			Script script = HoneydConfiguration::Inst()->GetScript(m_TCPexceptions[i].m_scriptName);
+			Script script = HoneydConfiguration::Inst()->GetScript(m_portExceptions[i].m_scriptName);
 
 			if (script.m_isConfigurable)
 			{
@@ -114,7 +110,7 @@ string PortSet::ToString(const string &profileName)
 				for (map<string, vector<string>>::iterator optionIter = script.options.begin(); optionIter != script.options.end(); optionIter++)
 				{
 					bool found = false;
-					for (map<string, string>::iterator it = m_TCPexceptions[i].m_scriptConfiguration.begin(); it != m_TCPexceptions[i].m_scriptConfiguration.end(); it++)
+					for (map<string, string>::iterator it = m_portExceptions[i].m_scriptConfiguration.begin(); it != m_portExceptions[i].m_scriptConfiguration.end(); it++)
 					{
 						if (it->first == optionIter->first)
 						{
@@ -138,90 +134,23 @@ string PortSet::ToString(const string &profileName)
 				}
 
 				// Put the values for any strings the user set
-				for (map<string, string>::iterator it = m_TCPexceptions[i].m_scriptConfiguration.begin(); it != m_TCPexceptions[i].m_scriptConfiguration.end(); it++)
+				for (map<string, string>::iterator it = m_portExceptions[i].m_scriptConfiguration.begin(); it != m_portExceptions[i].m_scriptConfiguration.end(); it++)
 				{
 					configFile << it->first << " " << it->second << endl;
 				}
 				configFile.close();
 
-				out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << " \"" << script.m_path << " " << scriptConfigPath << "\"\n";
+				out << "add " << profileName << " " << Port::PortProtocolToString(m_portExceptions[i].m_protocol) << " port " << m_portExceptions[i].m_portNumber << " \"" << script.m_path << " " << scriptConfigPath << "\"\n";
 			}
 			else
 			{
-				out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << " \"" << script.m_path << "\"\n";
+				out << "add " << profileName << " " << Port::PortProtocolToString(m_portExceptions[i].m_protocol) << " port "  << m_portExceptions[i].m_portNumber << " \"" << script.m_path << "\"\n";
 			}
 		}
 		else
 		{
-			out << "add " << profileName << " tcp port " << m_TCPexceptions[i].m_portNumber << " " <<
-					Port::PortBehaviorToString(m_TCPexceptions[i].m_behavior) << "\n";
-		}
-	}
-
-	//UDP Exceptions
-	for(uint i = 0; i < m_UDPexceptions.size(); i++)
-	{
-		//If it's a script then we need to print the script path, not "script"
-		if((m_UDPexceptions[i].m_behavior == PORT_SCRIPT) || (m_UDPexceptions[i].m_behavior == PORT_TARPIT_SCRIPT))
-		{
-			Script script = HoneydConfiguration::Inst()->GetScript(m_UDPexceptions[i].m_scriptName);
-
-			if (script.m_isConfigurable)
-			{
-
-				stringstream ss;
-				ss << Config::Inst()->GetPathHome() << "/config/haystackscripts/" << configFileIndex;
-				configFileIndex++;
-				string scriptConfigPath = ss.str();
-
-				ofstream configFile;
-				configFile.open (scriptConfigPath);
-
-				// Put default strings for anything that isn't set
-				for (map<string, vector<string>>::iterator optionIter = script.options.begin(); optionIter != script.options.end(); optionIter++)
-				{
-					bool found = false;
-					for (map<string, string>::iterator it = m_UDPexceptions[i].m_scriptConfiguration.begin(); it != m_UDPexceptions[i].m_scriptConfiguration.end(); it++)
-					{
-						if (it->first == optionIter->first)
-						{
-							found = true;
-							break;
-						}
-					}
-
-					if (!found)
-					{
-						if (script.options[optionIter->first].size() > 0)
-						{
-							//LOG(DEBUG, "Writing default value because no user specified option for key " + optionIter->first, "");
-							configFile << optionIter->first << " " << script.options[optionIter->first].at(0) << endl;
-						}
-						else
-						{
-							LOG(ERROR, "Script contained no value options for the key " + optionIter->first, "");
-						}
-					}
-				}
-
-				// Put the values for any strings the user set
-				for (map<string, string>::iterator it = m_UDPexceptions[i].m_scriptConfiguration.begin(); it != m_UDPexceptions[i].m_scriptConfiguration.end(); it++)
-				{
-					configFile << it->first << " " << it->second << endl;
-				}
-				configFile.close();
-
-				out << "add " << profileName << " udp port " << m_UDPexceptions[i].m_portNumber << " \"" << script.m_path << " " << scriptConfigPath << "\"\n";
-			}
-			else
-			{
-				out << "add " << profileName << " udp port " << m_UDPexceptions[i].m_portNumber << " \"" << script.m_path << "\"\n";
-			}
-		}
-		else
-		{
-			out << "add " << profileName << " udp port " << m_UDPexceptions[i].m_portNumber << " " <<
-					Port::PortBehaviorToString(m_UDPexceptions[i].m_behavior) << "\n";
+			out << "add " << profileName << " " << Port::PortProtocolToString(m_portExceptions[i].m_protocol) << " port " << m_portExceptions[i].m_portNumber << " " <<
+					Port::PortBehaviorToString(m_portExceptions[i].m_behavior) << "\n";
 		}
 	}
 
