@@ -1103,12 +1103,10 @@ wsServer.on('request', function(request)
 						     everyone.now.RenderBenignRequests(); 
 						   }
 						}
-						console.log('json_args.port == ' + json_args.port);
 						novaClients[json_args.id.toString()] = {statusNova: json_args.nova, 
 						                                        statusHaystack: json_args.haystack, 
 						                                        connection: connection, 
 						                                        url: matchHostToConnection[connection] + ':' + json_args.port};
-            console.log('host: ' + novaClients[json_args.id.toString()].url);
             delete matchHostToConnection[connection]
 						var date = new Date();
 						WriteNotification(json_args.id + ' connected at ' + date);
