@@ -162,7 +162,7 @@ void Config::LoadCustomSettings(int argc,  char** argv)
 		if(vm.count("pcap-file"))
 		{
 			Config::Inst()->SetPathPcapFile(pCAPFilePath);
-			Config::Inst()->SetReadPcap(true);
+			Config::Inst()->SetReadCustomPcap(true);
 		}
 	}
 	catch(exception &e)
@@ -282,30 +282,40 @@ void Config::LoadConfig_Internal()
 
 			// READ_PCAP
 			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
+			if(this->GetCustomReadPcap() == false)
 			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+				prefix = m_prefixes[prefixIndex];
+				if(!line.substr(0, prefix.size()).compare(prefix))
 				{
-					m_readPcap = atoi(line.c_str());
-					isValid[prefixIndex] = true;
+					line = line.substr(prefix.size() + 1, line.size());
+					if(atoi(line.c_str()) == 0 || atoi(line.c_str()) == 1)
+					{
+						m_readPcap = atoi(line.c_str());
+						isValid[prefixIndex] = true;
+					}
+					continue;
 				}
-				continue;
-			}
 
-			// PCAP_FILE
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
+
+				// PCAP_FILE
+				prefixIndex++;
+				prefix = m_prefixes[prefixIndex];
+				if(!line.substr(0, prefix.size()).compare(prefix))
 				{
-					m_pathPcapFile = line;
-					isValid[prefixIndex] = true;
+					line = line.substr(prefix.size() + 1, line.size());
+					if(line.size() > 0)
+					{
+						m_pathPcapFile = line;
+						isValid[prefixIndex] = true;
+					}
+					continue;
 				}
-				continue;
+			}
+			else
+			{
+				isValid[prefixIndex] = true;
+				prefixIndex++;
+				isValid[prefixIndex] = true;
 			}
 
 			// GO_TO_LIVE
@@ -1911,6 +1921,12 @@ bool Config::GetReadPcap()
 	return m_readPcap;
 }
 
+bool Config::GetCustomReadPcap()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_readCustomPcap;
+}
+
 int Config::GetSaveFreq()
 {
 	Lock lock(&m_lock, READ_LOCK);
@@ -2217,6 +2233,12 @@ void Config::SetReadPcap(bool readPcap)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_readPcap = readPcap;
+}
+
+void Config::SetReadCustomPcap(bool readCustomPcap)
+{
+	Lock lock(&m_lock, WRITE_LOCK);
+	m_readCustomPcap = readCustomPcap;
 }
 
 void Config::SetSaveFreq(int saveFreq)

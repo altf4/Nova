@@ -66,6 +66,7 @@ var crypto = require('crypto');
 var exec = require('child_process').exec;
 var nowjs = require("now");
 var Validator = require('validator').Validator;
+var sanitizeCheck = require('validator').sanitize;
 
 var Tail = require('tail').Tail;
 var NovaHomePath = NovaCommon.config.GetPathHome();
