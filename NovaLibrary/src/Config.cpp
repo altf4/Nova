@@ -62,7 +62,6 @@ string Config::m_prefixes[] =
 	"K",
 	"EPS",
 	"CLASSIFICATION_THRESHOLD",
-	"USER_HONEYD_CONFIG",
 	"DOPPELGANGER_IP",
 	"DOPPELGANGER_INTERFACE",
 	"DM_ENABLED",
@@ -76,7 +75,6 @@ string Config::m_prefixes[] =
 	"SMTP_USEAUTH",
 	"RECIPIENTS",
 	"SERVICE_PREFERENCES",
-	"HAYSTACK_STORAGE",
 	"WHITELIST_FILE",
 	"MIN_PACKET_THRESHOLD",
 	"CUSTOM_PCAP_FILTER",
@@ -128,7 +126,7 @@ Config::Config()
 		// Do not call LOG here, Config and logger are not yet initialized
 		cout << "CRITICAL ERROR: InitUserConfigs failed" << endl;
 	}
-
+	m_readCustomPcap = false;
 	m_configFilePath = m_pathHome + string("/config/NOVAConfig.txt");
 	m_userConfigFilePath = m_pathHome + string("/config/settings");
 	LoadUserConfig();
@@ -144,6 +142,7 @@ Config::~Config()
 void Config::LoadCustomSettings(int argc,  char** argv)
 {
 	string pCAPFilePath;
+
 	namespace po = boost::program_options;
 	po::options_description desc("Command line options");
 	try
@@ -388,21 +387,6 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
-			// USER_HONEYD_CONFIG
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_pathConfigHoneydUser = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-
 			// DOPPELGANGER_IP
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -596,47 +580,6 @@ void Config::LoadConfig_Internal()
 				{
 					m_loggerPreferences = line;
 					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// HAYSTACK_STORAGE
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-
-				if(line.size() > 0)
-				{
-
-					switch(line.at(0))
-					{
-						case 'E'://E will be implemented with multiple configuration support
-						case 'M':
-						{
-							m_haystackStorage = line.at(0);
-							//Needs a file or dir path
-							if(line.size() > 2)
-							{
-								m_userPath = line.substr(2, line.size());
-								isValid[prefixIndex] = true;
-							}
-							break;
-						}
-						case 'I':
-						{
-							m_haystackStorage = 'I';
-							m_userPath = m_pathHome + "/config/haystack_honeyd.config";
-							isValid[prefixIndex] = true;
-							break;
-						}
-						default:
-						{
-							//Invalid entry
-							break;
-						}
-					}
 				}
 				continue;
 			}
@@ -1431,13 +1374,6 @@ bool Config::SaveConfig()
 				continue;
 			}
 
-			prefix = "USER_HONEYD_CONFIG";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetPathConfigHoneydUser() << endl;
-				continue;
-			}
-
 			prefix = "DOPPELGANGER_IP";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -1513,17 +1449,7 @@ bool Config::SaveConfig()
 				}
 				continue;
 			}
-			prefix = "HAYSTACK_STORAGE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " <<  m_haystackStorage;
-				if(m_haystackStorage == 'M')
-				{
-					*out << " " << m_userPath;
-				}
-				*out << endl;
-				continue;
-			}
+
 
 			prefix = "CAPTURE_BUFFER_SIZE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
@@ -1611,7 +1537,7 @@ string Config::ToString()
 		ss << ifList[i];
 	}
 	ss << "GetPathCESaveFile() " << GetPathCESaveFile() << endl;
-	ss << "GetPathConfigHoneydDm() " << GetPathConfigHoneydUser() << endl;
+	//ss << "GetPathConfigHoneydDm() " << GetPathConfigHoneydUser() << endl; REMOVE ME
 	ss << "GetPathConfigHoneydHs() " << GetPathConfigHoneydHS() << endl;
 	ss << "GetPathPcapFile() " << GetPathPcapFile() << endl;
 
@@ -2414,30 +2340,6 @@ string Config::GetPathHome()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_pathHome;
-}
-
-char Config::GetHaystackStorage()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_haystackStorage;
-}
-
-void Config::SetHaystackStorage(char haystackStorage)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_haystackStorage = haystackStorage;
-}
-
-string Config::GetUserPath()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_userPath;
-}
-
-void Config::SetUserPath(string userPath)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_userPath = userPath;
 }
 
 uint Config::GetMinPacketThreshold()

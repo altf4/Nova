@@ -346,9 +346,6 @@ private:
 
 	std::string m_trainingSession;
 
-	char m_haystackStorage;
-	std::string m_userPath;
-
 	std::vector<std::string> m_classifierEngines;
 	std::vector<std::string> m_classifierConfigs;
 	std::vector<CLASSIFIER_MODES> m_classifierTypes;

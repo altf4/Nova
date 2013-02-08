@@ -65,11 +65,6 @@ form(method="post", action="/configureNovaSave")
   label Path to PCAP file
   input.wide(type="text", name="PCAP_FILE",  value=PCAP_FILE)
   br
-
-  label Path to User Honeyd Config
-  input.wide(type="text", name="USER_HONEYD_CONFIG",  value=USER_HONEYD_CONFIG)
-  br
-  
   
   label Path to Haystack Honeyd Config File
   input.wide(type="text", name="HS_HONEYD_CONFIG",  value=HS_HONEYD_CONFIG)
@@ -243,10 +238,6 @@ form(method="post", action="/configureNovaSave")
   
   label Remote Log Server IP
   input(name="RSYSLOG_IP", value=RSYSLOG_IP, id='RSYSLOG_IP', onfocus='watermark("RSYSLOG_IP", "NULL")', onblur='watermark("RSYSLOG_IP", "NULL")')
-  br
-
-  label Haystack Storage
-  input(name="HAYSTACK_STORAGE",  value=HAYSTACK_STORAGE)
   br
 
   h2 Master Multi-Instance User Interface
