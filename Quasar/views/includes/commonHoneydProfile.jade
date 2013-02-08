@@ -273,6 +273,12 @@ script
                             return false;
                         }
                     }
+
+                    if (port.portNum == 0)
+                    {
+                        alert("Port can't be 0!");
+                        return false;
+                    }
                     PortExceptions.push(port);
             }
             for (var i in profile.portSets)

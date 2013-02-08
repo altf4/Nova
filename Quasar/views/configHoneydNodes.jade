@@ -20,6 +20,13 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
 
+  style
+    label.nodeAdd {
+        text-align: right;
+        margin-right: 5px;
+        margin-top: 5px;
+    }
+
   script
     var currentInterface;
     var pfile;
@@ -347,22 +354,21 @@ block headerAdditions
     }
 
 block content
-  h1 Current Haystack Node Configuration
-  h2 Create Honeyd Nodes
-  label Show Only Leaf Profiles?
+  h1 Create Honeyd Nodes
+  label.nodeAdd Show Only Leaf Profiles?
   input(type='checkbox', checked=true, onclick='repopulateSelect(this)')
   br
   br
-  label Profile
+  label.nodeAdd Profile
   select#profile(name="profile", onchange='profileChanged()')
     each profile, i in profiles
       option #{profile}
   br
-  label Portset
+  label.nodeAdd Portset
   select#portSetList(name="profile", onchange='portsetSelectionChanged()')
   br
   br
-  div(style="margin-left: 300px; height: 200px; overflow-y: scroll;")
+  div(style="margin-left: 300px; height: 200px; overflow-y: scroll; display: inline-block; margin-right: 20px; border: 1px solid black")
     table(border='1')
       thead
         th(style='background-color: #d0e9fc;') Port Number
@@ -371,15 +377,15 @@ block content
       tbody#portsetHook
   br
   
-  label Ethernet Vendor
+  label.nodeAdd Ethernet Vendor
   select#vendorList(name"vendorList")
   br
 
-  label Number of nodes to create
+  label.nodeAdd Number of nodes to create
   input#nodeCount(type="number", name="nodeCount", min="1", value="1")
   
   br
-  label Network Interface
+  label.nodeAdd Network Interface
   table
     thead
       tr 
@@ -387,27 +393,27 @@ block content
     - if(INTERFACES.length == 1)
       tr 
         td
-          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
+          input(type="radio", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
           #{INTERFACES[0]} (Alias: #{interfaceAliases[0]})
     - else
       tr 
         td
-          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
+          input(type="radio", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
           #{INTERFACES[0]} (Alias: #{interfaceAliases[0]})
       - for (var i = 1; i < INTERFACES.length; i++)
           tr 
             td
-              input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne('if#{i}')")
+              input(type="radio", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne('if#{i}')")
               #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
   hidden(id="length", value=INTERFACES.length)
   br
-  label IP Address Range Type
+  label.nodeAdd IP Address Allocation Type
   select#ipType(name="ipType", onChange="ipTypeChanged()")
     option DHCP
     option IP Range
 
   br
-  label Starting IP address
+  label.nodeAdd Starting IP address
   input.ip#ip1(type="number", name="ip1", min="0", max="255", value="0", disabled="disabled")
   input.ip#ip2(type="number", name="ip2", min="0", max="255", value="0", disabled="disabled")
   input.ip#ip3(type="number", name="ip3", min="0", max="255", value="0", disabled="disabled")

@@ -113,7 +113,7 @@ Config *Config::Inst()
 Config::Config()
 {
 	pthread_rwlock_init(&m_lock, NULL);
-
+	m_readCustomPcap = false;
 	m_pathPrefix = GetEnvVariable("NOVA_PATH_PREFIX");
 	if (m_pathPrefix.compare(""))
 	{
