@@ -72,7 +72,7 @@ Getting Dependencies on Ubuntu
   Nova: Honeyd. We will have to download some extra libraries for Honeyd as
   well; you can get them using this command:
 
-    sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake 
+    sudo apt-get install libevent-dev libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake tcl perl python
 
 - For the Honeyd Autoconfiguration tool, we require Nmap 6.00 or higher.
   If you have an Ubuntu version older than 12.10 you'll need to install from
