@@ -69,6 +69,9 @@ block headerAdditions
       });
       
       setUpClientsList('clientsList');
+      setTimeout(function(){
+        setUpClientsList('clientsList');
+      }, 3000);
       setUpGroups('appendHook');
       
       var members = '';
