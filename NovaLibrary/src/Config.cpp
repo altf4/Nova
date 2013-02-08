@@ -282,7 +282,7 @@ void Config::LoadConfig_Internal()
 
 			// READ_PCAP
 			prefixIndex++;
-			if(this->GetCustomReadPcap() == false)//if custom pcap isn't set then use the installed one
+			if(this->GetCustomReadPcap() == false)
 			{
 				prefix = m_prefixes[prefixIndex];
 				if(!line.substr(0, prefix.size()).compare(prefix))
@@ -313,7 +313,9 @@ void Config::LoadConfig_Internal()
 			}
 			else
 			{
-				prefixIndex++;//still increment the prefix so we can continue
+				isValid[prefixIndex] = true;
+				prefixIndex++;
+				isValid[prefixIndex] = true;
 			}
 
 			// GO_TO_LIVE

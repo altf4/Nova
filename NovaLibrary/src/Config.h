@@ -296,7 +296,7 @@ private:
 	double m_classificationThreshold;
 
 	bool m_readPcap;
-	bool m_readCustomPcap;
+	bool m_readCustomPcap = false;
 	bool m_gotoLive;
 	bool m_isDmEnabled;
 
