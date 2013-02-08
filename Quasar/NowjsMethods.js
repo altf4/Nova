@@ -526,13 +526,37 @@ everyone.now.SaveProfile = function (profile, cb)
         return;
     }
 
-	// Check we have ethernet vendors
-	if (profile.ethernet.length == 0)
-	{
+    // Check we have ethernet vendors
+    if (profile.ethernet.length == 0)
+    {
         var err = "ERROR: Must have at least one ethernet vendor!";
         cb && cb(err);
         return;
-	}
+    }
+
+
+    // Check for valid drop percentage
+    if (isNaN(parseInt(profile.dropRate)))
+    {
+        cb && cb("ERROR: Can't convert drop rate to integer");
+        return;
+    }
+
+    profile.dropRate = parseInt(profile.dropRate);
+
+    if (profile.dropRate < 0 || profile.dropRate > 100)
+    {
+        cb && cb("ERROR: Droprate must be between 0 and 100");
+        return;
+    }
+
+    // Check uptimes
+    if (profile.uptimeValueMax < 0 || profile.uptimeValueMin < 0)
+    {
+        cb && cb("ERROR: Uptime must be a positive integer");
+        return;
+    }
+
 
     // Check that we have the scriptnames set for profiles that need scripts
     for (var i = 0; i < profile.portSets.length; i++) 
@@ -540,6 +564,19 @@ everyone.now.SaveProfile = function (profile, cb)
         for (var j = 0; j < profile.portSets[i].PortExceptions.length; j++)
         {
             var port = profile.portSets[i].PortExceptions[j];
+
+
+            if (isNaN(parseInt(port.portNum)))
+            {
+                cb && cb("ERROR: unable to parse port into an integer!");
+                return;
+            }
+
+
+            if (parseInt(port.portNum) <= 0 || parseInt(port.portNum) > 65535) {
+                cb && cb("ERROR: Unable to save profile with invalid port number!");
+                return;
+            }
 
             if (port.behavior == "script" || port.behavior == "tarpit script") {
                 if (port.scriptName == "" || port.scriptName == "NA") {
