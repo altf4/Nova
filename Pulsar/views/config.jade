@@ -136,8 +136,11 @@ block content
   //the user and redirect to main page
   button(id='updateButton', onclick='updateConfiguration();') Submit Configuration
   br
+  br
   button(id='manualConfigure', onclick='manualConfigure();') Manually Configure
   select(id='selectClient') 
+  br
+  p(style='font-style: italic;') Clicking "Manually Configure" will open a new window
   
 block headerAdditions
   script(type='text/javascript', src='scripts/Config.js')

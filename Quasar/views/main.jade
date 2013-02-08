@@ -621,18 +621,23 @@ block headerAdditions
 
     function init()
     {
+        var initialized = false;
         now.ready(function()
         {
-            now.updateHaystackStatus = updateHaystackStatus;
-            now.updateNovadStatus = updateNovadStatus;
-            now.IsHaystackUp(updateHaystackStatus);
-            now.IsNovadUp(updateNovadStatus);
+            if (!initialized)
+            {
+                initialized = true;
+                now.updateHaystackStatus = updateHaystackStatus;
+                now.updateNovadStatus = updateNovadStatus;
+                now.IsHaystackUp(updateHaystackStatus);
+                now.IsNovadUp(updateNovadStatus);
 
-            now.AllSuspectsCleared = AllSuspectsCleared;
-            now.SuspectCleared = SuspectCleared;
-            now.OnNewSuspect = OnNewSuspect;
+                now.AllSuspectsCleared = AllSuspectsCleared;
+                now.SuspectCleared = SuspectCleared;
+                now.OnNewSuspect = OnNewSuspect;
 
-            Init();
+                Init();
+            }
         });
     };
 

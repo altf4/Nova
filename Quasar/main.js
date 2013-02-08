@@ -511,7 +511,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
               var executionString = 'haystackautoconfig';
               var nFlag = '-n';
               var rFlag = '-r';
-              var iFlag = '--nodeinterface';
+              var iFlag = '-i';
               var eFlag = '-e';
             
               var hhconfigArgs = new Array();

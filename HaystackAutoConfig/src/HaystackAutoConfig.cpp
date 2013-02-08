@@ -133,7 +133,9 @@ int main(int argc, char ** argv)
 		if(vm.count("help"))
 		{
 			cout << desc << endl;
-			return HHC_CODE_OKAY;
+			lockFile.close();
+			remove(lockFilePath.c_str());
+			exit(HHC_CODE_OKAY);
 		}
 
 		if(vm.count("group") && vm.count("append-to"))
@@ -224,7 +226,7 @@ int main(int argc, char ** argv)
 		cout << "Creating nodes on interface " << nodeInterface << endl;
 		if(vm.count("scaninterface"))
 		{
-			vector<string> interfaces_flag = vm["interface"].as< vector<string> >();
+			vector<string> interfaces_flag = vm["scaninterface"].as< vector<string> >();
 
 			for(uint i = 0; i < interfaces_flag.size(); i++)
 			{
@@ -404,8 +406,10 @@ int main(int argc, char ** argv)
 	catch(exception &e)
 	{
 		LOG(ERROR, "Uncaught exception: " + string(e.what()) + ".", "");
-
+		lockFile.close();
+		remove(lockFilePath.c_str());
 		cout << '\n' << desc << endl;
+		return HHC_CODE_GENERIC_ERROR;
 	}
 }
 

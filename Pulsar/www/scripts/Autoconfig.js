@@ -144,9 +144,9 @@ function createAutoconfigElement(clientName, group)
   labelBold.setAttribute('style', 'font-weight: bold;');
   var label = document.createElement('label');
   label.innerHTML = ': Create ';
-  label.id = 'label' + elementCount;
+  label.id = 'label' + clientName;
   var inputType = document.createElement('select');
-  inputType.id = 'type' + elementCount;
+  inputType.id = 'type' + clientName;
   var types = ['number', 'ratio', 'range'];
   
   for(var i = 0; i < types.length; i++)
@@ -156,10 +156,10 @@ function createAutoconfigElement(clientName, group)
     option.innerHTML = types[i];
     inputType.appendChild(option);
   }
-  inputType.setAttribute('onclick', 'changeLabel(document.getElementById("type' + elementCount + '").value, ' + elementCount + ')');
+  inputType.setAttribute('onclick', 'changeLabel(document.getElementById("type' + clientName + '").value, "' + clientName + '")');
   
   var input = document.createElement('input');
-  input.id = 'input' + elementCount;
+  input.id = 'input' + clientName;
   input.type = 'number';
   input.min = '0';
   //This needs to be found dynamically
@@ -169,7 +169,7 @@ function createAutoconfigElement(clientName, group)
   //host with clientId clientName
   var label1 = document.createElement('label');
   label1.innerHTML = ' nodes on ';
-  label1.id = 'change' + elementCount;
+  label1.id = 'change' + clientName;
   var dropDown = document.createElement('select');
   
   now.GetInterfacesOfClient(clientName, function(interfaces){
@@ -225,6 +225,39 @@ function removeAutoconfigElement(target)
   }
 }
 
+function isIp(ip)
+{
+  var d = ip.split('.'), i = d.length;
+  if (i != 4)
+  {
+    return false;
+  }
+  var ok = true;
+  while (i-- && ok) 
+  {
+    ok = false;
+    if (d[i].length != 0) if (parseInt(d[i])) if (d[i] > -1 && d[i] < 256) ok = true;
+  }
+  return ok;
+}
+
+function isIpRange(source)
+{
+  if(document.getElementById(source).value == '')
+  {
+    return false;
+  }
+  var range = document.getElementById(source).value.strip().split('-');
+  if(isIp(range[0]) && isIp(range[1]))
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
 function processAutoconfigElements()
 {
   var loopIter = document.getElementById('autoconfElements');
@@ -239,13 +272,22 @@ function processAutoconfigElements()
       var s = simple.childNodes[2];
       autoconfMessage.numNodesType = s.options[s.selectedIndex].value;
       autoconfMessage.numNodes = simple.childNodes[3].value;
-      if(/^[0-9]+$/i.test(autoconfMessage.numNodes.toString()) == false)
+      if(/^[0-9]+$/i.test(autoconfMessage.numNodes.toString()) == false 
+         && (autoconfMessage.numNodesType == 'number' || autoconfMessage.numNodesType == 'ratio')
+         && parseInt(autoconfMessage.numNodes) <= 0)
       {
         simple.childNodes[3].value = '0';
         alert('Number of nodes/ratio of nodes to create must be a digit');
         return;
       }
-      autoconfMessage.interface = simple.childNodes[5].value;
+      else if(autoconfMessage.numNodesType == 'range' 
+              && !isIpRange('input' + autoconfMessage.id))
+      {
+        simple.childNodes[3].value = '';
+        alert('Ip range formatted incorrectly');
+        return;
+      }
+      autoconfMessage.ethinterface = simple.childNodes[5].value;
       now.MessageSend(autoconfMessage);
     }
     loopIter.removeChild(loopIter.lastChild);
