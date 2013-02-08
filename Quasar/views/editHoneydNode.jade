@@ -154,7 +154,7 @@ block headerAdditions
       if(err != null)
       {
         alert("Unable to complete operation due to error: " + err);
-        window.location = "/honeydConfigManage?tag=settingsNodes";
+        window.location = "/honeydConfigManage?tab=settingsNodes";
         return;
       }
      now.IsHaystackUp(checkIfRestartNeeded); 
@@ -171,7 +171,7 @@ block headerAdditions
         }
       }
 
-      window.location = "/configHoneydNodes";
+      window.location = "/honeydConfigManage?tab=settingsNodes";
     }
 
     function ipTypeChanged()
@@ -194,29 +194,7 @@ block headerAdditions
     
     function checkOnlyOne(checkedBox)
     {
-      var forLength = document.getElementById("length").getAttribute("value");
-      
-      var checkAgainst = checkedBox.getAttribute("id");
       currentInterface = checkedBox.value;
-      
-      if(forLength == 1)
-      {
-        checkedBox.checked = true;
-        return;
-      }
-      
-      for(var i = 0; i < forLength; i++)
-      {
-        if(checkAgainst !== ("if" + i))
-        {
-          document.getElementById("if" + i).checked = false;
-        }
-      }
-      
-      if(!checkedBox.checked)
-      {
-        checkedBox.checked = true; 
-      }  
     }
 
     function GenerateMac()
@@ -286,24 +264,24 @@ block content
     - if(INTERFACES.length == 1)
       tr 
         td
-          input(type="checkbox", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onchange="checkOnlyOne(if0)")
+          input(type="radio", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onchange="checkOnlyOne(if0)")
           #{INTERFACES[0]}
     - else
       - for (var i = 0; i < INTERFACES.length; i++)
           tr 
             td
               - if (String(interface) == String(INTERFACES[i]))
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", checked, width=10, onchange="checkOnlyOne(if#{i})")
+                input(type="radio", value=INTERFACES[i], id="if#{i}", name="interface", checked, width=10, onchange="checkOnlyOne(if#{i})")
                 #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
               - else
-                input(type="checkbox", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onchange="checkOnlyOne(if#{i})")
+                input(type="radio", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onchange="checkOnlyOne(if#{i})")
                 #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
 
   hidden(id="length", value=INTERFACES.length)
  
   br
   br
-  label IP Address Range Type
+  label IP Address Allocation Type
   select#ipType(name="ipType", onChange="ipTypeChanged()")
     if ip == 'DHCP'
       option(SELECTED) DHCP
@@ -311,9 +289,9 @@ block content
       option DHCP
 
     if ip == 'DHCP'
-      option IP Address
+      option Static Address
     else
-      option(SELECTED) IP Address
+      option(SELECTED) Static Address
 
   br
   label IP address
