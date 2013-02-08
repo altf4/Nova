@@ -88,17 +88,6 @@ THINNING_DISTANCE 0.001
 CLASSIFICATION_THRESHOLD 0.5
 
 ############################################
-# USER_HONEYD_CONFIG #
-############################################
-#
-# Path relative to nova where the honeyd
-# configuration file resides.
-#
-# EXAMPLE:
-#USER_HONEYD_CONFIG config/user_honeyd.config
-USER_HONEYD_CONFIG config/user_honeyd.config
-
-############################################
 # DOPPELGANGER_IP #
 ############################################
 #
@@ -321,19 +310,6 @@ SERVICE_PREFERENCES 0:1+;1:6+;
 # alerts. You must also set SERVICE_PREFERENCES
 # and the SMTP settings to get email alerts.
 EMAIL_ALERTS_ENABLED 0
-
-
-############################################
-# HAYSTACK_STORAGE #
-############################################
-#
-# Specifies the way Nova loads and saves the haystack
-# ( 'I' | 'M [path]' )
-# I - (Internal - Default) Store haystack at /usr/share/nova/nova/config
-# M [path] - (Manual) Run honeyd using the configuration in the file specified instead of Nova's configuration
-#
-# HAYSTACK_STORAGE I
-HAYSTACK_STORAGE I
 
 
 ############################################

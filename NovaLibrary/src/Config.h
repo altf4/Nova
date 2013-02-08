@@ -296,7 +296,7 @@ private:
 	double m_classificationThreshold;
 
 	bool m_readPcap;
-	bool m_readCustomPcap = false;
+	bool m_readCustomPcap;
 	bool m_gotoLive;
 	bool m_isDmEnabled;
 
@@ -345,9 +345,6 @@ private:
 	std::string m_pathIcon;
 
 	std::string m_trainingSession;
-
-	char m_haystackStorage;
-	std::string m_userPath;
 
 	std::vector<std::string> m_classifierEngines;
 	std::vector<std::string> m_classifierConfigs;
