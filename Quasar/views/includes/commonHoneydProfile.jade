@@ -489,7 +489,7 @@ script
                                 {
                                     //need conditional here for add vs. edit, false == edit, true == add
                                     try {
-                                        now.SaveProfile(profile, savedChanges);
+                                        now.SaveProfile(profile, newProfile == "true", savedChanges);
                                     } catch (err)
                                     {
                                         alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
@@ -509,6 +509,7 @@ script
                         now.IsHaystackUp(checkIfRestartNeeded); 
                     } else {
                         alert("Unable to save profile: " + err);
+                        return;
                     }
                 };
 

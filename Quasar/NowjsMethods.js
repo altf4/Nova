@@ -513,7 +513,7 @@ function jsProfileToHoneydProfile(profile)
 
 
 //portSets = A 2D array. (array of portSets, which are arrays of Ports)
-everyone.now.SaveProfile = function (profile, cb)
+everyone.now.SaveProfile = function (profile, newProfile, cb)
 {
     // Check input
     var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
@@ -525,6 +525,18 @@ everyone.now.SaveProfile = function (profile, cb)
         cb(err);
         return;
     }
+
+    // Check for duplicate profile
+    if (newProfile) 
+    {
+        var existingProfile = NovaCommon.honeydConfig.GetProfile(profile.name);
+        if (existingProfile != null)
+	{
+	    cb && cb("ERROR: Profile with name already exists");
+	    return;
+	}
+    }
+
 
     // Check we have ethernet vendors
     if (profile.ethernet.length == 0)
