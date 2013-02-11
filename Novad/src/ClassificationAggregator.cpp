@@ -136,6 +136,16 @@ double ClassificationAggregator::Classify(Suspect *s)
     //cout << endl;
     s->SetClassification(classification);
 
+
+    if (classification > Config::Inst()->GetClassificationThreshold())
+    {
+    	s->SetIsHostile(true);
+    }
+    else
+    {
+    	s->SetIsHostile(false);
+    }
+
 	return classification;
 }
 
