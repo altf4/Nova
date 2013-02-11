@@ -157,6 +157,7 @@ void Config::LoadCustomSettings(int argc,  char** argv)
 		if(vm.count("help"))
 		{
 			std::cout << desc << std::endl;
+			exit(EXIT_SUCCESS);
 		}
 		if(vm.count("pcap-file"))
 		{
@@ -168,6 +169,7 @@ void Config::LoadCustomSettings(int argc,  char** argv)
 	{
 		LOG(ERROR, "Uncaught exception: " + string(e.what()) + ".", "");
 		std::cout << '\n' << desc << std::endl;
+		exit(EXIT_FAILURE);
 	}
 }
 
