@@ -468,12 +468,33 @@ script
 
                         profile.personality = dojo.byId("personality").value;
                         profile.dropRate = dojo.byId("dropRate").value;
+
+                        var value = parseInt(dojo.byId("uptimeMin").value);
+                        if (isNaN(value) || value < 0)
+                        {
+                            alert("Uptime min must be a positive integer!");
+                            return;
+                        }
+
+
                         profile.uptimeMin = dojo.byId("uptimeMin").value;
 
                         if (dojo.byId("uptimeType").selectedIndex == 0)
                         {
+                                var value = parseInt(dojo.byId("uptimeMin").value);
+                                if (isNaN(value) || value < 0)
+                                {
+                                    alert("Uptime max must be a positive integer!");
+                                    return;
+                                }
                                 profile.uptimeMax = dojo.byId("uptimeMin").value;
                         }  else {
+                                var value = parseInt(dojo.byId("uptimeMax").value);
+                                if (isNaN(value) || value < 0)
+                                {
+                                    alert("Uptime max must be a positive integer!");
+                                    return;
+                                }
                                 profile.uptimeMax = dojo.byId("uptimeMax").value;
                         }
 
