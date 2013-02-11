@@ -770,7 +770,7 @@ void UpdateAndClassify(SuspectIdentifier key)
 			SendSuspectToUIs(&suspectCopy);
 		}
 
-		LOG(ALERT, "Detected potentially hostile traffic from " + suspectCopy.GetIpString(), "");
+		LOG(ALERT, "Detected potentially hostile traffic from: " + suspectCopy.ToString(), "");
 	}
 	else
 	{
