@@ -99,7 +99,7 @@ void Database::InsertSuspectHostileAlert(Suspect *suspect)
 
 
 	ss << "INSERT INTO suspect_alerts VALUES (NULL, '";
-	ss << suspect->GetIpString() << "', " << "datetime('now')" << ",";
+	ss << suspect->GetIpString() << "', '" << suspect->GetInterface() << "', datetime('now')" << ",";
 	ss << "last_insert_rowid()" << "," << suspect->GetClassification() << ")";
 
 	char *zErrMsg = 0;

@@ -6,6 +6,7 @@ PRAGMA journal_mode = WAL;
 CREATE TABLE suspect_alerts (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	suspect VARCHAR(40),
+	interface VARCHAR(40),
 	timestamp TIMESTAMP,
 	statistics INT,
 	classification DOUBLE
