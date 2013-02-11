@@ -822,7 +822,6 @@ app.get('/advancedOptions', function (req, res)
             , K: NovaCommon.config.ReadSetting("K")
             , EPS: NovaCommon.config.ReadSetting("EPS")
             , CLASSIFICATION_THRESHOLD: NovaCommon.config.ReadSetting("CLASSIFICATION_THRESHOLD")
-            , DATAFILE: NovaCommon.config.ReadSetting("DATAFILE")
             , DOPPELGANGER_IP: NovaCommon.config.ReadSetting("DOPPELGANGER_IP")
             , DOPPELGANGER_INTERFACE: NovaCommon.config.ReadSetting("DOPPELGANGER_INTERFACE")
             , DM_ENABLED: NovaCommon.config.ReadSetting("DM_ENABLED")
@@ -1669,7 +1668,7 @@ app.post('/configureNovaSave', function (req, res)
     // TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
     var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
     "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
-    "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "DOPPELGANGER_IP", 
+    "K", "EPS", "CLASSIFICATION_THRESHOLD", "DOPPELGANGER_IP", 
     "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", 
     "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", 
     "SERVICE_PREFERENCES", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", 
