@@ -1,0 +1,271 @@
+//- ============================================================================
+//-  Copyright   : DataSoft Corporation 2011-2013
+//-  Nova is free software: you can redistribute it and/or modify
+//-   it under the terms of the GNU General Public License as published by
+//-   the Free Software Foundation, either version 3 of the License, or
+//-   (at your option) any later version.
+//-
+//-   Nova is distributed in the hope that it will be useful,
+//-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//-   GNU General Public License for more details.
+//-
+//-   You should have received a copy of the GNU General Public License
+//-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
+//- ============================================================================
+
+script
+  function watermark(source, text){
+    var ele = document.getElementById(source);
+    if(ele.value == '')
+    {
+      ele.value = text; 
+    } 
+    else
+    {
+       
+    }
+  }
+
+  function init()
+  {
+  }
+  
+form(method="post", action="/configureNovaSave")
+  h2 General Configuration
+
+  h2 Web Interface
+
+  label Web interface port
+  input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
+  br
+
+  a(href="/editTLSCerts")
+    label Click to upload new TLS certificates
+  br
+  br
+
+  a(href="#", onclick="if (confirm('Are you sure you want to do this? This will shutdown the Quasar web UI. If upstart is configured, it may be restarted.')) {now.shutdownQuasar(); window.location = '/';}")
+    label Shut down Quasar
+  br
+
+  h2 File Paths
+  label Path to state save file
+  input.wide(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
+  br
+  
+  label Classification Training Data
+  input(name="TRAINING_DATA_PATH",  value=TRAINING_DATA_PATH)
+  br
+  
+  label Path to training file
+  input.wide(type="text", name="DATAFILE",  value=DATAFILE)
+  br
+   
+  label Path to PCAP file
+  input.wide(type="text", name="PCAP_FILE",  value=PCAP_FILE)
+  br
+  
+  label Path to Haystack Honeyd Config File
+  input.wide(type="text", name="HS_HONEYD_CONFIG",  value=HS_HONEYD_CONFIG)
+  br
+
+  h2 TCP Timeout
+  label TCP Timeout
+  input(type="number", step="1", min="0", name="TCP_TIMEOUT",  value=TCP_TIMEOUT)
+  br
+
+  label TCP Timeout Check Frequency
+  input(type="number", step="1", min="0", name="TCP_CHECK_FREQ",  value=TCP_CHECK_FREQ)
+  br
+
+  h2 Special Run Settings
+  label Read PCAP file?
+  br
+  if READ_PCAP != "0"
+    input(type="radio", name="READ_PCAP", value="1", checked)
+    |Yes
+    br
+    input(type="radio", name="READ_PCAP", value="0")
+    |No
+    br
+  else
+    input(type="radio", name="READ_PCAP", value="1")
+    |Yes
+    br
+    input(type="radio", name="READ_PCAP", value="0", checked)
+    |No
+    br
+  br
+
+  label Go to live capture after PCAP?
+  br
+  if GO_TO_LIVE != "0"
+    input(type="radio", name="GO_TO_LIVE", value="1", checked)
+    |Yes
+    br
+    input(type="radio", name="GO_TO_LIVE", value="0")
+    |No
+    br
+  else
+    input(type="radio", name="GO_TO_LIVE", value="1")
+    |Yes
+    br
+    input(type="radio", name="GO_TO_LIVE", value="0", checked)
+    |No
+    br
+  br
+  
+  label Packet Capture Buffer Size (in bytes)
+  input(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE",  value=CAPTURE_BUFFER_SIZE)
+  br
+  
+
+  h2 Classification Settings
+  a(href='/editClassifiers')
+    label Edit Classifiers (advanced users only)
+  br
+  
+  input(type="hidden", id="FEATURE_WEIGHTS", name="FEATURE_WEIGHTS", value="#{FEATURE_WEIGHTS}") 
+  input(type="hidden", id="THRESHOLD_HOSTILE_TRIGGERS", name="THRESHOLD_HOSTILE_TRIGGERS", value="#{THRESHOLD_HOSTILE_TRIGGERS}") 
+
+
+  
+  label Neighbors
+  input(type="number", step="1", min="1", name="K",  value=K)
+  br
+  
+  label Only classify packets going to honeypots?
+  br
+  if ONLY_CLASSIFY_HONEYPOT_TRAFFIC != "0"
+    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="1", checked)
+    |Yes
+    br
+    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="0")
+    |No
+    br
+  else
+    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="1")
+    |Yes
+    br
+    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="0", checked)
+    |No
+    br
+  br
+  
+  label Classification Timeout
+  input(type="number", step="1", min="0", name="CLASSIFICATION_TIMEOUT",  value=CLASSIFICATION_TIMEOUT)
+  br
+
+  label EPS
+  input(name="EPS",  value=EPS)
+  br
+
+  label Classification Threshold
+  input(name="CLASSIFICATION_THRESHOLD",  value=CLASSIFICATION_THRESHOLD)
+  br
+
+  label Packets Needed Before Classification
+  input(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
+  br
+
+  label Clear data after suspect logged as hostile?
+  br
+  if CLEAR_AFTER_HOSTILE_EVENT != "0"
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
+    |Yes
+    br
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0")
+    |No
+    br
+  else
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1")
+    |Yes
+    br
+    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0", checked)
+    |No
+    br
+  br
+
+  label Custom PCAP Filter String
+  input.wide(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
+  br
+  
+  label Custom PCAP Filter String Mode
+  br
+  if CUSTOM_PCAP_MODE != "0"
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="1", checked)
+    |Override
+    br
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0")
+    |Append
+    br
+  else
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="1")
+    |Override
+    br
+    input(type="radio", name="CUSTOM_PCAP_MODE", value="0", checked)
+    |Append
+    br
+  br
+
+  h2 Training Mode Settings
+
+  label Thinning Distance
+  input(name="THINNING_DISTANCE",  value=THINNING_DISTANCE)
+  br
+
+  h2 Doppelganger
+  label Doppelganger IP
+  input(name="DOPPELGANGER_IP",  value=DOPPELGANGER_IP)
+  br
+
+  label State save frequency
+  input(type="number", min="0", name="SAVE_FREQUENCY",  value=SAVE_FREQUENCY)
+  br
+
+  label Data TTL
+  input(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
+  br
+  
+  h2 Logger Settings
+  label Service Preferences
+  input(name="SERVICE_PREFERENCES", value=SERVICE_PREFERENCES)
+  br
+  
+  p(style="font-style: italic; float: left;") Note: To disable remote logging for Nova, use string NULL or empty the input field
+  br
+  
+  label Remote Log Server IP
+  input(name="RSYSLOG_IP", value=RSYSLOG_IP, id='RSYSLOG_IP', onfocus='watermark("RSYSLOG_IP", "NULL")', onblur='watermark("RSYSLOG_IP", "NULL")')
+  br
+
+    h2 Master Multi-Instance User Interface
+  if MASTER_UI_ENABLED != "0"
+    input(type="radio", name="MASTER_UI_ENABLED", value="1", checked)
+    |Yes
+    br
+    input(type="radio", name="MASTER_UI_ENABLED", value="0")
+    |No
+    br
+  else
+    input(type="radio", name="MASTER_UI_ENABLED", value="1")
+    |Yes
+    br
+    input(type="radio", name="MASTER_UI_ENABLED", value="0", checked)
+    |No
+    br
+
+
+  label Master UI IP
+  input(name="MASTER_UI_IP",  value=MASTER_UI_IP)
+  br
+  
+  label Master UI Client ID
+  input(name="MASTER_UI_CLIENT_ID",  value=MASTER_UI_CLIENT_ID)
+  br
+  
+  label Master UI Reconnect Time
+  input(name="MASTER_UI_RECONNECT_TIME",  value=MASTER_UI_RECONNECT_TIME)
+  br
+
