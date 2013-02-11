@@ -394,17 +394,17 @@ block content
       tr 
         td
           input(type="radio", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
-          #{INTERFACES[0]} (Alias: #{interfaceAliases[0]})
+          #{interfaceAliases[0]}
     - else
       tr 
         td
           input(type="radio", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
-          #{INTERFACES[0]} (Alias: #{interfaceAliases[0]})
+          #{interfaceAliases[0]}
       - for (var i = 1; i < INTERFACES.length; i++)
           tr 
             td
               input(type="radio", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne('if#{i}')")
-              #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
+              #{interfaceAliases[0]}
   hidden(id="length", value=INTERFACES.length)
   br
   label.nodeAdd IP Address Allocation Type

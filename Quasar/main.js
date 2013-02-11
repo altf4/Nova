@@ -1197,11 +1197,13 @@ app.post('/importCaptureSave', function (req, res)
 
 app.get('/configWhitelist', function (req, res)
 {
+    var interfaces = NovaCommon.config.ListInterfaces().sort();
     res.render('configWhitelist.jade', {
         locals: {
             whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
             whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
-            INTERFACES: NovaCommon.config.ListInterfaces().sort()
+      		INTERFACES: interfaces,
+      		interfaceAliases: ConvertInterfacesToAliases(interfaces)
         }
     })
 });
@@ -2187,7 +2189,7 @@ function ConvertInterfaceToAlias(iface)
 {
     if (interfaceAliases[iface] !== undefined) 
     {
-        return interfaceAliases[iface];
+        return interfaceAliases[iface] + ' (' + iface + ')';
     } 
     else 
     {
