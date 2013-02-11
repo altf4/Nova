@@ -267,19 +267,19 @@ script
                 port.protocol = dojo.byId("portType" + portIndexes[i]).value;
 
 
-                    for (var j = 0; j < PortExceptions.length; j++) {
-                        if (PortExceptions[j].portNum == port.portNum && port.protocol == PortExceptions[j].protocol) {
-                            alert("Error: Port " + port.portNum + " is used more than once!");
-                            return false;
-                        }
-                    }
-
-                    if (port.portNum == 0)
-                    {
-                        alert("Port can't be 0!");
+                for (var j = 0; j < PortExceptions.length; j++) {
+                    if (PortExceptions[j].portNum == port.portNum && port.protocol == PortExceptions[j].protocol) {
+                        alert("Error: Port " + port.portNum + " is used more than once!");
                         return false;
                     }
-                    PortExceptions.push(port);
+                }
+
+                if (port.portNum == 0)
+                {
+                    alert("Port can't be 0!");
+                    return false;
+                }
+                PortExceptions.push(port);
             }
             for (var i in profile.portSets)
             {
@@ -372,6 +372,8 @@ script
                 alert("Port sets must have a name.");
                 return;
             }
+            
+            if (!updatePortsModel()) {return};
 
             for (var i in profile.portSets)
             {
@@ -404,9 +406,13 @@ script
         // Currently edited port set has changed
         var portSetSelectionChanged = function()
         {
+            console.log("Running portSetSelectionChanged!")
             if (lastPortSet != "")
             {
-                updatePortsModel();
+                if (!updatePortsModel()) {
+                    document.getElementById("portSetSelection").value = lastPortSet;
+                    return;
+                }
             }
 
             lastPortSet = document.getElementById("portSetSelection").value;
@@ -797,7 +803,6 @@ script
                         {
                                 portIndexes.splice(idx, 1);
                         }
-                        updatePortsModel();
                 };
 
                 inheritanceChanged = function() 
