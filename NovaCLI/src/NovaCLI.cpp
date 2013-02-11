@@ -17,8 +17,9 @@
 //============================================================================
 
 #include "HoneydConfiguration/HoneydConfiguration.h"
-#include "NovaCLI.h"
 #include "nova_ui_core.h"
+#include "Database.h"
+#include "NovaCLI.h"
 #include "Logger.h"
 
 
@@ -80,6 +81,11 @@ int main(int argc, const char *argv[])
 	else if (!strcmp(argv[1], "monitor"))
 	{
 		MonitorCallback();
+	}
+
+	else if (!strcmp(argv[1], "resetpassword"))
+	{
+		ResetPassword();
 	}
 
 	else if (!strcmp(argv[1], "reclassify"))
@@ -419,6 +425,9 @@ void PrintUsage()
 	cout << endl;
 	cout << "  " << EXECUTABLE_NAME << " monitor" << endl;
 	cout << "    Monitors live output from novad (mainly for debugging)" << endl;
+	cout << endl;
+	cout << "  " << EXECUTABLE_NAME << " resetpassword" << endl;
+	cout << "    Reset the Quasar password to nova/toor (add nova user if doesn't exist, otherwise change password to 'toor')" << endl;
 
 	exit(EXIT_FAILURE);
 }
@@ -736,6 +745,13 @@ void ReclassifySuspects()
 	{
 		cout << "Unable to reclassify suspects" << endl;
 	}
+}
+
+void ResetPassword()
+{
+	Database db(Config::Inst()->GetPathHome() + "/data/quasarDatabase.db");
+	db.Connect();
+	db.ResetPassword();
 }
 
 void MonitorCallback()

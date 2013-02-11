@@ -61,6 +61,8 @@ void PrintUsage();
 void MonitorCallback();
 void ReclassifySuspects();
 
+void ResetPassword();
+
 }
 
 #endif /* NOVACLI_H_ */

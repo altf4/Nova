@@ -275,6 +275,14 @@ Debian Packages
 ===============================
 Common Problems and solutions
 ===============================
+        ==================
+        Help! I forgot my Quasar password!
+        ==================
+          The default password is username 'nova' and password 'toor'. To reset
+          things back to this password, login to the machine running nova
+          via ssh or a physical shell and run,
+
+                novacli resetpassword
         
         ==================
         Haystack Autoconfig nmap fails on large networks
