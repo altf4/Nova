@@ -34,22 +34,26 @@ void SaveAndExit(int param)
 	StopCapture();
 	AppendToStateFile();
 
-	if(system("sudo iptables -F") == -1)
+	if(Config::Inst()->GetIsDmEnabled())
 	{
-		// TODO Logging
+		if(system("sudo iptables -F") == -1)
+		{
+			// TODO Logging
+		}
+		if(system("sudo iptables -t nat -F") == -1)
+		{
+			// TODO Logging
+		}
+		if(system("sudo iptables -t nat -X DOPP") == -1)
+		{
+			// TODO Logging
+		}
+		if(system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) == -1)
+		{
+			// TODO Logging
+		}
 	}
-	if(system("sudo iptables -t nat -F") == -1)
-	{
-		// TODO Logging
-	}
-	if(system("sudo iptables -t nat -X DOPP") == -1)
-	{
-		// TODO Logging
-	}
-	if(system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) == -1)
-	{
-		// TODO Logging
-	}
+
 	if(engine != NULL)
 	{
 		void *res;

@@ -53,7 +53,7 @@ void *EventDispatcherThread(void *arg)
 	{
 		stringstream ss;
 		ss << ret;
-		LOG(DEBUG, "Message loop ended. Error code: " + ss.str(), "");
+		//LOG(DEBUG, "Message loop ended. Error code: " + ss.str(), "");
 	}
 	else
 	{
@@ -145,7 +145,7 @@ bool ConnectToNovad()
 	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST);
 	if(!MessageManager::Instance().WriteMessage(ticket, &connectRequest))
 	{
-		LOG(WARNING, "Could not send CONTROL_CONNECT_REQUEST to NOVAD", "");
+		//LOG(DEBUG, "Could not send CONTROL_CONNECT_REQUEST to NOVAD", "");
 		return false;
 	}
 

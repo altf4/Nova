@@ -119,7 +119,6 @@ var databaseOpenResult = function (err)
 {
     if(err === null)
     {
-        console.log("Opened sqlite3 database file.");
     }
     else
     {
