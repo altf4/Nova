@@ -62,9 +62,6 @@ public:
 	//      module - added s.t. rsyslog  will output NovaConfig messages as the parent process that called LoadConfig
 	void LoadConfig();
 	void LoadCustomSettings(int argc,  char** argv);
-	bool SaveConfig();
-
-	bool SaveUserConfig();
 
 	// Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
 	//	Returns: True if(after the function) the user has all necessary ~/.nova config files
