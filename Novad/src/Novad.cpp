@@ -486,7 +486,7 @@ void StartCapture()
 	if(Config::Inst()->GetReadPcap())
 	{
 		try {
-			LOG(DEBUG, "Loading PCAP file", "");
+			LOG(DEBUG, "Loading pcap file", "");
 			string pcapFilePath = Config::Inst()->GetPathPcapFile() + "/capture.pcap";
 			string ipAddressFile = Config::Inst()->GetPathPcapFile() + "/localIps.txt";
 
@@ -500,9 +500,9 @@ void StartCapture()
 
 			cap->StartCaptureBlocking();
 
-			LOG(DEBUG, "Done reading PCAP file. Processing...", "");
+			LOG(DEBUG, "Done reading pcap file. Processing...", "");
 			ClassificationLoop(NULL);
-			LOG(DEBUG, "Done processing PCAP file.", "");
+			LOG(DEBUG, "Done processing pcap file.", "");
 		}
 		catch (Nova::PacketCaptureException &e)
 		{
@@ -625,7 +625,7 @@ string ConstructFilterString(string captureIdentifier)
 		if(Config::Inst()->GetOverridePcapString())
 		{
 			filterString = Config::Inst()->GetCustomPcapString();
-			LOG(DEBUG, "Pcap filter string is "+filterString,"");
+			LOG(DEBUG, "Pcap filter string is: '" + filterString + "'","");
 			return filterString;
 		}
 		else

@@ -59,7 +59,7 @@ form(method="post", action="/configureNovaSave")
   input(name="TRAINING_DATA_PATH",  value=TRAINING_DATA_PATH)
   br
   
-  label Path to PCAP file
+  label Path to pcap file
   input.wide(type="text", name="PCAP_FILE",  value=PCAP_FILE)
   br
   
@@ -68,7 +68,7 @@ form(method="post", action="/configureNovaSave")
   br
 
   h2 Special Run Settings
-  label Read PCAP file?
+  label Read pcap file?
   br
   if READ_PCAP != "0"
     input(type="radio", name="READ_PCAP", value="1", checked)
@@ -86,7 +86,7 @@ form(method="post", action="/configureNovaSave")
     br
   br
 
-  label Go to live capture after PCAP?
+  label Go to live capture after pcap?
   br
   if GO_TO_LIVE != "0"
     input(type="radio", name="GO_TO_LIVE", value="1", checked)
@@ -183,11 +183,11 @@ form(method="post", action="/configureNovaSave")
     br
   br
 
-  label Custom PCAP Filter String
+  label Custom pcap Filter String
   input.wide(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
   br
   
-  label Custom PCAP Filter String Mode
+  label Custom pcap Filter String Mode
   br
   if CUSTOM_PCAP_MODE != "0"
     input(type="radio", name="CUSTOM_PCAP_MODE", value="1", checked)
