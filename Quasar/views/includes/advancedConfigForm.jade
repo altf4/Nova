@@ -49,6 +49,7 @@ form(method="post", action="/configureNovaSave")
     label Shut down Quasar
   br
 
+  br
   h2 File Paths
   label Path to state save file
   input.wide(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
@@ -107,7 +108,7 @@ form(method="post", action="/configureNovaSave")
   input(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE",  value=CAPTURE_BUFFER_SIZE)
   br
   
-
+  br
   h2 Classification Settings
   a(href='/editClassifiers')
     label Edit Classifiers (advanced users only)
@@ -154,6 +155,14 @@ form(method="post", action="/configureNovaSave")
 
   label Packets Needed Before Classification
   input(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
+  br
+  
+  label State data save frequency
+  input(type="number", min="0", name="SAVE_FREQUENCY",  value=SAVE_FREQUENCY)
+  br
+
+  label Sate data chunk TTL
+  input(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
   br
 
   label Clear data after suspect logged as hostile?
@@ -206,20 +215,7 @@ form(method="post", action="/configureNovaSave")
   label Doppelganger IP
   input(name="DOPPELGANGER_IP",  value=DOPPELGANGER_IP)
   br
-
-  label State save frequency
-  input(type="number", min="0", name="SAVE_FREQUENCY",  value=SAVE_FREQUENCY)
-  br
-
-  label Data TTL
-  input(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
-  br
-  
-  h2 Logger Settings
-  label Service Preferences
-  input(name="SERVICE_PREFERENCES", value=SERVICE_PREFERENCES)
-  br
-  
+ 
   p(style="font-style: italic; float: left;") Note: To disable remote logging for Nova, use string NULL or empty the input field
   br
   
