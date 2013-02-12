@@ -813,8 +813,6 @@ app.get('/advancedOptions', function (req, res)
             INTERFACES: NovaCommon.config.ListInterfaces().sort()
             , DEFAULT: NovaCommon.config.GetUseAllInterfacesBinding()
             , HS_HONEYD_CONFIG: NovaCommon.config.ReadSetting("HS_HONEYD_CONFIG")
-            , TCP_TIMEOUT: NovaCommon.config.ReadSetting("TCP_TIMEOUT")
-            , TCP_CHECK_FREQ: NovaCommon.config.ReadSetting("TCP_CHECK_FREQ")
             , READ_PCAP: NovaCommon.config.ReadSetting("READ_PCAP")
             , PCAP_FILE: NovaCommon.config.ReadSetting("PCAP_FILE")
             , GO_TO_LIVE: NovaCommon.config.ReadSetting("GO_TO_LIVE")
@@ -1667,7 +1665,7 @@ app.post('/configureNovaSave', function (req, res)
 {
     // TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
     var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
-    "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
+    "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
     "K", "EPS", "CLASSIFICATION_THRESHOLD", "DOPPELGANGER_IP", 
     "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", 
     "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", 
@@ -1776,10 +1774,6 @@ app.post('/configureNovaSave', function (req, res)
         }
         switch (configItems[item])
         {
-        case "TCP_TIMEOUT":
-            validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
-            break;
-
         case "WEB_UI_PORT":
             validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
             break;

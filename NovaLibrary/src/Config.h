@@ -110,8 +110,6 @@ public:
     int GetDataTTL();
     int GetK();
     int GetSaveFreq();
-    int GetTcpCheckFreq();
-    int GetTcpTimout();
     double GetThinningDistance();
 
     double GetClassificationThreshold();
@@ -149,8 +147,6 @@ public:
     void SetReadPcap(bool readPcap);
     void SetReadCustomPcap(bool readCustomPcap);
     void SetSaveFreq(int saveFreq);
-    void SetTcpCheckFreq(int tcpCheckFreq);
-    void SetTcpTimout(int tcpTimout);
     void SetThinningDistance(double thinningDistance);
     void SetUseTerminals(bool useTerminals);
     void SetKey(std::string key);

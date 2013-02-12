@@ -53,8 +53,6 @@ string Config::m_prefixes[] =
 {
 	"INTERFACE",
 	"HS_HONEYD_CONFIG",
-	"TCP_TIMEOUT",
-	"TCP_CHECK_FREQ",
 	"READ_PCAP",
 	"PCAP_FILE",
 	"GO_TO_LIVE",
@@ -248,34 +246,6 @@ void Config::LoadConfig_Internal()
 				if(line.size() > 0)
 				{
 					m_pathConfigHoneydHs  = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// TCP_TIMEOUT
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					m_tcpTimout = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// TCP_CHECK_FREQ
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					m_tcpCheckFreq = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -1403,20 +1373,6 @@ bool Config::SaveConfig()
 				continue;
 			}
 
-			prefix = "TCP_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetTcpTimout() << endl;
-				continue;
-			}
-
-			prefix = "TCP_CHECK_FREQ";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetTcpCheckFreq()  << endl;
-				continue;
-			}
-
 			prefix = "PCAP_FILE";
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
@@ -1551,8 +1507,6 @@ string Config::ToString()
 	ss << "GetDataTTL() " << GetDataTTL() << endl;
 	ss << "GetK() " << GetK() << endl;
 	ss << "GetSaveFreq() " << GetSaveFreq() << endl;
-	ss << "GetTcpCheckFreq() " << GetTcpCheckFreq() << endl;
-	ss << "GetTcpTimout() " << GetTcpTimout() << endl;
 	ss << "GetThinningDistance() " << GetThinningDistance() << endl;
 
 	ss << "GetClassificationThreshold() " << GetClassificationThreshold() << endl;
@@ -1861,18 +1815,6 @@ int Config::GetSaveFreq()
 	return m_saveFreq;
 }
 
-int Config::GetTcpCheckFreq()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_tcpCheckFreq;
-}
-
-int Config::GetTcpTimout()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_tcpTimout;
-}
-
 double Config::GetThinningDistance()
 {
 	Lock lock(&m_lock, READ_LOCK);
@@ -2173,18 +2115,6 @@ void Config::SetSaveFreq(int saveFreq)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_saveFreq = saveFreq;
-}
-
-void Config::SetTcpCheckFreq(int tcpCheckFreq)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_tcpCheckFreq = tcpCheckFreq;
-}
-
-void Config::SetTcpTimout(int tcpTimout)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_tcpTimout = tcpTimout;
 }
 
 void Config::SetThinningDistance(double thinningDistance)
