@@ -506,7 +506,8 @@ void StartCapture()
 		}
 		catch (Nova::PacketCaptureException &e)
 		{
-			LOG(ERROR, string("Unable to open pcap file for capture: ") + e.what(), "");
+			LOG(CRITICAL, string("Unable to open pcap file for capture: ") + e.what(), "");
+			exit(EXIT_FAILURE);
 		}
 
 		Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
@@ -534,7 +535,8 @@ void StartCapture()
 			}
 			catch (Nova::PacketCaptureException &e)
 			{
-				LOG(ERROR, string("Exception when starting packet capture on device " + ifList[i] + ": ") + e.what(), "");
+				LOG(CRITICAL, string("Exception when starting packet capture on device " + ifList[i] + ": ") + e.what(), "");
+				exit(EXIT_FAILURE);
 			}
 		}
 	}
