@@ -109,7 +109,7 @@ NovaGrid.prototype = {
                    {
                        title = '<div class="sortArrow">' + (this.m_sortDescending ? '&#8744;' : '&#8743;') + '</div>' + title;
                    }
-                   this.headerHTML += '<TH class="novaGrid"><A HREF="javascript:void(0)" style="font-size: 12px;" onclick="' + this.m_name + '.SetSortByKey(' + c + ');">' + title + '</A></TH>';
+                   this.headerHTML += '<TH class="novaGrid" onclick="' + this.m_name + '.SetSortByKey(' + c + ')"><A HREF="javascript:void(0)" style="font-size: 12px;">' + title + '</A></TH>';
                }
                this.headerHTML += '</TR>';
                this.headerHTML += '</THEAD>';
