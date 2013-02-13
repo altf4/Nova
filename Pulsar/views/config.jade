@@ -19,15 +19,6 @@ extends layout
 block content
   h1 Configuration Options
   p(style='font-style: italic') Note: Configuration changes are reflected amongst all connected clients
-  h2 TCP Timeout
-  label TCP Timeout
-  br
-  input(type='number', name='TCP_TIMEOUT', step='1', min='0', value=TCP_TIMEOUT, id='TCP_TIMEOUT', onblur='checkInt("TCP_TIMEOUT")')    
-  br
-  label TCP Timeout Check Frequency
-  br
-  input(type='number', name='TCP_CHECK_FREQ', step='1', min='0', value=TCP_CHECK_FREQ, id='TCP_CHECK_FREQ', onblur='checkInt("TCP_CHECK_FREQ")')
-  br
   
   h2 Classification Settings
   label Classification Timeout

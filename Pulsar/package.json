@@ -11,6 +11,7 @@
 		"sqlite3": "",
 		"websocket": "1.x.x",
 		"socket.io": "0.9.10",
-		"node-schedule":""
+		"node-schedule":"",
+		"ncp":""
 	}
 }

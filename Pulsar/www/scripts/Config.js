@@ -38,8 +38,6 @@ now.UpdateConfiguration = function()
   //message type: updateConfiguration
   message.type = 'updateConfiguration';
   
-  message.TCP_TIMEOUT = parseInt(document.getElementsByName('TCP_TIMEOUT')[0].value);
-  message.TCP_CHECK_FREQ = parseInt(document.getElementsByName('TCP_CHECK_FREQ')[0].value);
   message.CLASSIFICATION_TIMEOUT = parseInt(document.getElementsByName('CLASSIFICATION_TIMEOUT')[0].value);
   message.K = parseInt(document.getElementsByName('K')[0].value);
   message.EPS = parseFloat(document.getElementsByName('EPS')[0].value);
@@ -86,7 +84,7 @@ now.UpdateConfiguration = function()
   
   message.SERVICE_PREFERENCES = document.getElementsByName('SERVICE_PREFERENCES')[0].value;
   
-  if((/^0:[0-7](\+|\-)?;1:[0-7](\+|\-)?;2:[0-7](\+|\-)?;$/).test(message.SERVICE_PREFERENCES) == false)
+  if((/^0:[0-7](\+|\-)?;1:[0-7](\+|\-)?;$/).test(message.SERVICE_PREFERENCES) == false)
   {
     document.getElementById('SERVICE_PREFERENCES').value = replace;
     alert('Service Preferences string is not formatted correctly.');

@@ -27,6 +27,7 @@ var fs = require('fs');
 var crypto = require('crypto');
 var sql = require('sqlite3');
 var schedule = require('node-schedule');
+var ncp = require('ncp').ncp;
 var nova = new novaconfig.Instance();
 var config = new novaconfig.NovaConfigBinding();
 
@@ -35,6 +36,41 @@ var BasicStrategy = require('passport-http').BasicStrategy;
 
 var NovaHomePath = config.GetPathHome();
 var NovaSharedPath = config.GetPathShared();
+
+ncp.limit = 16;
+
+if(!fs.existsSync(NovaHomePath + '/config/Pulsar/'))
+{
+  fs.mkdirSync(NovaHomePath + '/config/Pulsar/');
+  ncp(NovaSharedPath + '/Pulsar/client_groups.txt', NovaHomePath + '/config/Pulsar/client_groups.txt', {clobber:false}, function(err){
+    if(err)
+    {
+      console.log('copy file failed: ' + err);
+      return;
+    }
+    ncp(NovaSharedPath + '/Pulsar/Instructions.txt', NovaHomePath + '/config/Pulsar/Instructions.txt', {clobber:false}, function(err){
+      if(err)
+      {
+        console.log('copy file failed: ' + err);
+        return;
+      }
+      ncp(NovaSharedPath + '/Pulsar/notifications.txt', NovaHomePath + '/config/Pulsar/notifications.txt', {clobber:false}, function(err){
+        if(err)
+        {
+          console.log('copy file failed: ' + err);
+          return;
+        }
+        ncp(NovaSharedPath + '/Pulsar/ClientConfigs/', NovaHomePath + '/config/Pulsar/ClientConfigs/', {clobber:false}, function(err){
+          if(err)
+          {
+            console.log('copy file failed: ' + err);
+            return;
+          }
+        });
+      });
+    });
+  });
+}
 
 var matchHostToConnection = {};
 
@@ -272,7 +308,7 @@ function saveScheduledEvents(callback)
   // array, and the schedule module for Nodejs
   try
   {
-    fs.unlinkSync(NovaSharedPath + '/Pulsar/scheduledEvents.txt');
+    fs.unlinkSync(NovaHomePath + '/config/Pulsar/scheduledEvents.txt');
   }
   catch(err)
   {
@@ -280,10 +316,10 @@ function saveScheduledEvents(callback)
     return;
   }
   
-  var closeMe = fs.open(NovaSharedPath + '/Pulsar/scheduledEvents.txt', 'w');
+  var closeMe = fs.open(NovaHomePath + '/config/Pulsar/scheduledEvents.txt', 'w');
   closeMe.close(closeMe);
   
-  var writer = fs.createWriteStream(NovaSharedPath + '/Pulsar/scheduledEvents.txt', {'flags':'a'});
+  var writer = fs.createWriteStream(NovaHomePath + '/config/Pulsar/scheduledEvents.txt', {'flags':'a'});
   
   for(var i in scheduledMessages)
   {
@@ -302,7 +338,7 @@ function readScheduledEvents()
 {
   try
   {
-    var fsread = fs.readFileSync(NovaSharedPath + '/Pulsar/scheduledEvents.txt', 'utf8');
+    var fsread = fs.readFileSync(NovaHomePath + '/config/Pulsar/scheduledEvents.txt', 'utf8');
     var splitUp = fsread.split(/\r\n|\r|\n/);
     
     if(splitUp != '')
@@ -318,7 +354,7 @@ function readScheduledEvents()
     else
     {
       console.log('No scheduled events saved');
-      fs.unlinkSync(NovaSharedPath + '/Pulsar/scheduledEvents.txt'); 
+      fs.unlinkSync(NovaHomePath + '/config/Pulsar/scheduledEvents.txt'); 
     }
   }
   catch(err)
@@ -586,7 +622,7 @@ everyone.now.GetScheduledEvents = GetScheduledEvents;
 
 WriteNotification = function(notify)
 {
-  var append = fs.readFileSync(NovaSharedPath + '/Pulsar/notifications.txt', 'utf8');
+  var append = fs.readFileSync(NovaHomePath + '/config/Pulsar/notifications.txt', 'utf8');
   var newNotify = '';
   if(append != undefined)
   {
@@ -596,13 +632,13 @@ WriteNotification = function(notify)
   {
     newNotify = notify.toString() + '\n';
   }
-  fs.writeFileSync(NovaSharedPath + '/Pulsar/notifications.txt', newNotify);
+  fs.writeFileSync(NovaHomePath + '/config/Pulsar/notifications.txt', newNotify);
 }
 everyone.now.WriteNotification = WriteNotification;
 
 GetNotifications = function(callback)
 {
-  var notificationData = fs.readFileSync(NovaSharedPath + '/Pulsar/notifications.txt', 'utf8');
+  var notificationData = fs.readFileSync(NovaHomePath + '/config/Pulsar/notifications.txt', 'utf8');
   if(typeof callback == 'function')
   {
     callback(notificationData);
@@ -764,12 +800,12 @@ RemoveGroup = function(group, cb)
   console.log('Removing group ' + group + ' from the client groups file');
   try
   {
-    var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
+    var groupFile = fs.readFileSync(NovaHomePath + '/config/Pulsar/client_groups.txt', 'utf8');
     var regex = group + '.*?;';
     var replaceWithNull = new RegExp(regex, 'g');
     groupFile = groupFile.replace(replaceWithNull, '');
     groupFile = trimNewlines(groupFile);
-    fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
+    fs.writeFileSync(NovaHomePath + '/config/Pulsar/client_groups.txt', groupFile);
   }
   catch(err)
   {
@@ -789,7 +825,7 @@ UpdateGroup = function(group, newMembers, callback)
   console.log('Updating group ' + group + ' to have members ' + newMembers);
   try
   {
-    var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
+    var groupFile = fs.readFileSync(NovaHomePath + '/config/Pulsar/client_groups.txt', 'utf8');
     var regex = group + '.*?;';
     var replaceWithNull = new RegExp(regex, 'g');
     var sanitizeMemberString = '';
@@ -824,7 +860,7 @@ UpdateGroup = function(group, newMembers, callback)
       }
     }
     groupFile = groupFile.replace(replaceWithNull, group + ':' + sanitizeMemberString + ';');
-    fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
+    fs.writeFileSync(NovaHomePath + '/config/Pulsar/client_groups.txt', groupFile);
     if(typeof callback == 'function')
     {
       callback();
@@ -846,9 +882,9 @@ AddGroup = function(group, members, cb)
   try
   {
     console.log('Adding group ' + group + ' with members ' + members);
-    var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
+    var groupFile = fs.readFileSync(NovaHomePath + '/config/Pulsar/client_groups.txt', 'utf8');
     groupFile += '\n' + group + ':' + members + ';';
-    fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
+    fs.writeFileSync(NovaHomePath + '/config/Pulsar/client_groups.txt', groupFile);
   }
   catch(err)
   {
@@ -902,7 +938,7 @@ everyone.now.GetClientBenignRequest = GetClientBenignRequest;
 
 GetGroupMembers = function(group, callback)
 {
-  var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
+  var groupFile = fs.readFileSync(NovaHomePath + '/config/Pulsar/client_groups.txt', 'utf8');
   var start = groupFile.indexOf(group);
   var end = groupFile.indexOf(';', start) - 2;
   if(typeof callback == 'function')
@@ -916,7 +952,7 @@ everyone.now.GetGroupMembers = GetGroupMembers;
 // grab the list of interfaces for that client.
 GetInterfacesOfClient = function(clientId, cb)
 {
-  var interfaceFile = fs.readFileSync(NovaSharedPath + '/Pulsar/ClientConfigs/iflist@' + clientId + '.txt', 'utf8');
+  var interfaceFile = fs.readFileSync(NovaHomePath + '/config/Pulsar/ClientConfigs/iflist@' + clientId + '.txt', 'utf8');
   var pass = interfaceFile.split(',');
   if(typeof cb == 'function')
   {
@@ -985,7 +1021,7 @@ function getClientIds()
 
 function SaveClientIds(callback)
 {
-  fs.writeFileSync(NovaSharedPath + '/Pulsar/clientIds.txt', getClientIds());
+  fs.writeFileSync(NovaHomePath + '/config/Pulsar/clientIds.txt', getClientIds());
   if(typeof callback == 'function')
   {
     callback; 
@@ -997,7 +1033,7 @@ function populateNovaClients()
   try
   {
     var seen = new Array();
-    var clientFileList = fs.readFileSync(NovaSharedPath + '/Pulsar/clientIds.txt', 'utf8').split(/\r\n|\r|\n/); 
+    var clientFileList = fs.readFileSync(NovaHomePath + '/config/Pulsar/clientIds.txt', 'utf8').split(/\r\n|\r|\n/); 
     
     if(clientFileList == '' || clientFileList == undefined)
     {
@@ -1210,7 +1246,7 @@ wsServer.on('request', function(request)
 						
 						try
 						{
-						  var append = fs.readFileSync(NovaSharedPath + '/Pulsar/ClientConfigs/suspects@' + json_args.client + '.txt', 'utf8');
+						  var append = fs.readFileSync(NovaHomePath + '/config/Pulsar/ClientConfigs/suspects@' + json_args.client + '.txt', 'utf8');
 						  var start = append.indexOf(suspect.ip + '@' + suspect.client + '_' + suspect.interface);
 						  if(start == -1)
 						  {
@@ -1222,12 +1258,12 @@ wsServer.on('request', function(request)
 						    var newAppend = suspect.ip + '@' + suspect.client + '_' + suspect.interface + ':' + suspect.classification + ' ' + suspect.lastpacket + ';';
 						    append = append.replace(append.substr(start, end), newAppend);
 						  }
-						  fs.writeFileSync(NovaSharedPath + '/Pulsar/ClientConfigs/suspects@' + json_args.client + '.txt', append);
+						  fs.writeFileSync(NovaHomePath + '/config/Pulsar/ClientConfigs/suspects@' + json_args.client + '.txt', append);
 						}
 						catch(err)
 						{
 						  var write = suspect.ip + '@' + suspect.client + '_' + suspect.interface + ':' + suspect.classification + ' ' + suspect.lastpacket + ';\n';
-						  fs.writeFileSync(NovaSharedPath + '/Pulsar/ClientConfigs/suspects@' + json_args.client + '.txt', write); 
+						  fs.writeFileSync(NovaHomePath + '/config/Pulsar/ClientConfigs/suspects@' + json_args.client + '.txt', write); 
 						}
 						
 						if(typeof everyone.now.OnNewSuspect == 'function')
@@ -1284,7 +1320,7 @@ wsServer.on('request', function(request)
 						//       part of the push object literal
 						var push = {};
 						push.client = json_args.id;
-						push.file = (NovaSharedPath + '/Pulsar/ClientConfigs/' + json_args.filename);
+						push.file = (NovaHomePath + '/config/Pulsar/ClientConfigs/' + json_args.filename);
 						fileAssociations.push(push);
 						fs.writeFileSync(push.file, json_args.file);
 						console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);
@@ -1294,7 +1330,7 @@ wsServer.on('request', function(request)
 				  // Lightens the load on messaging, and once it's more fleshed out, will be polled to ensure
 				  // that it remains up to date. 
 				  case 'registerClientInterfaces':
-				    fs.writeFileSync(NovaSharedPath + '/Pulsar/ClientConfigs/' + json_args.filename, json_args.file);
+				    fs.writeFileSync(NovaHomePath + '/config/Pulsar/ClientConfigs/' + json_args.filename, json_args.file);
 				    console.log('Interfaces files for ' + json_args.id + ' can be found at ' + json_args.filename);
 				    break;
 				  // Case reserved for status updates from a given client about the classification and 
@@ -1347,9 +1383,9 @@ wsServer.on('request', function(request)
               everyone.now.UpdateClientsList(json_args.id, 'remove');
               everyone.now.UpdateClientsList(json_args.newId, 'add');
             }
-            var change = fs.readFileSync(NovaSharedPath + '/Pulsar/clientIds.txt', 'utf8');
+            var change = fs.readFileSync(NovaHomePath + '/config/Pulsar/clientIds.txt', 'utf8');
             change = change.replace(new RegExp(json_args.id), json_args.newId);
-            fs.writeFileSync(NovaSharedPath + '/Pulsar/clientIds.txt', change);
+            fs.writeFileSync(NovaHomePath + '/config/Pulsar/clientIds.txt', change);
             if(typeof everyone.now.RefreshPageAfterRename == 'function')
             {
               everyone.now.RefreshPageAfterRename();
@@ -1465,7 +1501,17 @@ everyone.now.GetClientHost = function(client, cb)
 // that have an associated list of last-known clientIds. 
 function getGroups()
 {
-  var group = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'ascii');
+  try
+  {
+    var group = fs.readFileSync(NovaHomePath + '/config/Pulsar/client_groups.txt', 'ascii');
+  }
+  catch(err)
+  {
+    console.log('client_groups.txt was not found: ' + err);
+    var data = '';
+    var group = fs.writeFileSync(NovaHomePath + '/config/Pulsar/client_groups.txt', data, 'w');
+    return JSON.stringify('');
+  }
   if(group == '')
   {
     console.log('client groups file is empty');
