@@ -244,7 +244,7 @@ block headerAdditions
 
     function buildLink(ip, interface)
     {
-      var res = "<div style='display: none;'>" + interface + "</div><div>" + ip + "</div>";
+      var res = "<div style='display: none;'>" + interface + "</div><div oncontextmenu='replacementContextMenu(event)'>" + ip + "</div>";
       return res;
     }
 
@@ -484,9 +484,16 @@ block headerAdditions
       var evt = (e ? e : window.event);
       var source = evt.target || evt.srcElement;
       
-      if(source.tagName == 'DIV' && source.getAttribute('class').indexOf('progress') != -1)
+      if(source.tagName == 'DIV')
       {
-        source = source.parentNode; 
+        if(source.getAttribute('class') != null && source.getAttribute('class').indexOf('progress') != -1)
+        {
+          source = source.parentNode;
+        }
+        else if(source.parentNode.tagName == 'TD')
+        {
+          
+        } 
       }
       else if(source.tagName != 'TD' && source.parentNode.tagName != 'TD')
       {
