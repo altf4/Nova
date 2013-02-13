@@ -30,7 +30,8 @@ block headerAdditions
   script
     var currentInterface;
     var pfile;
-    var interfaces = "#{INTERFACES}".split(',');
+    var interfaces;
+    var interfaceAliases; 
     
     function createNodes()
     {
@@ -268,11 +269,8 @@ block headerAdditions
     
     function Init()
     {
-      
-      var interfaces = !{JSON.stringify(INTERFACES)};
-      var interfaceAliases = !{JSON.stringify(interfaceAliases)}
-
-      
+      interfaces = !{JSON.stringify(INTERFACES)};
+      interfaceAliases = !{JSON.stringify(interfaceAliases)}
     }
     
     function repopulateSelect(src)
@@ -390,21 +388,11 @@ block content
     thead
       tr 
     tbody
-    - if(INTERFACES.length == 1)
-      tr 
-        td
-          input(type="radio", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
-          #{interfaceAliases[0]}
-    - else
-      tr 
-        td
-          input(type="radio", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onclick="checkOnlyOne('if0')")
-          #{interfaceAliases[0]}
-      - for (var i = 1; i < INTERFACES.length; i++)
+      - for (var i = 0; i < INTERFACES.length; i++)
           tr 
             td
               input(type="radio", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onclick="checkOnlyOne('if#{i}')")
-              #{interfaceAliases[0]}
+              #{interfaceAliases[i]}
   hidden(id="length", value=INTERFACES.length)
   br
   label.nodeAdd IP Address Allocation Type
