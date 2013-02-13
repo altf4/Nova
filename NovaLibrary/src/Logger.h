@@ -149,6 +149,8 @@ private:
 	std::string GetCcString();
 	void SetMailMessage(std::string message);
 	uint16_t GetRecipientsLength();
+	void SetLevel(uint16_t setLevel);
+	uint16_t GetLevel();
 
 public:
 	levelsMap m_levels;
@@ -158,6 +160,7 @@ private:
 	pthread_rwlock_t m_logLock;
 	static Logger *m_loggerInstance;
 	std::string m_mailMessage;
+	uint16_t m_level;
 };
 
 }

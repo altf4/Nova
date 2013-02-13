@@ -113,6 +113,8 @@ void Logger::Mail(uint16_t level, string message)
 	struct Writer counter;
 	struct curl_slist *rcpt_list = NULL;
 
+	Logger::Inst()->SetLevel(level);
+
 	int MULTI_PERFORM_HANG_TIMEOUT = 60*1000;
 
 	SetMailMessage(message);
@@ -368,6 +370,16 @@ uint16_t Logger::GetRecipientsLength()
 	return m_messageInfo.m_email_recipients.size();
 }
 
+uint16_t Logger::GetLevel()
+{
+	return m_level;
+}
+
+void Logger::SetLevel(uint16_t setLevel)
+{
+	m_level = setLevel;
+}
+
 size_t Logger::ReadCallback(void *ptr, size_t size, size_t nmemb, void * userp)
 {
 	struct Writer *counter = (struct Writer *)userp;
@@ -375,11 +387,35 @@ size_t Logger::ReadCallback(void *ptr, size_t size, size_t nmemb, void * userp)
 
 	std::string debug3 = Logger::Inst()->GetMailMessage();
 
+	std::string subject = "Subject: Nova Mail Alert: ";
+
+	switch(Logger::Inst()->GetLevel())
+	{
+		case(0): subject += "DEBUG ";
+				 break;
+		case(1): subject += "INFO ";
+				 break;
+		case(2): subject += "NOTICE ";
+				 break;
+		case(3): subject += "WARNING ";
+				 break;
+		case(4): subject += "ERROR ";
+				 break;
+		case(5): subject += "CRITICAL ";
+				 break;
+		case(6): subject += "ALERT ";
+				 break;
+		case(7): subject += "EMERGENCY ";
+				 break;
+	}
+
+	subject += "\n";
+
 	const char *text[] = {
 			Logger::Inst()->GenerateDateString().c_str(),
 			Logger::Inst()->GetRecipient().c_str(),
 			Logger::Inst()->GetSenderString().c_str(),
-			"Subject: Nova Mail Alert\n",
+			subject.c_str(),
 			Logger::Inst()->GetCcString().c_str(),
 			"\n",
 			Logger::Inst()->GetMailMessage().c_str(),
