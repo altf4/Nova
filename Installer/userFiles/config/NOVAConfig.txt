@@ -495,11 +495,7 @@ COMMAND_STOP_HAYSTACK novacli stop haystack
 
 # If using upstart, you should use upstart
 # start and stop here instead of the defaults.
-# Note that you'll need to set up sudoers so that
-# it will allow nova group users to run start
-# and stop with,
-
-# %nova ALL=(ALL) NOPASSWD: /sbin/start haystack, /sbin/stop haystack, /sbin/start novad, /sbin/stop novad
+# See the README section on using upstart.
 
 #COMMAND_START_NOVAD sudo start novad
 #COMMAND_STOP_NOVAD sudo stop novad

@@ -160,6 +160,21 @@ the files in $NOVAD_SOURCE/Installer/miscFiles/upstart/* to /etc/init. This is
 assuming that upstart is already installed and configured on your system (it
 comes by default on newer versions of Ubuntu).
 
+- Then you need to configure Quasar to start/stop novad and the haystack via upstart.
+ After installing edit ~/.config/nova/config/NOVAConfig.txt and set,
+
+  COMMAND_START_NOVAD sudo start novad
+  COMMAND_STOP_NOVAD sudo stop novad
+  COMMAND_START_HAYSTACK sudo start haystack
+  COMMAND_STOP_HAYSTACK sudo stop haystack
+
+- Finally, in order to start and stop the upstart jobs with Quasar without running
+ it as root you need to append the following commands to the command list in 
+ /etc/sudoers.d/sudoers_nova,
+
+    /sbin/start haystack, /sbin/stop haystack, /sbin/start novad, /sbin/stop novad
+
+
 =============================== 
 High Level Nova Components
 ===============================
