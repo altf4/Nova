@@ -139,8 +139,24 @@ block headerAdditions
       
       if(GetHaystackName() == '#')
       {
-        alert('No special characters in group name! Alphanumeric only.');
+        alert('Invalid haystack name! Can't be blank or non-alphanumeric characters.');
         return;
+      }
+
+      for(var i = 0; i < viewModel.subnetsToScan().length; i++)
+      {
+        if (parseInt(String(viewModel.subnetsToScan()[i].subnet).split("/")[1]) < 24)
+        {
+            var res = confirm("Warning: scanning subnets greater than size /24 can take several hours! Are you sure you want to continue?");
+            if (!res)
+            {
+                return;
+            }
+            else
+            {
+                break;
+            }
+        }
       }
       
       if(viewModel.subnetsToScan().length != 0)
@@ -294,7 +310,7 @@ block headerAdditions
             return;
           }
         
-          var text = subnet + ' (' + iface + " (Alias: " + interfaceAliasList[i] + '))';
+          var text = subnet + ' (' + interfaceAliasList[i] + ')';
           viewModel.interfaceSubnets.push({text: text, subnet: subnet});
         });
       } 
@@ -359,7 +375,7 @@ block content
 
         tr
           td
-            label(style='font-weight: bold') Interface to create nodes on
+            label(style='font-weight: bold') Interface for new nodes
           td
             select#nodeInterface(data-bind="options: interfaceList")
     br

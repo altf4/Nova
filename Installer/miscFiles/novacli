@@ -8,7 +8,7 @@ _novacli()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
-    opts="status start stop list get uptime readsetting writesetting listsettings monitor"
+    opts="status start stop list get uptime readsetting writesetting listsettings monitor resetpassword"
     components="nova haystack quasar capture"
     listtypes="all hostile benign"
 	settings=$(novacli listsettings)
@@ -50,6 +50,11 @@ _novacli()
 	;;
 	
 	uptime)	
+	    COMPREPLY=()
+	return 0
+	;;
+	
+	resetpassword)	
 	    COMPREPLY=()
 	return 0
 	;;

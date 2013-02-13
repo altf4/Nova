@@ -88,17 +88,6 @@ THINNING_DISTANCE 0.001
 CLASSIFICATION_THRESHOLD 0.5
 
 ############################################
-# USER_HONEYD_CONFIG #
-############################################
-#
-# Path relative to nova where the honeyd
-# configuration file resides.
-#
-# EXAMPLE:
-#USER_HONEYD_CONFIG config/user_honeyd.config
-USER_HONEYD_CONFIG config/user_honeyd.config
-
-############################################
 # DOPPELGANGER_IP #
 ############################################
 #
@@ -324,19 +313,6 @@ EMAIL_ALERTS_ENABLED 0
 
 
 ############################################
-# HAYSTACK_STORAGE #
-############################################
-#
-# Specifies the way Nova loads and saves the haystack
-# ( 'I' | 'M [path]' )
-# I - (Internal - Default) Store haystack at /usr/share/nova/nova/config
-# M [path] - (Manual) Run honeyd using the configuration in the file specified instead of Nova's configuration
-#
-# HAYSTACK_STORAGE I
-HAYSTACK_STORAGE I
-
-
-############################################
 # WHITELIST_FILE #
 ############################################
 #
@@ -502,4 +478,29 @@ QUASAR_TETHER_TLS_KEY /config/keys/quasarTether.key
 QUASAR_TETHER_TLS_PASSPHRASE toor
 
 TRAINING_DATA_PATH /config/training/data.txt
+
+
+
+
+############################################
+# Quasar start/stop command options
+############################################
+# These are the commands that Quasar will use
+# to start and stop novad and the haystack.
+
+COMMAND_START_NOVAD novacli start nova
+COMMAND_STOP_NOVAD novacli stop nova
+COMMAND_START_HAYSTACK novacli start haystack
+COMMAND_STOP_HAYSTACK novacli stop haystack
+
+# If using upstart, you should use upstart
+# start and stop here instead of the defaults.
+# See the README section on using upstart.
+
+#COMMAND_START_NOVAD sudo start novad
+#COMMAND_STOP_NOVAD sudo stop novad
+#COMMAND_START_HAYSTACK sudo start haystack
+#COMMAND_STOP_HAYSTACK sudo stop haystack
+
+
 

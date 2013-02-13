@@ -53,8 +53,6 @@ string Config::m_prefixes[] =
 {
 	"INTERFACE",
 	"HS_HONEYD_CONFIG",
-	"TCP_TIMEOUT",
-	"TCP_CHECK_FREQ",
 	"READ_PCAP",
 	"PCAP_FILE",
 	"GO_TO_LIVE",
@@ -62,7 +60,6 @@ string Config::m_prefixes[] =
 	"K",
 	"EPS",
 	"CLASSIFICATION_THRESHOLD",
-	"USER_HONEYD_CONFIG",
 	"DOPPELGANGER_IP",
 	"DOPPELGANGER_INTERFACE",
 	"DM_ENABLED",
@@ -76,7 +73,6 @@ string Config::m_prefixes[] =
 	"SMTP_USEAUTH",
 	"RECIPIENTS",
 	"SERVICE_PREFERENCES",
-	"HAYSTACK_STORAGE",
 	"WHITELIST_FILE",
 	"MIN_PACKET_THRESHOLD",
 	"CUSTOM_PCAP_FILTER",
@@ -97,7 +93,11 @@ string Config::m_prefixes[] =
 	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC",
 	"CURRENT_CONFIG",
 	"EMAIL_ALERTS_ENABLED",
-	"TRAINING_DATA_PATH"
+	"TRAINING_DATA_PATH",
+	"COMMAND_START_NOVAD",
+	"COMMAND_STOP_NOVAD",
+	"COMMAND_START_HAYSTACK",
+	"COMMAND_STOP_HAYSTACK"
 };
 
 Config *Config::m_instance = NULL;
@@ -128,7 +128,7 @@ Config::Config()
 		// Do not call LOG here, Config and logger are not yet initialized
 		cout << "CRITICAL ERROR: InitUserConfigs failed" << endl;
 	}
-
+	m_readCustomPcap = false;
 	m_configFilePath = m_pathHome + string("/config/NOVAConfig.txt");
 	m_userConfigFilePath = m_pathHome + string("/config/settings");
 	LoadUserConfig();
@@ -144,6 +144,7 @@ Config::~Config()
 void Config::LoadCustomSettings(int argc,  char** argv)
 {
 	string pCAPFilePath;
+
 	namespace po = boost::program_options;
 	po::options_description desc("Command line options");
 	try
@@ -158,6 +159,7 @@ void Config::LoadCustomSettings(int argc,  char** argv)
 		if(vm.count("help"))
 		{
 			std::cout << desc << std::endl;
+			exit(EXIT_SUCCESS);
 		}
 		if(vm.count("pcap-file"))
 		{
@@ -169,6 +171,7 @@ void Config::LoadCustomSettings(int argc,  char** argv)
 	{
 		LOG(ERROR, "Uncaught exception: " + string(e.what()) + ".", "");
 		std::cout << '\n' << desc << std::endl;
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -247,34 +250,6 @@ void Config::LoadConfig_Internal()
 				if(line.size() > 0)
 				{
 					m_pathConfigHoneydHs  = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// TCP_TIMEOUT
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					m_tcpTimout = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// TCP_CHECK_FREQ
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					m_tcpCheckFreq = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -387,21 +362,6 @@ void Config::LoadConfig_Internal()
 				}
 				continue;
 			}
-
-			// USER_HONEYD_CONFIG
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_pathConfigHoneydUser = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
 
 			// DOPPELGANGER_IP
 			prefixIndex++;
@@ -596,47 +556,6 @@ void Config::LoadConfig_Internal()
 				{
 					m_loggerPreferences = line;
 					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// HAYSTACK_STORAGE
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-
-				if(line.size() > 0)
-				{
-
-					switch(line.at(0))
-					{
-						case 'E'://E will be implemented with multiple configuration support
-						case 'M':
-						{
-							m_haystackStorage = line.at(0);
-							//Needs a file or dir path
-							if(line.size() > 2)
-							{
-								m_userPath = line.substr(2, line.size());
-								isValid[prefixIndex] = true;
-							}
-							break;
-						}
-						case 'I':
-						{
-							m_haystackStorage = 'I';
-							m_userPath = m_pathHome + "/config/haystack_honeyd.config";
-							isValid[prefixIndex] = true;
-							break;
-						}
-						default:
-						{
-							//Invalid entry
-							break;
-						}
-					}
 				}
 				continue;
 			}
@@ -980,6 +899,59 @@ void Config::LoadConfig_Internal()
 				}
 			}
 
+
+			// COMMAND_START_NOVAD
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_commandStartNovad = line;
+					isValid[prefixIndex] = true;
+				}
+			}
+
+			// COMMAND_STOP_NOVAD
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_commandStopNovad = line;
+					isValid[prefixIndex] = true;
+				}
+			}
+
+
+			// COMMAND_START_HAYSTACK
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_commandStartHaystack = line;
+					isValid[prefixIndex] = true;
+				}
+			}
+
+			// COMMAND_STOP_HAYSTACK
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_commandStopHaystack = line;
+					isValid[prefixIndex] = true;
+				}
+			}
 		}
 	}
 	else
@@ -1012,60 +984,6 @@ void Config::LoadConfig_Internal()
 	{
 		exit(EXIT_FAILURE);
 	}
-}
-
-bool Config::SaveUserConfig()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	string line, prefix;
-
-	//Rewrite the config file with the new settings
-	string configurationBackup = m_userConfigFilePath + ".tmp";
-	boost::filesystem::path from = m_userConfigFilePath;
-	boost::filesystem::path to = configurationBackup;
-	boost::filesystem::copy_file(from, to, boost::filesystem::copy_option::overwrite_if_exists);
-
-	ifstream *in = new ifstream(configurationBackup.c_str());
-	ofstream *out = new ofstream(m_userConfigFilePath.c_str());
-
-	if(out->is_open() && in->is_open())
-	{
-		while(in->good())
-		{
-			if(!getline(*in, line))
-			{
-				continue;
-			}
-
-			prefix = "group";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << "group " << m_group << endl;
-				continue;
-			}
-
-			*out << line << endl;
-		}
-	}
-	else
-	{
-		LOG(ERROR, "Problem saving current configuration.", "");
-		in->close();
-		out->close();
-		delete in;
-		delete out;
-
-		return false;
-	}
-
-	in->close();
-	out->close();
-	delete in;
-	delete out;
-
-	boost::filesystem::remove(to);
-
-	return true;
 }
 
 bool Config::LoadUserConfig()
@@ -1342,220 +1260,6 @@ string Config::ResolvePathVars(string path)
 	}
 }
 
-bool Config::SaveConfig()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	string line, prefix;
-
-	//XXX we need to do some interface checking to determine if we are still using the default configuration
-
-	//Rewrite the config file with the new settings
-	string configurationBackup = m_configFilePath + ".tmp";
-	boost::filesystem::path from = m_configFilePath;
-	boost::filesystem::path to = configurationBackup;
-	boost::filesystem::copy_file(from, to, boost::filesystem::copy_option::overwrite_if_exists);
-
-	ifstream *in = new ifstream(configurationBackup.c_str());
-	ofstream *out = new ofstream(m_configFilePath.c_str());
-
-	if(out->is_open() && in->is_open())
-	{
-		while(in->good())
-		{
-			if(!getline(*in, line))
-			{
-				continue;
-			}
-
-			prefix = "DM_ENABLED";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				if(GetIsDmEnabled())
-				{
-					*out << "DM_ENABLED 1"<<endl;
-				}
-				else
-				{
-					*out << "DM_ENABLED 0"<<endl;
-				}
-				continue;
-			}
-
-			prefix = "INTERFACE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix;
-				if(m_ifIsDefault)
-				{
-					*out << " default" << endl;
-					continue;
-				}
-
-				if (m_interfaces.size())
-				{
-					*out << m_interfaces.at(0);
-					for (uint i = 1; i < m_interfaces.size(); i++)
-					{
-						*out << " " << m_interfaces.at(i);
-					}
-				}
-				*out << endl;
-				continue;
-			}
-
-			prefix = "K";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetK() << endl;
-				continue;
-			}
-
-			prefix = "EPS";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetEps() << endl;
-				continue;
-			}
-
-			prefix = "CLASSIFICATION_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetClassificationTimeout() << endl;
-				continue;
-			}
-
-			prefix = "CLASSIFICATION_THRESHOLD";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetClassificationThreshold() << endl;
-				continue;
-			}
-
-			prefix = "USER_HONEYD_CONFIG";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetPathConfigHoneydUser() << endl;
-				continue;
-			}
-
-			prefix = "DOPPELGANGER_IP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetDoppelIp() << endl;
-				continue;
-			}
-
-			prefix = "DOPPELGANGER_INTERFACE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix;
-				if(m_loIsDefault)
-				{
-					*out << " default" << endl;
-					continue;
-				}
-				*out << " " << m_loopbackIF << endl;
-				continue;
-			}
-
-			prefix = "HS_HONEYD_CONFIG";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetPathConfigHoneydHS() << endl;
-				continue;
-			}
-
-			prefix = "TCP_TIMEOUT";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetTcpTimout() << endl;
-				continue;
-			}
-
-			prefix = "TCP_CHECK_FREQ";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " << GetTcpCheckFreq()  << endl;
-				continue;
-			}
-
-			prefix = "PCAP_FILE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " <<  GetPathPcapFile() << endl;
-				continue;
-			}
-
-			prefix = "READ_PCAP";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				if(GetReadPcap())
-				{
-					*out << "READ_PCAP 1"<<  endl;
-				}
-				else
-				{
-					*out << "READ_PCAP 0"<< endl;
-				}
-				continue;
-			}
-
-			prefix = "GO_TO_LIVE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				if(GetGotoLive())
-				{
-					*out << "GO_TO_LIVE 1" << endl;
-				}
-				else
-				{
-					*out << "GO_TO_LIVE 0" << endl;
-				}
-				continue;
-			}
-			prefix = "HAYSTACK_STORAGE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " <<  m_haystackStorage;
-				if(m_haystackStorage == 'M')
-				{
-					*out << " " << m_userPath;
-				}
-				*out << endl;
-				continue;
-			}
-
-			prefix = "CAPTURE_BUFFER_SIZE";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				*out << prefix << " " <<  GetCaptureBufferSize() << endl;
-				continue;
-			}
-
-			*out << line << endl;
-		}
-	}
-	else
-	{
-		LOG(ERROR, "Problem saving current configuration.", "");
-		in->close();
-		out->close();
-		delete in;
-		delete out;
-
-		return false;
-	}
-
-	in->close();
-	out->close();
-	delete in;
-	delete out;
-
-	boost::filesystem::remove(to);
-
-	return true;
-}
-
 //	Returns: True if(after the function) the user has all necessary nova config files
 //		IE: Returns false only if the user doesn't have configs AND we weren't able to make them
 bool Config::InitUserConfigs()
@@ -1590,48 +1294,6 @@ bool Config::InitUserConfigs()
 	}
 
 	return returnValue;
-}
-
-string Config::ToString()
-{
-	Lock lock(&m_lock, READ_LOCK);
-
-	std::stringstream ss;
-	ss << "GetConfigFilePath() " << GetConfigFilePath() << endl;
-	ss << "GetDoppelInterface() " << GetDoppelInterface() << endl;
-	ss << "GetDoppelIp() " << GetDoppelIp() << endl;
-	ss << "GetInterfaces() :";
-	vector<string> ifList = GetInterfaces();
-	for(uint i = 0; i < ifList.size(); i++)
-	{
-		if(i) //If i != 0;
-		{
-			ss << ", ";
-		}
-		ss << ifList[i];
-	}
-	ss << "GetPathCESaveFile() " << GetPathCESaveFile() << endl;
-	ss << "GetPathConfigHoneydDm() " << GetPathConfigHoneydUser() << endl;
-	ss << "GetPathConfigHoneydHs() " << GetPathConfigHoneydHS() << endl;
-	ss << "GetPathPcapFile() " << GetPathPcapFile() << endl;
-
-	ss << "GetReadPcap() " << GetReadPcap() << endl;
-	ss << "GetIsDmEnabled() " << GetIsDmEnabled() << endl;
-	ss << "GetGotoLive() " << GetGotoLive() << endl;
-
-	ss << "GetClassificationTimeout() " << GetClassificationTimeout() << endl;
-	ss << "GetDataTTL() " << GetDataTTL() << endl;
-	ss << "GetK() " << GetK() << endl;
-	ss << "GetSaveFreq() " << GetSaveFreq() << endl;
-	ss << "GetTcpCheckFreq() " << GetTcpCheckFreq() << endl;
-	ss << "GetTcpTimout() " << GetTcpTimout() << endl;
-	ss << "GetThinningDistance() " << GetThinningDistance() << endl;
-
-	ss << "GetClassificationThreshold() " << GetClassificationThreshold() << endl;
-	ss << "GetEps() " << GetEps() << endl;
-
-
-	return ss.str();
 }
 
 std::string Config::ReadSetting(std::string key)
@@ -1931,18 +1593,6 @@ int Config::GetSaveFreq()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_saveFreq;
-}
-
-int Config::GetTcpCheckFreq()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_tcpCheckFreq;
-}
-
-int Config::GetTcpTimout()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_tcpTimout;
 }
 
 double Config::GetThinningDistance()
@@ -2247,18 +1897,6 @@ void Config::SetSaveFreq(int saveFreq)
 	m_saveFreq = saveFreq;
 }
 
-void Config::SetTcpCheckFreq(int tcpCheckFreq)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_tcpCheckFreq = tcpCheckFreq;
-}
-
-void Config::SetTcpTimout(int tcpTimout)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_tcpTimout = tcpTimout;
-}
-
 void Config::SetThinningDistance(double thinningDistance)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -2414,30 +2052,6 @@ string Config::GetPathHome()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_pathHome;
-}
-
-char Config::GetHaystackStorage()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_haystackStorage;
-}
-
-void Config::SetHaystackStorage(char haystackStorage)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_haystackStorage = haystackStorage;
-}
-
-string Config::GetUserPath()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_userPath;
-}
-
-void Config::SetUserPath(string userPath)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_userPath = userPath;
 }
 
 uint Config::GetMinPacketThreshold()
@@ -2704,5 +2318,33 @@ string Config::GetPathTrainingData()
 	Lock lock(&m_lock, READ_LOCK);
 	return m_pathTrainingData;
 }
+
+std::string Config::GetCommandStartNovad()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_commandStartNovad;
+}
+
+
+std::string Config::GetCommandStopNovad()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_commandStopNovad;
+}
+
+
+std::string Config::GetCommandStartHaystack()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_commandStartHaystack;
+}
+
+std::string Config::GetCommandStopHaystack()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_commandStopHaystack;
+}
+
+
 
 }

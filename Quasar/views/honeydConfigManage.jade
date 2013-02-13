@@ -1088,14 +1088,7 @@ block headerAdditions
              }
            }
 
-           if(alias != "" && alias != nodeList[i].interface) 
-           {
-             row.push(nodeList[i].interface + " (alias: " + alias + ")"); 
-           } 
-           else 
-           {
-             row.push(nodeList[i].interface); 
-           }
+           row.push(alias); 
 
            row.push(String(nodeList[i].mac));
            row.push(String(nodeList[i].pfile));

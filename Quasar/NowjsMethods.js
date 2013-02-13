@@ -220,11 +220,11 @@ everyone.now.GetInheritedEthernetList = function (parent, cb)
 
 everyone.now.RestartHaystack = function(cb)
 {
-    NovaCommon.nova.StopHaystack();
+    NovaCommon.StopHaystack();
 
     // Note: the other honeyd may be shutting down still,
     // but the slight overlap doesn't cause problems
-    NovaCommon.nova.StartHaystack(false);
+    NovaCommon.StartHaystack(false);
 
     cb && cb();
 };
@@ -233,8 +233,10 @@ everyone.now.StartHaystack = function()
 {
     if(!NovaCommon.nova.IsHaystackUp())
     {
-        NovaCommon.nova.StartHaystack(false);
+        NovaCommon.StartHaystack(false);
     }
+
+  setTimeout(function() {
   if(!NovaCommon.nova.IsHaystackUp())
   {
     everyone.now.HaystackStartFailed();
@@ -248,11 +250,12 @@ everyone.now.StartHaystack = function()
     catch(err)
     {};
     }
+    }, 1000);
 };
 
 everyone.now.StopHaystack = function()
 {
-    NovaCommon.nova.StopHaystack();
+    NovaCommon.StopHaystack();
     try 
     {
         everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp());
@@ -273,18 +276,21 @@ everyone.now.IsNovadUp = function(cb)
 
 everyone.now.StartNovad = function()
 {
-    var result = NovaCommon.nova.StartNovad(false);
+    var result = NovaCommon.StartNovad(false);
+
+    setTimeout(function() {
     result = NovaCommon.nova.CheckConnection();
     try 
     {
         everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadUp(false));
     }
     catch(err){};
+    }, 1000);
 };
 
 everyone.now.StopNovad = function(cb)
 {
-    if(NovaCommon.nova.StopNovad() == false)
+    if(NovaCommon.StopNovad() == false)
     {
         cb && cb('false');
     return;
@@ -513,7 +519,7 @@ function jsProfileToHoneydProfile(profile)
 
 
 //portSets = A 2D array. (array of portSets, which are arrays of Ports)
-everyone.now.SaveProfile = function (profile, cb)
+everyone.now.SaveProfile = function (profile, newProfile, cb)
 {
     // Check input
     var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
@@ -526,13 +532,49 @@ everyone.now.SaveProfile = function (profile, cb)
         return;
     }
 
-	// Check we have ethernet vendors
-	if (profile.ethernet.length == 0)
+    // Check for duplicate profile
+    if (newProfile) 
+    {
+        var existingProfile = NovaCommon.honeydConfig.GetProfile(profile.name);
+        if (existingProfile != null)
 	{
+	    cb && cb("ERROR: Profile with name already exists");
+	    return;
+	}
+    }
+
+
+    // Check we have ethernet vendors
+    if (profile.ethernet.length == 0)
+    {
         var err = "ERROR: Must have at least one ethernet vendor!";
         cb && cb(err);
         return;
-	}
+    }
+
+
+    // Check for valid drop percentage
+    if (isNaN(parseInt(profile.dropRate)))
+    {
+        cb && cb("ERROR: Can't convert drop rate to integer");
+        return;
+    }
+
+    profile.dropRate = parseInt(profile.dropRate);
+
+    if (profile.dropRate < 0 || profile.dropRate > 100)
+    {
+        cb && cb("ERROR: Droprate must be between 0 and 100");
+        return;
+    }
+
+    // Check uptimes
+    if (profile.uptimeValueMax < 0 || profile.uptimeValueMin < 0)
+    {
+        cb && cb("ERROR: Uptime must be a positive integer");
+        return;
+    }
+
 
     // Check that we have the scriptnames set for profiles that need scripts
     for (var i = 0; i < profile.portSets.length; i++) 
@@ -540,6 +582,19 @@ everyone.now.SaveProfile = function (profile, cb)
         for (var j = 0; j < profile.portSets[i].PortExceptions.length; j++)
         {
             var port = profile.portSets[i].PortExceptions[j];
+
+
+            if (isNaN(parseInt(port.portNum)))
+            {
+                cb && cb("ERROR: unable to parse port into an integer!");
+                return;
+            }
+
+
+            if (parseInt(port.portNum) <= 0 || parseInt(port.portNum) > 65535) {
+                cb && cb("ERROR: Unable to save profile with invalid port number!");
+                return;
+            }
 
             if (port.behavior == "script" || port.behavior == "tarpit script") {
                 if (port.scriptName == "" || port.scriptName == "NA") {

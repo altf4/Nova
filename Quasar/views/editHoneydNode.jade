@@ -247,13 +247,14 @@ block content
   select#portSetList(name="profile", onchange='portsetSelectionChanged()')
   br
   br
-  div(style="height: 200px; overflow-y: scroll;")
+  div(style="height: 200px; overflow-y: scroll; border: 1px solid black; display: inline-block;")
     table(border='1')
       thead
         th(style='background-color: #d0e9fc;') Port Number
         th(style='background-color: #d0e9fc;') Protocol
         th(style='background-color: #d0e9fc;') Behavior
       tbody#portsetHook
+  br
   br
 
   label Network Interface
@@ -265,17 +266,17 @@ block content
       tr 
         td
           input(type="radio", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onchange="checkOnlyOne(if0)")
-          #{INTERFACES[0]}
+          #{interfaceAliases[0]}
     - else
       - for (var i = 0; i < INTERFACES.length; i++)
           tr 
             td
               - if (String(interface) == String(INTERFACES[i]))
                 input(type="radio", value=INTERFACES[i], id="if#{i}", name="interface", checked, width=10, onchange="checkOnlyOne(if#{i})")
-                #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
+                #{interfaceAliases[i]}
               - else
                 input(type="radio", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onchange="checkOnlyOne(if#{i})")
-                #{INTERFACES[i]} (Alias: #{interfaceAliases[i]})
+                #{interfaceAliases[i]}
 
   hidden(id="length", value=INTERFACES.length)
  

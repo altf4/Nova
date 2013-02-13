@@ -119,7 +119,6 @@ var databaseOpenResult = function (err)
 {
     if(err === null)
     {
-        console.log("Opened sqlite3 database file.");
     }
     else
     {
@@ -143,7 +142,7 @@ var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = 
 var dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
 var dbqFirstrunInsert = db.prepare("INSERT INTO firstrun values(datetime('now'))");
 
-var dbqSuspectAlertsGet = novaDb.prepare('SELECT suspect_alerts.id, timestamp, suspect, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_tcp_ports,distinct_udp_ports,avg_tcp_ports_per_host,avg_udp_ports_per_host,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
+var dbqSuspectAlertsGet = novaDb.prepare('SELECT suspect_alerts.id, timestamp, suspect, interface, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_tcp_ports,distinct_udp_ports,avg_tcp_ports_per_host,avg_udp_ports_per_host,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
 var dbqSuspectAlertsDeleteAll = novaDb.prepare('DELETE FROM suspect_alerts');
 var dbqSuspectAlertsDeleteAlert = novaDb.prepare('DELETE FROM suspect_alerts where id = ?');
 
@@ -424,7 +423,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
           switch(json_args.type)
           {
             case 'startNovad':
-              NovaCommon.nova.StartNovad(false);
+              NovaCommon.StartNovad(false);
               NovaCommon.nova.CheckConnection();
               var response = {};
               response.id = clientId;
@@ -433,7 +432,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
               pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'stopNovad':
-              NovaCommon.nova.StopNovad();
+              NovaCommon.StopNovad();
               NovaCommon.nova.CloseNovadConnection();
               var response = {};
               response.id = clientId;
@@ -444,7 +443,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
             case 'startHaystack':
               if(!NovaCommon.nova.IsHaystackUp())
               {
-                NovaCommon.nova.StartHaystack(false);
+                NovaCommon.StartHaystack(false);
                 var response = {};
                 response.id = clientId;
                 response.type = 'response';
@@ -461,7 +460,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
               }
               break;
             case 'stopHaystack':
-              NovaCommon.nova.StopHaystack();
+              NovaCommon.StopHaystack();
               var response = {};
               response.id = clientId;
               response.type = 'response';
@@ -813,8 +812,6 @@ app.get('/advancedOptions', function (req, res)
             INTERFACES: NovaCommon.config.ListInterfaces().sort()
             , DEFAULT: NovaCommon.config.GetUseAllInterfacesBinding()
             , HS_HONEYD_CONFIG: NovaCommon.config.ReadSetting("HS_HONEYD_CONFIG")
-            , TCP_TIMEOUT: NovaCommon.config.ReadSetting("TCP_TIMEOUT")
-            , TCP_CHECK_FREQ: NovaCommon.config.ReadSetting("TCP_CHECK_FREQ")
             , READ_PCAP: NovaCommon.config.ReadSetting("READ_PCAP")
             , PCAP_FILE: NovaCommon.config.ReadSetting("PCAP_FILE")
             , GO_TO_LIVE: NovaCommon.config.ReadSetting("GO_TO_LIVE")
@@ -822,8 +819,6 @@ app.get('/advancedOptions', function (req, res)
             , K: NovaCommon.config.ReadSetting("K")
             , EPS: NovaCommon.config.ReadSetting("EPS")
             , CLASSIFICATION_THRESHOLD: NovaCommon.config.ReadSetting("CLASSIFICATION_THRESHOLD")
-            , DATAFILE: NovaCommon.config.ReadSetting("DATAFILE")
-            , USER_HONEYD_CONFIG: NovaCommon.config.ReadSetting("USER_HONEYD_CONFIG")
             , DOPPELGANGER_IP: NovaCommon.config.ReadSetting("DOPPELGANGER_IP")
             , DOPPELGANGER_INTERFACE: NovaCommon.config.ReadSetting("DOPPELGANGER_INTERFACE")
             , DM_ENABLED: NovaCommon.config.ReadSetting("DM_ENABLED")
@@ -840,7 +835,6 @@ app.get('/advancedOptions', function (req, res)
             , SMTP_PASS: NovaCommon.config.GetSMTPPass()
             , RECIPIENTS: NovaCommon.config.ReadSetting("RECIPIENTS")
             , SERVICE_PREFERENCES: NovaCommon.config.ReadSetting("SERVICE_PREFERENCES")
-            , HAYSTACK_STORAGE: NovaCommon.config.ReadSetting("HAYSTACK_STORAGE")
             , CAPTURE_BUFFER_SIZE: NovaCommon.config.ReadSetting("CAPTURE_BUFFER_SIZE")
             , MIN_PACKET_THRESHOLD: NovaCommon.config.ReadSetting("MIN_PACKET_THRESHOLD")
             , CUSTOM_PCAP_FILTER: NovaCommon.config.ReadSetting("CUSTOM_PCAP_FILTER")
@@ -1199,11 +1193,13 @@ app.post('/importCaptureSave', function (req, res)
 
 app.get('/configWhitelist', function (req, res)
 {
+    var interfaces = NovaCommon.config.ListInterfaces().sort();
     res.render('configWhitelist.jade', {
         locals: {
             whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
             whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
-            INTERFACES: NovaCommon.config.ListInterfaces().sort()
+      		INTERFACES: interfaces,
+      		interfaceAliases: ConvertInterfacesToAliases(interfaces)
         }
     })
 });
@@ -1668,11 +1664,11 @@ app.post('/configureNovaSave', function (req, res)
 {
     // TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
     var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
-    "TCP_TIMEOUT", "TCP_CHECK_FREQ", "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
-    "K", "EPS", "CLASSIFICATION_THRESHOLD", "DATAFILE", "USER_HONEYD_CONFIG", "DOPPELGANGER_IP", 
+    "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
+    "K", "EPS", "CLASSIFICATION_THRESHOLD", "DOPPELGANGER_IP", 
     "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", 
     "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", 
-    "SERVICE_PREFERENCES", "HAYSTACK_STORAGE", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", 
+    "SERVICE_PREFERENCES", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", 
     "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", 
     "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", 
     "THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC", "EMAIL_ALERTS_ENABLED", "TRAINING_DATA_PATH"];
@@ -1777,10 +1773,6 @@ app.post('/configureNovaSave', function (req, res)
         }
         switch (configItems[item])
         {
-        case "TCP_TIMEOUT":
-            validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
-            break;
-
         case "WEB_UI_PORT":
             validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
             break;
@@ -2189,7 +2181,7 @@ function ConvertInterfaceToAlias(iface)
 {
     if (interfaceAliases[iface] !== undefined) 
     {
-        return interfaceAliases[iface];
+        return interfaceAliases[iface] + ' (' + iface + ')';
     } 
     else 
     {

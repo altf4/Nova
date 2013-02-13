@@ -62,9 +62,6 @@ public:
 	//      module - added s.t. rsyslog  will output NovaConfig messages as the parent process that called LoadConfig
 	void LoadConfig();
 	void LoadCustomSettings(int argc,  char** argv);
-	bool SaveConfig();
-
-	bool SaveUserConfig();
 
 	// Checks to see if the current user has a ~/.nova directory, and creates it if not, along with default config files
 	//	Returns: True if(after the function) the user has all necessary ~/.nova config files
@@ -76,8 +73,6 @@ public:
     // that you need.
     std::string ReadSetting(std::string key);
     bool WriteSetting(std::string key, std::string value);
-
-    std::string ToString();
 
     // Getters
     std::string GetConfigFilePath();
@@ -110,8 +105,6 @@ public:
     int GetDataTTL();
     int GetK();
     int GetSaveFreq();
-    int GetTcpCheckFreq();
-    int GetTcpTimout();
     double GetThinningDistance();
 
     double GetClassificationThreshold();
@@ -149,8 +142,6 @@ public:
     void SetReadPcap(bool readPcap);
     void SetReadCustomPcap(bool readCustomPcap);
     void SetSaveFreq(int saveFreq);
-    void SetTcpCheckFreq(int tcpCheckFreq);
-    void SetTcpTimout(int tcpTimout);
     void SetThinningDistance(double thinningDistance);
     void SetUseTerminals(bool useTerminals);
     void SetKey(std::string key);
@@ -247,6 +238,12 @@ public:
 	std::string GetPathTrainingData();
 
 	vector<string> GetSupportedEngines();
+
+
+	std::string GetCommandStartNovad();
+	std::string GetCommandStopNovad();
+	std::string GetCommandStartHaystack();
+	std::string GetCommandStopHaystack();
 
 protected:
 	Config();
@@ -346,9 +343,6 @@ private:
 
 	std::string m_trainingSession;
 
-	char m_haystackStorage;
-	std::string m_userPath;
-
 	std::vector<std::string> m_classifierEngines;
 	std::vector<std::string> m_classifierConfigs;
 	std::vector<CLASSIFIER_MODES> m_classifierTypes;
@@ -365,7 +359,11 @@ private:
 
 	static std::string m_pathPrefix;
 
+	std::string m_commandStartNovad;
+	std::string m_commandStopNovad;
 
+	std::string m_commandStartHaystack;
+	std::string m_commandStopHaystack;
 
 	pthread_rwlock_t m_lock;
 

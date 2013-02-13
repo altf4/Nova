@@ -49,6 +49,7 @@ form(method="post", action="/configureNovaSave")
     label Shut down Quasar
   br
 
+  br
   h2 File Paths
   label Path to state save file
   input.wide(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
@@ -58,34 +59,16 @@ form(method="post", action="/configureNovaSave")
   input(name="TRAINING_DATA_PATH",  value=TRAINING_DATA_PATH)
   br
   
-  label Path to training file
-  input.wide(type="text", name="DATAFILE",  value=DATAFILE)
-  br
-   
-  label Path to PCAP file
+  label Path to pcap file
   input.wide(type="text", name="PCAP_FILE",  value=PCAP_FILE)
   br
-
-  label Path to User Honeyd Config
-  input.wide(type="text", name="USER_HONEYD_CONFIG",  value=USER_HONEYD_CONFIG)
-  br
-  
   
   label Path to Haystack Honeyd Config File
   input.wide(type="text", name="HS_HONEYD_CONFIG",  value=HS_HONEYD_CONFIG)
   br
 
-  h2 TCP Timeout
-  label TCP Timeout
-  input(type="number", step="1", min="0", name="TCP_TIMEOUT",  value=TCP_TIMEOUT)
-  br
-
-  label TCP Timeout Check Frequency
-  input(type="number", step="1", min="0", name="TCP_CHECK_FREQ",  value=TCP_CHECK_FREQ)
-  br
-
   h2 Special Run Settings
-  label Read PCAP file?
+  label Read pcap file?
   br
   if READ_PCAP != "0"
     input(type="radio", name="READ_PCAP", value="1", checked)
@@ -103,7 +86,7 @@ form(method="post", action="/configureNovaSave")
     br
   br
 
-  label Go to live capture after PCAP?
+  label Go to live capture after pcap?
   br
   if GO_TO_LIVE != "0"
     input(type="radio", name="GO_TO_LIVE", value="1", checked)
@@ -125,7 +108,7 @@ form(method="post", action="/configureNovaSave")
   input(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE",  value=CAPTURE_BUFFER_SIZE)
   br
   
-
+  br
   h2 Classification Settings
   a(href='/editClassifiers')
     label Edit Classifiers (advanced users only)
@@ -173,6 +156,14 @@ form(method="post", action="/configureNovaSave")
   label Packets Needed Before Classification
   input(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
   br
+  
+  label State data save frequency
+  input(type="number", min="0", name="SAVE_FREQUENCY",  value=SAVE_FREQUENCY)
+  br
+
+  label Sate data chunk TTL
+  input(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
+  br
 
   label Clear data after suspect logged as hostile?
   br
@@ -192,11 +183,11 @@ form(method="post", action="/configureNovaSave")
     br
   br
 
-  label Custom PCAP Filter String
+  label Custom pcap Filter String
   input.wide(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
   br
   
-  label Custom PCAP Filter String Mode
+  label Custom pcap Filter String Mode
   br
   if CUSTOM_PCAP_MODE != "0"
     input(type="radio", name="CUSTOM_PCAP_MODE", value="1", checked)
@@ -224,20 +215,7 @@ form(method="post", action="/configureNovaSave")
   label Doppelganger IP
   input(name="DOPPELGANGER_IP",  value=DOPPELGANGER_IP)
   br
-
-  label State save frequency
-  input(type="number", min="0", name="SAVE_FREQUENCY",  value=SAVE_FREQUENCY)
-  br
-
-  label Data TTL
-  input(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
-  br
-  
-  h2 Logger Settings
-  label Service Preferences
-  input(name="SERVICE_PREFERENCES", value=SERVICE_PREFERENCES)
-  br
-  
+ 
   p(style="font-style: italic; float: left;") Note: To disable remote logging for Nova, use string NULL or empty the input field
   br
   
@@ -245,11 +223,7 @@ form(method="post", action="/configureNovaSave")
   input(name="RSYSLOG_IP", value=RSYSLOG_IP, id='RSYSLOG_IP', onfocus='watermark("RSYSLOG_IP", "NULL")', onblur='watermark("RSYSLOG_IP", "NULL")')
   br
 
-  label Haystack Storage
-  input(name="HAYSTACK_STORAGE",  value=HAYSTACK_STORAGE)
-  br
-
-  h2 Master Multi-Instance User Interface
+  h2 Pulsar
   if MASTER_UI_ENABLED != "0"
     input(type="radio", name="MASTER_UI_ENABLED", value="1", checked)
     |Yes
@@ -265,16 +239,16 @@ form(method="post", action="/configureNovaSave")
     |No
     br
 
-
-  label Master UI IP
+  br
+  label Pulsar Server IP
   input(name="MASTER_UI_IP",  value=MASTER_UI_IP)
   br
   
-  label Master UI Client ID
+  label Pulsar Client ID
   input(name="MASTER_UI_CLIENT_ID",  value=MASTER_UI_CLIENT_ID)
   br
   
-  label Master UI Reconnect Time
+  label Pulsar Reconnect Time
   input(name="MASTER_UI_RECONNECT_TIME",  value=MASTER_UI_RECONNECT_TIME)
   br
 

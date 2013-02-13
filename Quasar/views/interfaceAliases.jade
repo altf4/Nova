@@ -50,7 +50,7 @@ block headerAdditions
         columns.push({name: "Alias"});
         columns.push({name: "Delete"});
 
-        grid = new NovaGrid(columns, 0, aliasTable, 'grid', false);
+        grid = new NovaGrid(columns, 0, "aliasTable", 'grid', false);
 
         var interfaceAliases = !{JSON.stringify(interfaceAliases)};
         for (i in interfaceAliases)

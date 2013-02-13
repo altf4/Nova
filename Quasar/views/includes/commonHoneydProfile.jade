@@ -267,19 +267,19 @@ script
                 port.protocol = dojo.byId("portType" + portIndexes[i]).value;
 
 
-                    for (var j = 0; j < PortExceptions.length; j++) {
-                        if (PortExceptions[j].portNum == port.portNum && port.protocol == PortExceptions[j].protocol) {
-                            alert("Error: Port " + port.portNum + " is used more than once!");
-                            return false;
-                        }
-                    }
-
-                    if (port.portNum == 0)
-                    {
-                        alert("Port can't be 0!");
+                for (var j = 0; j < PortExceptions.length; j++) {
+                    if (PortExceptions[j].portNum == port.portNum && port.protocol == PortExceptions[j].protocol) {
+                        alert("Error: Port " + port.portNum + " is used more than once!");
                         return false;
                     }
-                    PortExceptions.push(port);
+                }
+
+                if (port.portNum == 0)
+                {
+                    alert("Port can't be 0!");
+                    return false;
+                }
+                PortExceptions.push(port);
             }
             for (var i in profile.portSets)
             {
@@ -372,6 +372,8 @@ script
                 alert("Port sets must have a name.");
                 return;
             }
+            
+            if (!updatePortsModel()) {return};
 
             for (var i in profile.portSets)
             {
@@ -404,9 +406,13 @@ script
         // Currently edited port set has changed
         var portSetSelectionChanged = function()
         {
+            console.log("Running portSetSelectionChanged!")
             if (lastPortSet != "")
             {
-                updatePortsModel();
+                if (!updatePortsModel()) {
+                    document.getElementById("portSetSelection").value = lastPortSet;
+                    return;
+                }
             }
 
             lastPortSet = document.getElementById("portSetSelection").value;
@@ -462,12 +468,33 @@ script
 
                         profile.personality = dojo.byId("personality").value;
                         profile.dropRate = dojo.byId("dropRate").value;
+
+                        var value = parseInt(dojo.byId("uptimeMin").value);
+                        if (isNaN(value) || value < 0)
+                        {
+                            alert("Uptime min must be a positive integer!");
+                            return;
+                        }
+
+
                         profile.uptimeMin = dojo.byId("uptimeMin").value;
 
                         if (dojo.byId("uptimeType").selectedIndex == 0)
                         {
+                                var value = parseInt(dojo.byId("uptimeMin").value);
+                                if (isNaN(value) || value < 0)
+                                {
+                                    alert("Uptime max must be a positive integer!");
+                                    return;
+                                }
                                 profile.uptimeMax = dojo.byId("uptimeMin").value;
                         }  else {
+                                var value = parseInt(dojo.byId("uptimeMax").value);
+                                if (isNaN(value) || value < 0)
+                                {
+                                    alert("Uptime max must be a positive integer!");
+                                    return;
+                                }
                                 profile.uptimeMax = dojo.byId("uptimeMax").value;
                         }
 
@@ -489,7 +516,7 @@ script
                                 {
                                     //need conditional here for add vs. edit, false == edit, true == add
                                     try {
-                                        now.SaveProfile(profile, savedChanges);
+                                        now.SaveProfile(profile, newProfile == "true", savedChanges);
                                     } catch (err)
                                     {
                                         alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
@@ -509,6 +536,7 @@ script
                         now.IsHaystackUp(checkIfRestartNeeded); 
                     } else {
                         alert("Unable to save profile: " + err);
+                        return;
                     }
                 };
 
@@ -796,7 +824,6 @@ script
                         {
                                 portIndexes.splice(idx, 1);
                         }
-                        updatePortsModel();
                 };
 
                 inheritanceChanged = function() 

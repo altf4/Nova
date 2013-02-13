@@ -105,6 +105,17 @@ string Suspect::ToString()
 		ss << FeatureSet::m_featureNames[i] << ": " << m_features.m_features[i] << "\n";
 	}
 
+	ss << "TCP RST Packets: " << GetRstCount() << "\n";
+	ss << "TCP ACK Packets: " << GetAckCount() << "\n";
+	ss << "TCP SYN Packets: " << GetSynCount() << "\n";
+	ss << "TCP FIN Packets: " << GetFinCount() << "\n";
+	ss << "TCP SYN/ACK Packets: " << GetSynAckCount() << "\n";
+
+	ss << "Total TCP Packets: " << GetTcpPacketCount() << "\n";
+	ss << "Total UDP Packets: " << GetUdpPacketCount() << "\n";
+	ss << "Total ICMP Packets: " << GetIcmpPacketCount() << "\n";
+	ss << "Total other protocol packets: " << GetOtherPacketCount() << "\n";
+
 	return ss.str();
 }
 

@@ -38,23 +38,8 @@ bool StartHaystack(bool blocking)
 	ss << " --disable-webserver";
 	ss << " -i " << Config::Inst()->GetDoppelInterface();
 	ss << " -f " << "\"" << Config::Inst()->GetPathHome() << "/";
-	switch(Config::Inst()->GetHaystackStorage())
-	{
-		case 'I':
-		{
-			ss << Config::Inst()->GetPathConfigHoneydHS() << "\"";
-			break;
-		}
-		case 'M':
-		{
-			ss << Config::Inst()->GetPathConfigHoneydUser() << "\"";
-			break;
-		}
-		default:
-		{
-			return false;
-		}
-	}
+	ss << Config::Inst()->GetPathConfigHoneydHS() << "\"";
+
 
 	ss << " -p " << "\"" << Config::Inst()->GetPathShared();
 	ss << "/nmap-os-db\" -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";

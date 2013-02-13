@@ -500,7 +500,6 @@ Handle<Value> NovaNode::registerOnAllSuspectsCleared(const Arguments& args)
 	m_SuspectsClearedCallback.MakeWeak(0, HandleOnNewSuspectWeakCollect);
 
 	m_AllSuspectsClearedCallbackRegistered = true;
-	LOG(DEBUG, "Registered callback for AllSuspectsCleared", "");
 	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
 	return scope.Close(result);      
 }
@@ -520,7 +519,6 @@ Handle<Value> NovaNode::registerOnSuspectCleared(const Arguments& args)
 	m_SuspectClearedCallback.MakeWeak(0, HandleOnNewSuspectWeakCollect);
 
 	m_SuspectClearedCallbackRegistered = true;
-	LOG(DEBUG, "Registered callback for SuspectCleared", "");
 	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
 	return scope.Close(result);      
 }

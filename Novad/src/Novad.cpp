@@ -486,7 +486,7 @@ void StartCapture()
 	if(Config::Inst()->GetReadPcap())
 	{
 		try {
-			LOG(DEBUG, "Loading PCAP file", "");
+			LOG(DEBUG, "Loading pcap file", "");
 			string pcapFilePath = Config::Inst()->GetPathPcapFile() + "/capture.pcap";
 			string ipAddressFile = Config::Inst()->GetPathPcapFile() + "/localIps.txt";
 
@@ -500,13 +500,14 @@ void StartCapture()
 
 			cap->StartCaptureBlocking();
 
-			LOG(DEBUG, "Done reading PCAP file. Processing...", "");
+			LOG(DEBUG, "Done reading pcap file. Processing...", "");
 			ClassificationLoop(NULL);
-			LOG(DEBUG, "Done processing PCAP file.", "");
+			LOG(DEBUG, "Done processing pcap file.", "");
 		}
 		catch (Nova::PacketCaptureException &e)
 		{
-			LOG(ERROR, string("Unable to open pcap file for capture: ") + e.what(), "");
+			LOG(CRITICAL, string("Unable to open pcap file for capture: ") + e.what(), "");
+			exit(EXIT_FAILURE);
 		}
 
 		Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
@@ -534,7 +535,8 @@ void StartCapture()
 			}
 			catch (Nova::PacketCaptureException &e)
 			{
-				LOG(ERROR, string("Exception when starting packet capture on device " + ifList[i] + ": ") + e.what(), "");
+				LOG(CRITICAL, string("Exception when starting packet capture on device " + ifList[i] + ": ") + e.what(), "");
+				exit(EXIT_FAILURE);
 			}
 		}
 	}
@@ -625,7 +627,7 @@ string ConstructFilterString(string captureIdentifier)
 		if(Config::Inst()->GetOverridePcapString())
 		{
 			filterString = Config::Inst()->GetCustomPcapString();
-			LOG(DEBUG, "Pcap filter string is "+filterString,"");
+			LOG(DEBUG, "Pcap filter string is: '" + filterString + "'","");
 			return filterString;
 		}
 		else
@@ -770,7 +772,7 @@ void UpdateAndClassify(SuspectIdentifier key)
 			SendSuspectToUIs(&suspectCopy);
 		}
 
-		LOG(ALERT, "Detected potentially hostile traffic from " + suspectCopy.GetIpString(), "");
+		LOG(ALERT, "Detected potentially hostile traffic from: " + suspectCopy.ToString(), "");
 	}
 	else
 	{

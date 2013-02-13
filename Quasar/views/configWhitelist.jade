@@ -134,7 +134,7 @@ block content
   select(id='interfaceDropdown', name='interfaceDropdown')
     option(value="All Interfaces") All Interfaces
     each interface, i in INTERFACES
-      option(value="#{interface}") #{interface}
+      option(value="#{INTERFACES[i]}") #{interfaceAliases[i]}
   br
   label IP Address or IP/netmask combination
   input#newEntry(type="text", placeholder="x.x.x.x/xx", onkeypress='if(event.keyCode == 13){addNewItem()}')

@@ -160,6 +160,15 @@ the files in $NOVAD_SOURCE/Installer/miscFiles/upstart/* to /etc/init. This is
 assuming that upstart is already installed and configured on your system (it
 comes by default on newer versions of Ubuntu).
 
+- Then you need to configure Quasar to start/stop novad and the haystack via upstart.
+ After installing edit ~/.config/nova/config/NOVAConfig.txt and set,
+
+  COMMAND_START_NOVAD sudo start novad
+  COMMAND_STOP_NOVAD sudo stop novad
+  COMMAND_START_HAYSTACK sudo start haystack
+  COMMAND_STOP_HAYSTACK sudo stop haystack
+
+
 =============================== 
 High Level Nova Components
 ===============================
@@ -275,6 +284,14 @@ Debian Packages
 ===============================
 Common Problems and solutions
 ===============================
+        ==================
+        Help! I forgot my Quasar password!
+        ==================
+          The default password is username 'nova' and password 'toor'. To reset
+          things back to this password, login to the machine running nova
+          via ssh or a physical shell and run,
+
+                novacli resetpassword
         
         ==================
         Haystack Autoconfig nmap fails on large networks
