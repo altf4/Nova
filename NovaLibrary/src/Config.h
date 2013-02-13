@@ -74,8 +74,6 @@ public:
     std::string ReadSetting(std::string key);
     bool WriteSetting(std::string key, std::string value);
 
-    std::string ToString();
-
     // Getters
     std::string GetConfigFilePath();
     std::string GetDoppelInterface();
@@ -241,6 +239,12 @@ public:
 
 	vector<string> GetSupportedEngines();
 
+
+	std::string GetCommandStartNovad();
+	std::string GetCommandStopNovad();
+	std::string GetCommandStartHaystack();
+	std::string GetCommandStopHaystack();
+
 protected:
 	Config();
 
@@ -355,7 +359,11 @@ private:
 
 	static std::string m_pathPrefix;
 
+	std::string m_commandStartNovad;
+	std::string m_commandStopNovad;
 
+	std::string m_commandStartHaystack;
+	std::string m_commandStopHaystack;
 
 	pthread_rwlock_t m_lock;
 

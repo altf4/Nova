@@ -16,6 +16,9 @@
 // Description : Common code for Nova modules
 //============================================================================
 
+var sys = require('sys');
+var exec = require('child_process').exec;
+
 var NovaCommon = new function() {
     console.log("Initializing nova C++ code");
     this.novaconfig = require('novaconfig.node');
@@ -42,6 +45,34 @@ var NovaCommon = new function() {
         return ret;
     }
 
+    this.StartNovad = function() {
+        var command = NovaCommon.config.ReadSetting("COMMAND_START_NOVAD");
+        exec(command, function(error, stdout, stderr) {
+            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        });
+    }
+    
+    this.StopNovad = function() {
+        var command = NovaCommon.config.ReadSetting("COMMAND_STOP_NOVAD");
+        exec(command, function(error, stdout, stderr) {
+            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        });
+    }
+    
+    this.StartHaystack = function() {
+        var command = NovaCommon.config.ReadSetting("COMMAND_START_HAYSTACK");
+        exec(command, function(error, stdout, stderr) {
+            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        });
+    }
+    
+    this.StopHaystack = function() {
+        var command = NovaCommon.config.ReadSetting("COMMAND_STOP_HAYSTACK");
+        exec(command, function(error, stdout, stderr) {
+            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        });
+    }
+
     this.GetPorts = function()
     {
       var scriptBindings = {};
@@ -58,7 +89,7 @@ var NovaCommon = new function() {
             var portSet = this.honeydConfig.GetPortSet(profiles[i], portSets[portSetName]);
             var ports = [];
 
-			var tmp = portSet.GetPorts();
+                        var tmp = portSet.GetPorts();
             for (var p in tmp)
             {
                 ports.push(tmp[p]);

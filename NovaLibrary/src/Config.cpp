@@ -93,7 +93,11 @@ string Config::m_prefixes[] =
 	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC",
 	"CURRENT_CONFIG",
 	"EMAIL_ALERTS_ENABLED",
-	"TRAINING_DATA_PATH"
+	"TRAINING_DATA_PATH",
+	"COMMAND_START_NOVAD",
+	"COMMAND_STOP_NOVAD",
+	"COMMAND_START_HAYSTACK",
+	"COMMAND_STOP_HAYSTACK"
 };
 
 Config *Config::m_instance = NULL;
@@ -895,6 +899,59 @@ void Config::LoadConfig_Internal()
 				}
 			}
 
+
+			// COMMAND_START_NOVAD
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_commandStartNovad = line;
+					isValid[prefixIndex] = true;
+				}
+			}
+
+			// COMMAND_STOP_NOVAD
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_commandStopNovad = line;
+					isValid[prefixIndex] = true;
+				}
+			}
+
+
+			// COMMAND_START_HAYSTACK
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_commandStartHaystack = line;
+					isValid[prefixIndex] = true;
+				}
+			}
+
+			// COMMAND_STOP_HAYSTACK
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_commandStopHaystack = line;
+					isValid[prefixIndex] = true;
+				}
+			}
 		}
 	}
 	else
@@ -1237,46 +1294,6 @@ bool Config::InitUserConfigs()
 	}
 
 	return returnValue;
-}
-
-string Config::ToString()
-{
-	Lock lock(&m_lock, READ_LOCK);
-
-	std::stringstream ss;
-	ss << "GetConfigFilePath() " << GetConfigFilePath() << endl;
-	ss << "GetDoppelInterface() " << GetDoppelInterface() << endl;
-	ss << "GetDoppelIp() " << GetDoppelIp() << endl;
-	ss << "GetInterfaces() :";
-	vector<string> ifList = GetInterfaces();
-	for(uint i = 0; i < ifList.size(); i++)
-	{
-		if(i) //If i != 0;
-		{
-			ss << ", ";
-		}
-		ss << ifList[i];
-	}
-	ss << "GetPathCESaveFile() " << GetPathCESaveFile() << endl;
-	//ss << "GetPathConfigHoneydDm() " << GetPathConfigHoneydUser() << endl; REMOVE ME
-	ss << "GetPathConfigHoneydHs() " << GetPathConfigHoneydHS() << endl;
-	ss << "GetPathPcapFile() " << GetPathPcapFile() << endl;
-
-	ss << "GetReadPcap() " << GetReadPcap() << endl;
-	ss << "GetIsDmEnabled() " << GetIsDmEnabled() << endl;
-	ss << "GetGotoLive() " << GetGotoLive() << endl;
-
-	ss << "GetClassificationTimeout() " << GetClassificationTimeout() << endl;
-	ss << "GetDataTTL() " << GetDataTTL() << endl;
-	ss << "GetK() " << GetK() << endl;
-	ss << "GetSaveFreq() " << GetSaveFreq() << endl;
-	ss << "GetThinningDistance() " << GetThinningDistance() << endl;
-
-	ss << "GetClassificationThreshold() " << GetClassificationThreshold() << endl;
-	ss << "GetEps() " << GetEps() << endl;
-
-
-	return ss.str();
 }
 
 std::string Config::ReadSetting(std::string key)
@@ -2301,5 +2318,33 @@ string Config::GetPathTrainingData()
 	Lock lock(&m_lock, READ_LOCK);
 	return m_pathTrainingData;
 }
+
+std::string Config::GetCommandStartNovad()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_commandStartNovad;
+}
+
+
+std::string Config::GetCommandStopNovad()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_commandStopNovad;
+}
+
+
+std::string Config::GetCommandStartHaystack()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_commandStartHaystack;
+}
+
+std::string Config::GetCommandStopHaystack()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_commandStopHaystack;
+}
+
+
 
 }

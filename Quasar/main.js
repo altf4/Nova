@@ -423,7 +423,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
           switch(json_args.type)
           {
             case 'startNovad':
-              NovaCommon.nova.StartNovad(false);
+              NovaCommon.StartNovad(false);
               NovaCommon.nova.CheckConnection();
               var response = {};
               response.id = clientId;
@@ -432,7 +432,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
               pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'stopNovad':
-              NovaCommon.nova.StopNovad();
+              NovaCommon.StopNovad();
               NovaCommon.nova.CloseNovadConnection();
               var response = {};
               response.id = clientId;
@@ -443,7 +443,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
             case 'startHaystack':
               if(!NovaCommon.nova.IsHaystackUp())
               {
-                NovaCommon.nova.StartHaystack(false);
+                NovaCommon.StartHaystack(false);
                 var response = {};
                 response.id = clientId;
                 response.type = 'response';
@@ -460,7 +460,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
               }
               break;
             case 'stopHaystack':
-              NovaCommon.nova.StopHaystack();
+              NovaCommon.StopHaystack();
               var response = {};
               response.id = clientId;
               response.type = 'response';

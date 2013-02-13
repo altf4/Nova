@@ -479,3 +479,32 @@ QUASAR_TETHER_TLS_PASSPHRASE toor
 
 TRAINING_DATA_PATH /config/training/data.txt
 
+
+
+
+############################################
+# Quasar start/stop command options
+############################################
+# These are the commands that Quasar will use
+# to start and stop novad and the haystack.
+
+COMMAND_START_NOVAD novacli start nova
+COMMAND_STOP_NOVAD novacli stop nova
+COMMAND_START_HAYSTACK novacli start haystack
+COMMAND_STOP_HAYSTACK novacli stop haystack
+
+# If using upstart, you should use upstart
+# start and stop here instead of the defaults.
+# Note that you'll need to set up sudoers so that
+# it will allow nova group users to run start
+# and stop with,
+
+# %nova ALL=(ALL) NOPASSWD: /sbin/start haystack, /sbin/stop haystack, /sbin/start novad, /sbin/stop novad
+
+#COMMAND_START_NOVAD sudo start novad
+#COMMAND_STOP_NOVAD sudo stop novad
+#COMMAND_START_HAYSTACK sudo start haystack
+#COMMAND_STOP_HAYSTACK sudo stop haystack
+
+
+

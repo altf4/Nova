@@ -220,11 +220,11 @@ everyone.now.GetInheritedEthernetList = function (parent, cb)
 
 everyone.now.RestartHaystack = function(cb)
 {
-    NovaCommon.nova.StopHaystack();
+    NovaCommon.StopHaystack();
 
     // Note: the other honeyd may be shutting down still,
     // but the slight overlap doesn't cause problems
-    NovaCommon.nova.StartHaystack(false);
+    NovaCommon.StartHaystack(false);
 
     cb && cb();
 };
@@ -233,8 +233,10 @@ everyone.now.StartHaystack = function()
 {
     if(!NovaCommon.nova.IsHaystackUp())
     {
-        NovaCommon.nova.StartHaystack(false);
+        NovaCommon.StartHaystack(false);
     }
+
+  setTimeout(function() {
   if(!NovaCommon.nova.IsHaystackUp())
   {
     everyone.now.HaystackStartFailed();
@@ -248,11 +250,12 @@ everyone.now.StartHaystack = function()
     catch(err)
     {};
     }
+    }, 1000);
 };
 
 everyone.now.StopHaystack = function()
 {
-    NovaCommon.nova.StopHaystack();
+    NovaCommon.StopHaystack();
     try 
     {
         everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp());
@@ -273,18 +276,21 @@ everyone.now.IsNovadUp = function(cb)
 
 everyone.now.StartNovad = function()
 {
-    var result = NovaCommon.nova.StartNovad(false);
+    var result = NovaCommon.StartNovad(false);
+
+    setTimeout(function() {
     result = NovaCommon.nova.CheckConnection();
     try 
     {
         everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadUp(false));
     }
     catch(err){};
+    }, 1000);
 };
 
 everyone.now.StopNovad = function(cb)
 {
-    if(NovaCommon.nova.StopNovad() == false)
+    if(NovaCommon.StopNovad() == false)
     {
         cb && cb('false');
     return;
