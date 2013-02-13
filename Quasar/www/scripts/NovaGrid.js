@@ -250,8 +250,6 @@ NovaGrid.prototype = {
                         if (this.m_columns[c].isDisabled == true) {continue;}
                         if (this.m_columns[c].formatter !== undefined) {
                           innerTableString += '<TD class="novaGrid">' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
-                        } else if(c == 3) {
-                          
                         } else {
                           innerTableString += '<TD class="novaGrid">' + arrayRep[i][c] + '</TD>';
                         }
