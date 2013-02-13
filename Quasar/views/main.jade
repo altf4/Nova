@@ -425,9 +425,9 @@ block headerAdditions
         } else if (d >= 0 && d <= 1)
         {
             var num = 100 * d;
-            return '<div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div>';
+            return '<div class="classification_entry" oncontextmenu="replacementContextMenu(event);"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div>';
         } else {
-             return "Error (" + d + ")";
+            return "Error (" + d + ")";
         }
     }
 
@@ -484,7 +484,11 @@ block headerAdditions
       var evt = (e ? e : window.event);
       var source = evt.target || evt.srcElement;
       
-      if(source.tagName != 'TD' && source.parentNode.tagName != 'TD')
+      if(source.tagName == 'DIV' && source.getAttribute('class').indexOf('progress') != -1)
+      {
+        source = source.parentNode; 
+      }
+      else if(source.tagName != 'TD' && source.parentNode.tagName != 'TD')
       {
         evt.returnValue = false || evt.preventDefault();
         return false;

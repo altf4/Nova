@@ -249,9 +249,11 @@ NovaGrid.prototype = {
                      for (var c = 0; c < this.m_columns.length; c++) {
                         if (this.m_columns[c].isDisabled == true) {continue;}
                         if (this.m_columns[c].formatter !== undefined) {
-                           innerTableString += '<TD class="novaGrid">' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
+                          innerTableString += '<TD class="novaGrid">' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
+                        } else if(c == 3) {
+                          
                         } else {
-                            innerTableString += '<TD class="novaGrid">' + arrayRep[i][c] + '</TD>';
+                          innerTableString += '<TD class="novaGrid">' + arrayRep[i][c] + '</TD>';
                         }
                     }
                     innerTableString += '</TR>';
