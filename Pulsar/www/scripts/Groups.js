@@ -91,7 +91,13 @@ function getMembers()
 function removeGroup(group)
 {
   var groupToRemove = theDoc.getElementById(group).value;
-  now.RemoveGroup(groupToRemove);
+  now.RemoveGroup(groupToRemove, function(err){
+    if(err != undefined)
+    {
+      alert(err);
+      return;
+    }
+  });
   for(var i in maintainGroups)
   {
     if(maintainGroups[i].group == groupToRemove)
@@ -104,7 +110,13 @@ function removeGroup(group)
 
 function updateGroup(group, newMembers)
 {
-  now.UpdateGroup(group, newMembers);
+  now.UpdateGroup(group, newMembers, function(err){
+    if(err != undefined)
+    {
+      alert(err);
+      return;
+    }
+  });
   var idx = 0;
   for(var i in maintainGroups)
   {
@@ -158,7 +170,13 @@ function addGroup(group, members)
    
     consle.log('group is ' + group);
    
-    now.AddGroup(group, members);
+    now.AddGroup(group, members, function(err){
+      if(err != undefined)
+      {
+        alert(err);
+        return;
+      }
+    });
     
     theDoc.getElementById('groupName').value = '';
     

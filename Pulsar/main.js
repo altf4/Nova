@@ -215,6 +215,7 @@ process.on('SIGTERM', function(){
   saveScheduledEvents(function(){
     process.exit(1);
   });
+  process.exit(1);
 });
 
 process.on('SIGKILL', function(){
@@ -225,6 +226,7 @@ process.on('SIGKILL', function(){
   saveScheduledEvents(function(){
     process.exit(1);
   });
+  process.exit(1);
 });
 
 process.on('SIGINT', function(){
@@ -235,6 +237,7 @@ process.on('SIGINT', function(){
   saveScheduledEvents(function(){
     process.exit(1);
   });
+  process.exit(1);
 });
 
 function cleanUI(callback)
@@ -273,7 +276,13 @@ function saveScheduledEvents(callback)
   }
   catch(err)
   {
+    console.log('could not save scheduled events: ' + err);
+    return;
   }
+  
+  var closeMe = fs.open(NovaSharedPath + '/Pulsar/scheduledEvents.txt', 'w');
+  closeMe.close(closeMe);
+  
   var writer = fs.createWriteStream(NovaSharedPath + '/Pulsar/scheduledEvents.txt', {'flags':'a'});
   
   for(var i in scheduledMessages)
@@ -750,15 +759,26 @@ ClearSuspectIPs = function(callback)
 everyone.now.ClearSuspectIPs = ClearSuspectIPs;
 
 // Remove a user-defined group from the client_groups.txt file
-RemoveGroup = function(group)
+RemoveGroup = function(group, cb)
 {
   console.log('Removing group ' + group + ' from the client groups file');
-  var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
-  var regex = group + '.*?;';
-  var replaceWithNull = new RegExp(regex, 'g');
-  groupFile = groupFile.replace(replaceWithNull, '');
-  groupFile = trimNewlines(groupFile);
-  fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
+  try
+  {
+    var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
+    var regex = group + '.*?;';
+    var replaceWithNull = new RegExp(regex, 'g');
+    groupFile = groupFile.replace(replaceWithNull, '');
+    groupFile = trimNewlines(groupFile);
+    fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
+  }
+  catch(err)
+  {
+    console.log('err during RemoveGroup: ' + err);
+    if(cb != undefined)
+    {
+      cb('Could not Remove Group: ' + err);
+    }
+  }
 };
 everyone.now.RemoveGroup = RemoveGroup;
 
@@ -767,56 +787,76 @@ everyone.now.RemoveGroup = RemoveGroup;
 UpdateGroup = function(group, newMembers, callback)
 {
   console.log('Updating group ' + group + ' to have members ' + newMembers);
-  var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
-  var regex = group + '.*?;';
-  var replaceWithNull = new RegExp(regex, 'g');
-  var sanitizeMemberString = '';
-  for(var i in newMembers)
+  try
   {
-    if(newMembers[i] != ',' && newMembers[i] != ';')
+    var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
+    var regex = group + '.*?;';
+    var replaceWithNull = new RegExp(regex, 'g');
+    var sanitizeMemberString = '';
+    for(var i in newMembers)
     {
-      sanitizeMemberString += newMembers[i];
-    }
-    else
-    {
-      if(newMembers[i] == ',')
+      if(newMembers[i] != ',' && newMembers[i] != ';')
       {
-        var nextIndex = (parseInt(i) + 1);
-        if(newMembers[nextIndex] != undefined && (newMembers[nextIndex] == ';' || newMembers[nextIndex] == ','))
+        sanitizeMemberString += newMembers[i];
+      }
+      else
+      {
+        if(newMembers[i] == ',')
         {
-         
+          var nextIndex = (parseInt(i) + 1);
+          if(newMembers[nextIndex] != undefined && (newMembers[nextIndex] == ';' || newMembers[nextIndex] == ','))
+          {
+           
+          }
+          else if(newMembers[nextIndex] == undefined)
+          {
+            
+          }
+          else
+          {
+            sanitizeMemberString += newMembers[i]; 
+          }
         }
-        else if(newMembers[nextIndex] == undefined)
+        if(newMembers == ';')
         {
           
         }
-        else
-        {
-          sanitizeMemberString += newMembers[i]; 
-        }
-      }
-      if(newMembers == ';')
-      {
-        
       }
     }
+    groupFile = groupFile.replace(replaceWithNull, group + ':' + sanitizeMemberString + ';');
+    fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
+    if(typeof callback == 'function')
+    {
+      callback();
+    }
   }
-  groupFile = groupFile.replace(replaceWithNull, group + ':' + sanitizeMemberString + ';');
-  fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
-  if(typeof callback == 'function')
+  catch(err)
   {
-    callback();
+    if(callback != undefined)
+    {
+      callback('Could not update group: ' + err);
+    }
   }
 }
 everyone.now.UpdateGroup = UpdateGroup;
 
 // Add a new user-defined group to the client_groups.txt file
-AddGroup = function(group, members)
+AddGroup = function(group, members, cb)
 {
-  console.log('Adding group ' + group + ' with members ' + members);
-  var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
-  groupFile += '\n' + group + ':' + members + ';';
-  fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
+  try
+  {
+    console.log('Adding group ' + group + ' with members ' + members);
+    var groupFile = fs.readFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', 'utf8');
+    groupFile += '\n' + group + ':' + members + ';';
+    fs.writeFileSync(NovaSharedPath + '/Pulsar/client_groups.txt', groupFile);
+  }
+  catch(err)
+  {
+    if(cb != undefined)
+    {
+      cb('Could not add group: ' + err);
+    }
+  }
 }
 everyone.now.AddGroup = AddGroup;
 
