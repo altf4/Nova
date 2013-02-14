@@ -1,3 +1,9 @@
+nova (13.01.2) quantal; urgency=low
+
+  * Update version to current Janauary 2013 release
+
+ -- David Clark <david.clark@datasoft.com>  Thu, 14 Feb 2012 14:58:17 -0700
+
 nova (12.12.12) quantal; urgency=low
 
   * Bump version, fighting with the npm and ppa
