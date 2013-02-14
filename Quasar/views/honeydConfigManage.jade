@@ -981,6 +981,21 @@ block headerAdditions
     }
     function dhcpStatusCallback(dhcpNodes)
     {
+        
+        // Clear existing entries
+        for (var i in grid.GetElements())
+        {
+            if (grid.GetElements()[i].addressSet)
+            {
+                var oldRow = grid.m_elements[i];
+                oldRow[1] = "DHCP";
+                oldRow.addressSet = false;
+                grid.PushEntry(oldRow);
+                grid.Render();
+            }
+        }
+
+        // Add new entries
         for (var i in dhcpNodes)
         {
             var mac = dhcpNodes[i].mac.replace(/ /, '');
@@ -988,6 +1003,7 @@ block headerAdditions
             {
                 var oldRow = grid.m_elements[mac];
                 oldRow[1] = "DHCP (currently " + dhcpNodes[i].ip + ")";
+                oldRow.addressSet = true;
                 grid.PushEntry(oldRow);
                 grid.Render();
             }
@@ -1102,17 +1118,20 @@ block headerAdditions
          
     }
     
+    var initialized = false;
     function init(){
       now.ready(function()
       {
-        populateConfigSelect(configurationList);
+        if (initialized) {return;}
+        initialized = true;
 
+        populateConfigSelect(configurationList);
         LoadNodeGrid();
- 
-          
-          now.GetHaystackDHCPStatus(dhcpStatusCallback);
-          checkForEditInterface();
-          });
+
+
+        setInterval(function() {now.GetHaystackDHCPStatus(dhcpStatusCallback);}, 2000);
+        checkForEditInterface();
+      });
 
       showTab("#{tab}");
     };
