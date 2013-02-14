@@ -1318,6 +1318,11 @@ app.get('/setup3', function (req, res)
     });
 });
 
+app.get('/shutdown', function (req, res)
+{
+    res.render('shutdown.jade');
+});
+
 app.get('/about', function (req, res)
 {
     res.render('about.jade');

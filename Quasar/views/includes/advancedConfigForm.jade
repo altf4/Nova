@@ -45,7 +45,7 @@ form(method="post", action="/configureNovaSave")
   br
   br
 
-  a(href="#", onclick="if (confirm('Are you sure you want to do this? This will shutdown the Quasar web UI. If upstart is configured, it may be restarted.')) {now.shutdownQuasar(); window.location = '/';}")
+  a(href="/shutdown")
     label Shut down Quasar
   br
 
