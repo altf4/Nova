@@ -29,7 +29,40 @@ block content
   div.novaGrid
     div#logTable
   p#rawLog(style="display: none")= log
-
+  br
+  button#filterOptions(onclick="showFilterOptions()") Show Filter Options
+  br
+  div#filterDiv(style='display: none; margin-left: 20px;')
+    label(style='font-weight: bold;') Checked options will be shown in grid:
+    br
+    br
+    input#debug(type='checkbox', checked=true)
+    label DEBUG
+    br
+    input#info(type='checkbox', checked=true) 
+    label INFO
+    br
+    input#notice(type='checkbox', checked=true)
+    label NOTICE
+    br
+    input#warning(type='checkbox', checked=true)
+    label WARNING
+    br
+    input#error(type='checkbox', checked=true)
+    label ERROR
+    br
+    input#critical(type='checkbox', checked=true)
+    label CRITICAL
+    br
+    input#alert(type='checkbox', checked=true)
+    label ALERT
+    br
+    input#emergency(type='checkbox', checked=true)
+    label EMERGENCY
+    br
+    br
+    button(onclick='applyLevelFilter()') Apply Filter Options
+    
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
@@ -43,6 +76,8 @@ block headerAdditions
     var line;
     var logGrid;
     
+    var allowedLevels = ['DEBUG','INFO','NOTICE','WARNING','ERROR','CRITICAL','ALERT','EMERGENCY'];
+    
     function showAdvancedChanged()
     {
         if (document.getElementById("showAdvanced").checked)
@@ -50,7 +85,9 @@ block headerAdditions
             logGrid.m_columns[2].isDisabled = false;
             logGrid.m_columns[4].isDisabled = false;
             logGrid.m_columns[5].isDisabled = false;
-        } else {
+        } 
+        else 
+        {
             logGrid.m_columns[2].isDisabled = true;
             logGrid.m_columns[4].isDisabled = true;
             logGrid.m_columns[5].isDisabled = true;
@@ -60,6 +97,18 @@ block headerAdditions
         logGrid.Render();
     }
     
+    function showFilterOptions()
+    {
+      if(document.getElementById('filterDiv').style.display == 'none')
+      {
+        document.getElementById('filterDiv').style.display = 'block';
+      }
+      else
+      {
+        document.getElementById('filterDiv').style.display = 'none';
+      }
+    }
+    
     function onGridRendered()
     {
        var tablePages = document.getElementById("tablePages");
@@ -67,42 +116,111 @@ block headerAdditions
        logGrid.populateTablePages(tablePages);
     }
 
+    function isIn(item, array)
+    {
+      for(i in array)
+      {
+        if(array[i] == item)
+        {
+          return true;
+        }
+      }
+      return false;
+    }
+
     var index = 0;
     function AddLogEntry(line)
     {
-            line = line.replace(/ +(?= )/g, '');
-            var match = line.match(/(\\S+ \\S+ \\S+) ([^:]+): (\\S+) File (.+) at line (\\d+): (.*)/);
+      line = line.replace(/ +(?= )/g, '');
+      var match = line.match(/(\\S+ \\S+ \\S+) ([^:]+): (\\S+) File (.+) at line (\\d+): (.*)/);
 
-            if (match != null)
-            {
-                match.splice(0,1,Number(index));
-                index++;
-                
-                
-                match[6] = "<span style='font-weight: bold;'>" + match[6] + "</span>";
-                
-                switch (match[3])
-                {
-                    case "DEBUG":
-                        match.style = "background-color: #99FF99";
-                        break;
-                    case "ERROR":
-                    case "CRITICAL":
-                        match.style = "background-color: #FF9999";
-                        break;
-                    case "WARNING":
-                        match.style = "background-color: orange";
-                        break;
-                    case "ALERT":
-                        match.style = "background-color: #9999FF";
-                        break;
-                }
-                logGrid.PushEntry(match);
-            } else {
-                console.log("No match for entry '" + line + "'");
-            }
+      if (match != null)
+      {
+        match.splice(0,1,Number(index));
+        index++;
+        
+        if(isIn(match[3], allowedLevels))
+        {
+          match[6] = "<span style='font-weight: bold;'>" + match[6] + "</span>";
+          
+          switch (match[3])
+          {
+              case "DEBUG":
+              case "INFO":
+              case "NOTICE":
+                  match.style = "background-color: #99FF99";
+                  break;
+              case "ERROR":
+              case "CRITICAL":
+                  match.style = "background-color: #FF9999";
+                  break;
+              case "WARNING":
+                  match.style = "background-color: orange";
+                  break;
+              case "ALERT":
+              case "EMERGENCY":
+                  match.style = "background-color: #9999FF";
+                  break;
+          }
+          logGrid.PushEntry(match);
+        }
+      } 
+      else 
+      {
+          console.log("No match for entry '" + line + "'");
+      }
     }
 
+    function applyLevelFilter()
+    {
+      index = 0;
+      logGrid.Clear();
+      allowedLevels = [];
+      
+      if(document.getElementById('debug').checked)
+      {
+        allowedLevels.push('DEBUG');
+      }
+      if(document.getElementById('info').checked)
+      {
+        allowedLevels.push('INFO');
+      }
+      if(document.getElementById('notice').checked)
+      {
+        allowedLevels.push('NOTICE');
+      }
+      if(document.getElementById('warning').checked)
+      {
+        allowedLevels.push('WARNING');
+      }
+      if(document.getElementById('error').checked)
+      {
+        allowedLevels.push('ERROR');
+      }
+      if(document.getElementById('critical').checked)
+      {
+        allowedLevels.push('CRITICAL');
+      }
+      if(document.getElementById('alert').checked)
+      {
+        allowedLevels.push('ALERT');
+      }
+      if(document.getElementById('emergency').checked)
+      {
+        allowedLevels.push('EMERGENCY');
+      }
+      
+      var log = document.getElementById("rawLog").innerHTML;
+      var parseLog = log.toString().split(/\\r\\n|\\n\\r|\\n|\\r/);
+      
+      for(var i in parseLog)
+      {
+          line = String(parseLog[i]);
+          AddLogEntry(line);
+      }
+      
+      logGrid.Render();
+    }
 
     function init()
     {
@@ -119,19 +237,16 @@ block headerAdditions
         logGrid = new NovaGrid(gridStructure, 0, document.getElementById('logTable'), 'logGrid');
         logGrid.SetRowsPerPage(25);
         logGrid.SetRenderCallback(onGridRendered);
-
         
         var log = log.toString().split(/\\r\\n|\\n\\r|\\n|\\r/);
 
         for(var i in log)
         {
             line = String(log[i]);
-
             AddLogEntry(line);
         }
 
-        logGrid.Render();
-    
+        logGrid.Render();  
     
         now.ready(function()
         {

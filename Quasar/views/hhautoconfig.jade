@@ -139,7 +139,7 @@ block headerAdditions
       
       if(GetHaystackName() == '#')
       {
-        alert('Invalid haystack name! Can't be blank or non-alphanumeric characters.');
+        alert('Invalid haystack name! Can not be blank or non-alphanumeric characters.');
         return;
       }
 
@@ -310,7 +310,7 @@ block headerAdditions
             return;
           }
         
-          var text = subnet + ' (' + interfaceAliasList[i] + ')';
+          var text = subnet + ' (' + interfaceAliasList[index] + ')';
           viewModel.interfaceSubnets.push({text: text, subnet: subnet});
         });
       } 

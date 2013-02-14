@@ -17,6 +17,7 @@ private:
 
   static v8::Handle<v8::Value> ReadSetting(const v8::Arguments& args);
   static v8::Handle<v8::Value> WriteSetting(const v8::Arguments& args);
+  static v8::Handle<v8::Value> ReloadConfiguration(const v8::Arguments& args);
   
   static v8::Handle<v8::Value> UseAllInterfaces(const v8::Arguments& args);
   static v8::Handle<v8::Value> UseAnyLoopback(const v8::Arguments& args);

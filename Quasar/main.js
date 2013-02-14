@@ -1948,6 +1948,8 @@ app.post('/configureNovaSave', function (req, res)
             }
         }
 
+        NovaCommon.config.ReloadConfiguration();
+
         var route = "/suspects";
         if (req.body['route'] != undefined)
         {

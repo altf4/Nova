@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #include <fstream>
 #include <sstream>
+#include <string>
+#include <iterator>
+#include <algorithm>
 #include <syslog.h>
 #include <string.h>
 #include <curl/curl.h>
@@ -101,7 +104,7 @@ void Logger::LogToFile(uint16_t level, string message)
 
 void Logger::Mail(uint16_t level, string message)
 {
-	if (!Config::Inst()->GetAreEmailAlertsEnabled())
+	if(!Config::Inst()->GetAreEmailAlertsEnabled())
 	{
 		return;
 	}
@@ -112,6 +115,8 @@ void Logger::Mail(uint16_t level, string message)
 	struct timeval mp_start;
 	struct Writer counter;
 	struct curl_slist *rcpt_list = NULL;
+
+	Logger::Inst()->SetLevel(level);
 
 	int MULTI_PERFORM_HANG_TIMEOUT = 60*1000;
 
@@ -253,68 +258,43 @@ void Logger::Mail(uint16_t level, string message)
 
 std::string Logger::GenerateDateString()
 {
-	time_t t = time(0);
-	struct tm *now = localtime(&t);
+	time_t rawtime;
+	time(&rawtime);
+	string time = string(ctime(&rawtime));
+	vector<string> reformat;
+	string ret = "Date: ";
 
-	std::string year;
-	std::string month;
-	std::string day;
+	istringstream iss(time);
+	copy(istream_iterator<string>(iss),
+		 istream_iterator<string>(),
+		 back_inserter<vector<string> >(reformat));
 
-	std::string ret;
+	string temp = reformat[1];
+	reformat[1] = reformat[2];
+	reformat[2] = temp;
 
-	std::stringstream ss;
-	ss << (now->tm_year + 1900);
-	year = ss.str();
-	ss.str("");
+	temp = reformat[3];
+	reformat[3] = reformat[4];
+	reformat[4] = temp;
 
-	switch(now->tm_mon + 1)
+	vector<string>::iterator it;
+	it = reformat.begin() + 1;
+
+	reformat.insert(it, string(","));
+
+	ret += reformat[0];
+
+	for(uint i = 1; i < reformat.size() - 1; i++)
 	{
-		case 1:
-			month = "January";
-			break;
-		case 2:
-			month = "February";
-			break;
-		case 3:
-			month = "March";
-			break;
-		case 4:
-			month = "April";
-			break;
-		case 5:
-			month = "May";
-			break;
-		case 6:
-			month = "June";
-			break;
-		case 7:
-			month = "July";
-			break;
-		case 8:
-			month = "August";
-			break;
-		case 9:
-			month = "September";
-			break;
-		case 10:
-			month = "October";
-			break;
-		case 11:
-			month = "November";
-			break;
-		case 12:
-			month = "December";
-			break;
-		default:
-			month = "";
-			break;
+		ret += reformat[i] + " ";
 	}
 
-	ss << now->tm_mday;
-	day = ss.str();
-	ss.str("");
+	ret += reformat[reformat.size() - 1];
 
-	ret = "Date: " + day + " " + month + " " + year + "\n";
+	if(ret[ret.length() - 1] != '\n')
+	{
+		ret += "\n";
+	}
 
 	return ret;
 }
@@ -368,6 +348,16 @@ uint16_t Logger::GetRecipientsLength()
 	return m_messageInfo.m_email_recipients.size();
 }
 
+uint16_t Logger::GetLevel()
+{
+	return m_level;
+}
+
+void Logger::SetLevel(uint16_t setLevel)
+{
+	m_level = setLevel;
+}
+
 size_t Logger::ReadCallback(void *ptr, size_t size, size_t nmemb, void * userp)
 {
 	struct Writer *counter = (struct Writer *)userp;
@@ -375,11 +365,35 @@ size_t Logger::ReadCallback(void *ptr, size_t size, size_t nmemb, void * userp)
 
 	std::string debug3 = Logger::Inst()->GetMailMessage();
 
+	std::string subject = "Subject: Nova Mail Alert: ";
+
+	switch(Logger::Inst()->GetLevel())
+	{
+		case(0): subject += "DEBUG ";
+				 break;
+		case(1): subject += "INFO ";
+				 break;
+		case(2): subject += "NOTICE ";
+				 break;
+		case(3): subject += "WARNING ";
+				 break;
+		case(4): subject += "ERROR ";
+				 break;
+		case(5): subject += "CRITICAL ";
+				 break;
+		case(6): subject += "ALERT ";
+				 break;
+		case(7): subject += "EMERGENCY ";
+				 break;
+	}
+
+	subject += "\n";
+
 	const char *text[] = {
 			Logger::Inst()->GenerateDateString().c_str(),
 			Logger::Inst()->GetRecipient().c_str(),
 			Logger::Inst()->GetSenderString().c_str(),
-			"Subject: Nova Mail Alert\n",
+			subject.c_str(),
 			Logger::Inst()->GetCcString().c_str(),
 			"\n",
 			Logger::Inst()->GetMailMessage().c_str(),

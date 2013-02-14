@@ -44,6 +44,7 @@ void NovaConfigBinding::Init(Handle<Object> target) {
   tpl->PrototypeTemplate()->Set(String::NewSymbol("UseAnyLoopback"),FunctionTemplate::New(UseAnyLoopback)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("ReadSetting"),FunctionTemplate::New(ReadSetting)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("WriteSetting"),FunctionTemplate::New(WriteSetting)->GetFunction());
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("ReloadConfiguration"),FunctionTemplate::New(ReloadConfiguration)->GetFunction());
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetVersionString"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetVersionString>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPathConfigHoneydHS"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetPathConfigHoneydHS>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPathHome"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetPathHome>));
@@ -56,7 +57,7 @@ void NovaConfigBinding::Init(Handle<Object> target) {
   tpl->PrototypeTemplate()->Set(String::NewSymbol("SetSMTPPass"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, std::string, &Config::SetSMTPPass>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSMTPUser"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetSMTPUser>));
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSMTPPass"),FunctionTemplate::New(InvokeWrappedMethod<string, NovaConfigBinding, Config, &Config::GetSMTPPass>));
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSMTPUseAuth"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, &Config::GetSMTPUseAuth>));
+  tpl->PrototypeTemplate()->Set(String::NewSymbol("GetSMTPUseAuth"),FunctionTemplate::New(InvokeWrappedMethod<bool, NovaConfigBinding, Config, &Config::GetSMTPUseAuth>));
 	
   tpl->PrototypeTemplate()->Set(String::NewSymbol("GetIpAddresses"),FunctionTemplate::New(InvokeMethod<std::vector<std::string>, std::string, Config::GetIpAddresses>));
 
@@ -242,3 +243,12 @@ Handle<Value> NovaConfigBinding::WriteSetting(const Arguments& args)
 	return scope.Close(Boolean::New(obj->m_conf->WriteSetting(key, value)));
 }
 
+Handle<Value> NovaConfigBinding::ReloadConfiguration(const Arguments& args)
+{
+	HandleScope scope;
+	NovaConfigBinding* obj = ObjectWrap::Unwrap<NovaConfigBinding>(args.This());
+
+	obj->m_conf->LoadConfig();
+
+	return scope.Close(Boolean::New(true));
+}
