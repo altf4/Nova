@@ -17,9 +17,9 @@
 extends layout
 
 block headerAdditions
-  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
-  link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
-  link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
+  link(rel='stylesheet', type='text/css', href='configstyle.css', media='screen')
+  link(rel='stylesheet', type='text/css', href='/dojo/dojox/grid/resources/Grid.css')
+  link(rel='stylesheet', type='text/css', href='/dojo/dojox/grid/resources/claroGrid.css')
 
   script
     var grid;
@@ -31,22 +31,22 @@ block headerAdditions
         
         if (items.length >= numberOfNames)
         {
-            var dialog = new dijit.Dialog({title: "Error", content: "You can not delete all user accounts! It will be impossible to log in."});
+            var dialog = new dijit.Dialog({title: 'Error', content: 'You can not delete all user accounts! It will be impossible to log in.'});
             dialog.show();  
             return;
         }
       var names = [];
       dojo.forEach(items, function(selectedItem)
       {
-        names.push(grid.store.getValues(selectedItem, "users")); 
+        names.push(grid.store.getValues(selectedItem, 'users')); 
       });
       
       try {
         now.deleteUserEntry(names, errorMessageCallback);
       } catch(err)
       {
-        alert("Action failed! Unable to connect to server. Try refreshing the page.");
-        console.log("Caught error was: " + err);
+        alert('Action failed! Unable to connect to server. Try refreshing the page.');
+        console.log('Caught error was: ' + err);
       }
     }
 
@@ -56,19 +56,19 @@ block headerAdditions
 
         if (items.length != 1)
         {
-            var dialog = new dijit.Dialog({title: "Error", content: "Please select 1 user account to edit the password of"});
+            var dialog = new dijit.Dialog({title: 'Error', content: 'Please select 1 user account to edit the password of'});
             dialog.show();  
             return;
         }
         
-        var user = String(grid.store.getValues(items[0], "users")); 
-        var password = dojo.byId("newPassword").value;
+        var user = String(grid.store.getValues(items[0], 'users')); 
+        var password = $('#newPassword').attr('value');
         try {
             now.updateUserPassword(user, password, errorMessageCallback);
          } catch(err)
          {
-           alert("Action failed! Unable to connect to server. Try refreshing the page.");
-           console.log("Caught error was: " + err);
+           alert('Action failed! Unable to connect to server. Try refreshing the page.');
+           console.log('Caught error was: ' + err);
          }
     }
 
@@ -78,7 +78,7 @@ block headerAdditions
       console.log('in errorMessageCallback');
       if(success != true)
       {
-        var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
+        var dialog = new dijit.Dialog({title: 'Error', content: 'Unable to complete operation due to error: ' + message});
         dialog.show();
         return;
       }
@@ -87,23 +87,23 @@ block headerAdditions
 
     function init()
     {
-        require(["dojox/grid/DataGrid","dojo/data/ObjectStore","dojox/data/HtmlStore", "dijit/Dialog"],
+        require(['dojox/grid/DataGrid','dojo/data/ObjectStore','dojox/data/HtmlStore', 'dijit/Dialog'],
             function(DataGrid,ObjectStore){
-              var gridStore = new dojox.data.HtmlStore({dataId:"profileTable"});
+              var gridStore = new dojox.data.HtmlStore({dataId:'profileTable'});
               grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutProfiles',query:{},rowsPerPage:40, autoWidth:true});
-              dojo.byId("gridDiv").appendChild(grid.domNode);
+              $('#gridDiv').append(grid.domNode);
         });
     }
   
-  script(type="text/javascript")
+  script(type='text/javascript')
           /*set up data store*/
           var layoutProfiles = [[
-            { field: "users", name: "User", width: '500px' },
+            { field: 'users', name: 'User', width: '500px' },
           ]];
 
 block content
   h1 Existing User Accounts
-  table#profileTable(style="display: none")
+  table#profileTable(style='display: none')
     thead
       tr
         th users
@@ -112,19 +112,19 @@ block content
         tr
           td #{name}
  
-  div(style="height: 250px;")
-    div#gridDiv(style="height: 250px")
+  div(style='height: 250px;')
+    div#gridDiv(style='height: 250px')
 
   br
-  button(onClick="deleteSelectedItems()")
-    img.buttonIcon(src="images/delete.png")
+  button(onClick='deleteSelectedItems()')
+    img.buttonIcon(src='images/delete.png')
     span.buttonSpan Delete Selected Users
   
   br
   br
-  input#newPassword(type="password")
-  button(onClick="updateUserPass()") 
-    img.buttonIcon(src="images/edit.png")
+  input#newPassword(type='password')
+  button(onClick='updateUserPass()') 
+    img.buttonIcon(src='images/edit.png')
     span.buttonSpan Update User Password
  
 

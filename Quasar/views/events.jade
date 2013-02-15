@@ -82,18 +82,19 @@ block headerAdditions
     
     function showAdvancedChanged()
     {
-        if (document.getElementById("showAdvanced").checked)
+        if($('#showAdvanced').is(':checked'))
         {
             for (var i = 4; i < suspectGrid.m_columns.length; i++)
             {
                 suspectGrid.m_columns[i].isDisabled = false;
             }
-        } else {
+        } 
+        else
+        {
             for (var i = 4; i < suspectGrid.m_columns.length; i++)
             {
                 suspectGrid.m_columns[i].isDisabled = true;
             }
-            
         }
 
         suspectGrid.GenerateTableHeader();
@@ -115,12 +116,12 @@ block headerAdditions
             gridStructure.push({name:featureNames[i], formatter: featureFormatter, isDisabled: true});
         }
    
-        suspectGrid = new NovaGrid(gridStructure, 0, document.getElementById('suspectTable'), 'suspectGrid');
+        suspectGrid = new NovaGrid(gridStructure, 0, $('#suspectTable')[0], 'suspectGrid');
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(1);
 
-        document.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
+        $('#suspectTable').html(suspectGrid.GetTable());
     
         try { 
           now.GetHostileEvents(function (results)
@@ -136,7 +137,7 @@ block headerAdditions
                   suspectGrid.PushEntry(row);
 
               } 
-              document.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
+              $('#suspectTable').html(suspectGrid.GetTable());
           });
         } catch(err)
         {
@@ -147,10 +148,10 @@ block headerAdditions
 
     function init()
     {
-        now.ready(function()
-        {
-                Init();
-        });
+      now.ready(function()
+      {
+        Init();
+      });
     };
 
 

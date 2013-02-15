@@ -17,20 +17,20 @@
 extends layout
 
 block headerAdditions
-  script(src="scripts/spin.js")
+  script(src='scripts/spin.js')
   script
-    var Interfaces = "#{INTERFACES}";
-    var InterfaceAliases = "#{interfaceAliases}";
+    var Interfaces = '#{INTERFACES}';
+    var InterfaceAliases = '#{interfaceAliases}';
    
     var interfaceList = Interfaces.split(',');
     var interfaceAliasList = InterfaceAliases.split(',');
     
     function viewModelApp() {
         var self = this;
-        self.newHaystackName = ko.observable("");
-        self.oldHaystackName = ko.observable("");
+        self.newHaystackName = ko.observable('');
+        self.oldHaystackName = ko.observable('');
 
-        self.isNewHaystackSelection = ko.observable("1");
+        self.isNewHaystackSelection = ko.observable('1');
         self.isNewHaystack = ko.computed(function() {return parseInt(self.isNewHaystackSelection())}, self);
         self.groupName = ko.computed(function() {
            if (self.isNewHaystack()) {
@@ -58,7 +58,7 @@ block headerAdditions
         self.nodeCreationType = ko.observable();
         self.nodeCountFixed = ko.observable(1);
         self.nodeCountRatio = ko.observable(1);
-        self.nodeCountRange = ko.observable("");
+        self.nodeCountRange = ko.observable('');
 
         self.nodeCount = ko.computed(function() {
           var num = -1;
@@ -87,34 +87,34 @@ block headerAdditions
 
     function validateAndAdd(id)
     {
-      var toValidate = document.getElementById(id).value;
+      var toValidate = $('#' + id).attr('value');
     
-      var regex = new RegExp("^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\/[1-3]?[0-9]$");
+      var regex = new RegExp('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\/[1-3]?[0-9]$');
     
-      document.getElementById("errorLabel").style.color = 'red';
+      $('#errorLabel').css('color', 'red');
       if((toValidate[toValidate.length - 2] >= 3 && toValidate[toValidate.length - 1] > 2)
         || (toValidate[toValidate.length - 3] != '/' && toValidate[toValidate.length - 2] != '/'))
       {
-        document.getElementById("errorLabel").innerHTML = "Invalid subnet bit value (e.g. 33 or higher)";
+        $('#errorLabel').html('Invalid subnet bit value (e.g. 33 or higher)');
         return;
       }
     
       if(isSubnetScanned(toValidate))
       {
-        document.getElementById("errorLabel").innerHTML = "That subnet is already in the subnets list";
+        $('#errorLabel').html('That subnet is already in the subnets list');
         return;
       }
     
       if(regex.test(toValidate))
       {
-        document.getElementById("errorLabel").style.color = 'green';
-        document.getElementById("errorLabel").innerHTML = "Valid subnet found!";
+        $('#errorLabel').css('color', 'green');
+        $('#errorLabel').html('Valid subnet found!');
         viewModel.subnetsToScan.push({subnet: toValidate});
-        document.getElementById(id).value = '';
+        $('#' + id).attr('value', '');
       }
       else
       {
-        document.getElementById("errorLabel").innerHTML = "That is not a valid subnet.";
+        $('#errorLabel').html('That is not a valid subnet.');
         return;
       }
     }
@@ -145,9 +145,9 @@ block headerAdditions
 
       for(var i = 0; i < viewModel.subnetsToScan().length; i++)
       {
-        if (parseInt(String(viewModel.subnetsToScan()[i].subnet).split("/")[1]) < 24)
+        if (parseInt(String(viewModel.subnetsToScan()[i].subnet).split('/')[1]) < 24)
         {
-            var res = confirm("Warning: scanning subnets greater than size /24 can take several hours! Are you sure you want to continue?");
+            var res = confirm('Warning: scanning subnets greater than size 24 can take several hours! Are you sure you want to continue?');
             if (!res)
             {
                 return;
@@ -161,11 +161,11 @@ block headerAdditions
       
       if(viewModel.subnetsToScan().length != 0)
       { 
-        disableBackground(document.getElementById('setup'));
-        document.getElementById("startScan").value='Scanning...'; 
-        document.getElementById("startScan").setAttribute('disabled', 'true');
-        document.getElementById("lightbox").style.display='block';
-        document.getElementById("setup").style.opacity='0.5';
+        disableBackground($('#setup')[0]);
+        $('#startScan').attr('value', 'Scanning...'); 
+        $('#startScan').attr('disabled', 'true');
+        $('#lightbox').css('display', 'block');
+        $('#setup').css('opacity', '0.5');
         var opts = {
             lines: 17,
             length: 0,
@@ -184,23 +184,23 @@ block headerAdditions
             left: 'auto'
         };
         
-        var spinner = new Spinner(opts).spin(document.getElementById('spinnerDiv'));
-        document.getElementById('spinnerDiv').style.height = ((opts.radius * 2) + 30)+ 'px';
-        var divWidth = document.getElementById('lightbox').scrollWidth;
-        document.getElementById('appendText').style.width = divWidth + 'px';
+        var spinner = new Spinner(opts).spin($('#spinnerDiv')[0]);
+        $('#spinnerDiv').css('height', (((opts.radius * 2) + 30)+ 'px'));
+        var divWidth = $('#lightbox')[0].scrollWidth;
+        $('#appendText').css('width', (divWidth + 'px'));
         try 
         {
             now.ShowAutoConfig(GetNodeInterface(), viewModel.nodeCreationType(), viewModel.nodeCount(), GetSubnets(), GetHaystackName(), !viewModel.isNewHaystack(), autoscancb, routeToReview); 
         } 
         catch(err) 
         {
-            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-            console.log("err was: " + err);
+            alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
+            console.log('err was: ' + err);
         }   
       } 
       else
       {
-          alert("Must have at least one subnet for scanning");
+          alert('Must have at least one subnet for scanning');
           return false;
       }
     }
@@ -239,19 +239,19 @@ block headerAdditions
 
     function GetNodeInterface()
     {
-        return document.getElementById("nodeInterface").value;
+        return $('#nodeInterface').attr('value');
     }
     
     function GetSubnets()
     {
-        var returnString = "";
+        var returnString = '';
       
         var index = 0;
         for(var i in viewModel.subnetsToScan())
         {
             if (index != 0)
             {
-                returnString += ",";
+                returnString += ',';
             }
             index++;
             returnString += viewModel.subnetsToScan()[i].subnet;
@@ -276,8 +276,8 @@ block headerAdditions
         var p = document.createElement('p');
         p.value = text;
         p.innerHTML = text;
-        document.getElementById('appendText').appendChild(p);
-        document.getElementById('appendText').scrollTop = document.getElementById('appendText').scrollHeight;
+        $('#appendText').append(p);
+        $('#appendText')[0].scrollTop = $('#appendText')[0].scrollHeight;
     }
     
     function routeToReview(redirect)
@@ -331,7 +331,7 @@ block headerAdditions
 
 block content
   if(SCANERROR !== undefined)
-    label(id="scanError", style="color: red;") #{SCANERROR}
+    label(id='scanError', style='color: red;') #{SCANERROR}
     
   div#setup
     h1 Haystack Autoconfig
@@ -341,18 +341,18 @@ block content
         td
           label(style='font-weight: bold;') New Haystack?
         td
-          input(data-bind="checked: isNewHaystackSelection", value='1', type='radio')
+          input(data-bind='checked: isNewHaystackSelection', value='1', type='radio')
           label Create new haystack
           br
-          input(data-bind="checked: isNewHaystackSelection", value='0', type='radio')
+          input(data-bind='checked: isNewHaystackSelection', value='0', type='radio')
           label Append to haystack
 
       tr
         td
           label(id='nameLabel', style='font-weight: bold') Haystack Name
         td
-          input(data-bind="visible: isNewHaystack, value: newHaystackName, valueUpdate: 'afterkeydown'", type='text')
-          select(data-bind="visible: !isNewHaystack(), value: oldHaystackName")
+          input(data-bind='visible: isNewHaystack, value: newHaystackName, valueUpdate: "afterkeydown"', type='text')
+          select(data-bind='visible: !isNewHaystack(), value: oldHaystackName')
             - for(var i = 0; i < GROUPS.length; i++)
               - if(GROUPS[i] != '' && GROUPS[i] != undefined && GROUPS[i] != 'default')
                 option #{GROUPS[i]}
@@ -360,45 +360,45 @@ block content
         td
           label#numNodesLabel(style='font-weight: bold') How to create nodes&nbsp&nbsp
         td
-          select(data-bind="value: nodeCreationType")
-            option(value="fixed", selected='selected') DHCP: Fixed number of nodes
-            option(value="ratio") DHCP: Ratio to number found in scan
-            option(value="range") STATIC: Place nodes in range of IPs
+          select(data-bind='value: nodeCreationType')
+            option(value='fixed', selected='selected') DHCP: Fixed number of nodes
+            option(value='ratio') DHCP: Ratio to number found in scan
+            option(value='range') STATIC: Place nodes in range of IPs
 
        tr
          td
            label(style='font-weight: bold') Nodes to create
          td
-           input(data-bind='visible: nodeCreationType() == "fixed", value: nodeCountFixed, valueUpdate: "afterkeydown"', type="number", min="1")
-           input(data-bind='visible: nodeCreationType() == "ratio", value: nodeCountRatio, valueUpdate: "afterkeydown"', type="number", min="0")
-           input(data-bind='visible: nodeCreationType() == "range", value: nodeCountRange, valueUpdate: "afterkeydown"', type="text", placeholder='###.###.###.###-###.###.###.###', style="width: 210px")
+           input(data-bind='visible: nodeCreationType() == "fixed", value: nodeCountFixed, valueUpdate: "afterkeydown"', type='number', min='1')
+           input(data-bind='visible: nodeCreationType() == "ratio", value: nodeCountRatio, valueUpdate: "afterkeydown"', type='number', min='0')
+           input(data-bind='visible: nodeCreationType() == "range", value: nodeCountRange, valueUpdate: "afterkeydown"', type='text', placeholder='###.###.###.###-###.###.###.###', style='width: 210px')
 
         tr
           td
             label(style='font-weight: bold') Interface for new nodes
           td
-            select#nodeInterface(data-bind="options: interfaceList")
+            select#nodeInterface(data-bind='options: interfaceList')
     br
     br
-    label(style="font-weight: bold;") Subnets to Scan
+    label(style='font-weight: bold;') Subnets to Scan
     br
     table
-      tbody(data-bind="foreach: interfaceSubnets")
+      tbody(data-bind='foreach: interfaceSubnets')
         tr
-          td(data-bind="text: text", style="width: 200px")
+          td(data-bind='text: text', style='width: 200px')
           td
-            button(data-bind="click: $root.addSubnet")
-              img.buttonIcon(src="images/add.png")
+            button(data-bind='click: $root.addSubnet')
+              img.buttonIcon(src='images/add.png')
               span.buttonSpan Add Subnet
     
     br
-    label(style="font-weight: bold;") Additional Subnets to Scan
+    label(style='font-weight: bold;') Additional Subnets to Scan
     br
-    label(id="errorLabel", style="color:red;")  
+    label(id='errorLabel', style='color:red;')  
     br
-    input(type="text", style="width:200px", id="subnetToAdd", width="20", onkeydown="if(event.keyCode == 13){document.getElementById('addSubnet').click(); document.getElementById('subnetToAdd').value=''; event.returnValue=false; event.cancel=true; }", placeholder="xxx.xxx.xxx.xxx/##") 
-    button(type="button", id="addSubnet", onclick="validateAndAdd(\"subnetToAdd\");")
-     img.buttonIcon(src="images/add.png")
+    input(type='text', style='width:200px', id='subnetToAdd', width='20', onkeydown='if(event.keyCode == 13){document.getElementById("addSubnet").click(); document.getElementById("subnetToAdd").value=""; event.returnValue=false; event.cancel=true; }', placeholder='xxx.xxx.xxx.xxx/##') 
+    button(type='button', id='addSubnet', onclick='validateAndAdd("subnetToAdd");')
+     img.buttonIcon(src='images/add.png')
      span.buttonSpan Add Subnet
     br
     br
@@ -407,26 +407,26 @@ block content
         tr
           th
             label Subnets that will be scanned
-      tbody(data-bind="foreach: subnetsToScan")
+      tbody(data-bind='foreach: subnetsToScan')
         tr
-          td(data-bind="text: subnet", style="width: 200px")
+          td(data-bind='text: subnet', style='width: 200px')
           td
-            button(data-bind="click: $root.removeSubnet")
-              img.buttonIcon(src="images/delete.png")
+            button(data-bind='click: $root.removeSubnet')
+              img.buttonIcon(src='images/delete.png')
               span.buttonSpan Delete
             
       
     br
     br
-    button(id="startScan", onclick="RunScan()")
-      img.buttonIcon(src="images/ok.png")
+    button(id='startScan', onclick='RunScan()')
+      img.buttonIcon(src='images/ok.png')
       span.buttonSpan Start Scan
     
-  div(id="lightbox", class="white_content")
-    label(style="font-size: 1.2em;") Scan Commencing...
-    div(id='spinnerDiv', style="height: 30px; padding-botton: 30px;")
-    div(id='appendText', style="height: 60%; width: auto; overflow-y: scroll; overflow-x: hidden")
+  div(id='lightbox', class='white_content')
+    label(style='font-size: 1.2em;') Scan Commencing...
+    div(id='spinnerDiv', style='height: 30px; padding-botton: 30px;')
+    div(id='appendText', style='height: 60%; width: auto; overflow-y: scroll; overflow-x: hidden')
     button(id='cancelscan', onclick='cancelScan()')
-      img.buttonIcon(src="images/cancel.png")
+      img.buttonIcon(src='images/cancel.png')
       span.buttonSpan Cancel Scan
     

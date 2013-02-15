@@ -17,9 +17,9 @@
 extends layout
 
 block headerAdditions
-  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
-  link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/Grid.css")
-  link(rel="stylesheet", type="text/css", href="/dojo/dojox/grid/resources/claroGrid.css")
+  link(rel='stylesheet', type='text/css', href='configstyle.css', media='screen')
+  link(rel='stylesheet', type='text/css', href='/dojo/dojox/grid/resources/Grid.css')
+  link(rel='stylesheet', type='text/css', href='/dojo/dojox/grid/resources/claroGrid.css')
 
   script
     var grid;
@@ -30,33 +30,33 @@ block headerAdditions
       var names = [];
       dojo.forEach(items, function(selectedItem)
       {
-        names.push(grid.store.getValues(selectedItem, "whitelistedIp")); 
+        names.push(grid.store.getValues(selectedItem, 'whitelistedIp')); 
       });
       
       try {
         now.deleteWhitelistEntry(names, errorMessageCallback);
       } catch(err)
       {
-        alert("Action failed! Unable to connect to server. Try refreshing the page.");
-        console.log("Caught error was: " + err);
+        alert('Action failed! Unable to connect to server. Try refreshing the page.');
+        console.log('Caught error was: ' + err);
       }
     }
 
     function addNewItem()
     {
-        var value = dojo.byId("newEntry").value;
-        var interfaceDropdown = document.getElementById("interfaceDropdown");
+        var value = dojo.byId('newEntry').value;
+        var interfaceDropdown = $('#interfaceDropdown');
         var interface = interfaceDropdown.options[interfaceDropdown.selectedIndex].value;
-        console.log("Value is " + value);
+        console.log('Value is ' + value);
 
-        var individualIp = new RegExp("^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))$");
+        var individualIp = new RegExp('^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))$');
         individualIp.global = false;
-        var subnetRangeIp = new RegExp("^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\/[1-3]?[0-9])$");
+        var subnetRangeIp = new RegExp('^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\/[1-3]?[0-9])$');
         subnetRangeIp.global = false;
-        var slashSubnetMaskIp = new RegExp("^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))\\/((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))$");
+        var slashSubnetMaskIp = new RegExp('^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))\\/((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))$');
         slashSubnetMaskIp.global = false;
         
-        // only add the value to the ipWhitelist if value is either an individual IP or a subnet-style ip "range"
+        // only add the value to the ipWhitelist if value is either an individual IP or a subnet-style ip 'range'
         if(individualIp.test(value) || subnetRangeIp.test(value) || slashSubnetMaskIp.test(value))
         {
           try 
@@ -65,14 +65,14 @@ block headerAdditions
           } 
           catch(err) 
           {
-            alert("Action failed! Unable to connect to server. Try refreshing the page.");
-            console.log("Caught error was: " + err);
+            alert('Action failed! Unable to connect to server. Try refreshing the page.');
+            console.log('Caught error was: ' + err);
           }
-          document.getElementById("errorLabel").innerHTML = "Valid entry found. Adding to the whitelist.";
+          $('#errorLabel').html('Valid entry found. Adding to the whitelist.');
         }
         else
         {
-          document.getElementById("errorLabel").innerHTML = "Invalid IP string";
+          $('#errorLabel').html('Invalid IP string');
         }
     }
 
@@ -81,7 +81,7 @@ block headerAdditions
     {
       if(success != true)
       {
-        var dialog = new dijit.Dialog({title: "Error", content: "Unable to complete operation due to error: " + message});
+        var dialog = new dijit.Dialog({title: 'Error', content: 'Unable to complete operation due to error: ' + message});
         dialog.show();
         return;
       }
@@ -90,23 +90,23 @@ block headerAdditions
 
     function init()
     {
-        require(["dojox/grid/DataGrid","dojo/data/ObjectStore", "dojox/data/HtmlStore", "dijit/Dialog"],
+        require(['dojox/grid/DataGrid','dojo/data/ObjectStore', 'dojox/data/HtmlStore', 'dijit/Dialog'],
         function(DataGrid,ObjectStore){
-          var gridStore = new dojox.data.HtmlStore({dataId:"profileTable"});
+          var gridStore = new dojox.data.HtmlStore({dataId:'profileTable'});
           grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutProfiles',query:{},rowsPerPage:40, autoWidth:true});
-          dojo.byId("gridDiv").appendChild(grid.domNode);
+          dojo.byId('gridDiv').appendChild(grid.domNode);
         });
     }
   
-  script(type="text/javascript")
+  script(type='text/javascript')
           /*set up data store*/
           var layoutProfiles = [[
-            { field: "whitelistedIp", name: "Whitelist Entry", width: '500px' },
+            { field: 'whitelistedIp', name: 'Whitelist Entry', width: '500px' },
           ]];
 
 block content
   h1 Current Whitelisted IPs
-  table#profileTable(style="display: none")
+  table#profileTable(style='display: none')
     thead
       tr
         th whitelistedIp
@@ -118,30 +118,30 @@ block content
         tr
           td #{ip}
  
-  div(style="height: 250px;")
-    div#gridDiv(style="height: 250px")
+  div(style='height: 250px;')
+    div#gridDiv(style='height: 250px')
   br
-  button.button(onClick="deleteSelectedItems()")
-    img.buttonIcon(src="images/delete.png")
+  button.button(onClick='deleteSelectedItems()')
+    img.buttonIcon(src='images/delete.png')
     span.buttonSpan Delete Selected Entry
   
   br
   br
-  label(id="errorLabel", style="color:red")
+  label(id='errorLabel', style='color:red')
   br
 
   label Interface
   select(id='interfaceDropdown', name='interfaceDropdown')
-    option(value="All Interfaces") All Interfaces
+    option(value='All Interfaces') All Interfaces
     each interface, i in INTERFACES
-      option(value="#{INTERFACES[i]}") #{interfaceAliases[i]}
+      option(value='#{INTERFACES[i]}') #{interfaceAliases[i]}
   br
   label IP Address or IP/netmask combination
-  input#newEntry(type="text", placeholder="x.x.x.x/xx", onkeypress='if(event.keyCode == 13){addNewItem()}')
+  input#newEntry(type='text', placeholder='x.x.x.x/xx', onkeypress='if(event.keyCode == 13){addNewItem()}')
   br
 
-  button.button(onClick="addNewItem()")
-    img.buttonIcon(src="images/add.png")
+  button.button(onClick='addNewItem()')
+    img.buttonIcon(src='images/add.png')
     span.buttonSpan Add to Whitelist
  
 

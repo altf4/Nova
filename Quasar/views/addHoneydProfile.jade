@@ -16,12 +16,12 @@
 
 extends layout
 block headerAdditions
-  //link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  //link(rel='stylesheet', type='text/css', href='configstyle.css', media='screen')
   
   include includes/commonHoneydProfile
 
 block content
-  div#lightbox(class="white_content", style="display:none;")
+  div#lightbox(class='white_content', style='display:none;')
     div#configureScript
     
     br
@@ -32,90 +32,90 @@ block content
 
     div
 
-      table(id="tableEditProfile")
+      table(id='tableEditProfile')
         col
         col
-        col(style="width:200px")
-        col(style="width:300px")
+        col(style='width:200px')
+        col(style='width:300px')
         
-        tr(id="row0")
+        tr(id='row0')
           td
           td
-          td(style="text-align:right")
+          td(style='text-align:right')
             label Profile Name
           td
-            input#name(type="text", name="name")
+            input#name(type='text', name='name')
         
-        tr(id="row1")
+        tr(id='row1')
           td
           td
-          td(style="text-align:right")
+          td(style='text-align:right')
             label Parent Profile
           td
-            input#parentName(type="text", name="name", disabled="true")
+            input#parentName(type='text', name='name', disabled='true')
         
  
-        tr(id="row2")
+        tr(id='row2')
           td
-            input#inheritPersonality(type="checkbox", name="inheritPersonality", onclick="inheritanceChanged()") 
+            input#inheritPersonality(type='checkbox', name='inheritPersonality', onclick='inheritanceChanged()') 
           td
             label Inherit?
-          td(style="text-align:right")
+          td(style='text-align:right')
             label Operating System Personality
           td
-            select#personality(data-dojo-type="dijit.form.FilteringSelect", name="personality", autocomplete="true", pageSize=10)
+            select#personality(data-dojo-type='dijit.form.FilteringSelect', name='personality', autocomplete='true', pageSize=10)
               each os in personalities
-                option(value="#{os}") #{os}
+                option(value='#{os}') #{os}
         
-        tr(id="row4")
+        tr(id='row4')
           td
-            input#inheritDropRate(type="checkbox", name="inheritDropRate", onclick="inheritanceChanged()") 
+            input#inheritDropRate(type='checkbox', name='inheritDropRate', onclick='inheritanceChanged()') 
           td
             label Inherit?
-          td(style="text-align:right")
+          td(style='text-align:right')
             label Packet Drop Percentage
           td
-            input#dropRate(type="number", name="dropRate", min=0, max=100)
+            input#dropRate(type='number', name='dropRate', min=0, max=100)
         tr
           td
             br
-        tr(id="row5")
+        tr(id='row5')
           td
-            input#inheritUptime(type="checkbox", name="inheritUptime", onclick="inheritanceChanged()") 
+            input#inheritUptime(type='checkbox', name='inheritUptime', onclick='inheritanceChanged()') 
           td
             label Inherit?
-          td(style="text-align:right")
+          td(style='text-align:right')
             label Fixed uptime or range?
           td
-            select#uptimeType(name="uptimeType", onchange="uptimeTypeChanged()")
+            select#uptimeType(name='uptimeType', onchange='uptimeTypeChanged()')
               option Fixed
               option Range
           
-        tr(id="row6")
+        tr(id='row6')
           td
           td
-          td(style="text-align:right")
-            label(id="uptimeLabel") Uptime Range
+          td(style='text-align:right')
+            label(id='uptimeLabel') Uptime Range
           td
-            input#uptimeMin(type="number", name="uptimeMin", min=0)
-            input#uptimeMax(type="number", name="uptimeMax", min=0)
+            input#uptimeMin(type='number', name='uptimeMin', min=0)
+            input#uptimeMax(type='number', name='uptimeMax', min=0)
 
       br
       br
       h1 Profile Ethernet Vendor Configuration
       table#ethernetVEndors
        
-      div(id="ethSelectDiv")
-        button.button(type="button", id="ethSelectButton", onclick="addEthernetVendor(document.getElementById('ethernet').value, 1)")
-          img.buttonIcon(src="images/add.png")
+      div(id='ethSelectDiv')
+        button.button(type='button', id='ethSelectButton', onclick='addEthernetVendor(document.getElementById("ethernet").value, 1)')
+          img.buttonIcon(src='images/add.png')
           span.buttonSpan Add New Vendor
 
-        select#ethernet(data-dojo-type="dijit.form.FilteringSelect", name="ethernet", autocomplete="true", pageSize=10)
+        select#ethernet(data-dojo-type='dijit.form.FilteringSelect', name='ethernet', autocomplete='true', pageSize=10)
           each vendor in vendors
-            option(value="#{vendor}") #{vendor}
+            option(value='#{vendor}') #{vendor}
                 
         
-      label(id="errorEthernet", style="color:red;", value="")
+      label(id='errorEthernet', style='color:red;', value='')
       input(type='hidden', id='profDist', value='')
 
       br
@@ -127,30 +127,30 @@ block content
           td
             label Create New Port Set
           td
-            input#newPortSetName(type="text", placeholder="Name of new portset", style="width: 95%")
+            input#newPortSetName(type='text', placeholder='Name of new portset', style='width: 95%')
           td
-            button(type="button", onclick = "addNewPortset()")
-              img.buttonIcon(src="images/add.png")
+            button(type='button', onclick = 'addNewPortset()')
+              img.buttonIcon(src='images/add.png')
               span.buttonSpan Add Portset
 
         tr
           td
             label Edit Port Set
           td
-            select#portSetSelection(onchange='portSetSelectionChanged()', style="width: 95%")
+            select#portSetSelection(onchange='portSetSelectionChanged()', style='width: 95%')
           td
-            button(type="button", onclick = "deletePortset()")
-              img.buttonIcon(src="images/delete.png")
+            button(type='button', onclick = 'deletePortset()')
+              img.buttonIcon(src='images/delete.png')
               span.buttonSpan Delete Portset
       
         tr
           td
             label Rename Selected Port Set  
           td
-            input#newPortsetName(type="text", placeholder="New Portset Name", style="width: 95%")
+            input#newPortsetName(type='text', placeholder='New Portset Name', style='width: 95%')
           td
-            button(type="button", onclick = "renamePortset()") 
-              img.buttonIcon(src="images/edit.png")
+            button(type='button', onclick = 'renamePortset()') 
+              img.buttonIcon(src='images/edit.png')
               span.buttonSpan Rename Portset
 
       br
@@ -161,41 +161,41 @@ block content
             td
               label Default TCP Action
              td
-               select#defaultTCPAction(style="width: 100%")
-                 option(value="filtered") Filtered (don't respond)
-                 option(value="open") Open (respond with SYN/ACK)
-                 option(value="closed") Closed (respond with RST)
+               select#defaultTCPAction(style='width: 100%')
+                 option(value='filtered') Filtered (don't respond)
+                 option(value='open') Open (respond with SYN/ACK)
+                 option(value='closed') Closed (respond with RST)
 
            tr
              td
                label Default UDP Action
              td
-               select#defaultUDPAction(style="width: 100%")
-                 option(value="filtered") Filtered (don't respond)
-                 option(value="closed") Closed (respond with ICMP port unreach)
+               select#defaultUDPAction(style='width: 100%')
+                 option(value='filtered') Filtered (don't respond)
+                 option(value='closed') Closed (respond with ICMP port unreach)
            tr
              td
                label Default ICMP Action
              td
-               select#defaultICMPAction(style="width: 100%")
-                 option(value="filtered") Filtered (don't respond)
-                 option(value="open") Open (respond to pings)
+               select#defaultICMPAction(style='width: 100%')
+                 option(value='filtered') Filtered (don't respond)
+                 option(value='open') Open (respond to pings)
    
         br
         table#portTable
     
-        button(type="button", onClick="addPort()")
-          img.buttonIcon(src="images/add.png")
+        button(type='button', onClick='addPort()')
+          img.buttonIcon(src='images/add.png')
           span.buttonSpan Add New Port
     
       br
       br
       br
       
-      button(type="button", onclick="saveChanges()")
-        img.buttonIcon(src="images/ok.png")
+      button(type='button', onclick='saveChanges()')
+        img.buttonIcon(src='images/ok.png')
         span.buttonSpan Save Changes
       
-      button(type="button", onclick="window.location='/honeydConfigManage?tab=settingsProfiles'")
-        img.buttonIcon(src="images/cancel.png")
+      button(type='button', onclick='window.location="/honeydConfigManage?tab=settingsProfiles"')
+        img.buttonIcon(src='images/cancel.png')
         span.buttonSpan Cancel
