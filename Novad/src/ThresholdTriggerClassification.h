@@ -13,7 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : TODO: Description here
+// Description : Child class of ClassificationEngine, specifies a threshold for
+// classifying a device as an intruder
 //============================================================================
 
 #ifndef THRESHOLDTRIGGERCLASSIFICATION_H_
