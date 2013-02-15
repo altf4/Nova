@@ -75,7 +75,7 @@ block content
           td(style='text-align:right')
             label Packet Drop Percentage
           td
-            input#dropRate(type='number', name='dropRate', min=0, max=100)
+            input#dropRate(type='number', name='dropRate', min=0, max=100, onblur='enforceMinAndMax("dropRate")')
         tr
           td
             br
@@ -97,8 +97,8 @@ block content
           td(style='text-align:right')
             label(id='uptimeLabel') Uptime Range
           td
-            input#uptimeMin(type='number', name='uptimeMin', min=0)
-            input#uptimeMax(type='number', name='uptimeMax', min=0)
+            input#uptimeMin(type='number', name='uptimeMin', min=0, onblur='enforceMinAndMax("uptimeMax")')
+            input#uptimeMax(type='number', name='uptimeMax', min=0, onblur='enforceMinAndMax("uptimeMin")')
 
       br
       br
