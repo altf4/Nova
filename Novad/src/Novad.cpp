@@ -106,6 +106,10 @@ pthread_t ipUpdateThread;
 pthread_t ipWhitelistUpdateThread;
 pthread_t consumer;
 
+pthread_mutex_t shutdownClassificationMutex;
+bool shutdownClassification;
+pthread_cond_t shutdownClassificationCond;
+
 namespace Nova
 {
 
@@ -201,8 +205,11 @@ int RunNovaD()
 		}
 	}
 
+	pthread_mutex_init(&shutdownClassificationMutex, NULL);
+	shutdownClassification = false;
+	pthread_cond_init(&shutdownClassificationCond, NULL);
 	pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
-	//pthread_detach(classificationLoopThread);
+	pthread_detach(classificationLoopThread);
 
 	// TODO: Figure out if having multiple ConsumerLoops has a performance benefit
 	pthread_create(&consumer, NULL, ConsumerLoop, NULL);
