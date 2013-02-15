@@ -78,6 +78,10 @@ extern EvidenceTable suspectEvidence;
 
 extern Doppelganger *doppel;
 
+extern pthread_mutex_t shutdownClassificationMutex;
+extern bool shutdownClassification;
+extern pthread_cond_t shutdownClassificationCond;
+
 namespace Nova
 {
 void *ClassificationLoop(void *ptr)
@@ -87,7 +91,31 @@ void *ClassificationLoop(void *ptr)
 	//Classification Loop
 	do
 	{
-		sleep(Config::Inst()->GetClassificationTimeout());
+		struct timespec timespec;
+		struct timeval timeval;
+		gettimeofday(&timeval, NULL);
+		timespec.tv_sec  = timeval.tv_sec;
+		timespec.tv_nsec = timeval.tv_usec*1000;
+		timespec.tv_sec += Config::Inst()->GetClassificationTimeout();
+
+		{
+			//Protection for the queue structure
+			Lock lock(&shutdownClassificationMutex);
+
+			//While loop to protect against spurious wakeups
+			while(!shutdownClassification)
+			{
+				if(pthread_cond_timedwait(&shutdownClassificationCond, &shutdownClassificationMutex, &timespec) == ETIMEDOUT)
+				{
+					break;
+				}
+			}
+			if(shutdownClassification)
+			{
+				return NULL;
+			}
+		}
+
 		CheckForDroppedPackets();
 
 		//Calculate the "true" Feature Set for each Suspect

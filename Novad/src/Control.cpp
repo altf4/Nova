@@ -23,9 +23,15 @@
 #include "Logger.h"
 #include "Novad.h"
 #include "ClassificationEngine.h"
+#include "Lock.h"
 
 extern Nova::ClassificationEngine *engine;
-extern pthread_t classificationLoopThread;;
+extern pthread_t classificationLoopThread;
+
+extern pthread_mutex_t shutdownClassificationMutex;
+extern bool shutdownClassification;
+extern pthread_cond_t shutdownClassificationCond;
+extern bool classificationRunning;
 
 namespace Nova
 {
@@ -56,14 +62,14 @@ void SaveAndExit(int param)
 
 	if(engine != NULL)
 	{
-		void *res;
-		pthread_cancel(classificationLoopThread);
-		pthread_join(classificationLoopThread, &res);
-
-		if (res != PTHREAD_CANCELED)
 		{
-			LOG(WARNING, "Problem when attempting to cancel CE thread during SaveAndExit.", "");
+			Lock lock(&shutdownClassificationMutex);
+			shutdownClassification = true;
 		}
+		pthread_cond_signal(&shutdownClassificationCond);
+
+		pthread_cond_destroy(&shutdownClassificationCond);
+		pthread_mutex_destroy(&shutdownClassificationMutex);
 
 		delete engine;
 	}
