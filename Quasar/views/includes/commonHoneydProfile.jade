@@ -57,6 +57,17 @@ script
 
   var rmLb = false;
 
+  function enforceMinAndMax(source)
+  {
+    var val = parseInt($('#' + source).val());
+    var min = parseInt($('#' + source).attr('min'));
+    var max = parseInt($('#' + source).attr('max'));
+    if((min != undefined && val < min) || (max != undefined && val > max))
+    {
+      $('#' + source).val($('#' + source).attr('min'));
+    }
+  }
+
   function handleOnclick(e)
   {
     var evt = (e ? e : window.event);
@@ -472,7 +483,7 @@ script
           return;
         }
 
-        profile.uptimeMin =$('#uptimeMin').attr('value');
+        profile.uptimeMin = $('#uptimeMin').attr('value');
 
         if($('#uptimeType')[0].selectedIndex == 0)
         {
@@ -527,7 +538,7 @@ script
       savedChanges = function(err){
         if(err == null)
         {
-          window.location='/honeydConfigManage?tab=settingsProfiles';
+          window.location = '/honeydConfigManage?tab=settingsProfiles';
           now.IsHaystackUp(checkIfRestartNeeded); 
         }
         else
@@ -555,7 +566,7 @@ script
         if(port == undefined) 
         {
           port = {};
-          port.portNum = 0;
+          port.portNum = 1;
           port.protocol = 'tcp';
           port.behavior = 'open';
           port.scriptName = 'NA';
@@ -590,6 +601,7 @@ script
         numInput.min = 1;
         numInput.max = 65535;
         numInput.value = port.portNum;
+        numInput.setAttribute('onblur', 'enforceMinAndMax("portNum' + portUID + '")');
         numContainer.appendChild(numInput);
         row.appendChild(numContainer);
                 
@@ -825,17 +837,17 @@ script
 
         if($('#dropRate').attr('disabled', $('#inheritDropRate').is(':checked'))) 
         {
-          $('#dropRate').attr('value', origProfile.dropRate);
+          $('#dropRate').val(origProfile.dropRate);
         }
 
         if($('#uptimeMin').attr('disabled', $('#inheritUptime').is(':checked'))) 
         {
-          $('#uptimeMin').attr('value', origProfile.uptimeMin);
+          $('#uptimeMin').val(origProfile.uptimeMin);
         }
 
         if($('#uptimeMax').attr('disabled', $('#inheritUptime').is(':checked'))) 
         {
-          $('#uptimeMax').attr('value', origProfile.uptimeMax);
+          $('#uptimeMax').val(origProfile.uptimeMax);
         }
 
         if($('#uptimeType').attr('disabled', $('#inheritUptime').is(':checked'))) 

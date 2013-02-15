@@ -44,27 +44,19 @@ void SaveAndExit(int param)
 	{
 		if(system("sudo iptables -F") == -1)
 		{
-			// TODO Logging
-			LOG(ALERT, "Novad EXIT FAILURE: sudo iptables -F command failed.", "");
-			exit(EXIT_FAILURE);
+			LOG("WARNING", "Failed to flush iptables rules", "Command sudo iptables -F failed");
 		}
 		if(system("sudo iptables -t nat -F") == -1)
 		{
-			// TODO Logging
-			LOG(ALERT, "Novad EXIT FAILURE: sudo iptables -t nat -F command failed.", "");
-			exit(EXIT_FAILURE);
+			LOG("WARNING", "Failed to flush nat table rules", "Command sudo iptables -t nat -F failed");
 		}
 		if(system("sudo iptables -t nat -X DOPP") == -1)
 		{
-			// TODO Logging
-			LOG(ALERT, "Novad EXIT FAILURE: sudo iptables -t nat -X DOPP command failed.", "");
-			exit(EXIT_FAILURE);
+			LOG("WARNING", "Failed to delete chain DOPP in nat table", "Command sudo iptables -t nat -X DOPP failed");
 		}
 		if(system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) == -1)
 		{
-			// TODO Logging
-			LOG(ALERT, "Novad EXIT FAILURE: sudo iptables -t nat -X DOPP command failed.", "");
-			exit(EXIT_FAILURE);
+			LOG("WARNING", "Failed to delete Doppelganger route", "Command sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) + " failed");
 		}
 	}
 
