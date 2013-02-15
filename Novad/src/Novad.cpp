@@ -211,7 +211,7 @@ int RunNovaD()
 	pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
 	pthread_detach(classificationLoopThread);
 
-	// TODO: Figure out if having multiple ConsumerLoops has a performance benefit
+	// TODO: Figure out if having multiple Consumer Loops has a performance benefit
 	pthread_create(&consumer, NULL, ConsumerLoop, NULL);
 	pthread_detach(consumer);
 

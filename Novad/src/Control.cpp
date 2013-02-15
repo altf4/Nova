@@ -45,18 +45,26 @@ void SaveAndExit(int param)
 		if(system("sudo iptables -F") == -1)
 		{
 			// TODO Logging
+			LOG(ALERT, "Novad EXIT FAILURE: sudo iptables -F command failed.", "");
+			exit(EXIT_FAILURE);
 		}
 		if(system("sudo iptables -t nat -F") == -1)
 		{
 			// TODO Logging
+			LOG(ALERT, "Novad EXIT FAILURE: sudo iptables -t nat -F command failed.", "");
+			exit(EXIT_FAILURE);
 		}
 		if(system("sudo iptables -t nat -X DOPP") == -1)
 		{
 			// TODO Logging
+			LOG(ALERT, "Novad EXIT FAILURE: sudo iptables -t nat -X DOPP command failed.", "");
+			exit(EXIT_FAILURE);
 		}
 		if(system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) == -1)
 		{
 			// TODO Logging
+			LOG(ALERT, "Novad EXIT FAILURE: sudo iptables -t nat -X DOPP command failed.", "");
+			exit(EXIT_FAILURE);
 		}
 	}
 
