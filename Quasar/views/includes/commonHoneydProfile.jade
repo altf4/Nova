@@ -16,12 +16,12 @@
 
 script
         var ports = {};
-        var lastPortSet = "";
+        var lastPortSet = '';
         var loadedName;
         var profile;
         var origProfile;
         var portList = new function() {};
-        var newProfile = "#{newProfile}";
+        var newProfile = '#{newProfile}';
         var portIndexes = [];
 
         // Configuration details for the scripts
@@ -31,15 +31,15 @@ script
         var loaded = false;
 
         var currentName;
-        if (newProfile == "true")
+        if (newProfile == 'true')
         {
-                currentName = "#{parentName}";
+                currentName = '#{parentName}';
                 loadedName = currentName;
-                //console.log("Creating child of profile " + currentName);
+                //console.log('Creating child of profile ' + currentName);
         } else {
-                currentName = "#{oldName}";
+                currentName = '#{oldName}';
                 loadedName = currentName;
-                //console.log("Editing profile " + currentName);
+                //console.log('Editing profile ' + currentName);
         }
 
         var inheritanceChanged = function() {};
@@ -101,11 +101,11 @@ script
         var closeLightbox = function()
         {
             enableBackground(document.getElementById('setup'));
-            var table = document.getElementById("configureScriptTable")
+            var table = document.getElementById('configureScriptTable')
             scriptConfigurations[currentLightboxIndex] = {};
             for (var i = 0; i < table.children.length; i++)
             {
-               if (table.children[i].tagName === "TR")
+               if (table.children[i].tagName === 'TR')
                {
                     scriptConfigurations[currentLightboxIndex][table.children[i].children[0].innerHTML] = table.children[i].children[1].children[0].value;
                }
@@ -173,13 +173,13 @@ script
         // Make the HTML view reflect the internal model
         var refreshVendorsView = function()
         {
-                var vendorDiv = document.getElementById("ethernetVEndors");
+                var vendorDiv = document.getElementById('ethernetVEndors');
                 dojo.empty(vendorDiv);
 
                 // Populate the table header
-                var headerRow = document.createElement("tr");
-                var headerName = document.createElement("th");
-                headerName.innerHTML = "Ethernet Vendor";
+                var headerRow = document.createElement('tr');
+                var headerName = document.createElement('th');
+                headerName.innerHTML = 'Ethernet Vendor';
 
 
                 headerRow.appendChild(headerName);
@@ -188,23 +188,23 @@ script
                 // Populate the table rows
                 for (var i in profile.ethernet)
                 {
-                        var vendorRow = document.createElement("tr");
+                        var vendorRow = document.createElement('tr');
 
                         // Vendor name cell
-                        var vendorNameCell = document.createElement("td");
-                        var vendorName = document.createElement("input");
+                        var vendorNameCell = document.createElement('td');
+                        var vendorName = document.createElement('input');
                         vendorNameCell.appendChild(vendorName);
                         
-                        vendorName.id = "vendorName" + i;
+                        vendorName.id = 'vendorName' + i;
                         vendorName.value = profile.ethernet[i].vendor;
                         vendorName.setAttribute('readonly', true);
 
                         // Vendor delete button
-                        var vendorDeleteCell = document.createElement("td");
-                        var vendorDelete = document.createElement("button");
+                        var vendorDeleteCell = document.createElement('td');
+                        var vendorDelete = document.createElement('button');
                         vendorDeleteCell.appendChild(vendorDelete);
 
-                        vendorDelete.innerHTML = "<img class='buttonIcon' src='images/delete.png'/><span class='buttonSpan'>Delete</span>";
+                        vendorDelete.innerHTML = '<img class="buttonIcon" src="images/delete.png"/><span class="buttonSpan">Delete</span>';
                         vendorDelete.onclick = function(i){return function(){deleteEthernetVendor(i);}}(i)
 
                         vendorRow.appendChild(vendorNameCell);
@@ -222,7 +222,7 @@ script
                 {
                         if (profile.ethernet[i].vendor == vendorName)
                         {
-                                alert("Vendor already exists. Can not have duplicates.");
+                                alert('Vendor already exists. Can not have duplicates.');
                                 return;
                         }
                 }
@@ -243,40 +243,40 @@ script
             for (var i = 0; i < portIndexes.length; i++) 
             {
                 var port = {};
-                port.portNum = dojo.byId("portNum" + portIndexes[i]).value;
+                port.portNum = dojo.byId('portNum' + portIndexes[i]).value;
 
                 port.scriptConfiguration = scriptConfigurations[portIndexes[i]];
 
-                switch (Number(dojo.byId("portBehavior" + portIndexes[i]).value)) 
+                switch (Number(dojo.byId('portBehavior' + portIndexes[i]).value)) 
                 {
-                    case 0: port.behavior = "closed"; break; 
-                    case 1: port.behavior = "filtered"; break;
-                    case 2: port.behavior = "open"; break;
-                    case 3: port.behavior = "script"; break;
-                    case 4: port.behavior = "tarpit open"; break;
-                    case 5: port.behavior = "tarpit script"; break;
+                    case 0: port.behavior = 'closed'; break; 
+                    case 1: port.behavior = 'filtered'; break;
+                    case 2: port.behavior = 'open'; break;
+                    case 3: port.behavior = 'script'; break;
+                    case 4: port.behavior = 'tarpit open'; break;
+                    case 5: port.behavior = 'tarpit script'; break;
                 }
 
-                if (port.behavior == "script" || port.behavior == "tarpit script")
+                if (port.behavior == 'script' || port.behavior == 'tarpit script')
                 {
-                    port.scriptName = dojo.byId("portScriptDrop" + portIndexes[i]).value;
+                    port.scriptName = dojo.byId('portScriptDrop' + portIndexes[i]).value;
                 } else {
-                    port.scriptName = "";
+                    port.scriptName = '';
                 }
 
-                port.protocol = dojo.byId("portType" + portIndexes[i]).value;
+                port.protocol = dojo.byId('portType' + portIndexes[i]).value;
 
 
                 for (var j = 0; j < PortExceptions.length; j++) {
                     if (PortExceptions[j].portNum == port.portNum && port.protocol == PortExceptions[j].protocol) {
-                        alert("Error: Port " + port.portNum + " is used more than once!");
+                        alert('Error: Port ' + port.portNum + ' is used more than once!');
                         return false;
                     }
                 }
 
                 if (port.portNum == 0)
                 {
-                    alert("Port can't be 0!");
+                    alert('Port cannot have port number 0!');
                     return false;
                 }
                 PortExceptions.push(port);
@@ -286,9 +286,9 @@ script
                 if (profile.portSets[i].setName == lastPortSet)
                 {
                     profile.portSets[i].PortExceptions = PortExceptions;
-                    profile.portSets[i].TCPBehavior = dojo.byId("defaultTCPAction").value;
-                    profile.portSets[i].UDPBehavior = dojo.byId("defaultUDPAction").value;
-                    profile.portSets[i].ICMPBehavior = dojo.byId("defaultICMPAction").value;
+                    profile.portSets[i].TCPBehavior = dojo.byId('defaultTCPAction').value;
+                    profile.portSets[i].UDPBehavior = dojo.byId('defaultUDPAction').value;
+                    profile.portSets[i].ICMPBehavior = dojo.byId('defaultICMPAction').value;
                     break;
                 }
             }
@@ -297,27 +297,27 @@ script
 
         var updatePortSetLists = function()
         {
-            dojo.empty(document.getElementById("portSetSelection"));
+            dojo.empty(document.getElementById('portSetSelection'));
             if (profile.portSets.length != 0)
             {
-                dojo.byId("portSetDiv").style.display = "block";
-                document.getElementById("portSetSelection").disabled = false;
+                dojo.byId('portSetDiv').style.display = 'block';
+                document.getElementById('portSetSelection').disabled = false;
                 for (var i in profile.portSets)
                 {
-                    var option = document.createElement("option");
+                    var option = document.createElement('option');
                     option.value = profile.portSets[i].setName;
                     option.innerHTML = profile.portSets[i].setName;
-                    document.getElementById("portSetSelection").appendChild(option);
+                    document.getElementById('portSetSelection').appendChild(option);
                 }
             } else {
-                dojo.byId("portSetDiv").style.display = "none";
+                dojo.byId('portSetDiv').style.display = 'none';
             }
             portSetSelectionChanged();
         };
 
         var deletePortset = function()
         {
-            var setName = dojo.byId("portSetSelection").value;
+            var setName = dojo.byId('portSetSelection').value;
             
             for (var i in profile.portSets)
             {
@@ -358,18 +358,18 @@ script
           }
           catch(err)
           {
-            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-            console.log("err was: " + err);
+            alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
+            console.log('err was: ' + err);
           }
         }
 
         var addNewPortset = function addNewPortSet()
         {
-            var setName = dojo.byId("newPortSetName").value;
+            var setName = dojo.byId('newPortSetName').value;
 
-            if (setName == "")
+            if (setName == '')
             {
-                alert("Port sets must have a name.");
+                alert('Port sets must have a name.');
                 return;
             }
             
@@ -379,15 +379,15 @@ script
             {
                 if (profile.portSets[i].setName == setName)
                 {
-                    alert("A port set by that name already exists");
+                    alert('A port set by that name already exists');
                     return;
                 }
             }
 
             var portSet = {setName: setName
-                , ICMPBehavior: "open"
-                , TCPBehavior: "closed"
-                , UDPBehavior: "closed"
+                , ICMPBehavior: 'open'
+                , TCPBehavior: 'closed'
+                , UDPBehavior: 'closed'
                 , PortExceptions: []
             }
 
@@ -400,26 +400,26 @@ script
             if (!updatePortsModel()) {return};
 
             // Set is as the current portset
-            document.getElementById("portSetSelection").value = setName;
+            document.getElementById('portSetSelection').value = setName;
             portSetSelectionChanged();
         };
         // Currently edited port set has changed
         var portSetSelectionChanged = function()
         {
-            console.log("Running portSetSelectionChanged!")
-            if (lastPortSet != "")
+            console.log('Running portSetSelectionChanged!')
+            if (lastPortSet != '')
             {
                 if (!updatePortsModel()) {
-                    document.getElementById("portSetSelection").value = lastPortSet;
+                    document.getElementById('portSetSelection').value = lastPortSet;
                     return;
                 }
             }
 
-            lastPortSet = document.getElementById("portSetSelection").value;
+            lastPortSet = document.getElementById('portSetSelection').value;
 
-            var newPortSet = document.getElementById("portSetSelection").value;
+            var newPortSet = document.getElementById('portSetSelection').value;
 
-            dojo.empty("portTable");
+            dojo.empty('portTable');
             scriptConfigurations = {};
 
             portIndexes = [];
@@ -427,9 +427,9 @@ script
             {
                 if (profile.portSets[i].setName == newPortSet)
                 {
-                    dojo.byId("defaultICMPAction").value = profile.portSets[i].ICMPBehavior;
-                    dojo.byId("defaultTCPAction").value = profile.portSets[i].TCPBehavior;
-                    dojo.byId("defaultUDPAction").value = profile.portSets[i].UDPBehavior;
+                    dojo.byId('defaultICMPAction').value = profile.portSets[i].ICMPBehavior;
+                    dojo.byId('defaultTCPAction').value = profile.portSets[i].TCPBehavior;
+                    dojo.byId('defaultUDPAction').value = profile.portSets[i].UDPBehavior;
                         
                     for (var port in profile.portSets[i].PortExceptions)
                     {
@@ -453,7 +453,7 @@ script
 
         function init()
         {
-        require(["dijit/registry", "dijit/form/FilteringSelect"], function()
+        require(['dijit/registry', 'dijit/form/FilteringSelect'], function()
         {
                 function obj() {};
                 saveChanges = function()
@@ -461,47 +461,47 @@ script
 
                         var ethVendorList = [];
 
-                        profile.oldName = "#{oldName}";
-                        profile.parentProfile = dojo.byId("parentName").value;
-                        profile.name = dojo.byId("name").value;
+                        profile.oldName = '#{oldName}';
+                        profile.parentProfile = dojo.byId('parentName').value;
+                        profile.name = dojo.byId('name').value;
 
 
-                        profile.personality = dojo.byId("personality").value;
-                        profile.dropRate = dojo.byId("dropRate").value;
+                        profile.personality = dojo.byId('personality').value;
+                        profile.dropRate = dojo.byId('dropRate').value;
 
-                        var value = parseInt(dojo.byId("uptimeMin").value);
+                        var value = parseInt(dojo.byId('uptimeMin').value);
                         if (isNaN(value) || value < 0)
                         {
-                            alert("Uptime min must be a positive integer!");
+                            alert('Uptime min must be a positive integer!');
                             return;
                         }
 
 
-                        profile.uptimeMin = dojo.byId("uptimeMin").value;
+                        profile.uptimeMin = dojo.byId('uptimeMin').value;
 
-                        if (dojo.byId("uptimeType").selectedIndex == 0)
+                        if (dojo.byId('uptimeType').selectedIndex == 0)
                         {
-                                var value = parseInt(dojo.byId("uptimeMin").value);
+                                var value = parseInt(dojo.byId('uptimeMin').value);
                                 if (isNaN(value) || value < 0)
                                 {
-                                    alert("Uptime max must be a positive integer!");
+                                    alert('Uptime max must be a positive integer!');
                                     return;
                                 }
-                                profile.uptimeMax = dojo.byId("uptimeMin").value;
+                                profile.uptimeMax = dojo.byId('uptimeMin').value;
                         }  else {
-                                var value = parseInt(dojo.byId("uptimeMax").value);
+                                var value = parseInt(dojo.byId('uptimeMax').value);
                                 if (isNaN(value) || value < 0)
                                 {
-                                    alert("Uptime max must be a positive integer!");
+                                    alert('Uptime max must be a positive integer!');
                                     return;
                                 }
-                                profile.uptimeMax = dojo.byId("uptimeMax").value;
+                                profile.uptimeMax = dojo.byId('uptimeMax').value;
                         }
 
 
-                        profile.isPersonalityInherited = dojo.byId("inheritPersonality").checked;
-                        profile.isDropRateInherited = dojo.byId("inheritDropRate").checked;
-                        profile.isUptimeInherited = dojo.byId("inheritUptime").checked;
+                        profile.isPersonalityInherited = dojo.byId('inheritPersonality').checked;
+                        profile.isDropRateInherited = dojo.byId('inheritDropRate').checked;
+                        profile.isUptimeInherited = dojo.byId('inheritUptime').checked;
                         if (!updatePortsModel()) {return};
 
                         now.WouldProfileSaveDeleteNodes(profile, function(result)
@@ -509,18 +509,18 @@ script
                             var userConfirmed = true;
                             if (result == true)
                             {
-                                userConfirmed = confirm("Warning: this will delete nodes that used deleted portsets");
+                                userConfirmed = confirm('Warning: this will delete nodes that used deleted portsets');
                             }
 
                                 if (userConfirmed)
                                 {
                                     //need conditional here for add vs. edit, false == edit, true == add
                                     try {
-                                        now.SaveProfile(profile, newProfile == "true", savedChanges);
+                                        now.SaveProfile(profile, newProfile == 'true', savedChanges);
                                     } catch (err)
                                     {
-                                        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-                                        console.log("err was: " + err);
+                                        alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
+                                        console.log('err was: ' + err);
                                     }
                                 }
 
@@ -532,10 +532,10 @@ script
                 {
                     if (err == null)
                     {
-                        window.location="/honeydConfigManage?tab=settingsProfiles";
+                        window.location='/honeydConfigManage?tab=settingsProfiles';
                         now.IsHaystackUp(checkIfRestartNeeded); 
                     } else {
-                        alert("Unable to save profile: " + err);
+                        alert('Unable to save profile: ' + err);
                         return;
                     }
                 };
@@ -545,14 +545,14 @@ script
                  {
                     if (haystackUp)
                     {
-                        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
+                        var restartHaystack = confirm('You must restart the haystack for this to take effect. Restart it now?');
                         if (restartHaystack)
                         {
                             now.RestartHaystack();
                         }
                     }
 
-                    window.location="/honeydConfigManage?tab=settingsProfiles";
+                    window.location='/honeydConfigManage?tab=settingsProfiles';
                 };
 
                 addPort = function(port) 
@@ -561,13 +561,13 @@ script
                         {
                                 port = {};
                                 port.portNum = 0;
-                                port.protocol = "tcp";
-                                port.behavior = "open";
-                                port.scriptName = "NA";
+                                port.protocol = 'tcp';
+                                port.behavior = 'open';
+                                port.scriptName = 'NA';
                                 port.scriptConfiguration = {};
                         }
 
-                        var portDiv = dojo.byId("portTable");
+                        var portDiv = dojo.byId('portTable');
                         var portUID;
 
                         if (portIndexes.length > 0) 
@@ -582,13 +582,13 @@ script
                         portIndexes.push(portUID);
                         scriptConfigurations[portUID] = port.scriptConfiguration;
 
-                        var row = document.createElement("tr");
-                        row.id = "portRow" + portUID;
+                        var row = document.createElement('tr');
+                        row.id = 'portRow' + portUID;
 
 
-                        var numContainer = document.createElement("td");
-                        var numInput = document.createElement("input");
-                        if (navigator.userAgent.indexOf("MSIE") == "-1") {
+                        var numContainer = document.createElement('td');
+                        var numInput = document.createElement('input');
+                        if (navigator.userAgent.indexOf('MSIE') == '-1') {
                                 numInput.type = 'number';
                         }
                         numInput.id = 'portNum' + portUID;
@@ -598,14 +598,14 @@ script
                         numContainer.appendChild(numInput);
                         row.appendChild(numContainer);
                                 
-                        var typeContainer = document.createElement("td");
-                        var typeSelect = document.createElement("select");
+                        var typeContainer = document.createElement('td');
+                        var typeSelect = document.createElement('select');
                         typeSelect.id = 'portType' + portUID;
 
-                        options = ["udp", "tcp"];
+                        options = ['udp', 'tcp'];
                         for(j = 0; j < options.length; j++)
                         {
-                                var option = document.createElement("option");
+                                var option = document.createElement('option');
                                 option.value = options[j];
                                 option.innerHTML = options[j];
                                 if(port.protocol == options[j])
@@ -618,20 +618,20 @@ script
                         typeContainer.appendChild(typeSelect);
                         row.appendChild(typeContainer);
 
-                        var behaviorContainer = document.createElement("td");
-                        var behaviorSelect = document.createElement("select");
+                        var behaviorContainer = document.createElement('td');
+                        var behaviorSelect = document.createElement('select');
                         behaviorSelect.id = 'portBehavior' + portUID;
                         behaviorSelect.onchange = portBehaviorChanged;
                         
                          
-                        options = ["closed", "filtered", "open", "script", "tarpit open", "tarpit script"];
-                        longOptions = ["Closed: Respond with TCP RST or ICMP Port Error", "Filter: Drop packets and do not respond", "Open: Establish incoming connections", "Script: Emulate a service", "Open with tarpit", "Script with tarpit"];
+                        options = ['closed', 'filtered', 'open', 'script', 'tarpit open', 'tarpit script'];
+                        longOptions = ['Closed: Respond with TCP RST or ICMP Port Error', 'Filter: Drop packets and do not respond', 'Open: Establish incoming connections', 'Script: Emulate a service', 'Open with tarpit', 'Script with tarpit'];
                         
                         for (j = 0; j < options.length; j++) 
                         {
                                 if (port.behavior == options[j]) 
                                 {
-                                        var option = document.createElement("option");
+                                        var option = document.createElement('option');
                                         option.value = j;
                                         option.selected = true;
                                         option.innerHTML = longOptions[j];
@@ -639,7 +639,7 @@ script
                                 } 
                                 else 
                                 {
-                                        var option = document.createElement("option");
+                                        var option = document.createElement('option');
                                         option.value = j;
                                         option.innerHTML = longOptions[j];
                                         behaviorSelect.appendChild(option);
@@ -650,20 +650,20 @@ script
                         row.appendChild(behaviorContainer);
 
 
-                        var scriptContainer = document.createElement("td");
-                        var scriptSelect = document.createElement("select");
+                        var scriptContainer = document.createElement('td');
+                        var scriptSelect = document.createElement('select');
                         scriptSelect.id = 'portScriptDrop' + portUID;
-                        scriptSelect.setAttribute("onchange", 'scriptSelectionChanged(' + portUID + ')');
+                        scriptSelect.setAttribute('onchange', 'scriptSelectionChanged(' + portUID + ')');
 
-                        var scripts = "#{scripts}";
-                        options = scripts.split(",");
+                        var scripts = '#{scripts}';
+                        options = scripts.split(',');
                         matchingScriptFound = false;
 
                         for (j = 0; j < options.length; j++) 
                         {
                                 if (port.scriptName == options[j]) 
                                 {
-                                        var option = document.createElement("option");
+                                        var option = document.createElement('option');
                                         option.selected = true;
                                         option.innerHTML = options[j];
                                         scriptSelect.appendChild(option);
@@ -671,7 +671,7 @@ script
                                 } 
                                 else 
                                 {
-                                        var option = document.createElement("option");
+                                        var option = document.createElement('option');
                                         option.innerHTML = options[j];
                                         scriptSelect.appendChild(option);
                                 }
@@ -680,8 +680,8 @@ script
                         // Have a blank option if no script is selected
                         if (!matchingScriptFound) 
                         {
-                                //row += "<option disabled='true' SELECTED>NA</option>";
-                                var option = document.createElement("option");
+                                //row += '<option disabled='true' SELECTED>NA</option>';
+                                var option = document.createElement('option');
                                 option.disabled = true;
                                 option.selected = true;
                                 option.innerHTML = 'NA';
@@ -689,8 +689,8 @@ script
                         } 
                         else 
                         {
-                                //row += "<option disabled='true'>NA</option>";
-                                var option = document.createElement("option");
+                                //row += '<option disabled='true'>NA</option>';
+                                var option = document.createElement('option');
                                 option.disabled = true;
                                 option.innerHTML = 'NA';
                                 scriptSelect.appendChild(option);
@@ -699,25 +699,25 @@ script
                         scriptContainer.appendChild(scriptSelect);
                         row.appendChild(scriptContainer);
 
-                        var configureContainer = document.createElement("td");
-                        var configureButton = document.createElement("button");
+                        var configureContainer = document.createElement('td');
+                        var configureButton = document.createElement('button');
                         configureButton.setAttribute('type', 'button');
                         configureButton.setAttribute('onclick', 'configureScript(' + portUID + ')');
-                        configureButton.innerHTML = "<img class='buttonIcon' src='images/edit.png'/><span class='buttonSpan'>Configure</span>";
-                        configureButton.id = "configureButton" + portUID;
+                        configureButton.innerHTML = '<img class="buttonIcon" src="images/edit.png"/><span class="buttonSpan">Configure</span>';
+                        configureButton.id = 'configureButton' + portUID;
                         configureContainer.appendChild(configureButton);
                         row.appendChild(configureContainer);
 
                         // Delete button 
-                        var buttonContainer = document.createElement("td");
-                        var deleteButton = document.createElement("button");
+                        var buttonContainer = document.createElement('td');
+                        var deleteButton = document.createElement('button');
                         deleteButton.setAttribute('type', 'button');
                         deleteButton.setAttribute('onclick', 'deletePort(' + portUID + ')');
-                        deleteButton.innerHTML = "<img class='buttonIcon' src='images/delete.png'/><span class='buttonSpan'>Delete</span>";
+                        deleteButton.innerHTML = '<img class="buttonIcon" src="images/delete.png"/><span class="buttonSpan">Delete</span>';
                         buttonContainer.appendChild(deleteButton);
                         row.appendChild(buttonContainer);
 
-                        dojo.byId("portTable").appendChild(row);
+                        dojo.byId('portTable').appendChild(row);
 
                         portBehaviorChanged();
                 };
@@ -725,15 +725,15 @@ script
 
                 uptimeTypeChanged = function() 
                 {
-                        if (dojo.byId("uptimeType").selectedIndex == 0) 
+                        if (dojo.byId('uptimeType').selectedIndex == 0) 
                         {
-                                dojo.byId("uptimeMax").style.display = "none";
-                                document.getElementById("uptimeLabel").innerHTML = "Uptime";
+                                dojo.byId('uptimeMax').style.display = 'none';
+                                document.getElementById('uptimeLabel').innerHTML = 'Uptime';
                         } 
                         else 
                         {
-                                dojo.byId("uptimeMax").style.display = "block"; 
-                                document.getElementById("uptimeLabel").innerHTML = "Uptime Range";
+                                dojo.byId('uptimeMax').style.display = 'block'; 
+                                document.getElementById('uptimeLabel').innerHTML = 'Uptime Range';
                         }
                 };
 
@@ -741,7 +741,7 @@ script
                 {
                     currentLightboxIndex = portIndex;
                     var scriptName = document.getElementById('portScriptDrop' + portIndex).value;
-                    if (scriptName === "NA")
+                    if (scriptName === 'NA')
                     {
                         return;
                     }
@@ -750,21 +750,21 @@ script
 
                         now.GetScript(scriptName, function(script)
                         {
-                            dojo.empty("configureScript");
-                            var table = document.getElementById("configureScript").appendChild(document.createElement("TABLE"));
-                            table.id = "configureScriptTable";
+                            dojo.empty('configureScript');
+                            var table = document.getElementById('configureScript').appendChild(document.createElement('TABLE'));
+                            table.id = 'configureScriptTable';
                             
                             var optionCount = 0;
                             for (var option in script.GetOptions)
                             {
-                                var tr = table.appendChild(document.createElement("TR"));
-                                var keyData = tr.appendChild(document.createElement("TD"));
-                                var valueData = tr.appendChild(document.createElement("TD"));
-                                var valueSelect = valueData.appendChild(document.createElement("SELECT"));
+                                var tr = table.appendChild(document.createElement('TR'));
+                                var keyData = tr.appendChild(document.createElement('TD'));
+                                var valueData = tr.appendChild(document.createElement('TD'));
+                                var valueSelect = valueData.appendChild(document.createElement('SELECT'));
 
                                 for (var i = 0; i < script.GetOptions[option].length; i++)
                                 {
-                                    var selectOption = document.createElement("OPTION");
+                                    var selectOption = document.createElement('OPTION');
                                     selectOption.text = script.GetOptions[option][i];
                                     valueSelect.add(selectOption, null);
 
@@ -784,7 +784,7 @@ script
                             
                             if (optionCount == 0)
                             {
-                                alert("No configuration options for the selected script");
+                                alert('No configuration options for the selected script');
                                 return;
                             }
 
@@ -792,7 +792,7 @@ script
                         });
 
                     } catch (err) {
-                        console.log("Error was: " + err);
+                        console.log('Error was: ' + err);
                     }
                 };
 
@@ -800,16 +800,16 @@ script
                 {
                         for (var i = 0; i < portIndexes.length; i++) 
                         {
-                                if (dojo.byId("portBehavior" + portIndexes[i]).value == "3" || dojo.byId("portBehavior" + portIndexes[i]).value == "5") 
+                                if (dojo.byId('portBehavior' + portIndexes[i]).value == '3' || dojo.byId('portBehavior' + portIndexes[i]).value == '5') 
                                 {
-                                        dojo.byId("portScriptDrop" + portIndexes[i]).disabled = false;
-                                        if (dojo.byId("portScriptDrop" + portIndexes[i]).value == "NA") {
-                                            dojo.byId("portScriptDrop" + portIndexes[i]).selectedIndex = 0;
+                                        dojo.byId('portScriptDrop' + portIndexes[i]).disabled = false;
+                                        if (dojo.byId('portScriptDrop' + portIndexes[i]).value == 'NA') {
+                                            dojo.byId('portScriptDrop' + portIndexes[i]).selectedIndex = 0;
                                         }
                                 } 
                                 else 
                                 {
-                                        dojo.byId("portScriptDrop" + portIndexes[i]).disabled = true;
+                                        dojo.byId('portScriptDrop' + portIndexes[i]).disabled = true;
                                 }
                                 scriptSelectionChanged(portIndexes[i]);
                         }
@@ -817,7 +817,7 @@ script
 
                 deletePort = function(portUID) 
                 {
-                        var row = dojo.byId("portRow" + portUID);
+                        var row = dojo.byId('portRow' + portUID);
                         row.parentNode.removeChild(row);
                         var idx = portIndexes.indexOf(portUID);
                         if (idx != -1) 
@@ -828,40 +828,40 @@ script
 
                 inheritanceChanged = function() 
                 {
-                        if (dojo.byId("personality").disabled = dojo.byId("inheritPersonality").checked) 
+                        if (dojo.byId('personality').disabled = dojo.byId('inheritPersonality').checked) 
                         {
-                                dojo.byId("personality").value = origProfile.personality;
-                                dijit.byId("personality").setDisabled(true);
+                                dojo.byId('personality').value = origProfile.personality;
+                                dijit.byId('personality').setDisabled(true);
                         } 
                         else
                         {
-                                dijit.byId("personality").setDisabled(false);
+                                dijit.byId('personality').setDisabled(false);
                         }
 
-                        if (dojo.byId("dropRate").disabled = dojo.byId("inheritDropRate").checked) 
+                        if (dojo.byId('dropRate').disabled = dojo.byId('inheritDropRate').checked) 
                         {
-                                dojo.byId("dropRate").value = origProfile.dropRate;
+                                dojo.byId('dropRate').value = origProfile.dropRate;
                         }
 
-                        if (dojo.byId("uptimeMin").disabled = dojo.byId("inheritUptime").checked) 
+                        if (dojo.byId('uptimeMin').disabled = dojo.byId('inheritUptime').checked) 
                         {
-                                dojo.byId("uptimeMin").value = origProfile.uptimeMin;
+                                dojo.byId('uptimeMin').value = origProfile.uptimeMin;
                         }
 
-                        if (dojo.byId("uptimeMax").disabled = dojo.byId("inheritUptime").checked) 
+                        if (dojo.byId('uptimeMax').disabled = dojo.byId('inheritUptime').checked) 
                         {
-                                dojo.byId("uptimeMax").value = origProfile.uptimeMax;
+                                dojo.byId('uptimeMax').value = origProfile.uptimeMax;
                         }
 
-                        if (dojo.byId("uptimeType").disabled = dojo.byId("inheritUptime").checked) 
+                        if (dojo.byId('uptimeType').disabled = dojo.byId('inheritUptime').checked) 
                         {
                                 if (origProfile.uptimeMin == origProfile.uptimeMax) 
                                 {
-                                        dojo.byId("uptimeType").selectedIndex = 0;
+                                        dojo.byId('uptimeType').selectedIndex = 0;
                                 } 
                                 else 
                                 {
-                                        dojo.byId("uptimeType").selectedIndex = 1; 
+                                        dojo.byId('uptimeType').selectedIndex = 1; 
                                 }
                         }
 
@@ -873,14 +873,14 @@ script
                     scriptConfigurations[portIndex] = {};
 
                     // Don't bother if the dropdown is disabled
-                    if(document.getElementById("portScriptDrop" + portIndex).disabled)
+                    if(document.getElementById('portScriptDrop' + portIndex).disabled)
                     {
-                      document.getElementById("configureButton" + portIndex).style.display = "none";
+                      document.getElementById('configureButton' + portIndex).style.display = 'none';
                       return;
                     }
 
                     // TODO Internet Explore doesn't support select element .value
-                    var scriptName = document.getElementById("portScriptDrop" + portIndex).value;
+                    var scriptName = document.getElementById('portScriptDrop' + portIndex).value;
 
                     // Populate the defaults
                     now.GetScript(scriptName, function(script)
@@ -894,11 +894,11 @@ script
                         
                         if (optionCount === 0)
                         {
-                            document.getElementById("configureButton" + portIndex).style.display = "none";
+                            document.getElementById('configureButton' + portIndex).style.display = 'none';
                         }
                         else
                         {
-                            document.getElementById("configureButton" + portIndex).style.display = "block";
+                            document.getElementById('configureButton' + portIndex).style.display = 'block';
 
                         }
                     });
@@ -920,53 +920,53 @@ script
                         {
                                 if (pfile == undefined)
                                 {
-                                        alert("ERROR: Unable to fetch the requested profile information.");
-                                        window.location="/honeydConfigManage?tab=settingsProfiles";
+                                        alert('ERROR: Unable to fetch the requested profile information.');
+                                        window.location='/honeydConfigManage?tab=settingsProfiles';
                                         return;
                                 }
 
                                 profile = pfile;
                                 origProfile = pfile;
 
-                                if (newProfile == "true") 
+                                if (newProfile == 'true') 
                                 {
-                                        dojo.byId("name").value = "New Profile";
-                                        dojo.byId("parentName").value = "#{parentName}";
-                                        dojo.byId("inheritPersonality").checked = true;
-                                        dojo.byId("inheritDropRate").checked = true; 
-                                        dojo.byId("inheritUptime").checked = true; 
+                                        dojo.byId('name').value = 'New Profile';
+                                        dojo.byId('parentName').value = '#{parentName}';
+                                        dojo.byId('inheritPersonality').checked = true;
+                                        dojo.byId('inheritDropRate').checked = true; 
+                                        dojo.byId('inheritUptime').checked = true; 
 
                                         // We don't want copies of the port sets (or do we?)
                                         profile.portSets = [];
                                 } 
                                 else 
                                 {
-                                        dojo.byId("name").value = profile.name;
-                                        if(profile.name == "default")
+                                        dojo.byId('name').value = profile.name;
+                                        if(profile.name == 'default')
                                         {
-                                          dojo.byId("row1").style.display = 'none';
+                                          dojo.byId('row1').style.display = 'none';
                                         }
                                         else
                                         {
-                                          dojo.byId("parentName").value = profile.parentProfile;
+                                          dojo.byId('parentName').value = profile.parentProfile;
                                         }
-                                        dojo.byId("inheritPersonality").checked = profile.isPersonalityInherited;
-                                        dojo.byId("inheritDropRate").checked = profile.isDropRateInherited;
-                                        dojo.byId("inheritUptime").checked = profile.isUptimeInherited;
+                                        dojo.byId('inheritPersonality').checked = profile.isPersonalityInherited;
+                                        dojo.byId('inheritDropRate').checked = profile.isDropRateInherited;
+                                        dojo.byId('inheritUptime').checked = profile.isUptimeInherited;
                                 }
 
-                                dojo.byId("personality").value = profile.personality;
-                                dojo.byId("uptimeMin").value = profile.uptimeMin;
-                                dojo.byId("uptimeMax").value = profile.uptimeMax;
+                                dojo.byId('personality').value = profile.personality;
+                                dojo.byId('uptimeMin').value = profile.uptimeMin;
+                                dojo.byId('uptimeMax').value = profile.uptimeMax;
 
                                 if (profile.uptimeMin != profile.uptimeMax)
                                 {
-                                        dojo.byId("uptimeType").selectedIndex = 1;
+                                        dojo.byId('uptimeType').selectedIndex = 1;
                                         uptimeTypeChanged();
                                 }
 
 
-                                dojo.byId("dropRate").value = profile.dropRate;
+                                dojo.byId('dropRate').value = profile.dropRate;
 
                                 // Populate the port set options
                                 updatePortSetLists();
@@ -979,8 +979,8 @@ script
 
                         } catch(err)
                         {
-                            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-                            console.log("err was: " + err);
+                            alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
+                            console.log('err was: ' + err);
                         }  
                 });
         });

@@ -17,9 +17,9 @@
 extends layout
 
 block headerAdditions
-  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
-  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
-  style(type="text/css")
+  link(rel='stylesheet', type='text/css', href='novagrid.css', media='screen')
+  link(rel='stylesheet', type='text/css', href='configstyle.css', media='screen')
+  style(type='text/css')
     a.selectedProfile, a.unselectedProfile {
         display: block;
         font-size: 12px;
@@ -126,8 +126,8 @@ block headerAdditions
         background-color: #AFD9FF;
     }
     
-  script(type="text/javascript", src="scripts/NovaGrid.js")
-  script(type="text/javascript", src="scripts/NovaPiChart.js")
+  script(type='text/javascript', src='scripts/NovaGrid.js')
+  script(type='text/javascript', src='scripts/NovaPiChart.js')
   script
     var grid;
     var interfaces = !{JSON.stringify(INTERFACES)};
@@ -137,21 +137,18 @@ block headerAdditions
     var theDoc = document;
     var profilesArray = {};
     var saveProfileObjs = {};
-    var currentConfig = "#{current}";
+    var currentConfig = '#{current}';
     var lightboxProfile;
     var getSummaryOrNot = true;
 
     function closeLightbox()
     {
-      enableBackground(theDoc.getElementById('setup'));
+      enableBackground($('#setup')[0]);
       
-      theDoc.getElementById('lightbox').style.display = 'none';
-      theDoc.getElementById('setup').style.opacity = '1.0';
+      $('#lightbox').css('display', 'none');
+      $('#setup').css('opacity', '1.0');
       
-      while(theDoc.getElementById('cloneMe').hasChildNodes())
-      {
-        theDoc.getElementById('cloneMe').removeChild(theDoc.getElementById('cloneMe').lastChild);
-      }
+      $('#cloneMe').empty();
       
       rmLb = false;
     }
@@ -171,7 +168,7 @@ block headerAdditions
     
     function UnsetHighlighted(element)
     {
-        element.className = "unselectedProfile";
+        element.className = 'unselectedProfile';
     }
     
     function addChildSelectedItem()
@@ -179,15 +176,15 @@ block headerAdditions
       var items = GetSelectedProfiles();
       if (items.length != 1)
       {
-        alert("Invalid Selection: Please select only 1 profile for parenting");
+        alert('Invalid Selection: Please select only 1 profile for parenting');
         return;
       }
-      window.location.href = "addHoneydProfile?parent=" + items[0];
+      window.location.href = 'addHoneydProfile?parent=' + items[0];
     }
 
     function SetHighlighted(element)
     {
-        element.className = "selectedProfile";
+        element.className = 'selectedProfile';
     }
     
     function newConfiguration(configName, cloneInfo)
@@ -206,20 +203,14 @@ block headerAdditions
     
     function onGridRendered()
     {
-       var tablePages = document.getElementById("tablePages");
-       tablePages.innerHTML = "";
+       var tablePages = $('#tablePages')[0];
+       tablePages.innerHTML = '';
        grid.populateTablePages(tablePages);   
     }
     
     function populateConfigSelect(configs)
     {
-      if(theDoc.getElementById('configurations').hasChildNodes())
-      {
-        while(theDoc.getElementById('configurations').hasChildNodes())
-        {
-          theDoc.getElementById('configurations').removeChild(theDoc.getElementById('configurations').lastChild);
-        }
-      }
+      $('#configurations').empty();
       
       if(configs == undefined || configs == '')
       {
@@ -229,7 +220,7 @@ block headerAdditions
         option.value = 'None';
         option.innerHTML = 'None';
         option.id = 'None';
-        theDoc.getElementById('configurations').appendChild(option);
+        $('#configurations').append(option);
       }
       else
       {
@@ -249,7 +240,7 @@ block headerAdditions
             option.value = configs[i];
             option.innerHTML = configs[i];
             option.id = configs[i];
-            theDoc.getElementById('configurations').appendChild(option);
+            $('#configurations').append(option);
           }
         }
         
@@ -263,30 +254,21 @@ block headerAdditions
       var config;
       profilesArray = {};
       
-      while(theDoc.getElementById('appendHook').hasChildNodes())
-      {
-        theDoc.getElementById('appendHook').removeChild(theDoc.getElementById('appendHook').lastChild);
-      }
-      while(theDoc.getElementById('treeDiv').hasChildNodes())
-      {
-        theDoc.getElementById('treeDiv').removeChild(theDoc.getElementById('treeDiv').lastChild);
-      }
-      while(theDoc.getElementById('piChart').hasChildNodes())
-      {
-        theDoc.getElementById('piChart').removeChild(theDoc.getElementById('piChart').lastChild);
-      }
+      $('#appendHook').empty();
+      $('#treeDiv').empty();
+      $('#piChart').empty();
       
       var label = theDoc.createElement('label');
       label.innerHTML = 'Loading...';
-      theDoc.getElementById('treeDiv').appendChild(label);
+      $('#treeDiv').append(label);
       
       var label1 = theDoc.createElement('label');
       label1.innerHTML = 'Loading...';
-      theDoc.getElementById('piChart').appendChild(label1);
+      $('#piChart').append(label1);
       
       if(configArg == undefined)
       {
-        var element = theDoc.getElementById('configurations');
+        var element = $('#configurations')[0];
         config = element.options[element.selectedIndex].value;
       }
       else
@@ -329,7 +311,7 @@ block headerAdditions
             td1.appendChild(profilesPorts);
             tr.appendChild(td0);
             tr.appendChild(td1);
-            theDoc.getElementById('appendHook').appendChild(tr);
+            $('#appendHook').append(tr);
           }
           
           if(scriptProfileBindings.length == 0)
@@ -345,7 +327,7 @@ block headerAdditions
             td1.appendChild(label1);
             tr.appendChild(td0);
             tr.appendChild(td1);
-            theDoc.getElementById('appendHook').appendChild(tr);
+            $('#appendHook').append(tr);
           }
           
           for(var i in profileObj)
@@ -370,12 +352,7 @@ block headerAdditions
             }
           }
           
-          var treeDiv = theDoc.getElementById('treeDiv');
-          
-          while(treeDiv.hasChildNodes())
-          {
-            treeDiv.removeChild(treeDiv.lastChild);
-          }
+          $('#treeDiv').empty();
           
           var drawNode = function(profile, parentDOMNode){
             var li = theDoc.createElement('li');
@@ -401,22 +378,14 @@ block headerAdditions
             }
           }
           
-          drawNode("default", treeDiv);
+          drawNode('default', $('#treeDiv')[0]);
           
           var nodesPerProfile = {};
           var piChartRender = [];
           var piChartRender2 = [];
           
-          while(theDoc.getElementById('piChart').hasChildNodes())
-          {
-            theDoc.getElementById('piChart').removeChild(theDoc.getElementById('piChart').lastChild);
-          }
-          
-          while(theDoc.getElementById('piChart2').hasChildNodes())
-          {
-            theDoc.getElementById('piChart2').removeChild(theDoc.getElementById('piChart2').lastChild);
-          }
-         
+          $('#piChart').empty();
+          $('#piChart2').empty();
 
           var nodesPerInterface = {};
 
@@ -457,10 +426,10 @@ block headerAdditions
             piChartRender2.push(p);
           }
           
-           var pi = new NovaPiChart('piChart', "Nodes by Profile", 200, 'deleteByProfile');
+           var pi = new NovaPiChart('piChart', 'Nodes by Profile', 200, 'deleteByProfile');
            pi.Render(piChartRender);
            
-           var pi2 = new NovaPiChart('piChart2', "Nodes by Interface", 200, 'deleteByInterface');
+           var pi2 = new NovaPiChart('piChart2', 'Nodes by Interface', 200, 'deleteByInterface');
            pi2.Render(piChartRender2);
 
            LoadNodeGrid();
@@ -478,24 +447,24 @@ block headerAdditions
     
     function showLightBox(divIndex)
     {
-      disableBackground(theDoc.getElementById('setup'));
+      disableBackground($('#setup')[0]);
       
-      theDoc.getElementById('setup').style.opacity = '0.5';
-      theDoc.getElementById('lightbox').style.display = 'block';
+      $('#setup').css('opacity', '0.5');
+      $('#lightbox').css('display', 'block');
       
       if(divIndex == '0')
       {
-        theDoc.getElementById('addConfigForm').style.display = 'block';
-        theDoc.getElementById('newName').value = '';
-        theDoc.getElementById('cloneConfigForm').style.display = 'none';
-        theDoc.getElementById('profileInfo').style.display = 'none';
+        $('#addConfigForm').css('display', 'block');
+        $('#newName').attr('value', '');
+        $('#cloneConfigForm').css('display', 'none');
+        $('#profileInfo').css('display', 'none');
       }
       else if(divIndex == '1')
       {
-        theDoc.getElementById('addConfigForm').style.display = 'none';
-        theDoc.getElementById('cloneConfigForm').style.display = 'block';
-        theDoc.getElementById('newNameClone').value = '';
-        theDoc.getElementById('profileInfo').style.display = 'none';
+        $('#addConfigForm').css('display', 'none');
+        $('#cloneConfigForm').css('display', 'block');
+        $('#newNameClone').attr('value', '');
+        $('#profileInfo').css('display', 'none');
         
         for(var i in configurationList)
         {
@@ -506,17 +475,17 @@ block headerAdditions
             option.value = configurationList[i];
             option.innerHTML = configurationList[i];
             option.id = configurationList[i];
-            theDoc.getElementById('cloneMe').appendChild(option);
+            $('#cloneMe').append(option);
           }
         }
       }
       else if(divIndex == '2')
       {
-        theDoc.getElementById('addConfigForm').style.display = 'none';
-        theDoc.getElementById('cloneConfigForm').style.display = 'none';
-        theDoc.getElementById('newNameClone').value = '';
-        theDoc.getElementById('newName').value = '';
-        theDoc.getElementById('profileInfo').style.display = 'block';
+        $('#addConfigForm').css('display', 'none');
+        $('#cloneConfigForm').css('display', 'none');
+        $('#newNameClone').attr('value', '');
+        $('#newName').attr('value', '');
+        $('#profileInfo').css('display', 'block');
       }
       else
       {
@@ -540,12 +509,12 @@ block headerAdditions
     
     function checkParametersAdd()
     {
-      if(theDoc.getElementById('newName').value == '')
+      if($('#newName').attr('value') == '')
       {
         alert('Must give a new name for New Haystacks');
         return false;
       }
-      else if(checkExistingName(theDoc.getElementById('newName').value) == true)
+      else if(checkExistingName($('#newName').attr('value')) == true)
       {
         alert('Cannot add cloned configuration that has the same name as a present configuration');
         return false;
@@ -558,12 +527,12 @@ block headerAdditions
     
     function checkParametersClone()
     { 
-      if(theDoc.getElementById('newNameClone').value == '')
+      if($('#newNameClone').attr('value').value == '')
       {
         alert('Must give a new name for Cloned Haystacks');
         return false;
       }
-      else if(checkExistingName(theDoc.getElementById('newNameClone').value) == true)
+      else if(checkExistingName($('#newNameClone').attr('value').value) == true)
       {
         alert('Cannot add cloned configuration that has the same name as a present configuration');
         return false;
@@ -588,8 +557,8 @@ block headerAdditions
         if(typeof now.RemoveConfiguration == 'function')
         {
           now.RemoveConfiguration(configToRemove, function(name){
-            theDoc.getElementById('default').selected = true;
-            theDoc.getElementById('configurations').removeChild(theDoc.getElementById(name));
+            $('#default').attr('selected', true);
+            $('#' + name).remove();
             
             for(var i in configurationList)
             {
@@ -655,13 +624,13 @@ block headerAdditions
     
     function getConfig()
     {
-      return document.getElementById('configurations').value;
+      return $('#configurations').val();
     }
     
     function confirmHaystackRestart()
     {
       now.IsHaystackUp(function(status){
-        if(status == true && confirm("Restart the Haystack with current configuration " + getConfig() + "?"))
+        if(status == true && confirm('Restart the Haystack with current configuration ' + getConfig() + '?'))
         {
           now.WriteHoneydConfig(function(){
             now.RestartHaystack();
@@ -678,7 +647,7 @@ block headerAdditions
     {
       if(typeof now.SwitchConfigurationTo == 'function')
       {
-        var configSelect = document.getElementById('configurations');
+        var configSelect = $('#configurations')[0];
         var config = configSelect.options[configSelect.selectedIndex].value;
         now.SwitchConfigurationTo(config);
       }
@@ -731,7 +700,7 @@ block headerAdditions
       {
         closeLightbox();
       }
-      else if(document.getElementById('lightbox').style.display == 'block')
+      else if($('#lightbox').css('display') == 'block')
       {
         rmLb = true;
       }
@@ -765,7 +734,7 @@ block headerAdditions
       tr0.appendChild(td0);
       tr0.appendChild(td1);
       tr0.appendChild(td2);
-      theDoc.getElementById('portsetHook').appendChild(tr0);
+      $('#portsetHook').append(tr0);
       
       var tr1 = theDoc.createElement('tr');
       var td3 = theDoc.createElement('td');
@@ -777,7 +746,7 @@ block headerAdditions
       tr1.appendChild(td3);
       tr1.appendChild(td4);
       tr1.appendChild(td5);
-      theDoc.getElementById('portsetHook').appendChild(tr1);
+      $('#portsetHook').append(tr1);
       
       var tr2 = theDoc.createElement('tr');
       var td6 = theDoc.createElement('td');
@@ -789,7 +758,7 @@ block headerAdditions
       tr2.appendChild(td6);
       tr2.appendChild(td7);
       tr2.appendChild(td8);
-      theDoc.getElementById('portsetHook').appendChild(tr2);
+      $('#portsetHook').append(tr2);
     }
     
     function generateExceptionRow(num, proto, behav)
@@ -804,16 +773,13 @@ block headerAdditions
       tr0.appendChild(td0);
       tr0.appendChild(td1);
       tr0.appendChild(td2);
-      theDoc.getElementById('portsetHook').appendChild(tr0);
+      $('#portsetHook').append(tr0);
     }
     
     function redoGrid()
     {
-      while(theDoc.getElementById('portsetHook').hasChildNodes())
-      {
-        theDoc.getElementById('portsetHook').removeChild(theDoc.getElementById('portsetHook').lastChild);
-      }
-      var desired = theDoc.getElementById('portsetSelect').options[theDoc.getElementById('portsetSelect').selectedIndex].value;
+      $('#portsetHook').empty();
+      var desired = $('#portsetSelect')[0].options[$('#portsetSelect')[0].selectedIndex].value;
       now.GetPortSets(lightboxProfile, function(portset){
         for(var i in portset)
         {
@@ -833,7 +799,7 @@ block headerAdditions
     {
       if (haystackUp)
       {
-        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
+        var restartHaystack = confirm('You must restart the haystack for this to take effect. Restart it now?');
         if (restartHaystack)
         {
           now.RestartHaystack();
@@ -846,7 +812,7 @@ block headerAdditions
     {
       if(success != true)
       {
-        alert("Unable to complete operation due to error: " + message);
+        alert('Unable to complete operation due to error: ' + message);
         location.reload(true);
         return;
       }
@@ -868,8 +834,8 @@ block headerAdditions
       }
       catch(err)
       {
-        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-        console.log("err was: " + err);
+        alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
+        console.log('err was: ' + err);
       }
     }
     
@@ -888,8 +854,8 @@ block headerAdditions
       }
       catch(err)
       {
-        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-        console.log("err was: " + err);
+        alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
+        console.log('err was: ' + err);
       }   
       grid.Render();
     }
@@ -912,8 +878,8 @@ block headerAdditions
       }
       catch(err)
       {
-        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-        console.log("err was: " + err);
+        alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
+        console.log('err was: ' + err);
       }
     }
     
@@ -935,8 +901,8 @@ block headerAdditions
       }
       catch(err)
       {
-        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-        console.log("err was: " + err);
+        alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
+        console.log('err was: ' + err);
       }
     }
     
@@ -988,7 +954,7 @@ block headerAdditions
             if (grid.GetElements()[i].addressSet)
             {
                 var oldRow = grid.m_elements[i];
-                oldRow[1] = "DHCP";
+                oldRow[1] = 'DHCP';
                 oldRow.addressSet = false;
                 grid.PushEntry(oldRow);
                 grid.Render();
@@ -1002,7 +968,7 @@ block headerAdditions
             if (grid.GetElements()[mac] !== undefined)
             {
                 var oldRow = grid.m_elements[mac];
-                oldRow[1] = "DHCP (currently " + dhcpNodes[i].ip + ")";
+                oldRow[1] = 'DHCP (currently ' + dhcpNodes[i].ip + ')';
                 oldRow.addressSet = true;
                 grid.PushEntry(oldRow);
                 grid.Render();
@@ -1018,7 +984,7 @@ block headerAdditions
         button.setAttribute('onclick', 'changeSelectedInterfaces()');
         button.setAttribute('class', 'button');
         button.innerHTML = '<img src="images/edit.png" class="buttonIcon"/><span class="buttonSpan">Change Node Interfaces</span>';
-        document.getElementById('generateHook').appendChild(button);
+        $('#generateHook').append(button);
       }
     }
     
@@ -1027,10 +993,10 @@ block headerAdditions
       var items = GetSelectedProfiles();
       if (items.length != 1)
       {
-        alert("Invalid Selection: Please select only 1 profile for editing");
+        alert('Invalid Selection: Please select only 1 profile for editing');
         return;
       }
-      window.location.href = "editHoneydProfile?profile=" + items[0];
+      window.location.href = 'editHoneydProfile?profile=' + items[0];
     }
     function deleteSelectedProfileItems()
     {
@@ -1042,8 +1008,8 @@ block headerAdditions
       }
       catch(err)
       {
-        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-        console.log("err was: " + err);
+        alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
+        console.log('err was: ' + err);
       }
     }
     
@@ -1058,22 +1024,22 @@ block headerAdditions
 
       var nodeName = items[0];
 
-      if (nodeName == "Doppelganger") 
+      if (nodeName == 'Doppelganger') 
       {
         alert('The Doppelganger node can not be edited here');
         return; 
       }
-      window.location.href = "editHoneydNode?node=" + nodeName;
+      window.location.href = 'editHoneydNode?node=' + nodeName;
     }
 
     function LoadNodeGrid()
     {
         var gridStructure = [];
-        gridStructure.push({name: "Enabled"});
-        gridStructure.push({name: "IP"});
-        gridStructure.push({name: "Interface"});
-        gridStructure.push({name: "MAC"});
-        gridStructure.push({name: "Profile"});
+        gridStructure.push({name: 'Enabled'});
+        gridStructure.push({name: 'IP'});
+        gridStructure.push({name: 'Interface'});
+        gridStructure.push({name: 'MAC'});
+        gridStructure.push({name: 'Profile'});
         
         grid = new NovaGrid(gridStructure, 3, document.getElementById('nodeTable'), 'grid', true);
         
@@ -1086,16 +1052,16 @@ block headerAdditions
            var row = [];
            row.push(String(nodeList[i].enabled));
            
-           if(nodeList[i].ip != "DHCP") 
+           if(nodeList[i].ip != 'DHCP') 
            {
              row.push(String(nodeList[i].ip));
            } 
            else 
            {
-             row.push("DHCP");
+             row.push('DHCP');
            }
            
-           var alias = "";
+           var alias = '';
            for(var j = 0; j < interfaces.length; j++) 
            {
              if(interfaces[j] == nodeList[i].interface) 
@@ -1133,25 +1099,25 @@ block headerAdditions
         checkForEditInterface();
       });
 
-      showTab("#{tab}");
+      showTab('#{tab}');
     };
 
     function showTab(tab) {
         var tabNames = [];
-        tabNames.push("settingsGroups");
-        tabNames.push("settingsProfiles");
-        tabNames.push("settingsNodes");
-        tabNames.push("settingsScripts");
+        tabNames.push('settingsGroups');
+        tabNames.push('settingsProfiles');
+        tabNames.push('settingsNodes');
+        tabNames.push('settingsScripts');
 
         for (var i = 0; i < tabNames.length; i++) {
-            document.getElementById(tabNames[i]).style.display = "none";
-            document.getElementById("b" + tabNames[i]).className = "unselectedTab";
+            $('#' + tabNames[i]).css('display', 'none');
+            $('#b' + tabNames[i])[0].className = 'unselectedTab';
         }
         
-        window.history.replaceState("", "", "/honeydConfigManage?tab=" + tab);
+        window.history.replaceState('', '', '/honeydConfigManage?tab=' + tab);
 
-        document.getElementById(tab).style.display = "block";
-        document.getElementById("b" + tab).className = "selectedTab";
+        $('#' + tab).css('display', 'block');
+        $('#b' + tab)[0].className = 'selectedTab';
     }
   
 block content
@@ -1165,14 +1131,14 @@ block content
     div.tabDiv#settingsGroups
       h1 Edit Haystacks
       button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch')
-        img.buttonIcon(src="images/add.png") 
+        img.buttonIcon(src='images/add.png') 
         span.buttonSpan Add Haystack
       button#cloneConfig(onclick='showLightBox("1")', title='Create a new configuration group by cloning an existing configuration')
-        img.buttonIcon(src="images/add.png") 
+        img.buttonIcon(src='images/add.png') 
         span.buttonSpan Clone Haystack
       
-      button(onclick="window.location='/autoConfig'", title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') 
-        img.buttonIcon(src="images/details.png")
+      button(onclick='window.location="/autoConfig"', title='Run the haystack autoconfiguration tool to create honeypots that mimic an existing network') 
+        img.buttonIcon(src='images/details.png')
         span.buttonSpan Create Haystack From Network Scan
       
       br
@@ -1180,17 +1146,17 @@ block content
       h2 Current Haystack
       select#configurations(onchange='GetConfigurationSummary()')
       button#removeConfig(onclick='removeConfig()', title='Delete the currently selected group')
-        img.buttonIcon(src="images/delete.png") 
+        img.buttonIcon(src='images/delete.png') 
         span.buttonSpan Delete Haystack
       br
       br
       br
-      div#piChart(style="display: inline-block; margin: 10px")
-      div#piChart2(style="display: inline-block; margin: 10px; float: left")
+      div#piChart(style='display: inline-block; margin: 10px')
+      div#piChart2(style='display: inline-block; margin: 10px; float: left')
       br
 
 
-    div.tabDiv#settingsProfiles(style="display: none;")
+    div.tabDiv#settingsProfiles(style='display: none;')
       h1 Profiles
 
       div#treeDiv
@@ -1198,19 +1164,19 @@ block content
       br
      
 
-      button(onClick="deleteSelectedProfileItems()")
-        img.buttonIcon(src="images/delete.png")
+      button(onClick='deleteSelectedProfileItems()')
+        img.buttonIcon(src='images/delete.png')
         span.buttonSpan Delete Selected Profiles 
       
-      button(onClick="editSelectedProfileItem()")
-        img.buttonIcon(src="images/edit.png")
+      button(onClick='editSelectedProfileItem()')
+        img.buttonIcon(src='images/edit.png')
         span.buttonSpan Edit Selected Profile
       
-      button(onClick="addChildSelectedItem()") 
-        img.buttonIcon(src="images/add.png")
+      button(onClick='addChildSelectedItem()') 
+        img.buttonIcon(src='images/add.png')
         span.buttonSpan Add Child Profile
     
-    div.tabDiv#settingsNodes(style="display: none;")
+    div.tabDiv#settingsNodes(style='display: none;')
       h1 Current Node Configuration
       div#node_header
         br
@@ -1222,34 +1188,34 @@ block content
       br
       
       
-      button.button(onclick="window.location = '/configHoneydNodes'")
-        img.buttonIcon(src="images/add.png")
+      button.button(onclick='window.location = "/configHoneydNodes"')
+        img.buttonIcon(src='images/add.png')
         span.buttonSpan Add New Nodes
       
-      button.button(onclick="editSelectedItem()")
-        img.buttonIcon(src="images/edit.png")
+      button.button(onclick='editSelectedItem()')
+        img.buttonIcon(src='images/edit.png')
         span.buttonSpan Edit Selected Node
 
-      button.button(onclick="deleteSelectedItems()") 
-        img.buttonIcon(src="images/delete.png")
+      button.button(onclick='deleteSelectedItems()') 
+        img.buttonIcon(src='images/delete.png')
         span.buttonSpan Delete Selected Nodes
 
 
       br
       br
       
-      button.button(onclick="window.location = '/nodeState.csv'")
-        img.buttonIcon(src="images/save.png")
+      button.button(onclick='window.location="/nodeState.csv"')
+        img.buttonIcon(src='images/save.png')
         span.buttonSpan Save as CSV
       br
       
-      button.button(onclick="window.location='/editHoneydNode?node=doppelganger'")
-        img.buttonIcon(src="images/edit.png")
+      button.button(onclick='window.location="/editHoneydNode?node=doppelganger"')
+        img.buttonIcon(src='images/edit.png')
         span Edit Doppelganger
 
       br
-      button.button(onclick="deleteAllNodes()")
-        img.buttonIcon(src="images/delete.png")
+      button.button(onclick='deleteAllNodes()')
+        img.buttonIcon(src='images/delete.png')
         span.buttonSpan Delete All Nodes
       br
       
@@ -1258,10 +1224,10 @@ block content
 
       br
 
-    div.tabDiv#settingsScripts(style="display: none;")
+    div.tabDiv#settingsScripts(style='display: none;')
       h1 Current Script Usage
-      button(onclick="window.location='/scripts'")
-        img.buttonIcon(src="images/edit.png") 
+      button(onclick='window.location="/scripts"')
+        img.buttonIcon(src='images/edit.png') 
         span.buttonSpan Edit Scripts
       br
       br
@@ -1313,9 +1279,9 @@ block content
       select#portsetSelect(onchange='redoGrid()', style='width: 200px')
       br
       br
-      div#tablePages(style="width: 100%; display: block;")
+      div#tablePages(style='width: 100%; display: block;')
       br
-      div(style="width:100%; height: 200px; overflow-y: scroll;")
+      div(style='width:100%; height: 200px; overflow-y: scroll;')
         table(border='1')
           thead
             tr
@@ -1325,7 +1291,7 @@ block content
           tbody#portsetHook
       br
     button#closeLB(onclick='closeLightbox()')
-      img.buttonIcon(src="images/cancel.png")
+      img.buttonIcon(src='images/cancel.png')
       span.buttonSpan Cancel
 
 

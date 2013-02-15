@@ -20,17 +20,19 @@ block headerAdditions
   script
     var scriptList = !{JSON.stringify(scripts)};
     var scriptBindings = !{JSON.stringify(bindings)};
+
     var theDoc = document;
 
     function closeLightbox()
     {
       enableBackground();
       
-      theDoc.getElementById('lightbox').style.display = 'none';
-      theDoc.getElementById('setup').style.opacity = '1.0'; 
-      while(theDoc.getElementById('appendHook').hasChildNodes())
+      $('#lightbox').css('display', 'none');
+      $('#setup').css('opacity', '1.0'); 
+      
+      while($('#appendHook')[0].hasChildNodes())
       {
-        theDoc.getElementById('appendHook').removeChild(theDoc.getElementById('appendHook').lastChild); 
+        $('#appendHook').children('appendHook:last-child').remove(); 
       }
       
       rmLb = false;
@@ -42,7 +44,7 @@ block headerAdditions
     {
       var evt = (e ? e : window.event);
       var source = evt.target || evt.srcElement;
-      var loc = document.location.href;
+      var loc = theDoc.location.href;
       if(loc.indexOf('/suspects') != -1)
       {
         removeContextMenu(); 
@@ -51,7 +53,7 @@ block headerAdditions
       {
         closeLightbox();
       }
-      else if(document.getElementById('lightbox').style.display == 'block')
+      else if($('#lightbox').css('display') == 'block')
       {
         rmLb = true;
       }
@@ -140,9 +142,9 @@ block headerAdditions
     function addScriptOptionValue()
     {
         // TODO Internet Explore Support
-        var key = document.getElementById("optionKeys").value;
-        var value = document.getElementById("newOptionName").value;
-        document.getElementById("newOptionName").value = "";
+        var key = $('#optionKeys').attr('value');
+        var value = $('#newOptionName').attr('value');
+        $('#newOptionName').attr('value', '');
         now.addScriptOptionValue(currentlyEditedScript.GetName, key, value, function() {editOptions(currentlyEditedScript.GetName)});
     }
 
@@ -155,24 +157,24 @@ block headerAdditions
 
     function selectedKeyChanged()
     {
-        document.getElementById("newOptionName").value = "";
-        dojo.empty("optionValues"); 
+        $('#newOptionName').attr('value', '');
+        dojo.empty('optionValues'); 
         // TODO Internet Explore Support
-        var currentKey = document.getElementById("optionKeys").value;
+        var currentKey = $('#optionKeys').attr('value');
         for (var i = 0; i < currentlyEditedScript.GetOptions[currentKey].length; i++)
         {
-           var tr = document.createElement("tr");
+           var tr = theDoc.createElement("tr");
           
-          var td1 = document.createElement("td");
+          var td1 = theDoc.createElement("td");
            tr.appendChild(td1);
            
-           var td2 = document.createElement("td");
+           var td2 = theDoc.createElement("td");
            tr.appendChild(td2);
            
            var value = currentlyEditedScript.GetOptions[currentKey][i];
            td1.innerHTML = value;
          
-           var deleteButton = document.createElement("button");
+           var deleteButton = theDoc.createElement("button");
            deleteButton.innerHTML = "Delete";
            deleteButton.onclick = function()
            {    
@@ -184,7 +186,7 @@ block headerAdditions
            }();
            td2.appendChild(deleteButton);
            
-           document.getElementById("optionValues").appendChild(tr); 
+           $('optionValues').append(tr); 
         }
     }
 
@@ -198,9 +200,9 @@ block headerAdditions
             var count = 0;
             for (var key in script.GetOptions)
             {
-                var option = document.createElement("option");
+                var option = theDoc.createElement("option");
                 option.innerHTML = key;
-                document.getElementById("optionKeys").add(option);
+                $('#optionKeys').append(option);
                 count++;
             }
 
@@ -242,9 +244,9 @@ block headerAdditions
           td1.appendChild(label);
           tr.appendChild(td0);
           tr.appendChild(td1);
-          theDoc.getElementById('appendHook').appendChild(tr);
+          $('#appendHook').append(tr);
         }
-        theDoc.getElementById('changeOnclick').setAttribute('onclick', 'ClearScriptFromProfiles("' + scriptName + '", getProfileExceptions("' + profilesForScript.join() + '"), true)');
+        $('#changeOnclick')[0].setAttribute('onclick', 'ClearScriptFromProfiles("' + scriptName + '", getProfileExceptions("' + profilesForScript.join() + '"), true)');
       }
       else
       {
@@ -320,38 +322,39 @@ block headerAdditions
     {
       disableBackground();
       
-      theDoc.getElementById('setup').style.opacity='0.5';
-      theDoc.getElementById('lightbox').style.display='block';
+      $('#setup').css('opacity', '0.5');
+      $('#lightbox').css('display', 'block');
+      
       if(divIndex == '0')
       {
-        theDoc.getElementById('addScriptForm').style.display='block';
-        theDoc.getElementById('selectClearProfiles').style.display='none';
-        theDoc.getElementById('editScriptForm').style.display='none';
+        $('#addScriptForm').css('display', 'block');
+        $('#selectClearProfiles').css('display', 'none');
+        $('#editScriptForm').css('display', 'none');
       }
       else if(divIndex == '1')
       {
-        theDoc.getElementById('addScriptForm').style.display='none';
-        theDoc.getElementById('selectClearProfiles').style.display='block';
-        theDoc.getElementById('editScriptForm').style.display='none';
+        $('#addScriptForm').css('display', 'none');
+        $('#selectClearProfiles').css('display', 'block');
+        $('#editScriptForm').css('display', 'none');
       }
       else if (divIndex == '2')
       {
-        theDoc.getElementById('addScriptForm').style.display='none';
-        theDoc.getElementById('selectClearProfiles').style.display='none';
-        theDoc.getElementById('editScriptForm').style.display='block';
+        $('#addScriptForm').css('display', 'none');
+        $('#selectClearProfiles').css('display', 'none');
+        $('#editScriptForm').css('display', 'block');
       }
     }
     
     function checkParams(callback)
     {
-      var sName = theDoc.getElementById('scriptFile').value;
+      var sName = $('#scriptFile').attr('value');
       // I'm wondering if we shouldn't enforce some sort of regulation regarding
       // what file extensions people can submit with the file dialog; I can't seem
       // to find any documentation regarding limiting what types of files an input
       // can take to a smaller subset outside of back-end magickry.
-      var sFile = theDoc.getElementById('scriptName').value;
-      var sShell = theDoc.getElementById('scriptShell').value;
-      var sArgs = theDoc.getElementById('scriptArgs').value;
+      var sFile = $('#scriptName').attr('value');
+      var sShell = $('#scriptShell').attr('value');
+      var sArgs = $('#scriptArgs').attr('value');
       
       if(sName == '' || sFile == '' || sName == undefined || sFile == undefined)
       {
@@ -378,20 +381,12 @@ block headerAdditions
    
     function disableBackground()
     {
-      var disableUs = document.getElementById('setup').childNodes;
-      for(var i in disableUs)
-      {
-        disableUs[i].disabled = true;
-      }
+      $('#addAnchor').find('button').attr('disabled', true);
     }
 
     function enableBackground()
     {
-      var enableUs = document.getElementById('setup').childNodes;
-      for(var i in enableUs)
-      {
-        enableUs[i].disabled = false;
-      }
+      $('#addAnchor').find('button').attr('disabled', false);
     }
    
     function init()

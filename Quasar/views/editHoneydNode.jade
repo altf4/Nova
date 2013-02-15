@@ -17,8 +17,8 @@
 extends layout 
 
 block headerAdditions
-  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
-  script(type="text/javascript", src="scripts/portset.js")
+  link(rel='stylesheet', type='text/css', href='configstyle.css', media='screen')
+  script(type='text/javascript', src='scripts/portset.js')
 
   script
     var currentInterface;
@@ -26,13 +26,13 @@ block headerAdditions
 
     function SaveNode()
     {
-        var node = {profile : document.getElementById("profile").value
-            , portSet : document.getElementById("portSetList").value
+        var node = {profile : $('#profile').val()
+            , portSet : $('#portSetList').val()
             , intface : currentInterface
-            , oldName : "#{oldName}"
-            , ipType : document.getElementById("ipType").value
-            , ip : document.getElementById("ip0").value + "." + document.getElementById("ip1").value + "." + document.getElementById("ip2").value + "." + document.getElementById("ip3").value
-            , mac : document.getElementById("mac0").value + ":" + document.getElementById("mac1").value + ":" + document.getElementById("mac2").value + ":" + document.getElementById("mac3").value + ":" + document.getElementById("mac4").value + ":" + document.getElementById("mac5").value
+            , oldName : '#{oldName}'
+            , ipType : $('#ipType').val()
+            , ip : $('#ip0').attr('value') + '.' + $('#ip1').attr('value') + '.' + $('#ip2').attr('value') + '.' + $('#ip3').attr('value')
+            , mac : $('#mac0').attr('value') + ':' + $('#mac1').attr('value') + ':' + $('#mac2').attr('value') + ':' + $('#mac3').attr('value') + ':' + $('#mac4').attr('value') + ':' + $('#mac5').attr('value')
         };
 
         now.SaveHoneydNode(node, saveNodeCallback);
@@ -41,27 +41,27 @@ block headerAdditions
     function populateVendorList(profile)
     {
         pfile = profile;
-        document.getElementById("vendorList").innerHTML = "";
+        $('#vendorList').html('');
         for (var vendor in profile.ethernet)
         {
             var v = profile.ethernet[vendor].vendor;
             var option = document.createElement('option');
             option.innerHTML = v;
-            document.getElementById("vendorList").appendChild(option);
+            $('#vendorList').append(option);
         }
 
-        document.getElementById("portSetList").innerHTML = "";
+        $('#portSetList').html('');
         for (var portset in profile.portSets)
         {
             var v = profile.portSets[portset].setName;
             var option = document.createElement('option');
             option.innerHTML = v;
-            if (v == "#{portSet}")
+            if (v == '#{portSet}')
             {
                 option.selected = true;
             }
 
-            document.getElementById("portSetList").appendChild(option);
+            $('#portSetList').append(option);
         }
         
         portsetSelectionChanged();
@@ -79,7 +79,7 @@ block headerAdditions
       tr0.appendChild(td0);
       tr0.appendChild(td1);
       tr0.appendChild(td2);
-      document.getElementById('portsetHook').appendChild(tr0);
+      $('#portsetHook').append(tr0);
       
       var tr1 = document.createElement('tr');
       var td3 = document.createElement('td');
@@ -91,7 +91,7 @@ block headerAdditions
       tr1.appendChild(td3);
       tr1.appendChild(td4);
       tr1.appendChild(td5);
-      document.getElementById('portsetHook').appendChild(tr1);
+      $('#portsetHook').append(tr1);
       
       var tr2 = document.createElement('tr');
       var td6 = document.createElement('td');
@@ -103,7 +103,7 @@ block headerAdditions
       tr2.appendChild(td6);
       tr2.appendChild(td7);
       tr2.appendChild(td8);
-      document.getElementById('portsetHook').appendChild(tr2);
+      $('#portsetHook').append(tr2);
     }
     
     function generateExceptionRow(num, proto, behav)
@@ -118,17 +118,14 @@ block headerAdditions
       tr0.appendChild(td0);
       tr0.appendChild(td1);
       tr0.appendChild(td2);
-      document.getElementById('portsetHook').appendChild(tr0);
+      $('#portsetHook').append(tr0);
     }
     
     function portsetSelectionChanged()
     {
-      while(document.getElementById('portsetHook').hasChildNodes())
-      {
-        document.getElementById('portsetHook').removeChild(document.getElementById('portsetHook').lastChild);
-      }
-      var desired = document.getElementById('portSetList').options[document.getElementById('portSetList').selectedIndex].value;
-      var lightboxProfile = document.getElementById('profile').options[document.getElementById('profile').selectedIndex].value;
+      $('#portsetHook').empty();
+      var desired = $('#portSetList')[0].options[$('#portSetList')[0].selectedIndex].value;
+      var lightboxProfile = $('#profile')[0].options[$('#profile')[0].selectedIndex].value;
       now.GetPortSets(lightboxProfile, function(portset){
         for(var i in portset)
         {
@@ -146,15 +143,15 @@ block headerAdditions
 
     function profileChanged()
     {
-        now.GetProfile(document.getElementById("profile").value, populateVendorList);
+        now.GetProfile($('#profile').val(), populateVendorList);
     }
 
     function saveNodeCallback(err)
     {
       if(err != null)
       {
-        alert("Unable to complete operation due to error: " + err);
-        window.location = "/honeydConfigManage?tab=settingsNodes";
+        alert('Unable to complete operation due to error: ' + err);
+        window.location = '/honeydConfigManage?tab=settingsNodes';
         return;
       }
      now.IsHaystackUp(checkIfRestartNeeded); 
@@ -164,14 +161,14 @@ block headerAdditions
     {
       if (haystackUp)
       {
-        var restartHaystack = confirm("You must restart the haystack for this to take effect. Restart it now?");
+        var restartHaystack = confirm('You must restart the haystack for this to take effect. Restart it now?');
         if (restartHaystack)
         {
           now.RestartHaystack();
         }
       }
 
-      window.location = "/honeydConfigManage?tab=settingsNodes";
+      window.location = '/honeydConfigManage?tab=settingsNodes';
     }
 
     function ipTypeChanged()
@@ -179,16 +176,18 @@ block headerAdditions
       var ipEditEnabled;
       var macEditEnabled;
 
-      if (document.getElementById("ipType").value == "DHCP")
+      if($('#ipType').val() == 'DHCP')
       {
         ipEditEnabled = true;
-      } else {
+      }
+      else
+      {
         ipEditEnabled = false;
       }
 
       for (var i = 0; i < 4; i++)
       {
-        document.getElementById("ip" + i).disabled = ipEditEnabled;
+        $('#ip' + i).attr('disabled', ipEditEnabled);
       }
      }
     
@@ -199,22 +198,21 @@ block headerAdditions
 
     function GenerateMac()
     {
-        var vendor = document.getElementById("vendorList").value;
-        now.GenerateMACForVendor(vendor, MACAddressCb);
+        now.GenerateMACForVendor($('#vendorList').val(), MACAddressCb);
     }
 
     function MACAddressCb(mac)
     {
         if (mac == null)
         {
-            alert("Unable to get MAC Address");
+            alert('Unable to get MAC Address');
             return;
         }
 
-        var splitMac = mac.split(":");
+        var splitMac = mac.split(':');
         for (var i = 0; i < 6; i++)
         {
-            document.getElementById("mac" + i).value = splitMac[i];
+            $('#mac' + i).attr('value', splitMac[i]);
         }
     }
    
@@ -223,18 +221,18 @@ block headerAdditions
         now.ready( function()
         {
             profileChanged();
-            checkOnlyOne(document.getElementById("if0"));
+            checkOnlyOne($('#if0')[0]);
         });
     }
     
 block content
   br
-  h2 Editing Honeyd Node "#{oldName}"
+  h2 Editing Honeyd Node '#{oldName}'
 
-  input(type="hidden", name="oldName", value="#{oldName}")
+  input(type='hidden', name='oldName', value='#{oldName}')
 
   label Profile
-  select#profile(name="profile", onchange="profileChanged()")
+  select#profile(name='profile', onchange='profileChanged()')
     each p, i in profiles
       if p == profile
         option(SELECTED) #{p}
@@ -244,10 +242,10 @@ block content
   br
   
   label Portset
-  select#portSetList(name="profile", onchange='portsetSelectionChanged()')
+  select#portSetList(name='profile', onchange='portsetSelectionChanged()')
   br
   br
-  div(style="height: 200px; overflow-y: scroll; border: 1px solid black; display: inline-block;")
+  div(style='height: 200px; overflow-y: scroll; border: 1px solid black; display: inline-block;')
     table(border='1')
       thead
         th(style='background-color: #d0e9fc;') Port Number
@@ -265,25 +263,25 @@ block content
     - if(INTERFACES.length == 1)
       tr 
         td
-          input(type="radio", value=INTERFACES[0], id="if0", name="interface", width=10, checked, onchange="checkOnlyOne(if0)")
+          input(type='radio', value=INTERFACES[0], id='if0', name='interface', width=10, checked, onchange='checkOnlyOne(if0)')
           #{interfaceAliases[0]}
     - else
       - for (var i = 0; i < INTERFACES.length; i++)
           tr 
             td
               - if (String(interface) == String(INTERFACES[i]))
-                input(type="radio", value=INTERFACES[i], id="if#{i}", name="interface", checked, width=10, onchange="checkOnlyOne(if#{i})")
+                input(type='radio', value=INTERFACES[i], id='if#{i}', name='interface', checked, width=10, onchange='checkOnlyOne(if#{i})')
                 #{interfaceAliases[i]}
               - else
-                input(type="radio", value=INTERFACES[i], id="if#{i}", name="interface", width=10, onchange="checkOnlyOne(if#{i})")
+                input(type='radio', value=INTERFACES[i], id='if#{i}', name='interface', width=10, onchange='checkOnlyOne(if#{i})')
                 #{interfaceAliases[i]}
 
-  hidden(id="length", value=INTERFACES.length)
+  hidden(id='length', value=INTERFACES.length)
  
   br
   br
   label IP Address Allocation Type
-  select#ipType(name="ipType", onChange="ipTypeChanged()")
+  select#ipType(name='ipType', onChange='ipTypeChanged()')
     if ip == 'DHCP'
       option(SELECTED) DHCP
     else
@@ -298,38 +296,38 @@ block content
   label IP address
   - for (var i = 0; i < 4; i++)
     - if (ip == 'DHCP')
-      input.ip(id = "ip" + i,type="number", name="#{"ip" + i}", min="0", max="255", required="true", value="1", disabled="disabled")
+      input.ip(id = 'ip' + i,type='number', name='#{"ip" + i}', min='0', max='255', required='true', value='1', disabled='disabled')
     - else
-      input.ip(id = "ip" + i,type="number", name="#{"ip" + i}", min="0", max="255", required="true", value="#{ip.split(".")[i]}")
+      input.ip(id = 'ip' + i,type='number', name='#{"ip" + i}', min='0', max='255', required='true', value='#{ip.split(".")[i]}')
   
 
 
   br
   br
   label &nbsp
-  button(onclick="GenerateMac()") 
-    img(class="buttonIcon", src="images/dice.png")
-    span(class="buttonSpan") Generate new MAC
+  button(onclick='GenerateMac()') 
+    img(class='buttonIcon', src='images/dice.png')
+    span(class='buttonSpan') Generate new MAC
   br
   br
   label Ethernet Vendor
-  select#vendorList(name"vendorList")
+  select#vendorList(name'vendorList')
 
   br
   label MAC Address
   - for (var i = 0; i < 6; i++)
     - if (mac == 'RANDOM')
-      input(id = "mac" + i, type="text", name="#{"mac" + i}", pattern="[0-9a-f]{2}", required="true", value="00", disabled="disabled", style="width: 25px")
+      input(id = 'mac' + i, type='text', name='#{"mac" + i}', pattern='[0-9a-f]{2}', required='true', value='00', disabled='disabled', style='width: 25px')
     - else
-      input(id = "mac" + i, type="text", name="#{"mac" + i}", pattern="[0-9a-f]{2}", required="true", value="#{mac.split(":")[i]}", style="width: 25px")
+      input(id = 'mac' + i, type='text', name='#{"mac" + i}', pattern='[0-9a-f]{2}', required='true', value='#{mac.split(":")[i]}', style='width: 25px')
 
 
   br
   br
-  button(onclick="SaveNode();")
-    img.buttonIcon(src="images/ok.png")
+  button(onclick='SaveNode();')
+    img.buttonIcon(src='images/ok.png')
     span.buttonSpan Save Changes
   
-  button(onclick="window.location='/honeydConfigManage?tab=settingsNodes'")
-    img.buttonIcon(src="images/cancel.png")
+  button(onclick='window.location="/honeydConfigManage?tab=settingsNodes"')
+    img.buttonIcon(src='images/cancel.png')
     span.buttonSpan Cancel

@@ -27,9 +27,9 @@ block headerAdditions
 
     var AddNewAlias = function()
     {
-        var ifaceDropdown = document.getElementById("interfaceSelection");
+        var ifaceDropdown = $('#interfaceSelection')[0];
         var iface = ifaceDropdown.options[ifaceDropdown.selectedIndex].value;
-        var alias = document.getElementById("aliasSelection").value;
+        var alias = $('#aliasSelection').attr('value');
 
         now.AddInterfaceAlias(iface, alias, refresh);
     }

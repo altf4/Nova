@@ -30,7 +30,10 @@ block content
     div#logTable
   p#rawLog(style="display: none")= log
   br
-  button#filterOptions(onclick="showFilterOptions()") Show Filter Options
+  button#filterOptions(onclick="showFilterOptions()")
+    img.buttonIcon(src="images/edit.png")
+    span.buttonSpan Filtering Options
+  br
   br
   div#filterDiv(style='display: none; margin-left: 20px;')
     label(style='font-weight: bold;') Checked options will be shown in grid:
@@ -61,7 +64,9 @@ block content
     label EMERGENCY
     br
     br
-    button(onclick='applyLevelFilter()') Apply Filter Options
+    button(onclick='applyLevelFilter()')
+      img.buttonIcon(src="images/benign.png")
+      span.buttonSpan Apply Advanced Filters
     
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
@@ -80,7 +85,7 @@ block headerAdditions
     
     function showAdvancedChanged()
     {
-        if (document.getElementById("showAdvanced").checked)
+        if($('#showAdvanced').is(':checked'))
         {
             logGrid.m_columns[2].isDisabled = false;
             logGrid.m_columns[4].isDisabled = false;
@@ -99,19 +104,19 @@ block headerAdditions
     
     function showFilterOptions()
     {
-      if(document.getElementById('filterDiv').style.display == 'none')
+      if($('#filterDiv').css('display') == 'none')
       {
-        document.getElementById('filterDiv').style.display = 'block';
+        $('#filterDiv').css('display', 'block');
       }
       else
       {
-        document.getElementById('filterDiv').style.display = 'none';
+        $('#filterDiv').css('display', 'none');
       }
     }
     
     function onGridRendered()
     {
-       var tablePages = document.getElementById("tablePages");
+       var tablePages = $("#tablePages")[0];
        tablePages.innerHTML = "";
        logGrid.populateTablePages(tablePages);
     }
@@ -134,9 +139,9 @@ block headerAdditions
       line = line.replace(/ +(?= )/g, '');
       var match = line.match(/(\\S+ \\S+ \\S+) ([^:]+): (\\S+) File (.+) at line (\\d+): (.*)/);
 
-      if (match != null)
+      if(match != null)
       {
-        match.splice(0,1,Number(index));
+        match.splice(0, 1, Number(index));
         index++;
         
         if(isIn(match[3], allowedLevels))
@@ -177,40 +182,40 @@ block headerAdditions
       logGrid.Clear();
       allowedLevels = [];
       
-      if(document.getElementById('debug').checked)
+      if($('#debug').is(':checked'))
       {
         allowedLevels.push('DEBUG');
       }
-      if(document.getElementById('info').checked)
+      if($('#info').is(':checked'))
       {
         allowedLevels.push('INFO');
       }
-      if(document.getElementById('notice').checked)
+      if($('#notice').is(':checked'))
       {
         allowedLevels.push('NOTICE');
       }
-      if(document.getElementById('warning').checked)
+      if($('#warning').is(':checked'))
       {
         allowedLevels.push('WARNING');
       }
-      if(document.getElementById('error').checked)
+      if($('#error').is(':checked'))
       {
         allowedLevels.push('ERROR');
       }
-      if(document.getElementById('critical').checked)
+      if($('#critical').is(':checked'))
       {
         allowedLevels.push('CRITICAL');
       }
-      if(document.getElementById('alert').checked)
+      if($('#alert').is(':checked'))
       {
         allowedLevels.push('ALERT');
       }
-      if(document.getElementById('emergency').checked)
+      if($('#emergency').is(':checked'))
       {
         allowedLevels.push('EMERGENCY');
       }
       
-      var log = document.getElementById("rawLog").innerHTML;
+      var log = $('#rawLog').html();
       var parseLog = log.toString().split(/\\r\\n|\\n\\r|\\n|\\r/);
       
       for(var i in parseLog)
@@ -224,7 +229,7 @@ block headerAdditions
 
     function init()
     {
-        var log = document.getElementById("rawLog").innerHTML;
+        var log = $('#rawLog').html();
         var gridStructure = new Array();
         var gridStructure = new Array();
         gridStructure.push({name: "Message #", isDisabled: false});
@@ -234,7 +239,7 @@ block headerAdditions
         gridStructure.push({name: "File", isDisabled: true});
         gridStructure.push({name: "Line", isDisabled: true});
         gridStructure.push({name: "Message", isDisabled: false});
-        logGrid = new NovaGrid(gridStructure, 0, document.getElementById('logTable'), 'logGrid');
+        logGrid = new NovaGrid(gridStructure, 0, $('#logTable')[0], 'logGrid');
         logGrid.SetRowsPerPage(25);
         logGrid.SetRenderCallback(onGridRendered);
         

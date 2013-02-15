@@ -86,8 +86,6 @@ block headerAdditions
   script(type="text/javascript", src="scripts/NovaGrid.js")
   script
     // Performance boost accessing local var over document lookup
-    var theDoc = document;
-
     var suspectGrid;
     var liveUpdate = true;
 
@@ -112,7 +110,7 @@ block headerAdditions
       {
         closeLightbox();
       }
-      else if(document.getElementById('lightbox').style.display == 'block')
+      else if($('#lightbox').css('display') == 'block')
       {
         rmLb = true;
       }
@@ -136,29 +134,29 @@ block headerAdditions
 
     function isNovadUpChanged(isNovadUp)
     {
-        document.getElementById("nova_suspects_header").style.display = isNovadUp ? "block" : "none";
-        document.getElementById("nova_suspects").style.display = isNovadUp ? "block" : "none";
-        document.getElementById("nova_suspects_error_view").style.display = isNovadUp ? "none" : "block";
+        $("#nova_suspects_header").css('display', (isNovadUp ? "block" : "none"));
+        $("#nova_suspects").css('display', (isNovadUp ? "block" : "none"));
+        $("#nova_suspects_error_view").css('display', (isNovadUp ? "none" : "block"));
     }
 
     var LiveUpdateChanged = function()
     {
-      liveUpdate = document.getElementById("liveGridUpdate").checked;
+      liveUpdate = $("#liveGridUpdate").is(':checked');
       console.log("Toggled live update to " + liveUpdate);
     }
 
     var toggleFilterBlock = function()
     {
-      document.getElementById('setup').style.opacity = '0.5';
-      document.getElementById('lightbox').style.display = 'block';
-      disableBackground(document.getElementById('setup'));
+      $('#setup').css('opacity', '0.5');
+      $('#lightbox').css('display', 'block');
+      disableBackground($('#setup')[0]);
     }
 
     var closeLightbox = function()
     {
-      document.getElementById('lightbox').style.display = 'none';
-      document.getElementById('setup').style.opacity = '1';
-      enableBackground(document.getElementById('setup'));
+      $('#lightbox').css('display', 'none');
+      $('#setup').css('opacity', '1');
+      enableBackground($('#setup')[0]);
       rmLb = false;
     }
 
@@ -249,7 +247,7 @@ block headerAdditions
     }
 
     var OnNewSuspect = function(suspect){
-       if(!document.getElementById("showUnclassified").checked)
+       if(!$('#showUnclassified').is(':checked'))
        {
          if(suspect.GetClassification < 0) {return;}
        }
@@ -317,7 +315,7 @@ block headerAdditions
         {
             var filter = "";
             var id = "advancedFilter" + String(i);
-            var element = theDoc.getElementById(id);
+            var element = $('#' + id)[0];
             if (element != null)
             {
                 filter = element.value;
@@ -346,7 +344,7 @@ block headerAdditions
             }
         }
 
-        var filter = theDoc.getElementById("ipFilter").value;
+        var filter = $('#ipFilter').attr('value');
         if (filter != "")
         {
             try {
@@ -377,7 +375,7 @@ block headerAdditions
 
     var disableAdvancedFilter = function()
     {
-        theDoc.getElementById('lightbox').style.display='none';
+        $('#lightbox').css('display', 'none');
         
         advancedFilterEnabled = false;
         var advancedFilters = new Object();
@@ -387,13 +385,15 @@ block headerAdditions
 
     function showAdvancedChanged()
     {
-        if (document.getElementById("showAdvanced").checked)
+        if($('#showAdvanced').is(':checked'))
         {
             for (var i = 5; i < suspectGrid.m_columns.length; i++)
             {
                 suspectGrid.m_columns[i].isDisabled = false;
             }
-        } else {
+        } 
+        else 
+        {
             for (var i = 5; i < suspectGrid.m_columns.length; i++)
             {
                 suspectGrid.m_columns[i].isDisabled = true;
@@ -433,14 +433,13 @@ block headerAdditions
 
     function onGridRendered()
     {
-       var tablePages = document.getElementById("tablePages");
+       var tablePages = $('#tablePages')[0];
        tablePages.innerHTML = "";
        suspectGrid.populateTablePages(tablePages);   
     }
     
     function Init()
     {
-        theDoc = document;
         var gridStructure = [];
         gridStructure.push({name: "Hostility", isDisabled: false});
         gridStructure.push({name: "Interface", isDisabled: false});
@@ -454,7 +453,7 @@ block headerAdditions
             gridStructure.push({name:featureNames[i], isDisabled: true, formatter: featureFormatter});
         }
    
-        suspectGrid = new NovaGrid(gridStructure, 2, theDoc.getElementById('suspectTable'), 'suspectGrid', false);
+        suspectGrid = new NovaGrid(gridStructure, 2, $('#suspectTable')[0], 'suspectGrid', false);
         
         suspectGrid.SetRightClickEventListener("replacementContextMenu(event);");
     
@@ -476,9 +475,9 @@ block headerAdditions
 
     function replacementContextMenu(e)
     {
-      if(document.getElementById('contextMenu') != undefined)
+      if($('#contextMenu')[0] != undefined)
       {
-        document.getElementById('hook').removeChild(document.getElementById('contextMenu'));
+        $('#contextMenu').remove();
       }
       
       var evt = (e ? e : window.event);

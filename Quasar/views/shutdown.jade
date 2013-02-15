@@ -19,13 +19,13 @@ extends layout
 block content
   script
     function init() {
-        $("#yes").click(shutdown);
+        $('#yes').click(shutdown);
     }
 
     function shutdown() {
       now.shutdownQuasar();
-      $("#check").hide();
-      $("#shuttingdown").show();
+      $('#check').hide();
+      $('#shuttingdown').show();
       
       setTimeout(function()
       {
@@ -36,14 +36,14 @@ block content
   div#check
     p Are you sure you want to shutdown Quasar? It will only be restarted if you're running it under upstart or forever.
     button.button#yes
-      img.buttonIcon(src="images/ok.png")
+      img.buttonIcon(src='images/ok.png')
       spam.buttonSpan Yes
 
-    a.button(href="/advancedOptions")
-      img.buttonIcon(src="images/cancel.png")
+    a.button(href='/advancedOptions')
+      img.buttonIcon(src='images/cancel.png')
       spam.buttonSpan No
   
-  div#shuttingdown(style="display: none")
+  div#shuttingdown(style='display: none')
     p Shutting down Quasar... Please wait.
 
 

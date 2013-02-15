@@ -17,20 +17,20 @@
 extends layout
 
 block headerAdditions
-  link(rel="stylesheet", type="text/css", href="configstyle.css", media="screen")
+  link(rel='stylesheet', type='text/css', href='configstyle.css', media='screen')
 
-  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
-  script(type="text/javascript", src="scripts/NovaGrid.js")
+  link(rel='stylesheet', type='text/css', href='novagrid.css', media='screen')
+  script(type='text/javascript', src='scripts/NovaGrid.js')
   
   script
     var grid;
 
     function init(){
         var columns = new Array();
-        columns.push({name: "Index"});
-        columns.push({name: "Type"});
-        columns.push({name: "Mode"});
-        columns.push({name: "Weight"});
+        columns.push({name: 'Index'});
+        columns.push({name: 'Type'});
+        columns.push({name: 'Mode'});
+        columns.push({name: 'Weight'});
 
         grid = new NovaGrid(columns, 0, classifierTable, 'grid', true);
 
@@ -63,15 +63,15 @@ block headerAdditions
         var selected = grid.GetSelected();
 
         if (selected.length != 1) {
-            alert("You must have 1 and only 1 classifier selected for deletion");
+            alert('You must have 1 and only 1 classifier selected for deletion');
             return;
         }
 
         try {
             now.deleteClassifier(selected[0], refreshCallback);
         } catch (err) {
-            console.log("Error was: " + err);
-            alert("Server is down or not responding to this request");
+            console.log('Error was: ' + err);
+            alert('Server is down or not responding to this request');
         }
     }
 
@@ -79,7 +79,7 @@ block headerAdditions
         var selected = grid.GetSelected();
 
         if (selected.length != 1) {
-            alert("You must have 1 and only 1 classifier selected for editing");
+            alert('You must have 1 and only 1 classifier selected for editing');
             return;
         }
 
@@ -95,15 +95,15 @@ block content
   br
   
   br
-  button.button(onclick='window.location ="/editClassifier"')
-    img.buttonIcon(src="images/add.png");
+  button.button(onclick='window.location ='/editClassifier'')
+    img.buttonIcon(src='images/add.png');
     span.buttonSpan Add Classifier
   
   button.button(onclick='editClassifier()')
-    img.buttonIcon(src="images/edit.png");
+    img.buttonIcon(src='images/edit.png');
     span.buttonSpan Edit Classifiers
 
   button.button(onclick='deleteClassifier()')
-    img.buttonIcon(src="images/delete.png");
+    img.buttonIcon(src='images/delete.png');
     span.buttonSpan Delete Classifiers
 

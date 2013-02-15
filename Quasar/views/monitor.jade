@@ -31,34 +31,34 @@ block content
       td
         b#domain Waiting for reply...
 
-  a(class="button", href="#", onclick="markClassificationAs(1)") Mark as Hostile
-  a(class="button", href="#", onclick="markClassificationAs(0)") Mark as Benign
+  a(class='button', href='#', onclick='markClassificationAs(1)') Mark as Hostile
+  a(class='button', href='#', onclick='markClassificationAs(0)') Mark as Benign
   div
-    div#ProtocolPiChart(style="display: inline-block;float: left; margin: 10px;")
-    div#tcpPiChart(style="display: inline-block; margin: 20px")
-  input#enableGridLines(type="checkbox", onclick="toggleGridLines()")
+    div#ProtocolPiChart(style='display: inline-block;float: left; margin: 10px;')
+    div#tcpPiChart(style='display: inline-block; margin: 20px')
+  input#enableGridLines(type='checkbox', onclick='toggleGridLines()')
   span Enable Graph Point Lines
   br
-  input#enableAutoScale(type="checkbox", onclick="toggleAutoscale()")
+  input#enableAutoScale(type='checkbox', onclick='toggleAutoscale()')
   span Enable Auto Scaling
   br
   
-  div(style="display: inline-block; margin: 8px; float: left")
+  div(style='display: inline-block; margin: 8px; float: left')
     h3 Classification
-    canvas(id = "classificationChart", width="200px", height="200px", style="border: 1px solid black")
-    p(id = "classificationChartP")     
+    canvas(id = 'classificationChart', width='200px', height='200px', style='border: 1px solid black')
+    p(id = 'classificationChartP')     
   - for (var i = 0; i < 14; i++) {
-    div(style="display: inline-block; margin: 8px")
-      h3 #{String(featureNames).split(",")[i]}
-      canvas(id = "chart#{i}", width="200px", height="200px", style="border: 1px solid black")
-      p(id = "p#{i}")     
+    div(style='display: inline-block; margin: 8px')
+      h3 #{String(featureNames).split(',')[i]}
+      canvas(id = 'chart#{i}', width='200px', height='200px', style='border: 1px solid black')
+      p(id = 'p#{i}')     
   -}
 
   br
-  a(href="GetSuspectDetails?ip=#{suspectIp}&interface=#{suspectInterface}") Get Debugging Information
+  a(href='GetSuspectDetails?ip=#{suspectIp}&interface=#{suspectInterface}') Get Debugging Information
    
 block headerAdditions
-  script(type="text/javascript", src="scripts/NovaPiChart.js")
+  script(type='text/javascript', src='scripts/NovaPiChart.js')
   script
     var tcpChart;
     var protocolChart;
@@ -74,33 +74,33 @@ block headerAdditions
     {
         for (var i = 0; i < 14; i++)
         {
-            drawGraph("chart" + i, "p" + i, data, i);
+            drawGraph('chart' + i, 'p' + i, data, i);
         }
     
-        drawGraph("classificationChart", "classificationChartP", classificationData, 0); 
+        drawGraph('classificationChart', 'classificationChartP', classificationData, 0); 
     }
 
     function toggleGridLines()
     {
-        gridLinesEnabled = document.getElementById("enableGridLines").checked;
+        gridLinesEnabled = document.getElementById('enableGridLines').checked;
         redrawGraphs();
     }
 
     function toggleAutoscale()
     {
-        autoscale = document.getElementById("enableAutoScale").checked;
+        autoscale = document.getElementById('enableAutoScale').checked;
         redrawGraphs();
     }
 
     function markClassificationAs(hostility)
     {
-        "use strict";
+        'use strict';
         var hostilityString;
-        if (hostility == "1")
+        if (hostility == '1')
         {
-            hostilityString = "hostile";
+            hostilityString = 'hostile';
         } else {    
-            hostilityString = "benign";
+            hostilityString = 'benign';
         }
 
         if (!confirm("This will train the classifiaction engine to match all suspects looking like this one's current state as " + hostilityString + ". Are you sure you want to do this?"))
@@ -109,7 +109,7 @@ block headerAdditions
         }
         if (lastSuspectObject == null)
         {
-            alert("No data recieved for suspect yet");
+            alert('No data recieved for suspect yet');
             return;
         }
 
@@ -119,8 +119,8 @@ block headerAdditions
            now.addTrainingPoint(lastSuspectObject.GetIpString, lastSuspectObject.GetInterface, features, hostility, addedCb);
         } catch (err)
         {
-            console.log("Error was: " + err);
-            alert("Unable to contact server. Try refreshing the page");
+            console.log('Error was: ' + err);
+            alert('Unable to contact server. Try refreshing the page');
         }
     }
 
@@ -128,9 +128,9 @@ block headerAdditions
     {
         if (err)
         {
-            alert("There was and error adding the new training point: " + err);
+            alert('There was and error adding the new training point: ' + err);
         } else {
-            alert("Added suspect point to training data");
+            alert('Added suspect point to training data');
         }
     }
     
@@ -141,15 +141,15 @@ block headerAdditions
         if (err != null)
         {
             var errorString;
-            if (err.code == "ENOTFOUND")
+            if (err.code == 'ENOTFOUND')
             {
-                errorString = "No domain name found";
+                errorString = 'No domain name found';
             } else {
-                errorString = "Unable to get domain name because of error: " + err.code;
+                errorString = 'Unable to get domain name because of error: ' + err.code;
             }
-            document.getElementById("domain").innerHTML = prefix + errorString + suffix;
+            document.getElementById('domain').innerHTML = prefix + errorString + suffix;
         } else {
-            document.getElementById("domain").innerHTML = prefix + domains + suffix;
+            document.getElementById('domain').innerHTML = prefix + domains + suffix;
         }
     }
 
@@ -162,7 +162,7 @@ block headerAdditions
             OnNewSuspect(suspect);
         }
         
-        if (suspect.GetIpString == "#{suspectIp}" && suspect.GetInterface == "#{suspectInterface}")
+        if (suspect.GetIpString == '#{suspectIp}' && suspect.GetInterface == '#{suspectInterface}')
         {
             lastSuspectObject = suspect;
             data.push(suspect.GetFeatures);
@@ -185,21 +185,21 @@ block headerAdditions
             redrawGraphs();
 
             arr = new Array();
-            arr.push({name: "SYN Packets", value: suspect.GetSynCount});
-            arr.push({name: "RST Packets", value: suspect.GetRstCount});
-            arr.push({name: "ACK Packets", value: suspect.GetAckCount});
-            arr.push({name: "FIN Packets", value: suspect.GetFinCount});
-            arr.push({name: "SYN ACK Packets", value: suspect.GetSynAckCount});
+            arr.push({name: 'SYN Packets', value: suspect.GetSynCount});
+            arr.push({name: 'RST Packets', value: suspect.GetRstCount});
+            arr.push({name: 'ACK Packets', value: suspect.GetAckCount});
+            arr.push({name: 'FIN Packets', value: suspect.GetFinCount});
+            arr.push({name: 'SYN ACK Packets', value: suspect.GetSynAckCount});
             arr = arr.sort(function(a,b) {return b.value - a.value});
             tcpChart.Render(arr);
 
 
 
             arr = new Array();
-            arr.push({name: "TCP Packets", value: suspect.GetTcpPacketCount});
-            arr.push({name: "UDP Packets", value: suspect.GetUdpPacketCount});
-            arr.push({name: "ICMP Packets", value: suspect.GetIcmpPacketCount});
-            arr.push({name: "Other", value: suspect.GetOtherPacketCount});
+            arr.push({name: 'TCP Packets', value: suspect.GetTcpPacketCount});
+            arr.push({name: 'UDP Packets', value: suspect.GetUdpPacketCount});
+            arr.push({name: 'ICMP Packets', value: suspect.GetIcmpPacketCount});
+            arr.push({name: 'Other', value: suspect.GetOtherPacketCount});
             arr = arr.sort(function(a,b) {return b.value - a.value});
             protocolChart.Render(arr);
 
@@ -220,10 +220,10 @@ block headerAdditions
         
         var c = document.getElementById(canvas);
         var p = document.getElementById(pID);
-        var ctx = c.getContext("2d");
+        var ctx = c.getContext('2d');
         ctx.clearRect (0, 0,m_width ,m_height);
        
-        ctx.fillSTyle="#0000FF";
+        ctx.fillSTyle='#0000FF';
 
         var minY;
         var maxY;
@@ -233,15 +233,15 @@ block headerAdditions
             maxY = data[0][index];
         } else {
             // Hard coded fixed scale charts between 0 and 1
-            if (canvas == "classificationChart"
-            || canvas == "chart0"
-            || canvas == "chart1"
-            || canvas == "chart0"
-            || canvas == "chart9"
-            || canvas == "chart10"
-            || canvas == "chart11"
-            || canvas == "chart12"
-            || canvas == "chart13")
+            if (canvas == 'classificationChart'
+            || canvas == 'chart0'
+            || canvas == 'chart1'
+            || canvas == 'chart0'
+            || canvas == 'chart9'
+            || canvas == 'chart10'
+            || canvas == 'chart11'
+            || canvas == 'chart12'
+            || canvas == 'chart13')
             {
                 minY = 0;
                 maxY = 1;
@@ -254,7 +254,7 @@ block headerAdditions
         
         if (data.length == 1)
         {
-            p.innerHTML = "<br> Current: " + data[0][index].toFixed(12);
+            p.innerHTML = '<br> Current: ' + data[0][index].toFixed(12);
             return;
         }
 
@@ -291,7 +291,7 @@ block headerAdditions
         // Draw grid lines
         if (gridLinesEnabled)
         {
-            ctx.strokeStyle="#A1A1A1";
+            ctx.strokeStyle='#A1A1A1';
             ctx.beginPath();
             ctx.moveTo(0, border);
             ctx.lineTo(width, border);
@@ -314,14 +314,14 @@ block headerAdditions
             }
         }
         
-        ctx.fillStyle = "blue";
-        ctx.font = "10px Arial";
+        ctx.fillStyle = 'blue';
+        ctx.font = '10px Arial';
         ctx.fillText(minY, 0, m_height); 
         ctx.fillText(maxY, 0, 10);
         
 
         
-        ctx.strokeStyle="#FF0000";
+        ctx.strokeStyle='#FF0000';
         for (var i = 1; i < points.length; i++)
         {
             ctx.beginPath();
@@ -330,7 +330,7 @@ block headerAdditions
             ctx.stroke();
         }
 
-        ctx.fillStyle="#0000FF";
+        ctx.fillStyle='#0000FF';
         for (var i = 0; i < points.length; i++)
         {
             ctx.beginPath();
@@ -339,7 +339,7 @@ block headerAdditions
         }
         
         
-        var trendString = "";
+        var trendString = '';
         // TODO Don't hard code
         var trendStringCutoff = 25;
         for (var i = points.length - 2; i >= 0; i--)
@@ -351,31 +351,31 @@ block headerAdditions
 
             if (points[i].y > points[i+1].y)
             {
-                trendString = "+" + trendString;
+                trendString = '+' + trendString;
             } else if (points[i].y < points[i+1].y)
             {
-                trendString = "-" + trendString;
+                trendString = '-' + trendString;
             } else {
-                trendString = "=" + trendString;
+                trendString = '=' + trendString;
             }
         }
 
         p.innerHTML = trendString;
-        p.innerHTML += "<br> Current: " + data[data.length-1][index].toFixed(12);
-        p.innerHTML += "<br> Delta: " + (data[data.length-1][index]- data[data.length-2][index]).toFixed(12);
+        p.innerHTML += '<br> Current: ' + data[data.length-1][index].toFixed(12);
+        p.innerHTML += '<br> Delta: ' + (data[data.length-1][index]- data[data.length-2][index]).toFixed(12);
     }
 
 
 
     function init(ready){
-        tcpChart = new NovaPiChart("tcpPiChart", "TCP Flags", 200);
-        protocolChart = new NovaPiChart("ProtocolPiChart", "Protocols Used", 200);
+        tcpChart = new NovaPiChart('tcpPiChart', 'TCP Flags', 200);
+        protocolChart = new NovaPiChart('ProtocolPiChart', 'Protocols Used', 200);
         
         now.ready(function()
         {
             now.OnNewSuspect = OnNewSuspect;
-            now.sendSuspect("#{suspectIp}", "#{suspectInterface}", OnNewSuspect)
-            now.reverseDNS("#{suspectIp}", reverseDNScb);
+            now.sendSuspect('#{suspectIp}', '#{suspectInterface}', OnNewSuspect)
+            now.reverseDNS('#{suspectIp}', reverseDNScb);
         });
     };
 
