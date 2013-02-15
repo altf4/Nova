@@ -56,7 +56,7 @@ void SaveAndExit(int param)
 		}
 		if(system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) == -1)
 		{
-			LOG("WARNING", "Failed to delete Doppelganger route", "Command sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) + " failed");
+			LOG("WARNING", "Failed to delete Doppelganger route", "Command sudo route del " + Config::Inst()->GetDoppelIp()).c_str()+" failed";
 		}
 	}
 
