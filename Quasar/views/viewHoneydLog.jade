@@ -45,10 +45,12 @@ block headerAdditions
     
     function showAdvancedChanged()
     {
-        if ($('#showAdvanced').is(':checked'))
+        if($('#showAdvanced').is(':checked'))
         {
             logGrid.m_columns[2].isDisabled = false;
-        } else {
+        }
+        else
+        {
             logGrid.m_columns[2].isDisabled = true;
         }
 
@@ -66,22 +68,23 @@ block headerAdditions
     var index = 0;
     function AddLogEntry(line)
     {
-            line = line.replace(/ +(?= )/g, '');
-            var match = line.match(/(\\S+ \\S+ \\S+) ([^:]+): (.*)/);
+        line = line.replace(/ +(?= )/g, '');
+        var match = line.match(/(\\S+ \\S+ \\S+) ([^:]+): (.*)/);
 
-            if (match != null)
-            {
-                match.splice(0,1,Number(index));
-                index++;
-                
-                
-                match[3] = "<span style='font-weight: bold;'>" + match[3] + "</span>";
-                match.style = "background-color: #E4F2FF";
-                
-                logGrid.PushEntry(match);
-            } else {
-                console.log("No match for entry '" + line + "'");
-            }
+        if(match != null)
+        {
+            match.splice(0,1,Number(index));
+            index++;
+            
+            match[3] = "<span style='font-weight: bold;'>" + match[3] + "</span>";
+            match.style = "background-color: #E4F2FF";
+            
+            logGrid.PushEntry(match);
+        }
+        else
+        {
+            console.log("No match for entry '" + line + "'");
+        }
     }
 
 
@@ -97,7 +100,6 @@ block headerAdditions
         logGrid = new NovaGrid(gridStructure, 0, $('#logTable')[0], 'logGrid');
         logGrid.SetRowsPerPage(25);
         logGrid.SetRenderCallback(onGridRendered);
-
         
         var log = log.toString().split(/\\r\\n|\\n\\r|\\n|\\r/);
 

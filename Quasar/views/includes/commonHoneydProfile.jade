@@ -44,27 +44,28 @@ script
     //console.log('Editing profile ' + currentName);
   }
 
-  var inheritanceChanged = function() {};
-  var scriptSelectionChanged = function() {};
-  var uptimeTypeChanged = function() {};
-  var deletePort = function() {};
-  var addPort = function(port) {};
-  var portBehaviorChanged = function() {};
-  var configureScript = function() {};
-  var saveChanges = function() {};
-  var savedChanges = function() {};
-  var checkIfRestartNeeded = function() {};
+  var inheritanceChanged = function(){};
+  var scriptSelectionChanged = function(){};
+  var uptimeTypeChanged = function(){};
+  var deletePort = function(){};
+  var addPort = function(port){};
+  var portBehaviorChanged = function(){};
+  var configureScript = function(){};
+  var saveChanges = function(){};
+  var savedChanges = function(){};
+  var checkIfRestartNeeded = function(){};
 
   var rmLb = false;
 
   function enforceMinAndMax(source)
   {
-    var val = parseInt($('#' + source).val());
-    var min = parseInt($('#' + source).attr('min'));
-    var max = parseInt($('#' + source).attr('max'));
+    var sourceNode = $('#' + source);
+    var val = parseInt(sourceNode.val());
+    var min = parseInt(sourceNode.attr('min'));
+    var max = parseInt(sourceNode.attr('max'));
     if((min != undefined && val < min) || (max != undefined && val > max))
     {
-      $('#' + source).val($('#' + source).attr('min'));
+      sourceNode.val(sourceNode.attr('min'));
     }
   }
 
@@ -294,9 +295,9 @@ script
       if(profile.portSets[i].setName == lastPortSet)
       {
         profile.portSets[i].PortExceptions = PortExceptions;
-        profile.portSets[i].TCPBehavior = $('#defaultTCPAction').attr('value');
-        profile.portSets[i].UDPBehavior = $('#defaultUDPAction').attr('value');
-        profile.portSets[i].ICMPBehavior = $('#defaultICMPAction').attr('value');
+        profile.portSets[i].TCPBehavior = $('#defaultTCPAction').val();
+        profile.portSets[i].UDPBehavior = $('#defaultUDPAction').val();
+        profile.portSets[i].ICMPBehavior = $('#defaultICMPAction').val();
         break;
       }
     }
@@ -438,9 +439,9 @@ script
     {
       if(profile.portSets[i].setName == newPortSet)
       {
-        $('#defaultICMPAction').attr('value', profile.portSets[i].ICMPBehavior);
-        $('#defaultTCPAction').attr('value', profile.portSets[i].TCPBehavior);
-        $('#defaultUDPAction').attr('value', profile.portSets[i].UDPBehavior);
+        $('#defaultICMPAction').val(profile.portSets[i].ICMPBehavior);
+        $('#defaultTCPAction').val(profile.portSets[i].TCPBehavior);
+        $('#defaultUDPAction').val(profile.portSets[i].UDPBehavior);
             
         for(var port in profile.portSets[i].PortExceptions)
         {
@@ -878,8 +879,6 @@ script
 
         var scriptName = $('#portScriptDrop' + portIndex).val();
 
-        console.log('scriptName == ' + scriptName);
-
         // Populate the defaults
         now.GetScript(scriptName, function(script){
           var optionCount = 0;
@@ -950,7 +949,7 @@ script
               $('#inheritUptime').attr('checked', profile.isUptimeInherited);
             }
 
-            $('#personality').attr('value', profile.personality);
+            $('#personality').val(profile.personality);
             $('#uptimeMin').attr('value', profile.uptimeMin);
             $('#uptimeMax').attr('value', profile.uptimeMax);
 

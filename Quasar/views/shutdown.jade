@@ -18,11 +18,13 @@ extends layout
 
 block content
   script
-    function init() {
+    function init() 
+    {
         $('#yes').click(shutdown);
     }
 
-    function shutdown() {
+    function shutdown()
+    {
       now.shutdownQuasar();
       $('#check').hide();
       $('#shuttingdown').show();

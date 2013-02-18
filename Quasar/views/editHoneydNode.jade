@@ -42,7 +42,7 @@ block headerAdditions
     {
         pfile = profile;
         $('#vendorList').html('');
-        for (var vendor in profile.ethernet)
+        for(var vendor in profile.ethernet)
         {
             var v = profile.ethernet[vendor].vendor;
             var option = document.createElement('option');
@@ -51,12 +51,12 @@ block headerAdditions
         }
 
         $('#portSetList').html('');
-        for (var portset in profile.portSets)
+        for(var portset in profile.portSets)
         {
             var v = profile.portSets[portset].setName;
             var option = document.createElement('option');
             option.innerHTML = v;
-            if (v == '#{portSet}')
+            if(v == '#{portSet}')
             {
                 option.selected = true;
             }
@@ -69,6 +69,8 @@ block headerAdditions
     
     function generateDefaultRows(tcp, udp, icmp)
     {
+      var portHook = $('#portsetHook');
+      
       var tr0 = document.createElement('tr');
       var td0 = document.createElement('td');
       td0.innerHTML = 'default';
@@ -79,7 +81,7 @@ block headerAdditions
       tr0.appendChild(td0);
       tr0.appendChild(td1);
       tr0.appendChild(td2);
-      $('#portsetHook').append(tr0);
+      portHook.append(tr0);
       
       var tr1 = document.createElement('tr');
       var td3 = document.createElement('td');
@@ -91,7 +93,7 @@ block headerAdditions
       tr1.appendChild(td3);
       tr1.appendChild(td4);
       tr1.appendChild(td5);
-      $('#portsetHook').append(tr1);
+      portHook.append(tr1);
       
       var tr2 = document.createElement('tr');
       var td6 = document.createElement('td');
@@ -103,7 +105,7 @@ block headerAdditions
       tr2.appendChild(td6);
       tr2.appendChild(td7);
       tr2.appendChild(td8);
-      $('#portsetHook').append(tr2);
+      portHook.append(tr2);
     }
     
     function generateExceptionRow(num, proto, behav)

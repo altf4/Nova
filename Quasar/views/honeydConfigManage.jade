@@ -254,17 +254,21 @@ block headerAdditions
       var config;
       profilesArray = {};
       
-      $('#appendHook').empty();
-      $('#treeDiv').empty();
-      $('#piChart').empty();
+      var appendH = $('#appendHook');
+      var treeD = $('#treeDiv');
+      var piC = $('#piChart');
+      
+      appendH.empty();
+      treeD.empty();
+      piC.empty();
       
       var label = theDoc.createElement('label');
       label.innerHTML = 'Loading...';
-      $('#treeDiv').append(label);
+      treeD.append(label);
       
       var label1 = theDoc.createElement('label');
       label1.innerHTML = 'Loading...';
-      $('#piChart').append(label1);
+      piC.append(label1);
       
       if(configArg == undefined)
       {
@@ -311,7 +315,7 @@ block headerAdditions
             td1.appendChild(profilesPorts);
             tr.appendChild(td0);
             tr.appendChild(td1);
-            $('#appendHook').append(tr);
+            appendH.append(tr);
           }
           
           if(scriptProfileBindings.length == 0)
@@ -327,7 +331,7 @@ block headerAdditions
             td1.appendChild(label1);
             tr.appendChild(td0);
             tr.appendChild(td1);
-            $('#appendHook').append(tr);
+            appendH.append(tr);
           }
           
           for(var i in profileObj)
@@ -352,7 +356,7 @@ block headerAdditions
             }
           }
           
-          $('#treeDiv').empty();
+          treeD.empty();
           
           var drawNode = function(profile, parentDOMNode){
             var li = theDoc.createElement('li');
@@ -384,7 +388,7 @@ block headerAdditions
           var piChartRender = [];
           var piChartRender2 = [];
           
-          $('#piChart').empty();
+          piC.empty();
           $('#piChart2').empty();
 
           var nodesPerInterface = {};
@@ -593,19 +597,21 @@ block headerAdditions
     function onProfileClicked(profile)
     {
         var ctrlKeyPressed = true;
-        if (typeof(event) !== 'undefined')
+        if(typeof(event) !== 'undefined')
         {
-                if (!event.ctrlKey)
-                {
-                        ctrlKeyPressed = false;
-                } else {
-                        ctrlKeyPressed = true;
-                }
+            if(!event.ctrlKey)
+            {
+                ctrlKeyPressed = false;
+            }
+            else
+            {
+                ctrlKeyPressed = true;
+            }
         }
 
-        if (!ctrlKeyPressed)
+        if(!ctrlKeyPressed)
         {
-            for (entry in profilesArray)
+            for(entry in profilesArray)
             {
                 profilesArray[entry].isSelected = false;
                 UnsetHighlighted(profilesArray[entry].listElement);
@@ -613,10 +619,12 @@ block headerAdditions
         }
 
         profilesArray[profile].isSelected = !profilesArray[profile].isSelected;
-        if (profilesArray[profile].isSelected)
+        if(profilesArray[profile].isSelected)
         {
             SetHighlighted(profilesArray[profile].listElement);
-        } else {
+        }
+        else
+        {
             UnsetHighlighted(profilesArray[profile].listElement);
         }
     }
@@ -1041,7 +1049,7 @@ block headerAdditions
         gridStructure.push({name: 'MAC'});
         gridStructure.push({name: 'Profile'});
         
-        grid = new NovaGrid(gridStructure, 3, document.getElementById('nodeTable'), 'grid', true);
+        grid = new NovaGrid(gridStructure, 3, $('#nodeTable')[0], 'grid', true);
         
         grid.SetSortByKey(1);
         grid.SetRowsPerPage(25);
@@ -1081,7 +1089,6 @@ block headerAdditions
          grid.Render();
       
          var gridElements = grid.GetElements();
-         
     }
     
     var initialized = false;
@@ -1093,7 +1100,6 @@ block headerAdditions
 
         populateConfigSelect(configurationList);
         LoadNodeGrid();
-
 
         setInterval(function() {now.GetHaystackDHCPStatus(dhcpStatusCallback);}, 2000);
         checkForEditInterface();

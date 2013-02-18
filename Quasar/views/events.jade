@@ -57,26 +57,32 @@ block headerAdditions
     function classificationFormatter(d)
     {
         var num = 100 * d;
-        if (num > 0)
+        if(num > 0)
         {
             // Minor performance boost, don't bother with coloring those < than 5% hostile, barely shows anyway
-            if (num > 5)
+            if(num > 5)
             {
                 return '<div style="background: rgba(255, 0, 0, ' + d.toFixed(2) + ');">' + num.toFixed(2) + "%</div>";
-            } else {
+            }
+            else
+            {
                 return num.toFixed(2) + "%";
             }
-        } else {
-            if (num == -100)
+        }
+        else
+        {
+            if(num == -100)
             {
                 return "Invalid";
-            } else if (num == -200)
+            }
+            else if(num == -200)
             {
                 return "Not Enough Data";
-            } else {
+            }
+            else
+            {
                 return "Error";
             }
-
         }
     }
     
@@ -84,14 +90,14 @@ block headerAdditions
     {
         if($('#showAdvanced').is(':checked'))
         {
-            for (var i = 4; i < suspectGrid.m_columns.length; i++)
+            for(var i = 4; i < suspectGrid.m_columns.length; i++)
             {
                 suspectGrid.m_columns[i].isDisabled = false;
             }
         } 
         else
         {
-            for (var i = 4; i < suspectGrid.m_columns.length; i++)
+            for(var i = 4; i < suspectGrid.m_columns.length; i++)
             {
                 suspectGrid.m_columns[i].isDisabled = true;
             }
@@ -110,36 +116,39 @@ block headerAdditions
         gridStructure.push({name: "Interface", isDisabled: false});
         gridStructure.push({name: "Classification", isDisabled: false});
    
+        var susTable = $('#suspectTable');
+   
         var featureNames = String("#{featureNames}").split(",");
-        for (var i = 0; i < featureNames.length; i++)
+        for(var i = 0; i < featureNames.length; i++)
         {
             gridStructure.push({name:featureNames[i], formatter: featureFormatter, isDisabled: true});
         }
    
-        suspectGrid = new NovaGrid(gridStructure, 0, $('#suspectTable')[0], 'suspectGrid');
+        suspectGrid = new NovaGrid(gridStructure, 0, susTable[0], 'suspectGrid');
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(1);
 
-        $('#suspectTable').html(suspectGrid.GetTable());
+        susTable.html(suspectGrid.GetTable());
     
-        try { 
+        try
+        { 
           now.GetHostileEvents(function (results)
           {
-              for (var i = 0; i < results.length; i++)
+              for(var i = 0; i < results.length; i++)
               {
                   var row = new Array();
-                  for (var j in results[0])
+                  for(var j in results[0])
                   {
                       row.push(results[i][j]);
                   }
 
                   suspectGrid.PushEntry(row);
-
               } 
-              $('#suspectTable').html(suspectGrid.GetTable());
+              susTable.html(suspectGrid.GetTable());
           });
-        } catch(err)
+        }
+        catch(err)
         {
           alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
           console.log("err was: " + err);

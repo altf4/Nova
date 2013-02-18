@@ -77,7 +77,7 @@ block headerAdditions
 
     function setUpScriptTable()
     {
-      var append = theDoc.getElementById('addAnchor');
+      var append = $('#addAnchor')[0];
       for(var i in scriptList)
       {
         var disable = false;
@@ -89,17 +89,20 @@ block headerAdditions
         var td1 = theDoc.createElement('td');
         var label1 = theDoc.createElement('label');
         label1.innerHTML = (scriptBindings[scriptList[i].script] != undefined ? scriptBindings[scriptList[i].script] : '');
+        
         if(label1.innerHTML !== scriptBindings[scriptList[i].script])
         {
           disable = true;
         }
+        
         var td2 = theDoc.createElement('td');
         var label2 = theDoc.createElement('label');
         label2.innerHTML = scriptList[i].path;
 
         var td4 = theDoc.createElement('td');
         
-        if (scriptList[i].configurable) {
+        if(scriptList[i].configurable)
+        {
           var editButton = theDoc.createElement('button');
           editButton.innerHTML = '<span style="width: 50px; display: block" class="buttonSpan"><img class="buttonIcon" src="images/edit.png"/>Edit</span>';
           editButton.setAttribute('onclick', 'editOptions("' + scriptList[i].script + '")');
@@ -152,7 +155,6 @@ block headerAdditions
     {
         console.log("Deleting " + script + " " + key + " " + value);
         now.deleteScriptOptionValue(currentlyEditedScript.GetName, key, value, function() {editOptions(script)});
-
     }
 
     function selectedKeyChanged()
@@ -161,11 +163,11 @@ block headerAdditions
         dojo.empty('optionValues'); 
         // TODO Internet Explore Support
         var currentKey = $('#optionKeys').attr('value');
-        for (var i = 0; i < currentlyEditedScript.GetOptions[currentKey].length; i++)
+        for(var i = 0; i < currentlyEditedScript.GetOptions[currentKey].length; i++)
         {
            var tr = theDoc.createElement("tr");
           
-          var td1 = theDoc.createElement("td");
+           var td1 = theDoc.createElement("td");
            tr.appendChild(td1);
            
            var td2 = theDoc.createElement("td");
@@ -176,11 +178,10 @@ block headerAdditions
          
            var deleteButton = theDoc.createElement("button");
            deleteButton.innerHTML = "Delete";
-           deleteButton.onclick = function()
-           {    
+           deleteButton.onclick = function(){    
                 var key = currentKey;
                 var innerValue = value;
-                return function() {
+                return function(){
                     deleteScriptOptionValue(currentlyEditedScript.GetName, key, innerValue);
                 }
            }();
@@ -194,27 +195,25 @@ block headerAdditions
     {
        dojo.empty("optionKeys"); 
        dojo.empty("optionValues"); 
-       now.GetScript(scriptName, function(script)
-       {
+       now.GetScript(scriptName, function(script){
             currentlyEditedScript = script;
             var count = 0;
-            for (var key in script.GetOptions)
+            for(var key in script.GetOptions)
             {
-                var option = theDoc.createElement("option");
-                option.innerHTML = key;
-                $('#optionKeys').append(option);
-                count++;
+              var option = theDoc.createElement("option");
+              option.innerHTML = key;
+              $('#optionKeys').append(option);
+              count++;
             }
 
-            if (count == 0)
+            if(count == 0)
             {
-                alert("No editable options for this script");         
+              alert("No editable options for this script");         
             }
             else
             {
-                showLightBox('2'); 
+              showLightBox('2'); 
             }
-
 
             selectedKeyChanged();
        });
@@ -337,7 +336,7 @@ block headerAdditions
         $('#selectClearProfiles').css('display', 'block');
         $('#editScriptForm').css('display', 'none');
       }
-      else if (divIndex == '2')
+      else if(divIndex == '2')
       {
         $('#addScriptForm').css('display', 'none');
         $('#selectClearProfiles').css('display', 'none');

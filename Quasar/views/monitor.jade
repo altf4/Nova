@@ -72,7 +72,7 @@ block headerAdditions
 
     function redrawGraphs()
     {
-        for (var i = 0; i < 14; i++)
+        for(var i = 0; i < 14; i++)
         {
             drawGraph('chart' + i, 'p' + i, data, i);
         }
@@ -82,13 +82,13 @@ block headerAdditions
 
     function toggleGridLines()
     {
-        gridLinesEnabled = document.getElementById('enableGridLines').checked;
+        gridLinesEnabled = $('#enableGridLines').is(':checked');
         redrawGraphs();
     }
 
     function toggleAutoscale()
     {
-        autoscale = document.getElementById('enableAutoScale').checked;
+        autoscale = $('#enableAutoScale').is(':checked');
         redrawGraphs();
     }
 
@@ -96,18 +96,20 @@ block headerAdditions
     {
         'use strict';
         var hostilityString;
-        if (hostility == '1')
+        if(hostility == '1')
         {
             hostilityString = 'hostile';
-        } else {    
+        }
+        else
+        {    
             hostilityString = 'benign';
         }
 
-        if (!confirm("This will train the classifiaction engine to match all suspects looking like this one's current state as " + hostilityString + ". Are you sure you want to do this?"))
+        if(!confirm("This will train the classifiaction engine to match all suspects looking like this one's current state as " + hostilityString + ". Are you sure you want to do this?"))
         {
             return;
         }
-        if (lastSuspectObject == null)
+        if(lastSuspectObject == null)
         {
             alert('No data recieved for suspect yet');
             return;
@@ -115,9 +117,11 @@ block headerAdditions
 
         var features = String(lastSuspectObject.GetFeatures).split(',').join(' ');
  
-        try {
+        try
+        {
            now.addTrainingPoint(lastSuspectObject.GetIpString, lastSuspectObject.GetInterface, features, hostility, addedCb);
-        } catch (err)
+        }
+        catch(err)
         {
             console.log('Error was: ' + err);
             alert('Unable to contact server. Try refreshing the page');
@@ -126,10 +130,12 @@ block headerAdditions
 
     function addedCb(err)
     {
-        if (err)
+        if(err)
         {
             alert('There was and error adding the new training point: ' + err);
-        } else {
+        }
+        else
+        {
             alert('Added suspect point to training data');
         }
     }
@@ -141,15 +147,19 @@ block headerAdditions
         if (err != null)
         {
             var errorString;
-            if (err.code == 'ENOTFOUND')
+            if(err.code == 'ENOTFOUND')
             {
                 errorString = 'No domain name found';
-            } else {
+            }
+            else
+            {
                 errorString = 'Unable to get domain name because of error: ' + err.code;
             }
-            document.getElementById('domain').innerHTML = prefix + errorString + suffix;
-        } else {
-            document.getElementById('domain').innerHTML = prefix + domains + suffix;
+            $('#domain').html(prefix + errorString + suffix);
+        }
+        else
+        {
+            $('#domain').html(prefix + domains + suffix);
         }
     }
 
@@ -218,8 +228,8 @@ block headerAdditions
         var width = m_width;
         var height = m_height - border*2;
         
-        var c = document.getElementById(canvas);
-        var p = document.getElementById(pID);
+        var c = $('#' + canvas)[0];
+        var p = $('#' + pID)[0];
         var ctx = c.getContext('2d');
         ctx.clearRect (0, 0,m_width ,m_height);
        

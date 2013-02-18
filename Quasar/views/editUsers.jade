@@ -29,21 +29,23 @@ block headerAdditions
       var numberOfNames = #{usernames.length}
       var items = grid.selection.getSelected();
         
-        if (items.length >= numberOfNames)
-        {
-            var dialog = new dijit.Dialog({title: 'Error', content: 'You can not delete all user accounts! It will be impossible to log in.'});
-            dialog.show();  
-            return;
-        }
+      if(items.length >= numberOfNames)
+      {
+          var dialog = new dijit.Dialog({title: 'Error', content: 'You can not delete all user accounts! It will be impossible to log in.'});
+          dialog.show();  
+          return;
+      }
       var names = [];
       dojo.forEach(items, function(selectedItem)
       {
         names.push(grid.store.getValues(selectedItem, 'users')); 
       });
       
-      try {
+      try
+      {
         now.deleteUserEntry(names, errorMessageCallback);
-      } catch(err)
+      }
+      catch(err)
       {
         alert('Action failed! Unable to connect to server. Try refreshing the page.');
         console.log('Caught error was: ' + err);
@@ -54,7 +56,7 @@ block headerAdditions
     {
         var items = grid.selection.getSelected();
 
-        if (items.length != 1)
+        if(items.length != 1)
         {
             var dialog = new dijit.Dialog({title: 'Error', content: 'Please select 1 user account to edit the password of'});
             dialog.show();  
@@ -63,13 +65,15 @@ block headerAdditions
         
         var user = String(grid.store.getValues(items[0], 'users')); 
         var password = $('#newPassword').attr('value');
-        try {
+        try
+        {
             now.updateUserPassword(user, password, errorMessageCallback);
-         } catch(err)
-         {
-           alert('Action failed! Unable to connect to server. Try refreshing the page.');
-           console.log('Caught error was: ' + err);
-         }
+        } 
+        catch(err)
+        {
+          alert('Action failed! Unable to connect to server. Try refreshing the page.');
+          console.log('Caught error was: ' + err);
+        }
     }
 
     

@@ -51,25 +51,29 @@ html(lang="en", onclick='removeContextMenu();')
       // Wrappers for now.js calls with some try/catches
       var StartNovad = function()
       {
-          try {
-              now.StartNovad();
-            } catch(err)
-            {
-              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-              console.log("err was: " + err);
+          try
+          {
+            now.StartNovad();
+          }
+          catch(err)
+          {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
           } 
       }
       var StopNovad = function()
       {
-          try {
-              now.StopNovad(function(result){
-                if(result == 'false')
-                {
-                  now.HardStopNovad();   
-                }
-              });
-            } catch(err)
-            {
+          try
+          {
+            now.StopNovad(function(result){
+              if(result == 'false')
+              {
+                now.HardStopNovad();   
+              }
+            });
+          }
+          catch(err)
+          {
               alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
               console.log("err was: " + err);
           } 
@@ -77,23 +81,27 @@ html(lang="en", onclick='removeContextMenu();')
   
       var StartHaystack = function()
       {
-          try {
-              now.StartHaystack();
-            } catch(err)
-            {
-              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-              console.log("err was: " + err);
+          try
+          {
+            now.StartHaystack();
+          }
+          catch(err)
+          {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
           } 
       }
   
       var StopHaystack = function()
       {
-          try {
-              now.StopHaystack();
-            } catch(err)
-            {
-              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-              console.log("err was: " + err);
+          try 
+          {
+            now.StopHaystack();
+          }
+          catch(err)
+          {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
           } 
       }
  
@@ -128,7 +136,7 @@ html(lang="en", onclick='removeContextMenu();')
         $("#haystack_status_icon_green").css('display', 'none');
         $("#haystack_status_icon_orange").css('display', 'none');
         
-        if (isHaystackUp)
+        if(isHaystackUp)
         {
           $("#haystack_status_icon_green").css('display', 'block');
         } 
@@ -143,23 +151,26 @@ html(lang="en", onclick='removeContextMenu();')
 
       function fixConsole(alertFallback)
       {    
-          if (typeof console === "undefined")
+          if(typeof console === "undefined")
           {
-              console = {}; // define it if it doesn't exist already
+            console = {}; // define it if it doesn't exist already
           }
-          if (typeof console.log === "undefined") 
+          if(typeof console.log === "undefined") 
           {
-              if (alertFallback) { console.log = function(msg) { alert(msg); }; } 
-              else { console.log = function() {}; }
+            if(alertFallback) { console.log = function(msg){ alert(msg); }; } 
+            else { console.log = function() {}; }
           }
-          if (typeof console.dir === "undefined") 
+          if(typeof console.dir === "undefined") 
           {
-              if (alertFallback) 
-              { 
-                  // THIS COULD BE IMPROVED. maybe list all the object properties?
-                  console.dir = function(obj) { alert("DIR: "+obj); }; 
-              }
-              else { console.dir = function() {}; }
+            if(alertFallback) 
+            { 
+              // THIS COULD BE IMPROVED. maybe list all the object properties?
+              console.dir = function(obj){ alert("DIR: "+obj); }; 
+            }
+            else
+            {
+              console.dir = function(){};
+             }
           }
       }
     
@@ -178,18 +189,17 @@ html(lang="en", onclick='removeContextMenu();')
             dojo.fadeIn({node:"appLayout", delay:0}).play();
 
             var sideBarButtons = $(".sideBarButton");
-            for (var i in sideBarButtons)
+            for(var i in sideBarButtons)
             {
-                if (!sideBarButtons[i].pathname)
-                {
-                    continue;
-                }
-                
-                if (sideBarButtons[i].pathname == window.location.pathname)
-                {
-                    sideBarButtons[i].className += ' active';
-                    console.log("Enabled button " + sideBarButtons[i]);
-                }
+              if(!sideBarButtons[i].pathname)
+              {
+                continue;
+              }
+              if(sideBarButtons[i].pathname == window.location.pathname)
+              {
+                sideBarButtons[i].className += ' active';
+                console.log("Enabled button " + sideBarButtons[i]);
+              }
             }
           });
 

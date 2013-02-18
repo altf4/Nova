@@ -36,7 +36,7 @@ block headerAdditions
 
         var classifiers = !{JSON.stringify(classifiers)};
         var index = 0;
-        for (i in classifiers)
+        for(i in classifiers)
         {
             var classifier = classifiers[i];
             var row = new Array();
@@ -48,8 +48,6 @@ block headerAdditions
             row.push(classifier.weight);
         
             grid.PushEntry(row);
-            
-            
         }
     
         grid.Render();
@@ -62,14 +60,18 @@ block headerAdditions
     function deleteClassifier() {
         var selected = grid.GetSelected();
 
-        if (selected.length != 1) {
+        if(selected.length != 1)
+        {
             alert('You must have 1 and only 1 classifier selected for deletion');
             return;
         }
 
-        try {
+        try
+        {
             now.deleteClassifier(selected[0], refreshCallback);
-        } catch (err) {
+        }
+        catch(err)
+        {
             console.log('Error was: ' + err);
             alert('Server is down or not responding to this request');
         }
@@ -78,7 +80,8 @@ block headerAdditions
     function editClassifier() {
         var selected = grid.GetSelected();
 
-        if (selected.length != 1) {
+        if(selected.length != 1)
+        {
             alert('You must have 1 and only 1 classifier selected for editing');
             return;
         }
