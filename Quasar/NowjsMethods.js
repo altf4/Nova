@@ -644,7 +644,6 @@ everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, s
 
     var hhconfigArgs = new Array();
 
-
     hhconfigArgs.push('--nodeinterface');
     hhconfigArgs.push(nodeInterface);
 
@@ -679,12 +678,15 @@ everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, s
         hhconfigArgs.push(subnets);
     }
 
-    if (!append) {
+    if(!append) 
+    {
         hhconfigArgs.push('-t');
         hhconfigArgs.push(groupName);
         NovaCommon.honeydConfig.AddConfiguration(groupName, 'false', '');
         NovaCommon.config.SetCurrentConfig(groupName);
-    } else {
+    }
+    else
+    {
         hhconfigArgs.push('-t');
         hhconfigArgs.push(groupName);
     }
@@ -721,17 +723,18 @@ everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, s
 
     autoconfig.on('exit', function (code, signal)
     {
-        console.log("autoconfig exited with code " + code);
-        var response = "autoconfig exited with code " + code;
+      console.log('signal is ' + signal);
+      console.log("autoconfig exited with code " + code);
+      var response = "autoconfig exited with code " + code;
       if(typeof route == 'function' && signal != 'SIGTERM')
-    {
-      route("/honeydConfigManage", response);
-    }
-    if(signal == 'SIGTERM')
-    {
-      response = "autoconfig scan terminated early";
-      route("/autoConfig", response);
-    }
+      {
+        route("/honeydConfigManage", response);
+      }
+      else if(signal == 'SIGTERM')
+      {
+        response = "autoconfig scan terminated early";
+        route("/autoConfig", response);
+      }
     });
 };
 

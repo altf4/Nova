@@ -115,8 +115,7 @@ var DATABASE_HOST = NovaCommon.config.ReadSetting("DATABASE_HOST");
 var DATABASE_USER = NovaCommon.config.ReadSetting("DATABASE_USER");
 var DATABASE_PASS = NovaCommon.config.ReadSetting("DATABASE_PASS");
 
-var databaseOpenResult = function (err)
-{
+var databaseOpenResult = function(err){
     if(err === null)
     {
     }
@@ -161,61 +160,59 @@ passport.use(new BasicStrategy(
 function (username, password, done)
 {
     var user = username;
-    process.nextTick(function ()
+    process.nextTick(function (){
+    dbqCredentialsRowCount.all(function (err, rowcount)
     {
-
-        dbqCredentialsRowCount.all(function (err, rowcount)
+        if(err)
         {
-            if(err)
-            {
-                console.log("Database error: " + err);
-            }
+            console.log("Database error: " + err);
+        }
 
-            // If there are no users, add default nova and log in
-            if(rowcount[0].rows === 0)
+        // If there are no users, add default nova and log in
+        if(rowcount[0].rows === 0)
+        {
+            console.log("No users in user database. Creating default user.");
+            dbqCredentialsInsertUser.run('nova', HashPassword('toor', 'root'), 'root', function (err)
             {
-                console.log("No users in user database. Creating default user.");
-                dbqCredentialsInsertUser.run('nova', HashPassword('toor', 'root'), 'root', function (err)
+                if(err)
                 {
-                    if(err)
-                    {
-                        throw err;
-                    }
+                    throw err;
+                }
 
-                    switcher(err, user, true, done);
-                });
+                switcher(err, user, true, done);
+            });
+        }
+        else
+        {
+          dbqCredentialsGetSalt.all(user, function cb(err, salt)
+          {
+            if(err || (salt[0] == undefined))
+            {
+              switcher(err, user, false, done);
             }
             else
             {
-              dbqCredentialsGetSalt.all(user, function cb(err, salt)
+              dbqCredentialsCheckLogin.all(user, HashPassword(password, salt[0].salt),
+              function selectCb(err, results)
               {
-                if(err || (salt[0] == undefined))
-                {
-                  switcher(err, user, false, done);
-                }
-                else
-                {
-                    dbqCredentialsCheckLogin.all(user, HashPassword(password, salt[0].salt),
-                    function selectCb(err, results)
-                    {
-                        if(err)
-                        {
-                            console.log("Database error: " + err);
-                        }
-                        if(results[0] === undefined)
-                        {
-                            switcher(err, user, false, done);
-                        } 
-                        else if(user === results[0].user)
-                        {
-                            switcher(err, user, true, done);
-                        } 
-                        else
-                        {
-                            switcher(err, user, false, done);
-                        }
+                  if(err)
+                  {
+                      console.log("Database error: " + err);
+                  }
+                  if(results[0] === undefined)
+                  {
+                      switcher(err, user, false, done);
+                  } 
+                  else if(user === results[0].user)
+                  {
+                      switcher(err, user, true, done);
+                  } 
+                  else
+                  {
+                      switcher(err, user, false, done);
+                  }
               });
-            }});
+           }});
           }
         });
     });
@@ -338,7 +335,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
   var WebSocketClient = require('websocket').client;
   var client;
   
-  if (NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_ENABLED"))
+  if(NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_ENABLED"))
   {
     client = new WebSocketClient({
       tlsOptions: {
@@ -347,7 +344,9 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
         passphrase: NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_PASSPHRASE")
       }
     });
-  } else {
+  }
+  else
+  {
     client = new WebSocketClient();
   }
   // TODO: Make configurable
@@ -363,7 +362,6 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
     if(!reconnecting)
     {
       console.log('No current attempts to reconnect, starting reconnect attempts every ', (reconnectTimer / 1000) ,' seconds.');
-      // TODO: Don't have static lengths for reconnect interval; make configurable
       clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, reconnectTimer);
       reconnecting = true;
     }

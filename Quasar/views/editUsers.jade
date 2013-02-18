@@ -58,16 +58,16 @@ block headerAdditions
 
         if(items.length != 1)
         {
-            var dialog = new dijit.Dialog({title: 'Error', content: 'Please select 1 user account to edit the password of'});
-            dialog.show();  
-            return;
+          var dialog = new dijit.Dialog({title: 'Error', content: 'Please select 1 user account to edit the password of'});
+          dialog.show();  
+          return;
         }
         
         var user = String(grid.store.getValues(items[0], 'users')); 
         var password = $('#newPassword').val();
         try
         {
-            now.updateUserPassword(user, password, errorMessageCallback);
+          now.updateUserPassword(user, password, errorMessageCallback);
         } 
         catch(err)
         {
@@ -79,7 +79,6 @@ block headerAdditions
     
     function errorMessageCallback(success, message)
     {
-      console.log('in errorMessageCallback');
       if(success != true)
       {
         var dialog = new dijit.Dialog({title: 'Error', content: 'Unable to complete operation due to error: ' + message});

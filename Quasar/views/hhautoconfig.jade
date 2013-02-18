@@ -32,10 +32,13 @@ block headerAdditions
 
         self.isNewHaystackSelection = ko.observable('1');
         self.isNewHaystack = ko.computed(function() {return parseInt(self.isNewHaystackSelection())}, self);
-        self.groupName = ko.computed(function() {
-           if (self.isNewHaystack()) {
+        self.groupName = ko.computed(function(){
+           if (self.isNewHaystack()) 
+           {
             return self.newHaystackName();
-           } else {
+           }
+           else
+           {
             return self.oldHaystackName();
            }
         }, self);
@@ -45,12 +48,13 @@ block headerAdditions
 
         self.interfaceList = interfaceList;
 
-        self.removeSubnet = function(subnet) {
+        self.removeSubnet = function(subnet){
             self.subnetsToScan.remove(subnet);
         }
         
-        self.addSubnet = function(subnet) {
-            if (!isSubnetScanned(subnet.subnet)) {
+        self.addSubnet = function(subnet){
+            if (!isSubnetScanned(subnet.subnet))
+            {
                 self.subnetsToScan.push(subnet);
             }
         }
@@ -87,7 +91,7 @@ block headerAdditions
 
     function validateAndAdd(id)
     {
-      var toValidate = $('#' + id).attr('value');
+      var toValidate = $('#' + id).val();
     
       var errLabel = $('#errorLabel');
     
@@ -161,6 +165,8 @@ block headerAdditions
         }
       }
       
+      var iface = GetNodeInterface();
+      
       if(viewModel.subnetsToScan().length != 0)
       { 
         disableBackground($('#setup')[0]);
@@ -192,12 +198,12 @@ block headerAdditions
         $('#appendText').css('width', (divWidth + 'px'));
         try 
         {
-            now.ShowAutoConfig(GetNodeInterface(), viewModel.nodeCreationType(), viewModel.nodeCount(), GetSubnets(), GetHaystackName(), !viewModel.isNewHaystack(), autoscancb, routeToReview); 
+          now.ShowAutoConfig(iface, viewModel.nodeCreationType(), viewModel.nodeCount(), GetSubnets(), GetHaystackName(), !viewModel.isNewHaystack(), autoscancb, routeToReview); 
         } 
         catch(err) 
         {
-            alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
-            console.log('err was: ' + err);
+          alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
+          console.log('err was: ' + err);
         }   
       } 
       else
@@ -241,7 +247,7 @@ block headerAdditions
 
     function GetNodeInterface()
     {
-        return $('#nodeInterface').val();
+      return $('#nodeInterface').val();
     }
     
     function GetSubnets()
