@@ -64,7 +64,7 @@ block headerAdditions
         }
         
         var user = String(grid.store.getValues(items[0], 'users')); 
-        var password = $('#newPassword').attr('value');
+        var password = $('#newPassword').val();
         try
         {
             now.updateUserPassword(user, password, errorMessageCallback);

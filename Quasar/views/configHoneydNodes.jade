@@ -37,7 +37,7 @@ block headerAdditions
     {
         $('#createNewNodes').attr('disabled', true);
         $('#createNewNodes').attr('value', 'Please wait. Creating new nodes...');
-        var ipType = $('#ipType').attr('value');
+        var ipType = $('#ipType').val();
         var ip1 = $('#ip1').attr('value');
         var ip2 = $('#ip2').attr('value');
         var ip3 = $('#ip3').attr('value');
@@ -147,8 +147,8 @@ block headerAdditions
     function portsetSelectionChanged()
     {
       $('#portsetHook').empty()
-      var desired = $('#portSetList')[0].options[$('#portSetList')[0].selectedIndex].value;
-      var lightboxProfile = $('#profile')[0].options[$('#profile')[0].selectedIndex].value;
+      var desired = $('#portSetList').val();
+      var lightboxProfile = $('#profile').val();
       now.GetPortSets(lightboxProfile, function(portset){
         for(var i in portset)
         {
@@ -166,7 +166,7 @@ block headerAdditions
 
     function createNodesCallback(err)
     {
-        if (err)
+        if(err)
         {
             alert('Unable to create nodes due to error: ' + err);
         } 
@@ -178,10 +178,10 @@ block headerAdditions
 
     function checkIfRestartNeeded(haystackUp)
     {
-      if (haystackUp)
+      if(haystackUp)
       {
         var restartHaystack = confirm('You must restart the haystack for this to take effect. Restart it now?');
-        if (restartHaystack)
+        if(restartHaystack)
         {
           now.RestartHaystack();
         }
@@ -294,6 +294,7 @@ block headerAdditions
     
     function populateProfileSelectAll()
     {
+      var prof = $('#profile');
       try
       {
         now.GetProfileNames(function(names){
@@ -302,7 +303,7 @@ block headerAdditions
             var option = document.createElement('option');
             option.value = names[i];
             option.innerHTML = names[i];
-            $('#profile').append(option);
+            prof.append(option);
           } 
         });
       }
@@ -315,6 +316,7 @@ block headerAdditions
     
     function populateProfileSelectLeaf()
     {
+      var prof = $('#profile');
       try
       {
         now.GetLeafProfileNames(function(names){
@@ -323,7 +325,7 @@ block headerAdditions
             var option = document.createElement('option');
             option.value = names[i];
             option.innerHTML = names[i];
-            $('#profile').append(option);
+            prof.append(option);
           }
         });
       }

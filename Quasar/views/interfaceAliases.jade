@@ -27,9 +27,8 @@ block headerAdditions
 
     var AddNewAlias = function()
     {
-        var ifaceDropdown = $('#interfaceSelection')[0];
-        var iface = ifaceDropdown.options[ifaceDropdown.selectedIndex].value;
-        var alias = $('#aliasSelection').attr('value');
+        var iface = $('#interfaceSelection').val();
+        var alias = $('#aliasSelection').val();
 
         now.AddInterfaceAlias(iface, alias, refresh);
     }
@@ -53,7 +52,7 @@ block headerAdditions
         grid = new NovaGrid(columns, 0, "aliasTable", 'grid', false);
 
         var interfaceAliases = !{JSON.stringify(interfaceAliases)};
-        for (i in interfaceAliases)
+        for(i in interfaceAliases)
         {
             var row = new Array();
             row.push(i);
@@ -61,8 +60,6 @@ block headerAdditions
         
             row.push("<button class='button' onclick='DeleteAlias(\\"" + i + "\\")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Delete</span></button>");
             grid.PushEntry(row);
-            
-            
         }
     
         grid.Render();

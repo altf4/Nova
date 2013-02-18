@@ -126,8 +126,8 @@ block headerAdditions
     function portsetSelectionChanged()
     {
       $('#portsetHook').empty();
-      var desired = $('#portSetList')[0].options[$('#portSetList')[0].selectedIndex].value;
-      var lightboxProfile = $('#profile')[0].options[$('#profile')[0].selectedIndex].value;
+      var desired = $('#portSetList').val();
+      var lightboxProfile = $('#profile').val();
       now.GetPortSets(lightboxProfile, function(portset){
         for(var i in portset)
         {
@@ -214,7 +214,7 @@ block headerAdditions
         var splitMac = mac.split(':');
         for (var i = 0; i < 6; i++)
         {
-            $('#mac' + i).attr('value', splitMac[i]);
+            $('#mac' + i).val(splitMac[i]);
         }
     }
    

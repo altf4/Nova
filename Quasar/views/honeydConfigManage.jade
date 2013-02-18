@@ -470,6 +470,8 @@ block headerAdditions
         $('#newNameClone').attr('value', '');
         $('#profileInfo').css('display', 'none');
         
+        var cloneMe = $('#cloneMe');
+        
         for(var i in configurationList)
         {
           if(configurationList[i] != '' && configurationList[i] != undefined)
@@ -479,7 +481,7 @@ block headerAdditions
             option.value = configurationList[i];
             option.innerHTML = configurationList[i];
             option.id = configurationList[i];
-            $('#cloneMe').append(option);
+            cloneMe.append(option);
           }
         }
       }
@@ -513,12 +515,13 @@ block headerAdditions
     
     function checkParametersAdd()
     {
-      if($('#newName').attr('value') == '')
+      var value = $('#newName').val();
+      if(value.val() == '')
       {
         alert('Must give a new name for New Haystacks');
         return false;
       }
-      else if(checkExistingName($('#newName').attr('value')) == true)
+      else if(checkExistingName(value.val()) == true)
       {
         alert('Cannot add cloned configuration that has the same name as a present configuration');
         return false;
@@ -531,12 +534,13 @@ block headerAdditions
     
     function checkParametersClone()
     { 
-      if($('#newNameClone').attr('value').value == '')
+      var value = $('#newNameClone').val();
+      if(value == '')
       {
         alert('Must give a new name for Cloned Haystacks');
         return false;
       }
-      else if(checkExistingName($('#newNameClone').attr('value').value) == true)
+      else if(checkExistingName(value) == true)
       {
         alert('Cannot add cloned configuration that has the same name as a present configuration');
         return false;
@@ -549,7 +553,7 @@ block headerAdditions
     
     function removeConfig()
     {
-      var configToRemove = theDoc.getElementById('configurations').value;
+      var configToRemove = $('#configurations').val();
       
       if(configToRemove == 'default')
       {
@@ -655,8 +659,7 @@ block headerAdditions
     {
       if(typeof now.SwitchConfigurationTo == 'function')
       {
-        var configSelect = $('#configurations')[0];
-        var config = configSelect.options[configSelect.selectedIndex].value;
+        var config = $('#configurations').val();
         now.SwitchConfigurationTo(config);
       }
     }
