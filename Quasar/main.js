@@ -421,8 +421,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
           switch(json_args.type)
           {
             case 'startNovad':
-              NovaCommon.StartNovad(false);
-              NovaCommon.nova.CheckConnection();
+              everyone.now.StartNovad();
               var response = {};
               response.id = clientId;
               response.type = 'response';
