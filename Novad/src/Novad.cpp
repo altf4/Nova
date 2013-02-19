@@ -86,8 +86,7 @@ Database *db;
 
 
 //HS Vars
-// TODO: Don't hard code this path. Might also be in NovaTrainer.
-string dhcpListFile = "/var/log/honeyd/ipList";
+string dhcpListFile;
 vector<string> haystackAddresses;
 vector<string> haystackDhcpAddresses;
 vector<string> whitelistIpAddresses;
@@ -115,7 +114,7 @@ namespace Nova
 
 int RunNovaD()
 {
-	Config::Inst();
+	dhcpListFile = Config::Inst()->GetIpListPath();
 	Logger::Inst();
 	HoneydConfiguration::Inst();
 
@@ -123,9 +122,6 @@ int RunNovaD()
 	{
 		exit(EXIT_FAILURE);
 	}
-
-	// Let the logger initialize before we have multiple threads going
-	Logger::Inst();
 
 	// Change our working folder into the config folder so our relative paths are correct
 	if(chdir(Config::Inst()->GetPathHome().c_str()) == -1)

@@ -449,6 +449,11 @@ ONLY_CLASSIFY_HONEYPOT_TRAFFIC 0
 CURRENT_CONFIG default
 
 ############################################
+# IPLIST_PATH
+############################################
+IPLIST_PATH /var/log/honeyd/ipList
+
+############################################
 # TLS Options
 ############################################
 # This will enable TLS between Pulsar and the client web browser
@@ -479,9 +484,6 @@ QUASAR_TETHER_TLS_PASSPHRASE toor
 
 TRAINING_DATA_PATH /config/training/data.txt
 
-
-
-
 ############################################
 # Quasar start/stop command options
 ############################################
@@ -501,6 +503,4 @@ COMMAND_STOP_HAYSTACK novacli stop haystack
 #COMMAND_STOP_NOVAD sudo stop novad
 #COMMAND_START_HAYSTACK sudo start haystack
 #COMMAND_STOP_HAYSTACK sudo stop haystack
-
-
 

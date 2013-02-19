@@ -305,7 +305,7 @@ void CaptureData(std::string captureFolder, std::string interface)
     	LOG(DEBUG, "Haystack appears up. Recording current state.", "");
     	string haystackFile = captureFolder + "/haystackIps.txt";
         haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathConfigHoneydHS());
-        haystackDhcpAddresses = Config::GetIpAddresses("/var/log/honeyd/ipList");
+        haystackDhcpAddresses = Config::GetIpAddresses(Config::Inst()->GetIpListPath());
 
         LOG(DEBUG, "Writing haystack IPs to file " + haystackFile, "");
         ofstream haystackIpStream(haystackFile);

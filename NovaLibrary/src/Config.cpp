@@ -92,6 +92,7 @@ string Config::m_prefixes[] =
 	"CLASSIFICATION_WEIGHTS",
 	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC",
 	"CURRENT_CONFIG",
+	"IPLIST_PATH",
 	"EMAIL_ALERTS_ENABLED",
 	"TRAINING_DATA_PATH",
 	"COMMAND_START_NOVAD",
@@ -181,7 +182,6 @@ void Config::LoadConfig()
 	LoadVersionFile();
 	LoadInterfaces();
 }
-
 
 vector<string> Config::GetPrefixes()
 {
@@ -873,6 +873,19 @@ void Config::LoadConfig_Internal()
 				}
 			}
 
+			// IPLIST_PATH
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_iplistPath = string(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+			}
+
 			// EMAIL_ALERTS_ENABLED
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -899,7 +912,6 @@ void Config::LoadConfig_Internal()
 				}
 			}
 
-
 			// COMMAND_START_NOVAD
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -925,7 +937,6 @@ void Config::LoadConfig_Internal()
 					isValid[prefixIndex] = true;
 				}
 			}
-
 
 			// COMMAND_START_HAYSTACK
 			prefixIndex++;
@@ -2345,6 +2356,16 @@ std::string Config::GetCommandStopHaystack()
 	return m_commandStopHaystack;
 }
 
+std::string Config::GetIpListPath()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_iplistPath;
+}
 
+void Config::SetIpListPath(string path)
+{
+	Lock lock(&m_lock, WRITE_LOCK);
+	m_iplistPath = path;
+}
 
 }

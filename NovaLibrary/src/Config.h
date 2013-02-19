@@ -149,6 +149,9 @@ public:
     void SetGroup(std::string group);
     bool SetCurrentConfig(std::string configName);
 
+    void SetIpListPath(std::string path);
+    std::string GetIpListPath();
+
     std::string GetLoggerPreferences();
     std::string GetSMTPAddr();
     std::string GetSMTPDomain();
@@ -302,6 +305,8 @@ private:
 	bool m_emailAlertsEnabled;
 
 	version m_version;
+
+	std::string m_iplistPath;
 
 	static std::string m_pathsFile;
 
