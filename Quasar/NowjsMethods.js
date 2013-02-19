@@ -723,9 +723,18 @@ everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, s
 
     autoconfig.on('exit', function (code, signal)
     {
-      console.log('signal is ' + signal);
       console.log("autoconfig exited with code " + code);
       var response = "autoconfig exited with code " + code;
+      try
+      {
+        if(fs.statSync(NovaHomePath + '/data/hhconfig.lock').isFile())
+        {
+          fs.unlinkSync(NovaHomePath + '/data/hhconfig.lock');
+        }
+      }
+      catch(err)
+      {
+      }
       if(typeof route == 'function' && signal != 'SIGTERM')
       {
         route("/honeydConfigManage", response);
@@ -734,6 +743,11 @@ everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, s
       {
         response = "autoconfig scan terminated early";
         route("/autoConfig", response);
+      }
+      else if(signal == 'SIGSEGV')
+      {
+        response = "autoconfig experienced a segmentation fault";
+        route("/honeydConfigManage", response);
       }
     });
 };
