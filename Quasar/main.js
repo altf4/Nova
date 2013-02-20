@@ -349,7 +349,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
   {
     client = new WebSocketClient();
   }
-  // TODO: Make configurable
+
   var clientId = NovaCommon.config.ReadSetting('MASTER_UI_CLIENT_ID');
   var reconnecting = false;
   var clearReconnect;
