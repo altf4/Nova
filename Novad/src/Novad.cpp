@@ -175,7 +175,6 @@ int RunNovaD()
 	whitelistNotifyFd = inotify_init();
 	if(whitelistNotifyFd > 0)
 	{
-		LOG(ERROR, string("WhiteListFilePath is ") + Config::Inst()->GetPathWhitelistFile(), "");
 		whitelistWatch = inotify_add_watch(whitelistNotifyFd, Config::Inst()->GetPathWhitelistFile().c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
 		pthread_create(&ipWhitelistUpdateThread, NULL, UpdateWhitelistIPFilter, NULL);
 		pthread_detach(ipWhitelistUpdateThread);
@@ -527,8 +526,6 @@ void StartCapture()
 		stringstream temp;
 		temp << ifList.size() << endl;
 
-		LOG(ERROR, string("ifList length is ") + temp.str(), "");
-
 		for(uint i = 0; i < ifList.size(); i++)
 		{
 			dropCounts.push_back(0);
@@ -539,9 +536,7 @@ void StartCapture()
 				cap->SetPacketCb(&Packet_Handler);
 				cap->Init();
 				string captureFilterString = ConstructFilterString(cap->GetIdentifier());
-				LOG(ERROR, string("Setting filter string to ") + captureFilterString, "");
 				cap->SetFilter(captureFilterString);
-				LOG(ERROR, string("Filter string compiled and set"), "");
 				cap->StartCapture();
 				cap->SetIdIndex(packetCaptures.size());
 				packetCaptures.push_back(cap);
