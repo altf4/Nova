@@ -38,15 +38,17 @@ block headerAdditions
         $('#createNewNodes').attr('disabled', true);
         $('#createNewNodes').attr('value', 'Please wait. Creating new nodes...');
         var ipType = $('#ipType').val();
-        var ip1 = $('#ip1').attr('value');
-        var ip2 = $('#ip2').attr('value');
-        var ip3 = $('#ip3').attr('value');
-        var ip4 = $('#ip4').attr('value');
+        var ip1 = $('#ip1').val();
+        var ip2 = $('#ip2').val();
+        var ip3 = $('#ip3').val();
+        var ip4 = $('#ip4').val();
         var portset = $('#portSetList').val();
         var vendor = $('#vendorList').val();
         var profile = $('#profile').val();
-        var count = $('#nodeCount').attr('value');
+        var count = $('#nodeCount').val();
         var interface = currentInterface;
+
+        console.log('ipType == ' + ipType);
 
         try
         {
@@ -210,7 +212,7 @@ block headerAdditions
     function checkOnlyOne(checkedBox)
     {
       var checkedBox = $('#' + checkedBox)[0];
-      var forLength = $('#length').attr('value');
+      var forLength = $('#length').val();
       
       var checkAgainst = checkedBox.getAttribute('id');
       
