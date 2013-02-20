@@ -1406,7 +1406,6 @@ wsServer.on('request', function(request)
 						break;
 				}
 			}
-      // TODO: Account for non-UTF8 here (really shouldn't be using it as the main encoding anyways)
       else
       {
       }
