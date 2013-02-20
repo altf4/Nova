@@ -345,8 +345,8 @@ script
 
   var renamePortset = function(){
     var oldName = $('#portSetSelection').val();
-    var newName = $('#newPortsetName').attr('value');
-    var profile = $('#name').attr('value');
+    var newName = $('#newPortsetName').val();
+    var profile = $('#name').val();
     if(newName.length == 0)
     {
       alert('Cannot rename portset to empty string!');
@@ -471,40 +471,40 @@ script
         var ethVendorList = [];
 
         profile.oldName = '#{oldName}';
-        profile.parentProfile = $('#parentName').attr('value');
-        profile.name = $('#name').attr('value');
+        profile.parentProfile = $('#parentName').val();
+        profile.name = $('#name').val();
 
-        profile.personality = $('#personality').attr('value');
-        profile.dropRate = $('#dropRate').attr('value');
+        profile.personality = $('#personality').val();
+        profile.dropRate = $('#dropRate').val();
 
-        var value = parseInt($('#uptimeMin').attr('value'));
+        var value = parseInt($('#uptimeMin').val());
         if(isNaN(value) || value < 0)
         {
           alert('Uptime min must be a positive integer!');
           return;
         }
 
-        profile.uptimeMin = $('#uptimeMin').attr('value');
+        profile.uptimeMin = $('#uptimeMin').val();
 
         if($('#uptimeType')[0].selectedIndex == 0)
         {
-          var value = parseInt($('#uptimeMin').attr('value'));
+          var value = parseInt($('#uptimeMin').val());
           if(isNaN(value) || value < 0)
           {
             alert('Uptime max must be a positive integer!');
             return;
           }
-          profile.uptimeMax = $('#uptimeMin').attr('value');
+          profile.uptimeMax = $('#uptimeMin').val();
         }
         else
         {
-          var value = parseInt($('#uptimeMax').attr('value'));
+          var value = parseInt($('#uptimeMax').val());
           if(isNaN(value) || value < 0)
           {
             alert('Uptime max must be a positive integer!');
             return;
           }
-          profile.uptimeMax = $('#uptimeMax').attr('value');
+          profile.uptimeMax = $('#uptimeMax').val();
         }
 
         profile.isPersonalityInherited = $('#inheritPersonality').checked;
