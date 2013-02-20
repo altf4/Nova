@@ -18,9 +18,6 @@
 
 var novaconfig = require('novaconfig.node');
 
-// TODO: Need to make fallback code, in case a connection
-// doesn't/can't accept websocket connections (for whatever reason)
-// Problem not a problem now, but definitely will be later
 var express = require('express');
 var nowjs = require('now');
 var fs = require('fs');
@@ -229,7 +226,6 @@ var hostileEvents = 0;
 // src files, etc.
 app.set('view options', { layout: false });
 app.set('views', __dirname + '/views');
-// TODO: Make port configurable
 var MASTER_UI_PORT = parseInt(config.ReadSetting("MASTER_UI_PORT"));
 app.listen(MASTER_UI_PORT);
 app.use(express.static(NovaSharedPath + '/Pulsar/www'));
@@ -1077,7 +1073,6 @@ var https = require('https');
 // Eventually we will want these options to include the
 // commented stanzas; the ca option will contain a list of 
 // trusted certs, and the other options do what they say
-// TODO: These paths will need to be relative to the NovaPath
 // or something Pulsar specific
 
 var options;
@@ -1113,7 +1108,6 @@ var httpsServer = https.createServer(options, function(request, response)
 // Have to have the websockets listen on a different port than the express
 // server, or else it'll catch all the messages that express is meant to get
 // and lead to some undesirable behavior
-// TODO: Make this port configurable
 httpsServer.listen((MASTER_UI_PORT + 1), function()
 {
 	console.log('Pulsar Server is listening on ' + (MASTER_UI_PORT + 1));
@@ -1159,12 +1153,10 @@ wsServer.on('request', function(request)
           // essentially binds their client id to the connection that has
           // has been created for future reference and connection management
 					case 'addId':
-						// TODO: Check that id doesn't exist before adding
 						for(var i in novaClients)
 						{
 						  if(i == json_args.id.toString() && novaClients[i].connection != null)
 						  {
-						    // TODO: test
 						    console.log('There is already a client connected with id ' + json_args.id);
 						    connection.close();
 						    return;
