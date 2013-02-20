@@ -53,7 +53,7 @@ public:
 
 	//Grabs a message off of the given socket and returns a pointer to it
 	//	ticket - Ticket object holding all the necessary conversation info to pop a new message
-	//	timeout - How long (in seconds) to wait for the message before giving up
+	//	timeout - How long (in seconds) to wait for incoming data before giving up
 	// Returns - A pointer to a valid Message object. Never NULL. Caller is responsible for life cycle of this message
 	//		On error, this function returns an ErrorMessage with the details of the error
 	//		IE: Returns ErrorMessage of type ERROR_TIMEOUT if timeout has been exceeded

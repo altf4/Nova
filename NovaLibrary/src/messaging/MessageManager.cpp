@@ -295,6 +295,12 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 		//If we don't yet have enough data, then just quit and wait for more
 		if(evbufferLength < length)
 		{
+			MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
+			ErrorMessage *keepAlive = new ErrorMessage(ERROR_KEEP_WAITING);
+			if(!endpoint.m_endpoint->PushMessage(keepAlive))
+			{
+				LOG(DEBUG, "Discarding message. Error in pushing it to a queue.", "");
+			}
 			keepGoing = false;
 			continue;
 		}
