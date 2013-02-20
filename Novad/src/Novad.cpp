@@ -172,11 +172,12 @@ int RunNovaD()
 
 	LoadStateFile();
 
-	whitelistNotifyFd = inotify_init ();
+	whitelistNotifyFd = inotify_init();
 	if(whitelistNotifyFd > 0)
 	{
-		whitelistWatch = inotify_add_watch (whitelistNotifyFd, Config::Inst()->GetPathWhitelistFile().c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
-		pthread_create(&ipWhitelistUpdateThread, NULL, UpdateWhitelistIPFilter,NULL);
+		LOG(ERROR, string("WhiteListFilePath is ") + Config::Inst()->GetPathWhitelistFile(), "");
+		whitelistWatch = inotify_add_watch(whitelistNotifyFd, Config::Inst()->GetPathWhitelistFile().c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
+		pthread_create(&ipWhitelistUpdateThread, NULL, UpdateWhitelistIPFilter, NULL);
 		pthread_detach(ipWhitelistUpdateThread);
 	}
 	else
@@ -488,7 +489,8 @@ void StartCapture()
 	//If we're reading from a packet capture file
 	if(Config::Inst()->GetReadPcap())
 	{
-		try {
+		try
+		{
 			LOG(DEBUG, "Loading pcap file", "");
 			string pcapFilePath = Config::Inst()->GetPathPcapFile() + "/capture.pcap";
 			string ipAddressFile = Config::Inst()->GetPathPcapFile() + "/localIps.txt";
@@ -522,16 +524,24 @@ void StartCapture()
 
 		//trainingFileStream = pcap_dump_open(handles[0], trainingCapFile.c_str());
 
+		stringstream temp;
+		temp << ifList.size() << endl;
+
+		LOG(ERROR, string("ifList length is ") + temp.str(), "");
+
 		for(uint i = 0; i < ifList.size(); i++)
 		{
 			dropCounts.push_back(0);
 			InterfacePacketCapture *cap = new InterfacePacketCapture(ifList[i].c_str());
 
-			try {
+			try
+			{
 				cap->SetPacketCb(&Packet_Handler);
 				cap->Init();
 				string captureFilterString = ConstructFilterString(cap->GetIdentifier());
+				LOG(ERROR, string("Setting filter string to ") + captureFilterString, "");
 				cap->SetFilter(captureFilterString);
+				LOG(ERROR, string("Filter string compiled and set"), "");
 				cap->StartCapture();
 				cap->SetIdIndex(packetCaptures.size());
 				packetCaptures.push_back(cap);

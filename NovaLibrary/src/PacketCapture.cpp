@@ -49,13 +49,13 @@ void PacketCapture::SetPacketCb(void (*cb)(unsigned char *index, const struct pc
 
 void PacketCapture::SetFilter(string filter)
 {
-	if (m_handle == NULL)
+	if(m_handle == NULL)
 	{
+		LOG(ERROR, "m_handle is NULL, returning", "");
 		return;
 	}
 
 	struct bpf_program fp;
-
 
 	if(pcap_compile(m_handle, &fp, filter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1)
 	{

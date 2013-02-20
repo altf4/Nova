@@ -370,7 +370,6 @@ everyone.now.deleteProfiles = function (profileNames, cb)
             return;
         }
 
-
         if (!NovaCommon.honeydConfig.SaveAll())
         {
             cb(false, "Failed to save XML templates");
@@ -381,14 +380,16 @@ everyone.now.deleteProfiles = function (profileNames, cb)
     cb(true, "");
 };
 
-everyone.now.addWhitelistEntry = function (ethinterface, entry, cb)
+everyone.now.addWhitelistEntry = function(ethinterface, entry, cb)
 {
     // TODO: Input validation. Should be IP address or 'IP/netmask'
     // Should also be sanitized for newlines/trailing whitespace
-    if (NovaCommon.whitelistConfig.AddEntry(ethinterface + "," + entry))
+    if(NovaCommon.whitelistConfig.AddEntry(ethinterface + "," + entry))
     {
         cb(true, "");
-    } else {
+    }
+    else
+    {
         cb(true, "Attempt to add whitelist entry failed");
     }
 };

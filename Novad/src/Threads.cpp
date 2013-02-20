@@ -233,7 +233,8 @@ void *UpdateWhitelistIPFilter(void *ptr)
 					Lock lock(&packetCapturesLock);
 					for(uint i = 0; i < packetCaptures.size(); i++)
 					{
-						try {
+						try
+						{
 							string captureFilterString = ConstructFilterString(packetCaptures.at(i)->GetIdentifier());
 							packetCaptures.at(i)->SetFilter(captureFilterString);
 						}
@@ -248,16 +249,23 @@ void *UpdateWhitelistIPFilter(void *ptr)
 				// Clear any suspects that were whitelisted from the GUIs
 				/*
 				 * TODO: Fix this. Disabled during switch to SuspectIdentifier objects instead of IPs for suspect references
+				 * */
+				vector<SuspectIdentifier> all = suspects.GetAllKeys();
 				for(uint i = 0; i < whitelistIpAddresses.size(); i++)
 				{
-					if(suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str())))
+					LOG(ERROR, string("in whitelistIpAddresses for loop with ") + whitelistIpAddresses.at(i), "");
+					uint32_t whitelistInt = inet_addr(whitelistIpAddresses.at(i).c_str());
+					for(uint j = 0; j < all.size(); j++)
 					{
-						UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
-						msg->m_IPAddress = inet_addr(whitelistIpAddresses.at(i).c_str());
-						NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
+						if(whitelistInt == all[j].m_ip && suspects.Erase(all[j]))
+						{
+							LOG(ERROR, "Sending UpdateMessage, calling NotifyUIs", "");
+							UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
+							msg->m_IPAddress = all[j];
+							NotifyUIs(msg, UPDATE_SUSPECT_CLEARED_ACK, -1);
+						}
 					}
 				}
-				*/
 			}
 		}
 		else
