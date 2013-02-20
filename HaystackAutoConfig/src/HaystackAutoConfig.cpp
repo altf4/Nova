@@ -1212,8 +1212,7 @@ bool Nova::CheckSubnet(vector<string> &hostAddrStrings, string matchStr)
 
 int Nova::GetNumberOfIPsInRange(string ipRange)
 {
-	// TODO: Extend this method to take into account a comma-separated list of ranges
-	// i.e. "10.10.1.0-11.10.10.0,11.10.11.0-12.10.0.0"
+	
 	uint conditional = ipRange.find(',');
 	if(conditional == ipRange.npos)
 	{
