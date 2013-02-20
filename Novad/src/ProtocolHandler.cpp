@@ -309,10 +309,6 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 			RequestMessage connectReply(REQUEST_PONG);
 			MessageManager::Instance().WriteMessage(ticket, &connectReply);
 
-			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
-			//LOG(DEBUG, "Got a Ping from UI. We're alive!",
-			//	"Got a CONTROL_PING, sent a PONG.");
-
 			break;
 		}
 		default:
