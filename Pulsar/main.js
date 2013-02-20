@@ -1647,7 +1647,6 @@ app.get('/schedule', passport.authenticate('basic', {session: false}), function(
 });
 
 app.get('/listschedule', passport.authenticate('basic', {session: false}), function(req, res){
-  // TODO: Put the actual listschedule.jade file here
   res.render('listschedule.jade', {locals:{
     CLIENTS: getClients()
     , GROUPS: getGroups()
