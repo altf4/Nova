@@ -1173,7 +1173,6 @@ app.post('/importCaptureSave', function (req, res)
         }
     }
 
-    // TODO: Don't hard code this path
     if (!trainingDump.SaveToDb(NovaHomePath + "/config/training/training.db"))
     {
         RenderError(res, "Unable to save to training db");
