@@ -64,7 +64,6 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 	{
 		case CONTROL_EXIT_REQUEST:
 		{
-			//TODO: Check for any reason why might not want to exit
 			ControlMessage exitReply(CONTROL_EXIT_REPLY);
 			exitReply.m_success = true;
 
@@ -149,15 +148,11 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 		{
 			if(strlen(controlMessage.m_filePath) == 0)
 			{
-				//TODO: possibly make a logger call here for incorrect file name, probably need to check name in a more
-				// comprehensive way. This may not be needed, as I can't see a way for execution to get here,
-				// but better safe than sorry
 				suspects.SaveSuspectsToFile(string("save.txt")); //TODO: Should check for errors here and return results
 			}
 			else
 			{
 				suspects.SaveSuspectsToFile(string(controlMessage.m_filePath));
-				//TODO: Should check for errors here and return result
 			}
 
 			ControlMessage saveSuspectsReply(CONTROL_SAVE_SUSPECTS_REPLY);
@@ -170,7 +165,7 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 		}
 		case CONTROL_RECLASSIFY_ALL_REQUEST:
 		{
-			Reload(); //TODO: Should check for errors here and return result
+			Reload();
 
 			ControlMessage reclassifyAllReply(CONTROL_RECLASSIFY_ALL_REPLY);
 			reclassifyAllReply.m_success = true;
@@ -308,10 +303,6 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 		{
 			RequestMessage connectReply(REQUEST_PONG);
 			MessageManager::Instance().WriteMessage(ticket, &connectReply);
-
-			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
-			//LOG(DEBUG, "Got a Ping from UI. We're alive!",
-			//	"Got a CONTROL_PING, sent a PONG.");
 
 			break;
 		}
