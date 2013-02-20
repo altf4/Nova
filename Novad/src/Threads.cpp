@@ -249,7 +249,7 @@ void *UpdateWhitelistIPFilter(void *ptr)
 				// Clear any suspects that were whitelisted from the GUIs
 				/*
 				 * TODO: Fix this. Disabled during switch to SuspectIdentifier objects instead of IPs for suspect references
-				 * */
+				 *
 				vector<SuspectIdentifier> all = suspects.GetAllKeys();
 				for(uint i = 0; i < whitelistIpAddresses.size(); i++)
 				{
@@ -265,7 +265,7 @@ void *UpdateWhitelistIPFilter(void *ptr)
 							NotifyUIs(msg, UPDATE_SUSPECT_CLEARED_ACK, -1);
 						}
 					}
-				}
+				}*/
 			}
 		}
 		else
