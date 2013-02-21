@@ -43,6 +43,7 @@ bool StartHaystack(bool blocking)
 
 	ss << " -p " << "\"" << Config::Inst()->GetPathShared();
 	ss << "/nmap-os-db\" -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
+	ss << " -m \"" << Config::Inst()->GetPathShared() << "/nmap-mac-prefixes\"";
 
 	if (blocking)
 	{

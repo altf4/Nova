@@ -631,7 +631,8 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 string ConstructFilterString(string captureIdentifier)
 {
 	string filterString = "not src net 0.0.0.0";
-	if(Config::Inst()->GetCustomPcapString() != "") {
+	if(Config::Inst()->GetCustomPcapString() != "")
+	{
 		if(Config::Inst()->GetOverridePcapString())
 		{
 			filterString = Config::Inst()->GetCustomPcapString();
@@ -721,7 +722,7 @@ string ConstructFilterString(string captureIdentifier)
 		filterString += ")";
 	}
 
-	LOG(DEBUG, "Pcap filter string is "+filterString,"");
+	LOG(DEBUG, "Pcap filter string is \"" + filterString + "\"","");
 	return filterString;
 }
 
