@@ -48,6 +48,9 @@
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
 
+// ***DEBUG***
+#include <arpa/inet.h>
+
 using namespace std;
 using namespace Nova;
 
@@ -217,7 +220,7 @@ void *UpdateWhitelistIPFilter(void *ptr)
 	{
 		if(whitelistWatch > 0)
 		{
-			int BUF_LEN = (1024 *(sizeof(struct inotify_event)) + 16);
+			int BUF_LEN = (1024 * (sizeof(struct inotify_event)) + 16);
 			char buf[BUF_LEN];
 
 			// Blocking call, only moves on when the kernel notifies it that file has been changed
@@ -247,25 +250,27 @@ void *UpdateWhitelistIPFilter(void *ptr)
 
 
 				// Clear any suspects that were whitelisted from the GUIs
-				/*
-				 * TODO: Fix this. Disabled during switch to SuspectIdentifier objects instead of IPs for suspect references
-				 *
 				vector<SuspectIdentifier> all = suspects.GetAllKeys();
 				for(uint i = 0; i < whitelistIpAddresses.size(); i++)
 				{
-					LOG(ERROR, string("in whitelistIpAddresses for loop with ") + whitelistIpAddresses.at(i), "");
-					uint32_t whitelistInt = inet_addr(whitelistIpAddresses.at(i).c_str());
+					struct sockaddr_in doop;
+					uint32_t splitDex = whitelistIpAddresses.at(i).find_first_of(",");
+					string whitelistUse = whitelistIpAddresses.at(i).substr(splitDex + 1);
+
+					char str[INET_ADDRSTRLEN];
 					for(uint j = 0; j < all.size(); j++)
 					{
-						if(whitelistInt == all[j].m_ip && suspects.Erase(all[j]))
+						doop.sin_addr.s_addr = ntohl(all[j].m_ip);
+						inet_ntop(AF_INET, &(doop.sin_addr), str, INET_ADDRSTRLEN);
+
+						if(!whitelistUse.compare(string(str)) && suspects.Erase(all[j]))
 						{
-							LOG(ERROR, "Sending UpdateMessage, calling NotifyUIs", "");
 							UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
 							msg->m_IPAddress = all[j];
 							NotifyUIs(msg, UPDATE_SUSPECT_CLEARED_ACK, -1);
 						}
 					}
-				}*/
+				}
 			}
 		}
 		else

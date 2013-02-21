@@ -365,11 +365,6 @@ void NotifyUIs(UpdateMessage *updateMessage, enum UpdateType ackType, int socket
 		return;
 	}
 
-	stringstream temp;
-	temp << updateMessage->m_IPAddress.m_ip;
-
-	LOG(ERROR, string("In NotifyUIs, IP_Address is ") + temp.str(), "");
-
 	struct UI_NotificationPackage *args = new UI_NotificationPackage();
 	args->m_updateMessage = updateMessage;
 	args->m_ackType = ackType;

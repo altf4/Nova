@@ -2080,13 +2080,13 @@ var distributeAllSuspectsCleared = function ()
 
 var distributeSuspectCleared = function (suspect)
 {
-    var s = new Object;
+    //var s = new Object;
     
-    s['interface'] = suspect.GetInterface();
-    s['ip'] = suspect.GetIpString();
-    s['idString'] = suspect.GetIdString();
+    //s['interface'] = suspect.GetInterface();
+    //s['ip'] = suspect.GetIpString();
+    //s['idString'] = suspect.GetIdString();
     
-    everyone.now.SuspectCleared(s);
+    //everyone.now.SuspectCleared(s);
 }
 
 NovaCommon.nova.registerOnAllSuspectsCleared(distributeAllSuspectsCleared);
