@@ -123,10 +123,6 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 				LOG(DEBUG, "Failed to Erase suspect from the unsaved suspect table.", "");
 			}
 
-
-			//RefreshStateFile();
-
-			//TODO: Should check for errors here and return result
 			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY);
 			clearSuspectReply.m_success = true;
 			MessageManager::Instance().WriteMessage(ticket, &clearSuspectReply);
