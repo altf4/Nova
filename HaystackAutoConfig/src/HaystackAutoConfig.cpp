@@ -619,7 +619,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 							{
 								if(!newPortSet->SetTCPBehavior(defaultBehavior))
 								{
-									//TODO: ERROR
+									LOG(WARNING, string("SetTCPBehavoir with defaultBehavior \"") + defaultBehavior + string("\" for newPortSet failed"), "");
 								}
 								continue;
 							}
