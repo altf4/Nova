@@ -1308,14 +1308,28 @@ wsServer.on('request', function(request)
 				  // configuration files. 
 					case 'registerConfig':
 						console.log('Nova Configuration received from ' + json_args.id);
-						// TODO: Check for existing client to add new file association to, extend the .file 
-						//       part of the push object literal
 						var push = {};
 						push.client = json_args.id;
 						push.file = (NovaHomePath + '/config/Pulsar/ClientConfigs/' + json_args.filename);
-						fileAssociations.push(push);
-						fs.writeFileSync(push.file, json_args.file);
-						console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);
+						if(novaClients[json_args.id] == undefined)
+						{
+						  fileAssociations.push(push);
+              fs.writeFileSync(push.file, json_args.file);
+              console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);   
+						}
+            else
+            {
+              for(var i in fileAssociations)
+              {
+                if(fileAssociations[i].client == push.client)
+                {
+                  fs.unlinkSync(fileAssociations[i].file);
+                  fileAssociations[i].file = push.file;
+                  fs.writeFileSync(push.file, json_args.file);
+                  break;
+                }
+              }
+            }
 						break;
 				  // Rather than just query the client whenever a list of interfaces is needed (like for the haystack
 				  // autoconfig tool) I opted to have the client register a file containing a list of their interfaces.
