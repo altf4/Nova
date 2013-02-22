@@ -148,7 +148,7 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 		{
 			if(strlen(controlMessage.m_filePath) == 0)
 			{
-				suspects.SaveSuspectsToFile(string("save.txt")); //TODO: Should check for errors here and return results
+				suspects.SaveSuspectsToFile(string("save.txt"));
 			}
 			else
 			{
