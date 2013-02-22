@@ -52,6 +52,7 @@ string Config::m_pathPrefix = "";
 string Config::m_prefixes[] =
 {
 	"INTERFACE",
+	"KNN_NORMALIZATION",
 	"HS_HONEYD_CONFIG",
 	"READ_PCAP",
 	"PCAP_FILE",
@@ -238,6 +239,35 @@ void Config::LoadConfig_Internal()
 					isValid[prefixIndex] = true;
 				}
 
+				continue;
+			}
+
+			// KNN_NORMALIZATION
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					vector<string> temp;
+					boost::split(temp, line, boost::is_any_of(","));
+					for(uint i = 0; i < temp.size(); i++)
+					{
+						switch(temp[i].at(0))
+						{
+							case '0':m_normalization.push_back(NormalizationType::NONORM);
+									 break;
+							case '1':m_normalization.push_back(NormalizationType::LINEAR);
+									 break;
+							case '2':m_normalization.push_back(NormalizationType::LINEAR_SHIFT);
+									 break;
+							case '3':m_normalization.push_back(NormalizationType::LOGARITHMIC);
+									 break;
+						}
+					}
+					isValid[prefixIndex] = true;
+				}
 				continue;
 			}
 
@@ -2366,6 +2396,12 @@ void Config::SetIpListPath(string path)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_iplistPath = path;
+}
+
+vector<NormalizationType> Config::GetNormalizationFunctions()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_normalization;
 }
 
 }
