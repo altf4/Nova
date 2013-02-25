@@ -20,24 +20,25 @@
 #include "SuspectTable.h"
 #include "Suspect.h"
 
-/*
-
 // The fixture for testing class SuspectTable.
 class SuspectTableTest : public ::testing::Test, public SuspectTable {
 protected:
 	SuspectTable table;
 	Suspect *s1, *s2;
+	SuspectIdentifier id1, id2;
 
 	SuspectTableTest() {}
 
 	void InitSuspects()
 	{
+		id1 = SuspectIdentifier(1, "ethFoo");
 		s1 = new Suspect();
-		s1->SetIpAddress(1);
+		s1->SetIdentifier(id1);
 		s1->SetIsHostile(false);
 
+		id2 = SuspectIdentifier(2, "ethFoo");
 		s2 = new Suspect();
-		s2->SetIpAddress(2);
+		s2->SetIdentifier(id2);
 		s2->SetIsHostile(true);
 
 		table.AddNewSuspect(s1);
@@ -65,10 +66,10 @@ TEST_F(SuspectTableTest, GetKeys) {
 	vector<Nova::SuspectIdentifier> badKeys = table.GetKeys_of_HostileSuspects();
 
 	EXPECT_EQ((uint)1, goodKeys.size());
-	EXPECT_EQ((uint)1, goodKeys.at(0));
+	EXPECT_EQ((uint)1, goodKeys.at(0).m_ip);
 
 	EXPECT_EQ((uint)1, badKeys.size());
-	EXPECT_EQ((uint)2, badKeys.at(0));
+	EXPECT_EQ((uint)2, badKeys.at(0).m_ip);
 }
 
 
@@ -87,10 +88,9 @@ TEST_F(SuspectTableTest, IsValidKey) {
 	EXPECT_FALSE(table.IsValidKey(id));
 	id.m_ip = 42;
 	EXPECT_FALSE(table.IsValidKey(id));
-	id.m_ip = 1;
-	EXPECT_TRUE(table.IsValidKey(id));
-	id.m_ip = 2;
-	EXPECT_TRUE(table.IsValidKey(id));
+
+	EXPECT_TRUE(table.IsValidKey(id1));
+	EXPECT_TRUE(table.IsValidKey(id2));
 }
 
 TEST_F(SuspectTableTest, Erase) {
@@ -101,12 +101,7 @@ TEST_F(SuspectTableTest, Erase) {
 
 	InitSuspects();
 	EXPECT_FALSE(table.Erase(id));
-
-	//EXPECT_EQ(SUSPECT_NOT_CHECKED_OUT , table.Erase(1));
-	//table.CheckOut(1);
-
-	id.m_ip = 1;
-	EXPECT_TRUE(table.Erase(id.m_ip));
+	EXPECT_TRUE(table.Erase(id1));
 }
 
 
@@ -119,8 +114,7 @@ TEST_F(SuspectTableTest, CheckInAndOut) {
 	EXPECT_EQ(SUSPECT_KEY_INVALID, table.CheckIn(s));
 
 	// Test for proper result on an empty table
-	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.CheckOut((uint64_t)42).GetIpAddress());
-	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.CheckOut((in_addr_t)42).GetIpAddress());
+	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.CheckOut(SuspectIdentifier(42, "ethFoo")).GetIpAddress());
 
 	// Check in a suspect that wasn't in the table
 	EXPECT_EQ(SUSPECT_KEY_INVALID, table.CheckIn(s));
@@ -128,12 +122,11 @@ TEST_F(SuspectTableTest, CheckInAndOut) {
 	InitSuspects();
 
 	// Make sure invalid keys still fail
-	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.CheckOut((uint64_t)42).GetIpAddress());
-	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.CheckOut((in_addr_t)42).GetIpAddress());
+	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.CheckOut(SuspectIdentifier(42, "ethFoo")).GetIpAddress());
 
 	// Check some suspects out
-	Suspect checkedOutS1 = table.CheckOut((in_addr_t)1);
-	Suspect checkedOutS2 = table.CheckOut((in_addr_t)2);
+	Suspect checkedOutS1 = table.CheckOut(id1);
+	Suspect checkedOutS2 = table.CheckOut(id2);
 	EXPECT_EQ(s1->GetIpAddress(), checkedOutS1.GetIpAddress());
 	EXPECT_EQ(s2->GetIpAddress(), checkedOutS2.GetIpAddress());
 
@@ -153,15 +146,14 @@ TEST_F(SuspectTableTest, CheckInAndOut) {
 
 }
 
-// TODO: Enable this test again when ticket
+
 TEST_F(SuspectTableTest, GetSuspect) {
 	// Test for proper result on an empty table
-	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.GetSuspect(42).GetIpAddress());
+	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.GetSuspect(SuspectIdentifier(42, "ethFoo")).GetIpAddress());
 
 	InitSuspects();
-	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.GetSuspect(42).GetIpAddress());
-	EXPECT_EQ((uint)1, table.GetSuspect(1).GetIpAddress());
-	EXPECT_EQ((uint)2, table.GetSuspect(2).GetIpAddress());
+	EXPECT_EQ(table.m_emptySuspect.GetIpAddress(), table.GetSuspect(SuspectIdentifier(42, "ethFoo")).GetIpAddress());
+	EXPECT_EQ((uint)1, table.GetSuspect(id1).GetIpAddress());
+	EXPECT_EQ((uint)2, table.GetSuspect(id2).GetIpAddress());
 }
 
-*/
