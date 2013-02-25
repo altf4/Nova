@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : TODO: Place a description here
+// Description : Wrapper for adding entries to the SQL database
 //============================================================================
 
 #include "Config.h"
