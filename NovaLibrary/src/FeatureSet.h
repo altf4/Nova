@@ -105,8 +105,7 @@ namespace std
 {
 	template<>
 	struct hash< IpPortCombination > {
-		// TODO: This should be passed by reference, doesn't compile though. Look into it.
-		std::size_t operator()( IpPortCombination c ) const
+		std::size_t operator()( const IpPortCombination &c ) const
 		{
 			uint32_t a = c.m_ip;
 

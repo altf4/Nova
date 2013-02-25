@@ -34,9 +34,7 @@ namespace std
 	template<>
 	struct hash< Nova::SuspectIdentifier >
 	{
-		// TODO: This should be passed by reference, doesn't compile though. Look into it.
-		//std::size_t operator()( Nova::SuspectIdentifier &c ) const
-		std::size_t operator()( Nova::SuspectIdentifier c ) const
+		std::size_t operator()( const Nova::SuspectIdentifier &c ) const
 		{
 			return hash<uint32_t>()(c.m_ip);
 		}
