@@ -71,9 +71,7 @@ block content
       //br
       br
       
-      
-      a(href='javascript:void(0)', onclick='document.getElementById("advancedFiltering").style.display="block";')
-        p Advanced Filtering Options
+      button(onclick='toggleAdvancedFilter()') Advanced Filtering Options
       div#advancedFiltering(style='display: none;')
         br
         p Filter by IP (supports standard regular expressions. Example: '192\.168\.10\..*|192\.168\.3\..*')
@@ -162,6 +160,19 @@ block headerAdditions
       return ret;
     }
     
+    function toggleAdvancedFilter()
+    {
+      var af = $('#advancedFiltering');
+      if(af.css('display') == 'none')
+      {
+        af.css('display', 'block');
+      }
+      else
+      {
+        af.css('display', 'none');
+      }
+    }
+    
     function Init() {
       var gridStructure = new Array();
       gridStructure.push({name: 'Address'});
@@ -177,7 +188,7 @@ block headerAdditions
       suspectGrid.SetRowsPerPage(100);
       suspectGrid.SetRenderCallback(onGridRendered);
 
-      theDoc.getElementById('suspectTable').innerHTML = suspectGrid.GetTable();
+      $('#suspectTable').html(suspectGrid.GetTable());
       
       now.GetHostileSuspects();
       

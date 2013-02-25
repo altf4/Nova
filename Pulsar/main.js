@@ -233,12 +233,6 @@ app.use(express.static(NovaSharedPath + '/Pulsar/www'));
 // Initialize nowjs to listen to our express server
 var everyone = nowjs.initialize(app);
 
-// TODO: For each of the cases below, there will be code to ensure
-// that any relevant state data is saved s.t. upon Pulsar 
-// coming back up, it's state will be as it was when it died
-// Specifically, we want to save the list of the found suspects, as well
-// as their suspectGrid data. Almost everything else that would need to be
-// saved already should be. 
 process.on('SIGTERM', function(){
   console.log('SIGTERM recieved');
   cleanUI(function(){
