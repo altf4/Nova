@@ -564,14 +564,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 
 						if(!vendorString.empty())
 						{
-							try
-							{
-								newHost->AddVendor(vendorString);
-							}
-							catch(emptyKeyException &e)
-							{
-								LOG(ERROR,("Couldn't determine MAC vendor type for local machine"), "");
-							}
+							newHost->AddVendor(vendorString);
 						}
 					}
 				}
