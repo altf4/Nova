@@ -1663,7 +1663,6 @@ app.post('/customizeTrainingSave', function (req, res)
 
 app.post('/configureNovaSave', function (req, res)
 {
-    // TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
     var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
     "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
     "K", "EPS", "CLASSIFICATION_THRESHOLD", "DOPPELGANGER_IP", 
