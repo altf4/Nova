@@ -255,7 +255,6 @@ install-pcap-debug:
 	install Installer/miscFiles/sudoers_nova_debug "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 
 install-docs:
-	# TODO: Combine man pages
 	gzip -c Installer/miscFiles/manpages/novad.1 > Installer/miscFiles/manpages/novad.1.gz
 	gzip -c Installer/miscFiles/manpages/novacli.1 > Installer/miscFiles/manpages/novacli.1.gz
 	gzip -c Installer/miscFiles/manpages/quasar.1 > Installer/miscFiles/manpages/quasar.1.gz
