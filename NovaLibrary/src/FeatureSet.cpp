@@ -385,25 +385,21 @@ void FeatureSet::UpdateEvidence(const Evidence &evidence)
 		case 17:
 		{
 			m_udpPacketCount++;
-			// TODO: This is bad. We should be able to handle port 0 (currently empty key)
-			if(evidence.m_evidencePacket.dst_port != 0)
-			{
-				m_PortUDPTable[evidence.m_evidencePacket.dst_port]++;
+			m_PortUDPTable[evidence.m_evidencePacket.dst_port]++;
 
-				IpPortCombination t;
-				t.m_ip = evidence.m_evidencePacket.ip_dst;
-				t.m_port = evidence.m_evidencePacket.dst_port;
-				if (!m_hasUdpPortIpBeenContacted.keyExists(t))
+			IpPortCombination t;
+			t.m_ip = evidence.m_evidencePacket.ip_dst;
+			t.m_port = evidence.m_evidencePacket.dst_port;
+			if (!m_hasUdpPortIpBeenContacted.keyExists(t))
+			{
+				m_hasUdpPortIpBeenContacted[t] = true;
+				if (m_udpPortsContactedForIP.keyExists(t.m_ip))
 				{
-					m_hasUdpPortIpBeenContacted[t] = true;
-					if (m_udpPortsContactedForIP.keyExists(t.m_ip))
-					{
-						m_udpPortsContactedForIP[t.m_ip]++;
-					}
-					else
-					{
-						m_udpPortsContactedForIP[t.m_ip] = 1;
-					}
+					m_udpPortsContactedForIP[t.m_ip]++;
+				}
+				else
+				{
+					m_udpPortsContactedForIP[t.m_ip] = 1;
 				}
 			}
 
@@ -422,24 +418,21 @@ void FeatureSet::UpdateEvidence(const Evidence &evidence)
 			{
 				m_IPTable[evidence.m_evidencePacket.ip_dst]++;
 
-				if(evidence.m_evidencePacket.dst_port != 0)
-				{
-					m_PortTCPTable[evidence.m_evidencePacket.dst_port]++;
+				m_PortTCPTable[evidence.m_evidencePacket.dst_port]++;
 
-					IpPortCombination t;
-					t.m_ip = evidence.m_evidencePacket.ip_dst;
-					t.m_port = evidence.m_evidencePacket.dst_port;
-					if (!m_hasTcpPortIpBeenContacted.keyExists(t))
+				IpPortCombination t;
+				t.m_ip = evidence.m_evidencePacket.ip_dst;
+				t.m_port = evidence.m_evidencePacket.dst_port;
+				if (!m_hasTcpPortIpBeenContacted.keyExists(t))
+				{
+					m_hasTcpPortIpBeenContacted[t] = true;
+					if (m_tcpPortsContactedForIP.keyExists(t.m_ip))
 					{
-						m_hasTcpPortIpBeenContacted[t] = true;
-						if (m_tcpPortsContactedForIP.keyExists(t.m_ip))
-						{
-							m_tcpPortsContactedForIP[t.m_ip]++;
-						}
-						else
-						{
-							m_tcpPortsContactedForIP[t.m_ip] = 1;
-						}
+						m_tcpPortsContactedForIP[t.m_ip]++;
+					}
+					else
+					{
+						m_tcpPortsContactedForIP[t.m_ip] = 1;
 					}
 				}
 			}
@@ -643,18 +636,16 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 	SerializeChunk(buf, &offset, (char*)&m_otherPacketCount, sizeof m_otherPacketCount, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_numberOfHaystackNodesContacted, sizeof m_numberOfHaystackNodesContacted, bufferSize);
 
-	SerializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, &offset, m_packTable, 0, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_IPTable, 0, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_HaystackIPTable, 0, bufferSize);
-	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortTCPTable, 0, bufferSize);
-	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortUDPTable, 0, bufferSize);
+	SerializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, &offset, m_packTable, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_IPTable, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_HaystackIPTable, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortTCPTable, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortUDPTable, bufferSize);
 
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_tcpPortsContactedForIP, 0, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_udpPortsContactedForIP, 0, bufferSize);
-	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted,
-			IpPortCombination::GetEmptyKey(), bufferSize);
-	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted,
-			IpPortCombination::GetEmptyKey(), bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_tcpPortsContactedForIP, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_udpPortsContactedForIP, bufferSize);
+	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted, bufferSize);
+	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted,bufferSize);
 
 	return offset;
 }
@@ -682,17 +673,15 @@ uint32_t FeatureSet::GetFeatureDataLength()
 			+ sizeof m_otherPacketCount
 			+ sizeof m_numberOfHaystackNodesContacted;
 
-	out += GetSerializeHashTableLength<Packet_Table, uint16_t, uint64_t> (m_packTable, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t>     (m_IPTable, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t>     (m_HaystackIPTable, 0);
-	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint64_t>  (m_PortTCPTable, 0);
-	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint64_t>  (m_PortUDPTable, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_tcpPortsContactedForIP, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_udpPortsContactedForIP, 0);
-	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (
-			m_hasTcpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
-	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (
-			m_hasUdpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
+	out += GetSerializeHashTableLength<Packet_Table, uint16_t, uint64_t> (m_packTable);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t>     (m_IPTable);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t>     (m_HaystackIPTable);
+	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint64_t>  (m_PortTCPTable);
+	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint64_t>  (m_PortUDPTable);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_tcpPortsContactedForIP);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_udpPortsContactedForIP);
+	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (m_hasTcpPortIpBeenContacted);
+	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (m_hasUdpPortIpBeenContacted);
 
 	return out;
 }

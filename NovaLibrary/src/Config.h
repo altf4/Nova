@@ -49,6 +49,13 @@ enum CLASSIFIER_MODES {
 	CLASSIFIER_BENIGN_OVERRIDE
 };
 
+enum NormalizationType {
+	NONORM, 		// Does no data normalization. Feature must already be in a range from 0 to 1
+	LINEAR,			// Simple linear normalization by dividing data by the max
+	LINEAR_SHIFT, 	// Shifts min value to 0 before doing linear normalization
+	LOGARITHMIC		// Logarithmic normalization, larger outlier value will have less of an effect
+};
+
 class Config
 {
 
@@ -149,6 +156,9 @@ public:
     void SetGroup(std::string group);
     bool SetCurrentConfig(std::string configName);
 
+    void SetIpListPath(std::string path);
+    std::string GetIpListPath();
+
     std::string GetLoggerPreferences();
     std::string GetSMTPAddr();
     std::string GetSMTPDomain();
@@ -245,6 +255,8 @@ public:
 	std::string GetCommandStartHaystack();
 	std::string GetCommandStopHaystack();
 
+	vector<NormalizationType> GetNormalizationFunctions();
+
 protected:
 	Config();
 
@@ -303,7 +315,11 @@ private:
 
 	version m_version;
 
+	std::string m_iplistPath;
+
 	static std::string m_pathsFile;
+
+	vector<NormalizationType> m_normalization;
 
 	// the SMTP server domain name for display purposes
 	std::string m_SMTPDomain;

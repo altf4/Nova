@@ -16,9 +16,9 @@
 extends layout
 
 block headerAdditions
-  link(rel="stylesheet", name="text/css", href="configstyle.css", media="screen")
+  link(rel='stylesheet', name='text/css', href='configstyle.css', media='screen')
   script
-    alert("Warning! These are advanced configuration options for experienced users.");
+    alert('Warning! These are advanced configuration options for experienced users.');
     
     function restoreDefaults()
     {
@@ -26,8 +26,8 @@ block headerAdditions
             now.restoreDefaultSettings(configurationRestored);
         } catch (err)
         {
-            alert("Unable to contact server");
-            console.log("Error was: " + err);
+            alert('Unable to contact server');
+            console.log('Error was: ' + err);
         }
     }
 
@@ -38,14 +38,14 @@ block headerAdditions
 
 
 block content
-  form#advancedConfigForm(method="post", action="/configureNovaSave")
+  form#advancedConfigForm(method='post', action='/configureNovaSave')
     include includes/advancedConfigForm
-  button(onClick="document.getElementById('advancedConfigForm').submit()")
-    img.buttonIcon(src="images/ok.png")
+  button(onClick='document.getElementById("advancedConfigForm").submit()')
+    img.buttonIcon(src='images/ok.png')
     span.buttonSpan Save Changes
   br
-  button(onClick="restoreDefaults()") 
-    img.buttonIcon(src="/images/erase.png")
+  button(onClick='restoreDefaults()') 
+    img.buttonIcon(src='/images/erase.png')
     span.buttonSpan Restore Default Configuration (will erase all changes!)
 //  include includes/advancedConfigForm
 

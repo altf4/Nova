@@ -51,7 +51,7 @@ NovaCommon.nova.CheckConnection();
 // Modules from NodejsModule/Javascript
 var LOG = NovaCommon.LOG;
 
-if (!NovaCommon.honeydConfig.LoadAllTemplates())
+if(!NovaCommon.honeydConfig.LoadAllTemplates())
 {
     LOG("ERROR", "Call to initial LoadAllTemplates failed!");
 }
@@ -115,8 +115,7 @@ var DATABASE_HOST = NovaCommon.config.ReadSetting("DATABASE_HOST");
 var DATABASE_USER = NovaCommon.config.ReadSetting("DATABASE_USER");
 var DATABASE_PASS = NovaCommon.config.ReadSetting("DATABASE_PASS");
 
-var databaseOpenResult = function (err)
-{
+var databaseOpenResult = function(err){
     if(err === null)
     {
     }
@@ -161,61 +160,59 @@ passport.use(new BasicStrategy(
 function (username, password, done)
 {
     var user = username;
-    process.nextTick(function ()
+    process.nextTick(function (){
+    dbqCredentialsRowCount.all(function (err, rowcount)
     {
-
-        dbqCredentialsRowCount.all(function (err, rowcount)
+        if(err)
         {
-            if(err)
-            {
-                console.log("Database error: " + err);
-            }
+            console.log("Database error: " + err);
+        }
 
-            // If there are no users, add default nova and log in
-            if(rowcount[0].rows === 0)
+        // If there are no users, add default nova and log in
+        if(rowcount[0].rows === 0)
+        {
+            console.log("No users in user database. Creating default user.");
+            dbqCredentialsInsertUser.run('nova', HashPassword('toor', 'root'), 'root', function (err)
             {
-                console.log("No users in user database. Creating default user.");
-                dbqCredentialsInsertUser.run('nova', HashPassword('toor', 'root'), 'root', function (err)
+                if(err)
                 {
-                    if(err)
-                    {
-                        throw err;
-                    }
+                    throw err;
+                }
 
-                    switcher(err, user, true, done);
-                });
+                switcher(err, user, true, done);
+            });
+        }
+        else
+        {
+          dbqCredentialsGetSalt.all(user, function cb(err, salt)
+          {
+            if(err || (salt[0] == undefined))
+            {
+              switcher(err, user, false, done);
             }
             else
             {
-              dbqCredentialsGetSalt.all(user, function cb(err, salt)
+              dbqCredentialsCheckLogin.all(user, HashPassword(password, salt[0].salt),
+              function selectCb(err, results)
               {
-                if(err || (salt[0] == undefined))
-                {
-                  switcher(err, user, false, done);
-                }
-                else
-                {
-                    dbqCredentialsCheckLogin.all(user, HashPassword(password, salt[0].salt),
-                    function selectCb(err, results)
-                    {
-                        if(err)
-                        {
-                            console.log("Database error: " + err);
-                        }
-                        if(results[0] === undefined)
-                        {
-                            switcher(err, user, false, done);
-                        } 
-                        else if(user === results[0].user)
-                        {
-                            switcher(err, user, true, done);
-                        } 
-                        else
-                        {
-                            switcher(err, user, false, done);
-                        }
+                  if(err)
+                  {
+                      console.log("Database error: " + err);
+                  }
+                  if(results[0] === undefined)
+                  {
+                      switcher(err, user, false, done);
+                  } 
+                  else if(user === results[0].user)
+                  {
+                      switcher(err, user, true, done);
+                  } 
+                  else
+                  {
+                      switcher(err, user, false, done);
+                  }
               });
-            }});
+           }});
           }
         });
     });
@@ -338,7 +335,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
   var WebSocketClient = require('websocket').client;
   var client;
   
-  if (NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_ENABLED"))
+  if(NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_ENABLED"))
   {
     client = new WebSocketClient({
       tlsOptions: {
@@ -347,10 +344,12 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
         passphrase: NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_PASSPHRASE")
       }
     });
-  } else {
+  }
+  else
+  {
     client = new WebSocketClient();
   }
-  // TODO: Make configurable
+
   var clientId = NovaCommon.config.ReadSetting('MASTER_UI_CLIENT_ID');
   var reconnecting = false;
   var clearReconnect;
@@ -363,7 +362,6 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
     if(!reconnecting)
     {
       console.log('No current attempts to reconnect, starting reconnect attempts every ', (reconnectTimer / 1000) ,' seconds.');
-      // TODO: Don't have static lengths for reconnect interval; make configurable
       clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, reconnectTimer);
       reconnecting = true;
     }
@@ -423,8 +421,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
           switch(json_args.type)
           {
             case 'startNovad':
-              NovaCommon.StartNovad(false);
-              NovaCommon.nova.CheckConnection();
+              everyone.now.StartNovad();
               var response = {};
               response.id = clientId;
               response.type = 'response';
@@ -1176,7 +1173,6 @@ app.post('/importCaptureSave', function (req, res)
         }
     }
 
-    // TODO: Don't hard code this path
     if (!trainingDump.SaveToDb(NovaHomePath + "/config/training/training.db"))
     {
         RenderError(res, "Unable to save to training db");
@@ -1667,7 +1663,6 @@ app.post('/customizeTrainingSave', function (req, res)
 
 app.post('/configureNovaSave', function (req, res)
 {
-    // TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
     var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
     "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
     "K", "EPS", "CLASSIFICATION_THRESHOLD", "DOPPELGANGER_IP", 
@@ -2084,13 +2079,13 @@ var distributeAllSuspectsCleared = function ()
 
 var distributeSuspectCleared = function (suspect)
 {
-    var s = new Object;
+    //var s = new Object;
     
-    s['interface'] = suspect.GetInterface();
-    s['ip'] = suspect.GetIpString();
-    s['idString'] = suspect.GetIdString();
+    //s['interface'] = suspect.GetInterface();
+    //s['ip'] = suspect.GetIpString();
+    //s['idString'] = suspect.GetIdString();
     
-    everyone.now.SuspectCleared(s);
+    //everyone.now.SuspectCleared(s);
 }
 
 NovaCommon.nova.registerOnAllSuspectsCleared(distributeAllSuspectsCleared);
@@ -2215,10 +2210,7 @@ setInterval(function()
 // TODO: These need some more work to move over to NowjsMethods.js
 everyone.now.GetHostileEvents = function (cb)
 {
-    dbqSuspectAlertsGet.all(
-
-    function (err, results)
-    {
+    dbqSuspectAlertsGet.all(function(err, results){
         if (err)
         {
             console.log("Database error: " + err);
@@ -2233,10 +2225,7 @@ everyone.now.GetHostileEvents = function (cb)
 
 everyone.now.ClearHostileEvents = function (cb)
 {
-    dbqSuspectAlertsDeleteAll.run(
-
-    function (err)
-    {
+    dbqSuspectAlertsDeleteAll.run(function(err){
         if (err)
         {
             console.log("Database error: " + err);
@@ -2250,10 +2239,7 @@ everyone.now.ClearHostileEvents = function (cb)
 
 everyone.now.ClearHostileEvent = function (id, cb)
 {
-    dbqSuspectAlertsDeleteAlert(id,
-
-    function (err)
-    {
+    dbqSuspectAlertsDeleteAlert(id, function(err){
         if (err)
         {
             console.log("Database error: " + err);

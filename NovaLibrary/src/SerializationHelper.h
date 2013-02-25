@@ -100,10 +100,9 @@ inline std::string DeserializeString(u_char *buf, uint32_t *offset, uint32_t max
 //    buf             : Pointer to buffer location where serialized data should go
 //    offset          : Offset from the buffer (will be incremented by SerializeChunk)
 //    dataToSerialize : Reference to the hash map
-//    nullValue       : Any map entries with this value will be skipped (eg, 0 for bins that store a count)
 //   maxBufferSize    : Max size of the buffer, throw exception if serialize goes past this
 template <typename TableType, typename KeyType, typename ValueType>
-inline void SerializeHashTable(u_char *buf, uint32_t *offset, TableType& dataToSerialize, KeyType nullValue, uint32_t maxBufferSize)
+inline void SerializeHashTable(u_char *buf, uint32_t *offset, TableType& dataToSerialize, uint32_t maxBufferSize)
 {
 	typename TableType::iterator it = dataToSerialize.begin();
 	typename TableType::iterator last = dataToSerialize.end();
@@ -111,10 +110,7 @@ inline void SerializeHashTable(u_char *buf, uint32_t *offset, TableType& dataToS
 	uint32_t count = 0;
 	while(it != last)
 	{
-		if(it->first != nullValue)
-		{
-			count++;
-		}
+		count++;
 		it++;
 	}
 
@@ -125,17 +121,14 @@ inline void SerializeHashTable(u_char *buf, uint32_t *offset, TableType& dataToS
 
 	while(it != last)
 	{
-		if(it->first != nullValue)
-		{
-			SerializeChunk(buf, offset, (char*)&it->first, sizeof it->first, maxBufferSize);
-			SerializeChunk(buf, offset, (char*)&it->second, sizeof it->second, maxBufferSize);
-		}
+		SerializeChunk(buf, offset, (char*)&it->first, sizeof it->first, maxBufferSize);
+		SerializeChunk(buf, offset, (char*)&it->second, sizeof it->second, maxBufferSize);
 		it++;
 	}
 }
 
 template <typename TableType, typename KeyType, typename ValueType>
-inline uint32_t GetSerializeHashTableLength(TableType& dataToSerialize, KeyType nullValue)
+inline uint32_t GetSerializeHashTableLength(TableType& dataToSerialize)
 {
 	typename TableType::iterator it = dataToSerialize.begin();
 	typename TableType::iterator last = dataToSerialize.end();
@@ -145,12 +138,9 @@ inline uint32_t GetSerializeHashTableLength(TableType& dataToSerialize, KeyType 
 
 	while(it != last)
 	{
-		if(it->first != nullValue)
-		{
-			length += sizeof it->first;
-			length += sizeof it->second;
-			count++;
-		}
+		length += sizeof it->first;
+		length += sizeof it->second;
+		count++;
 		it++;
 	}
 
@@ -164,7 +154,6 @@ inline uint32_t GetSerializeHashTableLength(TableType& dataToSerialize, KeyType 
 //    buf             : Pointer to buffer location where deserialized data should go
 //    offset          : Offset from the buffer (will be incremented by DeserializeChunk)
 //    dataToSerialize : Reference to the hash map
-//    nullValue       : Any map entries with this value will be skipped (eg, 0 for bins that store a count)
 //   maxBufferSize    : Max size of the buffer, throw exception if deserialize goes past this
 template <typename TableType, typename KeyType, typename ValueType>
 inline void DeserializeHashTable(u_char *buf, uint32_t *offset, TableType& deserializeTo, uint32_t maxBufferSize)

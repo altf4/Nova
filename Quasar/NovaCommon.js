@@ -34,8 +34,7 @@ var NovaCommon = new function() {
     var classifiersConstructor = new require('./classifiers.js');
     this.classifiers = new classifiersConstructor(this.config);
 
-    this.cNodeToJs = function(node)
-    {
+    this.cNodeToJs = function(node){
         var ret = {};
         ret.enabled = node.IsEnabled();
         ret.pfile = node.GetProfile();
@@ -45,31 +44,31 @@ var NovaCommon = new function() {
         return ret;
     }
 
-    this.StartNovad = function() {
+    this.StartNovad = function(){
         var command = NovaCommon.config.ReadSetting("COMMAND_START_NOVAD");
-        exec(command, function(error, stdout, stderr) {
-            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        exec(command, function(error, stdout, stderr){
+            if(error != null){console.log("Error running command '" + command + "' :" + error);}
         });
     }
     
-    this.StopNovad = function() {
+    this.StopNovad = function(){
         var command = NovaCommon.config.ReadSetting("COMMAND_STOP_NOVAD");
-        exec(command, function(error, stdout, stderr) {
-            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        exec(command, function(error, stdout, stderr){
+            if(error != null){console.log("Error running command '" + command + "' :" + error);}
         });
     }
     
-    this.StartHaystack = function() {
+    this.StartHaystack = function(){
         var command = NovaCommon.config.ReadSetting("COMMAND_START_HAYSTACK");
-        exec(command, function(error, stdout, stderr) {
-            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        exec(command, function(error, stdout, stderr){
+            if(error != null){console.log("Error running command '" + command + "' :" + error);}
         });
     }
     
-    this.StopHaystack = function() {
+    this.StopHaystack = function(){
         var command = NovaCommon.config.ReadSetting("COMMAND_STOP_HAYSTACK");
-        exec(command, function(error, stdout, stderr) {
-            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        exec(command, function(error, stdout, stderr){
+            if(error != null){console.log("Error running command '" + command + "' :" + error);}
         });
     }
 
@@ -84,7 +83,7 @@ var NovaCommon = new function() {
         var profileName = profiles[i];
     
         var portSets = this.honeydConfig.GetPortSetNames(profiles[i]);
-        for (var portSetName in portSets)
+        for(var portSetName in portSets)
         {
             var portSet = this.honeydConfig.GetPortSet(profiles[i], portSets[portSetName]);
             var ports = [];

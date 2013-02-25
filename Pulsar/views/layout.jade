@@ -25,6 +25,7 @@ html(lang='en')
     link(rel='shortcut icon', href='/favicon.ico')
 
     script(type='text/javascript', src='/nowjs/now.js')
+    script(type="text/javascript", src="/scripts/jquery.js")
     script(type='text/javascript', src='/dojo/dojo/dojo.js', data-dojo-config='async:true, parseOnLoad:true')
     script
       // Method to render the left side connection status list;
@@ -49,12 +50,9 @@ html(lang='en')
 
       now.RenderConnectionsList = function(clients, optional)
       {
-        var divConnectionsList = document.getElementById('connectionsList');
-       
-        while(divConnectionsList.hasChildNodes())
-        {
-          divConnectionsList.removeChild(divConnectionsList.lastChild);
-        }
+        var connectionsList = $('#connectionsList');
+        
+        connectionsList.empty();
        
         if(clients == undefined || clients == '' || clients.length == 0)
         {
@@ -66,7 +64,8 @@ html(lang='en')
           
           tr.appendChild(td0);
           
-          divConnectionsList.appendChild(tr);
+          connectionsList.append(tr);
+          console.log('after connectionsList.append');
         }
         else
         {
@@ -172,21 +171,20 @@ html(lang='en')
               tr.appendChild(td1);
               tr.appendChild(td2);
               
-              divConnectionsList.appendChild(tr);
+              connectionsList.append(tr);
             }
           }
         }
-        divConnectionsList = null;
       }
       
       now.UpdateConnectionsList = function(clientId, action)
       {
-        var divConnectionsList = document.getElementById('connectionsList');
+        var connectionsList = $('#connectionsList');
         
         switch(action)
         {
           case 'add':
-            if(document.getElementById(clientId) != undefined)
+            if($('#' + clientId).size())
             {
               return now.UpdateConnectionsList(clientId, 'updateStatus');
             }
@@ -273,24 +271,24 @@ html(lang='en')
             tr.appendChild(td1);
             tr.appendChild(td2);
 
-            divConnectionsList.appendChild(tr);
+            connectionsList.append(tr);
             
-            if(document.getElementById('deleteMe') != undefined)
+            if($('#deleteMe').size())
             {
-              divConnectionsList.removeChild(document.getElementById('deleteMe'));
+              $('#deleteMe').remove();
             }
             
             break;
           case 'remove':
-            if(document.getElementById(clientId) != undefined)
+            if($('#' + clientId).size())
             {
-              divConnectionsList.removeChild(document.getElementById(clientId));
-              if(divConnectionsList.childNodes.length == 0)
+              $('#' + clientId).remove();
+              if(connectionsList.children().length == 0)
               {
                 var label = document.createElement('label');
                 label.id = 'deleteMe';
                 label.innerHTML = 'No clients connected';
-                divConnectionsList.appendChild(label);
+                connectionsList.appendChild(label);
               }
             }
             break;
@@ -298,18 +296,18 @@ html(lang='en')
             now.IsNovadUp(clientId, function(client, status){
               if(status == 'true')
               {
-                document.getElementById(clientId + 'nova').src = 'images/Ngreendot.png';
-                document.getElementById(clientId + 'nova').alt = 'Classification is on for ' + client;
+                var newAttr = {src:'images/Ngreendot.png', alt:('Classification is on for ' + client)};
+                $('#' + clientId + 'nova').attr(newAttr);
               }
               else if(status == 'false')
               {
-                document.getElementById(clientId + 'nova').src = 'images/Nreddot.png';
-                document.getElementById(clientId + 'nova').alt = 'Classification is off for ' + client;
+                var newAttr = {src:'images/Nreddot.png', alt:('Classification is off for ' + client)};
+                $('#' + clientId + 'nova').attr(newAttr);
               }
               else
               {
-                document.getElementById(clientId + 'nova').src = 'images/Ngreydot.png';
-                document.getElementById(clientId + 'nova').alt = 'No Classification status for ' + client;
+                var newAttr = {src:'images/Ngreydot.png', alt:('No Classification status for ' + client)};
+                $('#' + clientId + 'nova').attr(newAttr);
               }
             });
             now.IsHaystackUp(clientId, function(client, status){

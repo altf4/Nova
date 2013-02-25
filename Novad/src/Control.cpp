@@ -23,9 +23,15 @@
 #include "Logger.h"
 #include "Novad.h"
 #include "ClassificationEngine.h"
+#include "Lock.h"
 
 extern Nova::ClassificationEngine *engine;
-extern pthread_t classificationLoopThread;;
+extern pthread_t classificationLoopThread;
+
+extern pthread_mutex_t shutdownClassificationMutex;
+extern bool shutdownClassification;
+extern pthread_cond_t shutdownClassificationCond;
+extern bool classificationRunning;
 
 namespace Nova
 {
@@ -38,32 +44,32 @@ void SaveAndExit(int param)
 	{
 		if(system("sudo iptables -F") == -1)
 		{
-			// TODO Logging
+			LOG(WARNING, "Failed to flush iptables rules", "Command sudo iptables -F failed");
 		}
 		if(system("sudo iptables -t nat -F") == -1)
 		{
-			// TODO Logging
+			LOG(WARNING, "Failed to flush nat table rules", "Command sudo iptables -t nat -F failed");
 		}
 		if(system("sudo iptables -t nat -X DOPP") == -1)
 		{
-			// TODO Logging
+			LOG(WARNING, "Failed to delete chain DOPP in nat table", "Command sudo iptables -t nat -X DOPP failed");
 		}
 		if(system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) == -1)
 		{
-			// TODO Logging
+			LOG(WARNING, "Failed to delete Doppelganger route", "Command sudo route del " + (string)Config::Inst()->GetDoppelIp() + " failed");
 		}
 	}
 
 	if(engine != NULL)
 	{
-		void *res;
-		pthread_cancel(classificationLoopThread);
-		pthread_join(classificationLoopThread, &res);
-
-		if (res != PTHREAD_CANCELED)
 		{
-			LOG(WARNING, "Problem when attempting to cancel CE thread during SaveAndExit.", "");
+			Lock lock(&shutdownClassificationMutex);
+			shutdownClassification = true;
 		}
+		pthread_cond_signal(&shutdownClassificationCond);
+
+		pthread_cond_destroy(&shutdownClassificationCond);
+		pthread_mutex_destroy(&shutdownClassificationMutex);
 
 		delete engine;
 	}

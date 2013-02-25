@@ -18,9 +18,6 @@
 
 var novaconfig = require('novaconfig.node');
 
-// TODO: Need to make fallback code, in case a connection
-// doesn't/can't accept websocket connections (for whatever reason)
-// Problem not a problem now, but definitely will be later
 var express = require('express');
 var nowjs = require('now');
 var fs = require('fs');
@@ -229,7 +226,6 @@ var hostileEvents = 0;
 // src files, etc.
 app.set('view options', { layout: false });
 app.set('views', __dirname + '/views');
-// TODO: Make port configurable
 var MASTER_UI_PORT = parseInt(config.ReadSetting("MASTER_UI_PORT"));
 app.listen(MASTER_UI_PORT);
 app.use(express.static(NovaSharedPath + '/Pulsar/www'));
@@ -237,12 +233,6 @@ app.use(express.static(NovaSharedPath + '/Pulsar/www'));
 // Initialize nowjs to listen to our express server
 var everyone = nowjs.initialize(app);
 
-// TODO: For each of the cases below, there will be code to ensure
-// that any relevant state data is saved s.t. upon Pulsar 
-// coming back up, it's state will be as it was when it died
-// Specifically, we want to save the list of the found suspects, as well
-// as their suspectGrid data. Almost everything else that would need to be
-// saved already should be. 
 process.on('SIGTERM', function(){
   console.log('SIGTERM recieved');
   cleanUI(function(){
@@ -1077,7 +1067,6 @@ var https = require('https');
 // Eventually we will want these options to include the
 // commented stanzas; the ca option will contain a list of 
 // trusted certs, and the other options do what they say
-// TODO: These paths will need to be relative to the NovaPath
 // or something Pulsar specific
 
 var options;
@@ -1113,7 +1102,6 @@ var httpsServer = https.createServer(options, function(request, response)
 // Have to have the websockets listen on a different port than the express
 // server, or else it'll catch all the messages that express is meant to get
 // and lead to some undesirable behavior
-// TODO: Make this port configurable
 httpsServer.listen((MASTER_UI_PORT + 1), function()
 {
 	console.log('Pulsar Server is listening on ' + (MASTER_UI_PORT + 1));
@@ -1159,12 +1147,10 @@ wsServer.on('request', function(request)
           // essentially binds their client id to the connection that has
           // has been created for future reference and connection management
 					case 'addId':
-						// TODO: Check that id doesn't exist before adding
 						for(var i in novaClients)
 						{
 						  if(i == json_args.id.toString() && novaClients[i].connection != null)
 						  {
-						    // TODO: test
 						    console.log('There is already a client connected with id ' + json_args.id);
 						    connection.close();
 						    return;
@@ -1190,7 +1176,7 @@ wsServer.on('request', function(request)
 						{
 						  everyone.now.UpdateNotificationsButton('new');
 						}
-            // TODO: Get hostile suspects from connected client
+            
             var getHostile = {};
             getHostile.type = 'getHostileSuspects';
             getHostile.id = json_args.id + ':';
@@ -1316,14 +1302,28 @@ wsServer.on('request', function(request)
 				  // configuration files. 
 					case 'registerConfig':
 						console.log('Nova Configuration received from ' + json_args.id);
-						// TODO: Check for existing client to add new file association to, extend the .file 
-						//       part of the push object literal
 						var push = {};
 						push.client = json_args.id;
 						push.file = (NovaHomePath + '/config/Pulsar/ClientConfigs/' + json_args.filename);
-						fileAssociations.push(push);
-						fs.writeFileSync(push.file, json_args.file);
-						console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);
+						if(novaClients[json_args.id] == undefined)
+						{
+						  fileAssociations.push(push);
+              fs.writeFileSync(push.file, json_args.file);
+              console.log('Configuration for ' + json_args.id + ' can be found at ' + json_args.filename);   
+						}
+            else
+            {
+              for(var i in fileAssociations)
+              {
+                if(fileAssociations[i].client == push.client)
+                {
+                  fs.unlinkSync(fileAssociations[i].file);
+                  fileAssociations[i].file = push.file;
+                  fs.writeFileSync(push.file, json_args.file);
+                  break;
+                }
+              }
+            }
 						break;
 				  // Rather than just query the client whenever a list of interfaces is needed (like for the haystack
 				  // autoconfig tool) I opted to have the client register a file containing a list of their interfaces.
@@ -1406,7 +1406,6 @@ wsServer.on('request', function(request)
 						break;
 				}
 			}
-      // TODO: Account for non-UTF8 here (really shouldn't be using it as the main encoding anyways)
       else
       {
       }
@@ -1647,7 +1646,6 @@ app.get('/schedule', passport.authenticate('basic', {session: false}), function(
 });
 
 app.get('/listschedule', passport.authenticate('basic', {session: false}), function(req, res){
-  // TODO: Put the actual listschedule.jade file here
   res.render('listschedule.jade', {locals:{
     CLIENTS: getClients()
     , GROUPS: getGroups()

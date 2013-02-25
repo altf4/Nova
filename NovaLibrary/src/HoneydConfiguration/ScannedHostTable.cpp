@@ -59,7 +59,10 @@ void ScannedHostTable::AddHost(ScannedHost *add)
 		// address that exist inside of the Personality object and
 		// increment the number of times a host has had this personality
 		// by one.
-		currentHost->m_macs.push_back(add->m_macs[0]);
+		if(!add->m_macs.empty())
+		{
+			currentHost->m_macs.push_back(add->m_macs[0]);
+		}
 		currentHost->m_addresses.push_back(add->m_addresses[0]);
 		currentHost->m_count++;
 

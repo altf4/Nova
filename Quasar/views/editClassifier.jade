@@ -56,14 +56,14 @@ block content
       td
         span Classifier Type
       td
-        select(data-bind="value: type")
+        select(data-bind='value: type')
           option KNN
           option THRESHOLD_TRIGGER
     tr
       td
         span Mode
       td
-        select(data-bind="value: mode")
+        select(data-bind='value: mode')
           option WEIGHTED
           option HOSTILE_OVERRIDE
           option BENIGN_OVERRIDE
@@ -71,7 +71,7 @@ block content
       td
         span Weight
       td
-        input(type="number", data-bind="value: weight")
+        input(type='number', data-bind='value: weight')
 
   br
 
@@ -79,23 +79,23 @@ block content
     theader
       td Feature Name
       td Enabled
-      td(data-bind="visible: classifier.type() == 'KNN'") Weight
-      td(data-bind="visible: classifier.type() == 'THRESHOLD_TRIGGER'") Hostile Threshold
-    tbody(data-bind="foreach: classifier.features")
+      td(data-bind='visible: classifier.type() == "KNN"') Weight
+      td(data-bind='visible: classifier.type() == "THRESHOLD_TRIGGER"') Hostile Threshold
+    tbody(data-bind='foreach: classifier.features')
       tr
-        td(data-bind="text: name")
+        td(data-bind='text: name')
         td
-          input(type="checkbox", data-bind="checked: enabled")
-        td(data-bind="visible: classifier.type() == 'KNN'")
-          input(type="text", data-bind="value: weight, visible: classifier.type() == 'KNN', enable: (classifier.type() == 'KNN' && classifier.features[$index()].enabled())")
-        td(data-bind="visible: classifier.type() == 'THRESHOLD_TRIGGER'")
-          input(type="text", data-bind="value: threshold, visible: classifier.type() == 'THRESHOLD_TRIGGER', enable: (classifier.type() == 'THRESHOLD_TRIGGER' && classifier.features[$index()].enabled())")
+          input(type='checkbox', data-bind='checked: enabled')
+        td(data-bind='visible: classifier.type() == "KNN"')
+          input(type='text', data-bind='value: weight, visible: classifier.type() == "KNN", enable: (classifier.type() == "KNN" && classifier.features[$index()].enabled())')
+        td(data-bind='visible: classifier.type() == "THRESHOLD_TRIGGER"')
+          input(type='text', data-bind='value: threshold, visible: classifier.type() == "THRESHOLD_TRIGGER", enable: (classifier.type() == "THRESHOLD_TRIGGER" && classifier.features[$index()].enabled())')
 
   br
   button.button(onclick='submit()')
-    img.buttonIcon(src="/images/ok.png")
+    img.buttonIcon(src='/images/ok.png')
     span.buttonSpan Save Changes
   
   button.button(onclick='cancel()')
-    img.buttonIcon(src="/images/cancel.png")
+    img.buttonIcon(src='/images/cancel.png')
     span.buttonSpan Cancel

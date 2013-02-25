@@ -17,6 +17,19 @@
 INTERFACE default
 
 ############################################
+# KNN_NORMALIZATION
+############################################
+#
+# Parsed from CSV into array determining the
+# normalization functions for the corresponding
+# classification variable
+# 0 = NONORM // No data normalization; feature must already be within [0...1]
+# 1 = LINEAR // Simple linear normalization by dividing data by max
+# 2 = LINEAR_SHIFT // Shifts min value to 0 before doing linear normalization
+# 3 = LOGARITHMIC // Larger outlier values will have less effect
+KNN_NORMALIZATION 2,2,3,3,3,3,3,3,3,2,2,2,2,2
+
+############################################
 # K #
 ############################################
 #
@@ -449,6 +462,11 @@ ONLY_CLASSIFY_HONEYPOT_TRAFFIC 0
 CURRENT_CONFIG default
 
 ############################################
+# IPLIST_PATH
+############################################
+IPLIST_PATH /var/log/honeyd/ipList
+
+############################################
 # TLS Options
 ############################################
 # This will enable TLS between Pulsar and the client web browser
@@ -479,9 +497,6 @@ QUASAR_TETHER_TLS_PASSPHRASE toor
 
 TRAINING_DATA_PATH /config/training/data.txt
 
-
-
-
 ############################################
 # Quasar start/stop command options
 ############################################
@@ -501,6 +516,4 @@ COMMAND_STOP_HAYSTACK novacli stop haystack
 #COMMAND_STOP_NOVAD sudo stop novad
 #COMMAND_START_HAYSTACK sudo start haystack
 #COMMAND_STOP_HAYSTACK sudo stop haystack
-
-
 

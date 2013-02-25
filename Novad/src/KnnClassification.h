@@ -31,15 +31,6 @@
 
 namespace Nova
 {
-
-enum normalizationType {
-	NONORM, 		// Does no data normalization. Feature must already be in a range from 0 to 1
-	LINEAR,			// Simple linear normalization by dividing data by the max
-	LINEAR_SHIFT, 	// Shifts min value to 0 before doing linear normalization
-	LOGARITHMIC		// Logarithmic normalization, larger outlier value will have less of an effect
-};
-
-
 class KnnClassification : public Nova::ClassificationEngine
 {
 public:
@@ -60,13 +51,13 @@ public:
 	void LoadDataPointsFromVector(std::vector<double*> points);
 
 	// Normalized a single value
-	static double Normalize(normalizationType type, double value, double min, double max, double weight);
+	static double Normalize(NormalizationType type, double value, double min, double max, double weight);
 
 	void LoadConfiguration(std::string filePath);
 
 private:
 	// Types of normalization to apply to our features
-	static normalizationType m_normalization[];
+	vector<NormalizationType> m_normalization;
 
 	std::vector <Point*> m_dataPtsWithClass;
 
