@@ -144,8 +144,6 @@ v8::Handle<Value> CustomizeTrainingBinding::Save(const Arguments& args)
 
 	string classification = TrainingData::MakaDataFile(*(obj->m_map));
 
-	// TODO DTC Stuff will have to be more complicated here for multiple CEs
-	//string path = Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathTrainingFile();
 	string path = Config::Inst()->GetPathHome() + "/config/training/data.txt";
 
 
