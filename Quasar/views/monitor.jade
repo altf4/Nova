@@ -181,13 +181,13 @@ block headerAdditions
             classificationArrayWrapper.push(suspect.GetClassification);
             classificationData.push(classificationArrayWrapper);
 
-            //TODO Don't hard code
-            if(data.length > 100)
+            var maxNumberOfPoints = 100;
+            if(data.length > maxNumberOfPoints)
             {
                 data.shift();
             }
 
-            if(classificationData.length > 100)
+            if(classificationData.length > maxNumberOfPoints)
             {
                 classificationData.shift();
             }
@@ -220,7 +220,6 @@ block headerAdditions
 
     function drawGraph(canvas, pID, data, index)
     {
-        //TODO Don't hard code
         var m_width = 200;
         var m_height = 200;
         var border = 15;
@@ -350,7 +349,6 @@ block headerAdditions
         
         
         var trendString = '';
-        //TODO Don't hard code
         var trendStringCutoff = 25;
         for (var i = points.length - 2; i >= 0; i--)
         {
