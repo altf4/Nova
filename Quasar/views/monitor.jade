@@ -144,7 +144,7 @@ block headerAdditions
     {
         var prefix = '';
         var suffix = '';
-        if (err != null)
+        if(err != null)
         {
             var errorString;
             if(err.code == 'ENOTFOUND')
@@ -166,13 +166,13 @@ block headerAdditions
     function OnNewSuspect(suspect)
     {
         // We throw the first suspect in the graphs twice so it'll have a line instead of nothing
-        if (initialized)
+        if(initialized)
         {
             initialized = false;
             OnNewSuspect(suspect);
         }
         
-        if (suspect.GetIpString == '#{suspectIp}' && suspect.GetInterface == '#{suspectInterface}')
+        if(suspect.GetIpString == '#{suspectIp}' && suspect.GetInterface == '#{suspectInterface}')
         {
             lastSuspectObject = suspect;
             data.push(suspect.GetFeatures);
@@ -181,13 +181,13 @@ block headerAdditions
             classificationArrayWrapper.push(suspect.GetClassification);
             classificationData.push(classificationArrayWrapper);
 
-            // TODO Don't hard code
-            if (data.length > 100)
+            //TODO Don't hard code
+            if(data.length > 100)
             {
                 data.shift();
             }
 
-            if (classificationData.length > 100)
+            if(classificationData.length > 100)
             {
                 classificationData.shift();
             }
@@ -220,7 +220,7 @@ block headerAdditions
 
     function drawGraph(canvas, pID, data, index)
     {
-        // TODO Don't hard code
+        //TODO Don't hard code
         var m_width = 200;
         var m_height = 200;
         var border = 15;
@@ -237,13 +237,13 @@ block headerAdditions
 
         var minY;
         var maxY;
-        if (autoscale)
+        if(autoscale)
         {
             minY = data[0][index];
             maxY = data[0][index];
         } else {
             // Hard coded fixed scale charts between 0 and 1
-            if (canvas == 'classificationChart'
+            if(canvas == 'classificationChart'
             || canvas == 'chart0'
             || canvas == 'chart1'
             || canvas == 'chart0'
@@ -262,7 +262,7 @@ block headerAdditions
                 
         }
         
-        if (data.length == 1)
+        if(data.length == 1)
         {
             p.innerHTML = '<br> Current: ' + data[0][index].toFixed(12);
             return;
@@ -272,12 +272,12 @@ block headerAdditions
         var points = new Array();
         for (var i = 0; i < data.length; i++)
         {
-            if (data[i][index] > maxY)
+            if(data[i][index] > maxY)
             {
                 maxY = data[i][index];
             }
 
-            if (data[i][index] < minY)
+            if(data[i][index] < minY)
             {
                 minY = data[i][index];
             }
@@ -289,7 +289,7 @@ block headerAdditions
             var point = new Object();
             point.x = (width/(data.length - 1))*i;
 
-            if (maxY == minY)
+            if(maxY == minY)
             {
                 point.y = height/2;
             } else {
@@ -299,7 +299,7 @@ block headerAdditions
         }
        
         // Draw grid lines
-        if (gridLinesEnabled)
+        if(gridLinesEnabled)
         {
             ctx.strokeStyle='#A1A1A1';
             ctx.beginPath();
@@ -350,19 +350,19 @@ block headerAdditions
         
         
         var trendString = '';
-        // TODO Don't hard code
+        //TODO Don't hard code
         var trendStringCutoff = 25;
         for (var i = points.length - 2; i >= 0; i--)
         {
-            if (trendString.length > trendStringCutoff)
+            if(trendString.length > trendStringCutoff)
             {
                 break;
             }
 
-            if (points[i].y > points[i+1].y)
+            if(points[i].y > points[i+1].y)
             {
                 trendString = '+' + trendString;
-            } else if (points[i].y < points[i+1].y)
+            } else if(points[i].y < points[i+1].y)
             {
                 trendString = '-' + trendString;
             } else {

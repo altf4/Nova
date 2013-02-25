@@ -144,10 +144,9 @@ block headerAdditions
 
     function addScriptOptionValue()
     {
-        // TODO Internet Explore Support
-        var key = $('#optionKeys').attr('value');
-        var value = $('#newOptionName').attr('value');
-        $('#newOptionName').attr('value', '');
+        var key = $('#optionKeys').val();
+        var value = $('#newOptionName').val();
+        $('#newOptionName').val('');
         now.addScriptOptionValue(currentlyEditedScript.GetName, key, value, function() {editOptions(currentlyEditedScript.GetName)});
     }
 
@@ -159,48 +158,57 @@ block headerAdditions
 
     function selectedKeyChanged()
     {
-        $('#newOptionName').attr('value', '');
-        dojo.empty('optionValues'); 
-        // TODO Internet Explore Support
-        var currentKey = $('#optionKeys').attr('value');
-        for(var i = 0; i < currentlyEditedScript.GetOptions[currentKey].length; i++)
+        $('#newOptionName').val('');
+        $('#optionValues').empty(); 
+        var currentKey = $('#optionKeys').val();
+        var name = currentlyEditedScript.GetName;
+        var forLength = currentlyEditedScript.GetOptions[currentKey];
+        if(forLength == undefined)
         {
-           var tr = theDoc.createElement("tr");
+          forLength = 0;
+        }
+        else
+        {
+          forLength = forLength.length;
+        }
+        for(var i = 0; i < forLength; i++)
+        {
+           var tr = theDoc.createElement('tr');
           
-           var td1 = theDoc.createElement("td");
+           var td1 = theDoc.createElement('td');
            tr.appendChild(td1);
            
-           var td2 = theDoc.createElement("td");
+           var td2 = theDoc.createElement('td');
            tr.appendChild(td2);
            
            var value = currentlyEditedScript.GetOptions[currentKey][i];
            td1.innerHTML = value;
          
-           var deleteButton = theDoc.createElement("button");
-           deleteButton.innerHTML = "Delete";
+           var deleteButton = theDoc.createElement('button');
+           deleteButton.innerHTML = 'Delete';
            deleteButton.onclick = function(){    
                 var key = currentKey;
                 var innerValue = value;
                 return function(){
-                    deleteScriptOptionValue(currentlyEditedScript.GetName, key, innerValue);
+                    deleteScriptOptionValue(name, key, innerValue);
                 }
            }();
            td2.appendChild(deleteButton);
            
-           $('optionValues').append(tr); 
+           $('#optionValues').append(tr); 
         }
     }
 
     function editOptions(scriptName)
     {
-       dojo.empty("optionKeys"); 
-       dojo.empty("optionValues"); 
+       $('#optionKeys').empty(); 
+       $('#optionValues').empty(); 
        now.GetScript(scriptName, function(script){
             currentlyEditedScript = script;
             var count = 0;
             for(var key in script.GetOptions)
             {
-              var option = theDoc.createElement("option");
+              var option = theDoc.createElement('option');
               option.innerHTML = key;
               $('#optionKeys').append(option);
               count++;
@@ -208,7 +216,7 @@ block headerAdditions
 
             if(count == 0)
             {
-              alert("No editable options for this script");         
+              alert('No editable options for this script');         
             }
             else
             {
@@ -346,14 +354,14 @@ block headerAdditions
     
     function checkParams(callback)
     {
-      var sName = $('#scriptFile').attr('value');
+      var sName = $('#scriptFile').val();
       // I'm wondering if we shouldn't enforce some sort of regulation regarding
       // what file extensions people can submit with the file dialog; I can't seem
       // to find any documentation regarding limiting what types of files an input
       // can take to a smaller subset outside of back-end magickry.
-      var sFile = $('#scriptName').attr('value');
-      var sShell = $('#scriptShell').attr('value');
-      var sArgs = $('#scriptArgs').attr('value');
+      var sFile = $('#scriptName').val();
+      var sShell = $('#scriptShell').val();
+      var sArgs = $('#scriptArgs').val();
       
       if(sName == '' || sFile == '' || sName == undefined || sFile == undefined)
       {
@@ -421,10 +429,10 @@ block content
       label Key
       select#optionKeys(onchange='selectedKeyChanged()');
       table#optionValues(style='border: 1px solid black')
-      input#newOptionName(type="text")
+      input#newOptionName(type='text')
       button(onclick='addScriptOptionValue()') Add
     div(id='addScriptForm', style='display: none')
-      form(id='submitMe', method='post', enctype="multipart/form-data")
+      form(id='submitMe', method='post', enctype='multipart/form-data')
         table
           tbody
             tr
