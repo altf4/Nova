@@ -402,9 +402,15 @@ everyone.now.deleteProfiles = function (profileNames, cb)
 
 everyone.now.addWhitelistEntry = function(ethinterface, entry, cb)
 {
-    // TODO: Input validation. Should be IP address or 'IP/netmask'
-    // Should also be sanitized for newlines/trailing whitespace
-    if(NovaCommon.whitelistConfig.AddEntry(ethinterface + "," + entry))
+    entry = entry.replace(/\s+/g, '');
+    var individualIp = new RegExp('^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))$');
+    individualIp.global = false;
+    var subnetRangeIp = new RegExp('^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\/[1-3]?[0-9])$');
+    subnetRangeIp.global = false;
+    var slashSubnetMaskIp = new RegExp('^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))\\/((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))$');
+    slashSubnetMaskIp.global = false;
+
+    if((individualIp.test(entry) || subnetRangeIp.test(entry) || slashSubnetMaskIp.test(entry)) && NovaCommon.whitelistConfig.AddEntry(ethinterface + "," + entry))
     {
         cb(true, "");
     }

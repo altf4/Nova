@@ -51,7 +51,7 @@ NovaCommon.nova.CheckConnection();
 // Modules from NodejsModule/Javascript
 var LOG = NovaCommon.LOG;
 
-if (!NovaCommon.honeydConfig.LoadAllTemplates())
+if(!NovaCommon.honeydConfig.LoadAllTemplates())
 {
     LOG("ERROR", "Call to initial LoadAllTemplates failed!");
 }
@@ -2211,10 +2211,7 @@ setInterval(function()
 // TODO: These need some more work to move over to NowjsMethods.js
 everyone.now.GetHostileEvents = function (cb)
 {
-    dbqSuspectAlertsGet.all(
-
-    function (err, results)
-    {
+    dbqSuspectAlertsGet.all(function(err, results){
         if (err)
         {
             console.log("Database error: " + err);
@@ -2229,10 +2226,7 @@ everyone.now.GetHostileEvents = function (cb)
 
 everyone.now.ClearHostileEvents = function (cb)
 {
-    dbqSuspectAlertsDeleteAll.run(
-
-    function (err)
-    {
+    dbqSuspectAlertsDeleteAll.run(function(err){
         if (err)
         {
             console.log("Database error: " + err);
@@ -2246,10 +2240,7 @@ everyone.now.ClearHostileEvents = function (cb)
 
 everyone.now.ClearHostileEvent = function (id, cb)
 {
-    dbqSuspectAlertsDeleteAlert(id,
-
-    function (err)
-    {
+    dbqSuspectAlertsDeleteAlert(id, function(err){
         if (err)
         {
             console.log("Database error: " + err);
