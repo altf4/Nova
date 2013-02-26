@@ -128,8 +128,8 @@ block headerAdditions
 
         // Sort by classification by default
         suspectGrid.SetSortByKey(1);
+        suspectGrid.Render();
 
-        susTable.html(suspectGrid.GetTable());
     
         try
         { 
@@ -144,8 +144,8 @@ block headerAdditions
                   }
 
                   suspectGrid.PushEntry(row);
-              } 
-              susTable.html(suspectGrid.GetTable());
+              }
+              suspectGrid.Render();
           });
         }
         catch(err)
