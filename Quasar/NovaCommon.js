@@ -18,6 +18,8 @@
 
 var sys = require('sys');
 var exec = require('child_process').exec;
+var sql = require('sqlite3').verbose();
+var crypto = require('crypto');
 
 var NovaCommon = new function() {
     console.log("Initializing nova C++ code");
@@ -110,6 +112,45 @@ var NovaCommon = new function() {
     
       return scriptBindings;
     }
+
+	var novaDb = new sql.Database(this.config.GetPathHome() + "/data/novadDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
+	var db = new sql.Database(this.config.GetPathHome() + "/data/quasarDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
+
+
+	var databaseOpenResult = function(err){
+		if(err === null)
+		{
+		}
+		else
+		{
+			this.LOG("ERROR", "Error opening sqlite3 database file: " + err);
+		}
+	}
+
+	// Prepare query statements
+	this.dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
+	this.dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
+	this.dbqCredentialsGetUsers = db.prepare('SELECT user FROM credentials');
+	this.dbqCredentialsGetUser = db.prepare('SELECT user FROM credentials WHERE user = ?');
+	this.dbqCredentialsGetSalt = db.prepare('SELECT salt FROM credentials WHERE user = ?');
+	this.dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ?, salt = ? WHERE user = ?');
+	this.dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?, ?)');
+	this.dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = ?');
+
+	this.dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
+	this.dbqFirstrunInsert = db.prepare("INSERT INTO firstrun values(datetime('now'))");
+
+	this.dbqSuspectAlertsGet = novaDb.prepare('SELECT suspect_alerts.id, timestamp, suspect, interface, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_tcp_ports,distinct_udp_ports,avg_tcp_ports_per_host,avg_udp_ports_per_host,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
+	this.dbqSuspectAlertsDeleteAll = novaDb.prepare('DELETE FROM suspect_alerts');
+	this.dbqSuspectAlertsDeleteAlert = novaDb.prepare('DELETE FROM suspect_alerts where id = ?');
+
+	this.HashPassword = function (password, salt)
+	{
+		var shasum = crypto.createHash('sha1');
+		shasum.update(password + salt);
+		return shasum.digest('hex');
+	};
+
 }();
 
 module.exports = NovaCommon;

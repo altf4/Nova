@@ -1115,6 +1115,102 @@ everyone.now.GetProfile = function (profileName, cb)
     cb(profile);
 };
 
+
+
+everyone.now.GetHostileEvents = function (cb)
+{
+    NovaCommon.dbqSuspectAlertsGet.all(function(err, results){
+        if (err)
+        {
+            console.log("Database error: " + err);
+            // TODO implement better error handling cbs
+            cb();
+            return;
+        }
+
+        cb(results);
+    });
+};
+
+everyone.now.ClearHostileEvents = function (cb)
+{
+    NovaCommon.dbqSuspectAlertsDeleteAll.run(function(err){
+        if (err)
+        {
+            console.log("Database error: " + err);
+            // TODO implement better error handling cbs
+            return;
+        }
+
+        cb("true");
+    });
+};
+
+everyone.now.ClearHostileEvent = function (id, cb)
+{
+    NovaCommon.dbqSuspectAlertsDeleteAlert(id, function(err){
+        if (err)
+        {
+            console.log("Database error: " + err);
+            // TODO implement better error handling cbs
+            return;
+        }
+
+        cb("true");
+    });
+};
+
+everyone.now.WizardHasRun = function (cb)
+{
+    NovaCommon.dbqFirstrunInsert.run(cb);
+};
+
+everyone.now.deleteUserEntry = function (usernamesToDelete, cb)
+{
+    var username;
+    for (var i = 0; i < usernamesToDelete.length; i++)
+    {
+        username = String(usernamesToDelete[i]);
+        NovaCommon.dbqCredentialsDeleteUser.run(username, function (err)
+        {
+            if (err)
+            {
+                console.log("Database error: " + err);
+                cb(false);
+                return;
+            }
+            else
+            {
+                cb(true);
+            }
+        });
+    }
+};
+
+everyone.now.updateUserPassword = function (username, newPassword, cb)
+{
+  var salt = '';
+  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for(var i = 0; i < 8; i++)
+  {
+    salt += possible[Math.floor(Math.random() * possible.length)];
+  }
+  
+  //update credentials set pass=? and salt=? where user=?
+  NovaCommon.dbqCredentialsChangePassword.run(NovaCommon.HashPassword(newPassword, salt), salt, username, function(err){
+    console.log('err ' + err);
+    if(err)
+    {
+      cb(false);
+    }
+    else
+    {
+      cb(true);
+    }
+  });
+};
+
+
 var GetPortSets = function (profileName, cb)
 {
     var portSetNames = NovaCommon.honeydConfig.GetPortSetNames(profileName);

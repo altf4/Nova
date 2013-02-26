@@ -61,8 +61,6 @@ var jade = require('jade');
 var express = require('express');
 var passport = require('passport');
 var BasicStrategy = require('passport-http').BasicStrategy;
-var sql = require('sqlite3').verbose();
-var crypto = require('crypto');
 var exec = require('child_process').exec;
 var nowjs = require("now");
 var Validator = require('validator').Validator;
@@ -99,13 +97,6 @@ var RenderError = function (res, err, link)
     });
 }
 
-var HashPassword = function (password, salt)
-{
-    var shasum = crypto.createHash('sha1');
-    shasum.update(password + salt);
-    return shasum.digest('hex');
-};
-
 LOG("ALERT", "Starting QUASAR version " + NovaCommon.config.GetVersionString());
 
 
@@ -114,36 +105,6 @@ process.chdir(NovaHomePath);
 var DATABASE_HOST = NovaCommon.config.ReadSetting("DATABASE_HOST");
 var DATABASE_USER = NovaCommon.config.ReadSetting("DATABASE_USER");
 var DATABASE_PASS = NovaCommon.config.ReadSetting("DATABASE_PASS");
-
-var databaseOpenResult = function(err){
-    if(err === null)
-    {
-    }
-    else
-    {
-        LOG("ERROR", "Error opening sqlite3 database file: " + err);
-    }
-}
-
-var novaDb = new sql.Database(NovaHomePath + "/data/novadDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
-var db = new sql.Database(NovaHomePath + "/data/quasarDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
-
-// Prepare query statements
-var dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
-var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
-var dbqCredentialsGetUsers = db.prepare('SELECT user FROM credentials');
-var dbqCredentialsGetUser = db.prepare('SELECT user FROM credentials WHERE user = ?');
-var dbqCredentialsGetSalt = db.prepare('SELECT salt FROM credentials WHERE user = ?');
-var dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ?, salt = ? WHERE user = ?');
-var dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?, ?)');
-var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = ?');
-
-var dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
-var dbqFirstrunInsert = db.prepare("INSERT INTO firstrun values(datetime('now'))");
-
-var dbqSuspectAlertsGet = novaDb.prepare('SELECT suspect_alerts.id, timestamp, suspect, interface, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_tcp_ports,distinct_udp_ports,avg_tcp_ports_per_host,avg_udp_ports_per_host,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
-var dbqSuspectAlertsDeleteAll = novaDb.prepare('DELETE FROM suspect_alerts');
-var dbqSuspectAlertsDeleteAlert = novaDb.prepare('DELETE FROM suspect_alerts where id = ?');
 
 passport.serializeUser(function (user, done)
 {
@@ -161,7 +122,7 @@ function (username, password, done)
 {
     var user = username;
     process.nextTick(function (){
-    dbqCredentialsRowCount.all(function (err, rowcount)
+    NovaCommon.dbqCredentialsRowCount.all(function (err, rowcount)
     {
         if(err)
         {
@@ -172,7 +133,7 @@ function (username, password, done)
         if(rowcount[0].rows === 0)
         {
             console.log("No users in user database. Creating default user.");
-            dbqCredentialsInsertUser.run('nova', HashPassword('toor', 'root'), 'root', function (err)
+            NovaCommon.dbqCredentialsInsertUser.run('nova', NovaCommon.HashPassword('toor', 'root'), 'root', function (err)
             {
                 if(err)
                 {
@@ -184,7 +145,7 @@ function (username, password, done)
         }
         else
         {
-          dbqCredentialsGetSalt.all(user, function cb(err, salt)
+          NovaCommon.dbqCredentialsGetSalt.all(user, function cb(err, salt)
           {
             if(err || (salt[0] == undefined))
             {
@@ -192,7 +153,7 @@ function (username, password, done)
             }
             else
             {
-              dbqCredentialsCheckLogin.all(user, HashPassword(password, salt[0].salt),
+              NovaCommon.dbqCredentialsCheckLogin.all(user, NovaCommon.HashPassword(password, salt[0].salt),
               function selectCb(err, results)
               {
                   if(err)
@@ -1203,7 +1164,7 @@ app.get('/configWhitelist', function (req, res)
 app.get('/editUsers', function (req, res)
 {
     var usernames = new Array();
-    dbqCredentialsGetUsers.all(
+    NovaCommon.dbqCredentialsGetUsers.all(
 
     function (err, results)
     {
@@ -1265,7 +1226,7 @@ app.get('/events', function (req, res)
 
 app.get('/', function (req, res)
 {
-    dbqFirstrunCount.all(
+    NovaCommon.dbqFirstrunCount.all(
 
     function (err, results)
     {
@@ -1334,7 +1295,7 @@ app.post('/createNewUser', function (req, res)
       return;
     }
 
-    dbqCredentialsGetUser.all(userName,
+    NovaCommon.dbqCredentialsGetUser.all(userName,
 
     function selectCb(err, results, fields)
     {
@@ -1352,7 +1313,7 @@ app.post('/createNewUser', function (req, res)
           {
             salt += possible[Math.floor(Math.random() * possible.length)];
           }
-            dbqCredentialsInsertUser.run(userName, HashPassword(password, salt), salt, function ()
+            NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt, function ()
             {
                 res.render('saveRedirect.jade', {
                     locals: {
@@ -1378,7 +1339,7 @@ app.post('/createInitialUser', function (req, res)
       return;
     }
 
-    dbqCredentialsGetUser.all(userName,
+    NovaCommon.dbqCredentialsGetUser.all(userName,
 
     function selectCb(err, results)
     {
@@ -1396,8 +1357,8 @@ app.post('/createInitialUser', function (req, res)
       {
         salt += possible[Math.floor(Math.random() * possible.length)];
       }
-            dbqCredentialsInsertUser.run(userName, HashPassword(password, salt), salt);
-            dbqCredentialsDeleteUser.run('nova');
+            NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt);
+            NovaCommon.dbqCredentialsDeleteUser.run('nova');
             res.render('saveRedirect.jade', {
                 locals: {
                     redirectLink: "/setup2"
@@ -2205,57 +2166,6 @@ setInterval(function()
 }, 5000);
 
 
-
-
-// TODO: These need some more work to move over to NowjsMethods.js
-everyone.now.GetHostileEvents = function (cb)
-{
-    dbqSuspectAlertsGet.all(function(err, results){
-        if (err)
-        {
-            console.log("Database error: " + err);
-            // TODO implement better error handling cbs
-            cb();
-            return;
-        }
-
-        cb(results);
-    });
-};
-
-everyone.now.ClearHostileEvents = function (cb)
-{
-    dbqSuspectAlertsDeleteAll.run(function(err){
-        if (err)
-        {
-            console.log("Database error: " + err);
-            // TODO implement better error handling cbs
-            return;
-        }
-
-        cb("true");
-    });
-};
-
-everyone.now.ClearHostileEvent = function (id, cb)
-{
-    dbqSuspectAlertsDeleteAlert(id, function(err){
-        if (err)
-        {
-            console.log("Database error: " + err);
-            // TODO implement better error handling cbs
-            return;
-        }
-
-        cb("true");
-    });
-};
-
-everyone.now.WizardHasRun = function (cb)
-{
-    dbqFirstrunInsert.run(cb);
-};
-
 everyone.now.AddInterfaceAlias = function(iface, alias, callback)
 {
     if (alias != "") 
@@ -2271,47 +2181,3 @@ everyone.now.AddInterfaceAlias = function(iface, alias, callback)
     fs.writeFile(NovaHomePath + "/config/interface_aliases.txt", fileString, callback);
 };
 
-everyone.now.deleteUserEntry = function (usernamesToDelete, cb)
-{
-    var username;
-    for (var i = 0; i < usernamesToDelete.length; i++)
-    {
-        username = String(usernamesToDelete[i]);
-        dbqCredentialsDeleteUser.run(username, function (err)
-        {
-            if (err)
-            {
-                console.log("Database error: " + err);
-                cb(false);
-                return;
-            }
-            else
-            {
-                cb(true);
-            }
-        });
-    }
-};
-
-everyone.now.updateUserPassword = function (username, newPassword, cb)
-{
-  var salt = '';
-  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for(var i = 0; i < 8; i++)
-  {
-    salt += possible[Math.floor(Math.random() * possible.length)];
-  }
-  
-  //update credentials set pass=? and salt=? where user=?
-  dbqCredentialsChangePassword.run(HashPassword(newPassword, salt), salt, username, function(err){
-    console.log('err ' + err);
-    if(err)
-    {
-      cb(false);
-    }
-    else
-    {
-      cb(true);
-    }
-  });
-};
