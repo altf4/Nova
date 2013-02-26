@@ -1123,12 +1123,11 @@ everyone.now.GetHostileEvents = function (cb)
         if (err)
         {
             console.log("Database error: " + err);
-            // TODO implement better error handling cbs
-            cb();
+            cb(err);
             return;
         }
 
-        cb(results);
+        cb(null, results);
     });
 };
 
@@ -1138,25 +1137,11 @@ everyone.now.ClearHostileEvents = function (cb)
         if (err)
         {
             console.log("Database error: " + err);
-            // TODO implement better error handling cbs
+			cb(err);
             return;
         }
 
-        cb("true");
-    });
-};
-
-everyone.now.ClearHostileEvent = function (id, cb)
-{
-    NovaCommon.dbqSuspectAlertsDeleteAlert(id, function(err){
-        if (err)
-        {
-            console.log("Database error: " + err);
-            // TODO implement better error handling cbs
-            return;
-        }
-
-        cb("true");
+        cb(null);
     });
 };
 

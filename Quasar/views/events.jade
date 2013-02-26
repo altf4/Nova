@@ -38,13 +38,13 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
   script
-    function finishedClearing(result)
+    function finishedClearing(err)
     {
-        if (result == "true")
+        if (!err)
         {
             window.location.reload();
         } else {
-            alert("There was an error when clearing the event list.");
+            alert("There was an error when clearing the event list: " + err);
         }
     }
 
@@ -133,8 +133,13 @@ block headerAdditions
     
         try
         { 
-          now.GetHostileEvents(function (results)
+          now.GetHostileEvents(function (err, results)
           {
+              if (err) {
+                alert("Server error: " + err);
+                return;
+              }
+
               for(var i = 0; i < results.length; i++)
               {
                   var row = new Array();
