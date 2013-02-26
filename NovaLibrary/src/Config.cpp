@@ -1352,7 +1352,7 @@ std::string Config::ReadSetting(std::string key)
 		{
 			getline(config, line);
 
-			if(!line.substr(0, key.size()).compare(key))
+			if(!line.substr(0, key.size() + 1).compare(key + " "))
 			{
 				line = line.substr(key.size() + 1, line.size());
 				if(line.size() > 0)
@@ -1419,7 +1419,7 @@ bool Config::WriteSetting(std::string key, std::string value)
 			}
 
 
-			if(!line.substr(0,key.size()).compare(key))
+			if(!line.substr(0,key.size() + 1).compare(key + " "))
 			{
 				*out << key << " " << value << endl;
 				continue;
