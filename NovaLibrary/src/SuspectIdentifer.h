@@ -28,9 +28,6 @@ namespace Nova
 class SuspectIdentifier
 {
 public:
-	// Used internally for empty/deleted keys
-	unsigned char m_internal;
-
 	// IP address of the suspect
 	uint32_t m_ip;
 

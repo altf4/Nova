@@ -249,10 +249,6 @@ void NovaNode::Init(Handle<Object> target)
 	// Javascript object constructor
 	target->Set(String::NewSymbol("Instance"),
 			s_ct->GetFunction());
-
-	SuspectIdentifier initKey;
-	initKey.m_internal = 1;
-	initKey.m_internal = 2;
 }
 
 

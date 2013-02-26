@@ -26,7 +26,6 @@ uint32_t SuspectIdentifier::Serialize(u_char *buf, uint32_t bufferSize)
 {
 	uint32_t offset = 0;
 
-	SerializeChunk(buf, &offset, (char*)&m_internal, sizeof m_internal, bufferSize);
 	SerializeChunk(buf, &offset, (char*)&m_ip, sizeof m_ip, bufferSize);
 	SerializeString(buf, &offset, m_interface, bufferSize);
 
@@ -37,7 +36,6 @@ uint32_t SuspectIdentifier::Deserialize(u_char *buf, uint32_t bufferSize)
 {
 	uint32_t offset = 0;
 
-	DeserializeChunk(buf, &offset, (char*)&m_internal, sizeof m_internal, bufferSize);
 	DeserializeChunk(buf, &offset, (char*)&m_ip, sizeof m_ip, bufferSize);
 	m_interface = DeserializeString(buf, &offset, bufferSize);
 
@@ -46,7 +44,7 @@ uint32_t SuspectIdentifier::Deserialize(u_char *buf, uint32_t bufferSize)
 
 uint32_t SuspectIdentifier::GetSerializationLength()
 {
-	return sizeof(m_internal) + sizeof(m_ip) + (sizeof(uint32_t) + m_interface.size());
+	return sizeof(m_ip) + (sizeof(uint32_t) + m_interface.size());
 }
 
 std::string SuspectIdentifier::GetInterface()
@@ -56,15 +54,7 @@ std::string SuspectIdentifier::GetInterface()
 
 bool SuspectIdentifier::operator ==(const SuspectIdentifier &rhs) const
 {
-	// This is for checking equality of empty/deleted keys
-	if (m_internal != 0 || rhs.m_internal != 0)
-	{
-		return m_internal == rhs.m_internal;
-	}
-	else
-	{
-		return (m_ip == rhs.m_ip && m_interface == rhs.m_interface);
-	}
+	return (m_ip == rhs.m_ip && m_interface == rhs.m_interface);
 }
 
 bool SuspectIdentifier::operator != (const SuspectIdentifier &rhs) const
@@ -73,11 +63,11 @@ bool SuspectIdentifier::operator != (const SuspectIdentifier &rhs) const
 }
 
 SuspectIdentifier::SuspectIdentifier()
-	:m_internal(0), m_ip(0)
+	:m_ip(0)
 {}
 
 SuspectIdentifier::SuspectIdentifier(uint32_t ip, std::string interface)
-	:m_internal(0), m_ip(ip), m_interface(interface)
+	:m_ip(ip), m_interface(interface)
 {}
 
 } /* namespace Nova */

@@ -48,15 +48,10 @@ SuspectTable::SuspectTable()
 	pthread_rwlock_init(&m_lock, &tempAttr);
 	pthread_mutex_init(&m_needsUpdateLock, NULL);
 
-	SuspectIdentifier initKey;
-	initKey.m_internal = 1;
-
-	initKey.m_internal = 2;
-
 	m_emptySuspect.SetClassification(EMPTY_SUSPECT_CLASSIFICATION);
 }
 
-// Default Deconstructor for SuspectTable
+// Default destructor for SuspectTable
 SuspectTable::~SuspectTable()
 {
 	//Deletes the suspects pointed to by the table
