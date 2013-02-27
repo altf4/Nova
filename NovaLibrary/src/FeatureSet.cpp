@@ -750,15 +750,46 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 
 void FeatureSet::SetHaystackNodes(std::vector<uint32_t> nodes)
 {
-	// TODO DTC
-	// We could possibly do something a little more advanced here. If an IP was in
-	// the old list and also is in the new list, we could update the data instead of just
-	// deleting all of our old data. Not worrying about it right now though.
-	m_HaystackIPTable.clear();
-	m_numberOfHaystackNodesContacted = 0;
+	// Delete IPs in our list that aren't in the new list
+	IP_Table::iterator it = m_HaystackIPTable.begin();
+	while (it != m_HaystackIPTable.end())
+	{
+		bool keep = false;
 
+		for (uint i = 0; i < nodes.size(); i++) {
+			// Node exists in new list, leave it as is
+			if (nodes.at(i) == it->first)
+			{
+				keep = true;
+				break;
+			}
+		}
+
+		if (!keep)
+		{
+			in_addr r;
+			r.s_addr = it->first;
+			if (it->second != 0)
+			{
+				m_numberOfHaystackNodesContacted--;
+			}
+
+			m_HaystackIPTable.erase(it++);
+		}
+		else
+		{
+			it++;
+		}
+	}
+
+	// Now add in any haystack nodes that are in the new list but not the old
 	for (uint i = 0; i < nodes.size(); i++) {
-		m_HaystackIPTable[nodes.at(i)] = 0;
+		if (!m_HaystackIPTable.keyExists(nodes.at(i)))
+		{
+			in_addr r;
+			r.s_addr = nodes.at(i);
+			m_HaystackIPTable[nodes.at(i)] = 0;
+		}
 	}
 }
 
