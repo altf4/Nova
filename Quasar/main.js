@@ -1285,6 +1285,11 @@ app.get('/about', function (req, res)
     res.render('about.jade');
 });
 
+app.get('/newSuspects', function (req, res)
+{
+    res.render('newSuspects.jade');
+});
+
 app.post('/createNewUser', function (req, res)
 {
     var password = req.body["password"];
@@ -1982,10 +1987,32 @@ everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
 var distributeSuspect = function (suspect)
 {
-    var s = new Object();
+    var d = new Date(suspect.GetLastPacketTime() * 1000);
+    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     
+	
+    var s = new Object();
     objCopy(suspect, s);
-    s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
+	s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
+	
+	// Save to unseen db
+	NovaCommon.dbqIsNewSuspect.all(s.GetIpString, s.GetInterface, function(err, results) {
+		if (err) {
+			LOG("ERROR", err);
+			return;
+		}
+		
+		if (results[0].rows === 0) {
+			NovaCommon.dbqAddNewSuspect.run(s.GetIpString, s.GetInterface);
+			
+			try {
+				everyone.now.OnNewSuspectInserted(s.GetIpString, s.GetInterface);
+			} catch(err) {}
+
+		}
+
+	});
+    
     
     try 
     {
@@ -1994,8 +2021,6 @@ var distributeSuspect = function (suspect)
   
   if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) >= 0)
   {
-    var d = new Date(suspect.GetLastPacketTime() * 1000);
-    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     var send = {};
     
     send.ip = suspect.GetIpString();

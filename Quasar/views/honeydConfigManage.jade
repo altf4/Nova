@@ -201,12 +201,6 @@ block headerAdditions
       }
     }
     
-    function onGridRendered()
-    {
-       var tablePages = $('#tablePages')[0];
-       tablePages.innerHTML = '';
-       grid.populateTablePages(tablePages);   
-    }
     
     function populateConfigSelect(configs)
     {
@@ -1056,7 +1050,8 @@ block headerAdditions
         
         grid.SetSortByKey(1);
         grid.SetRowsPerPage(25);
-        grid.SetRenderCallback(onGridRendered);
+        var tablePages = $('#tablePages')[0];
+        grid.SetPageNumberDiv(tablePages);
       
          for(var i in nodeList)
          {

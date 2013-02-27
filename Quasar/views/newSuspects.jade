@@ -1,0 +1,112 @@
+//- ============================================================================
+//-  Copyright   : DataSoft Corporation 2011-2013
+//-  Nova is free software: you can redistribute it and/or modify
+//-   it under the terms of the GNU General Public License as published by
+//-   the Free Software Foundation, either version 3 of the License, or
+//-   (at your option) any later version.
+//-
+//-   Nova is distributed in the hope that it will be useful,
+//-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//-   GNU General Public License for more details.
+//-
+//-   You should have received a copy of the GNU General Public License
+//-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
+//- ============================================================================
+
+extends layout
+
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
+  script(type="text/javascript", src="scripts/NovaGrid.js")
+  
+  script
+    var grid;
+
+
+    function markSuspectSeen(ip, interface)
+    {
+        now.MarkSuspectSeen(ip, interface);
+        grid.DeleteRow(ip + interface);
+        grid.Render();
+    }
+
+    function markAllSuspectSeen()
+    {
+        now.MarkAllSuspectSeen();
+        grid.Clear();
+    }
+
+    function addNewSuspectRowAndRender(ip, interface) {
+        addNewSuspectRow(ip, interface);
+        grid.Render();
+    }
+
+    function addNewSuspectRow(ip, interface) {
+        var row = new Array();
+        row.push(ip + interface);
+        row.push(ip);
+        row.push(interface);
+
+        var buttonString = "<button class='button' onclick='markSuspectSeen(";
+        buttonString += '"' + ip + '", "' + interface + '"';
+        buttonString += ")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Mark as seen</span></button>";
+        row.push(buttonString);
+        
+        grid.PushEntry(row);
+    }
+
+    function initNewSuspects()
+    {
+        var columns = new Array();
+        columns.push({name: "hiddenkey"});
+        columns.push({name: "IP"});
+        columns.push({name: "Interface"});
+        columns.push({name: "Mark as seen"});
+
+        grid = new NovaGrid(columns, 0, "newSuspectGrid", 'grid', false);
+        grid.DisableColumn(0);
+        grid.SetSortByKey(1);
+        grid.GenerateTableHeader();
+        grid.SetRowsPerPage(10);
+        grid.SetPageNumberDiv($("#newSuspectPages").get(0));    
+        
+        now.OnNewSuspectInserted = addNewSuspectRowAndRender;
+
+        now.GetUnseenSuspects(function(err, suspects) 
+        {
+            if (err)
+            {
+                alert("Error fetching unseen suspects: " + err);
+                return;
+            }
+
+            for (var i in suspects)
+            {
+                addNewSuspectRow(suspects[i].ip, suspects[i].interface);
+            }
+            
+            grid.Render();
+        }
+
+
+
+    )}
+
+    function init(){
+        initNewSuspects();
+    };
+  
+block content
+  div#newSuspects
+    h1 New Suspects
+
+    div#newSuspectPages
+    div.novaGrid
+      div#newSuspectGrid
+    br
+    
+    button.button(onclick = 'markAllSuspectSeen()')
+      img.buttonIcon(src='images/delete.png');
+      span.buttonSpan Mark all as seen
+

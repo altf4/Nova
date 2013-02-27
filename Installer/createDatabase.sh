@@ -46,6 +46,15 @@ CREATE TABLE firstrun(
 	run TIMESTAMP PRIMARY KEY
 );
 
+CREATE TABLE suspectsSeen(
+	ip VARCHAR(16),
+	interface VARCHAR(16),
+	seenSuspect INTEGER,
+	seenAllData INTEGER,
+
+	PRIMARY KEY(ip, interface)
+);
+
 CREATE TABLE credentials(
 	user VARCHAR(100) PRIMARY KEY,
 	pass VARCHAR(100),
