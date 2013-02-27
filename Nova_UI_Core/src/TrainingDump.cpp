@@ -77,7 +77,6 @@ bool TrainingDump::LoadCaptureFile(string pathDumpFile)
 	{
 		LOG(ERROR, "Unable to open CE capture file for reading.", "");
 		return false;
-		// TODO: throw exception?
 	}
 	dataFile.close();
 	return true;
