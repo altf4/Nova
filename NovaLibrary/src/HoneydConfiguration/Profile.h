@@ -92,7 +92,6 @@ public:
 	bool SetDropRate(std::string droprate);
 
 	//Javascript compatibility functions
-	//TODO: Move these into the binding class
 	std::string GetName();
 	uint32_t GetCount();
 	std::string GetParentProfile() const;
