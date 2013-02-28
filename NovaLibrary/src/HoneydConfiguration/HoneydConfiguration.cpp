@@ -121,7 +121,6 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 
 	try
 	{
-		//TODO: possible memory leak here if an exception is thrown after this is made
 		profile = new Profile(parent, ptree.get<string>("name"));
 		profile->m_count = ptree.get<double>("count");
 		profile->SetPersonality(ptree.get<string>("personality"));
