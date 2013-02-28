@@ -1262,6 +1262,27 @@ everyone.now.MarkAllSuspectSeen = function(cb) {
 	});
 };
 
+everyone.now.GetUnseenDataSuspects = function(cb) {
+    NovaCommon.dbqGetUnseenDataSuspects.all(function(err, results){
+		if (databaseError(err, cb)) {return;}	
+		cb && cb(null, results);
+	});
+};
+
+everyone.now.MarkSuspectDataSeen = function(ip, ethinterface, cb) {
+    NovaCommon.dbqMarkSuspectDataSeen.run(ip, ethinterface, function(err){
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+everyone.now.MarkAllSuspectDataSeen = function(cb) {
+	NovaCommon.dbqMarkAllSuspectDataSeen.run(function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
 
 
 }

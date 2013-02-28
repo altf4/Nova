@@ -1997,21 +1997,45 @@ var distributeSuspect = function (suspect)
 	
 	// Save to unseen db
 	NovaCommon.dbqIsNewSuspect.all(s.GetIpString, s.GetInterface, function(err, results) {
-		if (err) {
+		if (err)
+        {
 			LOG("ERROR", err);
 			return;
 		}
 		
-		if (results[0].rows === 0) {
-			NovaCommon.dbqAddNewSuspect.run(s.GetIpString, s.GetInterface);
-			
-			try {
-				everyone.now.OnNewSuspectInserted(s.GetIpString, s.GetInterface);
-			} catch(err) {}
-
-		}
-
+		if (results[0].rows === 0)
+        {
+			NovaCommon.dbqAddNewSuspect.run(s.GetIpString, s.GetInterface, function()
+            {
+			    try {
+			    	everyone.now.OnNewSuspectInserted(s.GetIpString, s.GetInterface);
+                    everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
+			    } catch(err) {}
+            });
+		} 
+        else
+        {
+	        NovaCommon.dbqSeenAllData.all(s.GetIpString, s.GetInterface, function(err, results) {
+		        if (err)
+                {
+			        LOG("ERROR", err);
+			        return;
+		        }
+                
+                if (results[0].seenAllData)
+                {
+			        NovaCommon.dbqMarkSuspectDataUnseen.run(s.GetIpString, s.GetInterface, function() {
+			            try {
+                            everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
+			            } catch(err) {}
+                    });
+                }
+            });
+         }
 	});
+
+
+    
     
     
     try 

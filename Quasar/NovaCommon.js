@@ -146,11 +146,18 @@ var NovaCommon = new function() {
 
      // Queries regarding the seen suspects table
 	this.dbqAddNewSuspect = db.prepare('INSERT INTO suspectsSeen values(?, ?, 0, 0)');
-	this.dbqMarkSuspectSeen = db.prepare('UPDATE suspectsSeen SET seenSuspect = 1 WHERE ip = ? AND interface = ?');
-	this.dbqMarkAllSuspectSeen = db.prepare('UPDATE suspectsSeen SET seenSuspect = 1');
 	this.dbqIsNewSuspect = db.prepare('SELECT COUNT(*) AS rows from suspectsSeen WHERE ip = ? AND interface = ?');
+    this.dbqSeenAllData = db.prepare('SELECT seenAllData FROM suspectsSeen WHERE ip = ? AND interface = ?');
+	
+    this.dbqMarkAllSuspectSeen = db.prepare('UPDATE suspectsSeen SET seenSuspect = 1');
+    this.dbqMarkAllSuspectDataSeen = db.prepare('UPDATE suspectsSeen SET seenAllData = 1');
+	
+    this.dbqMarkSuspectSeen = db.prepare('UPDATE suspectsSeen SET seenSuspect = 1 WHERE ip = ? AND interface = ?');
 	this.dbqMarkSuspectDataSeen = db.prepare('UPDATE suspectsSeen SET seenAllData = 1 WHERE ip = ? and interface = ?');
-	this.dbqGetUnseenSuspects = db.prepare('SELECT ip, interface FROM suspectsSeen WHERE seenSuspect = 0');
+	
+    this.dbqMarkSuspectDataUnseen = db.prepare('UPDATE suspectsSeen SET seenAllData = 0 WHERE ip = ? and interface = ?');
+	
+    this.dbqGetUnseenSuspects = db.prepare('SELECT ip, interface FROM suspectsSeen WHERE seenSuspect = 0');
 	this.dbqGetUnseenDataSuspects = db.prepare('SELECT ip, interface FROM suspectsSeen WHERE seenAllData = 0');
 
 	this.HashPassword = function (password, salt)
