@@ -295,11 +295,16 @@ bool HoneydConfiguration::ReadNodesXML()
 		//For the doppelganger tag
 		try
 		{
+			int doppelcount = 0;
 			BOOST_FOREACH(ptree::value_type &nodePtree, propTree.get_child("doppelganger"))
 			{
-				// TODO: Make sure there's only one doppelganger node in the xml
 				if(!nodePtree.first.compare("node"))
 				{
+					doppelcount++;
+					if (doppelcount != 1) {
+						LOG(WARNING, "XML appears to contain more than one doppelganger node!", "");
+					}
+
 					Node node(nodePtree.second);
 					m_doppelganger = node;
 				}
