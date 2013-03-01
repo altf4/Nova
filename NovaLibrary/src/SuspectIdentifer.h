@@ -13,7 +13,8 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : TODO: Description here
+// Description : TODO: Contains the function prototypes and variable
+//   declarations for the SuspectIdentifier class
 //============================================================================
 
 #ifndef SUSPECTIDENTIFER_H_
