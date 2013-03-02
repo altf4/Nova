@@ -1155,8 +1155,8 @@ app.get('/configWhitelist', function (req, res)
         locals: {
             whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
             whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
-      		INTERFACES: interfaces,
-      		interfaceAliases: ConvertInterfacesToAliases(interfaces)
+            INTERFACES: interfaces,
+            interfaceAliases: ConvertInterfacesToAliases(interfaces)
         }
     })
 });
@@ -1990,49 +1990,49 @@ var distributeSuspect = function (suspect)
     var d = new Date(suspect.GetLastPacketTime() * 1000);
     var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     
-	
+    
     var s = new Object();
     objCopy(suspect, s);
-	s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
-	
-	// Save to unseen db
-	NovaCommon.dbqIsNewSuspect.all(s.GetIpString, s.GetInterface, function(err, results) {
-		if (err)
+    s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
+    
+    // Save to unseen db
+    NovaCommon.dbqIsNewSuspect.all(s.GetIpString, s.GetInterface, function(err, results) {
+        if (err)
         {
-			LOG("ERROR", err);
-			return;
-		}
-		
-		if (results[0].rows === 0)
+            LOG("ERROR", err);
+            return;
+        }
+        
+        if (results[0].rows === 0)
         {
-			NovaCommon.dbqAddNewSuspect.run(s.GetIpString, s.GetInterface, function()
+            NovaCommon.dbqAddNewSuspect.run(s.GetIpString, s.GetInterface, function()
             {
-			    try {
-			    	everyone.now.OnNewSuspectInserted(s.GetIpString, s.GetInterface);
+                try {
+                    everyone.now.OnNewSuspectInserted(s.GetIpString, s.GetInterface);
                     everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
-			    } catch(err) {}
+                } catch(err) {}
             });
-		} 
+        } 
         else
         {
-	        NovaCommon.dbqSeenAllData.all(s.GetIpString, s.GetInterface, function(err, results) {
-		        if (err)
+            NovaCommon.dbqSeenAllData.all(s.GetIpString, s.GetInterface, function(err, results) {
+                if (err)
                 {
-			        LOG("ERROR", err);
-			        return;
-		        }
+                    LOG("ERROR", err);
+                    return;
+                }
                 
                 if (results[0].seenAllData)
                 {
-			        NovaCommon.dbqMarkSuspectDataUnseen.run(s.GetIpString, s.GetInterface, function() {
-			            try {
+                    NovaCommon.dbqMarkSuspectDataUnseen.run(s.GetIpString, s.GetInterface, function() {
+                        try {
                             everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
-			            } catch(err) {}
+                        } catch(err) {}
                     });
                 }
             });
          }
-	});
+    });
 
 
     
