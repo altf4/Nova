@@ -49,7 +49,6 @@ public:
 	enum PushSuccess PushMessage(Message *message, uint32_t &outSerial);
 
 	uint32_t GetTheirSerialNum(uint32_t ourSerial);
-	uint32_t GetOurSerialNum(uint32_t theirSerial);
 
 	//Shuts down all the MessageQueues in the bimap
 	void Shutdown();

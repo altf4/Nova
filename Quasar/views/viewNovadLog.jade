@@ -250,7 +250,7 @@ block headerAdditions
         {
             now.newLogLine = function (line)
             {
-               console.log("Got new line");
+               AddLogEntry(line);
                logGrid.Render();
             }
         });

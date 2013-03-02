@@ -129,17 +129,6 @@ uint32_t MessageQueueBimap::GetTheirSerialNum(uint32_t ourSerial)
 	return queue->GetTheirSerialNum();
 }
 
-//TODO UNUSED?!
-uint32_t MessageQueueBimap::GetOurSerialNum(uint32_t theirSerial)
-{
-	//TODO: Locking
-	MessageQueue *queue = GetByOurSerial(theirSerial);
-	if(queue == NULL)
-	{
-		return 0;
-	}
-	return queue->GetOurSerialNum();
-}
 
 //Shuts down all the MessageQueues in the bimap
 void MessageQueueBimap::Shutdown()
@@ -300,7 +289,6 @@ bool MessageQueueBimap::RemoveQueue(uint32_t ourSerial)
 	return true;
 }
 
-//TODO: UNUSED?
 std::vector<uint32_t> MessageQueueBimap::GetUsedSerials()
 {
 	Lock lock(&m_queuesMutex);

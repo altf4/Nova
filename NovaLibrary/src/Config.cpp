@@ -1070,7 +1070,7 @@ bool Config::LoadUserConfig()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				//TODO Key should be 256 characters, hard check for this once implemented
+				
 				if((line.size() > 0) && (line.size() < 257))
 				{
 					m_key = line;
