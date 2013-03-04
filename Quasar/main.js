@@ -373,7 +373,7 @@ var initLogWatch = function ()
 
 
         try {
-            everyone.now.newHoneydLogLine(line);
+            everyone.now.newHoneydLogLine(lineNum, line);
         } catch (err) {};
     });
 }

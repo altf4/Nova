@@ -1283,6 +1283,8 @@ everyone.now.MarkAllSuspectDataSeen = function(cb) {
 	});
 };
 
+
+// Functions related to the nova log entry seen table in the DB
 everyone.now.GetUnseenNovaLogs = function(cb) {
 	NovaCommon.dbqGetUnseenNovaLogs.all(function(err, results) {
 		if (databaseError(err, cb)) {return;}
@@ -1299,6 +1301,28 @@ everyone.now.MarkNovaLogEntrySeen = function(linenum, cb) {
 
 everyone.now.MarkAllNovaLogEntriesSeen = function(cb) {
 	NovaCommon.dbqMarkAllNovaLogEntriesSeen.run(function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+// Functions related  to the honeyd log entry seen table in the DB
+everyone.now.GetUnseenHoneydLogs = function(cb) {
+	NovaCommon.dbqGetUnseenHoneydLogs.all(function(err, results) {
+		if (databaseError(err, cb)) {return;}
+		cb && cb(null, results);
+	});
+};
+
+everyone.now.MarkHoneydLogEntrySeen = function(linenum, cb) {
+	NovaCommon.dbqMarkHoneydLogEntrySeen.run(linenum, function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+everyone.now.MarkAllHoneydLogEntriesSeen = function(cb) {
+	NovaCommon.dbqMarkAllHoneydLogEntriesSeen.run(function(err) {
 		if (databaseError(err,cb)) {return;}	
 		cb && cb(null);
 	});
