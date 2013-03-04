@@ -332,17 +332,46 @@ var initLogWatch = function ()
             console.log("CAllback got error" + err);
             return;
         }
+
+    	NovaCommon.dbqIsNewNovaLogEntry.all(lineNum, function(err, results) {
+        	if (err)
+        	{
+            	LOG("ERROR", err);
+            	return;
+        	}
+        
+        	if (results[0].rows === 0)
+        	{
+				NovaCommon.dbqAddNovaLogEntry.run(lineNum, line);
+			}
+		});
+
         try {
-            everyone.now.newLogLine(line);
+            everyone.now.newLogLine(lineNum, line);
         } catch (err) {};
     });
     
-    var novadLogFileReader = new LiveFileReader(novadLogPath, function(err, line, lineNum) {
+    var novadLogFileReader = new LiveFileReader(honeydLogPath, function(err, line, lineNum) {
         if (err)
         {
             console.log("CAllback got error" + err);
             return;
         }
+    	
+		NovaCommon.dbqIsNewHoneydLogEntry.all(lineNum, function(err, results) {
+        	if (err)
+        	{
+            	LOG("ERROR", err);
+            	return;
+        	}
+        
+        	if (results[0].rows === 0)
+        	{
+				NovaCommon.dbqAddHoneydLogEntry.run(lineNum, line);
+			}
+		});
+
+
         try {
             everyone.now.newHoneydLogLine(line);
         } catch (err) {};

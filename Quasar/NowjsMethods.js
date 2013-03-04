@@ -1283,6 +1283,26 @@ everyone.now.MarkAllSuspectDataSeen = function(cb) {
 	});
 };
 
+everyone.now.GetUnseenNovaLogs = function(cb) {
+	NovaCommon.dbqGetUnseenNovaLogs.all(function(err, results) {
+		if (databaseError(err, cb)) {return;}
+		cb && cb(null, results);
+	});
+};
+
+everyone.now.MarkNovaLogEntrySeen = function(linenum, cb) {
+	NovaCommon.dbqMarkNovaLogEntrySeen.run(linenum, function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+everyone.now.MarkAllNovaLogEntriesSeen = function(cb) {
+	NovaCommon.dbqMarkAllNovaLogEntriesSeen.run(function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
 
 
 }

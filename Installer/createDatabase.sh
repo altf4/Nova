@@ -55,6 +55,18 @@ CREATE TABLE suspectsSeen(
 	PRIMARY KEY(ip, interface)
 );
 
+CREATE TABLE novalogSeen(
+	linenum INTEGER PRIMARY KEY,
+	line VARCHAR(2048),
+	seen INTEGER
+);
+
+CREATE TABLE honeydlogSeen(
+	linenum INTEGER PRIMARY KEY,
+	line VARCHAR(2048),
+	seen INTEGER
+);
+
 CREATE TABLE credentials(
 	user VARCHAR(100) PRIMARY KEY,
 	pass VARCHAR(100),

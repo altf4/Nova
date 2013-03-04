@@ -248,7 +248,7 @@ block headerAdditions
     
         now.ready(function()
         {
-            now.newLogLine = function (line)
+            now.newLogLine = function (linenum, line)
             {
                AddLogEntry(line);
                logGrid.Render();

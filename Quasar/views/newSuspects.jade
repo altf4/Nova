@@ -26,27 +26,27 @@ block headerAdditions
 
     function newSuspectWidget() {
         var self = this;
-        this.markSuspectSeen = function(ip, interface)
+        this.markSeen = function(ip, interface)
         {
             now.MarkSuspectSeen(ip, interface);
             newSuspectGrid.DeleteRow(ip + interface);
             newSuspectGrid.Render();
         }
 
-        this.markAllSuspectSeen = function()
+        this.markAllSeen = function()
         {
             now.MarkAllSuspectSeen();
             newSuspectGrid.Clear();
         }
 
 
-        this.addNewSuspectRow = function(ip, interface) {
+        this.addRow = function(ip, interface) {
             var row = new Array();
             row.push(ip + interface);
             row.push(ip);
             row.push(interface);
 
-            var buttonString = "<button class='button' onclick='widget1.markSuspectSeen(";
+            var buttonString = "<button class='button' onclick='widget1.markSeen(";
             buttonString += '"' + ip + '", "' + interface + '"';
             buttonString += ")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Mark as seen</span></button>";
             row.push(buttonString);
@@ -54,8 +54,8 @@ block headerAdditions
             newSuspectGrid.PushEntry(row);
         }
         
-        this.addNewSuspectRowAndRender = function(ip, interface) {
-            self.addNewSuspectRow(ip, interface);
+        this.addRowAndRender = function(ip, interface) {
+            self.addRow(ip, interface);
             newSuspectGrid.Render();
         }
 
@@ -74,7 +74,7 @@ block headerAdditions
             newSuspectGrid.SetRowsPerPage(10);
             newSuspectGrid.SetPageNumberDiv($("#newSuspectPages").get(0));    
             
-            now.OnNewSuspectInserted = self.addNewSuspectRowAndRender;
+            now.OnNewSuspectInserted = self.addRowAndRender;
 
 
             now.GetUnseenSuspects(function(err, suspects) 
@@ -87,7 +87,7 @@ block headerAdditions
 
                 for (var i in suspects)
                 {
-                    self.addNewSuspectRow(suspects[i].ip, suspects[i].interface);
+                    self.addRow(suspects[i].ip, suspects[i].interface);
                 }
                 
                 newSuspectGrid.Render();
@@ -98,27 +98,27 @@ block headerAdditions
 
     function newSuspectDataWidget() {
         var self = this;
-        this.markSuspectSeen = function(ip, interface)
+        this.markSeen = function(ip, interface)
         {
             now.MarkSuspectDataSeen(ip, interface);
             newSuspectDataGrid.DeleteRow(ip + interface);
             newSuspectDataGrid.Render();
         }
 
-        this.markAllSuspectSeen = function()
+        this.markAllSeen = function()
         {
             now.MarkAllSuspectDataSeen();
             newSuspectDataGrid.Clear();
         }
 
 
-        this.addNewSuspectRow = function(ip, interface) {
+        this.addRow = function(ip, interface) {
             var row = new Array();
             row.push(ip + interface);
             row.push(ip);
             row.push(interface);
 
-            var buttonString = "<button class='button' onclick='widget2.markSuspectSeen(";
+            var buttonString = "<button class='button' onclick='widget2.markSeen(";
             buttonString += '"' + ip + '", "' + interface + '"';
             buttonString += ")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Mark as seen</span></button>";
             row.push(buttonString);
@@ -127,8 +127,8 @@ block headerAdditions
         }
        
         this.renderTimeout = null;
-        this.addNewSuspectRowAndRender = function(ip, interface) {
-            self.addNewSuspectRow(ip, interface);
+        this.addRowAndRender = function(ip, interface) {
+            self.addRow(ip, interface);
             // Use a timer to only render once a second even if we get a bunch of suspects. Keeps things from rendering too often from new data.
             if (self.renderTimeout == null) {
                 self.renderTimeout = setTimeout(function() {newSuspectDataGrid.Render(); self.renderTimeout = null;}, 1000);
@@ -150,7 +150,7 @@ block headerAdditions
             newSuspectDataGrid.SetRowsPerPage(10);
             newSuspectDataGrid.SetPageNumberDiv($("#newSuspectDataPages").get(0));    
             
-            now.OnNewSuspectData = self.addNewSuspectRowAndRender;
+            now.OnNewSuspectData = self.addRowAndRender;
 
 
             now.GetUnseenDataSuspects(function(err, suspects) 
@@ -163,7 +163,7 @@ block headerAdditions
 
                 for (var i in suspects)
                 {
-                    self.addNewSuspectRow(suspects[i].ip, suspects[i].interface);
+                    self.addRow(suspects[i].ip, suspects[i].interface);
                 }
                 
                 newSuspectDataGrid.Render();
@@ -171,8 +171,82 @@ block headerAdditions
         )}
     }
 
+    function newNovaLogWidget() {
+        var self = this;
+        this.markSeen = function(linenum)
+        {
+            now.MarkNovaLogEntrySeen(linenum);
+            newNovaLogGrid.DeleteRow(linenum);
+            newNovaLogGrid.Render();
+        }
+
+        this.markAllSeen = function()
+        {
+            now.MarkAllNovaLogEntriesSeen();
+            newNovaLogGrid.Clear();
+        }
+
+
+        this.addRow = function(linenum, line) {
+            var row = new Array();
+            row.push(linenum);
+            row.push(line);
+
+            var buttonString = "<button class='button' onclick='widget3.markSeen(";
+            buttonString += '"' + linenum + '"';
+            buttonString += ")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Mark as seen</span></button>";
+            row.push(buttonString);
+            
+            newNovaLogGrid.PushEntry(row);
+        }
+       
+        this.renderTimeout = null;
+        this.addRowAndRender = function(linenum, line) {
+            self.addRow(linenum, line);
+            // Use a timer to only render once a second even if we get a bunch of suspects. Keeps things from rendering too often from new data.
+            if (self.renderTimeout == null) {
+                self.renderTimeout = setTimeout(function() {newNovaLogGrid.Render(); self.renderTimeout = null;}, 1000);
+            }
+        }
+
+        this.init = function()
+        {
+            var columns = new Array();
+            columns.push({name: "Line Number"});
+            columns.push({name: "Message"});
+            columns.push({name: "Mark as seen"});
+
+            newNovaLogGrid = new NovaGrid(columns, 0, "newNovaLogGrid", 'newNovaLogGrid', false);
+            newNovaLogGrid.DisableColumn(0);
+            newNovaLogGrid.SetSortByKey(1);
+            newNovaLogGrid.GenerateTableHeader();
+            newNovaLogGrid.SetRowsPerPage(10);
+            newNovaLogGrid.SetPageNumberDiv($("#newNovaLogPages").get(0));    
+            
+            now.newLogLine = self.addRowAndRender;
+
+
+            now.GetUnseenNovaLogs(function(err, entries) 
+            {
+                if (err)
+                {
+                    alert("Error fetching unseen nova log entries: " + err);
+                    return;
+                }
+
+                for (var i in entries)
+                {
+                    self.addRow(entries[i].linenum, entries[i].line);
+                }
+                
+                newNovaLogGrid.Render();
+            }
+        )}
+    }
+
     var widget1;
     var widget2;
+    var widget3;
     var img;
     function init(){
         // Trick to preload the delete.png image
@@ -184,6 +258,10 @@ block headerAdditions
 
         widget2 = new newSuspectDataWidget();
         widget2.initNewSuspects();
+
+        widget3 = new newNovaLogWidget();
+        widget3.init();
+
     };
   
 block content
@@ -195,7 +273,7 @@ block content
       div#newSuspectGrid
     br
     
-    button.button(onclick = 'widget1.markAllSuspectSeen()')
+    button.button(onclick = 'widget1.markAllSeen()')
       img.buttonIcon(src='images/delete.png');
       span.buttonSpan Mark all as seen
 
@@ -207,7 +285,20 @@ block content
       div#newSuspectDataGrid
     br
     
-    button.button(onclick = 'widget2.markAllSuspectSeen()')
+    button.button(onclick = 'widget2.markAllSeen()')
+      img.buttonIcon(src='images/delete.png');
+      span.buttonSpan Mark all as seen
+ 
+  br
+  div#newNovaLogs(style="display: inline-block; width: 400px; vertical-align: top; margin: 5px")
+    h1 New Nova Log Entries
+
+    div#newNovaLogPages
+    div.novaGrid
+      div#newNovaLogGrid
+    br
+    
+    button.button(onclick = 'widget3.markAllSeen()')
       img.buttonIcon(src='images/delete.png');
       span.buttonSpan Mark all as seen
 

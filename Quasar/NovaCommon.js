@@ -160,6 +160,20 @@ var NovaCommon = new function() {
     this.dbqGetUnseenSuspects = db.prepare('SELECT ip, interface FROM suspectsSeen WHERE seenSuspect = 0');
 	this.dbqGetUnseenDataSuspects = db.prepare('SELECT ip, interface FROM suspectsSeen WHERE seenAllData = 0');
 
+
+	this.dbqIsNewNovaLogEntry = db.prepare('SELECT COUNT(*) AS rows from novalogSeen WHERE linenum = ?');
+	this.dbqAddNovaLogEntry = db.prepare('INSERT INTO novalogSeen VALUES(?, ?, 0)');
+	this.dbqMarkNovaLogEntrySeen = db.prepare('UPDATE novalogSeen SET seen = 1 WHERE linenum = ?');
+	this.dbqMarkAllNovaLogEntriesSeen = db.prepare('UPDATE novalogSeen SET seen = 1');
+	this.dbqGetUnseenNovaLogs = db.prepare('SELECT * from novalogSeen WHERE seen = 0');
+
+	this.dbqIsNewHoneydLogEntry = db.prepare('SELECT COUNT(*) AS rows from honeydlogSeen WHERE linenum = ?');
+	this.dbqAddHoneydLogEntry = db.prepare('INSERT INTO honeydlogSeen VALUES(?, ?, 0)');
+	this.dbqMarkHoneydLogEntrySeen = db.prepare('UPDATE honeydlogSeen SET seen = 1 WHERE linenum = ?');
+	this.dbqMarkAllHoneydLogEntriesSeen = db.prepare('UPDATE honeydlogSeen SET seen = 1');
+	this.dbqGetUnseenHoneydLogs = db.prepare('SELECT * from honeydlogSeen WHERE seen = 0');
+
+
 	this.HashPassword = function (password, salt)
 	{
 		var shasum = crypto.createHash('sha1');
