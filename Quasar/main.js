@@ -1837,8 +1837,6 @@ app.post('/configureNovaSave', function (req, res)
             break;
 
         case "RSYSLOG_IP":
-          console.log('RSYSLOG_IP == ' + req.body[configItems[item]]);
-          console.log('test == ' + /^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]{1,5}){1}$/.test(req.body[configItems[item]]));
           if(/^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]{1,5}){1}$/.test(req.body[configItems[item]]) == false 
              && req.body[configItems[item]] != 'NULL')
           {
