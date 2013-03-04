@@ -1836,13 +1836,15 @@ app.post('/configureNovaSave', function (req, res)
             validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
             break;
 
-    case "RSYSLOG_IP":
-      if(/^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$/.test(req.body[configItems[item]]) == false 
-         && req.body[configItems[item]] != 'NULL')
-      {
-        validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP, must be IP:Port or the string "NULL"').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$');
-      }
-      break;
+        case "RSYSLOG_IP":
+          console.log('RSYSLOG_IP == ' + req.body[configItems[item]]);
+          console.log('test == ' + /^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]{1,5}){1}$/.test(req.body[configItems[item]]));
+          if(/^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]{1,5}){1}$/.test(req.body[configItems[item]]) == false 
+             && req.body[configItems[item]] != 'NULL')
+          {
+            validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP, must be IP:Port or the string "NULL"').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]{1,5})$');
+          }
+          break;
       
         case "DOPPELGANGER_IP":
             validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
@@ -1931,6 +1933,7 @@ app.post('/configureNovaSave', function (req, res)
       else
       {
         console.log('nova_rsyslog_helper updated rsyslog configuration');
+        NovaCommon.config.WriteSetting('RSYSLOG_IP', writeIP);
       }
     });
   }
@@ -1946,6 +1949,7 @@ app.post('/configureNovaSave', function (req, res)
     var rm = spawn(execution, options); 
     rm.on('exit', function(code){
       console.log('41-nova.conf has been removed from /etc/rsyslog.d/');
+      NovaCommon.config.WriteSetting('RSYSLOG_IP', writeIP);
     });
   }
 

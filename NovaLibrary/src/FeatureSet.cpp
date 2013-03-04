@@ -767,8 +767,6 @@ void FeatureSet::SetHaystackNodes(std::vector<uint32_t> nodes)
 
 		if (!keep)
 		{
-			in_addr r;
-			r.s_addr = it->first;
 			if (it->second != 0)
 			{
 				m_numberOfHaystackNodesContacted--;
@@ -786,8 +784,6 @@ void FeatureSet::SetHaystackNodes(std::vector<uint32_t> nodes)
 	for (uint i = 0; i < nodes.size(); i++) {
 		if (!m_HaystackIPTable.keyExists(nodes.at(i)))
 		{
-			in_addr r;
-			r.s_addr = nodes.at(i);
 			m_HaystackIPTable[nodes.at(i)] = 0;
 		}
 	}
