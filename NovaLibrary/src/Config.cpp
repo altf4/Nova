@@ -68,6 +68,7 @@ string Config::m_prefixes[] =
 	"SAVE_FREQUENCY",
 	"DATA_TTL",
 	"CE_SAVE_FILE",
+	"RSYSLOG_IP",
 	"SMTP_ADDR",
 	"SMTP_PORT",
 	"SMTP_DOMAIN",
@@ -493,6 +494,19 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
+			// RSYSLOG_IP
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_rsyslog = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
 
 			// SMTP_ADDR
 			prefixIndex++;
@@ -1070,7 +1084,7 @@ bool Config::LoadUserConfig()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				//TODO Key should be 256 characters, hard check for this once implemented
+				
 				if((line.size() > 0) && (line.size() < 257))
 				{
 					m_key = line;
@@ -1352,7 +1366,7 @@ std::string Config::ReadSetting(std::string key)
 		{
 			getline(config, line);
 
-			if(!line.substr(0, key.size()).compare(key))
+			if(!line.substr(0, key.size() + 1).compare(key + " "))
 			{
 				line = line.substr(key.size() + 1, line.size());
 				if(line.size() > 0)
@@ -1419,7 +1433,7 @@ bool Config::WriteSetting(std::string key, std::string value)
 			}
 
 
-			if(!line.substr(0,key.size()).compare(key))
+			if(!line.substr(0,key.size() + 1).compare(key + " "))
 			{
 				*out << key << " " << value << endl;
 				continue;
@@ -2402,6 +2416,18 @@ vector<NormalizationType> Config::GetNormalizationFunctions()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_normalization;
+}
+
+std::string Config::GetRsyslogIP()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_rsyslog;
+}
+
+void Config::SetRsyslogIP(std::string newIp)
+{
+	Lock lock(&m_lock, WRITE_LOCK);
+	m_rsyslog = newIp;
 }
 
 }

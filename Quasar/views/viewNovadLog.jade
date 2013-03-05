@@ -114,13 +114,6 @@ block headerAdditions
       }
     }
     
-    function onGridRendered()
-    {
-       var tablePages = $("#tablePages")[0];
-       tablePages.innerHTML = "";
-       logGrid.populateTablePages(tablePages);
-    }
-
     function isIn(item, array)
     {
       for(i in array)
@@ -241,7 +234,7 @@ block headerAdditions
         gridStructure.push({name: "Message", isDisabled: false});
         logGrid = new NovaGrid(gridStructure, 0, $('#logTable')[0], 'logGrid');
         logGrid.SetRowsPerPage(25);
-        logGrid.SetRenderCallback(onGridRendered);
+        logGrid.SetPageNumberDiv($("#tablePages")[0]);
         
         var log = log.toString().split(/\\r\\n|\\n\\r|\\n|\\r/);
 
@@ -257,7 +250,7 @@ block headerAdditions
         {
             now.newLogLine = function (line)
             {
-               console.log("Got new line");
+               AddLogEntry(line);
                logGrid.Render();
             }
         });

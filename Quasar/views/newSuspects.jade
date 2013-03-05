@@ -1,0 +1,213 @@
+//- ============================================================================
+//-  Copyright   : DataSoft Corporation 2011-2013
+//-  Nova is free software: you can redistribute it and/or modify
+//-   it under the terms of the GNU General Public License as published by
+//-   the Free Software Foundation, either version 3 of the License, or
+//-   (at your option) any later version.
+//-
+//-   Nova is distributed in the hope that it will be useful,
+//-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//-   GNU General Public License for more details.
+//-
+//-   You should have received a copy of the GNU General Public License
+//-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
+//- ============================================================================
+
+extends layout
+
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
+  script(type="text/javascript", src="scripts/NovaGrid.js")
+  
+  script
+    var newSuspectGrid;
+    var newSuspectDataGrid;
+
+    function newSuspectWidget() {
+        var self = this;
+        this.markSuspectSeen = function(ip, interface)
+        {
+            now.MarkSuspectSeen(ip, interface);
+            newSuspectGrid.DeleteRow(ip + interface);
+            newSuspectGrid.Render();
+        }
+
+        this.markAllSuspectSeen = function()
+        {
+            now.MarkAllSuspectSeen();
+            newSuspectGrid.Clear();
+        }
+
+
+        this.addNewSuspectRow = function(ip, interface) {
+            var row = new Array();
+            row.push(ip + interface);
+            row.push(ip);
+            row.push(interface);
+
+            var buttonString = "<button class='button' onclick='widget1.markSuspectSeen(";
+            buttonString += '"' + ip + '", "' + interface + '"';
+            buttonString += ")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Mark as seen</span></button>";
+            row.push(buttonString);
+            
+            newSuspectGrid.PushEntry(row);
+        }
+        
+        this.addNewSuspectRowAndRender = function(ip, interface) {
+            self.addNewSuspectRow(ip, interface);
+            newSuspectGrid.Render();
+        }
+
+        this.initNewSuspects = function()
+        {
+            var columns = new Array();
+            columns.push({name: "hiddenkey"});
+            columns.push({name: "IP"});
+            columns.push({name: "Interface"});
+            columns.push({name: "Mark as seen"});
+
+            newSuspectGrid = new NovaGrid(columns, 0, "newSuspectGrid", 'newSuspectGrid', false);
+            newSuspectGrid.DisableColumn(0);
+            newSuspectGrid.SetSortByKey(1);
+            newSuspectGrid.GenerateTableHeader();
+            newSuspectGrid.SetRowsPerPage(10);
+            newSuspectGrid.SetPageNumberDiv($("#newSuspectPages").get(0));    
+            
+            now.OnNewSuspectInserted = self.addNewSuspectRowAndRender;
+
+
+            now.GetUnseenSuspects(function(err, suspects) 
+            {
+                if (err)
+                {
+                    alert("Error fetching unseen suspects: " + err);
+                    return;
+                }
+
+                for (var i in suspects)
+                {
+                    self.addNewSuspectRow(suspects[i].ip, suspects[i].interface);
+                }
+                
+                newSuspectGrid.Render();
+            }
+        )}
+    }
+
+
+    function newSuspectDataWidget() {
+        var self = this;
+        this.markSuspectSeen = function(ip, interface)
+        {
+            now.MarkSuspectDataSeen(ip, interface);
+            newSuspectDataGrid.DeleteRow(ip + interface);
+            newSuspectDataGrid.Render();
+        }
+
+        this.markAllSuspectSeen = function()
+        {
+            now.MarkAllSuspectDataSeen();
+            newSuspectDataGrid.Clear();
+        }
+
+
+        this.addNewSuspectRow = function(ip, interface) {
+            var row = new Array();
+            row.push(ip + interface);
+            row.push(ip);
+            row.push(interface);
+
+            var buttonString = "<button class='button' onclick='widget2.markSuspectSeen(";
+            buttonString += '"' + ip + '", "' + interface + '"';
+            buttonString += ")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Mark as seen</span></button>";
+            row.push(buttonString);
+            
+            newSuspectDataGrid.PushEntry(row);
+        }
+       
+        this.renderTimeout = null;
+        this.addNewSuspectRowAndRender = function(ip, interface) {
+            self.addNewSuspectRow(ip, interface);
+            // Use a timer to only render once a second even if we get a bunch of suspects. Keeps things from rendering too often from new data.
+            if (self.renderTimeout == null) {
+                self.renderTimeout = setTimeout(function() {newSuspectDataGrid.Render(); self.renderTimeout = null;}, 1000);
+            }
+        }
+
+        this.initNewSuspects = function()
+        {
+            var columns = new Array();
+            columns.push({name: "hiddenkey"});
+            columns.push({name: "IP"});
+            columns.push({name: "Interface"});
+            columns.push({name: "Mark as seen"});
+
+            newSuspectDataGrid = new NovaGrid(columns, 0, "newSuspectDataGrid", 'newSuspectDataGrid', false);
+            newSuspectDataGrid.DisableColumn(0);
+            newSuspectDataGrid.SetSortByKey(1);
+            newSuspectDataGrid.GenerateTableHeader();
+            newSuspectDataGrid.SetRowsPerPage(10);
+            newSuspectDataGrid.SetPageNumberDiv($("#newSuspectDataPages").get(0));    
+            
+            now.OnNewSuspectData = self.addNewSuspectRowAndRender;
+
+
+            now.GetUnseenDataSuspects(function(err, suspects) 
+            {
+                if (err)
+                {
+                    alert("Error fetching unseen suspects: " + err);
+                    return;
+                }
+
+                for (var i in suspects)
+                {
+                    self.addNewSuspectRow(suspects[i].ip, suspects[i].interface);
+                }
+                
+                newSuspectDataGrid.Render();
+            }
+        )}
+    }
+
+    var widget1;
+    var widget2;
+    var img;
+    function init(){
+        // Trick to preload the delete.png image
+        img = new Image();
+        img.src = "images/delete.png";
+
+        widget1 = new newSuspectWidget();
+        widget1.initNewSuspects();
+
+        widget2 = new newSuspectDataWidget();
+        widget2.initNewSuspects();
+    };
+  
+block content
+  div#newSuspects(style="display: inline-block; width: 400px; vertical-align: top; margin: 5px;")
+    h1 New Suspects
+
+    div#newSuspectPages
+    div.novaGrid
+      div#newSuspectGrid
+    br
+    
+    button.button(onclick = 'widget1.markAllSuspectSeen()')
+      img.buttonIcon(src='images/delete.png');
+      span.buttonSpan Mark all as seen
+
+  div#newSuspectData(style="display: inline-block; width: 400px; vertical-align: top; margin: 5px")
+    h1 Suspects with new data
+
+    div#newSuspectDataPages
+    div.novaGrid
+      div#newSuspectDataGrid
+    br
+    
+    button.button(onclick = 'widget2.markAllSuspectSeen()')
+      img.buttonIcon(src='images/delete.png');
+      span.buttonSpan Mark all as seen
+

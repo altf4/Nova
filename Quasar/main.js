@@ -66,14 +66,11 @@ var nowjs = require("now");
 var Validator = require('validator').Validator;
 var sanitizeCheck = require('validator').sanitize;
 
-var Tail = require('tail').Tail;
 var NovaHomePath = NovaCommon.config.GetPathHome();
 var NovaSharedPath = NovaCommon.config.GetPathShared();
-var novadLogPath = "/var/log/nova/Nova.log";
-var novadLog = new Tail(novadLogPath);
 
+var novadLogPath = "/var/log/nova/Nova.log";
 var honeydLogPath = "/var/log/nova/Honeyd.log";
-var honeydLog = new Tail(honeydLogPath);
 
 var benignRequest = false;
 var pulsar;
@@ -226,52 +223,129 @@ var everyone = nowjs.initialize(app);
 var NowjsMethods = require('./NowjsMethods.js');
 var initEveryone = new NowjsMethods(everyone);
 
+
+
+
+// Testing some log watching stuff
+var logLines = new Array();
+
+
+
+function LiveFileReader(filePath, cb) {
+    this.processedLines = new Array();
+    this.initialContent = "";
+    this.initialLength = 0;
+    this.filePath = filePath;
+    this.cb = cb;
+    
+    this.file = null;
+    this.chunkLength = 2048;
+    this.readBytes = 0;
+
+    var self = this;
+   
+    fs.readFile(self.filePath, function(err, data)
+    {
+        if (err)
+        {
+            LOG("ERROR", "ERROR reading file: " + err);
+            self.cb(err);
+            return;
+        }
+
+        self.initialContent = String(data);
+        self.initialLength = self.initialContent.length;
+        self.processedLines = self.initialContent.split("\n");
+        
+        if (self.processedLines[self.processedLines.length - 1] == "") {
+            self.processedLines.pop();
+        }
+
+        for (var i = 0; i < self.processedLines.length; i++) {
+            cb(null, self.processedLines[i], i);
+        }
+
+        self.readBytes = self.initialLength;
+    
+        fs.open(self.filePath, 'r', function(err, fd)
+        {
+            if (err)
+            {
+                LOG("ERROR", "Unable to open log file for reading due to error: " + err);
+                self.cb(err);
+                return;
+            }
+            self.file = fd; 
+            self.readSomeData();
+        });
+
+        self.processData = function(err, bytecount, buff)
+        {
+            if (err)
+            {
+                LOG("ERROR", "Error reading log file: " + err);
+                self(err);
+                return;
+            }
+
+    
+        
+            var lastLineFeed = buff.toString('utf-8', 0, bytecount).lastIndexOf('\n');
+            if (lastLineFeed > -1)
+            {
+                var lineArray = buff.toString('utf-8', 0, bytecount).slice(0, lastLineFeed).split("\n");
+            
+                for (var i = 0; i < lineArray.length; i++)
+                {
+                    if (lineArray[i] != "") {
+                        self.cb(null, lineArray[i], self.processedLines.length);
+                        self.processedLines.push(lineArray[i]);
+                    }
+                }
+
+                self.readBytes += lastLineFeed + 1;
+            } else {
+                self.readBytes += bytecount;
+            }
+    
+        }
+
+        self.readSomeData = function()
+        {
+            var fb = fs.read(self.file, new Buffer(self.chunkLength), 0, self.chunkLength, self.readBytes, self.processData);
+        }
+
+        fs.watch(self.filePath, {persistent: false}, function(event, filename)
+        {
+            self.readSomeData();
+        });
+    });
+}
+
+
+
 var initLogWatch = function ()
 {
-    var novadLog = new Tail(novadLogPath);
-    novadLog.on("line", function (data)
-    {
-        try {
-            everyone.now.newLogLine(data);
-        } catch (err)
+    var novadLogFileReader = new LiveFileReader(novadLogPath, function(err, line, lineNum) {
+        if (err)
         {
-
+            console.log("CAllback got error" + err);
+            return;
         }
+        try {
+            everyone.now.newLogLine(line);
+        } catch (err) {};
     });
-
-    novadLog.on("error", function (data)
-    {
-        LOG("ERROR", "Novad log watch error: " + data);
-        try {
-            everyone.now.newLogLine(data)
-        } catch (err)
+    
+    var novadLogFileReader = new LiveFileReader(novadLogPath, function(err, line, lineNum) {
+        if (err)
         {
-            LOG("ERROR", "Novad log watch error: " + err);
+            console.log("CAllback got error" + err);
+            return;
         }
-    });
-
-
-    var honeydLog = new Tail(honeydLogPath);
-    honeydLog.on("line", function (data)
-    {
         try {
-            everyone.now.newHoneydLogLine(data);
-        } catch (err)
-        {
-
-        }
-    });
-
-    honeydLog.on("error", function (data)
-    {
-        LOG("ERROR", "Honeyd log watch error: " + data);
-        try {
-            everyone.now.newHoneydLogLine(data)
-        } catch (err)
-        {
-            LOG("ERROR", "Honeyd log watch error: " + err);
-
-        }
+            everyone.now.newHoneydLogLine(line);
+        } catch (err) {};
     });
 }
 
@@ -1155,8 +1229,8 @@ app.get('/configWhitelist', function (req, res)
         locals: {
             whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
             whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
-      		INTERFACES: interfaces,
-      		interfaceAliases: ConvertInterfacesToAliases(interfaces)
+            INTERFACES: interfaces,
+            interfaceAliases: ConvertInterfacesToAliases(interfaces)
         }
     })
 });
@@ -1283,6 +1357,11 @@ app.get('/shutdown', function (req, res)
 app.get('/about', function (req, res)
 {
     res.render('about.jade');
+});
+
+app.get('/newSuspects', function (req, res)
+{
+    res.render('newSuspects.jade');
 });
 
 app.post('/createNewUser', function (req, res)
@@ -1757,13 +1836,13 @@ app.post('/configureNovaSave', function (req, res)
             validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
             break;
 
-    case "RSYSLOG_IP":
-      if(/^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$/.test(req.body[configItems[item]]) == false 
-         && req.body[configItems[item]] != 'NULL')
-      {
-        validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP, must be IP:Port or the string "NULL"').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$');
-      }
-      break;
+        case "RSYSLOG_IP":
+          if(/^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]{1,5}){1}$/.test(req.body[configItems[item]]) == false 
+             && req.body[configItems[item]] != 'NULL')
+          {
+            validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP, must be IP:Port or the string "NULL"').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]{1,5})$');
+          }
+          break;
       
         case "DOPPELGANGER_IP":
             validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
@@ -1852,6 +1931,7 @@ app.post('/configureNovaSave', function (req, res)
       else
       {
         console.log('nova_rsyslog_helper updated rsyslog configuration');
+        NovaCommon.config.WriteSetting('RSYSLOG_IP', writeIP);
       }
     });
   }
@@ -1867,6 +1947,7 @@ app.post('/configureNovaSave', function (req, res)
     var rm = spawn(execution, options); 
     rm.on('exit', function(code){
       console.log('41-nova.conf has been removed from /etc/rsyslog.d/');
+      NovaCommon.config.WriteSetting('RSYSLOG_IP', writeIP);
     });
   }
 
@@ -1982,10 +2063,56 @@ everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
 var distributeSuspect = function (suspect)
 {
-    var s = new Object();
+    var d = new Date(suspect.GetLastPacketTime() * 1000);
+    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     
+    
+    var s = new Object();
     objCopy(suspect, s);
     s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
+    
+    // Save to unseen db
+    NovaCommon.dbqIsNewSuspect.all(s.GetIpString, s.GetInterface, function(err, results) {
+        if (err)
+        {
+            LOG("ERROR", err);
+            return;
+        }
+        
+        if (results[0].rows === 0)
+        {
+            NovaCommon.dbqAddNewSuspect.run(s.GetIpString, s.GetInterface, function()
+            {
+                try {
+                    everyone.now.OnNewSuspectInserted(s.GetIpString, s.GetInterface);
+                    everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
+                } catch(err) {}
+            });
+        } 
+        else
+        {
+            NovaCommon.dbqSeenAllData.all(s.GetIpString, s.GetInterface, function(err, results) {
+                if (err)
+                {
+                    LOG("ERROR", err);
+                    return;
+                }
+                
+                if (results[0].seenAllData)
+                {
+                    NovaCommon.dbqMarkSuspectDataUnseen.run(s.GetIpString, s.GetInterface, function() {
+                        try {
+                            everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
+                        } catch(err) {}
+                    });
+                }
+            });
+         }
+    });
+
+
+    
+    
     
     try 
     {
@@ -1994,8 +2121,6 @@ var distributeSuspect = function (suspect)
   
   if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) >= 0)
   {
-    var d = new Date(suspect.GetLastPacketTime() * 1000);
-    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     var send = {};
     
     send.ip = suspect.GetIpString();

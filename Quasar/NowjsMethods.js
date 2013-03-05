@@ -1229,6 +1229,62 @@ var GetPortSets = function (profileName, cb)
   return portSets;
 };
 everyone.now.GetPortSets = GetPortSets;
+
+
+function databaseError(err, cb) {
+    	if (err)
+		{
+			LOG("ERROR", "Database error: " + err);
+			cb && cb(err);
+			return true;
+		}
+		return false;
+}
+
+everyone.now.GetUnseenSuspects = function(cb) {
+    NovaCommon.dbqGetUnseenSuspects.all(function(err, results){
+		if (databaseError(err, cb)) {return;}	
+		cb && cb(null, results);
+	});
+};
+
+everyone.now.MarkSuspectSeen = function(ip, ethinterface, cb) {
+    NovaCommon.dbqMarkSuspectSeen.run(ip, ethinterface, function(err){
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+everyone.now.MarkAllSuspectSeen = function(cb) {
+	NovaCommon.dbqMarkAllSuspectSeen.run(function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+everyone.now.GetUnseenDataSuspects = function(cb) {
+    NovaCommon.dbqGetUnseenDataSuspects.all(function(err, results){
+		if (databaseError(err, cb)) {return;}	
+		cb && cb(null, results);
+	});
+};
+
+everyone.now.MarkSuspectDataSeen = function(ip, ethinterface, cb) {
+    NovaCommon.dbqMarkSuspectDataSeen.run(ip, ethinterface, function(err){
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+everyone.now.MarkAllSuspectDataSeen = function(cb) {
+	NovaCommon.dbqMarkAllSuspectDataSeen.run(function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+
+
 }
 
 

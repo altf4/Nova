@@ -244,6 +244,19 @@ CE_SAVE_FILE CESaveFile
 # Logging Stuff #
 
 ############################################
+# RSYSLOG_IP #
+############################################
+#
+# The IP:Port combination for rsyslog to send
+# messages to 
+# Example
+# 192.168.0.1:512
+#
+# Note: If you do not wish to redirect any logging,
+# use string NULL here (case-sensitive)
+RSYSLOG_IP NULL
+
+############################################
 # SMTP_ADDR #
 ############################################
 # 

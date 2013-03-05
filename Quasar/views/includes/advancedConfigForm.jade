@@ -56,6 +56,7 @@ form(method="post", action="/configureNovaSave")
   br
   
   label Classification Training Data
+  br
   input(name="TRAINING_DATA_PATH",  value=TRAINING_DATA_PATH)
   br
   
@@ -211,11 +212,13 @@ form(method="post", action="/configureNovaSave")
   input(name="DOPPELGANGER_IP",  value=DOPPELGANGER_IP)
   br
  
-  p(style="font-style: italic; float: left;") Note: To disable remote logging for Nova, use string NULL or empty the input field
+  p(style="font-style: italic; float: left;") Note: To disable remote logging for Nova, use string "NULL"
+  br
+  p(style="font-style: italic; float: left;") Format for Rsyslog connections is IP:PORT
   br
   
   label Remote Log Server IP
-  input(name="RSYSLOG_IP", value=RSYSLOG_IP, id='RSYSLOG_IP', onfocus='watermark("RSYSLOG_IP", "NULL")', onblur='watermark("RSYSLOG_IP", "NULL")')
+  input(name="RSYSLOG_IP", value=RSYSLOG_IP, id='RSYSLOG_IP', placeholder='Required format is IP:PORT')
   br
 
   h2 Pulsar

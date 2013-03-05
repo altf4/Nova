@@ -15,7 +15,6 @@ public:
 	ClassificationAggregator();
 	~ClassificationAggregator();
 
-	// TODO: Make this a single struct/class
 	std::vector<ClassificationEngine*> m_engines;
 	std::vector<CLASSIFIER_MODES> m_modes;
 	std::vector<double> m_engineWeights;

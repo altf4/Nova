@@ -444,13 +444,6 @@ block headerAdditions
         }
     }
 
-    function onGridRendered()
-    {
-       var tablePages = $('#tablePages')[0];
-       tablePages.innerHTML = "";
-       suspectGrid.populateTablePages(tablePages);   
-    }
-    
     function Init()
     {
         var gridStructure = [];
@@ -473,7 +466,7 @@ block headerAdditions
         // Sort by classification by default
         suspectGrid.SetSortByKey(3);
         suspectGrid.SetRowsPerPage(20);
-        suspectGrid.SetRenderCallback(onGridRendered);
+        suspectGrid.SetPageNumberDiv($('#tablePages').get(0));
 
         resendSuspects();
 

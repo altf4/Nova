@@ -47,7 +47,6 @@ public:
 	std::string ToString(const std::string &profileName);
 
 	//Javascript compatibility functions
-	//TODO: Move these into the binding class
 	std::string GetName() {return m_name;}
 	std::string GetTCPBehavior() {return Port::PortBehaviorToString(m_defaultTCPBehavior);}
 	std::string GetUDPBehavior() {return Port::PortBehaviorToString(m_defaultUDPBehavior);}

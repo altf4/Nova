@@ -176,6 +176,9 @@ public:
 	bool SetSMTPUser(std::string SMTPUser);
 	bool SetSMTPPass(std::string STMP_Pass);
 
+	std::string GetRsyslogIP();
+	void SetRsyslogIP(std::string newIp);
+
 	bool GetSMTPSettings_FromFile();
 	bool SaveSMTPSettings();
 
@@ -264,6 +267,8 @@ private:
 	static Config *m_instance;
 
 	__attribute__ ((visibility ("hidden"))) static std::string m_prefixes[];
+
+	std::string m_rsyslog;
 
 	std::string m_doppelIp;
 	std::string m_loopbackIF;

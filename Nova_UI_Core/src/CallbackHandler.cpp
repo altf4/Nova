@@ -22,6 +22,7 @@
 #include "messaging/messages/UpdateMessage.h"
 #include "messaging/messages/ErrorMessage.h"
 #include "messaging/MessageManager.h"
+#include "Logger.h"
 #include "Lock.h"
 
 using namespace Nova;
@@ -80,7 +81,7 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 			UpdateMessage callbackAck(UPDATE_SUSPECT_ACK);
 			if(!MessageManager::Instance().WriteMessage(ticket, &callbackAck))
 			{
-				//TODO: log this? We failed to send the ack
+				LOG(DEBUG, "Unable to send UPDATE_SUSPECT_ACK: WriteMessage failed.", "");
 			}
 			break;
 		}
@@ -91,7 +92,7 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 			UpdateMessage callbackAck(UPDATE_ALL_SUSPECTS_CLEARED_ACK);
 			if(!MessageManager::Instance().WriteMessage(ticket, &callbackAck))
 			{
-				//TODO: log this? We failed to send the ack
+				LOG(DEBUG, "Unable to send UPDATE_ALL_SUSPECTS_CLEARED_ACK: WriteMessage failed.", "");
 			}
 			break;
 		}
@@ -103,7 +104,7 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 			UpdateMessage callbackAck(UPDATE_SUSPECT_CLEARED_ACK);
 			if(!MessageManager::Instance().WriteMessage(ticket, &callbackAck))
 			{
-				//TODO: log this? We failed to send the ack
+				LOG(DEBUG, "Unable to send UPDATE_SUSPECT_CLEARED_ACK: WriteMessage failed.", "");
 			}
 			break;
 		}

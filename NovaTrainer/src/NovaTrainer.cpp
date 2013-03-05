@@ -109,7 +109,6 @@ namespace Nova
 void PrintUsage()
 {
 	cout << "Usage:" << endl;
-	// TODO
 	cout << "  novatrainer --writeToDatabase novaCaptureFolder databaseFile.db" << endl;
 	cout << "  novatrainer --save novaCaptureFolder" << endl;
 	cout << "  novatrainer --capture novaCaptureFolder interface" << endl;
