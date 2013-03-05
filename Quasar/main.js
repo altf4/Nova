@@ -256,6 +256,7 @@ function LiveFileReader(filePath, cb) {
         self.initialContent = String(data);
         self.initialLength = self.initialContent.length;
         self.processedLines = self.initialContent.split("\n");
+        self.reading = false;
         
         if (self.processedLines[self.processedLines.length - 1] == "") {
             self.processedLines.pop();
@@ -281,19 +282,18 @@ function LiveFileReader(filePath, cb) {
 
         self.processData = function(err, bytecount, buff)
         {
+            self.reading = false;
             if (err)
             {
                 LOG("ERROR", "Error reading log file: " + err);
                 self(err);
                 return;
             }
-
-    
         
-            var lastLineFeed = buff.toString('utf-8', 0, bytecount).lastIndexOf('\n');
-            if (lastLineFeed > -1)
+            var lastLineFeed = buff.toString('ascii', 0, bytecount).lastIndexOf('\n');
+            if (lastLineFeed != -1)
             {
-                var lineArray = buff.toString('utf-8', 0, bytecount).slice(0, lastLineFeed).split("\n");
+                var lineArray = buff.toString('ascii', 0, bytecount).slice(0, lastLineFeed).split("\n");
             
                 for (var i = 0; i < lineArray.length; i++)
                 {
@@ -305,7 +305,7 @@ function LiveFileReader(filePath, cb) {
 
                 self.readBytes += lastLineFeed + 1;
             } else {
-                self.readBytes += bytecount;
+                //self.readBytes += bytecount;
             }
     
         }
@@ -315,9 +315,14 @@ function LiveFileReader(filePath, cb) {
             var fb = fs.read(self.file, new Buffer(self.chunkLength), 0, self.chunkLength, self.readBytes, self.processData);
         }
 
-        fs.watch(self.filePath, {persistent: false}, function(event, filename)
+        fs.watch(self.filePath, {persistent: true}, function(event, filename)
+        //fs.watchFile(self.filePath, function(curr, prev)
         {
-            self.readSomeData();
+            if (!self.reading)
+            {
+                self.reading = true;
+                self.readSomeData();
+            }
         });
     });
 }
@@ -333,18 +338,18 @@ var initLogWatch = function ()
             return;
         }
 
-    	NovaCommon.dbqIsNewNovaLogEntry.all(lineNum, function(err, results) {
-        	if (err)
-        	{
-            	LOG("ERROR", err);
-            	return;
-        	}
+        NovaCommon.dbqIsNewNovaLogEntry.all(lineNum, function(err, results) {
+            if (err)
+            {
+                LOG("ERROR", err);
+                return;
+            }
         
-        	if (results[0].rows === 0)
-        	{
-				NovaCommon.dbqAddNovaLogEntry.run(lineNum, line);
-			}
-		});
+            if (results[0].rows === 0)
+            {
+                NovaCommon.dbqAddNovaLogEntry.run(lineNum, line);
+            }
+        });
 
         try {
             everyone.now.newLogLine(lineNum, line);
@@ -357,19 +362,19 @@ var initLogWatch = function ()
             console.log("CAllback got error" + err);
             return;
         }
-    	
-		NovaCommon.dbqIsNewHoneydLogEntry.all(lineNum, function(err, results) {
-        	if (err)
-        	{
-            	LOG("ERROR", err);
-            	return;
-        	}
         
-        	if (results[0].rows === 0)
-        	{
-				NovaCommon.dbqAddHoneydLogEntry.run(lineNum, line);
-			}
-		});
+        NovaCommon.dbqIsNewHoneydLogEntry.all(lineNum, function(err, results) {
+            if (err)
+            {
+                LOG("ERROR", err);
+                return;
+            }
+        
+            if (results[0].rows === 0)
+            {
+                NovaCommon.dbqAddHoneydLogEntry.run(lineNum, line);
+            }
+        });
 
 
         try {
