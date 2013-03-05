@@ -216,9 +216,14 @@ public:
 
 	void SetHaystackNodes(std::vector<uint32_t> nodes);
 
-	//FeatureSet(const FeatureSet &rhs);
-	//FeatureSet& operator=(FeatureSet &rhs);
-//private:
+	// For some TCP flag ratios and statistics
+	uint64_t m_rstCount;
+	uint64_t m_ackCount;
+	uint64_t m_synCount;
+	uint64_t m_finCount;
+	uint64_t m_synAckCount;
+
+private:
 	//Temporary variables used to calculate Features
 
 	//Table of Packet sizes and counts for variance calc
@@ -231,14 +236,6 @@ public:
 	time_t m_startTime;
 	time_t m_endTime;
 	time_t m_lastTime;
-
-	// For some TCP flag ratios and statistics
-	uint64_t m_rstCount;
-	uint64_t m_ackCount;
-	uint64_t m_synCount;
-	uint64_t m_finCount;
-	uint64_t m_synAckCount;
-
 	time_t m_totalInterval;
 
 	//Total number of bytes in all packets

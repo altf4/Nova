@@ -26,22 +26,38 @@
 #include <vector>
 
 #include "Suspect.h"
+#include "protobuf/marshalled_classes.pb.h"
 
 #define EMPTY_SUSPECT_CLASSIFICATION -1337
 
 namespace std
 {
 	template<>
-	struct hash< Nova::SuspectIdentifier >
+	struct hash< Nova::SuspectID_pb >
 	{
-		std::size_t operator()( const Nova::SuspectIdentifier &c ) const
+		std::size_t operator()( const Nova::SuspectID_pb &c ) const
 		{
-			return hash<uint32_t>()(c.m_ip);
+			return hash<uint32_t>()(c.m_ip());
 		}
 	};
 }
 
-typedef Nova::HashMap<Nova::SuspectIdentifier, Nova::Suspect *, std::hash<Nova::SuspectIdentifier>, Nova::equalityChecker> SuspectHashTable;
+namespace Nova
+{
+
+struct SuspectIDEq
+{
+	bool operator()(Nova::SuspectID_pb k1, Nova::SuspectID_pb k2) const
+	{
+		if((k1.m_ip() == k2.m_ip()) && (k1.m_ifname() == k2.m_ifname()))
+		{
+			return true;
+		}
+		return false;
+	}
+};
+
+typedef Nova::HashMap<Nova::SuspectID_pb, Nova::Suspect *, std::hash<Nova::SuspectID_pb>, Nova::SuspectIDEq> SuspectHashTable;
 
 struct SuspectLock
 {
@@ -50,10 +66,7 @@ struct SuspectLock
 	bool deleted;
 };
 
-typedef Nova::HashMap<Nova::SuspectIdentifier,SuspectLock, std::hash<Nova::SuspectIdentifier>, Nova::equalityChecker> SuspectLockTable;
-
-namespace Nova
-{
+typedef Nova::HashMap<Nova::SuspectID_pb,SuspectLock, std::hash<Nova::SuspectID_pb>, Nova::SuspectIDEq> SuspectLockTable;
 
 enum SuspectTableRet : int32_t
 {
@@ -83,7 +96,7 @@ public:
 	// Returns true on Success, and false if the suspect already exists
 	//bool AddNewSuspect(const Evidence& evidence);
 
-	bool ClassifySuspect(Nova::SuspectIdentifier key);
+	bool ClassifySuspect(Nova::SuspectID_pb key);
 
 	void UpdateAllSuspects();
 
@@ -102,27 +115,27 @@ public:
 	// Returns (0) on Success, (-1) if the Suspect is checked out by someone else
 	// and (1) if the Suspect is not checked out
 	// Note:  This function blocks until it can acquire a write lock on the suspect
-	SuspectTableRet CheckIn(Nova::SuspectIdentifier key);
+	SuspectTableRet CheckIn(Nova::SuspectID_pb key);
 
 	// Copies out a suspect and marks the suspect so that it cannot be written or deleted
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns empty Suspect on failure.
 	// Note: A 'Checked Out' Suspect cannot be modified until is has been replaced by the suspect 'Checked In'
 	// 		However the suspect can continue to be read. It is similar to having a read lock.
-	Suspect CheckOut(Nova::SuspectIdentifier key);
+	Suspect CheckOut(Nova::SuspectID_pb key);
 
 	// Lookup and get an Asynchronous copy of the Suspect
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns an empty suspect on failure
 	// Note: To modify or lock a suspect use CheckOut();
 	// Note: This is the same as GetSuspectStatus except it copies the feature set object which can grow very large.
-	Suspect GetSuspect(Nova::SuspectIdentifier key);
-	Suspect GetShallowSuspect(Nova::SuspectIdentifier key);
+	Suspect GetSuspect(Nova::SuspectID_pb key);
+	Suspect GetShallowSuspect(Nova::SuspectID_pb key);
 
 	//Erases a suspect from the table if it is not locked
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns (true) on success, (false) if the suspect does not exist (key is invalid)
-	bool Erase(Nova::SuspectIdentifier key);
+	bool Erase(Nova::SuspectID_pb key);
 
 	// Clears the Suspect Table of all entries
 	// Note: Locks may still persist until all threads unlock or return from blocking on them.
@@ -130,19 +143,19 @@ public:
 
 	// This function returns a vector of suspects keys the caller can iterate over to access the table.
 	// Returns a std::vector of every suspect currently in the table
-	std::vector<SuspectIdentifier> GetAllKeys();
+	std::vector<SuspectID_pb> GetAllKeys();
 
 	// This function returns a vector of suspects keys the caller can iterate over to access the table.
 	// Returns a std::vector containing all hostile suspect keys
-	std::vector<SuspectIdentifier> GetKeys_of_HostileSuspects();
+	std::vector<SuspectID_pb> GetKeys_of_HostileSuspects();
 
 	// This function returns a vector of suspects keys the caller can iterate over to access the table.
 	// Returns a std::vector containing all benign suspect keys
-	std::vector<SuspectIdentifier> GetKeys_of_BenignSuspects();
+	std::vector<SuspectID_pb> GetKeys_of_BenignSuspects();
 
 	// This function returns a vector of suspects keys the caller can iterate over to access the table.
 	// Returns a std::vector containing the keys of all suspects that need a classification update.
-	std::vector<SuspectIdentifier> GetKeys_of_ModifiedSuspects();
+	std::vector<SuspectID_pb> GetKeys_of_ModifiedSuspects();
 
 	// Get the size of the Suspect Table
 	// Returns the size of the Table
@@ -168,7 +181,7 @@ public:
 	// Checks the validity of the key - public thread-safe version
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns true if there is a suspect associated with the given key, false otherwise
-	bool IsValidKey(Nova::SuspectIdentifier key);
+	bool IsValidKey(Nova::SuspectID_pb key);
 
 	bool IsEmptySuspect(Suspect *suspect);
 
@@ -188,7 +201,7 @@ private:
 
 	// Hashmap used for constant time key lookups
 	SuspectHashTable m_suspectTable;
-	std::vector<Nova::SuspectIdentifier> m_suspectsNeedingUpdate;
+	std::vector<Nova::SuspectID_pb> m_suspectsNeedingUpdate;
 	SuspectLockTable m_lockTable;
 
 	// List of haystack nodes, cached in the suspectTable
@@ -199,29 +212,29 @@ private:
 	pthread_rwlock_t m_lock;
 	pthread_mutex_t m_needsUpdateLock;
 
-	std::vector<Nova::SuspectIdentifier> m_keys;
+	std::vector<Nova::SuspectID_pb> m_keys;
 
 	// Marks a suspect to be reclassified at some point
-	void SetNeedsClassificationUpdate(Nova::SuspectIdentifier key);
-	void SetNeedsClassificationUpdate_noLocking(Nova::SuspectIdentifier key);
+	void SetNeedsClassificationUpdate(Nova::SuspectID_pb key);
+	void SetNeedsClassificationUpdate_noLocking(Nova::SuspectID_pb key);
 
 	// Checks the validity of the key - private use non-locking version
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns true if there is a suspect associated with the given key, false otherwise
 	// *Note: Assumes you have already locked the table
-	bool IsValidKey_NonBlocking(Nova::SuspectIdentifier key);
+	bool IsValidKey_NonBlocking(Nova::SuspectID_pb key);
 
 	//Used by threads about to block on a suspect
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Note: lock won't be deleted until the ref count is 0, but the Suspect can still be.
-	bool LockSuspect(Nova::SuspectIdentifier key);
+	bool LockSuspect(Nova::SuspectID_pb key);
 
 	//Used by threads done blocking on a suspect
 	// 		key: IP address of the suspect as a uint value (host byte order)
 	// Returns (true) if the Lock could be unlocked and still exists and
 	// (false) if the Suspect has been deleted or could not be unlocked.
 	// Note: automatically deletes the lock if the suspect has been deleted and the ref count is 0
-	bool UnlockSuspect(Nova::SuspectIdentifier key);
+	bool UnlockSuspect(Nova::SuspectID_pb key);
 
 };
 

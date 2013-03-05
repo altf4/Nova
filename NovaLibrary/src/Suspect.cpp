@@ -53,27 +53,27 @@ Suspect::~Suspect()
 string Suspect::GetIpString()
 {
 	stringstream ss;
-	ss << ((m_id.m_ip & 0xFF000000) >> 24) << ".";
-	ss << ((m_id.m_ip & 0x00FF0000) >> 16) << ".";
-	ss << ((m_id.m_ip & 0x0000FF00) >> 8) << ".";
-	ss << ((m_id.m_ip & 0x000000FF) >> 0);
+	ss << ((m_id.m_ip() & 0xFF000000) >> 24) << ".";
+	ss << ((m_id.m_ip() & 0x00FF0000) >> 16) << ".";
+	ss << ((m_id.m_ip() & 0x0000FF00) >> 8) << ".";
+	ss << ((m_id.m_ip() & 0x000000FF) >> 0);
 	return ss.str();
 }
 
 string Suspect::GetIdString()
 {
 	stringstream ss;
-	ss << m_id.m_interface << " ";
-	ss << ((m_id.m_ip & 0xFF000000) >> 24) << ".";
-	ss << ((m_id.m_ip & 0x00FF0000) >> 16) << ".";
-	ss << ((m_id.m_ip & 0x0000FF00) >> 8) << ".";
-	ss << ((m_id.m_ip & 0x000000FF) >> 0);
+	ss << m_id.m_ifname() << " ";
+	ss << ((m_id.m_ip() & 0xFF000000) >> 24) << ".";
+	ss << ((m_id.m_ip() & 0x00FF0000) >> 16) << ".";
+	ss << ((m_id.m_ip() & 0x0000FF00) >> 8) << ".";
+	ss << ((m_id.m_ip() & 0x000000FF) >> 0);
 	return ss.str();
 }
 
 string Suspect::GetInterface()
 {
-	return m_id.m_interface;
+	return m_id.m_ifname();
 }
 
 string Suspect::ToString()
@@ -122,10 +122,10 @@ string Suspect::ToString()
 //Just like Consume but doesn't deallocate
 void Suspect::ReadEvidence(Evidence *evidence, bool deleteEvidence)
 {
-	if(m_id.m_ip == 0)
+	if(m_id.m_ip() == 0)
 	{
-		m_id.m_ip = evidence->m_evidencePacket.ip_src;
-		m_id.m_interface = evidence->m_evidencePacket.interface;
+		m_id.set_m_ip(evidence->m_evidencePacket.ip_src);
+		m_id.set_m_ifname(evidence->m_evidencePacket.interface);
 	}
 
 	Evidence *curEvidence = evidence, *tempEv = NULL;
@@ -133,7 +133,7 @@ void Suspect::ReadEvidence(Evidence *evidence, bool deleteEvidence)
 	{
 		m_unsentFeatures.UpdateEvidence(*curEvidence);
 		m_features.UpdateEvidence(*curEvidence);
-		m_id.m_interface = curEvidence->m_evidencePacket.interface;
+		m_id.set_m_ifname(curEvidence->m_evidencePacket.interface);
 
 		if(m_lastPacketTime < evidence->m_evidencePacket.ts)
 		{
@@ -162,22 +162,21 @@ void Suspect::CalculateFeatures()
 uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures)
 {
 	uint32_t offset = 0;
+	uint32_t suspectSize = GetSerializeLength(whichFeatures);
 
 	//Copies the value and increases the offset
-	SerializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
-	SerializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
-	SerializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
-	SerializeChunk(buf, &offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
+	SerializeChunk(buf, offset,(char*)&suspectSize, sizeof suspectSize, bufferSize);
+	SerializeChunk(buf, offset,(char*)&m_classification, sizeof m_classification, bufferSize);
+	SerializeChunk(buf, offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
+	SerializeChunk(buf, offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
+	SerializeChunk(buf, offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
 
-	SerializeString(buf, &offset, m_classificationNotes, bufferSize);
-
-	offset += m_id.Serialize(buf + offset, bufferSize - offset);
-
+	SerializeString(buf, offset, m_classificationNotes, bufferSize);
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		SerializeChunk(buf, &offset,(char*)&m_featureAccuracy[i], sizeof m_featureAccuracy[i], bufferSize);
+		SerializeChunk(buf, offset,(char*)&m_featureAccuracy[i], sizeof m_featureAccuracy[i], bufferSize);
 	}
 
 	//Stores the FeatureSet information into the buffer, retrieved using deserializeFeatureSet
@@ -218,23 +217,32 @@ uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMo
 			break;
 		}
 		case NO_FEATURE_DATA:
-			SerializeChunk(buf, &offset,(char*)&m_features.m_synCount, sizeof m_features.m_synCount, bufferSize);
-			SerializeChunk(buf, &offset,(char*)&m_features.m_synAckCount, sizeof m_features.m_synAckCount, bufferSize);
-			SerializeChunk(buf, &offset,(char*)&m_features.m_ackCount, sizeof m_features.m_ackCount, bufferSize);
-			SerializeChunk(buf, &offset,(char*)&m_features.m_finCount, sizeof m_features.m_finCount, bufferSize);
-			SerializeChunk(buf, &offset,(char*)&m_features.m_rstCount, sizeof m_features.m_rstCount, bufferSize);
+		{
+			SerializeChunk(buf, offset,(char*)&m_features.m_synCount, sizeof m_features.m_synCount, bufferSize);
+			SerializeChunk(buf, offset,(char*)&m_features.m_synAckCount, sizeof m_features.m_synAckCount, bufferSize);
+			SerializeChunk(buf, offset,(char*)&m_features.m_ackCount, sizeof m_features.m_ackCount, bufferSize);
+			SerializeChunk(buf, offset,(char*)&m_features.m_finCount, sizeof m_features.m_finCount, bufferSize);
+			SerializeChunk(buf, offset,(char*)&m_features.m_rstCount, sizeof m_features.m_rstCount, bufferSize);
 
-			SerializeChunk(buf, &offset,(char*)&m_features.m_tcpPacketCount, sizeof m_features.m_tcpPacketCount, bufferSize);
-			SerializeChunk(buf, &offset,(char*)&m_features.m_udpPacketCount, sizeof m_features.m_udpPacketCount, bufferSize);
-			SerializeChunk(buf, &offset,(char*)&m_features.m_icmpPacketCount, sizeof m_features.m_icmpPacketCount, bufferSize);
-			SerializeChunk(buf, &offset,(char*)&m_features.m_otherPacketCount, sizeof m_features.m_otherPacketCount, bufferSize);
+			SerializeChunk(buf, offset,(char*)&m_features.m_tcpPacketCount, sizeof m_features.m_tcpPacketCount, bufferSize);
+			SerializeChunk(buf, offset,(char*)&m_features.m_udpPacketCount, sizeof m_features.m_udpPacketCount, bufferSize);
+			SerializeChunk(buf, offset,(char*)&m_features.m_icmpPacketCount, sizeof m_features.m_icmpPacketCount, bufferSize);
+			SerializeChunk(buf, offset,(char*)&m_features.m_otherPacketCount, sizeof m_features.m_otherPacketCount, bufferSize);
 
 			break;
+		}
 		default:
 		{
 			break;
 		}
 	}
+
+	//Serialize m_id last so that we know its length
+	if(!m_id.SerializeToArray(buf + offset, m_id.ByteSize()))
+	{
+		return 0;
+	}
+	offset += m_id.ByteSize();
 
 	return offset;
 }
@@ -243,7 +251,8 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 {
 	//Adds the sizeof results for the static required fields to messageSize
 	uint32_t messageSize =
-		m_id.GetSerializationLength()
+		m_id.ByteSize()
+		+ sizeof(uint32_t) 			//total suspect length
 		+ sizeof(m_classification)
 		+ sizeof(m_isHostile)
 		+ sizeof(m_hostileNeighbors)
@@ -300,20 +309,21 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures)
 {
 	uint32_t offset = 0;
+	uint32_t suspectSize;
 
-	DeserializeChunk(buf, &offset,(char*)&m_classification, sizeof m_classification, bufferSize);
-	DeserializeChunk(buf, &offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
-	DeserializeChunk(buf, &offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
-	DeserializeChunk(buf, &offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
+	//Copies the value and increases the offset
+	DeserializeChunk(buf, offset,(char*)&suspectSize, sizeof suspectSize, bufferSize);
+	DeserializeChunk(buf, offset,(char*)&m_classification, sizeof m_classification, bufferSize);
+	DeserializeChunk(buf, offset,(char*)&m_isHostile, sizeof m_isHostile, bufferSize);
+	DeserializeChunk(buf, offset,(char*)&m_hostileNeighbors, sizeof m_hostileNeighbors, bufferSize);
+	DeserializeChunk(buf, offset,(char*)&m_lastPacketTime, sizeof m_lastPacketTime, bufferSize);
 
-	m_classificationNotes = DeserializeString(buf, &offset, bufferSize);
-
-	offset += m_id.Deserialize(buf + offset, bufferSize - offset);
+	m_classificationNotes = DeserializeString(buf, offset, bufferSize);
 
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		DeserializeChunk(buf, &offset,(char*)&m_featureAccuracy[i], sizeof m_featureAccuracy[i], bufferSize);
+		DeserializeChunk(buf, offset,(char*)&m_featureAccuracy[i], sizeof m_featureAccuracy[i], bufferSize);
 	}
 
 	//Reads FeatureSet information from a buffer originally populated by serializeFeatureSet
@@ -351,22 +361,32 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 			break;
 		}
 		case NO_FEATURE_DATA:
-			DeserializeChunk(buf, &offset,(char*)&m_features.m_synCount, sizeof m_features.m_synCount, bufferSize);
-			DeserializeChunk(buf, &offset,(char*)&m_features.m_synAckCount, sizeof m_features.m_synAckCount, bufferSize);
-			DeserializeChunk(buf, &offset,(char*)&m_features.m_ackCount, sizeof m_features.m_ackCount, bufferSize);
-			DeserializeChunk(buf, &offset,(char*)&m_features.m_finCount, sizeof m_features.m_finCount, bufferSize);
-			DeserializeChunk(buf, &offset,(char*)&m_features.m_rstCount, sizeof m_features.m_rstCount, bufferSize);
+		{
+			DeserializeChunk(buf, offset,(char*)&m_features.m_synCount, sizeof m_features.m_synCount, bufferSize);
+			DeserializeChunk(buf, offset,(char*)&m_features.m_synAckCount, sizeof m_features.m_synAckCount, bufferSize);
+			DeserializeChunk(buf, offset,(char*)&m_features.m_ackCount, sizeof m_features.m_ackCount, bufferSize);
+			DeserializeChunk(buf, offset,(char*)&m_features.m_finCount, sizeof m_features.m_finCount, bufferSize);
+			DeserializeChunk(buf, offset,(char*)&m_features.m_rstCount, sizeof m_features.m_rstCount, bufferSize);
 
-			DeserializeChunk(buf, &offset,(char*)&m_features.m_tcpPacketCount, sizeof m_features.m_tcpPacketCount, bufferSize);
-			DeserializeChunk(buf, &offset,(char*)&m_features.m_udpPacketCount, sizeof m_features.m_udpPacketCount, bufferSize);
-			DeserializeChunk(buf, &offset,(char*)&m_features.m_icmpPacketCount, sizeof m_features.m_icmpPacketCount, bufferSize);
-			DeserializeChunk(buf, &offset,(char*)&m_features.m_otherPacketCount, sizeof m_features.m_otherPacketCount, bufferSize);
+			DeserializeChunk(buf, offset,(char*)&m_features.m_tcpPacketCount, sizeof m_features.m_tcpPacketCount, bufferSize);
+			DeserializeChunk(buf, offset,(char*)&m_features.m_udpPacketCount, sizeof m_features.m_udpPacketCount, bufferSize);
+			DeserializeChunk(buf, offset,(char*)&m_features.m_icmpPacketCount, sizeof m_features.m_icmpPacketCount, bufferSize);
+			DeserializeChunk(buf, offset,(char*)&m_features.m_otherPacketCount, sizeof m_features.m_otherPacketCount, bufferSize);
 			break;
+		}
 		default:
 		{
 			break;
 		}
 	}
+
+	//Deserialize the m_id last so that we know its length
+	if(!m_id.ParseFromArray(buf + offset, suspectSize - offset))
+	{
+		return 0;
+	}
+	offset += m_id.ByteSize();
+
 	return offset;
 }
 
@@ -374,15 +394,15 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeature
 //Returns: Suspect's in_addr.s_addr
 in_addr_t Suspect::GetIpAddress()
 {
-	return m_id.m_ip;
+	return m_id.m_ip();
 }
 
-SuspectIdentifier Suspect::GetIdentifier()
+SuspectID_pb Suspect::GetIdentifier()
 {
 	return m_id;
 }
 
-void Suspect::SetIdentifier(SuspectIdentifier id)
+void Suspect::SetIdentifier(SuspectID_pb id)
 {
 	m_id = id;
 }
@@ -390,7 +410,7 @@ void Suspect::SetIdentifier(SuspectIdentifier id)
 //Sets the suspects in_addr
 void Suspect::SetIpAddress(in_addr_t ip)
 {
-	m_id.m_ip= ip;
+	m_id.set_m_ip(ip);
 }
 
 //Returns a copy of the Suspects classification double
@@ -560,11 +580,14 @@ bool Suspect::operator==(const Suspect &rhs) const
 	{
 		return false;
 	}
-	if(m_id != rhs.m_id)
+	if(m_id.m_ifname() != rhs.m_id.m_ifname())
 	{
 		return false;
 	}
-
+	if(m_id.m_ip() != rhs.m_id.m_ip())
+	{
+		return false;
+	}
 	if(m_classification != rhs.m_classification)
 	{
 		return false;

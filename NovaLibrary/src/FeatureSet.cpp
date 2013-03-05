@@ -591,7 +591,7 @@ uint32_t FeatureSet::SerializeFeatureSet(u_char *buf, uint32_t bufferSize)
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		SerializeChunk(buf, &offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
+		SerializeChunk(buf, offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
 	}
 
 	return offset;
@@ -605,7 +605,7 @@ uint32_t FeatureSet::DeserializeFeatureSet(u_char *buf, uint32_t bufferSize)
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		DeserializeChunk(buf, &offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
+		DeserializeChunk(buf, offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
 	}
 
 	return offset;
@@ -618,34 +618,34 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
 
-	SerializeChunk(buf, &offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_packetCount, sizeof m_packetCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_bytesTotal, sizeof m_bytesTotal, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_startTime, sizeof m_startTime, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_endTime, sizeof m_endTime, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_lastTime, sizeof m_lastTime, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_packetCount, sizeof m_packetCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_bytesTotal, sizeof m_bytesTotal, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_startTime, sizeof m_startTime, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_endTime, sizeof m_endTime, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_lastTime, sizeof m_lastTime, bufferSize);
 
-	SerializeChunk(buf, &offset, (char*)&m_rstCount, sizeof m_rstCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_ackCount, sizeof m_ackCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_synCount, sizeof m_synCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_udpPacketCount, sizeof m_udpPacketCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_icmpPacketCount, sizeof m_icmpPacketCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_otherPacketCount, sizeof m_otherPacketCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_numberOfHaystackNodesContacted, sizeof m_numberOfHaystackNodesContacted, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_rstCount, sizeof m_rstCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_ackCount, sizeof m_ackCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_synCount, sizeof m_synCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_udpPacketCount, sizeof m_udpPacketCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_icmpPacketCount, sizeof m_icmpPacketCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_otherPacketCount, sizeof m_otherPacketCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_numberOfHaystackNodesContacted, sizeof m_numberOfHaystackNodesContacted, bufferSize);
 
-	SerializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, &offset, m_packTable, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_IPTable, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_HaystackIPTable, bufferSize);
-	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortTCPTable, bufferSize);
-	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortUDPTable, bufferSize);
+	SerializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, offset, m_packTable, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, offset, m_IPTable, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, offset, m_HaystackIPTable, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, offset, m_PortTCPTable, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, offset, m_PortUDPTable, bufferSize);
 
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_tcpPortsContactedForIP, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_udpPortsContactedForIP, bufferSize);
-	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted, bufferSize);
-	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted,bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, offset, m_tcpPortsContactedForIP, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, offset, m_udpPortsContactedForIP, bufferSize);
+	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, offset, m_hasTcpPortIpBeenContacted, bufferSize);
+	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, offset, m_hasUdpPortIpBeenContacted,bufferSize);
 
 	return offset;
 }
@@ -695,55 +695,55 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	uint64_t temp = 0;
 
 	//Required, individual variables for calculation
-	DeserializeChunk(buf, &offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_packetCount, sizeof m_packetCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_bytesTotal, sizeof m_bytesTotal, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_startTime, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_packetCount, sizeof m_packetCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_bytesTotal, sizeof m_bytesTotal, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&temp, sizeof m_startTime, bufferSize);
 	if(m_startTime > (time_t)temp)
 	{
 		m_startTime = temp;
 	}
 
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_endTime, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&temp, sizeof m_endTime, bufferSize);
 	if(m_endTime < (time_t)temp)
 	{
 		m_endTime = temp;
 	}
 
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_lastTime, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&temp, sizeof m_lastTime, bufferSize);
 	if(m_lastTime < (time_t)temp)
 	{
 		m_lastTime = temp;
 	}
 
-	DeserializeChunk(buf, &offset, (char*)&m_rstCount, sizeof m_rstCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_ackCount, sizeof m_ackCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_synCount, sizeof m_synCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_rstCount, sizeof m_rstCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_ackCount, sizeof m_ackCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_synCount, sizeof m_synCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
 
-	DeserializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_udpPacketCount, sizeof m_udpPacketCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_icmpPacketCount, sizeof m_icmpPacketCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_otherPacketCount, sizeof m_otherPacketCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_udpPacketCount, sizeof m_udpPacketCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_icmpPacketCount, sizeof m_icmpPacketCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_otherPacketCount, sizeof m_otherPacketCount, bufferSize);
 
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_numberOfHaystackNodesContacted, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&temp, sizeof m_numberOfHaystackNodesContacted, bufferSize);
 	m_numberOfHaystackNodesContacted = temp;
 
 	/***************************************************************************************************
 	 For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
 	 i += the # of packets in the bin, if we haven't reached packet count we know there's another item
 	****************************************************************************************************/
-	DeserializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, &offset, m_packTable, bufferSize);
-	DeserializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_IPTable, bufferSize);
-	DeserializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_HaystackIPTable, bufferSize);
-	DeserializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortTCPTable, bufferSize);
-	DeserializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortUDPTable, bufferSize);
+	DeserializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, offset, m_packTable, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, offset, m_IPTable, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, offset, m_HaystackIPTable, bufferSize);
+	DeserializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, offset, m_PortTCPTable, bufferSize);
+	DeserializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, offset, m_PortUDPTable, bufferSize);
 
-	DeserializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_tcpPortsContactedForIP, bufferSize);
-	DeserializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_udpPortsContactedForIP, bufferSize);
-	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted, bufferSize);
-	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, offset, m_tcpPortsContactedForIP, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, offset, m_udpPortsContactedForIP, bufferSize);
+	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, offset, m_hasTcpPortIpBeenContacted, bufferSize);
+	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, offset, m_hasUdpPortIpBeenContacted, bufferSize);
 
 	return offset;
 }

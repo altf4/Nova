@@ -21,6 +21,7 @@
 #define CALLBACKHANDLER_H_
 
 #include "Suspect.h"
+#include "protobuf/marshalled_classes.pb.h"
 
 namespace Nova
 {
@@ -38,7 +39,7 @@ struct CallbackChange
 {
 	enum CallbackChangeType m_type;
 	Nova::Suspect *m_suspect;			//Used in type: CALLBACK_NEW_SUSPECT
-	SuspectIdentifier m_suspectIP;				//Used in CALLBACK_SUSPECT_CLEARED
+	SuspectID_pb m_suspectIP;			//Used in CALLBACK_SUSPECT_CLEARED
 };
 
 class CallbackHandler

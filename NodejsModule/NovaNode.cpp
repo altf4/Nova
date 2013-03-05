@@ -83,7 +83,7 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 		case CALLBACK_SUSPECT_CLEARED:
 			s = new Suspect();
 			s->SetIdentifier(cb.m_suspectIP);
-			LOG(DEBUG, "Got a clear callback request for a suspect on interface " + cb.m_suspectIP.m_interface, "");
+			LOG(DEBUG, "Got a clear callback request for a suspect on interface " + cb.m_suspectIP.m_ifname(), "");
 			HandleSuspectCleared(s);
 			break;
 
@@ -195,7 +195,7 @@ int NovaNode::HandleAllClearedOnV8Thread(eio_req*)
 }
 
 
-void HandleCallbackError()
+void NovaNode::HandleCallbackError()
 {
 	LOG(ERROR, "Novad provided CALLBACK_ERROR, will continue and move on","");
 }
@@ -262,9 +262,9 @@ Handle<Value> NovaNode::GetSuspectDetailsString(const Arguments &args) {
 	struct in_addr address;
 	inet_pton(AF_INET, suspectIp.c_str(), &address);
 
-	SuspectIdentifier id;
-	id.m_ip = htonl(address.s_addr);
-	id.m_interface = suspectInterface;
+	SuspectID_pb id;
+	id.set_m_ip(htonl(address.s_addr));
+	id.set_m_ifname(suspectInterface);
 
 	Suspect *suspect = GetSuspectWithData(id);
 	if (suspect != NULL) {
@@ -355,7 +355,9 @@ Handle<Value> NovaNode::ClearSuspect(const Arguments &args)
 	in_addr_t address;
 	inet_pton(AF_INET, suspectIp.c_str(), &address);
 
-	SuspectIdentifier id(htonl(address), suspectInterface);
+	SuspectID_pb id;
+	id.set_m_ifname(suspectInterface);
+	id.set_m_ip(ntohl(address));
 	return scope.Close(Boolean::New(Nova::ClearSuspect(id)));
 }
 
@@ -377,7 +379,7 @@ NovaNode::~NovaNode()
 // Update our internal suspect list to that of novad
 void NovaNode::SynchInternalList()
 {
-	vector<SuspectIdentifier> suspects = GetSuspectList(SUSPECTLIST_ALL);
+	vector<SuspectID_pb> suspects = GetSuspectList(SUSPECTLIST_ALL);
 
 	for (uint i = 0; i < suspects.size(); i++)
 	{
@@ -415,9 +417,9 @@ Handle<Value> NovaNode::sendSuspect(const Arguments& args)
 	struct in_addr address;
 	inet_pton(AF_INET, suspectIp.c_str(), &address);
 
-	SuspectIdentifier id;
-	id.m_ip = htonl(address.s_addr);
-	id.m_interface = suspectInterface;
+	SuspectID_pb id;
+	id.set_m_ifname(suspectInterface);
+	id.set_m_ip(htonl(address.s_addr));
 
 	Suspect *suspect = GetSuspect(id);
 

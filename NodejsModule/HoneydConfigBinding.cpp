@@ -147,7 +147,6 @@ Handle<Value> HoneydConfigBinding::GetPortSet(const Arguments& args)
 	PortSet *portSet = profile->GetPortSet(portSetName);
 	if(portSet == NULL)
 	{
-		cout << "xxxDEBUGxxx OMG!" << endl;
 		return scope.Close( Null() );
 	}
 

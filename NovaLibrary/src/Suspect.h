@@ -21,10 +21,10 @@
 #define SUSPECT_H_
 
 #include "SerializationHelper.h"
-#include "SuspectIdentifer.h"
 #include "Point.h"
 #include "Evidence.h"
 #include "FeatureSet.h"
+#include "protobuf/marshalled_classes.pb.h"
 
 enum SerializeFeatureMode: uint8_t
 {
@@ -77,8 +77,8 @@ public:
 	// This gets a copy of the suspect without the featureset hash tables being copied for performance reasons
 	Suspect GetShallowCopy();
 
-	SuspectIdentifier GetIdentifier();
-	void SetIdentifier(SuspectIdentifier id);
+	SuspectID_pb GetIdentifier();
+	void SetIdentifier(SuspectID_pb id);
 
 	// Converts suspect into a human readable std::string
 	//		featureEnabled: Array of size DIM that specifies which features to return in the std::string
@@ -185,7 +185,7 @@ public:
 	std::string m_classificationNotes;
 
 private:
-	SuspectIdentifier m_id;
+	SuspectID_pb m_id;
 
 	// Array of values that represent the quality of suspect classification on each feature
 	double m_featureAccuracy[DIM];

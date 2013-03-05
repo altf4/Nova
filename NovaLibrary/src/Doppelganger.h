@@ -20,6 +20,7 @@
 #define DOPPELGANGER_H_
 
 #include "SuspectTable.h"
+#include "protobuf/marshalled_classes.pb.h"
 
 namespace Nova
 {
@@ -54,7 +55,7 @@ public:
 private:
 
 	SuspectTable& m_suspectTable;
-	std::vector<SuspectIdentifier> m_suspectKeys;
+	std::vector<SuspectID_pb> m_suspectKeys;
 	bool m_initialized;
 
 };
