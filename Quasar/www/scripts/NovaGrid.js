@@ -92,6 +92,8 @@ NovaGrid.prototype = {
                    throw "Can't push entry of size " + entry.length + " into table of size " + this.m_columns.length
                } else {
                    this.m_elements[entry[this.m_keyIndex]] = entry;
+                   this.m_elements[entry[this.m_keyIndex]]._newRow = true;
+				   
                }
            }
 
@@ -222,28 +224,34 @@ NovaGrid.prototype = {
                    }
                    else
                    {
+                     var classes = "novaGrid";
+                     if (arrayRep[i]._newRow)
+                     {
+                        arrayRep[i]._newRow = false;
+                        classes += " newRow";
+                     }
+
+                     innerTableString += '<TR class="' + classes + '" ';
                      if(this.m_rightClick != undefined)
                      {
-                       innerTableString += '<TR class="novaGrid">';
                        if(arrayRep[i].style != undefined)
                        {
-                         innerTableString += '<TR class="novaGrid" style="' + arrayRep[i].style + '" oncontextmenu="' + this.m_rightClick + '">';
+                         innerTableString += 'style="' + arrayRep[i].style + '" oncontextmenu="' + this.m_rightClick + '">';
                        } 
                        else
                        {
-                         innerTableString += '<TR class="novaGrid" oncontextmenu="' + this.m_rightClick + '">';
+                         innerTableString += 'oncontextmenu="' + this.m_rightClick + '">';
                        }     
                      }
                      else
                      {
-                       innerTableString += '<TR class="novaGrid">';
                        if(arrayRep[i].style != undefined)
                        {
-                         innerTableString += '<TR class="novaGrid" style="' + arrayRep[i].style + '">';
+                         innerTableString += 'style="' + arrayRep[i].style + '">';
                        } 
                        else
                        {
-                         innerTableString += '<TR class="novaGrid">';
+                         innerTableString += '>';
                        }                         
                      }
                    }

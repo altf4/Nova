@@ -468,6 +468,11 @@ block headerAdditions
         suspectGrid.SetRowsPerPage(20);
         suspectGrid.SetPageNumberDiv($('#tablePages').get(0));
 
+        suspectGrid.SetRenderCallback(function() {
+            $(".newRow").css({backgroundColor:"#E4F2FF"}).animate({backgroundColor:"transparent"}, 2500, null, 
+                function() { this.style.backgroundColor='transparent'; });
+        });
+
         resendSuspects();
 
         setInterval(function(){
