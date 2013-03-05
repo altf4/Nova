@@ -1393,9 +1393,9 @@ app.get('/about', function (req, res)
     res.render('about.jade');
 });
 
-app.get('/newSuspects', function (req, res)
+app.get('/newInformation', function (req, res)
 {
-    res.render('newSuspects.jade');
+    res.render('newInformation.jade');
 });
 
 app.post('/createNewUser', function (req, res)
