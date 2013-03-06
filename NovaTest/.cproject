@@ -55,6 +55,8 @@
 									<listOptionValue builtIn="false" value="curl"/>
 									<listOptionValue builtIn="false" value="sqlite3"/>
 									<listOptionValue builtIn="false" value="gcov"/>
+									<listOptionValue builtIn="false" value="event"/>
+									<listOptionValue builtIn="false" value="event_pthreads"/>
 									<listOptionValue builtIn="false" value="protobuf"/>
 									<listOptionValue builtIn="false" value="z"/>
 								</option>
@@ -135,6 +137,8 @@
 									<listOptionValue builtIn="false" value="curl"/>
 									<listOptionValue builtIn="false" value="sqlite3"/>
 									<listOptionValue builtIn="false" value="gcov"/>
+									<listOptionValue builtIn="false" value="event"/>
+									<listOptionValue builtIn="false" value="event_pthreads"/>
 									<listOptionValue builtIn="false" value="protobuf"/>
 									<listOptionValue builtIn="false" value="z"/>
 								</option>

@@ -90,6 +90,7 @@ hhconfig-debug:
 	cp HaystackAutoConfig/Debug/haystackautoconfig HaystackAutoConfig/
 
 coverageTests: test-prepare
+	protoc -I=NovaLibrary/src/ --cpp_out=NovaLibrary/src NovaLibrary/src/protobuf/marshalled_classes.proto
 	$(MAKE) -C NovaLibrary/Coverage
 	$(MAKE) -C Nova_UI_Core/Coverage
 	$(MAKE) -C NovaTest/Coverage
