@@ -727,7 +727,7 @@ string ConstructFilterString(string captureIdentifier)
 }
 
 
-void UpdateAndClassify(SuspectIdentifier key)
+void UpdateAndClassify(SuspectID_pb key)
 {
 	//Check for a valid suspect
 	Suspect suspectCopy = suspects.GetShallowSuspect(key);
@@ -772,7 +772,7 @@ void UpdateAndClassify(SuspectIdentifier key)
 			LOG(DEBUG, ss2.str(), "");
 
 			UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
-			msg->m_IPAddress = suspectCopy.GetIdentifier();
+			msg->m_contents.mutable_m_suspectid()->CopyFrom(suspectCopy.GetIdentifier());
 			NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 		}
 		else

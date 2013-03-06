@@ -41,19 +41,19 @@ class serializationException : public std::exception
 //    dataToSerialize : Pointer to data to serialize
 //    size            : Size of the data to serialize
 //   maxBufferSize   : Max size of the buffer, throw exception if serialize goes past this
-inline bool SerializeChunk(u_char* buf, uint32_t *offset, char const* dataToSerialize, uint32_t size, uint32_t maxBufferSize)
+inline bool SerializeChunk(u_char* buf, uint32_t &offset, char const* dataToSerialize, uint32_t size, uint32_t maxBufferSize)
 {
-	if(*offset + size > maxBufferSize)
+	if(offset + size > maxBufferSize)
 	{
 		throw serializationException();
 		return false;
 	}
-	::memcpy(buf+*offset, dataToSerialize, size);
-	*offset += size;
+	::memcpy(buf+offset, dataToSerialize, size);
+	offset += size;
 	return true;
 }
 
-inline bool SerializeString(u_char* buf, uint32_t *offset, std::string stringToSerialize, uint32_t maxBufferSize)
+inline bool SerializeString(u_char* buf, uint32_t &offset, std::string stringToSerialize, uint32_t maxBufferSize)
 {
 	uint32_t sizeOfString = stringToSerialize.size();
 	SerializeChunk(buf, offset, (char*)&sizeOfString, sizeof sizeOfString, maxBufferSize);
@@ -66,20 +66,20 @@ inline bool SerializeString(u_char* buf, uint32_t *offset, std::string stringToS
 //    dataToSerialize : Pointer to data to deserialize
 //    size            : Size of the data to deserialize
 //   maxBufferSize   : Max size of the buffer, throw exception if deserialize goes past this
-inline bool DeserializeChunk(u_char *buf, uint32_t *offset, char *deserializeTo, uint32_t size, uint32_t maxBufferSize)
+inline bool DeserializeChunk(u_char *buf, uint32_t &offset, char *deserializeTo, uint32_t size, uint32_t maxBufferSize)
 {
-	if(*offset + size > maxBufferSize)
+	if(offset + size > maxBufferSize)
 	{
 		throw serializationException();
 		return false;
 	}
 
-	::memcpy(deserializeTo, buf+*offset, size);
-	*offset += size;
+	::memcpy(deserializeTo, buf+offset, size);
+	offset += size;
 	return true;
 }
 
-inline std::string DeserializeString(u_char *buf, uint32_t *offset, uint32_t maxBufferSize)
+inline std::string DeserializeString(u_char *buf, uint32_t &offset, uint32_t maxBufferSize)
 {
 	uint32_t sizeOfString;
 	DeserializeChunk(buf, offset,(char*)&sizeOfString, sizeof sizeOfString, maxBufferSize);
@@ -102,7 +102,7 @@ inline std::string DeserializeString(u_char *buf, uint32_t *offset, uint32_t max
 //    dataToSerialize : Reference to the hash map
 //   maxBufferSize    : Max size of the buffer, throw exception if serialize goes past this
 template <typename TableType, typename KeyType, typename ValueType>
-inline void SerializeHashTable(u_char *buf, uint32_t *offset, TableType& dataToSerialize, uint32_t maxBufferSize)
+inline void SerializeHashTable(u_char *buf, uint32_t &offset, TableType& dataToSerialize, uint32_t maxBufferSize)
 {
 	typename TableType::iterator it = dataToSerialize.begin();
 	typename TableType::iterator last = dataToSerialize.end();
@@ -156,7 +156,7 @@ inline uint32_t GetSerializeHashTableLength(TableType& dataToSerialize)
 //    dataToSerialize : Reference to the hash map
 //   maxBufferSize    : Max size of the buffer, throw exception if deserialize goes past this
 template <typename TableType, typename KeyType, typename ValueType>
-inline void DeserializeHashTable(u_char *buf, uint32_t *offset, TableType& deserializeTo, uint32_t maxBufferSize)
+inline void DeserializeHashTable(u_char *buf, uint32_t &offset, TableType& deserializeTo, uint32_t maxBufferSize)
 {
 	uint32_t tableSize = 0;
 	ValueType value;

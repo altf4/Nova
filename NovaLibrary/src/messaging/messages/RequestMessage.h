@@ -21,40 +21,12 @@
 
 #include "Message.h"
 #include "../../Suspect.h"
+#include "../../protobuf/marshalled_classes.pb.h"
 
 #include <vector>
 #include <arpa/inet.h>
 
 #define REQUEST_MSG_MIN_SIZE 2
-
-//The different message types
-enum RequestType: char
-{
-	// Requests for lists of suspect IPs
-	REQUEST_SUSPECTLIST = 0,
-	REQUEST_SUSPECTLIST_REPLY,
-
-	// Request for an individual suspect
-	REQUEST_SUSPECT,
-	REQUEST_SUSPECT_REPLY,
-
-	REQUEST_SUSPECT_WITHDATA,
-	REQUEST_SUSPECT_WITHDATA_REPLY,
-
-	// Request for the uptime of novad
-	REQUEST_UPTIME,
-	REQUEST_UPTIME_REPLY,
-
-	REQUEST_PING,					//Request to Novad to see if it's alive
-	REQUEST_PONG					//Reply from Novad to verify it's alive
-};
-
-enum SuspectListType : char
-{
-	SUSPECTLIST_ALL = 0,
-	SUSPECTLIST_HOSTILE,
-	SUSPECTLIST_BENIGN
-};
 
 namespace Nova
 {
@@ -74,32 +46,14 @@ public:
 	//	On error, sets m_serializeError to true, on success sets it to false
 	RequestMessage(char *buffer, uint32_t length);
 
-	//Serializes the Message object into a char array
-	//	*length - Return parameter, specifies the length of the serialized array returned
-	// Returns - A pointer to the serialized array
-	//	NOTE: The caller must manually free() the returned buffer after use
-
-	enum RequestType m_requestType;
-
-	// For suspect list
-	enum SuspectListType m_listType;
-	uint32_t m_suspectListLength;
-	std::vector<SuspectIdentifier> m_suspectList;
-
-	// For returning a single suspect
-	Suspect *m_suspect;
-	uint32_t m_suspectLength;
-	SuspectIdentifier m_suspectAddress;
-
-	// For uptime
-	uint32_t m_startTime;
-
 	//Serializes the request into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use
 	char *Serialize(uint32_t *length);
 
+	Suspect *m_suspect;
+	RequestMessage_pb m_contents;
 };
 
 }

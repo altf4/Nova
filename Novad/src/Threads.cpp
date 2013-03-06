@@ -122,7 +122,7 @@ void *ClassificationLoop(void *ptr)
 		CheckForDroppedPackets();
 
 		//Calculate the "true" Feature Set for each Suspect
-		vector<SuspectIdentifier> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
+		vector<SuspectID_pb> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
 		for(uint i = 0; i < updateKeys.size(); i++)
 		{
 			UpdateAndClassify(updateKeys[i]);
@@ -250,7 +250,7 @@ void *UpdateWhitelistIPFilter(void *ptr)
 
 
 				// Clear any suspects that were whitelisted from the GUIs
-				vector<SuspectIdentifier> all = suspects.GetAllKeys();
+				vector<SuspectID_pb> all = suspects.GetAllKeys();
 				for(uint i = 0; i < whitelistIpAddresses.size(); i++)
 				{
 					struct sockaddr_in doop;
@@ -260,13 +260,13 @@ void *UpdateWhitelistIPFilter(void *ptr)
 					char str[INET_ADDRSTRLEN];
 					for(uint j = 0; j < all.size(); j++)
 					{
-						doop.sin_addr.s_addr = ntohl(all[j].m_ip);
+						doop.sin_addr.s_addr = ntohl(all[j].m_ip());
 						inet_ntop(AF_INET, &(doop.sin_addr), str, INET_ADDRSTRLEN);
 
 						if(!whitelistUse.compare(string(str)) && suspects.Erase(all[j]))
 						{
 							UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
-							msg->m_IPAddress = all[j];
+							msg->m_contents.mutable_m_suspectid()->CopyFrom(all[j]);
 							NotifyUIs(msg, UPDATE_SUSPECT_CLEARED_ACK, -1);
 						}
 					}

@@ -6,6 +6,7 @@ all-the-things: release
 
 #Release Target
 release:
+	protoc -I=NovaLibrary/src/ --cpp_out=NovaLibrary/src NovaLibrary/src/protobuf/marshalled_classes.proto
 	$(MAKE) novalib-release
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
@@ -15,6 +16,7 @@ release-helper: novad-release novacli-release novatrainer-release hhconfig-relea
 
 #Debug target
 debug:
+	protoc -I=NovaLibrary/src/ --cpp_out=NovaLibrary/src NovaLibrary/src/protobuf/marshalled_classes.proto
 	$(MAKE) novalib-debug
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
@@ -148,12 +150,15 @@ clean-lib: clean-lib-debug clean-lib-release clean-lib-coverage
 	
 clean-lib-debug:
 	$(MAKE) -C NovaLibrary/Debug clean
+	rm -f NovaLibrary/src/protobuf/*.cc NovaLibrary/src/protobuf/*.h
 
 clean-lib-release:
 	$(MAKE) -C NovaLibrary/Release clean
+	rm -f NovaLibrary/src/protobuf/*.cc NovaLibrary/src/protobuf/*.h
 
 clean-lib-coverage:
 	$(MAKE) -C NovaLibrary/Coverage clean
+	rm -f NovaLibrary/src/protobuf/*.cc NovaLibrary/src/protobuf/*.h
 
 clean-cli: clean-cli-debug clean-cli-release
 

@@ -20,6 +20,7 @@
 #define NOVACLI_H_
 
 #include "messaging/messages/RequestMessage.h"
+#include "protobuf/marshalled_classes.pb.h"
 
 // Name of the CLI executable
 #define EXECUTABLE_NAME "novacli"
@@ -47,12 +48,12 @@ bool StopQuasarWrapper();
 
 void PrintSuspect(in_addr_t address, std::string interface);
 void PrintSuspectData(in_addr_t address, std::string interface);
-void PrintAllSuspects(enum SuspectListType listType, bool csv);
+void PrintAllSuspects(enum Nova::SuspectListType listType, bool csv);
 
 void ClearSuspectWrapper(in_addr_t address, std::string interface);
 void ClearAllSuspectsWrapper();
 
-void PrintSuspectList(enum SuspectListType listType);
+void PrintSuspectList(enum Nova::SuspectListType listType);
 
 void PrintUptime();
 

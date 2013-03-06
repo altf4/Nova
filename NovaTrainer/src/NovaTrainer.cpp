@@ -141,15 +141,8 @@ void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u
 		{
 			//Prepare Packet structure
 			Evidence evidencePacket(packet + sizeof(struct ether_header), pkthdr);
-			uint32_t ipSrc = evidencePacket.m_evidencePacket.ip_src;
 
 			suspects.ProcessEvidence(&evidencePacket, true);
-
-			SuspectIdentifier id;
-			id.m_ip = ipSrc;
-
-			//update(id);
-
 			return;
 		}
 		default:
@@ -159,9 +152,9 @@ void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u
 	}
 }
 
-void Update(SuspectIdentifier key)
+void Update(SuspectID_pb key)
 {
-	SuspectIdentifier foo = key;
+	SuspectID_pb foo = key;
 	suspects.ClassifySuspect(foo);
 
 	//Check that we updated correctly
@@ -274,7 +267,7 @@ void ConvertCaptureToDump(std::string captureFolder)
 
 	LOG(DEBUG, "Done processing PCAP file.", "");
 
-	vector<SuspectIdentifier> ids = suspects.GetAllKeys();
+	vector<SuspectID_pb> ids = suspects.GetAllKeys();
 	for (uint i = 0; i < ids.size(); i++)
 	{
 		Update(ids.at(i));

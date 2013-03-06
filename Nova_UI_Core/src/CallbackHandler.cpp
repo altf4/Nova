@@ -71,7 +71,7 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 	}
 	UpdateMessage *updateMessage = (UpdateMessage*)message;
 
-	switch(updateMessage->m_updateType)
+	switch(updateMessage->m_contents.m_updatetype())
 	{
 		case UPDATE_SUSPECT:
 		{
@@ -99,7 +99,7 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 		case UPDATE_SUSPECT_CLEARED:
 		{
 			change.m_type = CALLBACK_SUSPECT_CLEARED;
-			change.m_suspectIP = updateMessage->m_IPAddress;
+			change.m_suspectIP = updateMessage->m_contents.m_suspectid();
 
 			UpdateMessage callbackAck(UPDATE_SUSPECT_CLEARED_ACK);
 			if(!MessageManager::Instance().WriteMessage(ticket, &callbackAck))

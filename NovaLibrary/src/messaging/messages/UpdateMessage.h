@@ -22,19 +22,9 @@
 
 #include "Message.h"
 #include "../../Suspect.h"
+#include "../../protobuf/marshalled_classes.pb.h"
 
 #define UPDATE_MSG_MIN_SIZE 2
-
-//The different message types
-enum UpdateType: char
-{
-	UPDATE_SUSPECT = 0,					//A new or updated suspect being sent to a UI
-	UPDATE_SUSPECT_ACK = 1,				//Reply from Novad with success
-	UPDATE_ALL_SUSPECTS_CLEARED,		//A UI has cleared all suspect records
-	UPDATE_ALL_SUSPECTS_CLEARED_ACK,	//Acknowledgment of UPDATE_ALL_SUSPECTS_CLEARED
-	UPDATE_SUSPECT_CLEARED,				//A single suspect was cleared by a UI
-	UPDATE_SUSPECT_CLEARED_ACK,			//Acknowledgment of UPDATE_ALL_SUSPECTS_CLEARED_ACK
-};
 
 namespace Nova
 {
@@ -54,17 +44,14 @@ public:
 	//	On error, sets m_serializeError to true, on success sets it to false
 	UpdateMessage(char *buffer, uint32_t length);
 
-
-	enum UpdateType m_updateType;
-	uint32_t m_suspectLength;
-	Suspect *m_suspect;
-	SuspectIdentifier m_IPAddress;
-
 	//Serializes the Message object into a char array
 	//	*length - Return parameter, specifies the length of the serialized array returned
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use
 	char *Serialize(uint32_t *length);
+
+	Suspect *m_suspect;
+	UpdateMessage_pb m_contents;
 };
 
 }

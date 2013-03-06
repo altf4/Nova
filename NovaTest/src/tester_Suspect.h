@@ -135,18 +135,5 @@ TEST_F(SuspectTest, Serialization)
 	delete suspectCopy;
 }
 
-TEST_F(SuspectTest, SuspectIdSerialization)
-{
-	SuspectIdentifier id(42, "Hello");
-	u_char buffer[LARGE_BUFFER_SIZE];
-	uint32_t bytesSerialized = id.Serialize(buffer, LARGE_BUFFER_SIZE);
-	EXPECT_EQ(bytesSerialized, id.GetSerializationLength());
-
-	SuspectIdentifier idCopy;
-	idCopy.Deserialize(buffer, LARGE_BUFFER_SIZE);
-
-	EXPECT_EQ(idCopy, id);
-}
-
 }
 

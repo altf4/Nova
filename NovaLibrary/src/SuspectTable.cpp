@@ -48,15 +48,10 @@ SuspectTable::SuspectTable()
 	pthread_rwlock_init(&m_lock, &tempAttr);
 	pthread_mutex_init(&m_needsUpdateLock, NULL);
 
-	SuspectIdentifier initKey;
-	initKey.m_internal = 1;
-
-	initKey.m_internal = 2;
-
 	m_emptySuspect.SetClassification(EMPTY_SUSPECT_CLASSIFICATION);
 }
 
-// Default Deconstructor for SuspectTable
+// Default destructor for SuspectTable
 SuspectTable::~SuspectTable()
 {
 	//Deletes the suspects pointed to by the table
@@ -74,7 +69,7 @@ SuspectTable::~SuspectTable()
 }
 
 //Sets the needs classification bool
-void SuspectTable::SetNeedsClassificationUpdate(SuspectIdentifier key)
+void SuspectTable::SetNeedsClassificationUpdate(SuspectID_pb key)
 {
 	Lock updateLock(&m_needsUpdateLock);
 	SetNeedsClassificationUpdate_noLocking(key);
@@ -90,7 +85,7 @@ void SuspectTable::SetEveryoneNeedsClassificationUpdate()
 }
 
 //Sets the needs classification bool
-void SuspectTable::SetNeedsClassificationUpdate_noLocking(SuspectIdentifier key)
+void SuspectTable::SetNeedsClassificationUpdate_noLocking(SuspectID_pb key)
 {
 	if(!m_suspectTable[key]->m_needsClassificationUpdate)
 	{
@@ -108,7 +103,7 @@ bool SuspectTable::AddNewSuspect(Suspect *suspect)
 	if(suspect != NULL)
 	{
 		Suspect *suspectCopy = new Suspect(*suspect);
-		SuspectIdentifier key = suspectCopy->GetIdentifier();
+		SuspectID_pb key = suspectCopy->GetIdentifier();
 		pthread_rwlock_wrlock(&m_lock);
 		if(!IsValidKey_NonBlocking(key))
 		{
@@ -149,7 +144,7 @@ bool SuspectTable::AddNewSuspect(Suspect *suspect)
 // Updates a suspects evidence and calculates the FeatureSet
 //		key: IP address of the suspect as a uint value (host byte order)
 // Returns (true) if the call succeeds, (false) if the suspect doesn't exist or doesn't need updating
-bool SuspectTable::ClassifySuspect(SuspectIdentifier key)
+bool SuspectTable::ClassifySuspect(SuspectID_pb key)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	if(IsValidKey_NonBlocking(key))
@@ -185,7 +180,7 @@ void SuspectTable::UpdateAllSuspects()
 SuspectTableRet SuspectTable::CheckIn(Suspect *suspect)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
-	SuspectIdentifier key = suspect->GetIdentifier();
+	SuspectID_pb key = suspect->GetIdentifier();
 	//If the key has a valid suspect
 	if(IsValidKey_NonBlocking(key))
 	{
@@ -223,7 +218,7 @@ SuspectTableRet SuspectTable::CheckIn(Suspect *suspect)
 // Returns (0) on Success, (-1) if the Suspect is checked out by someone else
 // and (1) if the Suspect is not checked out
 // Note:  This function blocks until it can acquire a write lock on the suspect
-SuspectTableRet SuspectTable::CheckIn(SuspectIdentifier key)
+SuspectTableRet SuspectTable::CheckIn(SuspectID_pb key)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	//If the key has a valid suspect
@@ -261,7 +256,7 @@ SuspectTableRet SuspectTable::CheckIn(SuspectIdentifier key)
 //		key: IP address of the suspect as a uint value (host byte order)
 // Returns a copy of the Suspect associated with 'key', it returns an empty suspect if that key is Invalid.
 // Note: This function read locks the suspect until CheckIn(&suspect) or suspect->UnsetOwner() is called.
-Suspect SuspectTable::CheckOut(SuspectIdentifier key)
+Suspect SuspectTable::CheckOut(SuspectID_pb key)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	if(IsValidKey_NonBlocking(key))
@@ -281,7 +276,7 @@ Suspect SuspectTable::CheckOut(SuspectIdentifier key)
 // Returns an empty suspect on failure
 // Note: To modify or lock a suspect use CheckOut();
 // Note: This is the same as GetSuspectStatus except it copies the feature set object which can grow very large.
-Suspect SuspectTable::GetSuspect(SuspectIdentifier key)
+Suspect SuspectTable::GetSuspect(SuspectID_pb key)
 {
 	//Read lock the table, Suspects can only change in the table while it's write locked.
 	Lock lock(&m_lock, READ_LOCK);
@@ -303,7 +298,7 @@ Suspect SuspectTable::GetSuspect(SuspectIdentifier key)
 // Returns an empty suspect on failure
 // Note: To modify or lock a suspect use CheckOut();
 // Note: This is the same as GetSuspectStatus except it copies the feature set object which can grow very large.
-Suspect SuspectTable::GetShallowSuspect(SuspectIdentifier key)
+Suspect SuspectTable::GetShallowSuspect(SuspectID_pb key)
 {
 	//Read lock the table, Suspects can only change in the table while it's write locked.
 	Lock lock(&m_lock, READ_LOCK);
@@ -323,7 +318,7 @@ Suspect SuspectTable::GetShallowSuspect(SuspectIdentifier key)
 //Erases a suspect from the table if it is not locked
 // 		key: IP address of the suspect as a uint value (host byte order)
 // Returns (true) on success, (false) if the suspect does not exist (key is invalid)
-bool SuspectTable::Erase(SuspectIdentifier key)
+bool SuspectTable::Erase(SuspectID_pb key)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
 	if(IsValidKey_NonBlocking(key))
@@ -332,9 +327,9 @@ bool SuspectTable::Erase(SuspectIdentifier key)
 		m_lockTable[key].deleted = true;
 
 		//Remove from key vector
-		for(vector<SuspectIdentifier>::iterator vit = m_keys.begin(); vit != m_keys.end(); vit++)
+		for(vector<SuspectID_pb>::iterator vit = m_keys.begin(); vit != m_keys.end(); vit++)
 		{
-			if(*vit == key)
+			if(((*vit).m_ip() == key.m_ip()) && ((*vit).m_ifname() == key.m_ifname()))
 			{
 				m_keys.erase(vit);
 				break;
@@ -395,9 +390,9 @@ void SuspectTable::EraseAllSuspects()
 
 // This function returns a vector of suspects keys the caller can iterate over to access the table.
 // Returns a std::vector of every suspect currently in the table
-vector<SuspectIdentifier> SuspectTable::GetAllKeys()
+vector<SuspectID_pb> SuspectTable::GetAllKeys()
 {
-	vector<SuspectIdentifier> ret;
+	vector<SuspectID_pb> ret;
 	ret.clear();
 	Lock lock(&m_lock, READ_LOCK);
 	for(uint i = 0; i < m_keys.size(); i++)
@@ -412,9 +407,9 @@ vector<SuspectIdentifier> SuspectTable::GetAllKeys()
 
 // This function returns a vector of suspects keys the caller can iterate over to access the table.
 // Returns a std::vector containing all hostile suspect keys
-vector<SuspectIdentifier> SuspectTable::GetKeys_of_HostileSuspects()
+vector<SuspectID_pb> SuspectTable::GetKeys_of_HostileSuspects()
 {
-	vector<SuspectIdentifier> ret;
+	vector<SuspectID_pb> ret;
 	ret.clear();
 	Lock lock(&m_lock, READ_LOCK);
 	for(uint i = 0; i < m_keys.size(); i++)
@@ -432,9 +427,9 @@ vector<SuspectIdentifier> SuspectTable::GetKeys_of_HostileSuspects()
 
 // This function returns a vector of suspects keys the caller can iterate over to access the table.
 // Returns a std::vector containing all benign suspect keys
-vector<SuspectIdentifier> SuspectTable::GetKeys_of_BenignSuspects()
+vector<SuspectID_pb> SuspectTable::GetKeys_of_BenignSuspects()
 {
-	vector<SuspectIdentifier> ret;
+	vector<SuspectID_pb> ret;
 	ret.clear();
 	Lock lock(&m_lock, READ_LOCK);
 	for(uint i = 0; i < m_keys.size(); i++)
@@ -452,10 +447,10 @@ vector<SuspectIdentifier> SuspectTable::GetKeys_of_BenignSuspects()
 
 // This function returns a vector of suspects keys the caller can iterate over to access the table.
 // Returns a std::vector containing the keys of all suspects that need a classification update.
-vector<SuspectIdentifier> SuspectTable::GetKeys_of_ModifiedSuspects()
+vector<SuspectID_pb> SuspectTable::GetKeys_of_ModifiedSuspects()
 {
-	vector<SuspectIdentifier> ret;
-	vector<SuspectIdentifier> invalidKeys;
+	vector<SuspectID_pb> ret;
+	vector<SuspectID_pb> invalidKeys;
 	ret.clear();
 	Lock lock(&m_lock, WRITE_LOCK);
 	Lock updateLock(&m_needsUpdateLock);
@@ -640,7 +635,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 				return 0;
 			}
 
-			SuspectIdentifier key = newSuspect->GetIdentifier();
+			SuspectID_pb key = newSuspect->GetIdentifier();
 			// If our suspect has no evidence, throw it out
 			if(!newSuspect->GetFeatureSet(MAIN_FEATURES).m_packetCount
 					&& !newSuspect->GetFeatureSet(UNSENT_FEATURES).m_packetCount)
@@ -708,7 +703,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 // Checks the validity of the key - public thread-safe version
 //		key: IP address of the suspect as a uint value (host byte order)
 // Returns true if there is a suspect associated with the given key, false otherwise
-bool SuspectTable::IsValidKey(SuspectIdentifier key)
+bool SuspectTable::IsValidKey(SuspectID_pb key)
 {
 	Lock lock(&m_lock, READ_LOCK);
 	//If we find a SuspectLock the suspect exists or is scheduled to be deleted
@@ -729,10 +724,9 @@ void SuspectTable::ProcessEvidence(Evidence *evidence, bool readOnly)
 {
 	// ~~~ Write lock ~~~
 	Lock lock (&m_lock, WRITE_LOCK);
-	SuspectIdentifier key;
-	key.m_ip = evidence->m_evidencePacket.ip_src;
-
-	key.m_interface = evidence->m_evidencePacket.interface;
+	SuspectID_pb key;
+	key.set_m_ip(evidence->m_evidencePacket.ip_src);
+	key.set_m_ifname(evidence->m_evidencePacket.interface);
 
 	//If this suspect doesn't have a lock, make one.
 	if(!m_lockTable.keyExists(key))
@@ -773,7 +767,7 @@ void SuspectTable::ProcessEvidence(Evidence *evidence, bool readOnly)
 //		key: IP address of the suspect as a uint value (host byte order)
 // Returns true if there is a suspect associated with the given key, false otherwise
 // *Note: Assumes you have already locked the table
-bool SuspectTable::IsValidKey_NonBlocking(SuspectIdentifier key)
+bool SuspectTable::IsValidKey_NonBlocking(SuspectID_pb key)
 {
 	//If we find a SuspectLock the suspect exists or is scheduled to be deleted
 	if(m_lockTable.keyExists(key))
@@ -787,7 +781,7 @@ bool SuspectTable::IsValidKey_NonBlocking(SuspectIdentifier key)
 // Returns (true) after locking the suspect and (false) if the suspect couldn't be found
 // Note: A suspect's lock won't be deleted until there are no more threads trying to lock it
 // Imporant: table MUST be write locked before calling this.
-bool SuspectTable::LockSuspect(SuspectIdentifier key)
+bool SuspectTable::LockSuspect(SuspectID_pb key)
 {
 	//If the suspect has a lock
 	if(IsValidKey_NonBlocking(key))
@@ -806,7 +800,7 @@ bool SuspectTable::LockSuspect(SuspectIdentifier key)
 // Returns (true) if the Lock could be unlocked and still exists and
 // (false) if the Suspect has been deleted or could not be unlocked.
 // Note: automatically deletes the lock if the suspect has been deleted and the ref count is 0
-bool SuspectTable::UnlockSuspect(SuspectIdentifier key)
+bool SuspectTable::UnlockSuspect(SuspectID_pb key)
 {
 	//If the lock exists
 	if(m_lockTable.keyExists(key))

@@ -28,8 +28,7 @@ RequestMessage::RequestMessage(enum RequestType requestType)
 {
 	m_suspect = NULL;
 	m_messageType = REQUEST_MESSAGE;
-	m_suspectListLength = 0;
-	m_requestType = requestType;
+	m_contents.set_m_requesttype(requestType);
 }
 
 RequestMessage::~RequestMessage()
@@ -62,172 +61,46 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 		return;
 	}
 
-	// Deserialize the request message type
-	memcpy(&m_requestType, buffer, sizeof(m_requestType));
-	buffer += sizeof(m_requestType);
+	uint32_t contentsSize;
+	memcpy(&contentsSize, buffer, sizeof(contentsSize));
+	buffer += sizeof(contentsSize);
 
-	switch(m_requestType)
+	if(!m_contents.ParseFromArray(buffer, contentsSize))
 	{
-		case REQUEST_SUSPECTLIST_REPLY:
+		m_serializeError = true;
+		return;
+	}
+	buffer += contentsSize;
+
+	//If more bytes to go...
+	uint32_t bytesToGo = length - (MESSAGE_HDR_SIZE + sizeof(contentsSize) + contentsSize);
+	if(bytesToGo > 0)
+	{
+		enum SerializeFeatureMode suspectSerialMode;
+		if(m_contents.m_requesttype() == REQUEST_SUSPECT_REPLY)
 		{
-			// Deserialize the request list type
-			memcpy(&m_listType, buffer, sizeof(m_listType));
-			buffer += sizeof(m_listType);
-
-			// Deserialize the length of the suspect list
-			memcpy(&m_suspectListLength, buffer, sizeof(m_suspectListLength));
-			buffer += sizeof(m_suspectListLength);
-
-			// Deserialize the list
-			m_suspectList.clear();
-			for(uint i = 0; i < m_suspectListLength; i++)
-			{
-				SuspectIdentifier address;
-				buffer += address.Deserialize(reinterpret_cast<u_char*>(buffer), length);
-
-				m_suspectList.push_back(address);
-			}
-
-			break;
+			suspectSerialMode = NO_FEATURE_DATA;
 		}
-		case REQUEST_SUSPECTLIST:
+		else
 		{
-			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_listType);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-
-			// Deserialize the request list type
-			memcpy(&m_listType, buffer, sizeof(m_listType));
-			buffer += sizeof(m_listType);
-
-			break;
+			suspectSerialMode = MAIN_FEATURE_DATA;
 		}
 
-		case REQUEST_SUSPECT:
+		try
 		{
-			// Deserialize the address of the suspect being requested
-			buffer += m_suspectAddress.Deserialize(reinterpret_cast<u_char*>(buffer), length);
-
-			break;
-		}
-
-		case REQUEST_SUSPECT_REPLY:
-		{
-			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength);
-			if(length < expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			// DeSerialize the size of the suspect
-			memcpy(&m_suspectLength, buffer, sizeof(m_suspectLength));
-			buffer += sizeof(m_suspectLength );
-
-			expectedSize += m_suspectLength;
-			if(expectedSize != length)
-			{
-				m_serializeError = true;
-				return;
-			}
 			m_suspect = new Suspect();
-			try
+			if(m_suspect->Deserialize((u_char*)buffer, bytesToGo, suspectSerialMode) != bytesToGo)
 			{
-				if(m_suspect->Deserialize((u_char*)buffer, length, NO_FEATURE_DATA) != m_suspectLength)
-				{
-					m_serializeError = true;
-					return;
-				}
-			} catch(Nova::serializationException &e) {
+				delete m_suspect;
+				m_suspect = NULL;
 				m_serializeError = true;
 				return;
 			}
-			break;
 		}
-
-
-		case REQUEST_SUSPECT_WITHDATA:
+		catch(Nova::serializationException &e)
 		{
-			// Deserialize the address of the suspect being requested
-			buffer += m_suspectAddress.Deserialize(reinterpret_cast<u_char*>(buffer), length);
-
-			break;
-		}
-
-		case REQUEST_SUSPECT_WITHDATA_REPLY:
-		{
-			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength);
-			if(length < expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			// DeSerialize the size of the suspect
-			memcpy(&m_suspectLength, buffer, sizeof(m_suspectLength));
-			buffer += sizeof(m_suspectLength );
-
-			expectedSize += m_suspectLength;
-			if(expectedSize != length)
-			{
-				m_serializeError = true;
-				return;
-			}
-			m_suspect = new Suspect();
-			try
-			{
-				if(m_suspect->Deserialize((u_char*)buffer, length, MAIN_FEATURE_DATA) != m_suspectLength)
-				{
-					m_serializeError = true;
-					return;
-				}
-			} catch(Nova::serializationException &e) {
-				m_serializeError = true;
-				return;
-			}
-			break;
-		}
-
-		case REQUEST_UPTIME_REPLY:
-		{
-			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			// Deserialize the uptime
-			memcpy(&m_startTime, buffer, sizeof(m_startTime));
-			buffer += sizeof(m_startTime);
-
-			break;
-		}
-
-		case REQUEST_UPTIME:
-		case REQUEST_PING:
-		case REQUEST_PONG:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-
-			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_requestType);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			break;
-		}
-
-
-		default:
-		{
+			delete m_suspect;
+			m_suspect = NULL;
 			m_serializeError = true;
 			return;
 		}
@@ -238,210 +111,32 @@ char *RequestMessage::Serialize(uint32_t *length)
 {
 	char *buffer, *originalBuffer;
 	uint32_t messageSize;
+	enum SerializeFeatureMode suspectSerialMode;
+	bool sendSuspect = false;
 
-	switch(m_requestType)
+	switch(m_contents.m_requesttype())
 	{
-		case REQUEST_SUSPECTLIST_REPLY:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) Request Message Type
-			// 		3) Type of list being returned (all, hostile, benign)
-			//		4) Size of list
-			//		5) List of suspect IPs
-
-			m_suspectListLength = m_suspectList.size();
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectListLength) + sizeof(m_listType) + sizeof(messageSize);
-			for (uint i = 0; i < m_suspectList.size(); i++)
-			{
-				messageSize += m_suspectList.at(i).GetSerializationLength();
-			}
-
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Request Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
-
-			//Length of list suspect buffer
-			memcpy(buffer, &m_listType, sizeof(m_listType));
-			buffer += sizeof(m_listType);
-
-			// Length of the incoming list
-			memcpy(buffer, &m_suspectListLength, sizeof(m_suspectListLength));
-			buffer += sizeof(m_suspectListLength);
-
-			//Suspect list buffer itself
-			for(uint i = 0; i < m_suspectList.size(); i++)
-			{
-				buffer += m_suspectList.at(i).Serialize(reinterpret_cast<u_char*>(buffer), messageSize);
-			}
-
-			break;
-		}
-		case REQUEST_SUSPECTLIST:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) request Message Type
-			// 		3) Type of list we want (all, hostile, benign)
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_listType)+ sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Request Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
-
-			// Put the type of list we're requesting
-			memcpy(buffer, &m_listType, sizeof(m_listType));
-			buffer += sizeof(m_listType);
-
-			break;
-		}
-
-		case REQUEST_SUSPECT:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) Request Message Type
-			// 		3) Suspect ID
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + m_suspectAddress.GetSerializationLength() + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Request Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
-
-			// Serialize our IP
-			buffer += m_suspectAddress.Serialize(reinterpret_cast<u_char*>(buffer), messageSize);
-			break;
-		}
 		case REQUEST_SUSPECT_REPLY:
 		{
-			//Uses: 1) UI_Message Header
-			//		2) Request Message Type
-			//		3) Size of the requested suspect
-			// 		4) The requested suspect
-
-			m_suspectLength = m_suspect->GetSerializeLength(NO_FEATURE_DATA);
-			if(m_suspectLength == 0)
-			{
-				return NULL;
-			}
-
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Request Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
-
-			// Serialize the size of the suspect
-			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
-			buffer += sizeof(m_suspectLength );
-			// Serialize our suspect
-			if(m_suspect->Serialize((u_char*)buffer, messageSize, NO_FEATURE_DATA) != m_suspectLength)
-			{
-				return NULL;
-			}
-			buffer += m_suspectLength;
-			break;
-		}
-
-		case REQUEST_SUSPECT_WITHDATA:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) Request Message Type
-			// 		3) Suspect ID
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + m_suspectAddress.GetSerializationLength() + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Request Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
-
-			// Serialize our IP
-			buffer += m_suspectAddress.Serialize(reinterpret_cast<u_char*>(buffer), messageSize);
+			sendSuspect = true;
+			suspectSerialMode = NO_FEATURE_DATA;
 			break;
 		}
 		case REQUEST_SUSPECT_WITHDATA_REPLY:
 		{
-			//Uses: 1) UI_Message Header
-			//		2) Request Message Type
-			//		3) Size of the requested suspect
-			// 		4) The requested suspect
-
-			m_suspectLength = m_suspect->GetSerializeLength(MAIN_FEATURE_DATA);
-			if(m_suspectLength == 0)
-			{
-				return NULL;
-			}
-
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Request Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
-
-			// Serialize the size of the suspect
-			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
-			buffer += sizeof(m_suspectLength );
-			// Serialize our suspect
-			if(m_suspect->Serialize((u_char*)buffer, messageSize, MAIN_FEATURE_DATA) != m_suspectLength)
-			{
-				return NULL;
-			}
-			buffer += m_suspectLength;
+			sendSuspect = true;
+			suspectSerialMode = MAIN_FEATURE_DATA;
 			break;
 		}
-
+		case REQUEST_SUSPECTLIST_REPLY:
+		case REQUEST_SUSPECTLIST:
+		case REQUEST_SUSPECT:
+		case REQUEST_SUSPECT_WITHDATA:
 		case REQUEST_UPTIME_REPLY:
-		{
-			//Uses: 1) UI_Message Type
-			//		2) Request Message Type
-			//		3) The uptime
-
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(m_startTime) + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Request Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
-
-			// Serialize the uptime
-			memcpy(buffer, &m_startTime, sizeof(m_startTime));
-			buffer += sizeof(m_startTime );
-
-			break;
-		}
-
 		case REQUEST_UPTIME:
 		case REQUEST_PING:
 		case REQUEST_PONG:
 		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_requestType) + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Control Message type in
-			memcpy(buffer, &m_requestType, sizeof(m_requestType));
-			buffer += sizeof(m_requestType);
-
 			break;
 		}
 		default:
@@ -449,6 +144,46 @@ char *RequestMessage::Serialize(uint32_t *length)
 			return NULL;
 		}
 	}
+
+	uint32_t suspectLength = 0;
+	if((m_suspect != NULL) && sendSuspect)
+	{
+		suspectLength = m_suspect->GetSerializeLength(suspectSerialMode);
+		if(suspectLength == 0)
+		{
+			return NULL;
+		}
+		messageSize = MESSAGE_HDR_SIZE +  sizeof(uint32_t) + sizeof(uint32_t) + m_contents.ByteSize() + suspectLength;
+	}
+	else
+	{
+		messageSize = MESSAGE_HDR_SIZE +  sizeof(uint32_t) + sizeof(uint32_t) + m_contents.ByteSize();
+	}
+	buffer = (char*)malloc(messageSize);
+	originalBuffer = buffer;
+
+	SerializeHeader(&buffer, messageSize);
+
+	uint32_t contentLength = m_contents.ByteSize();
+	memcpy(buffer, &contentLength, sizeof(contentLength));
+	buffer += sizeof(contentLength);
+
+	if(!m_contents.SerializeToArray(buffer, m_contents.ByteSize()))
+	{
+		return NULL;
+	}
+	buffer += m_contents.ByteSize();
+
+	if((m_suspect != NULL) && sendSuspect)
+	{
+		// Serialize our suspect
+		if(m_suspect->Serialize((u_char*)buffer, suspectLength, suspectSerialMode) != suspectLength)
+		{
+			return NULL;
+		}
+		buffer += suspectLength;
+	}
+
 	*length = messageSize;
 	return originalBuffer;
 }
