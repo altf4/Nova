@@ -22,7 +22,7 @@ script
   {
     if($('#default').is(':checked'))
     {
-      for(var i = 0; i < $('#length').attr('value'); i++)
+      for(var i = 0; i < $('#length').val(); i++)
       {
         $('#if' + i)[0].checked = true;
         $('#if' + i)[0].disabled = true;
@@ -31,7 +31,7 @@ script
     }
     else
     {
-      for(var i = 0; i < $('#length').attr('value'); i++)
+      for(var i = 0; i < $('#length').val(); i++)
       {
         $('#if' + i)[0].disabled = false;
         $('#DEFAULT')[0].value = 'false';
@@ -43,7 +43,7 @@ script
   {
     var numNotChecked = 0;
     
-    for(var i = 0; i < $('#length').attr('value'); i++)
+    for(var i = 0; i < $('#length').val(); i++)
     {
       if(!$('#if' + i).is(':checked'))
       {
@@ -51,7 +51,7 @@ script
       }
     }
     
-    if(numNotChecked == $('#length').attr('value'))
+    if(numNotChecked == $('#length').val())
     {
       $('#if0')[0].checked = true;
     }
@@ -61,7 +61,7 @@ script
   {
     var numNotChecked = 0;
     
-    for(var i = 0; i < $('#doppel_length').attr('value'); i++)
+    for(var i = 0; i < $('#doppel_length').val(); i++)
     {
       if(!$('#dif' + i).is(':checked'))
       {
@@ -73,7 +73,7 @@ script
       }
     }
     
-    if(numNotChecked == $('#doppel_length').attr('value'))
+    if(numNotChecked == $('#doppel_length').val())
     {
       $('#dif0')[0].checked = true;
     }

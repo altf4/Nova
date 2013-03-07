@@ -31,8 +31,8 @@ block headerAdditions
             , intface : currentInterface
             , oldName : '#{oldName}'
             , ipType : $('#ipType').val()
-            , ip : $('#ip0').attr('value') + '.' + $('#ip1').attr('value') + '.' + $('#ip2').attr('value') + '.' + $('#ip3').attr('value')
-            , mac : $('#mac0').attr('value') + ':' + $('#mac1').attr('value') + ':' + $('#mac2').attr('value') + ':' + $('#mac3').attr('value') + ':' + $('#mac4').attr('value') + ':' + $('#mac5').attr('value')
+            , ip : $('#ip0').val() + '.' + $('#ip1').val() + '.' + $('#ip2').val() + '.' + $('#ip3').val()
+            , mac : $('#mac0').val() + ':' + $('#mac1').val() + ':' + $('#mac2').val() + ':' + $('#mac3').val() + ':' + $('#mac4').val() + ':' + $('#mac5').val()
         };
 
         now.SaveHoneydNode(node, saveNodeCallback);
