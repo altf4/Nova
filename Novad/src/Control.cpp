@@ -44,19 +44,19 @@ void SaveAndExit(int param)
 	{
 		if(system("sudo iptables -F") == -1)
 		{
-			// TODO Logging
+			LOG(WARNING, "Failed to flush iptables rules", "Command sudo iptables -F failed");
 		}
 		if(system("sudo iptables -t nat -F") == -1)
 		{
-			// TODO Logging
+			LOG(WARNING, "Failed to flush nat table rules", "Command sudo iptables -t nat -F failed");
 		}
 		if(system("sudo iptables -t nat -X DOPP") == -1)
 		{
-			// TODO Logging
+			LOG(WARNING, "Failed to delete chain DOPP in nat table", "Command sudo iptables -t nat -X DOPP failed");
 		}
 		if(system(std::string("sudo route del " + Config::Inst()->GetDoppelIp()).c_str()) == -1)
 		{
-			// TODO Logging
+			LOG(WARNING, "Failed to delete Doppelganger route", "Command sudo route del " + (string)Config::Inst()->GetDoppelIp() + " failed");
 		}
 	}
 

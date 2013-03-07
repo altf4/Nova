@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+<?fileVersion 4.0.0?>
+
+<cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="cdt.managedbuild.config.gnu.exe.debug.1099422156">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.exe.debug.1099422156" moduleId="org.eclipse.cdt.core.settings" name="Debug">
@@ -53,6 +55,10 @@
 									<listOptionValue builtIn="false" value="curl"/>
 									<listOptionValue builtIn="false" value="sqlite3"/>
 									<listOptionValue builtIn="false" value="gcov"/>
+									<listOptionValue builtIn="false" value="event"/>
+									<listOptionValue builtIn="false" value="event_pthreads"/>
+									<listOptionValue builtIn="false" value="protobuf"/>
+									<listOptionValue builtIn="false" value="z"/>
 								</option>
 								<option id="gnu.cpp.link.option.flags.162266494" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-pthread -fprofile-arcs" valueType="string"/>
 								<option id="gnu.cpp.link.option.paths.226558368" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
@@ -124,8 +130,6 @@
 									<listOptionValue builtIn="false" value="boost_system"/>
 									<listOptionValue builtIn="false" value="boost_program_options"/>
 									<listOptionValue builtIn="false" value="boost_filesystem"/>
-									<listOptionValue builtIn="false" value="event"/>
-									<listOptionValue builtIn="false" value="event_pthreads"/>
 									<listOptionValue builtIn="false" value="pcap"/>
 									<listOptionValue builtIn="false" value="ann"/>
 									<listOptionValue builtIn="false" value="pthread"/>
@@ -133,6 +137,10 @@
 									<listOptionValue builtIn="false" value="curl"/>
 									<listOptionValue builtIn="false" value="sqlite3"/>
 									<listOptionValue builtIn="false" value="gcov"/>
+									<listOptionValue builtIn="false" value="event"/>
+									<listOptionValue builtIn="false" value="event_pthreads"/>
+									<listOptionValue builtIn="false" value="protobuf"/>
+									<listOptionValue builtIn="false" value="z"/>
 								</option>
 								<option id="gnu.cpp.link.option.flags.221688231" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-pthread -fprofile-arcs" valueType="string"/>
 								<option id="gnu.cpp.link.option.paths.1367132009" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">

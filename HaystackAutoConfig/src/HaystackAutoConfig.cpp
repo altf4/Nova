@@ -564,14 +564,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 
 						if(!vendorString.empty())
 						{
-							try
-							{
-								newHost->AddVendor(vendorString);
-							}
-							catch(emptyKeyException &e)
-							{
-								LOG(ERROR,("Couldn't determine MAC vendor type for local machine"), "");
-							}
+							newHost->AddVendor(vendorString);
 						}
 					}
 				}
@@ -619,7 +612,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 							{
 								if(!newPortSet->SetTCPBehavior(defaultBehavior))
 								{
-									//TODO: ERROR
+									LOG(WARNING, string("SetTCPBehavoir with defaultBehavior \"") + defaultBehavior + string("\" for newPortSet failed"), "");
 								}
 								continue;
 							}
@@ -1212,8 +1205,7 @@ bool Nova::CheckSubnet(vector<string> &hostAddrStrings, string matchStr)
 
 int Nova::GetNumberOfIPsInRange(string ipRange)
 {
-	// TODO: Extend this method to take into account a comma-separated list of ranges
-	// i.e. "10.10.1.0-11.10.10.0,11.10.11.0-12.10.0.0"
+	
 	uint conditional = ipRange.find(',');
 	if(conditional == ipRange.npos)
 	{

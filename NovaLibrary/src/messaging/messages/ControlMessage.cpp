@@ -19,6 +19,7 @@
 //============================================================================
 
 #include "ControlMessage.h"
+
 #include <sys/un.h>
 #include <iostream>
 
@@ -30,7 +31,7 @@ namespace Nova
 ControlMessage::ControlMessage(enum ControlType controlType)
 {
 	m_messageType = CONTROL_MESSAGE;
-	m_controlType = controlType;
+	m_contents.set_m_controltype(controlType);
 }
 
 ControlMessage::~ControlMessage()
@@ -55,210 +56,25 @@ ControlMessage::ControlMessage(char *buffer, uint32_t length)
 		return;
 	}
 
-	//Copy the control message type
-	memcpy(&m_controlType, buffer, sizeof(m_controlType));
-	buffer += sizeof(m_controlType);
-
-	switch(m_controlType)
+	length -= MESSAGE_HDR_SIZE;
+	if(!m_contents.ParseFromArray(buffer, length))
 	{
-		case CONTROL_EXIT_REQUEST:
-		case CONTROL_CLEAR_ALL_REQUEST:
-		case CONTROL_DISCONNECT_NOTICE:
-		case CONTROL_DISCONNECT_ACK:
-		case CONTROL_RECLASSIFY_ALL_REQUEST:
-		case CONTROL_CONNECT_REQUEST:
-		case CONTROL_START_CAPTURE:
-		case CONTROL_START_CAPTURE_ACK:
-		case CONTROL_STOP_CAPTURE:
-		case CONTROL_STOP_CAPTURE_ACK:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-
-			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_controlType);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			break;
-		}
-
-		case CONTROL_EXIT_REPLY:
-		case CONTROL_CLEAR_SUSPECT_REPLY:
-		case CONTROL_SAVE_SUSPECTS_REPLY:
-		case CONTROL_CLEAR_ALL_REPLY:
-		case CONTROL_RECLASSIFY_ALL_REPLY:
-		case CONTROL_CONNECT_REPLY:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-			//		3) Boolean success
-
-			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			memcpy(&m_success, buffer, sizeof(m_success));
-			buffer += sizeof(m_success);
-
-			break;
-		}
-
-		case CONTROL_CLEAR_SUSPECT_REQUEST:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-			//		3) Suspect IP to clear
-
-			m_suspectAddress.Deserialize(reinterpret_cast<u_char*>(buffer), length);
-
-			break;
-		}
-
-		case CONTROL_SAVE_SUSPECTS_REQUEST:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-
-			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_filePath);
-			if(length != expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
-
-			memcpy(m_filePath, buffer, sizeof(m_filePath));
-			buffer += sizeof(m_filePath);
-
-			break;
-		}
-
-		case CONTROL_INVALID:
-		{
-			break;
-		}
-		default:
-		{
-			m_serializeError = true;
-			return;
-		}
+		m_serializeError = true;
+		return;
 	}
 }
 char *ControlMessage::Serialize(uint32_t *length)
 {
-	char *buffer = NULL, *originalBuffer = NULL;
-	uint32_t messageSize = 0;
-
-	switch(m_controlType)
+	*length = MESSAGE_HDR_SIZE + sizeof(uint32_t) + m_contents.ByteSize();
+	char *buffer = (char*)malloc(*length);
+	char *originalbuffer = buffer;
+	SerializeHeader(&buffer, *length);
+	if(!m_contents.SerializeToArray(buffer, m_contents.ByteSize()))
 	{
-		case CONTROL_EXIT_REQUEST:
-		case CONTROL_CLEAR_ALL_REQUEST:
-		case CONTROL_DISCONNECT_NOTICE:
-		case CONTROL_DISCONNECT_ACK:
-		case CONTROL_RECLASSIFY_ALL_REQUEST:
-		case CONTROL_CONNECT_REQUEST:
-		case CONTROL_START_CAPTURE:
-		case CONTROL_START_CAPTURE_ACK:
-		case CONTROL_STOP_CAPTURE:
-		case CONTROL_STOP_CAPTURE_ACK:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Control Message type in
-			memcpy(buffer, &m_controlType, sizeof(m_controlType));
-			buffer += sizeof(m_controlType);
-
-			break;
-		}
-
-		case CONTROL_EXIT_REPLY:
-		case CONTROL_CLEAR_SUSPECT_REPLY:
-		case CONTROL_SAVE_SUSPECTS_REPLY:
-		case CONTROL_CLEAR_ALL_REPLY:
-		case CONTROL_RECLASSIFY_ALL_REPLY:
-		case CONTROL_CONNECT_REPLY:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-			//		3) Boolean success
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_success)+ sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Control Message type in
-			memcpy(buffer, &m_controlType, sizeof(m_controlType));
-			buffer += sizeof(m_controlType);
-			//Put the Control Message type in
-			memcpy(buffer, &m_success, sizeof(m_success));
-			buffer += sizeof(m_success);
-
-			break;
-		}
-
-		case CONTROL_CLEAR_SUSPECT_REQUEST:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-			//		3) IP of suspect to clear
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(messageSize) + m_suspectAddress.GetSerializationLength();
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Control Message type in
-			memcpy(buffer, &m_controlType, sizeof(m_controlType));
-			buffer += sizeof(m_controlType);
-
-			//Put the Control Message type in
-			m_suspectAddress.Serialize(reinterpret_cast<u_char*>(buffer), messageSize);
-
-			break;
-		}
-
-		case CONTROL_SAVE_SUSPECTS_REQUEST:
-		{
-			//Uses: 1) UI_Message Header
-			//		2) ControlMessage Type
-			// 		3) Path of file to save to
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_controlType) + sizeof(m_filePath) + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Control Message type in
-			memcpy(buffer, &m_controlType, sizeof(m_controlType));
-			buffer += sizeof(m_controlType);
-
-			memcpy(buffer, m_filePath, sizeof(m_filePath));
-			buffer += sizeof(m_filePath);
-
-			break;
-		}
-
-		case CONTROL_INVALID:
-		{
-			break;
-		}
-		default:
-		{
-			//Error
-			return NULL;
-		}
+		free(originalbuffer);
+		return NULL;
 	}
-
-	*length = messageSize;
-	return originalBuffer;
+	return originalbuffer;
 }
 
 }

@@ -28,6 +28,7 @@ using namespace Nova;
 
 // Normalization method to use on each feature
 // TODO: Make this a configuration var somewhere in Novaconfig.txt?
+/*
 normalizationType KnnClassification::m_normalization[] =
 {
 		LINEAR_SHIFT, // Don't normalize IP traffic distribution, already between 0 and 1
@@ -44,13 +45,15 @@ normalizationType KnnClassification::m_normalization[] =
 		LINEAR_SHIFT,
 		LINEAR_SHIFT,
 		LINEAR_SHIFT
-};
+};*/
 
 KnnClassification::KnnClassification()
 {
 	pthread_rwlock_init(&m_lock, NULL);
 
 	m_pathTrainingFile = Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathTrainingData();
+
+	m_normalization = Config::Inst()->GetNormalizationFunctions();
 
 	m_normalizedDataPts = NULL;
 	m_dataPts = NULL;
@@ -667,7 +670,7 @@ void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 					m_enabledFeatureCount);						// dimension of space
 }
 
-double KnnClassification::Normalize(normalizationType type, double value, double min, double max, double weight)
+double KnnClassification::Normalize(NormalizationType type, double value, double min, double max, double weight)
 {
 	double ret = -1;
 	switch(type)

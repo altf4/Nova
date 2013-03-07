@@ -52,8 +52,6 @@ Logger *Logger::Inst()
 // Loads the configuration file into the class's state data
 uint16_t Logger::LoadConfiguration()
 {
-	// TODO: get Getter functions and a safe way to store
-	// the user and pass for the SMTP server
 	m_messageInfo.smtp_user = Config::Inst()->GetSMTPUser();
 	m_messageInfo.smtp_pass = Config::Inst()->GetSMTPPass();
 	m_messageInfo.smtp_addr = Config::Inst()->GetSMTPAddr();

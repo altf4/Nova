@@ -168,17 +168,17 @@ bool ConnectToNovad()
 		return false;
 	}
 	ControlMessage *connectionReply = (ControlMessage*)reply;
-	if(connectionReply->m_controlType != CONTROL_CONNECT_REPLY)
+	if(connectionReply->m_contents.m_controltype() != CONTROL_CONNECT_REPLY)
 	{
 		stringstream s;
-		s << "Expected control type of CONTROL_CONNECT_REPLY but got " <<connectionReply->m_controlType;
+		s << "Expected control type of CONTROL_CONNECT_REPLY but got " <<connectionReply->m_contents.m_controltype();
 		LOG(ERROR, s.str(), "");
 
 		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
-	bool replySuccess = connectionReply->m_success;
+	bool replySuccess = connectionReply->m_contents.m_success();
 	delete connectionReply;
 
 	return replySuccess;
@@ -263,7 +263,7 @@ bool CloseNovadConnection()
 		else
 		{
 			ControlMessage *connectionReply = (ControlMessage*)reply;
-			if(connectionReply->m_controlType != CONTROL_DISCONNECT_ACK)
+			if(connectionReply->m_contents.m_controltype() != CONTROL_DISCONNECT_ACK)
 			{
 				success = false;
 			}

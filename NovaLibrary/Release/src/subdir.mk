@@ -18,7 +18,6 @@ CPP_SRCS += \
 ../src/PacketCapture.cpp \
 ../src/Point.cpp \
 ../src/Suspect.cpp \
-../src/SuspectIdentifer.cpp \
 ../src/SuspectTable.cpp \
 ../src/WhitelistConfiguration.cpp 
 
@@ -37,7 +36,6 @@ OBJS += \
 ./src/PacketCapture.o \
 ./src/Point.o \
 ./src/Suspect.o \
-./src/SuspectIdentifer.o \
 ./src/SuspectTable.o \
 ./src/WhitelistConfiguration.o 
 
@@ -56,7 +54,6 @@ CPP_DEPS += \
 ./src/PacketCapture.d \
 ./src/Point.d \
 ./src/Suspect.d \
-./src/SuspectIdentifer.d \
 ./src/SuspectTable.d \
 ./src/WhitelistConfiguration.d 
 
@@ -65,7 +62,7 @@ CPP_DEPS += \
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -O3 -Wall -c -fmessage-length=0  -pthread -std=c++0x -fPIC -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	g++ -I../../NovaLibrary/src/ -O3 -Wall -c -fmessage-length=0  -pthread -std=c++0x -fPIC -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

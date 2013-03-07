@@ -23,38 +23,15 @@
 
 #include <sys/types.h>
 #include <arpa/inet.h>
-#include "../../Suspect.h"
 
+#include "../../Suspect.h"
 #include "Message.h"
+#include "../../protobuf/marshalled_classes.pb.h"
 
 //Maximum size of a linux file path
 #define MAX_PATH_SIZE 4096
 //Includes the UI_Message type and ControlType
 #define CONTROL_MSG_MIN_SIZE 2
-
-//The different message types
-enum ControlType: char
-{
-	CONTROL_EXIT_REQUEST = 0,		//Request for Novad to exit
-	CONTROL_EXIT_REPLY,				//Reply from Novad with success
-	CONTROL_CLEAR_ALL_REQUEST,		//Request for Novad to clear all suspects
-	CONTROL_CLEAR_ALL_REPLY,		//Reply from Novad with success
-	CONTROL_CLEAR_SUSPECT_REQUEST,	//Request for Novad to clear specified suspect
-	CONTROL_CLEAR_SUSPECT_REPLY,	//Reply from Novad with success
-	CONTROL_SAVE_SUSPECTS_REQUEST,	//Request for Novad to save the suspects list to persistent storage
-	CONTROL_SAVE_SUSPECTS_REPLY,	//Reply from Novad with success
-	CONTROL_RECLASSIFY_ALL_REQUEST,	//Request for Novad to reclassify all suspects
-	CONTROL_RECLASSIFY_ALL_REPLY,	//Reply from Novad with success
-	CONTROL_CONNECT_REQUEST,		//Request to connect to Novad from UI
-	CONTROL_CONNECT_REPLY,			//Reply from Novad with success
-	CONTROL_DISCONNECT_NOTICE,		//Notice to Novad that the UI is closing
-	CONTROL_DISCONNECT_ACK,
-	CONTROL_START_CAPTURE,			// Start packet capture on configured interfaces
-	CONTROL_START_CAPTURE_ACK,
-	CONTROL_STOP_CAPTURE,			// Stop packet capture on configured interfaces
-	CONTROL_STOP_CAPTURE_ACK,
-	CONTROL_INVALID
-};
 
 namespace Nova
 {
@@ -67,6 +44,12 @@ public:
 	//Empty constructor
 	ControlMessage(enum ControlType controlType);
 
+	//Serializes the UI_Message object into a char array
+	//	*length - Return parameter, specifies the length of the serialized array returned
+	// Returns - A pointer to the serialized array
+	//	NOTE: The caller must manually free() the returned buffer after use
+	char *Serialize(uint32_t *length);
+
 	virtual ~ControlMessage();
 
 	//Deserialization constructor
@@ -75,21 +58,7 @@ public:
 	//	On error, sets m_serializeError to true, on success sets it to false
 	ControlMessage(char *buffer, uint32_t length);
 
-	enum ControlType m_controlType;
-
-	// The argument, if applicable.
-	char m_filePath[MAX_PATH_SIZE];
-
-	SuspectIdentifier m_suspectAddress;
-
-	//Did the requested command succeed?
-	bool m_success;
-
-	//Serializes the UI_Message object into a char array
-	//	*length - Return parameter, specifies the length of the serialized array returned
-	// Returns - A pointer to the serialized array
-	//	NOTE: The caller must manually free() the returned buffer after use
-	char *Serialize(uint32_t *length);
+	ControlMessage_pb m_contents;
 };
 }
 

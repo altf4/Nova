@@ -22,6 +22,7 @@
 #include "messaging/messages/UpdateMessage.h"
 #include "messaging/messages/ErrorMessage.h"
 #include "messaging/MessageManager.h"
+#include "Logger.h"
 #include "Lock.h"
 
 using namespace Nova;
@@ -70,7 +71,7 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 	}
 	UpdateMessage *updateMessage = (UpdateMessage*)message;
 
-	switch(updateMessage->m_updateType)
+	switch(updateMessage->m_contents.m_updatetype())
 	{
 		case UPDATE_SUSPECT:
 		{
@@ -80,7 +81,7 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 			UpdateMessage callbackAck(UPDATE_SUSPECT_ACK);
 			if(!MessageManager::Instance().WriteMessage(ticket, &callbackAck))
 			{
-				//TODO: log this? We failed to send the ack
+				LOG(DEBUG, "Unable to send UPDATE_SUSPECT_ACK: WriteMessage failed.", "");
 			}
 			break;
 		}
@@ -91,19 +92,19 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 			UpdateMessage callbackAck(UPDATE_ALL_SUSPECTS_CLEARED_ACK);
 			if(!MessageManager::Instance().WriteMessage(ticket, &callbackAck))
 			{
-				//TODO: log this? We failed to send the ack
+				LOG(DEBUG, "Unable to send UPDATE_ALL_SUSPECTS_CLEARED_ACK: WriteMessage failed.", "");
 			}
 			break;
 		}
 		case UPDATE_SUSPECT_CLEARED:
 		{
 			change.m_type = CALLBACK_SUSPECT_CLEARED;
-			change.m_suspectIP = updateMessage->m_IPAddress;
+			change.m_suspectIP = updateMessage->m_contents.m_suspectid();
 
 			UpdateMessage callbackAck(UPDATE_SUSPECT_CLEARED_ACK);
 			if(!MessageManager::Instance().WriteMessage(ticket, &callbackAck))
 			{
-				//TODO: log this? We failed to send the ack
+				LOG(DEBUG, "Unable to send UPDATE_SUSPECT_CLEARED_ACK: WriteMessage failed.", "");
 			}
 			break;
 		}

@@ -24,7 +24,7 @@ else
      echo 'in rm call'
      rm -f '/etc/rsyslog.d/41-nova.conf'
      sudo restart rsyslog
-     exit 1
+     exit 0
   }
   else
   {
@@ -51,3 +51,4 @@ else
 fi
 
 sudo restart rsyslog
+exit 0

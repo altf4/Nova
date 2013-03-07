@@ -385,25 +385,21 @@ void FeatureSet::UpdateEvidence(const Evidence &evidence)
 		case 17:
 		{
 			m_udpPacketCount++;
-			// TODO: This is bad. We should be able to handle port 0 (currently empty key)
-			if(evidence.m_evidencePacket.dst_port != 0)
-			{
-				m_PortUDPTable[evidence.m_evidencePacket.dst_port]++;
+			m_PortUDPTable[evidence.m_evidencePacket.dst_port]++;
 
-				IpPortCombination t;
-				t.m_ip = evidence.m_evidencePacket.ip_dst;
-				t.m_port = evidence.m_evidencePacket.dst_port;
-				if (!m_hasUdpPortIpBeenContacted.keyExists(t))
+			IpPortCombination t;
+			t.m_ip = evidence.m_evidencePacket.ip_dst;
+			t.m_port = evidence.m_evidencePacket.dst_port;
+			if (!m_hasUdpPortIpBeenContacted.keyExists(t))
+			{
+				m_hasUdpPortIpBeenContacted[t] = true;
+				if (m_udpPortsContactedForIP.keyExists(t.m_ip))
 				{
-					m_hasUdpPortIpBeenContacted[t] = true;
-					if (m_udpPortsContactedForIP.keyExists(t.m_ip))
-					{
-						m_udpPortsContactedForIP[t.m_ip]++;
-					}
-					else
-					{
-						m_udpPortsContactedForIP[t.m_ip] = 1;
-					}
+					m_udpPortsContactedForIP[t.m_ip]++;
+				}
+				else
+				{
+					m_udpPortsContactedForIP[t.m_ip] = 1;
 				}
 			}
 
@@ -422,24 +418,21 @@ void FeatureSet::UpdateEvidence(const Evidence &evidence)
 			{
 				m_IPTable[evidence.m_evidencePacket.ip_dst]++;
 
-				if(evidence.m_evidencePacket.dst_port != 0)
-				{
-					m_PortTCPTable[evidence.m_evidencePacket.dst_port]++;
+				m_PortTCPTable[evidence.m_evidencePacket.dst_port]++;
 
-					IpPortCombination t;
-					t.m_ip = evidence.m_evidencePacket.ip_dst;
-					t.m_port = evidence.m_evidencePacket.dst_port;
-					if (!m_hasTcpPortIpBeenContacted.keyExists(t))
+				IpPortCombination t;
+				t.m_ip = evidence.m_evidencePacket.ip_dst;
+				t.m_port = evidence.m_evidencePacket.dst_port;
+				if (!m_hasTcpPortIpBeenContacted.keyExists(t))
+				{
+					m_hasTcpPortIpBeenContacted[t] = true;
+					if (m_tcpPortsContactedForIP.keyExists(t.m_ip))
 					{
-						m_hasTcpPortIpBeenContacted[t] = true;
-						if (m_tcpPortsContactedForIP.keyExists(t.m_ip))
-						{
-							m_tcpPortsContactedForIP[t.m_ip]++;
-						}
-						else
-						{
-							m_tcpPortsContactedForIP[t.m_ip] = 1;
-						}
+						m_tcpPortsContactedForIP[t.m_ip]++;
+					}
+					else
+					{
+						m_tcpPortsContactedForIP[t.m_ip] = 1;
 					}
 				}
 			}
@@ -598,7 +591,7 @@ uint32_t FeatureSet::SerializeFeatureSet(u_char *buf, uint32_t bufferSize)
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		SerializeChunk(buf, &offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
+		SerializeChunk(buf, offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
 	}
 
 	return offset;
@@ -612,7 +605,7 @@ uint32_t FeatureSet::DeserializeFeatureSet(u_char *buf, uint32_t bufferSize)
 	//Copies the value and increases the offset
 	for(uint32_t i = 0; i < DIM; i++)
 	{
-		DeserializeChunk(buf, &offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
+		DeserializeChunk(buf, offset, (char*)&m_features[i], sizeof m_features[i], bufferSize);
 	}
 
 	return offset;
@@ -625,36 +618,34 @@ uint32_t FeatureSet::SerializeFeatureData(u_char *buf, uint32_t bufferSize)
 	//Required, individual variables for calculation
 	CalculateTimeInterval();
 
-	SerializeChunk(buf, &offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_packetCount, sizeof m_packetCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_bytesTotal, sizeof m_bytesTotal, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_startTime, sizeof m_startTime, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_endTime, sizeof m_endTime, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_lastTime, sizeof m_lastTime, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_packetCount, sizeof m_packetCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_bytesTotal, sizeof m_bytesTotal, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_startTime, sizeof m_startTime, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_endTime, sizeof m_endTime, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_lastTime, sizeof m_lastTime, bufferSize);
 
-	SerializeChunk(buf, &offset, (char*)&m_rstCount, sizeof m_rstCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_ackCount, sizeof m_ackCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_synCount, sizeof m_synCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_udpPacketCount, sizeof m_udpPacketCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_icmpPacketCount, sizeof m_icmpPacketCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_otherPacketCount, sizeof m_otherPacketCount, bufferSize);
-	SerializeChunk(buf, &offset, (char*)&m_numberOfHaystackNodesContacted, sizeof m_numberOfHaystackNodesContacted, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_rstCount, sizeof m_rstCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_ackCount, sizeof m_ackCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_synCount, sizeof m_synCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_udpPacketCount, sizeof m_udpPacketCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_icmpPacketCount, sizeof m_icmpPacketCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_otherPacketCount, sizeof m_otherPacketCount, bufferSize);
+	SerializeChunk(buf, offset, (char*)&m_numberOfHaystackNodesContacted, sizeof m_numberOfHaystackNodesContacted, bufferSize);
 
-	SerializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, &offset, m_packTable, 0, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_IPTable, 0, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_HaystackIPTable, 0, bufferSize);
-	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortTCPTable, 0, bufferSize);
-	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortUDPTable, 0, bufferSize);
+	SerializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, offset, m_packTable, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, offset, m_IPTable, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, offset, m_HaystackIPTable, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, offset, m_PortTCPTable, bufferSize);
+	SerializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, offset, m_PortUDPTable, bufferSize);
 
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_tcpPortsContactedForIP, 0, bufferSize);
-	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_udpPortsContactedForIP, 0, bufferSize);
-	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted,
-			IpPortCombination::GetEmptyKey(), bufferSize);
-	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted,
-			IpPortCombination::GetEmptyKey(), bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, offset, m_tcpPortsContactedForIP, bufferSize);
+	SerializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, offset, m_udpPortsContactedForIP, bufferSize);
+	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, offset, m_hasTcpPortIpBeenContacted, bufferSize);
+	SerializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, offset, m_hasUdpPortIpBeenContacted,bufferSize);
 
 	return offset;
 }
@@ -682,17 +673,15 @@ uint32_t FeatureSet::GetFeatureDataLength()
 			+ sizeof m_otherPacketCount
 			+ sizeof m_numberOfHaystackNodesContacted;
 
-	out += GetSerializeHashTableLength<Packet_Table, uint16_t, uint64_t> (m_packTable, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t>     (m_IPTable, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t>     (m_HaystackIPTable, 0);
-	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint64_t>  (m_PortTCPTable, 0);
-	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint64_t>  (m_PortUDPTable, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_tcpPortsContactedForIP, 0);
-	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_udpPortsContactedForIP, 0);
-	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (
-			m_hasTcpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
-	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (
-			m_hasUdpPortIpBeenContacted, IpPortCombination::GetEmptyKey());
+	out += GetSerializeHashTableLength<Packet_Table, uint16_t, uint64_t> (m_packTable);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t>     (m_IPTable);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t>     (m_HaystackIPTable);
+	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint64_t>  (m_PortTCPTable);
+	out += GetSerializeHashTableLength<Port_Table, in_port_t, uint64_t>  (m_PortUDPTable);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_tcpPortsContactedForIP);
+	out += GetSerializeHashTableLength<IP_Table, uint32_t, uint64_t> (m_udpPortsContactedForIP);
+	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (m_hasTcpPortIpBeenContacted);
+	out += GetSerializeHashTableLength<IpPortTable, IpPortCombination, uint8_t> (m_hasUdpPortIpBeenContacted);
 
 	return out;
 }
@@ -706,70 +695,97 @@ uint32_t FeatureSet::DeserializeFeatureData(u_char *buf, uint32_t bufferSize)
 	uint64_t temp = 0;
 
 	//Required, individual variables for calculation
-	DeserializeChunk(buf, &offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_packetCount, sizeof m_packetCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_bytesTotal, sizeof m_bytesTotal, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_startTime, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_totalInterval, sizeof m_totalInterval, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_packetCount, sizeof m_packetCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_bytesTotal, sizeof m_bytesTotal, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&temp, sizeof m_startTime, bufferSize);
 	if(m_startTime > (time_t)temp)
 	{
 		m_startTime = temp;
 	}
 
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_endTime, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&temp, sizeof m_endTime, bufferSize);
 	if(m_endTime < (time_t)temp)
 	{
 		m_endTime = temp;
 	}
 
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_lastTime, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&temp, sizeof m_lastTime, bufferSize);
 	if(m_lastTime < (time_t)temp)
 	{
 		m_lastTime = temp;
 	}
 
-	DeserializeChunk(buf, &offset, (char*)&m_rstCount, sizeof m_rstCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_ackCount, sizeof m_ackCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_synCount, sizeof m_synCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_rstCount, sizeof m_rstCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_ackCount, sizeof m_ackCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_synCount, sizeof m_synCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_finCount, sizeof m_finCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_synAckCount, sizeof m_synAckCount, bufferSize);
 
-	DeserializeChunk(buf, &offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_udpPacketCount, sizeof m_udpPacketCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_icmpPacketCount, sizeof m_icmpPacketCount, bufferSize);
-	DeserializeChunk(buf, &offset, (char*)&m_otherPacketCount, sizeof m_otherPacketCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_tcpPacketCount, sizeof m_tcpPacketCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_udpPacketCount, sizeof m_udpPacketCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_icmpPacketCount, sizeof m_icmpPacketCount, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&m_otherPacketCount, sizeof m_otherPacketCount, bufferSize);
 
-	DeserializeChunk(buf, &offset, (char*)&temp, sizeof m_numberOfHaystackNodesContacted, bufferSize);
+	DeserializeChunk(buf, offset, (char*)&temp, sizeof m_numberOfHaystackNodesContacted, bufferSize);
 	m_numberOfHaystackNodesContacted = temp;
 
 	/***************************************************************************************************
 	 For all of these tables we extract, the key (bin identifier) followed by the data (packet count)
 	 i += the # of packets in the bin, if we haven't reached packet count we know there's another item
 	****************************************************************************************************/
-	DeserializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, &offset, m_packTable, bufferSize);
-	DeserializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_IPTable, bufferSize);
-	DeserializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, &offset, m_HaystackIPTable, bufferSize);
-	DeserializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortTCPTable, bufferSize);
-	DeserializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, &offset, m_PortUDPTable, bufferSize);
+	DeserializeHashTable<Packet_Table, uint16_t, uint64_t> (buf, offset, m_packTable, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, offset, m_IPTable, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>     (buf, offset, m_HaystackIPTable, bufferSize);
+	DeserializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, offset, m_PortTCPTable, bufferSize);
+	DeserializeHashTable<Port_Table, in_port_t, uint64_t>  (buf, offset, m_PortUDPTable, bufferSize);
 
-	DeserializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_tcpPortsContactedForIP, bufferSize);
-	DeserializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, &offset, m_udpPortsContactedForIP, bufferSize);
-	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasTcpPortIpBeenContacted, bufferSize);
-	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, &offset, m_hasUdpPortIpBeenContacted, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, offset, m_tcpPortsContactedForIP, bufferSize);
+	DeserializeHashTable<IP_Table, uint32_t, uint64_t>  (buf, offset, m_udpPortsContactedForIP, bufferSize);
+	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, offset, m_hasTcpPortIpBeenContacted, bufferSize);
+	DeserializeHashTable<IpPortTable, IpPortCombination, uint8_t>  (buf, offset, m_hasUdpPortIpBeenContacted, bufferSize);
 
 	return offset;
 }
 
 void FeatureSet::SetHaystackNodes(std::vector<uint32_t> nodes)
 {
-	// TODO DTC
-	// We could possibly do something a little more advanced here. If an IP was in
-	// the old list and also is in the new list, we could update the data instead of just
-	// deleting all of our old data. Not worrying about it right now though.
-	m_HaystackIPTable.clear();
-	m_numberOfHaystackNodesContacted = 0;
+	// Delete IPs in our list that aren't in the new list
+	IP_Table::iterator it = m_HaystackIPTable.begin();
+	while (it != m_HaystackIPTable.end())
+	{
+		bool keep = false;
 
+		for (uint i = 0; i < nodes.size(); i++) {
+			// Node exists in new list, leave it as is
+			if (nodes.at(i) == it->first)
+			{
+				keep = true;
+				break;
+			}
+		}
+
+		if (!keep)
+		{
+			if (it->second != 0)
+			{
+				m_numberOfHaystackNodesContacted--;
+			}
+
+			m_HaystackIPTable.erase(it++);
+		}
+		else
+		{
+			it++;
+		}
+	}
+
+	// Now add in any haystack nodes that are in the new list but not the old
 	for (uint i = 0; i < nodes.size(); i++) {
-		m_HaystackIPTable[nodes.at(i)] = 0;
+		if (!m_HaystackIPTable.keyExists(nodes.at(i)))
+		{
+			m_HaystackIPTable[nodes.at(i)] = 0;
+		}
 	}
 }
 

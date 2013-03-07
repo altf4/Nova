@@ -52,6 +52,7 @@ string Config::m_pathPrefix = "";
 string Config::m_prefixes[] =
 {
 	"INTERFACE",
+	"KNN_NORMALIZATION",
 	"HS_HONEYD_CONFIG",
 	"READ_PCAP",
 	"PCAP_FILE",
@@ -67,6 +68,7 @@ string Config::m_prefixes[] =
 	"SAVE_FREQUENCY",
 	"DATA_TTL",
 	"CE_SAVE_FILE",
+	"RSYSLOG_IP",
 	"SMTP_ADDR",
 	"SMTP_PORT",
 	"SMTP_DOMAIN",
@@ -92,6 +94,7 @@ string Config::m_prefixes[] =
 	"CLASSIFICATION_WEIGHTS",
 	"ONLY_CLASSIFY_HONEYPOT_TRAFFIC",
 	"CURRENT_CONFIG",
+	"IPLIST_PATH",
 	"EMAIL_ALERTS_ENABLED",
 	"TRAINING_DATA_PATH",
 	"COMMAND_START_NOVAD",
@@ -182,7 +185,6 @@ void Config::LoadConfig()
 	LoadInterfaces();
 }
 
-
 vector<string> Config::GetPrefixes()
 {
 	vector<string> ret;
@@ -238,6 +240,35 @@ void Config::LoadConfig_Internal()
 					isValid[prefixIndex] = true;
 				}
 
+				continue;
+			}
+
+			// KNN_NORMALIZATION
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					vector<string> temp;
+					boost::split(temp, line, boost::is_any_of(","));
+					for(uint i = 0; i < temp.size(); i++)
+					{
+						switch(temp[i].at(0))
+						{
+							case '0':m_normalization.push_back(NormalizationType::NONORM);
+									 break;
+							case '1':m_normalization.push_back(NormalizationType::LINEAR);
+									 break;
+							case '2':m_normalization.push_back(NormalizationType::LINEAR_SHIFT);
+									 break;
+							case '3':m_normalization.push_back(NormalizationType::LOGARITHMIC);
+									 break;
+						}
+					}
+					isValid[prefixIndex] = true;
+				}
 				continue;
 			}
 
@@ -463,6 +494,19 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
+			// RSYSLOG_IP
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_rsyslog = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
 
 			// SMTP_ADDR
 			prefixIndex++;
@@ -873,6 +917,19 @@ void Config::LoadConfig_Internal()
 				}
 			}
 
+			// IPLIST_PATH
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_iplistPath = string(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+			}
+
 			// EMAIL_ALERTS_ENABLED
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -899,7 +956,6 @@ void Config::LoadConfig_Internal()
 				}
 			}
 
-
 			// COMMAND_START_NOVAD
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -925,7 +981,6 @@ void Config::LoadConfig_Internal()
 					isValid[prefixIndex] = true;
 				}
 			}
-
 
 			// COMMAND_START_HAYSTACK
 			prefixIndex++;
@@ -1029,7 +1084,7 @@ bool Config::LoadUserConfig()
 			if(!line.substr(0,prefix.size()).compare(prefix))
 			{
 				line = line.substr(prefix.size()+1,line.size());
-				//TODO Key should be 256 characters, hard check for this once implemented
+				
 				if((line.size() > 0) && (line.size() < 257))
 				{
 					m_key = line;
@@ -1311,7 +1366,7 @@ std::string Config::ReadSetting(std::string key)
 		{
 			getline(config, line);
 
-			if(!line.substr(0, key.size()).compare(key))
+			if(!line.substr(0, key.size() + 1).compare(key + " "))
 			{
 				line = line.substr(key.size() + 1, line.size());
 				if(line.size() > 0)
@@ -1378,7 +1433,7 @@ bool Config::WriteSetting(std::string key, std::string value)
 			}
 
 
-			if(!line.substr(0,key.size()).compare(key))
+			if(!line.substr(0,key.size() + 1).compare(key + " "))
 			{
 				*out << key << " " << value << endl;
 				continue;
@@ -2345,6 +2400,34 @@ std::string Config::GetCommandStopHaystack()
 	return m_commandStopHaystack;
 }
 
+std::string Config::GetIpListPath()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_iplistPath;
+}
 
+void Config::SetIpListPath(string path)
+{
+	Lock lock(&m_lock, WRITE_LOCK);
+	m_iplistPath = path;
+}
+
+vector<NormalizationType> Config::GetNormalizationFunctions()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_normalization;
+}
+
+std::string Config::GetRsyslogIP()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_rsyslog;
+}
+
+void Config::SetRsyslogIP(std::string newIp)
+{
+	Lock lock(&m_lock, WRITE_LOCK);
+	m_rsyslog = newIp;
+}
 
 }

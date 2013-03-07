@@ -20,6 +20,7 @@
 #include "../../SerializationHelper.h"
 #include "../../FeatureSet.h"
 #include "UpdateMessage.h"
+#include "../../protobuf/marshalled_classes.pb.h"
 
 #include <string.h>
 
@@ -30,7 +31,7 @@ UpdateMessage::UpdateMessage(enum UpdateType updateType)
 {
 	m_suspect = NULL;
 	m_messageType = UPDATE_MESSAGE;
-	m_updateType = updateType;
+	m_contents.set_m_updatetype(updateType);
 }
 
 UpdateMessage::~UpdateMessage()
@@ -47,7 +48,8 @@ void UpdateMessage::DeleteContents()
 UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 {
 	m_suspect = NULL;
-	if( length < UPDATE_MSG_MIN_SIZE )
+
+	if(length < UPDATE_MSG_MIN_SIZE)
 	{
 		m_serializeError = true;
 		return;
@@ -55,81 +57,43 @@ UpdateMessage::UpdateMessage(char *buffer, uint32_t length)
 
 	m_serializeError = false;
 
-	//Deserialize the Message header
+	//Deserialize the UI_Message header
 	if(!DeserializeHeader(&buffer))
 	{
 		m_serializeError = true;
 		return;
 	}
 
-	//Copy the control message type
-	memcpy(&m_updateType, buffer, sizeof(m_updateType));
-	buffer += sizeof(m_updateType);
+	uint32_t contentsSize;
+	memcpy(&contentsSize, buffer, sizeof(contentsSize));
+	buffer += sizeof(contentsSize);
 
-	switch(m_updateType)
+	if(!m_contents.ParseFromArray(buffer, contentsSize))
 	{
-		case UPDATE_SUSPECT:
-		{
-			//Uses: 1) Message Header
-			//		2) ControlMessage Type
-			//		3) Length of incoming serialized suspect
-			//		3) Serialized suspect
-			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_updateType) + sizeof(m_suspectLength);
-			if(length <= expectedSize)
-			{
-				m_serializeError = true;
-				return;
-			}
+		m_serializeError = true;
+		return;
+	}
+	buffer += contentsSize;
 
-			memcpy(&m_suspectLength, buffer, sizeof(m_suspectLength));
-			buffer += sizeof(m_suspectLength);
-			expectedSize += m_suspectLength;
-			if((expectedSize != length) > SANITY_CHECK)
-			{
-				m_serializeError = true;
-				return;
-			}
+	//If more bytes to go...
+	uint32_t bytesToGo = length - (MESSAGE_HDR_SIZE + sizeof(contentsSize) + contentsSize);
+	if(bytesToGo > 0)
+	{
+		try
+		{
 			m_suspect = new Suspect();
-			try {
-				if(m_suspect->Deserialize((u_char*)buffer, length, NO_FEATURE_DATA) != m_suspectLength)
-				{
-					m_serializeError = true;
-					return;
-				}
-			} catch(Nova::serializationException &e) {
-				m_serializeError = true;
-				return;
-			}
-			break;
-		}
-		case UPDATE_SUSPECT_CLEARED:
-		{
-			//Uses: 1) Message Header
-			//		2) Update Type
-			//		3) Suspect IP
-
-			m_IPAddress.Deserialize(reinterpret_cast<u_char*>(buffer), length);
-
-			break;
-		}
-
-		case UPDATE_SUSPECT_ACK:
-		case UPDATE_ALL_SUSPECTS_CLEARED:
-		case UPDATE_ALL_SUSPECTS_CLEARED_ACK:
-		case UPDATE_SUSPECT_CLEARED_ACK:
-		{
-			//Uses: 1) Message Header
-			//		2) Update Type
-			uint32_t expectedSize = MESSAGE_HDR_SIZE + sizeof(m_updateType);
-			if(length != expectedSize)
+			if(m_suspect->Deserialize((u_char*)buffer, bytesToGo, NO_FEATURE_DATA) != bytesToGo)
 			{
+				delete m_suspect;
+				m_suspect = NULL;
 				m_serializeError = true;
 				return;
 			}
-			break;
 		}
-		default:
+		catch(Nova::serializationException &e)
 		{
+			delete m_suspect;
+			m_suspect = NULL;
 			m_serializeError = true;
 			return;
 		}
@@ -140,87 +104,52 @@ char *UpdateMessage::Serialize(uint32_t *length)
 {
 	char *buffer, *originalBuffer;
 	uint32_t messageSize;
+	bool sendSuspect = false;
 
-	switch(m_updateType)
+	if(m_contents.m_updatetype() == UPDATE_SUSPECT)
 	{
-		case UPDATE_SUSPECT:
-		{
-			//Uses: 1) Message Header
-			//		2) ControlMessage Type
-			//		3) Length of incoming serialized suspect
-			//		3) Serialized suspect
-			if(m_suspect == NULL)
-			{
-				return NULL;
-			}
-			m_suspectLength = m_suspect->GetSerializeLength(NO_FEATURE_DATA);
-			if(m_suspectLength == 0)
-			{
-				return NULL;
-			}
+		sendSuspect = true;
+	}
 
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_updateType) + sizeof(m_suspectLength) + m_suspectLength + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the update Message type in
-			memcpy(buffer, &m_updateType, sizeof(m_updateType));
-			buffer += sizeof(m_updateType);
-			//Length of suspect buffer
-			memcpy(buffer, &m_suspectLength, sizeof(m_suspectLength));
-			buffer += sizeof(m_suspectLength);
-			if(m_suspect->Serialize((u_char*)buffer, messageSize, NO_FEATURE_DATA) != m_suspectLength)
-			{
-				return NULL;
-			}
-			buffer += m_suspectLength;
-			break;
-		}
-
-		case UPDATE_SUSPECT_CLEARED:
-		{
-			//Uses: 1) Message Header
-			//		2) update Message Type
-			//		3) IP address of suspect cleared
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_updateType) +  m_IPAddress.GetSerializationLength() + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-
-			//Put the Control Message type in
-			memcpy(buffer, &m_updateType, sizeof(m_updateType));
-			buffer += sizeof(m_updateType);
-
-			m_IPAddress.Serialize(reinterpret_cast<u_char*>(buffer), messageSize);
-
-			break;
-		}
-
-		case UPDATE_SUSPECT_ACK:
-		case UPDATE_ALL_SUSPECTS_CLEARED:
-		case UPDATE_ALL_SUSPECTS_CLEARED_ACK:
-		case UPDATE_SUSPECT_CLEARED_ACK:
-		{
-			//Uses: 1) Message Header
-			//		2) Update Message Type
-			messageSize = MESSAGE_HDR_SIZE + sizeof(m_updateType) + sizeof(messageSize);
-			buffer = (char*)malloc(messageSize);
-			originalBuffer = buffer;
-
-			SerializeHeader(&buffer, messageSize);
-			//Put the Control Message type in
-			memcpy(buffer, &m_updateType, sizeof(m_updateType));
-			buffer += sizeof(m_updateType);
-
-			break;
-		}
-		default:
+	uint32_t suspectLength = 0;
+	if((m_suspect != NULL) && sendSuspect)
+	{
+		suspectLength = m_suspect->GetSerializeLength(NO_FEATURE_DATA);
+		if(suspectLength == 0)
 		{
 			return NULL;
 		}
+		messageSize = MESSAGE_HDR_SIZE +  sizeof(uint32_t) + sizeof(uint32_t) + m_contents.ByteSize() + suspectLength;
 	}
+	else
+	{
+		messageSize = MESSAGE_HDR_SIZE +  sizeof(uint32_t) + sizeof(uint32_t) + m_contents.ByteSize();
+	}
+	buffer = (char*)malloc(messageSize);
+	originalBuffer = buffer;
+
+	SerializeHeader(&buffer, messageSize);
+
+	uint32_t contentLength = m_contents.ByteSize();
+	memcpy(buffer, &contentLength, sizeof(contentLength));
+	buffer += sizeof(contentLength);
+
+	if(!m_contents.SerializeToArray(buffer, m_contents.ByteSize()))
+	{
+		return NULL;
+	}
+	buffer += m_contents.ByteSize();
+
+	if((m_suspect != NULL) && sendSuspect)
+	{
+		// Serialize our suspect
+		if(m_suspect->Serialize((u_char*)buffer, suspectLength, NO_FEATURE_DATA) != suspectLength)
+		{
+			return NULL;
+		}
+		buffer += suspectLength;
+	}
+
 	*length = messageSize;
 	return originalBuffer;
 }

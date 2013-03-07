@@ -60,13 +60,12 @@ namespace Nova
 
 void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 {
-	switch(controlMessage.m_controlType)
+	switch(controlMessage.m_contents.m_controltype())
 	{
 		case CONTROL_EXIT_REQUEST:
 		{
-			//TODO: Check for any reason why might not want to exit
 			ControlMessage exitReply(CONTROL_EXIT_REPLY);
-			exitReply.m_success = true;
+			exitReply.m_contents.set_m_success(true);
 
 			MessageManager::Instance().WriteMessage(ticket, &exitReply);
 
@@ -93,7 +92,7 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 			}
 
 			ControlMessage clearAllSuspectsReply(CONTROL_CLEAR_ALL_REPLY);
-			clearAllSuspectsReply.m_success = successResult;
+			clearAllSuspectsReply.m_contents.set_m_success(successResult);
 			MessageManager::Instance().WriteMessage(ticket, &clearAllSuspectsReply);
 
 			if(successResult)
@@ -111,57 +110,50 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 		{
 			bool result;
 
-			result = suspects.Erase(controlMessage.m_suspectAddress);
+			result = suspects.Erase(controlMessage.m_contents.m_suspectid());
 
 			if (!result)
 			{
 				LOG(DEBUG, "Failed to Erase suspect from the main suspect table.", "");
 			}
 
-			result = suspectsSinceLastSave.Erase(controlMessage.m_suspectAddress);
+			result = suspectsSinceLastSave.Erase(controlMessage.m_contents.m_suspectid());
 			if (!result)
 			{
 				LOG(DEBUG, "Failed to Erase suspect from the unsaved suspect table.", "");
 			}
 
-
-			//RefreshStateFile();
-
-			//TODO: Should check for errors here and return result
 			ControlMessage clearSuspectReply(CONTROL_CLEAR_SUSPECT_REPLY);
-			clearSuspectReply.m_success = true;
+			clearSuspectReply.m_contents.set_m_success(true);
 			MessageManager::Instance().WriteMessage(ticket, &clearSuspectReply);
 
 			struct in_addr suspectAddress;
-			suspectAddress.s_addr = ntohl(controlMessage.m_suspectAddress.m_ip);
+			suspectAddress.s_addr = ntohl(controlMessage.m_contents.m_suspectid().m_ip());
 
 			LOG(DEBUG, "Cleared a suspect due to UI request",
-					"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "+string(inet_ntoa(suspectAddress))+ "on interface " + controlMessage.m_suspectAddress.m_interface + ".");
+					"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "
+					+string(inet_ntoa(suspectAddress))+ "on interface " + controlMessage.m_contents.m_suspectid().m_ifname() + ".");
 
 			UpdateMessage *updateMessage = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
-			updateMessage->m_IPAddress = controlMessage.m_suspectAddress;
-			cout << "Sending UpdateMessage with suspect cleared on interface " << updateMessage->m_IPAddress.m_interface << endl;
+			updateMessage->m_contents.mutable_m_suspectid()->CopyFrom(controlMessage.m_contents.m_suspectid());
+			cout << "Sending UpdateMessage with suspect cleared on interface " << updateMessage->m_contents.m_suspectid().m_ifname() << endl;
 			NotifyUIs(updateMessage, UPDATE_SUSPECT_CLEARED_ACK, ticket.m_socketFD);
 
 			break;
 		}
 		case CONTROL_SAVE_SUSPECTS_REQUEST:
 		{
-			if(strlen(controlMessage.m_filePath) == 0)
+			if(controlMessage.m_contents.m_filepath().length() == 0)
 			{
-				//TODO: possibly make a logger call here for incorrect file name, probably need to check name in a more
-				// comprehensive way. This may not be needed, as I can't see a way for execution to get here,
-				// but better safe than sorry
-				suspects.SaveSuspectsToFile(string("save.txt")); //TODO: Should check for errors here and return results
+				suspects.SaveSuspectsToFile(string("save.txt"));
 			}
 			else
 			{
-				suspects.SaveSuspectsToFile(string(controlMessage.m_filePath));
-				//TODO: Should check for errors here and return result
+				suspects.SaveSuspectsToFile(string(controlMessage.m_contents.m_filepath()));
 			}
 
 			ControlMessage saveSuspectsReply(CONTROL_SAVE_SUSPECTS_REPLY);
-			saveSuspectsReply.m_success = true;
+			saveSuspectsReply.m_contents.set_m_success(true);
 			MessageManager::Instance().WriteMessage(ticket, &saveSuspectsReply);
 
 			LOG(DEBUG, "Saved suspects to file due to UI request",
@@ -170,10 +162,10 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 		}
 		case CONTROL_RECLASSIFY_ALL_REQUEST:
 		{
-			Reload(); //TODO: Should check for errors here and return result
+			Reload();
 
 			ControlMessage reclassifyAllReply(CONTROL_RECLASSIFY_ALL_REPLY);
-			reclassifyAllReply.m_success = true;
+			reclassifyAllReply.m_contents.set_m_success(true);
 			MessageManager::Instance().WriteMessage(ticket, &reclassifyAllReply);
 
 			LOG(DEBUG, "Reclassified all suspects due to UI request",
@@ -183,7 +175,7 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 		case CONTROL_CONNECT_REQUEST:
 		{
 			ControlMessage connectReply(CONTROL_CONNECT_REPLY);
-			connectReply.m_success = true;
+			connectReply.m_contents.set_m_success(true);
 			MessageManager::Instance().WriteMessage(ticket, &connectReply);
 			break;
 		}
@@ -225,45 +217,49 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 
 void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 {
-	switch(msg.m_requestType)
+	switch(msg.m_contents.m_requesttype())
 	{
 		case REQUEST_SUSPECTLIST:
 		{
 			RequestMessage reply(REQUEST_SUSPECTLIST_REPLY);
-			reply.m_listType = msg.m_listType;
+			reply.m_contents.set_m_listtype(msg.m_contents.m_listtype());
 
-			switch(msg.m_listType)
+			switch(msg.m_contents.m_listtype())
 			{
 				case SUSPECTLIST_ALL:
 				{
-					vector<SuspectIdentifier> benign = suspects.GetKeys_of_BenignSuspects();
+					vector<SuspectID_pb> benign = suspects.GetKeys_of_BenignSuspects();
 					for(uint i = 0; i < benign.size(); i++)
 					{
-						reply.m_suspectList.push_back(benign.at(i));
+						SuspectID_pb *temp = reply.m_contents.add_m_suspectid();
+						temp->CopyFrom(benign.at(i));
 					}
 
-					vector<SuspectIdentifier> hostile = suspects.GetKeys_of_HostileSuspects();
+					vector<SuspectID_pb> hostile = suspects.GetKeys_of_HostileSuspects();
 					for(uint i = 0; i < hostile.size(); i++)
 					{
-						reply.m_suspectList.push_back(hostile.at(i));
+						SuspectID_pb *temp = reply.m_contents.add_m_suspectid();
+						temp->CopyFrom(hostile.at(i));
 					}
 					break;
 				}
 				case SUSPECTLIST_HOSTILE:
 				{
-					vector<SuspectIdentifier> hostile = suspects.GetKeys_of_HostileSuspects();
+					vector<SuspectID_pb> hostile = suspects.GetKeys_of_HostileSuspects();
 					for(uint i = 0; i < hostile.size(); i++)
 					{
-						reply.m_suspectList.push_back(hostile.at(i));
+						SuspectID_pb *temp = reply.m_contents.add_m_suspectid();
+						temp->CopyFrom(hostile.at(i));
 					}
 					break;
 				}
 				case SUSPECTLIST_BENIGN:
 				{
-					vector<SuspectIdentifier> benign = suspects.GetKeys_of_BenignSuspects();
+					vector<SuspectID_pb> benign = suspects.GetKeys_of_BenignSuspects();
 					for(uint i = 0; i < benign.size(); i++)
 					{
-						reply.m_suspectList.push_back(benign.at(i));
+						SuspectID_pb *temp = reply.m_contents.add_m_suspectid();
+						temp->CopyFrom(benign.at(i));
 					}
 					break;
 				}
@@ -281,7 +277,7 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 		case REQUEST_SUSPECT:
 		{
 			RequestMessage reply(REQUEST_SUSPECT_REPLY);
-			Suspect tempSuspect = suspects.GetShallowSuspect(msg.m_suspectAddress);
+			Suspect tempSuspect = suspects.GetShallowSuspect(msg.m_contents.m_suspectid(0));
 			reply.m_suspect = &tempSuspect;
 			MessageManager::Instance().WriteMessage(ticket, &reply);
 
@@ -290,7 +286,7 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 		case REQUEST_SUSPECT_WITHDATA:
 		{
 			RequestMessage reply(REQUEST_SUSPECT_WITHDATA_REPLY);
-			Suspect tempSuspect = suspects.GetSuspect(msg.m_suspectAddress);
+			Suspect tempSuspect = suspects.GetSuspect(msg.m_contents.m_suspectid(0));
 			reply.m_suspect = &tempSuspect;
 			MessageManager::Instance().WriteMessage(ticket, &reply);
 
@@ -299,7 +295,7 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 		case REQUEST_UPTIME:
 		{
 			RequestMessage reply(REQUEST_UPTIME_REPLY);
-			reply.m_startTime = startTime;
+			reply.m_contents.set_m_starttime(startTime);
 			MessageManager::Instance().WriteMessage(ticket, &reply);
 
 			break;
@@ -308,10 +304,6 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 		{
 			RequestMessage connectReply(REQUEST_PONG);
 			MessageManager::Instance().WriteMessage(ticket, &connectReply);
-
-			//TODO: This was too noisy. Even at the debug level. So it's ignored. Maybe bring it back?
-			//LOG(DEBUG, "Got a Ping from UI. We're alive!",
-			//	"Got a CONTROL_PING, sent a PONG.");
 
 			break;
 		}
@@ -355,7 +347,7 @@ void SendSuspectToUIs(Suspect *suspect)
 			continue;
 		}
 		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
-		if(suspectCallback->m_updateType != UPDATE_SUSPECT_ACK)
+		if(suspectCallback->m_contents.m_updatetype() != UPDATE_SUSPECT_ACK)
 		{
 			suspectReply->DeleteContents();
 			delete suspectReply;
@@ -427,7 +419,7 @@ void *NotifyUIsHelper(void *ptr)
 			continue;
 		}
 		UpdateMessage *suspectCallback = (UpdateMessage*)suspectReply;
-		if(suspectCallback->m_updateType != arguments->m_ackType)
+		if(suspectCallback->m_contents.m_updatetype() != arguments->m_ackType)
 		{
 			suspectReply->DeleteContents();
 			delete suspectReply;

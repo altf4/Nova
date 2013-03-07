@@ -48,6 +48,9 @@
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
 
+// ***DEBUG***
+#include <arpa/inet.h>
+
 using namespace std;
 using namespace Nova;
 
@@ -119,7 +122,7 @@ void *ClassificationLoop(void *ptr)
 		CheckForDroppedPackets();
 
 		//Calculate the "true" Feature Set for each Suspect
-		vector<SuspectIdentifier> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
+		vector<SuspectID_pb> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
 		for(uint i = 0; i < updateKeys.size(); i++)
 		{
 			UpdateAndClassify(updateKeys[i]);
@@ -217,7 +220,7 @@ void *UpdateWhitelistIPFilter(void *ptr)
 	{
 		if(whitelistWatch > 0)
 		{
-			int BUF_LEN = (1024 *(sizeof(struct inotify_event)) + 16);
+			int BUF_LEN = (1024 * (sizeof(struct inotify_event)) + 16);
 			char buf[BUF_LEN];
 
 			// Blocking call, only moves on when the kernel notifies it that file has been changed
@@ -233,7 +236,8 @@ void *UpdateWhitelistIPFilter(void *ptr)
 					Lock lock(&packetCapturesLock);
 					for(uint i = 0; i < packetCaptures.size(); i++)
 					{
-						try {
+						try
+						{
 							string captureFilterString = ConstructFilterString(packetCaptures.at(i)->GetIdentifier());
 							packetCaptures.at(i)->SetFilter(captureFilterString);
 						}
@@ -246,18 +250,27 @@ void *UpdateWhitelistIPFilter(void *ptr)
 
 
 				// Clear any suspects that were whitelisted from the GUIs
-				/*
-				 * TODO: Fix this. Disabled during switch to SuspectIdentifier objects instead of IPs for suspect references
+				vector<SuspectID_pb> all = suspects.GetAllKeys();
 				for(uint i = 0; i < whitelistIpAddresses.size(); i++)
 				{
-					if(suspects.Erase(inet_addr(whitelistIpAddresses.at(i).c_str())))
+					struct sockaddr_in doop;
+					uint32_t splitDex = whitelistIpAddresses.at(i).find_first_of(",");
+					string whitelistUse = whitelistIpAddresses.at(i).substr(splitDex + 1);
+
+					char str[INET_ADDRSTRLEN];
+					for(uint j = 0; j < all.size(); j++)
 					{
-						UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
-						msg->m_IPAddress = inet_addr(whitelistIpAddresses.at(i).c_str());
-						NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
+						doop.sin_addr.s_addr = ntohl(all[j].m_ip());
+						inet_ntop(AF_INET, &(doop.sin_addr), str, INET_ADDRSTRLEN);
+
+						if(!whitelistUse.compare(string(str)) && suspects.Erase(all[j]))
+						{
+							UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
+							msg->m_contents.mutable_m_suspectid()->CopyFrom(all[j]);
+							NotifyUIs(msg, UPDATE_SUSPECT_CLEARED_ACK, -1);
+						}
 					}
 				}
-				*/
 			}
 		}
 		else

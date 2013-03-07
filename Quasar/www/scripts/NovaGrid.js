@@ -30,6 +30,7 @@ var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection, ri
     this.m_tableElement = tableElement;
     this.m_elements = new Object();
     this.m_pageElements = [];
+    this.m_pagesElement = null;
     this.m_renderCallback = function() {};
     this.m_selected = [];
     this.m_selection = selection;
@@ -91,6 +92,8 @@ NovaGrid.prototype = {
                    throw "Can't push entry of size " + entry.length + " into table of size " + this.m_columns.length
                } else {
                    this.m_elements[entry[this.m_keyIndex]] = entry;
+                   this.m_elements[entry[this.m_keyIndex]]._newRow = true;
+				   
                }
            }
 
@@ -221,28 +224,34 @@ NovaGrid.prototype = {
                    }
                    else
                    {
+                     var classes = "novaGrid";
+                     if (arrayRep[i]._newRow)
+                     {
+                        arrayRep[i]._newRow = false;
+                        classes += " newRow";
+                     }
+
+                     innerTableString += '<TR class="' + classes + '" ';
                      if(this.m_rightClick != undefined)
                      {
-                       innerTableString += '<TR class="novaGrid">';
                        if(arrayRep[i].style != undefined)
                        {
-                         innerTableString += '<TR class="novaGrid" style="' + arrayRep[i].style + '" oncontextmenu="' + this.m_rightClick + '">';
+                         innerTableString += 'style="' + arrayRep[i].style + '" oncontextmenu="' + this.m_rightClick + '">';
                        } 
                        else
                        {
-                         innerTableString += '<TR class="novaGrid" oncontextmenu="' + this.m_rightClick + '">';
+                         innerTableString += 'oncontextmenu="' + this.m_rightClick + '">';
                        }     
                      }
                      else
                      {
-                       innerTableString += '<TR class="novaGrid">';
                        if(arrayRep[i].style != undefined)
                        {
-                         innerTableString += '<TR class="novaGrid" style="' + arrayRep[i].style + '">';
+                         innerTableString += 'style="' + arrayRep[i].style + '">';
                        } 
                        else
                        {
-                         innerTableString += '<TR class="novaGrid">';
+                         innerTableString += '>';
                        }                         
                      }
                    }
@@ -392,8 +401,18 @@ NovaGrid.prototype = {
     }
   }
 
+  , SetPageNumberDiv: function(tablePages) {
+    this.m_pagesElement = tablePages;
+  }
   // Pass this a div DOM element and it will throw the page numbers in it
   ,populateTablePages: function(tablePages) {
+        if (!tablePages) {
+            tablePages = this.m_pagesElement;
+        }
+
+       if (!tablePages) {return;}
+       tablePages.innerHTML = "";
+
        var gridSize = this.GetNumberOfPages();
        var currentPage = this.GetCurrentPage();
 
@@ -515,6 +534,7 @@ NovaGrid.prototype = {
       // Simple way (slow in Chrome, fine in FF)
       //theDoc.getElementById("suspectTable").innerHTML = suspectGrid.GetTable();
       this.m_tableElement = replaceHtml(this.m_tableElement, this.GetTable());
+      this.populateTablePages();
       this.m_renderCallback();
   }
 }

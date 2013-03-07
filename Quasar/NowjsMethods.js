@@ -30,9 +30,9 @@ var NowjsMethods = function(everyone) {
 
 function objCopy(src, dst) 
 {
-    for (var member in src) 
+    for(var member in src) 
     {
-        if (typeof src[member] == 'function') 
+        if(typeof src[member] == 'function') 
         {
             dst[member] = src[member]();
         }
@@ -92,20 +92,22 @@ everyone.now.deleteScriptOptionValue = function (script, key, value, cb) {
 everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, portSet, vendor, ethinterface, count, cb)
 {
     var ipAddress;
-    if (ipType == "DHCP")
+    if(ipType == "DHCP")
     {
         ipAddress = "DHCP";
-    } else {
+    }
+    else
+    {
         ipAddress = ip1 + "." + ip2 + "." + ip3 + "." + ip4;
     }
 
     var result = null;
-    if (!NovaCommon.honeydConfig.AddNodes(profile, portSet, vendor, ipAddress, ethinterface, Number(count)))
+    if(!NovaCommon.honeydConfig.AddNodes(profile, portSet, vendor, ipAddress, ethinterface, Number(count)))
     {
         result = "Unable to create new nodes";  
     }
 
-    if (!NovaCommon.honeydConfig.SaveAll())
+    if(!NovaCommon.honeydConfig.SaveAll())
     {
         result = "Unable to save honeyd configuration";
     }
@@ -116,20 +118,24 @@ everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, p
 everyone.now.SaveDoppelganger = function(node, cb)
 {
     var ipAddress = node.ip;
-    if (node.ipType == "DHCP")
+    if(node.ipType == "DHCP")
     {
         ipAddress = "DHCP";
     }
 
-    if (!NovaCommon.honeydConfig.SaveDoppelganger(node.profile, node.portSet, ipAddress, node.mac, node.intface))
+    if(!NovaCommon.honeydConfig.SaveDoppelganger(node.profile, node.portSet, ipAddress, node.mac, node.intface))
     {
         cb && cb("SaveDoppelganger Failed");
         return;
-    } else {
-        if (!NovaCommon.honeydConfig.SaveAll())
+    }
+    else
+    {
+        if(!NovaCommon.honeydConfig.SaveAll())
         {
             cb && cb("Unable to save honeyd configuration");
-        } else {
+        }
+        else
+        {
             cb && cb(null);
         }
     }
@@ -138,7 +144,7 @@ everyone.now.SaveDoppelganger = function(node, cb)
 everyone.now.SaveHoneydNode = function(node, cb)
 {
     var ipAddress = node.ip;
-    if (node.ipType == "DHCP")
+    if(node.ipType == "DHCP")
     {
         ipAddress = "DHCP";
     }
@@ -146,32 +152,42 @@ everyone.now.SaveHoneydNode = function(node, cb)
     // Delete the old node and then add the new one 
     NovaCommon.honeydConfig.DeleteNode(node.oldName);
 
-    if (node.oldName == "doppelganger")
+    if(node.oldName == "doppelganger")
     {
-        if (!NovaCommon.honeydConfig.SetDoppelganger(node.profile, node.portSet, ipAddress, node.mac, node.intface))
+        if(!NovaCommon.honeydConfig.SetDoppelganger(node.profile, node.portSet, ipAddress, node.mac, node.intface))
         {
             cb && cb("doppelganger Failed");
             return;
-        } else {
-            if (!NovaCommon.honeydConfig.SaveAll())
+        }
+        else
+        {
+            if(!NovaCommon.honeydConfig.SaveAll())
             {
                 cb && cb("Unable to save honeyd configuration");
-            } else {
+            }
+            else
+            {
                 cb && cb(null);
             }
         }
 
-    } else {
-        if (!NovaCommon.honeydConfig.AddNode(node.profile, node.portSet, ipAddress, node.mac, node.intface))
+    }
+    else
+    {
+        if(!NovaCommon.honeydConfig.AddNode(node.profile, node.portSet, ipAddress, node.mac, node.intface))
         {
             cb && cb("AddNode Failed");
             return;
-        } else {
-            if (!NovaCommon.honeydConfig.SaveAll())
+        }
+        else
+        {
+            if(!NovaCommon.honeydConfig.SaveAll())
             {
                 cb && cb("Unable to save honeyd configuration");
-            } else {
-                cb && cb(null);
+            }
+            else
+            {
+               cb && cb(null);
             }
         }
     }
@@ -185,9 +201,11 @@ everyone.now.ClearAllSuspects = function (cb)
     {
         console.log("Manually deleting CE state file:" + NovaHomePath + "/" + NovaCommon.config.ReadSetting("CE_SAVE_FILE"));
         // If we weren't able to tell novad to clear the suspects, at least delete the CEStateFile
-        try {
+        try
+        {
             fs.unlinkSync(NovaHomePath + "/" + NovaCommon.config.ReadSetting("CE_SAVE_FILE"));
-        } catch (err)
+        }
+        catch(err)
         {
             // this is probably because the file doesn't exist. Just ignore.
         }
@@ -213,7 +231,9 @@ everyone.now.GetInheritedEthernetList = function (parent, cb)
     {
         console.log("ERROR Getting profile " + parent);
         cb(null);
-    } else {
+    }
+    else
+    {
         cb(prof.GetVendors(), prof.GetVendorCounts());
     }
 };
@@ -231,26 +251,26 @@ everyone.now.RestartHaystack = function(cb)
 
 everyone.now.StartHaystack = function()
 {
-    if(!NovaCommon.nova.IsHaystackUp())
-    {
-        NovaCommon.StartHaystack(false);
-    }
-
-  setTimeout(function() {
   if(!NovaCommon.nova.IsHaystackUp())
   {
-    everyone.now.HaystackStartFailed();
+      NovaCommon.StartHaystack(false);
   }
-  else
-  {
-    try 
+
+  setTimeout(function(){
+    if(!NovaCommon.nova.IsHaystackUp())
     {
-        everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp())
-    } 
-    catch(err)
-    {};
+      everyone.now.HaystackStartFailed();
     }
-    }, 1000);
+    else
+    {
+      try 
+      {
+          everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp())
+      } 
+      catch(err)
+      {};
+    }
+  }, 1000);
 };
 
 everyone.now.StopHaystack = function()
@@ -278,29 +298,29 @@ everyone.now.StartNovad = function()
 {
     var result = NovaCommon.StartNovad(false);
 
-    setTimeout(function() {
+    setTimeout(function(){
     result = NovaCommon.nova.CheckConnection();
-    try 
-    {
-        everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadUp(false));
-    }
-    catch(err){};
+      try 
+      {
+          everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadUp(false));
+      }
+      catch(err){};
     }, 1000);
 };
 
 everyone.now.StopNovad = function(cb)
 {
-    if(NovaCommon.StopNovad() == false)
-    {
-        cb && cb('false');
+  if(NovaCommon.StopNovad() == false)
+  {
+    cb && cb('false');
     return;
-    }
-    NovaCommon.nova.CloseNovadConnection();
-    try 
-    {
-        everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadUp(false));
-    }
-    catch(err){};
+  }
+  NovaCommon.nova.CloseNovadConnection();
+  try 
+  {
+    everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadUp(false));
+  }
+  catch(err){};
 };
 
 everyone.now.HardStopNovad = function(passwd)
@@ -323,7 +343,7 @@ everyone.now.sendAllSuspects = function (cb)
 everyone.now.sendSuspect = function (ethinterface, ip, cb)
 {
     var suspect = NovaCommon.nova.sendSuspect(ethinterface, ip);
-    if (suspect.GetIdString === undefined)
+    if(suspect.GetIdString === undefined)
     {
         console.log("Failed to get suspect");
         return;
@@ -336,59 +356,66 @@ everyone.now.sendSuspect = function (ethinterface, ip, cb)
 // Deletes a honeyd node
 everyone.now.deleteNodes = function (nodeNames, cb)
 {
-    var nodeName;
-    for (var i = 0; i < nodeNames.length; i++)
+  var nodeName;
+  for(var i = 0; i < nodeNames.length; i++)
+  {
+    nodeName = nodeNames[i];
+    if(nodeName != null && !NovaCommon.honeydConfig.DeleteNode(nodeName))
     {
-        nodeName = nodeNames[i];
-        if (nodeName != null && !NovaCommon.honeydConfig.DeleteNode(nodeName))
-        {
-            cb(false, "Failed to delete node " + nodeName);
-            return;
-        }
-
+      cb(false, "Failed to delete node " + nodeName);
+      return;
     }
 
-    if (!NovaCommon.honeydConfig.SaveAll())
-    {
-        cb(false, "Failed to save XML templates");
-        return;
-    }
+  }
 
-    cb(true, "");
+  if(!NovaCommon.honeydConfig.SaveAll())
+  {
+    cb(false, "Failed to save XML templates");
+    return;
+  }
+
+  cb(true, "");
 };
 
 everyone.now.deleteProfiles = function (profileNames, cb)
 {
-    var profileName;
-    for (var i = 0; i < profileNames.length; i++)
+  var profileName;
+  for(var i = 0; i < profileNames.length; i++)
+  {
+    profileName = profileNames[i];
+
+    if(!NovaCommon.honeydConfig.DeleteProfile(profileName))
     {
-        profileName = profileNames[i];
-
-        if (!NovaCommon.honeydConfig.DeleteProfile(profileName))
-        {
-            cb(false, "Failed to delete profile " + profileName);
-            return;
-        }
-
-
-        if (!NovaCommon.honeydConfig.SaveAll())
-        {
-            cb(false, "Failed to save XML templates");
-            return;
-        }
+      cb(false, "Failed to delete profile " + profileName);
+      return;
     }
 
-    cb(true, "");
+    if(!NovaCommon.honeydConfig.SaveAll())
+    {
+      cb(false, "Failed to save XML templates");
+      return;
+    }
+  }
+
+  cb(true, "");
 };
 
-everyone.now.addWhitelistEntry = function (ethinterface, entry, cb)
+everyone.now.addWhitelistEntry = function(ethinterface, entry, cb)
 {
-    // TODO: Input validation. Should be IP address or 'IP/netmask'
-    // Should also be sanitized for newlines/trailing whitespace
-    if (NovaCommon.whitelistConfig.AddEntry(ethinterface + "," + entry))
+    entry = entry.replace(/\s+/g, '');
+    var individualIp = new RegExp('^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))$');
+    individualIp.global = false;
+    var subnetRangeIp = new RegExp('^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\/[1-3]?[0-9])$');
+    subnetRangeIp.global = false;
+    var slashSubnetMaskIp = new RegExp('^((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))\\/((((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){3,3})(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2}))$');
+    slashSubnetMaskIp.global = false;
+
+    if((individualIp.test(entry) || subnetRangeIp.test(entry) || slashSubnetMaskIp.test(entry)) && NovaCommon.whitelistConfig.AddEntry(ethinterface + "," + entry))
     {
         cb(true, "");
-    } else {
+    }
+    else
+    {
         cb(true, "Attempt to add whitelist entry failed");
     }
 };
@@ -396,11 +423,11 @@ everyone.now.addWhitelistEntry = function (ethinterface, entry, cb)
 everyone.now.deleteWhitelistEntry = function (whitelistEntryNames, cb)
 {
     var whitelistEntryName;
-    for (var i = 0; i < whitelistEntryNames.length; i++)
+    for(var i = 0; i < whitelistEntryNames.length; i++)
     {
         whitelistEntryName = whitelistEntryNames[i];
 
-        if (!NovaCommon.whitelistConfig.DeleteEntry(whitelistEntryName))
+        if(!NovaCommon.whitelistConfig.DeleteEntry(whitelistEntryName))
         {
             cb(false, "Failed to delete whitelistEntry " + whitelistEntryName);
             return;
@@ -425,7 +452,7 @@ everyone.now.GetVendors = function (profileName, cb)
 {
     var profile = NovaCommon.honeydConfig.GetProfile(profileName);
 
-    if (profile == null)
+    if(profile == null)
     {
         console.log("ERROR Getting profile " + profileName);
         cb(null);
@@ -438,7 +465,7 @@ everyone.now.GetVendors = function (profileName, cb)
     var profVendors = profile.GetVendors();
     var profDists = profile.GetVendorCounts();
 
-    for (var i = 0; i < profVendors.length; i++)
+    for(var i = 0; i < profVendors.length; i++)
     {
         var element = {
             vendor: "",
@@ -460,7 +487,7 @@ function jsProfileToHoneydProfile(profile)
     var ethVendors = [];
     var ethDists = [];
 
-    for (var i in profile.ethernet)
+    for(var i in profile.ethernet)
     {
         ethVendors.push(profile.ethernet[i].vendor);
         ethDists.push(parseFloat(Number(profile.ethernet[i].count)));
@@ -483,7 +510,7 @@ function jsProfileToHoneydProfile(profile)
     // Add new ports
     honeydProfile.ClearPorts();
     var portName;
-    for (var i = 0; i < profile.portSets.length; i++) 
+    for(var i = 0; i < profile.portSets.length; i++) 
     {
         //Make a new port set
         var encodedName = sanitizeCheck(profile.portSets[i].setName).entityEncode();
@@ -493,12 +520,12 @@ function jsProfileToHoneydProfile(profile)
         honeydProfile.SetPortSetBehavior(encodedName, "udp", profile.portSets[i].UDPBehavior);
         honeydProfile.SetPortSetBehavior(encodedName, "icmp", profile.portSets[i].ICMPBehavior);
 
-        for (var j = 0; j < profile.portSets[i].PortExceptions.length; j++)
+        for(var j = 0; j < profile.portSets[i].PortExceptions.length; j++)
         {
             var scriptConfigKeys = new Array();
             var scriptConfigValues = new Array();
 
-            for (var key in profile.portSets[i].PortExceptions[j].scriptConfiguration)
+            for(var key in profile.portSets[i].PortExceptions[j].scriptConfiguration)
             {
                 scriptConfigKeys.push(key);
                 scriptConfigValues.push(profile.portSets[i].PortExceptions[j].scriptConfiguration[key]);
@@ -517,7 +544,6 @@ function jsProfileToHoneydProfile(profile)
     return honeydProfile;
 }
 
-
 //portSets = A 2D array. (array of portSets, which are arrays of Ports)
 everyone.now.SaveProfile = function (profile, newProfile, cb)
 {
@@ -525,7 +551,7 @@ everyone.now.SaveProfile = function (profile, newProfile, cb)
     var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
     var match = profileNameRegexp.exec(profile.name);
     
-    if (match == null) 
+    if(match == null) 
     {
         var err = "ERROR: Attempt to save a profile with an invalid name. Must be alphanumeric and not begin with a number.";
         cb(err);
@@ -533,19 +559,19 @@ everyone.now.SaveProfile = function (profile, newProfile, cb)
     }
 
     // Check for duplicate profile
-    if (newProfile) 
+    if(newProfile) 
     {
         var existingProfile = NovaCommon.honeydConfig.GetProfile(profile.name);
-        if (existingProfile != null)
-	{
-	    cb && cb("ERROR: Profile with name already exists");
-	    return;
-	}
+        if(existingProfile != null)
+      	{
+      	    cb && cb("ERROR: Profile with name already exists");
+      	    return;
+      	}
     }
 
 
     // Check we have ethernet vendors
-    if (profile.ethernet.length == 0)
+    if(profile.ethernet.length == 0)
     {
         var err = "ERROR: Must have at least one ethernet vendor!";
         cb && cb(err);
@@ -554,7 +580,7 @@ everyone.now.SaveProfile = function (profile, newProfile, cb)
 
 
     // Check for valid drop percentage
-    if (isNaN(parseInt(profile.dropRate)))
+    if(isNaN(parseInt(profile.dropRate)))
     {
         cb && cb("ERROR: Can't convert drop rate to integer");
         return;
@@ -562,14 +588,14 @@ everyone.now.SaveProfile = function (profile, newProfile, cb)
 
     profile.dropRate = parseInt(profile.dropRate);
 
-    if (profile.dropRate < 0 || profile.dropRate > 100)
+    if(profile.dropRate < 0 || profile.dropRate > 100)
     {
         cb && cb("ERROR: Droprate must be between 0 and 100");
         return;
     }
 
     // Check uptimes
-    if (profile.uptimeValueMax < 0 || profile.uptimeValueMin < 0)
+    if(profile.uptimeValueMax < 0 || profile.uptimeValueMin < 0)
     {
         cb && cb("ERROR: Uptime must be a positive integer");
         return;
@@ -577,27 +603,28 @@ everyone.now.SaveProfile = function (profile, newProfile, cb)
 
 
     // Check that we have the scriptnames set for profiles that need scripts
-    for (var i = 0; i < profile.portSets.length; i++) 
+    for(var i = 0; i < profile.portSets.length; i++) 
     {
-        for (var j = 0; j < profile.portSets[i].PortExceptions.length; j++)
+        for(var j = 0; j < profile.portSets[i].PortExceptions.length; j++)
         {
             var port = profile.portSets[i].PortExceptions[j];
 
-
-            if (isNaN(parseInt(port.portNum)))
+            if(isNaN(parseInt(port.portNum)))
             {
                 cb && cb("ERROR: unable to parse port into an integer!");
                 return;
             }
 
-
-            if (parseInt(port.portNum) <= 0 || parseInt(port.portNum) > 65535) {
+            if(parseInt(port.portNum) <= 0 || parseInt(port.portNum) > 65535)
+            {
                 cb && cb("ERROR: Unable to save profile with invalid port number!");
                 return;
             }
 
-            if (port.behavior == "script" || port.behavior == "tarpit script") {
-                if (port.scriptName == "" || port.scriptName == "NA") {
+            if(port.behavior == "script" || port.behavior == "tarpit script")
+            {
+                if(port.scriptName == "" || port.scriptName == "NA")
+                {
                     var err = "ERROR: Attempt to save a profile with an invalid port script value.";
                     cb && cb(err);
                     return;
@@ -612,7 +639,7 @@ everyone.now.SaveProfile = function (profile, newProfile, cb)
     honeydProfile.Save();
 
     // Save the profile
-    if (!NovaCommon.honeydConfig.SaveAll())
+    if(!NovaCommon.honeydConfig.SaveAll())
     {
         result = "Unable to save honeyd configuration";
     }
@@ -643,7 +670,6 @@ everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, s
     var executionString = 'haystackautoconfig';
 
     var hhconfigArgs = new Array();
-
 
     hhconfigArgs.push('--nodeinterface');
     hhconfigArgs.push(nodeInterface);
@@ -679,12 +705,15 @@ everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, s
         hhconfigArgs.push(subnets);
     }
 
-    if (!append) {
+    if(!append) 
+    {
         hhconfigArgs.push('-t');
         hhconfigArgs.push(groupName);
         NovaCommon.honeydConfig.AddConfiguration(groupName, 'false', '');
         NovaCommon.config.SetCurrentConfig(groupName);
-    } else {
+    }
+    else
+    {
         hhconfigArgs.push('-t');
         hhconfigArgs.push(groupName);
     }
@@ -701,37 +730,52 @@ everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, s
     {
       if(typeof cb == 'function')
       {
-          cb('' + data);
-        }
+        cb('' + data);
+      }
     });
 
     autoconfig.stderr.on('data', function (data)
     {
-        if (/^execvp\(\)/.test(data))
+        if(/^execvp\(\)/.test(data))
         {
-            console.log("haystackautoconfig failed to start.");
-            var response = "haystackautoconfig failed to start.";
-            everyone.now.SwitchConfigurationTo('default');
-            if(typeof route == 'function')
-            {
-              route("/autoConfig", response);
-            }
+          console.log("haystackautoconfig failed to start.");
+          var response = "haystackautoconfig failed to start.";
+          everyone.now.SwitchConfigurationTo('default');
+          if(typeof route == 'function')
+          {
+            route("/autoConfig", response);
+          }
         }
     });
 
     autoconfig.on('exit', function (code, signal)
     {
-        console.log("autoconfig exited with code " + code);
-        var response = "autoconfig exited with code " + code;
+      console.log("autoconfig exited with code " + code);
+      var response = "autoconfig exited with code " + code;
+      try
+      {
+        if(fs.statSync(NovaHomePath + '/data/hhconfig.lock').isFile())
+        {
+          fs.unlinkSync(NovaHomePath + '/data/hhconfig.lock');
+        }
+      }
+      catch(err)
+      {
+      }
       if(typeof route == 'function' && signal != 'SIGTERM')
-    {
-      route("/honeydConfigManage", response);
-    }
-    if(signal == 'SIGTERM')
-    {
-      response = "autoconfig scan terminated early";
-      route("/autoConfig", response);
-    }
+      {
+        route("/honeydConfigManage", response);
+      }
+      else if(signal == 'SIGTERM')
+      {
+        response = "autoconfig scan terminated early";
+        route("/autoConfig", response);
+      }
+      else if(signal == 'SIGSEGV')
+      {
+        response = "autoconfig experienced a segmentation fault";
+        route("/honeydConfigManage", response);
+      }
     });
 };
 
@@ -769,7 +813,7 @@ everyone.now.GetConfigSummary = function(configName, cb)
   var profiles = NovaCommon.honeydConfig.GetProfileNames();
   var profileObj = {};
   
-  for (var i = 0; i < profiles.length; i++) 
+  for(var i = 0; i < profiles.length; i++) 
   {
     if(profiles[i] != undefined && profiles[i] != '')
     {
@@ -815,7 +859,7 @@ everyone.now.GetConfigSummary = function(configName, cb)
   var nodeNames = NovaCommon.honeydConfig.GetNodeMACs();
   var nodeList = [];
   
-  for (var i = 0; i < nodeNames.length; i++)
+  for(var i = 0; i < nodeNames.length; i++)
   {
     var node = NovaCommon.honeydConfig.GetNode(nodeNames[i]);
     var push = NovaCommon.cNodeToJs(node);
@@ -907,13 +951,13 @@ everyone.now.reverseDNS = function(ip, cb)
 
 everyone.now.addTrainingPoint = function(ip, ethinterface, features, hostility, cb)
 {
-    if (hostility != '0' && hostility != '1')
+    if(hostility != '0' && hostility != '1')
     {
         cb("Error: Invalid hostility. Should be 0 or 1");
         return;
     }
     
-    if (features.toString().split(" ").length != NovaCommon.nova.GetDIM()) {
+    if(features.toString().split(" ").length != NovaCommon.nova.GetDIM()) {
         cb("Error: Invalid number of features!")
         return;
     }
@@ -921,7 +965,7 @@ everyone.now.addTrainingPoint = function(ip, ethinterface, features, hostility, 
     var point = features.toString() + " " + hostility + "\n";
     fs.appendFile(NovaHomePath + "/config/training/data.txt", point, function(err)
     {
-        if (err)
+        if(err)
         {
             console.log("Error: " + err);
             cb(err);
@@ -936,7 +980,7 @@ everyone.now.addTrainingPoint = function(ip, ethinterface, features, hostility, 
 
         fs.appendFile(NovaHomePath + "/config/training/training.db", trainingDbString, function(err)
         {
-            if (!NovaCommon.nova.ReclassifyAllSuspects())
+            if(!NovaCommon.nova.ReclassifyAllSuspects())
             {
                 cb("Error: Unable to reclassify suspects with new training data");
                 return;
@@ -952,12 +996,13 @@ everyone.now.GetHaystackDHCPStatus = function(cb)
     fs.readFile("/var/log/honeyd/ipList", 'utf8', function (err, data)
     {
         var DHCPIps = new Array();
-        if (err)
+        if(err)
         {
             RenderError(res, "Unable to open Honeyd status file for reading due to error: " + err);
             return;
-        } else {
-
+        }
+        else
+        {
             data = data.toString().split("\n");
             for(var i = 0; i < data.length; i++)
             {
@@ -977,7 +1022,7 @@ everyone.now.GetHaystackDHCPStatus = function(cb)
 everyone.now.deleteClassifier = function(index, cb)
 {
     NovaCommon.classifiers.deleteClassifier(index);
-    if (cb) cb();
+    if(cb) cb();
 };
 
 everyone.now.saveClassifier = function(classifier, index, cb)
@@ -987,9 +1032,9 @@ everyone.now.saveClassifier = function(classifier, index, cb)
     var weightString = "";
     var thresholdString = "";
 
-    for (var i = 0; i < classifier.features.length; i++)
+    for(var i = 0; i < classifier.features.length; i++)
     {
-        if (classifier.features[i].enabled)
+        if(classifier.features[i].enabled)
         {
             enabledFeaturesString += "1";
         }
@@ -998,11 +1043,11 @@ everyone.now.saveClassifier = function(classifier, index, cb)
             enabledFeaturesString += "0";
         }
 
-        if (classifier.type == "KNN")
+        if(classifier.type == "KNN")
         {
             weightString += String(classifier.features[i].weight) + " ";
         }
-        else if (classifier.type == "THRESHOLD_TRIGGER")
+        else if(classifier.type == "THRESHOLD_TRIGGER")
         {
             thresholdString += classifier.features[i].threshold + " ";
         }
@@ -1010,17 +1055,17 @@ everyone.now.saveClassifier = function(classifier, index, cb)
     
     classifier.strings = {};
     classifier.strings["ENABLED_FEATURES"] = enabledFeaturesString;
-    if (classifier.type == "KNN")
+    if(classifier.type == "KNN")
     {
         classifier.strings["FEATURE_WEIGHTS"] = weightString;
     }
-    else if (classifier.type == "THRESHOLD_TRIGGER")
+    else if(classifier.type == "THRESHOLD_TRIGGER")
     {
         classifier.strings["THRESHOLD_HOSTILE_TRIGGERS"] = thresholdString;
     }
 
     NovaCommon.classifiers.saveClassifier(classifier, index);
-    if (cb) cb();
+    if(cb) cb();
 };
 
 everyone.now.GetProfile = function (profileName, cb)
@@ -1028,7 +1073,7 @@ everyone.now.GetProfile = function (profileName, cb)
     var profile = NovaCommon.honeydConfig.GetProfile(profileName);
 
     
-    if (profile == null)
+    if(profile == null)
     {
         cb(null);
         return;
@@ -1056,7 +1101,7 @@ everyone.now.GetProfile = function (profileName, cb)
     var profVendors = profile.GetVendors();
     var profCounts = profile.GetVendorCounts();
 
-    for (var i = 0; i < profVendors.length; i++)
+    for(var i = 0; i < profVendors.length; i++)
     {
         var element = {};
         element.vendor = profVendors[i];
@@ -1071,13 +1116,93 @@ everyone.now.GetProfile = function (profileName, cb)
 };
 
 
+
+everyone.now.GetHostileEvents = function (cb)
+{
+    NovaCommon.dbqSuspectAlertsGet.all(function(err, results){
+        if (err)
+        {
+            console.log("Database error: " + err);
+            cb(err);
+            return;
+        }
+
+        cb(null, results);
+    });
+};
+
+everyone.now.ClearHostileEvents = function (cb)
+{
+    NovaCommon.dbqSuspectAlertsDeleteAll.run(function(err){
+        if (err)
+        {
+            console.log("Database error: " + err);
+			cb(err);
+            return;
+        }
+
+        cb(null);
+    });
+};
+
+everyone.now.WizardHasRun = function (cb)
+{
+    NovaCommon.dbqFirstrunInsert.run(cb);
+};
+
+everyone.now.deleteUserEntry = function (usernamesToDelete, cb)
+{
+    var username;
+    for (var i = 0; i < usernamesToDelete.length; i++)
+    {
+        username = String(usernamesToDelete[i]);
+        NovaCommon.dbqCredentialsDeleteUser.run(username, function (err)
+        {
+            if (err)
+            {
+                console.log("Database error: " + err);
+                cb(false);
+                return;
+            }
+            else
+            {
+                cb(true);
+            }
+        });
+    }
+};
+
+everyone.now.updateUserPassword = function (username, newPassword, cb)
+{
+  var salt = '';
+  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for(var i = 0; i < 8; i++)
+  {
+    salt += possible[Math.floor(Math.random() * possible.length)];
+  }
+  
+  //update credentials set pass=? and salt=? where user=?
+  NovaCommon.dbqCredentialsChangePassword.run(NovaCommon.HashPassword(newPassword, salt), salt, username, function(err){
+    console.log('err ' + err);
+    if(err)
+    {
+      cb(false);
+    }
+    else
+    {
+      cb(true);
+    }
+  });
+};
+
+
 var GetPortSets = function (profileName, cb)
 {
     var portSetNames = NovaCommon.honeydConfig.GetPortSetNames(profileName);
     
     var portSets = [];  
 
-    for (var i = 0; i < portSetNames.length; i++)
+    for(var i = 0; i < portSetNames.length; i++)
     {
         var portSet = NovaCommon.honeydConfig.GetPortSet( profileName, portSetNames[i] );
         portSet.setName = portSet.GetName();
@@ -1086,7 +1211,7 @@ var GetPortSets = function (profileName, cb)
         portSet.ICMPBehavior = portSet.GetICMPBehavior();
 
         portSet.PortExceptions = portSet.GetPorts();
-        for (var j = 0; j < portSet.PortExceptions.length; j++)
+        for(var j = 0; j < portSet.PortExceptions.length; j++)
         {
             portSet.PortExceptions[j].portNum = portSet.PortExceptions[j].GetPortNum();
             portSet.PortExceptions[j].protocol = portSet.PortExceptions[j].GetProtocol();
@@ -1104,6 +1229,104 @@ var GetPortSets = function (profileName, cb)
   return portSets;
 };
 everyone.now.GetPortSets = GetPortSets;
+
+
+function databaseError(err, cb) {
+    	if (err)
+		{
+			LOG("ERROR", "Database error: " + err);
+			cb && cb(err);
+			return true;
+		}
+		return false;
+}
+
+everyone.now.GetUnseenSuspects = function(cb) {
+    NovaCommon.dbqGetUnseenSuspects.all(function(err, results){
+		if (databaseError(err, cb)) {return;}	
+		cb && cb(null, results);
+	});
+};
+
+everyone.now.MarkSuspectSeen = function(ip, ethinterface, cb) {
+    NovaCommon.dbqMarkSuspectSeen.run(ip, ethinterface, function(err){
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+everyone.now.MarkAllSuspectSeen = function(cb) {
+	NovaCommon.dbqMarkAllSuspectSeen.run(function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+everyone.now.GetUnseenDataSuspects = function(cb) {
+    NovaCommon.dbqGetUnseenDataSuspects.all(function(err, results){
+		if (databaseError(err, cb)) {return;}	
+		cb && cb(null, results);
+	});
+};
+
+everyone.now.MarkSuspectDataSeen = function(ip, ethinterface, cb) {
+    NovaCommon.dbqMarkSuspectDataSeen.run(ip, ethinterface, function(err){
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+everyone.now.MarkAllSuspectDataSeen = function(cb) {
+	NovaCommon.dbqMarkAllSuspectDataSeen.run(function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+
+// Functions related to the nova log entry seen table in the DB
+everyone.now.GetUnseenNovaLogs = function(cb) {
+	NovaCommon.dbqGetUnseenNovaLogs.all(function(err, results) {
+		if (databaseError(err, cb)) {return;}
+		cb && cb(null, results);
+	});
+};
+
+everyone.now.MarkNovaLogEntrySeen = function(linenum, cb) {
+	NovaCommon.dbqMarkNovaLogEntrySeen.run(linenum, function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+everyone.now.MarkAllNovaLogEntriesSeen = function(cb) {
+	NovaCommon.dbqMarkAllNovaLogEntriesSeen.run(function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+// Functions related  to the honeyd log entry seen table in the DB
+everyone.now.GetUnseenHoneydLogs = function(cb) {
+	NovaCommon.dbqGetUnseenHoneydLogs.all(function(err, results) {
+		if (databaseError(err, cb)) {return;}
+		cb && cb(null, results);
+	});
+};
+
+everyone.now.MarkHoneydLogEntrySeen = function(linenum, cb) {
+	NovaCommon.dbqMarkHoneydLogEntrySeen.run(linenum, function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
+
+everyone.now.MarkAllHoneydLogEntriesSeen = function(cb) {
+	NovaCommon.dbqMarkAllHoneydLogEntriesSeen.run(function(err) {
+		if (databaseError(err,cb)) {return;}	
+		cb && cb(null);
+	});
+};
 
 
 }

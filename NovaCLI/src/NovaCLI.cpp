@@ -21,7 +21,7 @@
 #include "Database.h"
 #include "NovaCLI.h"
 #include "Logger.h"
-
+#include "protobuf/marshalled_classes.pb.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -570,7 +570,9 @@ void PrintSuspect(in_addr_t address, string interface)
 {
 	Connect();
 
-	SuspectIdentifier id(ntohl(address), interface);
+	SuspectID_pb id;
+	id.set_m_ifname(interface);
+	id.set_m_ip(ntohl(address));
 
 	Suspect *suspect = GetSuspect(id);
 
@@ -592,7 +594,9 @@ void PrintSuspectData(in_addr_t address, string interface)
 {
 	Connect();
 
-	SuspectIdentifier id(ntohl(address), interface);
+	SuspectID_pb id;
+	id.set_m_ifname(interface);
+	id.set_m_ip(ntohl(address));
 
 	Suspect *suspect = GetSuspectWithData(id);
 
@@ -620,7 +624,7 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 {
 	Connect();
 
-	vector<SuspectIdentifier> suspects = GetSuspectList(listType);
+	vector<SuspectID_pb> suspects = GetSuspectList(listType);
 
 	// Print the CSV header
 	if (csv)
@@ -647,7 +651,7 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 			else
 			{
 				cout << suspect->GetIpString() << ",";
-				cout << suspect->GetIdentifier().m_interface << ",";
+				cout << suspect->GetIdentifier().m_ifname() << ",";
 				for(int i = 0; i < DIM; i++)
 				{
 					cout << suspect->GetFeatureSet().m_features[i] << ",";
@@ -671,14 +675,14 @@ void PrintSuspectList(enum SuspectListType listType)
 {
 	Connect();
 
-	vector<SuspectIdentifier> suspects = GetSuspectList(listType);
+	vector<SuspectID_pb> suspects = GetSuspectList(listType);
 
 	for(uint i = 0; i < suspects.size(); i++)
 	{
 		in_addr tmp;
-		tmp.s_addr = htonl(suspects.at(i).m_ip);
+		tmp.s_addr = htonl(suspects.at(i).m_ip());
 		char *address = inet_ntoa((tmp));
-		cout << suspects.at(i).m_interface << " " << address << endl;
+		cout << suspects.at(i).m_ifname() << " " << address << endl;
 	}
 
 	CloseNovadConnection();
@@ -704,7 +708,9 @@ void ClearSuspectWrapper(in_addr_t address, string interface)
 {
 	Connect();
 
-	SuspectIdentifier id(ntohl(address), interface);
+	SuspectID_pb id;
+	id.set_m_ifname(interface);
+	id.set_m_ip(ntohl(address));
 
 	if(ClearSuspect(id))
 	{

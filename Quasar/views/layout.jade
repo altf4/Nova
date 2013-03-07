@@ -40,9 +40,9 @@ html(lang="en", onclick='removeContextMenu();')
 
       function removeContextMenu()
       {
-        if(document.getElementById('contextMenu') != undefined)
+        if($('#contextMenu') != undefined)
         {
-          document.getElementById('hook').removeChild(document.getElementById('contextMenu'));
+          $('#contextMenu').remove();
         }
       }
 
@@ -51,25 +51,29 @@ html(lang="en", onclick='removeContextMenu();')
       // Wrappers for now.js calls with some try/catches
       var StartNovad = function()
       {
-          try {
-              now.StartNovad();
-            } catch(err)
-            {
-              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-              console.log("err was: " + err);
+          try
+          {
+            now.StartNovad();
+          }
+          catch(err)
+          {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
           } 
       }
       var StopNovad = function()
       {
-          try {
-              now.StopNovad(function(result){
-                if(result == 'false')
-                {
-                  now.HardStopNovad();   
-                }
-              });
-            } catch(err)
-            {
+          try
+          {
+            now.StopNovad(function(result){
+              if(result == 'false')
+              {
+                now.HardStopNovad();   
+              }
+            });
+          }
+          catch(err)
+          {
               alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
               console.log("err was: " + err);
           } 
@@ -77,23 +81,27 @@ html(lang="en", onclick='removeContextMenu();')
   
       var StartHaystack = function()
       {
-          try {
-              now.StartHaystack();
-            } catch(err)
-            {
-              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-              console.log("err was: " + err);
+          try
+          {
+            now.StartHaystack();
+          }
+          catch(err)
+          {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
           } 
       }
   
       var StopHaystack = function()
       {
-          try {
-              now.StopHaystack();
-            } catch(err)
-            {
-              alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-              console.log("err was: " + err);
+          try 
+          {
+            now.StopHaystack();
+          }
+          catch(err)
+          {
+            alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
+            console.log("err was: " + err);
           } 
       }
  
@@ -102,59 +110,67 @@ html(lang="en", onclick='removeContextMenu();')
         {
           lastNovadStatus = isNovadUp;
 
-          document.getElementById("nova_status_icon_red").style.display = "none";
-          document.getElementById("nova_status_icon_green").style.display = "none";
-          document.getElementById("nova_status_icon_orange").style.display = "none";
+          $("#nova_status_icon_red").css('display', 'none');
+          $("#nova_status_icon_green").css('display', 'none');
+          $("#nova_status_icon_orange").css('display', 'none');
           
           if(isNovadUp) 
           {
-            document.getElementById("nova_status_icon_green").style.display = "block";
+            $("#nova_status_icon_green").css('display', 'block');
           } 
           else 
           {
-            document.getElementById("nova_status_icon_red").style.display = "block";
+            $("#nova_status_icon_red").css('display', 'block');
           }
 
-          document.getElementById("nova_status").innerHTML = isNovadUp ? "Online" : "Offline";
-          document.getElementById("eyeIcon").src = isNovadUp ? "/images/novaIconBlinking.gif" : "/images/novaIcon.png";
+          var ternaryLabel = isNovadUp ? "Online" : "Offline";
+          var ternarySrc = isNovadUp ? "/images/novaIconBlinking.gif" : "/images/novaIcon.png";
+          $("#nova_status").html(ternaryLabel);
+          $("#eyeIcon").attr('src', ternarySrc);
           isNovadUpChanged(isNovadUp);
         }
       };
 
       var updateHaystackStatus = function (isHaystackUp){
-        document.getElementById("haystack_status_icon_red").style.display = "none";
-        document.getElementById("haystack_status_icon_green").style.display = "none";
-        document.getElementById("haystack_status_icon_orange").style.display = "none";
+        $("#haystack_status_icon_red").css('display', 'none');
+        $("#haystack_status_icon_green").css('display', 'none');
+        $("#haystack_status_icon_orange").css('display', 'none');
         
-        if (isHaystackUp)
+        if(isHaystackUp)
         {
-          document.getElementById("haystack_status_icon_green").style.display = "block";
-        } else {
-          document.getElementById("haystack_status_icon_red").style.display = "block";
+          $("#haystack_status_icon_green").css('display', 'block');
+        } 
+        else
+        {
+          $("#haystack_status_icon_red").css('display', 'block');
         }
         
-        document.getElementById("haystack_status").innerHTML = isHaystackUp ? "Online" : "Offline";
+        var ternaryLabel = isHaystackUp ? "Online" : "Offline";
+        $("#haystack_status").html(ternaryLabel);
       };
 
       function fixConsole(alertFallback)
       {    
-          if (typeof console === "undefined")
+          if(typeof console === "undefined")
           {
-                  console = {}; // define it if it doesn't exist already
+            console = {}; // define it if it doesn't exist already
           }
-          if (typeof console.log === "undefined") 
+          if(typeof console.log === "undefined") 
           {
-                  if (alertFallback) { console.log = function(msg) { alert(msg); }; } 
-                  else { console.log = function() {}; }
+            if(alertFallback) { console.log = function(msg){ alert(msg); }; } 
+            else { console.log = function() {}; }
           }
-          if (typeof console.dir === "undefined") 
+          if(typeof console.dir === "undefined") 
           {
-                  if (alertFallback) 
-                  { 
-                          // THIS COULD BE IMPROVED. maybe list all the object properties?
-                          console.dir = function(obj) { alert("DIR: "+obj); }; 
-                  }
-                  else { console.dir = function() {}; }
+            if(alertFallback) 
+            { 
+              // THIS COULD BE IMPROVED. maybe list all the object properties?
+              console.dir = function(obj){ alert("DIR: "+obj); }; 
+            }
+            else
+            {
+              console.dir = function(){};
+             }
           }
       }
     
@@ -172,19 +188,18 @@ html(lang="en", onclick='removeContextMenu();')
             dojo.style("appLayout", "visibility", "visible");
             dojo.fadeIn({node:"appLayout", delay:0}).play();
 
-            var sideBarButtons = document.getElementsByClassName("sideBarButton");
-            for (var i in sideBarButtons)
+            var sideBarButtons = $(".sideBarButton");
+            for(var i in sideBarButtons)
             {
-                if (!sideBarButtons[i].pathname)
-                {
-                    continue;
-                }
-                
-                if (sideBarButtons[i].pathname == window.location.pathname)
-                {
-                    sideBarButtons[i].className += ' active';
-                    console.log("Enabled button " + sideBarButtons[i]);
-                }
+              if(!sideBarButtons[i].pathname)
+              {
+                continue;
+              }
+              if(sideBarButtons[i].pathname == window.location.pathname)
+              {
+                sideBarButtons[i].className += ' active';
+                console.log("Enabled button " + sideBarButtons[i]);
+              }
             }
           });
 
@@ -264,6 +279,7 @@ html(lang="en", onclick='removeContextMenu();')
        
         div.sideBarHeader Status
           a.sideBarButton(href='/suspects', title='View current packet classification and analysis data') Packet Classifier
+          a.sideBarButton(href='/newInformation', title='information that's changed since the last visit') New Information
         
         div.sideBarHeader Logs
           a.sideBarButton(href='/events', title='View suspects that were logged as hostile at some point') Hostile Events

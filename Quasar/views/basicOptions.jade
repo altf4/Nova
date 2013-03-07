@@ -17,13 +17,13 @@
 extends layout
 
 block headerAdditions
-  link(rel="stylesheet", name="text/css", href="configstyle.css", media="screen")
+  link(rel='stylesheet', name='text/css', href='configstyle.css', media='screen')
 
 
 block content
-  form#basicConfigForm(method="post", action="/configureNovaSave")
+  form#basicConfigForm(method='post', action='/configureNovaSave')
     include includes/basicConfigForm
-  button(onClick="document.getElementById('basicConfigForm').submit()")
-    img.buttonIcon(src="images/ok.png")
+  button(onClick='document.getElementById("basicConfigForm").submit()')
+    img.buttonIcon(src='images/ok.png')
     span.buttonSpan Save Changes
   

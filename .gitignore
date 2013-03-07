@@ -160,3 +160,7 @@ debian/nova/*
 /autom4te.cache/traces.0
 /NodejsModule/.cproject
 /NodejsModule/.project
+
+#Google Protocol Buffer generated code
+*.pb.cc
+*.pb.h

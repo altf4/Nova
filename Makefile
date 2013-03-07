@@ -6,6 +6,7 @@ all-the-things: release
 
 #Release Target
 release:
+	protoc -I=NovaLibrary/src/ --cpp_out=NovaLibrary/src NovaLibrary/src/protobuf/marshalled_classes.proto
 	$(MAKE) novalib-release
 	$(MAKE) ui_core-release
 	$(MAKE) release-helper
@@ -15,6 +16,7 @@ release-helper: novad-release novacli-release novatrainer-release hhconfig-relea
 
 #Debug target
 debug:
+	protoc -I=NovaLibrary/src/ --cpp_out=NovaLibrary/src NovaLibrary/src/protobuf/marshalled_classes.proto
 	$(MAKE) novalib-debug
 	$(MAKE) ui_core-debug
 	$(MAKE) debug-helper
@@ -88,6 +90,7 @@ hhconfig-debug:
 	cp HaystackAutoConfig/Debug/haystackautoconfig HaystackAutoConfig/
 
 coverageTests: test-prepare
+	protoc -I=NovaLibrary/src/ --cpp_out=NovaLibrary/src NovaLibrary/src/protobuf/marshalled_classes.proto
 	$(MAKE) -C NovaLibrary/Coverage
 	$(MAKE) -C Nova_UI_Core/Coverage
 	$(MAKE) -C NovaTest/Coverage
@@ -148,12 +151,15 @@ clean-lib: clean-lib-debug clean-lib-release clean-lib-coverage
 	
 clean-lib-debug:
 	$(MAKE) -C NovaLibrary/Debug clean
+	rm -f NovaLibrary/src/protobuf/*.cc NovaLibrary/src/protobuf/*.h
 
 clean-lib-release:
 	$(MAKE) -C NovaLibrary/Release clean
+	rm -f NovaLibrary/src/protobuf/*.cc NovaLibrary/src/protobuf/*.h
 
 clean-lib-coverage:
 	$(MAKE) -C NovaLibrary/Coverage clean
+	rm -f NovaLibrary/src/protobuf/*.cc NovaLibrary/src/protobuf/*.h
 
 clean-cli: clean-cli-debug clean-cli-release
 
@@ -255,7 +261,6 @@ install-pcap-debug:
 	install Installer/miscFiles/sudoers_nova_debug "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 
 install-docs:
-	# TODO: Combine man pages
 	gzip -c Installer/miscFiles/manpages/novad.1 > Installer/miscFiles/manpages/novad.1.gz
 	gzip -c Installer/miscFiles/manpages/novacli.1 > Installer/miscFiles/manpages/novacli.1.gz
 	gzip -c Installer/miscFiles/manpages/quasar.1 > Installer/miscFiles/manpages/quasar.1.gz

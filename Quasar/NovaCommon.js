@@ -18,6 +18,8 @@
 
 var sys = require('sys');
 var exec = require('child_process').exec;
+var sql = require('sqlite3').verbose();
+var crypto = require('crypto');
 
 var NovaCommon = new function() {
     console.log("Initializing nova C++ code");
@@ -34,8 +36,7 @@ var NovaCommon = new function() {
     var classifiersConstructor = new require('./classifiers.js');
     this.classifiers = new classifiersConstructor(this.config);
 
-    this.cNodeToJs = function(node)
-    {
+    this.cNodeToJs = function(node){
         var ret = {};
         ret.enabled = node.IsEnabled();
         ret.pfile = node.GetProfile();
@@ -45,31 +46,31 @@ var NovaCommon = new function() {
         return ret;
     }
 
-    this.StartNovad = function() {
+    this.StartNovad = function(){
         var command = NovaCommon.config.ReadSetting("COMMAND_START_NOVAD");
-        exec(command, function(error, stdout, stderr) {
-            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        exec(command, function(error, stdout, stderr){
+            if(error != null){console.log("Error running command '" + command + "' :" + error);}
         });
     }
     
-    this.StopNovad = function() {
+    this.StopNovad = function(){
         var command = NovaCommon.config.ReadSetting("COMMAND_STOP_NOVAD");
-        exec(command, function(error, stdout, stderr) {
-            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        exec(command, function(error, stdout, stderr){
+            if(error != null){console.log("Error running command '" + command + "' :" + error);}
         });
     }
     
-    this.StartHaystack = function() {
+    this.StartHaystack = function(){
         var command = NovaCommon.config.ReadSetting("COMMAND_START_HAYSTACK");
-        exec(command, function(error, stdout, stderr) {
-            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        exec(command, function(error, stdout, stderr){
+            if(error != null){console.log("Error running command '" + command + "' :" + error);}
         });
     }
     
-    this.StopHaystack = function() {
+    this.StopHaystack = function(){
         var command = NovaCommon.config.ReadSetting("COMMAND_STOP_HAYSTACK");
-        exec(command, function(error, stdout, stderr) {
-            if (error != null) {console.log("Error running command '" + command + "' :" + error);}
+        exec(command, function(error, stdout, stderr){
+            if(error != null){console.log("Error running command '" + command + "' :" + error);}
         });
     }
 
@@ -84,7 +85,7 @@ var NovaCommon = new function() {
         var profileName = profiles[i];
     
         var portSets = this.honeydConfig.GetPortSetNames(profiles[i]);
-        for (var portSetName in portSets)
+        for(var portSetName in portSets)
         {
             var portSet = this.honeydConfig.GetPortSet(profiles[i], portSets[portSetName]);
             var ports = [];
@@ -111,6 +112,75 @@ var NovaCommon = new function() {
     
       return scriptBindings;
     }
+
+	var novaDb = new sql.Database(this.config.GetPathHome() + "/data/novadDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
+	var db = new sql.Database(this.config.GetPathHome() + "/data/quasarDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
+
+
+	var databaseOpenResult = function(err){
+		if(err === null)
+		{
+		}
+		else
+		{
+			this.LOG("ERROR", "Error opening sqlite3 database file: " + err);
+		}
+	}
+
+	// Prepare query statements
+	this.dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
+	this.dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
+	this.dbqCredentialsGetUsers = db.prepare('SELECT user FROM credentials');
+	this.dbqCredentialsGetUser = db.prepare('SELECT user FROM credentials WHERE user = ?');
+	this.dbqCredentialsGetSalt = db.prepare('SELECT salt FROM credentials WHERE user = ?');
+	this.dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ?, salt = ? WHERE user = ?');
+	this.dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?, ?)');
+	this.dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = ?');
+
+	this.dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
+	this.dbqFirstrunInsert = db.prepare("INSERT INTO firstrun values(datetime('now'))");
+
+	this.dbqSuspectAlertsGet = novaDb.prepare('SELECT suspect_alerts.id, timestamp, suspect, interface, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_tcp_ports,distinct_udp_ports,avg_tcp_ports_per_host,avg_udp_ports_per_host,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
+	this.dbqSuspectAlertsDeleteAll = novaDb.prepare('DELETE FROM suspect_alerts');
+	this.dbqSuspectAlertsDeleteAlert = novaDb.prepare('DELETE FROM suspect_alerts where id = ?');
+
+     // Queries regarding the seen suspects table
+	this.dbqAddNewSuspect = db.prepare('INSERT INTO suspectsSeen values(?, ?, 0, 0)');
+	this.dbqIsNewSuspect = db.prepare('SELECT COUNT(*) AS rows from suspectsSeen WHERE ip = ? AND interface = ?');
+    this.dbqSeenAllData = db.prepare('SELECT seenAllData FROM suspectsSeen WHERE ip = ? AND interface = ?');
+	
+    this.dbqMarkAllSuspectSeen = db.prepare('UPDATE suspectsSeen SET seenSuspect = 1');
+    this.dbqMarkAllSuspectDataSeen = db.prepare('UPDATE suspectsSeen SET seenAllData = 1');
+	
+    this.dbqMarkSuspectSeen = db.prepare('UPDATE suspectsSeen SET seenSuspect = 1 WHERE ip = ? AND interface = ?');
+	this.dbqMarkSuspectDataSeen = db.prepare('UPDATE suspectsSeen SET seenAllData = 1 WHERE ip = ? and interface = ?');
+	
+    this.dbqMarkSuspectDataUnseen = db.prepare('UPDATE suspectsSeen SET seenAllData = 0 WHERE ip = ? and interface = ?');
+	
+    this.dbqGetUnseenSuspects = db.prepare('SELECT ip, interface FROM suspectsSeen WHERE seenSuspect = 0');
+	this.dbqGetUnseenDataSuspects = db.prepare('SELECT ip, interface FROM suspectsSeen WHERE seenAllData = 0');
+
+
+	this.dbqIsNewNovaLogEntry = db.prepare('SELECT COUNT(*) AS rows from novalogSeen WHERE linenum = ?');
+	this.dbqAddNovaLogEntry = db.prepare('INSERT INTO novalogSeen VALUES(?, ?, 0)');
+	this.dbqMarkNovaLogEntrySeen = db.prepare('UPDATE novalogSeen SET seen = 1 WHERE linenum = ?');
+	this.dbqMarkAllNovaLogEntriesSeen = db.prepare('UPDATE novalogSeen SET seen = 1');
+	this.dbqGetUnseenNovaLogs = db.prepare('SELECT * from novalogSeen WHERE seen = 0');
+
+	this.dbqIsNewHoneydLogEntry = db.prepare('SELECT COUNT(*) AS rows from honeydlogSeen WHERE linenum = ?');
+	this.dbqAddHoneydLogEntry = db.prepare('INSERT INTO honeydlogSeen VALUES(?, ?, 0)');
+	this.dbqMarkHoneydLogEntrySeen = db.prepare('UPDATE honeydlogSeen SET seen = 1 WHERE linenum = ?');
+	this.dbqMarkAllHoneydLogEntriesSeen = db.prepare('UPDATE honeydlogSeen SET seen = 1');
+	this.dbqGetUnseenHoneydLogs = db.prepare('SELECT * from honeydlogSeen WHERE seen = 0');
+
+
+	this.HashPassword = function (password, salt)
+	{
+		var shasum = crypto.createHash('sha1');
+		shasum.update(password + salt);
+		return shasum.digest('hex');
+	};
+
 }();
 
 module.exports = NovaCommon;

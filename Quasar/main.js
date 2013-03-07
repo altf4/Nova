@@ -51,7 +51,7 @@ NovaCommon.nova.CheckConnection();
 // Modules from NodejsModule/Javascript
 var LOG = NovaCommon.LOG;
 
-if (!NovaCommon.honeydConfig.LoadAllTemplates())
+if(!NovaCommon.honeydConfig.LoadAllTemplates())
 {
     LOG("ERROR", "Call to initial LoadAllTemplates failed!");
 }
@@ -61,21 +61,16 @@ var jade = require('jade');
 var express = require('express');
 var passport = require('passport');
 var BasicStrategy = require('passport-http').BasicStrategy;
-var sql = require('sqlite3').verbose();
-var crypto = require('crypto');
 var exec = require('child_process').exec;
 var nowjs = require("now");
 var Validator = require('validator').Validator;
 var sanitizeCheck = require('validator').sanitize;
 
-var Tail = require('tail').Tail;
 var NovaHomePath = NovaCommon.config.GetPathHome();
 var NovaSharedPath = NovaCommon.config.GetPathShared();
-var novadLogPath = "/var/log/nova/Nova.log";
-var novadLog = new Tail(novadLogPath);
 
+var novadLogPath = "/var/log/nova/Nova.log";
 var honeydLogPath = "/var/log/nova/Honeyd.log";
-var honeydLog = new Tail(honeydLogPath);
 
 var benignRequest = false;
 var pulsar;
@@ -99,13 +94,6 @@ var RenderError = function (res, err, link)
     });
 }
 
-var HashPassword = function (password, salt)
-{
-    var shasum = crypto.createHash('sha1');
-    shasum.update(password + salt);
-    return shasum.digest('hex');
-};
-
 LOG("ALERT", "Starting QUASAR version " + NovaCommon.config.GetVersionString());
 
 
@@ -114,37 +102,6 @@ process.chdir(NovaHomePath);
 var DATABASE_HOST = NovaCommon.config.ReadSetting("DATABASE_HOST");
 var DATABASE_USER = NovaCommon.config.ReadSetting("DATABASE_USER");
 var DATABASE_PASS = NovaCommon.config.ReadSetting("DATABASE_PASS");
-
-var databaseOpenResult = function (err)
-{
-    if(err === null)
-    {
-    }
-    else
-    {
-        LOG("ERROR", "Error opening sqlite3 database file: " + err);
-    }
-}
-
-var novaDb = new sql.Database(NovaHomePath + "/data/novadDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
-var db = new sql.Database(NovaHomePath + "/data/quasarDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
-
-// Prepare query statements
-var dbqCredentialsRowCount = db.prepare('SELECT COUNT(*) AS rows from credentials');
-var dbqCredentialsCheckLogin = db.prepare('SELECT user, pass FROM credentials WHERE user = ? AND pass = ?');
-var dbqCredentialsGetUsers = db.prepare('SELECT user FROM credentials');
-var dbqCredentialsGetUser = db.prepare('SELECT user FROM credentials WHERE user = ?');
-var dbqCredentialsGetSalt = db.prepare('SELECT salt FROM credentials WHERE user = ?');
-var dbqCredentialsChangePassword = db.prepare('UPDATE credentials SET pass = ?, salt = ? WHERE user = ?');
-var dbqCredentialsInsertUser = db.prepare('INSERT INTO credentials VALUES(?, ?, ?)');
-var dbqCredentialsDeleteUser = db.prepare('DELETE FROM credentials WHERE user = ?');
-
-var dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
-var dbqFirstrunInsert = db.prepare("INSERT INTO firstrun values(datetime('now'))");
-
-var dbqSuspectAlertsGet = novaDb.prepare('SELECT suspect_alerts.id, timestamp, suspect, interface, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_tcp_ports,distinct_udp_ports,avg_tcp_ports_per_host,avg_udp_ports_per_host,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
-var dbqSuspectAlertsDeleteAll = novaDb.prepare('DELETE FROM suspect_alerts');
-var dbqSuspectAlertsDeleteAlert = novaDb.prepare('DELETE FROM suspect_alerts where id = ?');
 
 passport.serializeUser(function (user, done)
 {
@@ -161,61 +118,59 @@ passport.use(new BasicStrategy(
 function (username, password, done)
 {
     var user = username;
-    process.nextTick(function ()
+    process.nextTick(function (){
+    NovaCommon.dbqCredentialsRowCount.all(function (err, rowcount)
     {
-
-        dbqCredentialsRowCount.all(function (err, rowcount)
+        if(err)
         {
-            if(err)
-            {
-                console.log("Database error: " + err);
-            }
+            console.log("Database error: " + err);
+        }
 
-            // If there are no users, add default nova and log in
-            if(rowcount[0].rows === 0)
+        // If there are no users, add default nova and log in
+        if(rowcount[0].rows === 0)
+        {
+            console.log("No users in user database. Creating default user.");
+            NovaCommon.dbqCredentialsInsertUser.run('nova', NovaCommon.HashPassword('toor', 'root'), 'root', function (err)
             {
-                console.log("No users in user database. Creating default user.");
-                dbqCredentialsInsertUser.run('nova', HashPassword('toor', 'root'), 'root', function (err)
+                if(err)
                 {
-                    if(err)
-                    {
-                        throw err;
-                    }
+                    throw err;
+                }
 
-                    switcher(err, user, true, done);
-                });
+                switcher(err, user, true, done);
+            });
+        }
+        else
+        {
+          NovaCommon.dbqCredentialsGetSalt.all(user, function cb(err, salt)
+          {
+            if(err || (salt[0] == undefined))
+            {
+              switcher(err, user, false, done);
             }
             else
             {
-              dbqCredentialsGetSalt.all(user, function cb(err, salt)
+              NovaCommon.dbqCredentialsCheckLogin.all(user, NovaCommon.HashPassword(password, salt[0].salt),
+              function selectCb(err, results)
               {
-                if(err || (salt[0] == undefined))
-                {
-                  switcher(err, user, false, done);
-                }
-                else
-                {
-                    dbqCredentialsCheckLogin.all(user, HashPassword(password, salt[0].salt),
-                    function selectCb(err, results)
-                    {
-                        if(err)
-                        {
-                            console.log("Database error: " + err);
-                        }
-                        if(results[0] === undefined)
-                        {
-                            switcher(err, user, false, done);
-                        } 
-                        else if(user === results[0].user)
-                        {
-                            switcher(err, user, true, done);
-                        } 
-                        else
-                        {
-                            switcher(err, user, false, done);
-                        }
+                  if(err)
+                  {
+                      console.log("Database error: " + err);
+                  }
+                  if(results[0] === undefined)
+                  {
+                      switcher(err, user, false, done);
+                  } 
+                  else if(user === results[0].user)
+                  {
+                      switcher(err, user, true, done);
+                  } 
+                  else
+                  {
+                      switcher(err, user, false, done);
+                  }
               });
-            }});
+           }});
           }
         });
     });
@@ -268,52 +223,163 @@ var everyone = nowjs.initialize(app);
 var NowjsMethods = require('./NowjsMethods.js');
 var initEveryone = new NowjsMethods(everyone);
 
+
+
+
+// Testing some log watching stuff
+var logLines = new Array();
+
+
+
+function LiveFileReader(filePath, cb) {
+    this.processedLines = new Array();
+    this.initialContent = "";
+    this.initialLength = 0;
+    this.filePath = filePath;
+    this.cb = cb;
+    
+    this.file = null;
+    this.chunkLength = 2048;
+    this.readBytes = 0;
+
+    var self = this;
+   
+    fs.readFile(self.filePath, function(err, data)
+    {
+        if (err)
+        {
+            LOG("ERROR", "ERROR reading file: " + err);
+            self.cb(err);
+            return;
+        }
+
+        self.initialContent = String(data);
+        self.initialLength = self.initialContent.length;
+        self.processedLines = self.initialContent.split("\n");
+        self.reading = false;
+        
+        if (self.processedLines[self.processedLines.length - 1] == "") {
+            self.processedLines.pop();
+        }
+
+        for (var i = 0; i < self.processedLines.length; i++) {
+            cb(null, self.processedLines[i], i);
+        }
+
+        self.readBytes = self.initialLength;
+    
+        fs.open(self.filePath, 'r', function(err, fd)
+        {
+            if (err)
+            {
+                LOG("ERROR", "Unable to open log file for reading due to error: " + err);
+                self.cb(err);
+                return;
+            }
+            self.file = fd; 
+            self.readSomeData();
+        });
+
+        self.processData = function(err, bytecount, buff)
+        {
+            self.reading = false;
+            if (err)
+            {
+                LOG("ERROR", "Error reading log file: " + err);
+                self(err);
+                return;
+            }
+        
+            var lastLineFeed = buff.toString('ascii', 0, bytecount).lastIndexOf('\n');
+            if (lastLineFeed != -1)
+            {
+                var lineArray = buff.toString('ascii', 0, bytecount).slice(0, lastLineFeed).split("\n");
+            
+                for (var i = 0; i < lineArray.length; i++)
+                {
+                    if (lineArray[i] != "") {
+                        self.cb(null, lineArray[i], self.processedLines.length);
+                        self.processedLines.push(lineArray[i]);
+                    }
+                }
+
+                self.readBytes += lastLineFeed + 1;
+            } else {
+                //self.readBytes += bytecount;
+            }
+    
+        }
+
+        self.readSomeData = function()
+        {
+            var fb = fs.read(self.file, new Buffer(self.chunkLength), 0, self.chunkLength, self.readBytes, self.processData);
+        }
+
+        fs.watch(self.filePath, {persistent: true}, function(event, filename)
+        //fs.watchFile(self.filePath, function(curr, prev)
+        {
+            if (!self.reading)
+            {
+                self.reading = true;
+                self.readSomeData();
+            }
+        });
+    });
+}
+
+
+
 var initLogWatch = function ()
 {
-    var novadLog = new Tail(novadLogPath);
-    novadLog.on("line", function (data)
-    {
-        try {
-            everyone.now.newLogLine(data);
-        } catch (err)
+    var novadLogFileReader = new LiveFileReader(novadLogPath, function(err, line, lineNum) {
+        if (err)
         {
-
+            console.log("CAllback got error" + err);
+            return;
         }
+
+        NovaCommon.dbqIsNewNovaLogEntry.all(lineNum, function(err, results) {
+            if (err)
+            {
+                LOG("ERROR", err);
+                return;
+            }
+        
+            if (results[0].rows === 0)
+            {
+                NovaCommon.dbqAddNovaLogEntry.run(lineNum, line);
+            }
+        });
+
+        try {
+            everyone.now.newLogLine(lineNum, line);
+        } catch (err) {};
     });
-
-    novadLog.on("error", function (data)
-    {
-        LOG("ERROR", "Novad log watch error: " + data);
-        try {
-            everyone.now.newLogLine(data)
-        } catch (err)
+    
+    var novadLogFileReader = new LiveFileReader(honeydLogPath, function(err, line, lineNum) {
+        if (err)
         {
-            LOG("ERROR", "Novad log watch error: " + err);
+            console.log("CAllback got error" + err);
+            return;
         }
-    });
+        
+        NovaCommon.dbqIsNewHoneydLogEntry.all(lineNum, function(err, results) {
+            if (err)
+            {
+                LOG("ERROR", err);
+                return;
+            }
+        
+            if (results[0].rows === 0)
+            {
+                NovaCommon.dbqAddHoneydLogEntry.run(lineNum, line);
+            }
+        });
 
 
-    var honeydLog = new Tail(honeydLogPath);
-    honeydLog.on("line", function (data)
-    {
         try {
-            everyone.now.newHoneydLogLine(data);
-        } catch (err)
-        {
-
-        }
-    });
-
-    honeydLog.on("error", function (data)
-    {
-        LOG("ERROR", "Honeyd log watch error: " + data);
-        try {
-            everyone.now.newHoneydLogLine(data)
-        } catch (err)
-        {
-            LOG("ERROR", "Honeyd log watch error: " + err);
-
-        }
+            everyone.now.newHoneydLogLine(lineNum, line);
+        } catch (err) {};
     });
 }
 
@@ -338,7 +404,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
   var WebSocketClient = require('websocket').client;
   var client;
   
-  if (NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_ENABLED"))
+  if(NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_ENABLED"))
   {
     client = new WebSocketClient({
       tlsOptions: {
@@ -347,10 +413,12 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
         passphrase: NovaCommon.config.ReadSetting("QUASAR_TETHER_TLS_PASSPHRASE")
       }
     });
-  } else {
+  }
+  else
+  {
     client = new WebSocketClient();
   }
-  // TODO: Make configurable
+
   var clientId = NovaCommon.config.ReadSetting('MASTER_UI_CLIENT_ID');
   var reconnecting = false;
   var clearReconnect;
@@ -363,7 +431,6 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
     if(!reconnecting)
     {
       console.log('No current attempts to reconnect, starting reconnect attempts every ', (reconnectTimer / 1000) ,' seconds.');
-      // TODO: Don't have static lengths for reconnect interval; make configurable
       clearReconnect = setInterval(function(){console.log('attempting reconnect to wss://' + connected); client.connect('wss://' + connected, null);}, reconnectTimer);
       reconnecting = true;
     }
@@ -423,8 +490,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
           switch(json_args.type)
           {
             case 'startNovad':
-              NovaCommon.StartNovad(false);
-              NovaCommon.nova.CheckConnection();
+              everyone.now.StartNovad();
               var response = {};
               response.id = clientId;
               response.type = 'response';
@@ -1176,7 +1242,6 @@ app.post('/importCaptureSave', function (req, res)
         }
     }
 
-    // TODO: Don't hard code this path
     if (!trainingDump.SaveToDb(NovaHomePath + "/config/training/training.db"))
     {
         RenderError(res, "Unable to save to training db");
@@ -1198,8 +1263,8 @@ app.get('/configWhitelist', function (req, res)
         locals: {
             whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
             whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
-      		INTERFACES: interfaces,
-      		interfaceAliases: ConvertInterfacesToAliases(interfaces)
+            INTERFACES: interfaces,
+            interfaceAliases: ConvertInterfacesToAliases(interfaces)
         }
     })
 });
@@ -1207,7 +1272,7 @@ app.get('/configWhitelist', function (req, res)
 app.get('/editUsers', function (req, res)
 {
     var usernames = new Array();
-    dbqCredentialsGetUsers.all(
+    NovaCommon.dbqCredentialsGetUsers.all(
 
     function (err, results)
     {
@@ -1269,7 +1334,7 @@ app.get('/events', function (req, res)
 
 app.get('/', function (req, res)
 {
-    dbqFirstrunCount.all(
+    NovaCommon.dbqFirstrunCount.all(
 
     function (err, results)
     {
@@ -1328,6 +1393,11 @@ app.get('/about', function (req, res)
     res.render('about.jade');
 });
 
+app.get('/newInformation', function (req, res)
+{
+    res.render('newInformation.jade');
+});
+
 app.post('/createNewUser', function (req, res)
 {
     var password = req.body["password"];
@@ -1338,7 +1408,7 @@ app.post('/createNewUser', function (req, res)
       return;
     }
 
-    dbqCredentialsGetUser.all(userName,
+    NovaCommon.dbqCredentialsGetUser.all(userName,
 
     function selectCb(err, results, fields)
     {
@@ -1356,7 +1426,7 @@ app.post('/createNewUser', function (req, res)
           {
             salt += possible[Math.floor(Math.random() * possible.length)];
           }
-            dbqCredentialsInsertUser.run(userName, HashPassword(password, salt), salt, function ()
+            NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt, function ()
             {
                 res.render('saveRedirect.jade', {
                     locals: {
@@ -1382,7 +1452,7 @@ app.post('/createInitialUser', function (req, res)
       return;
     }
 
-    dbqCredentialsGetUser.all(userName,
+    NovaCommon.dbqCredentialsGetUser.all(userName,
 
     function selectCb(err, results)
     {
@@ -1400,8 +1470,8 @@ app.post('/createInitialUser', function (req, res)
       {
         salt += possible[Math.floor(Math.random() * possible.length)];
       }
-            dbqCredentialsInsertUser.run(userName, HashPassword(password, salt), salt);
-            dbqCredentialsDeleteUser.run('nova');
+            NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt);
+            NovaCommon.dbqCredentialsDeleteUser.run('nova');
             res.render('saveRedirect.jade', {
                 locals: {
                     redirectLink: "/setup2"
@@ -1667,7 +1737,6 @@ app.post('/customizeTrainingSave', function (req, res)
 
 app.post('/configureNovaSave', function (req, res)
 {
-    // TODO: Throw this out and do error checking in the Config (WriteSetting) class instead
     var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
     "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
     "K", "EPS", "CLASSIFICATION_THRESHOLD", "DOPPELGANGER_IP", 
@@ -1801,13 +1870,13 @@ app.post('/configureNovaSave', function (req, res)
             validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
             break;
 
-    case "RSYSLOG_IP":
-      if(/^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$/.test(req.body[configItems[item]]) == false 
-         && req.body[configItems[item]] != 'NULL')
-      {
-        validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP, must be IP:Port or the string "NULL"').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]+)?$');
-      }
-      break;
+        case "RSYSLOG_IP":
+          if(/^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]{1,5}){1}$/.test(req.body[configItems[item]]) == false 
+             && req.body[configItems[item]] != 'NULL')
+          {
+            validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP, must be IP:Port or the string "NULL"').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]{1,5})$');
+          }
+          break;
       
         case "DOPPELGANGER_IP":
             validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
@@ -1896,6 +1965,7 @@ app.post('/configureNovaSave', function (req, res)
       else
       {
         console.log('nova_rsyslog_helper updated rsyslog configuration');
+        NovaCommon.config.WriteSetting('RSYSLOG_IP', writeIP);
       }
     });
   }
@@ -1911,6 +1981,7 @@ app.post('/configureNovaSave', function (req, res)
     var rm = spawn(execution, options); 
     rm.on('exit', function(code){
       console.log('41-nova.conf has been removed from /etc/rsyslog.d/');
+      NovaCommon.config.WriteSetting('RSYSLOG_IP', writeIP);
     });
   }
 
@@ -2026,10 +2097,56 @@ everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
 var distributeSuspect = function (suspect)
 {
-    var s = new Object();
+    var d = new Date(suspect.GetLastPacketTime() * 1000);
+    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     
+    
+    var s = new Object();
     objCopy(suspect, s);
     s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
+    
+    // Save to unseen db
+    NovaCommon.dbqIsNewSuspect.all(s.GetIpString, s.GetInterface, function(err, results) {
+        if (err)
+        {
+            LOG("ERROR", err);
+            return;
+        }
+        
+        if (results[0].rows === 0)
+        {
+            NovaCommon.dbqAddNewSuspect.run(s.GetIpString, s.GetInterface, function()
+            {
+                try {
+                    everyone.now.OnNewSuspectInserted(s.GetIpString, s.GetInterface);
+                    everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
+                } catch(err) {}
+            });
+        } 
+        else
+        {
+            NovaCommon.dbqSeenAllData.all(s.GetIpString, s.GetInterface, function(err, results) {
+                if (err)
+                {
+                    LOG("ERROR", err);
+                    return;
+                }
+                
+                if (results[0].seenAllData)
+                {
+                    NovaCommon.dbqMarkSuspectDataUnseen.run(s.GetIpString, s.GetInterface, function() {
+                        try {
+                            everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
+                        } catch(err) {}
+                    });
+                }
+            });
+         }
+    });
+
+
+    
+    
     
     try 
     {
@@ -2038,8 +2155,6 @@ var distributeSuspect = function (suspect)
   
   if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) >= 0)
   {
-    var d = new Date(suspect.GetLastPacketTime() * 1000);
-    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     var send = {};
     
     send.ip = suspect.GetIpString();
@@ -2084,13 +2199,13 @@ var distributeAllSuspectsCleared = function ()
 
 var distributeSuspectCleared = function (suspect)
 {
-    var s = new Object;
+    //var s = new Object;
     
-    s['interface'] = suspect.GetInterface();
-    s['ip'] = suspect.GetIpString();
-    s['idString'] = suspect.GetIdString();
+    //s['interface'] = suspect.GetInterface();
+    //s['ip'] = suspect.GetIpString();
+    //s['idString'] = suspect.GetIdString();
     
-    everyone.now.SuspectCleared(s);
+    //everyone.now.SuspectCleared(s);
 }
 
 NovaCommon.nova.registerOnAllSuspectsCleared(distributeAllSuspectsCleared);
@@ -2210,66 +2325,6 @@ setInterval(function()
 }, 5000);
 
 
-
-
-// TODO: These need some more work to move over to NowjsMethods.js
-everyone.now.GetHostileEvents = function (cb)
-{
-    dbqSuspectAlertsGet.all(
-
-    function (err, results)
-    {
-        if (err)
-        {
-            console.log("Database error: " + err);
-            // TODO implement better error handling cbs
-            cb();
-            return;
-        }
-
-        cb(results);
-    });
-};
-
-everyone.now.ClearHostileEvents = function (cb)
-{
-    dbqSuspectAlertsDeleteAll.run(
-
-    function (err)
-    {
-        if (err)
-        {
-            console.log("Database error: " + err);
-            // TODO implement better error handling cbs
-            return;
-        }
-
-        cb("true");
-    });
-};
-
-everyone.now.ClearHostileEvent = function (id, cb)
-{
-    dbqSuspectAlertsDeleteAlert(id,
-
-    function (err)
-    {
-        if (err)
-        {
-            console.log("Database error: " + err);
-            // TODO implement better error handling cbs
-            return;
-        }
-
-        cb("true");
-    });
-};
-
-everyone.now.WizardHasRun = function (cb)
-{
-    dbqFirstrunInsert.run(cb);
-};
-
 everyone.now.AddInterfaceAlias = function(iface, alias, callback)
 {
     if (alias != "") 
@@ -2285,47 +2340,3 @@ everyone.now.AddInterfaceAlias = function(iface, alias, callback)
     fs.writeFile(NovaHomePath + "/config/interface_aliases.txt", fileString, callback);
 };
 
-everyone.now.deleteUserEntry = function (usernamesToDelete, cb)
-{
-    var username;
-    for (var i = 0; i < usernamesToDelete.length; i++)
-    {
-        username = String(usernamesToDelete[i]);
-        dbqCredentialsDeleteUser.run(username, function (err)
-        {
-            if (err)
-            {
-                console.log("Database error: " + err);
-                cb(false);
-                return;
-            }
-            else
-            {
-                cb(true);
-            }
-        });
-    }
-};
-
-everyone.now.updateUserPassword = function (username, newPassword, cb)
-{
-  var salt = '';
-  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for(var i = 0; i < 8; i++)
-  {
-    salt += possible[Math.floor(Math.random() * possible.length)];
-  }
-  
-  //update credentials set pass=? and salt=? where user=?
-  dbqCredentialsChangePassword.run(HashPassword(newPassword, salt), salt, username, function(err){
-    console.log('err ' + err);
-    if(err)
-    {
-      cb(false);
-    }
-    else
-    {
-      cb(true);
-    }
-  });
-};

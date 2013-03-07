@@ -84,7 +84,6 @@ Profile *ProfileTree::GetRandomProfile()
 	return personality;
 }
 
-//TODO: Search could be improved by a heuristic, such as by using string similarity in choosing which children to pursue
 Profile *GetProfile_helper(Profile *item, const std::string &name)
 {
 	if(item == NULL)

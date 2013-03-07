@@ -45,10 +45,12 @@ block headerAdditions
     
     function showAdvancedChanged()
     {
-        if (document.getElementById("showAdvanced").checked)
+        if($('#showAdvanced').is(':checked'))
         {
             logGrid.m_columns[2].isDisabled = false;
-        } else {
+        }
+        else
+        {
             logGrid.m_columns[2].isDisabled = true;
         }
 
@@ -56,48 +58,41 @@ block headerAdditions
         logGrid.Render();
     }
     
-    function onGridRendered()
-    {
-       var tablePages = document.getElementById("tablePages");
-       tablePages.innerHTML = "";
-       logGrid.populateTablePages(tablePages);
-    }
-
     var index = 0;
     function AddLogEntry(line)
     {
-            line = line.replace(/ +(?= )/g, '');
-            var match = line.match(/(\\S+ \\S+ \\S+) ([^:]+): (.*)/);
+        line = line.replace(/ +(?= )/g, '');
+        var match = line.match(/(\\S+ \\S+ \\S+) ([^:]+): (.*)/);
 
-            if (match != null)
-            {
-                match.splice(0,1,Number(index));
-                index++;
-                
-                
-                match[3] = "<span style='font-weight: bold;'>" + match[3] + "</span>";
-                match.style = "background-color: #E4F2FF";
-                
-                logGrid.PushEntry(match);
-            } else {
-                console.log("No match for entry '" + line + "'");
-            }
+        if(match != null)
+        {
+            match.splice(0,1,Number(index));
+            index++;
+            
+            match[3] = "<span style='font-weight: bold;'>" + match[3] + "</span>";
+            match.style = "background-color: #E4F2FF";
+            
+            logGrid.PushEntry(match);
+        }
+        else
+        {
+            console.log("No match for entry '" + line + "'");
+        }
     }
 
 
     function init()
     {
-        var log = document.getElementById("rawLog").innerHTML;
+        var log = $('#rawLog').html();
         var gridStructure = new Array();
         var gridStructure = new Array();
         gridStructure.push({name: "Message #", isDisabled: false});
         gridStructure.push({name: "Timestamp", isDisabled: false});
         gridStructure.push({name: "Machine Info", isDisabled: true});
         gridStructure.push({name: "Message", isDisabled: false});
-        logGrid = new NovaGrid(gridStructure, 0, document.getElementById('logTable'), 'logGrid');
+        logGrid = new NovaGrid(gridStructure, 0, $('#logTable')[0], 'logGrid');
         logGrid.SetRowsPerPage(25);
-        logGrid.SetRenderCallback(onGridRendered);
-
+        logGrid.SetPageNumberDiv($('#tablePages')[0]);
         
         var log = log.toString().split(/\\r\\n|\\n\\r|\\n|\\r/);
 
@@ -113,8 +108,9 @@ block headerAdditions
     
         now.ready(function()
         {
-            now.newHoneydLogLine = function (line)
+            now.newHoneydLogLine = function (lineNum, line)
             {
+               AddLogEntry(line);
                logGrid.Render();
             }
         });

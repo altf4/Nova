@@ -94,7 +94,7 @@ bool IsNovadUp(bool tryToConnect)
 		}
 
 		RequestMessage *pong = (RequestMessage*)reply;
-		if(pong->m_requestType != REQUEST_PONG)
+		if(pong->m_contents.m_requesttype() != REQUEST_PONG)
 		{
 			//Received the wrong kind of control message
 			pong->DeleteContents();
@@ -139,7 +139,7 @@ uint64_t GetStartTime()
 	}
 
 	RequestMessage *requestReply = (RequestMessage*)reply;
-	if(requestReply->m_requestType != REQUEST_UPTIME_REPLY)
+	if(requestReply->m_contents.m_requesttype() != REQUEST_UPTIME_REPLY)
 	{
 		//Received the wrong kind of control message
 		requestReply->DeleteContents();
@@ -147,20 +147,20 @@ uint64_t GetStartTime()
 		return 0;
 	}
 
-	uint64_t ret = requestReply->m_startTime;
+	uint64_t ret = requestReply->m_contents.m_starttime();
 
 	delete requestReply;
 	return ret;
 }
 
-vector<SuspectIdentifier> GetSuspectList(enum SuspectListType listType)
+vector<SuspectID_pb> GetSuspectList(enum SuspectListType listType)
 {
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
 	RequestMessage request(REQUEST_SUSPECTLIST);
-	request.m_listType = listType;
+	request.m_contents.set_m_listtype(listType);
 
-	vector<SuspectIdentifier> ret;
+	vector<SuspectID_pb> ret;
 
 	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
@@ -186,7 +186,7 @@ vector<SuspectIdentifier> GetSuspectList(enum SuspectListType listType)
 	}
 
 	RequestMessage *requestReply = (RequestMessage*)reply;
-	if(requestReply->m_requestType != REQUEST_SUSPECTLIST_REPLY)
+	if(requestReply->m_contents.m_requesttype() != REQUEST_SUSPECTLIST_REPLY)
 	{
 		//Received the wrong kind of control message
 		reply->DeleteContents();
@@ -195,19 +195,25 @@ vector<SuspectIdentifier> GetSuspectList(enum SuspectListType listType)
 		return ret;
 	}
 
-
-	ret = requestReply->m_suspectList;
+	//XXX: Horrible kudge. We should just return the pb object, but this may be hard
+	//	this will make a deep copy of the list
+	for(int i = 0; i < requestReply->m_contents.m_suspectid_size(); i++)
+	{
+		ret.push_back(requestReply->m_contents.m_suspectid(i));
+	}
+	//ret = requestReply->m_suspectList.m_list().;
 
 	delete requestReply;
 	return ret;
 }
 
-Suspect *GetSuspect(SuspectIdentifier address)
+Suspect *GetSuspect(SuspectID_pb address)
 {
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
 	RequestMessage request(REQUEST_SUSPECT);
-	request.m_suspectAddress = address;
+	SuspectID_pb *suspectID = request.m_contents.add_m_suspectid();
+	*suspectID = address;
 
 	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
@@ -233,7 +239,7 @@ Suspect *GetSuspect(SuspectIdentifier address)
 	}
 
 	RequestMessage *requestReply = (RequestMessage*)reply;
-	if(requestReply->m_requestType != REQUEST_SUSPECT_REPLY)
+	if(requestReply->m_contents.m_requesttype() != REQUEST_SUSPECT_REPLY)
 	{
 		//Received the wrong kind of control message
 		reply->DeleteContents();
@@ -246,13 +252,13 @@ Suspect *GetSuspect(SuspectIdentifier address)
 	return suspect;
 }
 
-Suspect *GetSuspectWithData(SuspectIdentifier address)
+Suspect *GetSuspectWithData(SuspectID_pb address)
 {
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
 	RequestMessage request(REQUEST_SUSPECT_WITHDATA);
-	request.m_suspectAddress = address;
-
+	SuspectID_pb *ID = request.m_contents.add_m_suspectid();
+	*ID = address;
 
 	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
@@ -277,7 +283,7 @@ Suspect *GetSuspectWithData(SuspectIdentifier address)
 	}
 
 	RequestMessage *requestReply = (RequestMessage*)reply;
-	if(requestReply->m_requestType != REQUEST_SUSPECT_WITHDATA_REPLY)
+	if(requestReply->m_contents.m_requesttype() != REQUEST_SUSPECT_WITHDATA_REPLY)
 	{
 		//Received the wrong kind of control message
 		delete requestReply;

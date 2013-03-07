@@ -13,7 +13,7 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description : TODO: Description here
+// Description : Controls suspect classification data
 //============================================================================
 
 #include <fstream>
@@ -77,7 +77,6 @@ bool TrainingDump::LoadCaptureFile(string pathDumpFile)
 	{
 		LOG(ERROR, "Unable to open CE capture file for reading.", "");
 		return false;
-		// TODO: throw exception?
 	}
 	dataFile.close();
 	return true;

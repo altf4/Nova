@@ -11,31 +11,6 @@ namespace Nova
 // All hash map exceptions can be caught with this
 class hashMapException : public std::exception {};
 
-// Invalid key access exceptions cat be caught with this
-class emptyKeyException: public hashMapException
-{
-	virtual const char *what() const throw()
-	{
-		return "Unable to access empty key of google hash map";
-	}
-};
-
-class deleteKeyException: public hashMapException
-{
-	virtual const char *what() const throw()
-	{
-		return "Unable to access delete key of google hash map";
-	}
-};
-
-class emptyKeyNotSetException: public hashMapException
-{
-	virtual const char *what() const throw()
-	{
-		return "An empty key was not set on this table";
-	}
-};
-
 template <class KeyType, class ValueType, class HashFcn, class EqualKey>
 class HashMap
 {

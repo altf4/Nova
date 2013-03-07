@@ -86,8 +86,7 @@ Database *db;
 
 
 //HS Vars
-// TODO: Don't hard code this path. Might also be in NovaTrainer.
-string dhcpListFile = "/var/log/honeyd/ipList";
+string dhcpListFile;
 vector<string> haystackAddresses;
 vector<string> haystackDhcpAddresses;
 vector<string> whitelistIpAddresses;
@@ -115,7 +114,7 @@ namespace Nova
 
 int RunNovaD()
 {
-	Config::Inst();
+	dhcpListFile = Config::Inst()->GetIpListPath();
 	Logger::Inst();
 	HoneydConfiguration::Inst();
 
@@ -123,9 +122,6 @@ int RunNovaD()
 	{
 		exit(EXIT_FAILURE);
 	}
-
-	// Let the logger initialize before we have multiple threads going
-	Logger::Inst();
 
 	// Change our working folder into the config folder so our relative paths are correct
 	if(chdir(Config::Inst()->GetPathHome().c_str()) == -1)
@@ -176,11 +172,11 @@ int RunNovaD()
 
 	LoadStateFile();
 
-	whitelistNotifyFd = inotify_init ();
+	whitelistNotifyFd = inotify_init();
 	if(whitelistNotifyFd > 0)
 	{
-		whitelistWatch = inotify_add_watch (whitelistNotifyFd, Config::Inst()->GetPathWhitelistFile().c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
-		pthread_create(&ipWhitelistUpdateThread, NULL, UpdateWhitelistIPFilter,NULL);
+		whitelistWatch = inotify_add_watch(whitelistNotifyFd, Config::Inst()->GetPathWhitelistFile().c_str(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_MODIFY | IN_DELETE);
+		pthread_create(&ipWhitelistUpdateThread, NULL, UpdateWhitelistIPFilter, NULL);
 		pthread_detach(ipWhitelistUpdateThread);
 	}
 	else
@@ -211,7 +207,7 @@ int RunNovaD()
 	pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
 	pthread_detach(classificationLoopThread);
 
-	// TODO: Figure out if having multiple ConsumerLoops has a performance benefit
+	// TODO: Figure out if having multiple Consumer Loops has a performance benefit
 	pthread_create(&consumer, NULL, ConsumerLoop, NULL);
 	pthread_detach(consumer);
 
@@ -492,7 +488,8 @@ void StartCapture()
 	//If we're reading from a packet capture file
 	if(Config::Inst()->GetReadPcap())
 	{
-		try {
+		try
+		{
 			LOG(DEBUG, "Loading pcap file", "");
 			string pcapFilePath = Config::Inst()->GetPathPcapFile() + "/capture.pcap";
 			string ipAddressFile = Config::Inst()->GetPathPcapFile() + "/localIps.txt";
@@ -526,12 +523,16 @@ void StartCapture()
 
 		//trainingFileStream = pcap_dump_open(handles[0], trainingCapFile.c_str());
 
+		stringstream temp;
+		temp << ifList.size() << endl;
+
 		for(uint i = 0; i < ifList.size(); i++)
 		{
 			dropCounts.push_back(0);
 			InterfacePacketCapture *cap = new InterfacePacketCapture(ifList[i].c_str());
 
-			try {
+			try
+			{
 				cap->SetPacketCb(&Packet_Handler);
 				cap->Init();
 				string captureFilterString = ConstructFilterString(cap->GetIdentifier());
@@ -630,7 +631,8 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 string ConstructFilterString(string captureIdentifier)
 {
 	string filterString = "not src net 0.0.0.0";
-	if(Config::Inst()->GetCustomPcapString() != "") {
+	if(Config::Inst()->GetCustomPcapString() != "")
+	{
 		if(Config::Inst()->GetOverridePcapString())
 		{
 			filterString = Config::Inst()->GetCustomPcapString();
@@ -720,12 +722,12 @@ string ConstructFilterString(string captureIdentifier)
 		filterString += ")";
 	}
 
-	LOG(DEBUG, "Pcap filter string is "+filterString,"");
+	LOG(DEBUG, "Pcap filter string is \"" + filterString + "\"","");
 	return filterString;
 }
 
 
-void UpdateAndClassify(SuspectIdentifier key)
+void UpdateAndClassify(SuspectID_pb key)
 {
 	//Check for a valid suspect
 	Suspect suspectCopy = suspects.GetShallowSuspect(key);
@@ -770,7 +772,7 @@ void UpdateAndClassify(SuspectIdentifier key)
 			LOG(DEBUG, ss2.str(), "");
 
 			UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
-			msg->m_IPAddress = suspectCopy.GetIdentifier();
+			msg->m_contents.mutable_m_suspectid()->CopyFrom(suspectCopy.GetIdentifier());
 			NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
 		}
 		else

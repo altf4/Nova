@@ -97,14 +97,14 @@ bool StopNovad()
 		}
 
 		ControlMessage *killReply = (ControlMessage*)reply;
-		if( killReply->m_controlType != CONTROL_EXIT_REPLY )
+		if( killReply->m_contents.m_controltype() != CONTROL_EXIT_REPLY )
 		{
 			LOG(ERROR, "Received the wrong kind of control message", "");
 			reply->DeleteContents();
 			delete reply;
 			return false;
 		}
-		retSuccess = killReply->m_success;
+		retSuccess = killReply->m_contents.m_success();
 		delete killReply;
 
 		LOG(DEBUG, "Call to StopNovad complete", "");
@@ -131,7 +131,7 @@ bool SaveAllSuspects(std::string file)
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
 	ControlMessage saveRequest(CONTROL_SAVE_SUSPECTS_REQUEST);
-	strcpy(saveRequest.m_filePath, file.c_str());
+	saveRequest.m_contents.set_m_filepath(file.c_str());
 
 	if(!MessageManager::Instance().WriteMessage(ticket, &saveRequest))
 	{
@@ -156,14 +156,14 @@ bool SaveAllSuspects(std::string file)
 	}
 
 	ControlMessage *saveReply = (ControlMessage*)reply;
-	if( saveReply->m_controlType != CONTROL_SAVE_SUSPECTS_REPLY )
+	if( saveReply->m_contents.m_controltype() != CONTROL_SAVE_SUSPECTS_REPLY )
 	{
 		LOG(ERROR, "Received the wrong kind of control message", "");
 		saveReply->DeleteContents();
 		delete saveReply;
 		return false;
 	}
-	bool retSuccess = saveReply->m_success;
+	bool retSuccess = saveReply->m_contents.m_success();
 	delete saveReply;
 	return retSuccess;
 }
@@ -196,24 +196,25 @@ bool ClearAllSuspects()
 	}
 
 	ControlMessage *clearReply = (ControlMessage*)reply;
-	if( clearReply->m_controlType != CONTROL_CLEAR_ALL_REPLY )
+	if( clearReply->m_contents.m_controltype() != CONTROL_CLEAR_ALL_REPLY )
 	{
 		LOG(ERROR, "Received the wrong kind of control message", "");
 		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
-	bool retSuccess = clearReply->m_success;
+	bool retSuccess = clearReply->m_contents.m_success();
 	delete clearReply;
 	return retSuccess;
 }
 
-bool ClearSuspect(SuspectIdentifier suspectId)
+bool ClearSuspect(SuspectID_pb suspectId)
 {
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
 	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST);
-	clearRequest.m_suspectAddress = suspectId;
+	//XXX Watch out for this
+	*clearRequest.m_contents.mutable_m_suspectid() = suspectId;
 	if(!MessageManager::Instance().WriteMessage(ticket, &clearRequest))
 	{
 		LOG(ERROR, "Unable to send CONTROL_CLEAR_SUSPECT_REQUEST to NOVAD" ,"");
@@ -237,14 +238,14 @@ bool ClearSuspect(SuspectIdentifier suspectId)
 	}
 
 	ControlMessage *clearReply = (ControlMessage*)reply;
-	if( clearReply->m_controlType != CONTROL_CLEAR_SUSPECT_REPLY )
+	if( clearReply->m_contents.m_controltype() != CONTROL_CLEAR_SUSPECT_REPLY )
 	{
 		LOG(ERROR, "Received the wrong kind of control message", "");
 		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
-	bool retSuccess = clearReply->m_success;
+	bool retSuccess = clearReply->m_contents.m_success();
 	delete clearReply;
 	return retSuccess;
 }
@@ -278,14 +279,14 @@ bool ReclassifyAllSuspects()
 	}
 
 	ControlMessage *reclassifyReply = (ControlMessage*)reply;
-	if( reclassifyReply->m_controlType != CONTROL_RECLASSIFY_ALL_REPLY )
+	if( reclassifyReply->m_contents.m_controltype() != CONTROL_RECLASSIFY_ALL_REPLY )
 	{
 		LOG(ERROR, "Received the wrong kind of control message", "");
 		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
-	bool retSuccess = reclassifyReply->m_success;
+	bool retSuccess = reclassifyReply->m_contents.m_success();
 	delete reclassifyReply;
 	return retSuccess;
 }
@@ -310,7 +311,7 @@ bool StartPacketCapture()
 	}
 
 	ControlMessage *controlReply = dynamic_cast<ControlMessage*>(reply);
-	if(controlReply == NULL || controlReply->m_controlType != CONTROL_START_CAPTURE_ACK )
+	if(controlReply == NULL || controlReply->m_contents.m_controltype() != CONTROL_START_CAPTURE_ACK )
 	{
 		LOG(ERROR, "Received the wrong kind of reply message", "");
 		reply->DeleteContents();
@@ -342,7 +343,7 @@ bool StopPacketCapture()
 	}
 
 	ControlMessage *controlReply = dynamic_cast<ControlMessage*>(reply);
-	if(controlReply == NULL || controlReply->m_controlType != CONTROL_STOP_CAPTURE_ACK )
+	if(controlReply == NULL || controlReply->m_contents.m_controltype() != CONTROL_STOP_CAPTURE_ACK )
 	{
 		LOG(ERROR, "Received the wrong kind of reply message", "");
 		reply->DeleteContents();

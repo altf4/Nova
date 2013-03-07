@@ -22,8 +22,9 @@
 #include "HashMapStructs.h"
 #include "Evidence.h"
 #include "Suspect.h"
-#include <arpa/inet.h>
+#include "protobuf/marshalled_classes.pb.h"
 
+#include <arpa/inet.h>
 #include <vector>
 #include <string>
 
@@ -101,7 +102,7 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr *pkthdr,const u_cha
 void MaskKillSignals();
 
 // Updates data and classification for a suspect
-void UpdateAndClassify(SuspectIdentifier key);
+void UpdateAndClassify(SuspectID_pb key);
 
 //Logs and prints if any packets were dropped since the last time this was called
 void CheckForDroppedPackets();
