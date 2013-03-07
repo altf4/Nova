@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "event2/thread.h"
+#include <sstream>
 
 using namespace std;
 
@@ -56,22 +57,16 @@ Message *MessageManager::ReadMessage(Ticket &ticket, int timeout)
 		return new ErrorMessage(ERROR_SOCKET_CLOSED);
 	}
 
-	Message *message = ticket.m_endpoint->PopMessage(ticket, timeout);
-	if(message->m_messageType == ERROR_MESSAGE)
-	{
-		ErrorMessage *errorMessage = (ErrorMessage*)message;
-		if(errorMessage->m_errorType == ERROR_SOCKET_CLOSED)
-		{
-			//TODO: Close the socket with libevent?
-		}
-	}
-
-	return message;
+	return ticket.m_endpoint->PopMessage(ticket, timeout);
 }
 
 bool MessageManager::WriteMessage(const Ticket &ticket, Message *message)
 {
 	if(ticket.m_socketFD == -1)
+	{
+		return false;
+	}
+	if(ticket.m_endpoint->m_bufferevent == NULL)
 	{
 		return false;
 	}
@@ -81,27 +76,16 @@ bool MessageManager::WriteMessage(const Ticket &ticket, Message *message)
 
 	uint32_t length;
 	char *buffer = message->Serialize(&length);
-
-	//TODO: There's the possibility for two writers of the same socket to get mixed up, here.
-	//	Thread A could write half of his data to a socket, then thread B could write his first half.
-	//	This would produce garbage on the other end. So we really ought to lock other writers of
-	//	the same socket out, here. But doing so safely might be hard.
-
-	//Looping write, because the write() might not do it all at one time
-	int bytesWritten = 0;
-	uint totalBytesWritten = 0;
-	while(totalBytesWritten < length)
+	bufferevent_lock(ticket.m_endpoint->m_bufferevent);
+	if(bufferevent_write(ticket.m_endpoint->m_bufferevent, buffer, length) == -1)
 	{
-		bytesWritten = write(ticket.m_socketFD, buffer, length);
-		if(bytesWritten == -1)
-		{
-			free(buffer);
-			return false;
-		}
-		totalBytesWritten += bytesWritten;
+		free(buffer);
+		bufferevent_unlock(ticket.m_endpoint->m_bufferevent);
+		return false;
 	}
 
 	free(buffer);
+	bufferevent_unlock(ticket.m_endpoint->m_bufferevent);
 	return true;
 }
 
@@ -117,7 +101,8 @@ void MessageManager::StartSocket(int socketFD, struct bufferevent *bufferevent)
 		pthread_rwlock_init(rwLock, NULL);
 		//Write lock this new lock because we don't want someone trying to read from it or write to it halfway through our addition
 		Lock endLock(rwLock, WRITE_LOCK);
-		m_endpoints[socketFD] = std::pair<MessageEndpoint*, pthread_rwlock_t*>( new MessageEndpoint(socketFD, bufferevent), rwLock);
+		m_endpoints[socketFD] = std::pair<MessageEndpoint*, pthread_rwlock_t*>(
+				new MessageEndpoint(socketFD, bufferevent), rwLock);
 		return;
 	}
 
@@ -254,7 +239,6 @@ MessageEndpointLock MessageManager::GetEndpoint(int socketFD)
 
 void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 {
-
 	bufferevent_lock(bev);
 
 	struct evbuffer *input = bufferevent_get_input(bev);
@@ -292,17 +276,45 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			continue;
 		}
 
+		stringstream ss1, ss2;
+		ss1 << evbufferLength;
+		ss2 << length;
+		LOG(DEBUG, "xxxDEBUXxxx We have received: " + ss1.str() + " out of: " + ss2.str(), "");
 		//If we don't yet have enough data, then just quit and wait for more
 		if(evbufferLength < length)
 		{
 			MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
-			ErrorMessage *keepAlive = new ErrorMessage(ERROR_KEEP_WAITING);
-			if(!endpoint.m_endpoint->PushMessage(keepAlive))
+			if(endpoint.m_endpoint != NULL)
 			{
-				LOG(DEBUG, "Discarding message. Error in pushing it to a queue.", "");
+				char buffer[20];
+				if(evbuffer_copyout(input, buffer, sizeof(buffer)) < sizeof(buffer))
+				{
+					keepGoing = false;
+					continue;
+				}
+				ErrorMessage *keepAlive = new ErrorMessage(ERROR_KEEP_WAITING,
+						Message::GetOurSerial(buffer),
+						Message::GetTheirSerial(buffer));
+				if(!endpoint.m_endpoint->PushMessage(keepAlive))
+				{
+					LOG(DEBUG, "Ignoring message chunk. Error in pushing it to a queue.", "");
+				}
+				else
+				{
+					LOG(DEBUG, "xxxDEBUGxxx Successfully sent keepalive for chunk", "");
+				}
+			}
+			else
+			{
+				LOG(DEBUG, "Ignoring message chunk. Received it for a non-existent endpoint.", "");
 			}
 			keepGoing = false;
 			continue;
+		}
+
+		if(evbufferLength > length)
+		{
+			LOG(DEBUG, "xxxDEBUGxxx Got too much data", "");
 		}
 
 		evbuffer_drain(input, sizeof(length));
@@ -322,6 +334,7 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 
 		// Read in the actual message
 		int bytesRead = evbuffer_remove(input, buffer, length);
+		bufferevent_unlock(bev);
 		if(bytesRead == -1)
 		{
 			LOG(WARNING, "Error parsing message: couldn't remove data from buffer.", "");
@@ -331,13 +344,18 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			LOG(WARNING, "Error parsing message: incorrect amount of data received than what expected.", "");
 		}
 
+		LOG(DEBUG, "xxxDEBUGxxx TRYING TO PUSH ACTUAL MESSAGE", "");
 		MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
 		if(endpoint.m_endpoint != NULL)
 		{
-			Message *message = Message::Deserialize(buffer, length);
+			Message *message = Message::Deserialize(buffer, bytesRead);
 			if(!endpoint.m_endpoint->PushMessage(message))
 			{
 				LOG(DEBUG, "Discarding message. Error in pushing it to a queue.", "");
+			}
+			else
+			{
+				LOG(DEBUG, "xxxDEBUGxxx PUSHED ACTUAL MESSAGE", "");
 			}
 		}
 		else
@@ -346,6 +364,8 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 		}
 
 		free(buffer);
+		//Return here b/c we don't want to unlock a second time
+		return;
 	}
 
 	bufferevent_unlock(bev);
@@ -364,8 +384,9 @@ void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void 
 		//If we're a server...
 		if(ctx != NULL)
 		{
+			int sockFD = bufferevent_getfd(bev);
 			bufferevent_free(bev);
-			MessageManager::Instance().DeleteEndpoint(bufferevent_getfd(bev));
+			MessageManager::Instance().DeleteEndpoint(sockFD);
 		}
 		return;
 	}
@@ -385,7 +406,8 @@ void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
     {
 		struct bufferevent *bev;
 		evutil_make_socket_nonblocking(fd);
-		bev = bufferevent_socket_new(cbArg->m_base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+		bev = bufferevent_socket_new(cbArg->m_base, fd,
+				BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE |  BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS );
 		if(bev == NULL)
 		{
 			LOG(ERROR, "Failed to connect to UI: socket_new", "");

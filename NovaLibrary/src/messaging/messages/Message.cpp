@@ -134,3 +134,17 @@ Message *Message::Deserialize(char *buffer, uint32_t length)
 	}
 	return message;
 }
+
+uint32_t Message::GetOurSerial(char *buffer)
+{
+	uint32_t retval;
+	memcpy(&retval, buffer+9, sizeof(retval));
+	return retval;
+}
+
+uint32_t Message::GetTheirSerial(char *buffer)
+{
+	uint32_t retval;
+	memcpy(&retval, buffer+5, sizeof(retval));
+	return retval;
+}

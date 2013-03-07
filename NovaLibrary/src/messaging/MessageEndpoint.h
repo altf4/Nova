@@ -45,6 +45,7 @@ public:
 	//Constructor for MessageQueue
 	//	socketFD - The socket file descriptor the queue will listen on
 	//	direction - The protocol direction that is considered forward
+	// bufferevent - The libevent buffer associated with this endpoint
 	MessageEndpoint(int socketFD, struct bufferevent *bufferevent);
 
 	//Destructor should only be called by the callback thread, and also only while
@@ -88,6 +89,7 @@ public:
 	bool RemoveMessageQueue(uint32_t ourSerial);
 
 	bool m_isShutDown;
+	struct bufferevent *m_bufferevent;
 
 private:
 

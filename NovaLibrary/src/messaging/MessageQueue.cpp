@@ -20,10 +20,12 @@
 #include "../Lock.h"
 #include "MessageQueue.h"
 #include "messages/ErrorMessage.h"
+#include "../Logger.h"
 
 #include <sys/time.h>
 #include <pthread.h>
 #include "errno.h"
+#include <sstream>
 
 namespace Nova
 {
@@ -101,6 +103,9 @@ Message *MessageQueue::PopMessage(int timeout)
 			{
 				if(pthread_cond_timedwait(&m_popWakeupCondition, &m_queueMutex, &timespec) == ETIMEDOUT)
 				{
+					stringstream ss;
+					ss << m_ourSerialNum;
+					LOG(DEBUG, "xxxDEBUXxxx Got timeout for our serial:" + ss.str(), "");
 					return new ErrorMessage(ERROR_TIMEOUT);
 				}
 			}
@@ -113,7 +118,13 @@ Message *MessageQueue::PopMessage(int timeout)
 			m_queue.pop();
 		}
 		//If we get a "Keep Going" message, then read another message
-		if((retMessage->m_messageType != ERROR_MESSAGE) || (((ErrorMessage*)retMessage)->m_errorType != ERROR_KEEP_WAITING))
+		if((retMessage->m_messageType == ERROR_MESSAGE) && (((ErrorMessage*)retMessage)->m_errorType == ERROR_KEEP_WAITING))
+		{
+			LOG(DEBUG, "xxxDEBUGxxx Got a keepalive. Reading another msg", "");
+			delete retMessage;
+			retMessage = NULL;
+		}
+		else
 		{
 			keepGoing = false;
 		}

@@ -96,6 +96,7 @@ enum PushSuccess MessageQueueBimap::PushMessage(Message *message, uint32_t &outS
 		{
 			//If we still don't have a queue for this message, then it's an error
 			//	Maybe the queue got deleted before the message came in.
+			LOG(DEBUG, "xxxDEBUGxxx No queue", "");
 			return PUSH_FAIL;
 		}
 	}
@@ -103,6 +104,7 @@ enum PushSuccess MessageQueueBimap::PushMessage(Message *message, uint32_t &outS
 	//Do the actual message push
 	if(!queue->PushMessage(message))
 	{
+		LOG(DEBUG, "xxxDEBUGxxx sub-sub-push fail.", "");
 		return PUSH_FAIL;
 	}
 	else

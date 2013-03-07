@@ -47,7 +47,7 @@ class ErrorMessage : public Message
 public:
 
 	ErrorMessage(enum ErrorType errorType);
-	ErrorMessage(enum ErrorType errorType, uint32_t ourSerial);
+	ErrorMessage(enum ErrorType errorType, uint32_t ourSerial, uint32_t theirSerial);
 	~ErrorMessage();
 
 	//Deserialization constructor
