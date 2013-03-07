@@ -28,7 +28,8 @@
 #define REPLY_TIMEOUT 3
 
 //Currently, size is 9
-#define MESSAGE_HDR_SIZE sizeof(m_messageType) + sizeof(m_ourSerialNumber) + sizeof(m_theirSerialNumber)
+//Header contains Message Type, Serial Number, Serial Number
+#define MESSAGE_HDR_SIZE sizeof(enum MessageType) + sizeof(uint32_t) + sizeof(uint32_t)
 
 namespace Nova
 {

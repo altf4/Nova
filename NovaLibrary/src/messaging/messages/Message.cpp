@@ -34,6 +34,9 @@
 using namespace std;
 using namespace Nova;
 
+#define OUR_SERIAL_OFFSET 9
+#define THEIR_SERIAL_OFFSET 5
+
 Message::Message()
 {
 
@@ -138,13 +141,13 @@ Message *Message::Deserialize(char *buffer, uint32_t length)
 uint32_t Message::GetOurSerial(char *buffer)
 {
 	uint32_t retval;
-	memcpy(&retval, buffer+9, sizeof(retval));
+	memcpy(&retval, buffer + OUR_SERIAL_OFFSET, sizeof(retval));
 	return retval;
 }
 
 uint32_t Message::GetTheirSerial(char *buffer)
 {
 	uint32_t retval;
-	memcpy(&retval, buffer+5, sizeof(retval));
+	memcpy(&retval, buffer + THEIR_SERIAL_OFFSET, sizeof(retval));
 	return retval;
 }

@@ -26,7 +26,6 @@
 #include <unistd.h>
 #include <string.h>
 #include "event2/thread.h"
-#include <sstream>
 
 using namespace std;
 
@@ -239,17 +238,17 @@ MessageEndpointLock MessageManager::GetEndpoint(int socketFD)
 
 void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 {
-	bufferevent_lock(bev);
-
-	struct evbuffer *input = bufferevent_get_input(bev);
-	evutil_socket_t socketFD = bufferevent_getfd(bev);
-
-	uint32_t length = 0, evbufferLength;
-
 	bool keepGoing = true;
 	while(keepGoing)
 	{
-		evbufferLength = evbuffer_get_length(input);
+		bufferevent_lock(bev);
+
+		struct evbuffer *input = bufferevent_get_input(bev);
+		evutil_socket_t socketFD = bufferevent_getfd(bev);
+
+		uint32_t length = 0;
+		uint32_t evbufferLength = evbuffer_get_length(input);
+
 		//If we don't even have enough data to read the length, just quit
 		if(evbufferLength < sizeof(length))
 		{
@@ -276,18 +275,22 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			continue;
 		}
 
-		stringstream ss1, ss2;
-		ss1 << evbufferLength;
-		ss2 << length;
-		LOG(DEBUG, "xxxDEBUXxxx We have received: " + ss1.str() + " out of: " + ss2.str(), "");
 		//If we don't yet have enough data, then just quit and wait for more
 		if(evbufferLength < length)
 		{
 			MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
 			if(endpoint.m_endpoint != NULL)
 			{
-				char buffer[20];
-				if(evbuffer_copyout(input, buffer, sizeof(buffer)) < sizeof(buffer))
+				//Copy out the message header (and length)
+				char buffer[MESSAGE_HDR_SIZE + sizeof(uint32_t)];
+				ev_ssize_t copiedLen = evbuffer_copyout(input, buffer, sizeof(buffer));
+				if(copiedLen == -1)
+				{
+					keepGoing = false;
+					continue;
+				}
+				size_t uCopiedLen = (size_t)copiedLen;
+				if(uCopiedLen < sizeof(buffer))
 				{
 					keepGoing = false;
 					continue;
@@ -299,10 +302,6 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 				{
 					LOG(DEBUG, "Ignoring message chunk. Error in pushing it to a queue.", "");
 				}
-				else
-				{
-					LOG(DEBUG, "xxxDEBUGxxx Successfully sent keepalive for chunk", "");
-				}
 			}
 			else
 			{
@@ -310,11 +309,6 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			}
 			keepGoing = false;
 			continue;
-		}
-
-		if(evbufferLength > length)
-		{
-			LOG(DEBUG, "xxxDEBUGxxx Got too much data", "");
 		}
 
 		evbuffer_drain(input, sizeof(length));
@@ -344,7 +338,6 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			LOG(WARNING, "Error parsing message: incorrect amount of data received than what expected.", "");
 		}
 
-		LOG(DEBUG, "xxxDEBUGxxx TRYING TO PUSH ACTUAL MESSAGE", "");
 		MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
 		if(endpoint.m_endpoint != NULL)
 		{
@@ -353,10 +346,6 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			{
 				LOG(DEBUG, "Discarding message. Error in pushing it to a queue.", "");
 			}
-			else
-			{
-				LOG(DEBUG, "xxxDEBUGxxx PUSHED ACTUAL MESSAGE", "");
-			}
 		}
 		else
 		{
@@ -364,8 +353,6 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 		}
 
 		free(buffer);
-		//Return here b/c we don't want to unlock a second time
-		return;
 	}
 
 	bufferevent_unlock(bev);

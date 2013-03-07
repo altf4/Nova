@@ -107,7 +107,6 @@ bool MessageEndpoint::PushMessage(Message *message)
 {
 	if(message == NULL)
 	{
-		LOG(DEBUG, "xxxDEBUGxxx Message was NULL.", "");
 		return false;
 	}
 
@@ -115,7 +114,6 @@ bool MessageEndpoint::PushMessage(Message *message)
 		Lock shutdownLock(&m_isShutdownMutex);
 		if(m_isShutDown)
 		{
-			LOG(DEBUG, "xxxDEBUGxxx Endpoint is shutdown.", "");
 			message->DeleteContents();
 			delete message;
 			return false;
@@ -125,7 +123,6 @@ bool MessageEndpoint::PushMessage(Message *message)
 	//The other endpoint must always provide a valid "our" serial number, ignore if they don't
 	if(message->m_ourSerialNumber == 0)
 	{
-		LOG(DEBUG, "xxxDEBUGxxx Invalid our number", "");
 		message->DeleteContents();
 		delete message;
 		return false;
@@ -135,7 +132,6 @@ bool MessageEndpoint::PushMessage(Message *message)
 	enum PushSuccess pushRet = m_queues.PushMessage(message, newSerial);
 	if(pushRet == PUSH_FAIL)
 	{
-		LOG(DEBUG, "xxxDEBUGxxx sub-push failed. ", "");
 		return false;
 	}
 	else if(pushRet == PUSH_SUCCESS_NEW)
