@@ -168,17 +168,17 @@ script
     var uptimeIn = $('#inheritUptime').attr('checked');
     if(persIn == true)
     {
-      $('#personality').attr('disabled', true);
+      $('#personality').prop('disabled', true);
     }
     if(pdIn == true)
     {
-      $('#dropRate').attr('disabled', true);
+      $('#dropRate').prop('disabled', true);
     }
     if(uptimeIn == true)
     {
-      $('#uptimeType').attr('disabled', true);
-      $('#uptimeMin').attr('disabled', true);
-      $('#uptimeMax').attr('disabled', true);
+      $('#uptimeType').prop('disabled', true);
+      $('#uptimeMin').prop('disabled', true);
+      $('#uptimeMax').prop('disabled', true);
     }
   }
   
@@ -309,7 +309,7 @@ script
     if(profile.portSets.length != 0)
     {
       $('#portSetDiv').css('display', 'block');
-      $('#portSetSelection').attr('disabled', false);
+      $('#portSetSelection').prop('disabled', false);
       for(var i in profile.portSets)
       {
           var option = document.createElement('option');
@@ -800,7 +800,7 @@ script
         {
           if($('#portBehavior' + portIndexes[i]).val() == '3' || $('#portBehavior' + portIndexes[i]).val() == '5') 
           {
-            $('#portScriptDrop' + portIndexes[i]).attr('disabled', false);
+            $('#portScriptDrop' + portIndexes[i]).prop('disabled', false);
             if($('#portScriptDrop' + portIndexes[i]).val() == 'NA')
             {
               $('#portScriptDrop' + portIndexes[i])[0].selectedIndex = 0;
@@ -808,7 +808,7 @@ script
           } 
           else 
           {
-            $('#portScriptDrop' + portIndexes[i]).attr('disabled', true);
+            $('#portScriptDrop' + portIndexes[i]).prop('disabled', true);
             $('#portScriptDrop' + portIndexes[i])[0].selectedIndex = $('#portScriptDrop' + portIndexes[i]+  ' option').length - 1;
           }
           scriptSelectionChanged(portIndexes[i]);
@@ -825,33 +825,32 @@ script
       };
 
       inheritanceChanged = function(){
-        //personality.disabled = inheritPersonality.checked
-        if($('#personality').attr('disabled', $('#inheritPersonality').is(':checked'))) 
+        if($('#inheritPersonality').is(':checked'))
         {
-          $('#personality').attr('value', origProfile.personality);
-          $('#personality').attr('disabled', true);//setDisabled(true);
+          $('#personality').prop('value', origProfile.personality);
+          $('#personality').prop('disabled', true);
         } 
         else
         {
-          $('#personality').attr('disabled', false);//setDisabled(false);
+          $('#personality').prop('disabled', false);
         }
 
-        if($('#dropRate').attr('disabled', $('#inheritDropRate').is(':checked'))) 
+        if($('#dropRate').prop('disabled', $('#inheritDropRate').is(':checked'))) 
         {
           $('#dropRate').val(origProfile.dropRate);
         }
 
-        if($('#uptimeMin').attr('disabled', $('#inheritUptime').is(':checked'))) 
+        if($('#uptimeMin').prop('disabled', $('#inheritUptime').is(':checked'))) 
         {
           $('#uptimeMin').val(origProfile.uptimeMin);
         }
 
-        if($('#uptimeMax').attr('disabled', $('#inheritUptime').is(':checked'))) 
+        if($('#uptimeMax').prop('disabled', $('#inheritUptime').is(':checked'))) 
         {
           $('#uptimeMax').val(origProfile.uptimeMax);
         }
 
-        if($('#uptimeType').attr('disabled', $('#inheritUptime').is(':checked'))) 
+        if($('#uptimeType').prop('disabled', $('#inheritUptime').is(':checked'))) 
         {
           if(origProfile.uptimeMin == origProfile.uptimeMax) 
           {
@@ -871,7 +870,7 @@ script
         scriptConfigurations[portIndex] = {};
 
         // Don't bother if the dropdown is disabled
-        if($('#portScriptDrop' + portIndex).attr('disabled'))
+        if($('#portScriptDrop' + portIndex).prop('disabled'))
         {
           $('#configureButton' + portIndex).css('display', 'none');
           return;
