@@ -204,7 +204,7 @@ void DisconnectFromNovad()
 		Lock buffereventLock(&bufferevent_mutex);
 		if(bufferevent != NULL)
 		{
-			bufferevent_free(bufferevent);
+			//bufferevent_free(bufferevent);
 			bufferevent = NULL;
 		}
 	}
