@@ -20,6 +20,7 @@
 #include "../Lock.h"
 #include "MessageQueue.h"
 #include "messages/ErrorMessage.h"
+#include "../Logger.h"
 
 #include <sys/time.h>
 #include <pthread.h>
@@ -61,55 +62,68 @@ Message *MessageQueue::PopMessage(int timeout)
 {
 	Message *retMessage;
 
-	//If indefinite read:
-	if(timeout == 0)
+	bool keepGoing  = true;
+	while(keepGoing)
 	{
-		//Protection for the queue structure
-		Lock lock(&m_queueMutex);
-
-		//While loop to protect against spurious wakeups
-		while(m_queue.empty() && !m_isShutdown)
+		//If indefinite read:
+		if(timeout == 0)
 		{
-			pthread_cond_wait(&m_popWakeupCondition, &m_queueMutex);
-		}
-		if(m_isShutdown)
-		{
-			return new ErrorMessage(ERROR_SOCKET_CLOSED);
-		}
+			//Protection for the queue structure
+			Lock lock(&m_queueMutex);
 
-		retMessage = m_queue.front();
-		m_queue.pop();
-	}
-	//Read with timeout
-	else
-	{
-		struct timespec timespec;
-		struct timeval timeval;
-		gettimeofday(&timeval, NULL);
-		timespec.tv_sec  = timeval.tv_sec;
-		timespec.tv_nsec = timeval.tv_usec*1000;
-		timespec.tv_sec += timeout;
-
-		//Protection for the queue structure
-		Lock lock(&m_queueMutex);
-
-		//While loop to protect against spurious wakeups
-		while(m_queue.empty() && !m_isShutdown)
-		{
-			if(pthread_cond_timedwait(&m_popWakeupCondition, &m_queueMutex, &timespec) == ETIMEDOUT)
+			//While loop to protect against spurious wakeups
+			while(m_queue.empty() && !m_isShutdown)
 			{
-				return new ErrorMessage(ERROR_TIMEOUT);
+				pthread_cond_wait(&m_popWakeupCondition, &m_queueMutex);
 			}
+			if(m_isShutdown)
+			{
+				return new ErrorMessage(ERROR_SOCKET_CLOSED);
+			}
+
+			retMessage = m_queue.front();
+			m_queue.pop();
 		}
-		if(m_isShutdown)
+		//Read with timeout
+		else
 		{
-			return new ErrorMessage(ERROR_SOCKET_CLOSED);
+			struct timespec timespec;
+			struct timeval timeval;
+			gettimeofday(&timeval, NULL);
+			timespec.tv_sec  = timeval.tv_sec;
+			timespec.tv_nsec = timeval.tv_usec*1000;
+			timespec.tv_sec += timeout;
+
+			//Protection for the queue structure
+			Lock lock(&m_queueMutex);
+
+			//While loop to protect against spurious wakeups
+			while(m_queue.empty() && !m_isShutdown)
+			{
+				if(pthread_cond_timedwait(&m_popWakeupCondition, &m_queueMutex, &timespec) == ETIMEDOUT)
+				{
+					return new ErrorMessage(ERROR_TIMEOUT);
+				}
+			}
+			if(m_isShutdown)
+			{
+				return new ErrorMessage(ERROR_SOCKET_CLOSED);
+			}
+
+			retMessage = m_queue.front();
+			m_queue.pop();
 		}
-
-		retMessage = m_queue.front();
-		m_queue.pop();
+		//If we get a "Keep Going" message, then read another message
+		if((retMessage->m_messageType == ERROR_MESSAGE) && (((ErrorMessage*)retMessage)->m_errorType == ERROR_KEEP_WAITING))
+		{
+			delete retMessage;
+			retMessage = NULL;
+		}
+		else
+		{
+			keepGoing = false;
+		}
 	}
-
 	return retMessage;
 }
 

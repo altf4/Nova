@@ -94,7 +94,8 @@ bool ConnectToNovad()
 
 	{
 		Lock buffereventLock(&bufferevent_mutex);
-		bufferevent = bufferevent_socket_new(libeventBase, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+		bufferevent = bufferevent_socket_new(libeventBase, -1,
+				BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE |  BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS );
 		if(bufferevent == NULL)
 		{
 			LOG(ERROR, "Unable to create a socket to Nova", "");
@@ -145,7 +146,6 @@ bool ConnectToNovad()
 	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST);
 	if(!MessageManager::Instance().WriteMessage(ticket, &connectRequest))
 	{
-		//LOG(DEBUG, "Could not send CONTROL_CONNECT_REQUEST to NOVAD", "");
 		return false;
 	}
 

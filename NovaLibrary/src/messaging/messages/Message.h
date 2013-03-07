@@ -27,8 +27,9 @@
 
 #define REPLY_TIMEOUT 3
 
-//Currently, size is 2
-#define MESSAGE_HDR_SIZE sizeof(m_messageType) + sizeof(m_ourSerialNumber) + sizeof(m_theirSerialNumber)
+//Currently, size is 9
+//Header contains Message Type, Serial Number, Serial Number
+#define MESSAGE_HDR_SIZE sizeof(enum MessageType) + sizeof(uint32_t) + sizeof(uint32_t)
 
 namespace Nova
 {
@@ -68,6 +69,14 @@ public:
 	// Returns - A pointer to the serialized array
 	//	NOTE: The caller must manually free() the returned buffer after use
 	virtual char *Serialize(uint32_t *length) = 0;
+
+	//Helper function to deserialize just the "our" serial number from a message buffer
+	// Returns - a uint32_t of the given serialized message. 0 on error.
+	static uint32_t GetOurSerial(char *buffer);
+
+	//Helper function to deserialize just the "their" serial number from a message buffer
+	// Returns - a uint32_t of the given serialized message. 0 on error.
+	static uint32_t GetTheirSerial(char *buffer);
 
 	enum MessageType m_messageType;
 

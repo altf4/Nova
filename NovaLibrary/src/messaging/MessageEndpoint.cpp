@@ -45,7 +45,9 @@ MessageEndpoint::MessageEndpoint(int socketFD, struct bufferevent *bufferevent)
 	m_consecutiveTimeouts = 0;
 
 	m_isShutDown = false;
-	m_socketFD = socketFD;}
+	m_socketFD = socketFD;
+	m_bufferevent = bufferevent;
+}
 
 //Destructor should only be called by the callback thread, and also only while
 //	the protocol lock in MessageManager is held. This is done to avoid
