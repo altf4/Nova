@@ -263,7 +263,10 @@ bool Profile::Copy(Profile *source)
 	m_isUptimeInherited = source->m_isUptimeInherited;
 
 	//TODO: Maybe want to copy the port sets too (rather than pointers)
-	m_portSets = source->m_portSets;
+	//std::vector<PortSet *> new_(source->m_portSets);
+	std::copy(source->m_portSets.begin(), source->m_portSets.end(), m_portSets.begin());
+	//m_portSets = new_;
+	//m_portSets = source->m_portSets;
 
 	return true;
 }
