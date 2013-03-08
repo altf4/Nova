@@ -93,8 +93,6 @@ public:
 
 	std::string m_scriptName;
 
-	// TODO: The only reason this isn't an unordered_map is because cvv8 doesn't cast those to js,
-	// we should make a NativeToJs template specialization for doing that.
 	std::map<std::string, std::string> m_scriptConfiguration;
 };
 
