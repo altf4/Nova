@@ -8,7 +8,6 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include src/protobuf/subdir.mk
 -include src/messaging/messages/subdir.mk
 -include src/messaging/subdir.mk
 -include src/HoneydConfiguration/subdir.mk
