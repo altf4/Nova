@@ -216,7 +216,7 @@ private:
 
 	static HoneydConfiguration *m_instance;
 
-    //TODO: If we wind up with many scripts, this may not scale well
+    //xxx: If we wind up with many scripts, this may not scale well
     std::vector<Script> m_scripts;
 
     VendorMacDb m_macAddresses;
