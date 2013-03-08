@@ -85,11 +85,4 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 		<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>protobuf</name>
-			<type>2</type>
-			<location>/home/rami/Code/Nova/NovaLibrary/src/protobuf</location>
-		</link>
-	</linkedResources>
 </projectDescription>
