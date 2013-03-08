@@ -76,7 +76,6 @@ public:
 	static enum PortBehavior StringToPortBehavior(std::string behavior);
 
 	//Javascript compatibiltiy functions
-	//TODO: Move these into the binding class
 	uint GetPortNum() {return m_portNumber;}
 	std::string GetProtocol() { return PortProtocolToString(m_protocol);}
 	std::string GetBehavior() { return PortBehaviorToString(m_behavior);}
