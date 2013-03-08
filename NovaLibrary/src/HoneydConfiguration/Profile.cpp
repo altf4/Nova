@@ -52,7 +52,7 @@ Profile::Profile(string parentName, std::string key)
 	m_avgPortCount = 0;
 	m_parent = HoneydConfiguration::Inst()->GetProfile(parentName);
 	m_uptimeMin = 0;
-	m_uptimeMax = ~0;
+	m_uptimeMax = 86400;
 	m_isPersonalityInherited = false;
 	m_isUptimeInherited = false;
 	m_isDropRateInherited = false;
