@@ -74,17 +74,16 @@ Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 	if((m_evidencePacket.ip_p == 6))
 	{
 		struct tcp_hdr *tcp;
-		tcp = (tcp_hdr *) (packet_at_ip_header + ip_hl*4 + 2);
+		tcp = (tcp_hdr *) (packet_at_ip_header + ip_hl*4);
 		//Point to the beginning of the tcp or udp header + 2 to get the destination port, same offset after ip header for both
 		//offset = packet_at_ip_header + ip_hl*4 + 2;
 		//read in the dest port
-
 		m_evidencePacket.dst_port = ntohs(tcp->th_dport);//ntohs(*(uint16_t *)offset);
 	}
 	else if(m_evidencePacket.ip_p == 17)//udp
 	{
 		struct udp_hdr *udp;
-		udp = (udp_hdr *) (packet_at_ip_header + ip_hl*4 + 2);
+		udp = (udp_hdr *) (packet_at_ip_header + ip_hl*4);
 		m_evidencePacket.dst_port = ntohs(udp->uh_dport);//ntohs(*(uint16_t *)offset);
 	}
 

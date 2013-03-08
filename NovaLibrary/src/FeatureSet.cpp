@@ -523,6 +523,9 @@ FeatureSet& FeatureSet::operator+=(FeatureSet &rhs)
 	m_totalInterval += rhs.m_totalInterval;
 	m_packetCount += rhs.m_packetCount;
 	m_tcpPacketCount += rhs.m_tcpPacketCount;
+	m_udpPacketCount += rhs.m_udpPacketCount;
+	m_icmpPacketCount += rhs.m_icmpPacketCount;
+	m_otherPacketCount += rhs.m_otherPacketCount;
 	m_bytesTotal += rhs.m_bytesTotal;
 
 	for(IP_Table::iterator it = rhs.m_IPTable.begin(); it != rhs.m_IPTable.end(); it++)
