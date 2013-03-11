@@ -130,8 +130,6 @@ public:
 	// Returns a vector of strings containing the names of all profiles
 	std::vector<std::string> GetProfileNames();
 
-
-	//TODO Function contract
 	Script GetScript(std::string name);
 	std::vector<Script> GetScripts(std::string service, std::string osclass = "");
 
@@ -216,7 +214,7 @@ private:
 
 	static HoneydConfiguration *m_instance;
 
-    //TODO: If we wind up with many scripts, this may not scale well
+    //xxx: If we wind up with many scripts, this may not scale well
     std::vector<Script> m_scripts;
 
     VendorMacDb m_macAddresses;

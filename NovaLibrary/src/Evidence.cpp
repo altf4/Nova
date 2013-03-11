@@ -19,6 +19,7 @@
 
 #include "Evidence.h"
 #include "netinet/tcp.h"
+#include <dumbnet.h>
 
 using namespace std;
 
@@ -39,47 +40,51 @@ Evidence::Evidence()
 
 Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 {
-	// TODO: Way too many magic numbers. Cast the packet to into header structs and refer to offsets by name
+
+	struct ip_hdr *ip;
+	ip = (ip_hdr *) packet_at_ip_header;
 
 	//Get timestamp
 	m_evidencePacket.ts = pkthdr->ts.tv_sec;
 
-	//Copy out vals from header
-	const u_char *offset = packet_at_ip_header; // @2 - read 2
-
 	// 00001111 mask to get the ip header length
-	uint8_t ip_hl = 15;
-	ip_hl &= *(uint8_t *)offset;
+	uint8_t ip_hl = ip->ip_hl;//15;
 	m_next = NULL;
 
-	offset += 2;
-	m_evidencePacket.ip_len = ntohs(*(uint16_t *)offset);
-	offset += 7; // @16 - read 1
-	m_evidencePacket.ip_p = *(uint8_t *)offset;
-	offset += 3; // @19 - read 4
-	m_evidencePacket.ip_src = ntohl(*(uint32_t *)offset);
-	offset += 4; // @23 - read 4
-	m_evidencePacket.ip_dst = ntohl(*(uint32_t *)offset);
+	//offset += 2;
+	m_evidencePacket.ip_len = ip->ip_len;//ntohs(*(uint16_t *)offset);
+	//offset += 7; // @16 - read 1
+	m_evidencePacket.ip_p = ip->ip_p;//*(uint8_t *)offset;
+	//offset += 3; // @19 - read 4
+	m_evidencePacket.ip_src = ntohl(ip->ip_src); //ntohl(*(uint32_t *)offset);
+	//offset += 4; // @23 - read 4
+	m_evidencePacket.ip_dst = ntohl(ip->ip_dst);//ntohl(*(uint32_t *)offset);
 
 	//Initialize port to 0 in case we don't have a TCP or UDP packet
 	m_evidencePacket.dst_port = -1;
 
-	//If TCP or UDP
-	if((m_evidencePacket.ip_p == 6) || (m_evidencePacket.ip_p == 17))
+	if((m_evidencePacket.ip_p == 6))
 	{
-		//Point to the beginning of the tcp or udp header + 2 to get the destination port, same offset after ip header for both
-		offset = packet_at_ip_header + ip_hl*4 + 2;
+		struct tcp_hdr *tcp;
+		tcp = (tcp_hdr *) (packet_at_ip_header + ip_hl*4);
 		//read in the dest port
-		m_evidencePacket.dst_port = ntohs(*(uint16_t *)offset);
+		m_evidencePacket.dst_port = ntohs(tcp->th_dport);
+	}
+	else if(m_evidencePacket.ip_p == 17)//udp
+	{
+		struct udp_hdr *udp;
+		udp = (udp_hdr *) (packet_at_ip_header + ip_hl*4);
+		m_evidencePacket.dst_port = ntohs(udp->uh_dport);
 	}
 
 	if(m_evidencePacket.ip_p == 6)
 	{
-		offset = packet_at_ip_header + ip_hl*4;
-		m_evidencePacket.tcp_hdr.ack = ((tcphdr*)offset)->ack;
-		m_evidencePacket.tcp_hdr.rst = ((tcphdr*)offset)->rst;
-		m_evidencePacket.tcp_hdr.syn = ((tcphdr*)offset)->syn;
-		m_evidencePacket.tcp_hdr.fin = ((tcphdr*)offset)->fin;
+		struct tcphdr *tcp;
+		tcp = (tcphdr*)(packet_at_ip_header + ip_hl*4);
+		m_evidencePacket.tcp_hdr.ack = tcp->ack;
+		m_evidencePacket.tcp_hdr.rst = tcp->rst;
+		m_evidencePacket.tcp_hdr.syn = tcp->syn;
+		m_evidencePacket.tcp_hdr.fin = tcp->fin;
 	}
 }
 

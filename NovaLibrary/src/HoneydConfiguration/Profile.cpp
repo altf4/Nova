@@ -36,8 +36,8 @@ Profile::Profile(Profile *parent, string key)
 	m_count = 0;
 	m_avgPortCount = 0;
 	m_parent = parent;
-	m_uptimeMin = 0;	//TODO: What if we don't see any uptimes? We need to have a sane default
-	m_uptimeMax = ~0;	//TODO: Let's have a more reasonable "maximum" here. We don't want to be setting random uptimes this high
+	m_uptimeMin = 0;
+	m_uptimeMax = 86400;
 	m_isPersonalityInherited = false;
 	m_isUptimeInherited = false;
 	m_isDropRateInherited = false;
@@ -51,8 +51,8 @@ Profile::Profile(string parentName, std::string key)
 	m_count = 0;
 	m_avgPortCount = 0;
 	m_parent = HoneydConfiguration::Inst()->GetProfile(parentName);
-	m_uptimeMin = 0;	//TODO: What if we don't see any uptimes? We need to have a sane default
-	m_uptimeMax = ~0;	//TODO: Let's have a more reasonable "maximum" here. We don't want to be setting random uptimes this high
+	m_uptimeMin = 0;
+	m_uptimeMax = 86400;
 	m_isPersonalityInherited = false;
 	m_isUptimeInherited = false;
 	m_isDropRateInherited = false;
