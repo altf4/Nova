@@ -449,7 +449,7 @@ void StatusNovaWrapper()
 			cout << "Novad Status: Not responding" << endl;
 		}
 
-		CloseNovadConnection();
+		DisconnectFromNovad();
 	}
 }
 
@@ -486,7 +486,7 @@ void StartNovaWrapper(bool debug)
 	else
 	{
 		cout << "Novad is already running" << endl;
-		CloseNovadConnection();
+		DisconnectFromNovad();
 	}
 }
 
@@ -587,7 +587,7 @@ void PrintSuspect(in_addr_t address, string interface)
 
 	delete suspect;
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 }
 
 void PrintSuspectData(in_addr_t address, string interface)
@@ -615,7 +615,7 @@ void PrintSuspectData(in_addr_t address, string interface)
 
 	delete suspect;
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 
 
 }
@@ -667,7 +667,7 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 		}
 	}
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 
 }
 
@@ -685,7 +685,7 @@ void PrintSuspectList(enum SuspectListType listType)
 		cout << suspects.at(i).m_ifname() << " " << address << endl;
 	}
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 }
 
 void ClearAllSuspectsWrapper()
@@ -701,7 +701,7 @@ void ClearAllSuspectsWrapper()
 		cout << "There was an error when clearing the suspects" << endl;
 	}
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 }
 
 void ClearSuspectWrapper(in_addr_t address, string interface)
@@ -721,14 +721,14 @@ void ClearSuspectWrapper(in_addr_t address, string interface)
 		cout << "There was an error when trying to clear the suspect data for this suspect" << endl;
 	}
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 }
 
 void PrintUptime()
 {
 	Connect();
 	cout << "Uptime is: " << GetStartTime() << endl;
-	CloseNovadConnection();
+	DisconnectFromNovad();
 }
 
 void Connect()

@@ -223,7 +223,7 @@ void NovaNode::Init(Handle<Object> target)
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnSuspectCleared", registerOnSuspectCleared );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "CheckConnection", CheckConnection );
 
-	NODE_SET_PROTOTYPE_METHOD(s_ct, "CloseNovadConnection", (InvokeMethod<bool, Nova::CloseNovadConnection>) );
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "CloseNovadConnection", (InvokeMethod<bool, Nova::DisconnectFromNovad>) );
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ConnectToNovad", (InvokeMethod<bool, Nova::ConnectToNovad>) );
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "StartNovad", (InvokeMethod<bool, bool, Nova::StartNovad>) );
@@ -341,7 +341,7 @@ Handle<Value> NovaNode::Shutdown(const Arguments &)
 	HandleScope scope;
 	LOG(DEBUG, "Shutdown... closing Novad connection","");
 
-	Nova::CloseNovadConnection();
+	Nova::DisconnectFromNovad();
 	Local<Boolean> result = Local<Boolean>::New( Boolean::New(true) );
 	return scope.Close(result);
 }

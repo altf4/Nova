@@ -172,24 +172,6 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 				"Got a CONTROL_RECLASSIFY_ALL_REQUEST, reclassified all suspects.");
 			break;
 		}
-		case CONTROL_CONNECT_REQUEST:
-		{
-			ControlMessage connectReply(CONTROL_CONNECT_REPLY);
-			connectReply.m_contents.set_m_success(true);
-			MessageManager::Instance().WriteMessage(ticket, &connectReply);
-			break;
-		}
-		case CONTROL_DISCONNECT_NOTICE:
-		{
-			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK);
-			MessageManager::Instance().WriteMessage(ticket, &disconnectReply);
-
-			//TODO: Actually shut down the connection?
-
-			LOG(DEBUG, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
-
-			break;
-		}
 		case CONTROL_START_CAPTURE:
 		{
 			ControlMessage ack(CONTROL_START_CAPTURE_ACK);

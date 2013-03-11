@@ -75,16 +75,8 @@ bool TryWaitConnectToNovad(int timeout_ms);
 //		requires that we write lock it, while a Ticket has a read lock. Trying to do
 //		both will cause a deadlock.
 //	NOTE: Safely does nothing if already disconnected
-void DisconnectFromNovad();
-
-//Cleanly closes the connection to Novad by sending a notice and receiving an ack, then
-//		disconnecting from the socket
-//	returns - true if no connections to Novad exists, false if there is a connection (error)
-//	NOTE: Cannot be called in the same scope as a Ticket! Disconnecting from a socket
-//		requires that we write lock it, while a Ticket has a read lock. Trying to do
-//		both will cause a deadlock.
-//	NOTE: If there was already no connection, then the function does nothing and returns true
-bool CloseNovadConnection();
+// returns - (Vacuously returns true for the sake of nodejs wrapping)
+bool DisconnectFromNovad();
 
 
 //************************************************************************
