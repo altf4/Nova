@@ -36,51 +36,53 @@ class Lock
 public:
 	Lock(pthread_mutex_t *lock)
 	{
-		isMutex = true;
-		lockAquired = false;
+		m_isMutex = true;
+		m_lockAquired = false;
 		m_mutex = lock;
 
-		if (!pthread_mutex_lock(m_mutex))
+		if(!pthread_mutex_lock(m_mutex))
 		{
-			lockAquired = true;
+			m_lockAquired = true;
 		}
 	}
 
 	Lock(pthread_rwlock_t *lock, lockType type)
 	{
-		isMutex = false;
-		lockAquired = false;
+		m_isMutex = false;
+		m_lockAquired = false;
 		m_rwlock = lock;
 
 
 		if(type == READ_LOCK)
 		{
-			if (!pthread_rwlock_rdlock(m_rwlock))
+			if(!pthread_rwlock_rdlock(m_rwlock))
 			{
-				lockAquired = true;
+				m_lockAquired = true;
 			}
 		}
-		else if (type == WRITE_LOCK)
+		else if(type == WRITE_LOCK)
 		{
-			if (!pthread_rwlock_wrlock(m_rwlock))
+			if(!pthread_rwlock_wrlock(m_rwlock))
 			{
-				lockAquired = true;
+				m_lockAquired = true;
 			}
 		}
 	}
 
-	//Blank constructor meant to be used in conjunction with GetLock
 	Lock()
 	{
-		isMutex = true;
+		m_isMutex = true;
+		m_lockAquired = false;
+		m_mutex = NULL;
+		m_rwlock = NULL;
 	}
 
 	~Lock()
 	{
 		// Only try to unlock if we acquired the lock okay
-		if (lockAquired)
+		if(m_lockAquired)
 		{
-			if(isMutex)
+			if(m_isMutex)
 			{
 				pthread_mutex_unlock(m_mutex);
 			}
@@ -92,8 +94,8 @@ public:
 	}
 
 private:
-	bool isMutex;
-	bool lockAquired;
+	bool m_isMutex;
+	bool m_lockAquired;
 
 	pthread_mutex_t *m_mutex;
 	pthread_rwlock_t *m_rwlock;

@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : MessageManager.h
+// Name        : MessageManager.cpp
 // Copyright   : DataSoft Corporation 2011-2013
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -65,7 +65,10 @@ bool MessageManager::WriteMessage(const Ticket &ticket, Message *message)
 	{
 		return false;
 	}
-	if(ticket.m_endpoint->m_bufferevent == NULL)
+
+	struct bufferevent *bufferevent;
+	Lock lock = ticket.m_endpoint->LockBufferevent(&bufferevent);
+	if(bufferevent == NULL)
 	{
 		return false;
 	}
@@ -75,16 +78,16 @@ bool MessageManager::WriteMessage(const Ticket &ticket, Message *message)
 
 	uint32_t length;
 	char *buffer = message->Serialize(&length);
-	bufferevent_lock(ticket.m_endpoint->m_bufferevent);
-	if(bufferevent_write(ticket.m_endpoint->m_bufferevent, buffer, length) == -1)
+	bufferevent_lock(bufferevent);
+	if(bufferevent_write(bufferevent, buffer, length) == -1)
 	{
 		free(buffer);
-		bufferevent_unlock(ticket.m_endpoint->m_bufferevent);
+		bufferevent_unlock(bufferevent);
 		return false;
 	}
 
 	free(buffer);
-	bufferevent_unlock(ticket.m_endpoint->m_bufferevent);
+	bufferevent_unlock(bufferevent);
 	return true;
 }
 
@@ -368,14 +371,22 @@ void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void 
 
 	if(error & (BEV_EVENT_EOF | BEV_EVENT_ERROR))
 	{
-		//If we're a server...
-		if(ctx != NULL)
+		int sockFD = bufferevent_getfd(bev);
+
+		Lock lock;
+		struct bufferevent *bufferevent = NULL;
 		{
-			int sockFD = bufferevent_getfd(bev);
-			bufferevent_free(bev);
+			MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(sockFD);
+			if(endpoint.m_endpoint != NULL)
+			{
+				lock = endpoint.m_endpoint->LockBufferevent(&bufferevent);
+			}
+		}
+		if(bufferevent != NULL)
+		{
+			bufferevent_free(bufferevent);
 			MessageManager::Instance().DeleteEndpoint(sockFD);
 		}
-		return;
 	}
 }
 
@@ -400,7 +411,7 @@ void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
 			LOG(ERROR, "Failed to connect to UI: socket_new", "");
 			return;
 		}
-		bufferevent_setcb(bev, MessageDispatcher, NULL, ErrorDispatcher, cbArg);
+		bufferevent_setcb(bev, MessageDispatcher, NULL, ErrorDispatcher, NULL);
 		bufferevent_setwatermark(bev, EV_READ, 0, 0);
 		if(bufferevent_enable(bev, EV_READ|EV_WRITE) == -1)
 		{
@@ -408,8 +419,6 @@ void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
 			return;
 		}
 
-		//Create the socket within the messaging subsystem
-		//MessageManager::Instance().StartSocket(fd);
 		//Start the callback thread for this new connection
 		cbArg->m_callback->StartServerCallbackThread(fd, bev);
     }

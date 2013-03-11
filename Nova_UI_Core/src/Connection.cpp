@@ -205,6 +205,7 @@ void DisconnectFromNovad()
 		if(bufferevent != NULL)
 		{
 			//bufferevent_free(bufferevent);
+			shutdown(IPCSocketFD, 2);
 			bufferevent = NULL;
 		}
 	}

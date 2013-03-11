@@ -88,8 +88,12 @@ public:
 	//Deletes and removes the message queue indexed by the given ourSerial number
 	bool RemoveMessageQueue(uint32_t ourSerial);
 
+	//Returns a Lock on the internal bufferevent object
+	//  bufferevent - An output variable that will be written to.
+	//			gives you a pointer to the bufferevent
+	Lock LockBufferevent(struct bufferevent **bufferevent);
+
 	bool m_isShutDown;
-	struct bufferevent *m_bufferevent;
 
 private:
 
@@ -112,6 +116,9 @@ private:
 	uint8_t m_consecutiveTimeouts;
 
 	pthread_mutex_t m_callbackRegisterMutex;
+
+	pthread_mutex_t m_buffereventMutex;
+	struct bufferevent *m_bufferevent;
 };
 
 }

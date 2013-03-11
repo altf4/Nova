@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : MessageEndpoint.h
+// Name        : MessageEndpoint.cpp
 // Copyright   : DataSoft Corporation 2011-2013
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ MessageEndpoint::MessageEndpoint(int socketFD, struct bufferevent *bufferevent)
 	pthread_mutex_init(&m_theirUsedSerialsMutex, NULL);
 	pthread_mutex_init(&m_callbackRegisterMutex, NULL);
 	pthread_mutex_init(&m_availableCBsMutex, NULL);
+	pthread_mutex_init(&m_buffereventMutex, NULL);
 
 	pthread_cond_init(&m_callbackWakeupCondition, NULL);
 
@@ -58,6 +59,7 @@ MessageEndpoint::~MessageEndpoint()
 	pthread_mutex_destroy(&m_theirUsedSerialsMutex);
 	pthread_mutex_destroy(&m_callbackRegisterMutex);
 	pthread_mutex_destroy(&m_availableCBsMutex);
+	pthread_mutex_destroy(&m_buffereventMutex);
 
 	pthread_cond_destroy(&m_callbackWakeupCondition);
 }
@@ -205,6 +207,12 @@ void MessageEndpoint::Shutdown()
 bool MessageEndpoint::RemoveMessageQueue(uint32_t ourSerial)
 {
 	return m_queues.RemoveQueue(ourSerial);
+}
+
+Lock MessageEndpoint::LockBufferevent(struct bufferevent **bufferevent)
+{
+	*bufferevent = m_bufferevent;
+	return Lock(&m_buffereventMutex);
 }
 
 }
