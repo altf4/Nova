@@ -26,14 +26,6 @@
 #include "FeatureSet.h"
 #include "protobuf/marshalled_classes.pb.h"
 
-enum SerializeFeatureMode: uint8_t
-{
-	NO_FEATURE_DATA = 0,
-	UNSENT_FEATURE_DATA = 1,
-	MAIN_FEATURE_DATA = 2,
-	ALL_FEATURE_DATA = 3
-};
-
 enum FeatureMode: bool
 {
 	UNSENT_FEATURES = true,
@@ -97,19 +89,19 @@ public:
 	// Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 	//		buf - Pointer to buffer where serialized data will be stored
 	// Returns: number of bytes set in the buffer
-	uint32_t Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
+	uint32_t Serialize(u_char *buf, uint32_t bufferSize, SuspectFeatureMode whichFeatures);
 
 	// Returns an unsigned, 32 bit integer that represents the length of the
 	// Suspect to be serialized (in bytes).
 	//      GetData - If true, include the FeatureSetData length in this calculation;
 	//                if false, don't.
 	// Returns: number of bytes to allocate to serialization buffer
-	uint32_t GetSerializeLength(SerializeFeatureMode whichFeatures);
+	uint32_t GetSerializeLength(SuspectFeatureMode whichFeatures);
 
 	// Reads Suspect information from a buffer originally populated by serializeSuspect
 	//		buf - Pointer to buffer where the serialized suspect is
 	// Returns: number of bytes read from the buffer
-	uint32_t Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures);
+	uint32_t Deserialize(u_char *buf, uint32_t bufferSize, SuspectFeatureMode whichFeatures);
 
 
 	//Returns a copy of the suspects in_addr

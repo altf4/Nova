@@ -36,8 +36,8 @@ enum RequestType
 	REQUEST_SUSPECT = 2;
 	REQUEST_SUSPECT_REPLY = 3;
 
-	REQUEST_SUSPECT_WITHDATA = 4;
-	REQUEST_SUSPECT_WITHDATA_REPLY = 5;
+	REQUEST_ALL_SUSPECTS = 4;
+	REQUEST_ALL_SUSPECTS_REPLY = 5;
 
 	// Request for the uptime of novad
 	REQUEST_UPTIME = 6;
@@ -46,6 +46,14 @@ enum RequestType
 	//Request to Novad to see if it's still alive
 	REQUEST_PING = 8;
 	REQUEST_PONG = 9;
+};
+
+enum SuspectFeatureMode
+{
+	NO_FEATURE_DATA = 0;
+	UNSENT_FEATURE_DATA = 1;
+	MAIN_FEATURE_DATA = 2;
+	ALL_FEATURE_DATA = 3;
 };
 
 enum UpdateType
@@ -79,6 +87,7 @@ message RequestMessage_pb
 	optional SuspectListType m_listType = 2;
 	repeated SuspectID_pb m_SuspectID = 3;
 	optional uint32 m_startTime = 4;
+	optional SuspectFeatureMode m_featureMode = 5;
 }
 
 message UpdateMessage_pb

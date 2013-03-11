@@ -159,7 +159,7 @@ void Suspect::CalculateFeatures()
 // Stores the Suspect information into the buffer, retrieved using deserializeSuspect
 //		buf - Pointer to buffer where serialized data will be stored
 // Returns: number of bytes set in the buffer
-uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures)
+uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SuspectFeatureMode whichFeatures)
 {
 	uint32_t offset = 0;
 	uint32_t suspectSize = GetSerializeLength(whichFeatures);
@@ -247,7 +247,7 @@ uint32_t Suspect::Serialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMo
 	return offset;
 }
 
-uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
+uint32_t Suspect::GetSerializeLength(SuspectFeatureMode whichFeatures)
 {
 	//Adds the sizeof results for the static required fields to messageSize
 	uint32_t messageSize =
@@ -306,7 +306,7 @@ uint32_t Suspect::GetSerializeLength(SerializeFeatureMode whichFeatures)
 // Reads Suspect information from a buffer originally populated by serializeSuspect
 //		buf - Pointer to buffer where the serialized suspect is
 // Returns: number of bytes read from the buffer
-uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SerializeFeatureMode whichFeatures)
+uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SuspectFeatureMode whichFeatures)
 {
 	uint32_t offset = 0;
 	uint32_t suspectSize;

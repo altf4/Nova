@@ -214,6 +214,7 @@ Suspect *GetSuspect(SuspectID_pb address)
 	RequestMessage request(REQUEST_SUSPECT);
 	SuspectID_pb *suspectID = request.m_contents.add_m_suspectid();
 	*suspectID = address;
+	request.m_contents.set_m_featuremode(NO_FEATURE_DATA);
 
 	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
@@ -256,9 +257,10 @@ Suspect *GetSuspectWithData(SuspectID_pb address)
 {
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	RequestMessage request(REQUEST_SUSPECT_WITHDATA);
+	RequestMessage request(REQUEST_SUSPECT);
 	SuspectID_pb *ID = request.m_contents.add_m_suspectid();
 	*ID = address;
+	request.m_contents.set_m_featuremode(MAIN_FEATURE_DATA);
 
 	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
@@ -283,7 +285,7 @@ Suspect *GetSuspectWithData(SuspectID_pb address)
 	}
 
 	RequestMessage *requestReply = (RequestMessage*)reply;
-	if(requestReply->m_contents.m_requesttype() != REQUEST_SUSPECT_WITHDATA_REPLY)
+	if(requestReply->m_contents.m_requesttype() != REQUEST_SUSPECT_REPLY)
 	{
 		//Received the wrong kind of control message
 		delete requestReply;

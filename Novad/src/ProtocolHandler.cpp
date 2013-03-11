@@ -259,16 +259,16 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 		case REQUEST_SUSPECT:
 		{
 			RequestMessage reply(REQUEST_SUSPECT_REPLY);
-			Suspect tempSuspect = suspects.GetShallowSuspect(msg.m_contents.m_suspectid(0));
-			reply.m_suspect = &tempSuspect;
-			MessageManager::Instance().WriteMessage(ticket, &reply);
+			Suspect tempSuspect;
+			if(reply.m_contents.m_featuremode() == NO_FEATURE_DATA)
+			{
+				tempSuspect = suspects.GetShallowSuspect(msg.m_contents.m_suspectid(0));
+			}
+			else
+			{
+				tempSuspect = suspects.GetSuspect(msg.m_contents.m_suspectid(0));
+			}
 
-			break;
-		}
-		case REQUEST_SUSPECT_WITHDATA:
-		{
-			RequestMessage reply(REQUEST_SUSPECT_WITHDATA_REPLY);
-			Suspect tempSuspect = suspects.GetSuspect(msg.m_contents.m_suspectid(0));
 			reply.m_suspect = &tempSuspect;
 			MessageManager::Instance().WriteMessage(ticket, &reply);
 

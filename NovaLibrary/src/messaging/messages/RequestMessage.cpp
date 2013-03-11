@@ -76,20 +76,10 @@ RequestMessage::RequestMessage(char *buffer, uint32_t length)
 	uint32_t bytesToGo = length - (MESSAGE_HDR_SIZE + sizeof(contentsSize) + contentsSize);
 	if(bytesToGo > 0)
 	{
-		enum SerializeFeatureMode suspectSerialMode;
-		if(m_contents.m_requesttype() == REQUEST_SUSPECT_REPLY)
-		{
-			suspectSerialMode = NO_FEATURE_DATA;
-		}
-		else
-		{
-			suspectSerialMode = MAIN_FEATURE_DATA;
-		}
-
 		try
 		{
 			m_suspect = new Suspect();
-			if(m_suspect->Deserialize((u_char*)buffer, bytesToGo, suspectSerialMode) != bytesToGo)
+			if(m_suspect->Deserialize((u_char*)buffer, bytesToGo, m_contents.m_featuremode()) != bytesToGo)
 			{
 				delete m_suspect;
 				m_suspect = NULL;
@@ -111,44 +101,11 @@ char *RequestMessage::Serialize(uint32_t *length)
 {
 	char *buffer, *originalBuffer;
 	uint32_t messageSize;
-	enum SerializeFeatureMode suspectSerialMode;
-	bool sendSuspect = false;
-
-	switch(m_contents.m_requesttype())
-	{
-		case REQUEST_SUSPECT_REPLY:
-		{
-			sendSuspect = true;
-			suspectSerialMode = NO_FEATURE_DATA;
-			break;
-		}
-		case REQUEST_SUSPECT_WITHDATA_REPLY:
-		{
-			sendSuspect = true;
-			suspectSerialMode = MAIN_FEATURE_DATA;
-			break;
-		}
-		case REQUEST_SUSPECTLIST_REPLY:
-		case REQUEST_SUSPECTLIST:
-		case REQUEST_SUSPECT:
-		case REQUEST_SUSPECT_WITHDATA:
-		case REQUEST_UPTIME_REPLY:
-		case REQUEST_UPTIME:
-		case REQUEST_PING:
-		case REQUEST_PONG:
-		{
-			break;
-		}
-		default:
-		{
-			return NULL;
-		}
-	}
 
 	uint32_t suspectLength = 0;
-	if((m_suspect != NULL) && sendSuspect)
+	if(m_suspect != NULL)
 	{
-		suspectLength = m_suspect->GetSerializeLength(suspectSerialMode);
+		suspectLength = m_suspect->GetSerializeLength(m_contents.m_featuremode());
 		if(suspectLength == 0)
 		{
 			return NULL;
@@ -174,10 +131,10 @@ char *RequestMessage::Serialize(uint32_t *length)
 	}
 	buffer += m_contents.ByteSize();
 
-	if((m_suspect != NULL) && sendSuspect)
+	if(m_suspect != NULL)
 	{
 		// Serialize our suspect
-		if(m_suspect->Serialize((u_char*)buffer, suspectLength, suspectSerialMode) != suspectLength)
+		if(m_suspect->Serialize((u_char*)buffer, suspectLength, m_contents.m_featuremode()) != suspectLength)
 		{
 			return NULL;
 		}
