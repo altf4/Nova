@@ -172,24 +172,6 @@ void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket)
 				"Got a CONTROL_RECLASSIFY_ALL_REQUEST, reclassified all suspects.");
 			break;
 		}
-		case CONTROL_CONNECT_REQUEST:
-		{
-			ControlMessage connectReply(CONTROL_CONNECT_REPLY);
-			connectReply.m_contents.set_m_success(true);
-			MessageManager::Instance().WriteMessage(ticket, &connectReply);
-			break;
-		}
-		case CONTROL_DISCONNECT_NOTICE:
-		{
-			ControlMessage disconnectReply(CONTROL_DISCONNECT_ACK);
-			MessageManager::Instance().WriteMessage(ticket, &disconnectReply);
-
-			//TODO: Actually shut down the connection?
-
-			LOG(DEBUG, "The UI hung up", "Got a CONTROL_DISCONNECT_NOTICE, closed down socket.");
-
-			break;
-		}
 		case CONTROL_START_CAPTURE:
 		{
 			ControlMessage ack(CONTROL_START_CAPTURE_ACK);
@@ -277,19 +259,64 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 		case REQUEST_SUSPECT:
 		{
 			RequestMessage reply(REQUEST_SUSPECT_REPLY);
-			Suspect tempSuspect = suspects.GetShallowSuspect(msg.m_contents.m_suspectid(0));
-			reply.m_suspect = &tempSuspect;
+			Suspect tempSuspect;
+			if(reply.m_contents.m_featuremode() == NO_FEATURE_DATA)
+			{
+				tempSuspect = suspects.GetShallowSuspect(msg.m_contents.m_suspectid(0));
+			}
+			else
+			{
+				tempSuspect = suspects.GetSuspect(msg.m_contents.m_suspectid(0));
+			}
+
+			reply.m_suspects.push_back(&tempSuspect);
 			MessageManager::Instance().WriteMessage(ticket, &reply);
 
 			break;
 		}
-		case REQUEST_SUSPECT_WITHDATA:
+		case REQUEST_ALL_SUSPECTS:
 		{
-			RequestMessage reply(REQUEST_SUSPECT_WITHDATA_REPLY);
-			Suspect tempSuspect = suspects.GetSuspect(msg.m_contents.m_suspectid(0));
-			reply.m_suspect = &tempSuspect;
-			MessageManager::Instance().WriteMessage(ticket, &reply);
+			RequestMessage reply(REQUEST_ALL_SUSPECTS_REPLY);
+			vector<SuspectID_pb> keys;
 
+			switch(msg.m_contents.m_listtype())
+			{
+				case SUSPECTLIST_ALL:
+				{
+					keys = suspects.GetAllKeys();
+					break;
+				}
+				case SUSPECTLIST_HOSTILE:
+				{
+					keys = suspects.GetKeys_of_HostileSuspects();
+					break;
+				}
+				case SUSPECTLIST_BENIGN:
+				{
+					keys = suspects.GetKeys_of_BenignSuspects();
+					break;
+				}
+				default:
+				{
+					LOG(DEBUG, "UI sent us an invalid message", "Got an unexpected RequestMessage type");
+					break;
+				}
+			}
+
+			//Get copies of the suspects
+			vector<Suspect> suspectCopies;
+			for(uint i = 0; i < keys.size(); i++)
+			{
+				suspectCopies.push_back(suspects.GetSuspect(keys[i]));
+			}
+
+			//Populate the message
+			for(uint i = 0; i < suspectCopies.size(); i++)
+			{
+				reply.m_suspects.push_back(&suspectCopies[i]);
+			}
+
+			MessageManager::Instance().WriteMessage(ticket, &reply);
 			break;
 		}
 		case REQUEST_UPTIME:

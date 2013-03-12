@@ -18,15 +18,11 @@ enum ControlType
 	CONTROL_SAVE_SUSPECTS_REPLY = 7;	//Reply from Novad with success
 	CONTROL_RECLASSIFY_ALL_REQUEST = 8;	//Request for Novad to reclassify all suspects
 	CONTROL_RECLASSIFY_ALL_REPLY = 9;	//Reply from Novad with success
-	CONTROL_CONNECT_REQUEST = 10;		//Request to connect to Novad from UI
-	CONTROL_CONNECT_REPLY = 11;			//Reply from Novad with success
-	CONTROL_DISCONNECT_NOTICE = 12;		//Notice to Novad that the UI is closing
-	CONTROL_DISCONNECT_ACK = 13;
-	CONTROL_START_CAPTURE = 14;			// Start packet capture on configured interfaces
-	CONTROL_START_CAPTURE_ACK = 15;
-	CONTROL_STOP_CAPTURE = 16;			// Stop packet capture on configured interfaces
-	CONTROL_STOP_CAPTURE_ACK = 17;
-	CONTROL_INVALID = 18;
+	CONTROL_START_CAPTURE = 10;			// Start packet capture on configured interfaces
+	CONTROL_START_CAPTURE_ACK = 11;
+	CONTROL_STOP_CAPTURE = 12;			// Stop packet capture on configured interfaces
+	CONTROL_STOP_CAPTURE_ACK = 13;
+	CONTROL_INVALID = 14;
 };
 
 //The different message types
@@ -40,8 +36,8 @@ enum RequestType
 	REQUEST_SUSPECT = 2;
 	REQUEST_SUSPECT_REPLY = 3;
 
-	REQUEST_SUSPECT_WITHDATA = 4;
-	REQUEST_SUSPECT_WITHDATA_REPLY = 5;
+	REQUEST_ALL_SUSPECTS = 4;
+	REQUEST_ALL_SUSPECTS_REPLY = 5;
 
 	// Request for the uptime of novad
 	REQUEST_UPTIME = 6;
@@ -50,6 +46,14 @@ enum RequestType
 	//Request to Novad to see if it's still alive
 	REQUEST_PING = 8;
 	REQUEST_PONG = 9;
+};
+
+enum SuspectFeatureMode
+{
+	NO_FEATURE_DATA = 0;
+	UNSENT_FEATURE_DATA = 1;
+	MAIN_FEATURE_DATA = 2;
+	ALL_FEATURE_DATA = 3;
 };
 
 enum UpdateType
@@ -83,6 +87,7 @@ message RequestMessage_pb
 	optional SuspectListType m_listType = 2;
 	repeated SuspectID_pb m_SuspectID = 3;
 	optional uint32 m_startTime = 4;
+	optional SuspectFeatureMode m_featureMode = 5;
 }
 
 message UpdateMessage_pb

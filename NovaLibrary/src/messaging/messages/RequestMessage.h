@@ -52,7 +52,7 @@ public:
 	//	NOTE: The caller must manually free() the returned buffer after use
 	char *Serialize(uint32_t *length);
 
-	Suspect *m_suspect;
+	std::vector <Suspect*> m_suspects;
 	RequestMessage_pb m_contents;
 };
 

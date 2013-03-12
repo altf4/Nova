@@ -449,7 +449,7 @@ void StatusNovaWrapper()
 			cout << "Novad Status: Not responding" << endl;
 		}
 
-		CloseNovadConnection();
+		DisconnectFromNovad();
 	}
 }
 
@@ -486,7 +486,7 @@ void StartNovaWrapper(bool debug)
 	else
 	{
 		cout << "Novad is already running" << endl;
-		CloseNovadConnection();
+		DisconnectFromNovad();
 	}
 }
 
@@ -587,7 +587,7 @@ void PrintSuspect(in_addr_t address, string interface)
 
 	delete suspect;
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 }
 
 void PrintSuspectData(in_addr_t address, string interface)
@@ -615,7 +615,7 @@ void PrintSuspectData(in_addr_t address, string interface)
 
 	delete suspect;
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 
 
 }
@@ -624,10 +624,10 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 {
 	Connect();
 
-	vector<SuspectID_pb> suspects = GetSuspectList(listType);
+	vector<Suspect*> suspects = GetSuspects(listType);
 
 	// Print the CSV header
-	if (csv)
+	if(csv)
 	{
 		cout << "IP,";
 		cout << "INTERFACE,";
@@ -640,26 +640,24 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 
 	for(uint i = 0; i < suspects.size(); i++)
 	{
-		Suspect *suspect = GetSuspect(suspects.at(i));
-
-		if(suspect != NULL)
+		if(suspects[i] != NULL)
 		{
 			if(!csv)
 			{
-				cout << suspect->ToString() << endl;
+				cout << suspects[i]->ToString() << endl;
 			}
 			else
 			{
-				cout << suspect->GetIpString() << ",";
-				cout << suspect->GetIdentifier().m_ifname() << ",";
+				cout << suspects[i]->GetIpString() << ",";
+				cout << suspects[i]->GetIdentifier().m_ifname() << ",";
 				for(int i = 0; i < DIM; i++)
 				{
-					cout << suspect->GetFeatureSet().m_features[i] << ",";
+					cout << suspects[i]->GetFeatureSet().m_features[i] << ",";
 				}
-				cout << suspect->GetClassification() << endl;
+				cout << suspects[i]->GetClassification() << endl;
 			}
 
-			delete suspect;
+			delete suspects[i];
 		}
 		else
 		{
@@ -667,7 +665,7 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 		}
 	}
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 
 }
 
@@ -685,7 +683,7 @@ void PrintSuspectList(enum SuspectListType listType)
 		cout << suspects.at(i).m_ifname() << " " << address << endl;
 	}
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 }
 
 void ClearAllSuspectsWrapper()
@@ -701,7 +699,7 @@ void ClearAllSuspectsWrapper()
 		cout << "There was an error when clearing the suspects" << endl;
 	}
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 }
 
 void ClearSuspectWrapper(in_addr_t address, string interface)
@@ -721,14 +719,14 @@ void ClearSuspectWrapper(in_addr_t address, string interface)
 		cout << "There was an error when trying to clear the suspect data for this suspect" << endl;
 	}
 
-	CloseNovadConnection();
+	DisconnectFromNovad();
 }
 
 void PrintUptime()
 {
 	Connect();
 	cout << "Uptime is: " << GetStartTime() << endl;
-	CloseNovadConnection();
+	DisconnectFromNovad();
 }
 
 void Connect()

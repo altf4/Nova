@@ -140,10 +140,10 @@ bool ConnectToNovad()
 	}
 	pthread_create(&eventDispatchThread, NULL, EventDispatcherThread, NULL);
 
-	//Send a connection request
+	//Test if the connection is up
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	ControlMessage connectRequest(CONTROL_CONNECT_REQUEST);
+	RequestMessage connectRequest(REQUEST_PING);
 	if(!MessageManager::Instance().WriteMessage(ticket, &connectRequest))
 	{
 		return false;
@@ -157,34 +157,33 @@ bool ConnectToNovad()
 		return false;
 	}
 
-	if(reply->m_messageType != CONTROL_MESSAGE)
+	if(reply->m_messageType != REQUEST_MESSAGE)
 	{
 		stringstream s;
-		s << "Expected message type of CONTROL_MESSAGE but got " << reply->m_messageType;
+		s << "Expected message type of REQUEST_MESSAGE but got " << reply->m_messageType;
 		LOG(ERROR, s.str(), "");
 
 		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
-	ControlMessage *connectionReply = (ControlMessage*)reply;
-	if(connectionReply->m_contents.m_controltype() != CONTROL_CONNECT_REPLY)
+	RequestMessage *connectionReply = (RequestMessage*)reply;
+	if(connectionReply->m_contents.m_requesttype() != REQUEST_PONG)
 	{
 		stringstream s;
-		s << "Expected control type of CONTROL_CONNECT_REPLY but got " <<connectionReply->m_contents.m_controltype();
+		s << "Expected control type of CONTROL_CONNECT_REPLY but got " <<connectionReply->m_contents.m_requesttype();
 		LOG(ERROR, s.str(), "");
 
 		reply->DeleteContents();
 		delete reply;
 		return false;
 	}
-	bool replySuccess = connectionReply->m_contents.m_success();
 	delete connectionReply;
 
-	return replySuccess;
+	return true;
 }
 
-void DisconnectFromNovad()
+bool DisconnectFromNovad()
 {
 	//Close out any possibly remaining socket artifacts
 	if(libeventBase != NULL)
@@ -213,6 +212,7 @@ void DisconnectFromNovad()
 	MessageManager::Instance().DeleteEndpoint(IPCSocketFD);
 
 	IPCSocketFD = -1;
+	return true;
 }
 
 bool TryWaitConnectToNovad(int timeout_ms)
@@ -227,54 +227,6 @@ bool TryWaitConnectToNovad(int timeout_ms)
 		usleep(timeout_ms *1000);
 		return ConnectToNovad();
 	}
-}
-
-bool CloseNovadConnection()
-{
-	bool success = true;
-	//Keep the scope of the following Ticket out of the call to Disconnect
-	{
-		Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-		if(IPCSocketFD == -1)
-		{
-			return true;
-		}
-
-		ControlMessage disconnectNotice(CONTROL_DISCONNECT_NOTICE);
-		if(!MessageManager::Instance().WriteMessage(ticket, &disconnectNotice))
-		{
-			success = false;
-		}
-
-		Message *reply = MessageManager::Instance().ReadMessage(ticket);
-		if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-		{
-			LOG(ERROR, "Timeout error when waiting for message reply", "");
-			reply->DeleteContents();
-			delete reply;
-			success = false;
-		}
-		else if(reply->m_messageType != CONTROL_MESSAGE)
-		{
-			reply->DeleteContents();
-			delete reply;
-			success = false;
-		}
-		else
-		{
-			ControlMessage *connectionReply = (ControlMessage*)reply;
-			if(connectionReply->m_contents.m_controltype() != CONTROL_DISCONNECT_ACK)
-			{
-				success = false;
-			}
-			connectionReply->DeleteContents();
-			delete connectionReply;
-		}
-	}
-	DisconnectFromNovad();
-	LOG(DEBUG, "Call to CloseNovadConnection complete", "");
-	return success;
 }
 
 }
