@@ -171,6 +171,8 @@ block headerAdditions
         if(err)
         {
             alert('Unable to create nodes due to error: ' + err);
+            $('#createNewNodes').attr('value', 'Create New Nodes');
+            $('#createNewNodes').attr('disabled', false);
         } 
         else
         {

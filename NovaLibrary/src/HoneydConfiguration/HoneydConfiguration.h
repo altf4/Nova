@@ -165,6 +165,9 @@ public:
 	// *Note this function may have poor performance when there are a large number of nodes
 	bool IsMACUsed(std::string mac);
 
+
+	bool IsIPUsed(std::string ip);
+
 	static std::string SanitizeProfileName(std::string pfilename);
 
 	void ClearProfiles();

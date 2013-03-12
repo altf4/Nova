@@ -729,6 +729,14 @@ bool HoneydConfiguration::AddNode(string profileName, string ipAddress, string m
 			LOG(ERROR, "Invalid node IP address '" + ipAddress + "' given!", "");
 			return false;
 		}
+
+		// Make sure the IP address hasn't been used already
+		if (IsIPUsed(ipAddress))
+		{
+			LOG(DEBUG, "Attempt at creation of a node using IP address that already exists", "");
+			return false;
+		}
+
 	}
 
 	//Get the name after assigning the values
@@ -910,6 +918,20 @@ bool HoneydConfiguration::IsMACUsed(string mac)
 	}
 
 	return false;
+}
+
+bool HoneydConfiguration::IsIPUsed(string ip)
+{
+	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
+	{
+		if(it->second.m_IP == ip)
+		{
+			return true;
+		}
+	}
+
+	return false;
+
 }
 
 
