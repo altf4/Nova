@@ -624,10 +624,10 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 {
 	Connect();
 
-	vector<SuspectID_pb> suspects = GetSuspectList(listType);
+	vector<Suspect*> suspects = GetSuspects(listType);
 
 	// Print the CSV header
-	if (csv)
+	if(csv)
 	{
 		cout << "IP,";
 		cout << "INTERFACE,";
@@ -640,26 +640,24 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 
 	for(uint i = 0; i < suspects.size(); i++)
 	{
-		Suspect *suspect = GetSuspect(suspects.at(i));
-
-		if(suspect != NULL)
+		if(suspects[i] != NULL)
 		{
 			if(!csv)
 			{
-				cout << suspect->ToString() << endl;
+				cout << suspects[i]->ToString() << endl;
 			}
 			else
 			{
-				cout << suspect->GetIpString() << ",";
-				cout << suspect->GetIdentifier().m_ifname() << ",";
+				cout << suspects[i]->GetIpString() << ",";
+				cout << suspects[i]->GetIdentifier().m_ifname() << ",";
 				for(int i = 0; i < DIM; i++)
 				{
-					cout << suspect->GetFeatureSet().m_features[i] << ",";
+					cout << suspects[i]->GetFeatureSet().m_features[i] << ",";
 				}
-				cout << suspect->GetClassification() << endl;
+				cout << suspects[i]->GetClassification() << endl;
 			}
 
-			delete suspect;
+			delete suspects[i];
 		}
 		else
 		{

@@ -96,6 +96,9 @@ Suspect *GetSuspect(SuspectID_pb address);
 // Same as GetSuspect but returns all the featureset data
 Suspect *GetSuspectWithData(SuspectID_pb address);
 
+//Return a vector of multiple suspects, filtered by listType (all, just hostile, just benign)
+std::vector<Suspect*> GetSuspects(enum SuspectListType listType);
+
 //Asks Novad to save the suspect list to persistent storage
 //	returns - true if saved correctly, false on error
 bool SaveAllSuspects(std::string file);

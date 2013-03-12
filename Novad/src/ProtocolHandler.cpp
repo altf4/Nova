@@ -269,9 +269,54 @@ void HandleRequestMessage(RequestMessage &msg, Ticket &ticket)
 				tempSuspect = suspects.GetSuspect(msg.m_contents.m_suspectid(0));
 			}
 
-			reply.m_suspect = &tempSuspect;
+			reply.m_suspects.push_back(&tempSuspect);
 			MessageManager::Instance().WriteMessage(ticket, &reply);
 
+			break;
+		}
+		case REQUEST_ALL_SUSPECTS:
+		{
+			RequestMessage reply(REQUEST_ALL_SUSPECTS_REPLY);
+			vector<SuspectID_pb> keys;
+
+			switch(msg.m_contents.m_listtype())
+			{
+				case SUSPECTLIST_ALL:
+				{
+					keys = suspects.GetAllKeys();
+					break;
+				}
+				case SUSPECTLIST_HOSTILE:
+				{
+					keys = suspects.GetKeys_of_HostileSuspects();
+					break;
+				}
+				case SUSPECTLIST_BENIGN:
+				{
+					keys = suspects.GetKeys_of_BenignSuspects();
+					break;
+				}
+				default:
+				{
+					LOG(DEBUG, "UI sent us an invalid message", "Got an unexpected RequestMessage type");
+					break;
+				}
+			}
+
+			//Get copies of the suspects
+			vector<Suspect> suspectCopies;
+			for(uint i = 0; i < keys.size(); i++)
+			{
+				suspectCopies.push_back(suspects.GetSuspect(keys[i]));
+			}
+
+			//Populate the message
+			for(uint i = 0; i < suspectCopies.size(); i++)
+			{
+				reply.m_suspects.push_back(&suspectCopies[i]);
+			}
+
+			MessageManager::Instance().WriteMessage(ticket, &reply);
 			break;
 		}
 		case REQUEST_UPTIME:
