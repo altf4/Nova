@@ -60,17 +60,19 @@ var NovaCommon = new function() {
         });
     }
     
-    this.StartHaystack = function(){
+    this.StartHaystack = function(cb){
         var command = NovaCommon.config.ReadSetting("COMMAND_START_HAYSTACK");
         exec(command, function(error, stdout, stderr){
             if(error != null){console.log("Error running command '" + command + "' :" + error);}
+			cb && cb();
         });
     }
     
-    this.StopHaystack = function(){
+    this.StopHaystack = function(cb){
         var command = NovaCommon.config.ReadSetting("COMMAND_STOP_HAYSTACK");
         exec(command, function(error, stdout, stderr){
             if(error != null){console.log("Error running command '" + command + "' :" + error);}
+			cb && cb();
         });
     }
 

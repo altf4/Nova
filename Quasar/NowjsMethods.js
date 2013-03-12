@@ -240,13 +240,13 @@ everyone.now.GetInheritedEthernetList = function (parent, cb)
 
 everyone.now.RestartHaystack = function(cb)
 {
-    NovaCommon.StopHaystack();
-
-    // Note: the other honeyd may be shutting down still,
-    // but the slight overlap doesn't cause problems
-    NovaCommon.StartHaystack(false);
-
-    cb && cb();
+    NovaCommon.StopHaystack(function() {
+        // Note: the other honeyd may be shutting down still,
+        // but the slight overlap doesn't cause problems
+        NovaCommon.StartHaystack(function() {
+            cb && cb();
+        });
+    });
 };
 
 everyone.now.StartHaystack = function()
@@ -275,13 +275,14 @@ everyone.now.StartHaystack = function()
 
 everyone.now.StopHaystack = function()
 {
-    NovaCommon.StopHaystack();
-    try 
-    {
-        everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp());
-    } 
-    catch(err)
-    {};
+    NovaCommon.StopHaystack(function() {
+        try 
+        {
+            everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp());
+        } 
+        catch(err)
+        {};
+    });
 };
 
 everyone.now.IsHaystackUp = function(cb)
@@ -563,10 +564,10 @@ everyone.now.SaveProfile = function (profile, newProfile, cb)
     {
         var existingProfile = NovaCommon.honeydConfig.GetProfile(profile.name);
         if(existingProfile != null)
-      	{
-      	    cb && cb("ERROR: Profile with name already exists");
-      	    return;
-      	}
+        {
+            cb && cb("ERROR: Profile with name already exists");
+            return;
+        }
     }
 
 
@@ -1137,7 +1138,7 @@ everyone.now.ClearHostileEvents = function (cb)
         if (err)
         {
             console.log("Database error: " + err);
-			cb(err);
+            cb(err);
             return;
         }
 
@@ -1232,100 +1233,100 @@ everyone.now.GetPortSets = GetPortSets;
 
 
 function databaseError(err, cb) {
-    	if (err)
-		{
-			LOG("ERROR", "Database error: " + err);
-			cb && cb(err);
-			return true;
-		}
-		return false;
+        if (err)
+        {
+            LOG("ERROR", "Database error: " + err);
+            cb && cb(err);
+            return true;
+        }
+        return false;
 }
 
 everyone.now.GetUnseenSuspects = function(cb) {
     NovaCommon.dbqGetUnseenSuspects.all(function(err, results){
-		if (databaseError(err, cb)) {return;}	
-		cb && cb(null, results);
-	});
+        if (databaseError(err, cb)) {return;}   
+        cb && cb(null, results);
+    });
 };
 
 everyone.now.MarkSuspectSeen = function(ip, ethinterface, cb) {
     NovaCommon.dbqMarkSuspectSeen.run(ip, ethinterface, function(err){
-		if (databaseError(err,cb)) {return;}	
-		cb && cb(null);
-	});
+        if (databaseError(err,cb)) {return;}    
+        cb && cb(null);
+    });
 };
 
 everyone.now.MarkAllSuspectSeen = function(cb) {
-	NovaCommon.dbqMarkAllSuspectSeen.run(function(err) {
-		if (databaseError(err,cb)) {return;}	
-		cb && cb(null);
-	});
+    NovaCommon.dbqMarkAllSuspectSeen.run(function(err) {
+        if (databaseError(err,cb)) {return;}    
+        cb && cb(null);
+    });
 };
 
 everyone.now.GetUnseenDataSuspects = function(cb) {
     NovaCommon.dbqGetUnseenDataSuspects.all(function(err, results){
-		if (databaseError(err, cb)) {return;}	
-		cb && cb(null, results);
-	});
+        if (databaseError(err, cb)) {return;}   
+        cb && cb(null, results);
+    });
 };
 
 everyone.now.MarkSuspectDataSeen = function(ip, ethinterface, cb) {
     NovaCommon.dbqMarkSuspectDataSeen.run(ip, ethinterface, function(err){
-		if (databaseError(err,cb)) {return;}	
-		cb && cb(null);
-	});
+        if (databaseError(err,cb)) {return;}    
+        cb && cb(null);
+    });
 };
 
 everyone.now.MarkAllSuspectDataSeen = function(cb) {
-	NovaCommon.dbqMarkAllSuspectDataSeen.run(function(err) {
-		if (databaseError(err,cb)) {return;}	
-		cb && cb(null);
-	});
+    NovaCommon.dbqMarkAllSuspectDataSeen.run(function(err) {
+        if (databaseError(err,cb)) {return;}    
+        cb && cb(null);
+    });
 };
 
 
 // Functions related to the nova log entry seen table in the DB
 everyone.now.GetUnseenNovaLogs = function(cb) {
-	NovaCommon.dbqGetUnseenNovaLogs.all(function(err, results) {
-		if (databaseError(err, cb)) {return;}
-		cb && cb(null, results);
-	});
+    NovaCommon.dbqGetUnseenNovaLogs.all(function(err, results) {
+        if (databaseError(err, cb)) {return;}
+        cb && cb(null, results);
+    });
 };
 
 everyone.now.MarkNovaLogEntrySeen = function(linenum, cb) {
-	NovaCommon.dbqMarkNovaLogEntrySeen.run(linenum, function(err) {
-		if (databaseError(err,cb)) {return;}	
-		cb && cb(null);
-	});
+    NovaCommon.dbqMarkNovaLogEntrySeen.run(linenum, function(err) {
+        if (databaseError(err,cb)) {return;}    
+        cb && cb(null);
+    });
 };
 
 everyone.now.MarkAllNovaLogEntriesSeen = function(cb) {
-	NovaCommon.dbqMarkAllNovaLogEntriesSeen.run(function(err) {
-		if (databaseError(err,cb)) {return;}	
-		cb && cb(null);
-	});
+    NovaCommon.dbqMarkAllNovaLogEntriesSeen.run(function(err) {
+        if (databaseError(err,cb)) {return;}    
+        cb && cb(null);
+    });
 };
 
 // Functions related  to the honeyd log entry seen table in the DB
 everyone.now.GetUnseenHoneydLogs = function(cb) {
-	NovaCommon.dbqGetUnseenHoneydLogs.all(function(err, results) {
-		if (databaseError(err, cb)) {return;}
-		cb && cb(null, results);
-	});
+    NovaCommon.dbqGetUnseenHoneydLogs.all(function(err, results) {
+        if (databaseError(err, cb)) {return;}
+        cb && cb(null, results);
+    });
 };
 
 everyone.now.MarkHoneydLogEntrySeen = function(linenum, cb) {
-	NovaCommon.dbqMarkHoneydLogEntrySeen.run(linenum, function(err) {
-		if (databaseError(err,cb)) {return;}	
-		cb && cb(null);
-	});
+    NovaCommon.dbqMarkHoneydLogEntrySeen.run(linenum, function(err) {
+        if (databaseError(err,cb)) {return;}    
+        cb && cb(null);
+    });
 };
 
 everyone.now.MarkAllHoneydLogEntriesSeen = function(cb) {
-	NovaCommon.dbqMarkAllHoneydLogEntriesSeen.run(function(err) {
-		if (databaseError(err,cb)) {return;}	
-		cb && cb(null);
-	});
+    NovaCommon.dbqMarkAllHoneydLogEntriesSeen.run(function(err) {
+        if (databaseError(err,cb)) {return;}    
+        cb && cb(null);
+    });
 };
 
 
