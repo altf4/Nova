@@ -75,7 +75,7 @@ Profile::~Profile()
 	}
 }
 
-string Profile::ToString(const std::string &portSetName, const std::string &nodeName)
+string Profile::ToString(int portSetIndex, const std::string &nodeName)
 {
 	stringstream out;
 
@@ -89,7 +89,7 @@ string Profile::ToString(const std::string &portSetName, const std::string &node
 	}
 
 	//If the portset name is empty, just use the first port set in the list
-	if(portSetName.empty())
+	if(portSetIndex == -1)
 	{
 		if(!m_portSets.empty())
 		{
@@ -100,15 +100,7 @@ string Profile::ToString(const std::string &portSetName, const std::string &node
 	}
 	else
 	{
-		//Ports
-		for(uint i = 0; i < m_portSets.size(); i++)
-		{
-			//If we get a match for the port set
-			if(!portSetName.compare(m_portSets[i]->m_name))
-			{
-				out << m_portSets[i]->ToString(nodeName);
-			}
-		}
+		out << m_portSets[portSetIndex]->ToString(nodeName);
 	}
 
 	//Use the recursive personality, here
@@ -208,17 +200,14 @@ PortSet *Profile::GetRandomPortSet()
 	return m_portSets[random];
 }
 
-PortSet *Profile::GetPortSet(std::string name)
+PortSet *Profile::GetPortSet(int portSetIndex)
 {
-	for(uint i = 0; i < m_portSets.size(); i++)
+	if (portSetIndex < 0 || portSetIndex >= (int)m_portSets.size())
 	{
-		if(m_portSets[i]->m_name == name)
-		{
-			return m_portSets[i];
-		}
+		return NULL;
 	}
 
-	return NULL;
+	return m_portSets[portSetIndex];
 }
 
 uint Profile::GetVendorCount(std::string vendorName)

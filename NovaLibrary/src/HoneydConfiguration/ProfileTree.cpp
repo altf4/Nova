@@ -36,7 +36,7 @@ ProfileTree::ProfileTree()
 	m_root->m_distribution = 100;
 	m_root->m_vendors.push_back(pair<string, double>("Dell", 1));
 
-	PortSet *portset = new PortSet("default");
+	PortSet *portset = new PortSet();
 	portset->m_defaultICMPBehavior = PORT_OPEN;
 	portset->m_defaultTCPBehavior = PORT_CLOSED;
 	portset->m_defaultUDPBehavior = PORT_CLOSED;

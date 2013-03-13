@@ -153,13 +153,6 @@ TEST_F(HoneydConfigurationTest, test_GetRandomVendor)
 	EXPECT_TRUE(defaultProfile->GetRandomVendor().compare("") > 0);
 }
 
-TEST_F(HoneydConfigurationTest, test_GetPortSet)
-{
-	Profile *defaultProfile = new Profile("default","DefaultProfile");
-	EXPECT_TRUE(HC->AddProfile(defaultProfile));
-	EXPECT_TRUE(defaultProfile->GetRandomVendor().compare("") > 0);
-}
-
 TEST_F(HoneydConfigurationTest, test_GetScript)
 {
 	Script script;
@@ -327,16 +320,14 @@ TEST_F(HoneydConfigurationTest, test_GetPortSets)
 {
 	std::vector<PortSet*> vectorOfPorts;
 	Profile *defaultProfile = new Profile("default","DefaultProfile");
-	defaultProfile->m_portSets.push_back(new PortSet("test1"));
-	defaultProfile->m_portSets.push_back(new PortSet("test2"));
-	defaultProfile->m_portSets.push_back(new PortSet("test3"));
-	defaultProfile->m_portSets.push_back(new PortSet("test4"));
-	defaultProfile->m_portSets.push_back(new PortSet("test5"));
+	defaultProfile->m_portSets.push_back(new PortSet());
+	defaultProfile->m_portSets.push_back(new PortSet());
+	defaultProfile->m_portSets.push_back(new PortSet());
+	defaultProfile->m_portSets.push_back(new PortSet());
+	defaultProfile->m_portSets.push_back(new PortSet());
 	EXPECT_TRUE(HC->AddProfile(defaultProfile));
 	vectorOfPorts = HC->GetPortSets(defaultProfile->m_name);
-	PortSet* singlePort = HC->GetPortSet(defaultProfile->m_name,"test1");
 	EXPECT_TRUE(vectorOfPorts.size() == 5);
-	EXPECT_TRUE(singlePort->m_name.compare("test1") == 0);
 }
 
 TEST_F(HoneydConfigurationTest, test_WriteScriptsToXML)
@@ -489,7 +480,7 @@ TEST_F(HoneydConfigurationTest, test_GetProfileNames)
 
 TEST_F(HoneydConfigurationTest, test_AddNodes)
 {
-	EXPECT_TRUE(HC->AddNodes("default", "default", "Dell", "DHCP", "eth0", 10));
+	EXPECT_TRUE(HC->AddNodes("default", 0, "Dell", "DHCP", "eth0", 10));
 	EXPECT_EQ(10, HC->GetNodeMACs().size());
 }
 
@@ -502,25 +493,6 @@ TEST_F(HoneydConfigurationTest, test_AddNode)
 	EXPECT_TRUE(HC->AddNode(node));
 	EXPECT_TRUE(HC->GetNode("FF:FF:BA:BE:CA:FE") != NULL);
 	EXPECT_TRUE(HC->GetNode("FF:FF:BA:BE:CA:FE")->m_MAC == "FF:FF:BA:BE:CA:FE");
-}
-
-TEST_F(HoneydConfigurationTest, test_WouldAddProfileCauseNodeDeletions)
-{
-	Profile *p = new Profile("default", "testProfile");
-	p->m_portSets.push_back(new PortSet("test"));
-	EXPECT_TRUE(HC->AddProfile(p));
-
-	Node node;
-	node.m_pfile = "testProfile";
-	node.m_portSetName = "test";
-	node.m_MAC = "FF:FF:BA:BE:CA:FE";
-	EXPECT_TRUE(HC->AddNode(node));
-
-	Profile *p2 = new Profile("default", "testProfile");
-	EXPECT_TRUE(HC->WouldAddProfileCauseNodeDeletions(p2));
-
-	p2->m_portSets.push_back(new PortSet("test"));
-	EXPECT_FALSE(HC->WouldAddProfileCauseNodeDeletions(p2));
 }
 
 TEST_F(HoneydConfigurationTest, test_ReadScriptsXML)

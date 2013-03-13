@@ -24,7 +24,7 @@ Handle<Object> HoneydNodeJs::WrapNode(Node* node)
 		Local<Template> proto = nodeTemplate->PrototypeTemplate();
 		proto->Set("GetInterface",  FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetInterface>) );
 		proto->Set("GetProfile",    FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetProfile>) );
-		proto->Set("GetPortSet",    FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetPortSet>) );
+		proto->Set("GetPortSet",    FunctionTemplate::New(InvokeMethod<int, Node, &Nova::Node::GetPortSet>) );
 		proto->Set("GetIP",         FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetIP>) );
 		proto->Set("GetMAC",        FunctionTemplate::New(InvokeMethod<string, Node, &Nova::Node::GetMAC>) );
 		proto->Set("IsEnabled",     FunctionTemplate::New(InvokeMethod<bool, Node, &Nova::Node::IsEnabled>) );
@@ -54,7 +54,6 @@ Handle<Object> HoneydNodeJs::WrapPortSet(PortSet *portSet)
 
 		// Javascript methods
 		Local<Template> proto = portSetTemplate->PrototypeTemplate();
-		proto->Set("GetName",			FunctionTemplate::New(InvokeMethod<std::string, Nova::PortSet, &Nova::PortSet::GetName>) );
 		proto->Set("GetTCPBehavior",	FunctionTemplate::New(InvokeMethod<std::string, Nova::PortSet, &Nova::PortSet::GetTCPBehavior>) );
 		proto->Set("GetUDPBehavior",	FunctionTemplate::New(InvokeMethod<std::string, Nova::PortSet, &Nova::PortSet::GetUDPBehavior>) );
 		proto->Set("GetICMPBehavior",	FunctionTemplate::New(InvokeMethod<std::string, Nova::PortSet, &Nova::PortSet::GetICMPBehavior>) );

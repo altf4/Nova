@@ -16,14 +16,13 @@ public:
 
 	bool SetPersonality(std::string personality);
 	bool SetCount(int count);
-	bool AddPortSet(std::string portSetName);
+	int AddPortSet();
 	bool ClearPorts();
 
 	bool SetIsPersonalityInherited(bool);
 	bool SetIsDropRateInherited(bool);
 	bool SetIsUptimeInherited(bool);
 	bool Save();
-	bool WouldAddProfileCauseNodeDeletions();
 
 private:
 	//The parent name is needed to know where to put the profile in the tree,

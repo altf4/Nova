@@ -137,14 +137,14 @@ Handle<Value> HoneydConfigBinding::GetPortSet(const Arguments& args)
 	}
 
 	std::string profileName = cvv8::CastFromJS<string>(args[0]);
-	std::string portSetName = cvv8::CastFromJS<string>(args[1]);
+	int portSetIndex = cvv8::CastFromJS<int>(args[1]);
 
 	Profile *profile = obj->m_conf->GetProfile(profileName);
 	if(profile == NULL)
 	{
 		return scope.Close( Null() );
 	}
-	PortSet *portSet = profile->GetPortSet(portSetName);
+	PortSet *portSet = profile->GetPortSet(portSetIndex);
 	if(portSet == NULL)
 	{
 		return scope.Close( Null() );
@@ -175,7 +175,7 @@ Handle<Value> HoneydConfigBinding::GetPortSetNames(const Arguments& args)
 	v8::Local<v8::Array> portArray = v8::Array::New();
 	for(uint i = 0; i < profile->m_portSets.size(); i++)
 	{
-		portArray->Set(v8::Number::New(i),cvv8::CastToJS(profile->m_portSets[i]->m_name));
+		portArray->Set(v8::Number::New(i),cvv8::CastToJS(i));
 	}
 
 	return scope.Close( portArray );
@@ -207,13 +207,13 @@ Handle<Value> HoneydConfigBinding::AddNodes(const Arguments& args)
 	}
 
 	string profile = cvv8::CastFromJS<string>( args[0] );
-	string portsetName = cvv8::CastFromJS<string>( args[1] );
+	int portSetIndex = cvv8::CastFromJS<int>( args[1] );
 	string vendor = cvv8::CastFromJS<string>( args[2] );
 	string ipAddress = cvv8::CastFromJS<string>( args[3] );
 	string interface = cvv8::CastFromJS<string>( args[4] );
 	int count = cvv8::JSToInt32( args[5] );
 
-	return scope.Close(Boolean::New(obj->m_conf->AddNodes(profile, portsetName, vendor, ipAddress, interface, count)));
+	return scope.Close(Boolean::New(obj->m_conf->AddNodes(profile, portSetIndex, vendor, ipAddress, interface, count)));
 }
 
 
@@ -228,7 +228,7 @@ Handle<Value> HoneydConfigBinding::AddNode(const Arguments& args)
 	}
 
 	string profile = cvv8::CastFromJS<string>( args[0] );
-	string portset = cvv8::CastFromJS<string>( args[1] );
+	int portset = cvv8::CastFromJS<int>( args[1] );
 	string ipAddress = cvv8::CastFromJS<string>( args[2] );
 	string mac = cvv8::CastFromJS<string>( args[3] );
 	string interface = cvv8::CastFromJS<string>( args[4] );
@@ -250,7 +250,7 @@ Handle<Value> HoneydConfigBinding::SetDoppelganger(const Arguments& args)
 
 	Node node;
 	node.m_pfile = cvv8::CastFromJS<string>( args[0] );
-	node.m_portSetName = cvv8::CastFromJS<string>( args[1] );
+	node.m_portSetIndex = cvv8::CastFromJS<int>( args[1] );
 	node.m_IP = cvv8::CastFromJS<string>( args[2] );
 	node.m_MAC = cvv8::CastFromJS<string>( args[3] );
 	node.m_interface = cvv8::CastFromJS<string>( args[4] );

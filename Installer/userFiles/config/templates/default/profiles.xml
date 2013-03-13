@@ -18,7 +18,6 @@
 		</ethernet_vendors>
 		<portsets>
 			<portset>
-				<name>default</name>
 				<defaultTCPBehavior>filtered</defaultTCPBehavior>
 				<defaultUDPBehavior>filtered</defaultUDPBehavior>
 				<defaultICMPBehavior>filtered</defaultICMPBehavior>
@@ -44,7 +43,6 @@
 				</ethernet_vendors>
 				<portsets>
 					<portset>
-						<name>Basic Windows Configuration</name>
 						<defaultTCPBehavior>closed</defaultTCPBehavior>
 						<defaultUDPBehavior>closed</defaultUDPBehavior>
 						<defaultICMPBehavior>open</defaultICMPBehavior>
@@ -131,7 +129,6 @@
 				</ethernet_vendors>
 				<portsets>
 					<portset>
-						<name>Basic Linux Server</name>
 						<defaultTCPBehavior>closed</defaultTCPBehavior>
 						<defaultUDPBehavior>closed</defaultUDPBehavior>
 						<defaultICMPBehavior>open</defaultICMPBehavior>
@@ -199,7 +196,6 @@
 				</ethernet_vendors>
 				<portsets>
 					<portset>
-						<name>Basic FreeBSD Server</name>
 						<defaultTCPBehavior>closed</defaultTCPBehavior>
 						<defaultUDPBehavior>closed</defaultUDPBehavior>
 						<defaultICMPBehavior>open</defaultICMPBehavior>

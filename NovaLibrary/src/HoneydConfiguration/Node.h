@@ -31,7 +31,7 @@ public:
 
 	std::string m_interface;
 	std::string m_pfile;
-	std::string m_portSetName;
+	int m_portSetIndex;
 	std::string m_IP;
 	std::string m_MAC;
 	bool m_enabled;
@@ -46,7 +46,7 @@ public:
 		m_MAC = nodePtree.get<std::string>("MAC");
 
 		m_pfile = nodePtree.get<std::string>("profile.name");
-		m_portSetName = nodePtree.get<std::string>("profile.portset");
+		m_portSetIndex = nodePtree.get<int>("profile.portset");
 	}
 
 	boost::property_tree::ptree GetPtree()
@@ -58,7 +58,7 @@ public:
 		nodePtree.put<std::string>("MAC", m_MAC);
 
 		nodePtree.put<std::string>("profile.name", m_pfile);
-		nodePtree.put<std::string>("profile.portset", m_portSetName);
+		nodePtree.put<int>("profile.portset", m_portSetIndex);
 
 		return nodePtree;
 	}
@@ -66,7 +66,7 @@ public:
 	// This is for the Javascript bindings in the web interface
 	inline std::string GetInterface() {return m_interface;}
 	inline std::string GetProfile() {return m_pfile;}
-	inline std::string GetPortSet() {return m_portSetName;}
+	inline int GetPortSet() {return m_portSetIndex;}
 	inline std::string GetIP() {return m_IP;}
 	inline std::string GetMAC() {return m_MAC;}
 	inline bool IsEnabled() {return m_enabled;}

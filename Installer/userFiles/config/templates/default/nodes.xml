@@ -7,7 +7,7 @@
 		<MAC>00:11:43:7d:de:9f</MAC>
 		<profile>
 			<name>BSDServer</name>
-			<portset>Basic FreeBSD Server</portset>
+			<portset>0</portset>
 		</profile>
 	</node>
 	<node>
@@ -17,7 +17,7 @@
 		<MAC>00:18:8b:ba:77:fd</MAC>
 		<profile>
 			<name>WinServer</name>
-			<portset>Basic Windows Configuration</portset>
+			<portset>0</portset>
 		</profile>
 	</node>
 	<node>
@@ -27,7 +27,7 @@
 		<MAC>a4:ba:db:7d:27:5e</MAC>
 		<profile>
 			<name>LinuxServer</name>
-			<portset>Basic Linux Server</portset>
+			<portset>0</portset>
 		</profile>
 	</node>
 </nodes>
@@ -39,7 +39,7 @@
 		<MAC>a4:ba:db:7d:27:5f</MAC>
 		<profile>
 			<name>LinuxServer</name>
-			<portset>default</portset>
+			<portset>0</portset>
 		</profile>
 	</node>
 </doppelganger>

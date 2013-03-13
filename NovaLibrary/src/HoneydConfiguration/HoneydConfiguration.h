@@ -92,12 +92,8 @@ public:
 			std::string interface, PortSet *portSet);
 	bool AddNode(Node node);
 
-	bool AddNodes(std::string profileName, std::string portSetName, std::string macVendor, std::string ipAddress, std::string interface, int numberOfNodes);
+	bool AddNodes(std::string profileName, int portSetIndex, std::string macVendor, std::string ipAddress, std::string interface, int numberOfNodes);
 
-	// Calling add profile can result in node deletions if the profile being added already exists, and the
-	// new one is missing portsets. This will check the portsets and tell you if any nodes will be deleted if AddProfile
-	// is called with this profile.
-	bool WouldAddProfileCauseNodeDeletions(Profile *profile);
 
 
 	//Inserts the profile into the honeyd configuration
@@ -124,7 +120,7 @@ public:
 
 	//Get a vector of PortSets associated with a particular profile
 	std::vector<PortSet*> GetPortSets(std::string profileName);
-	PortSet* GetPortSet(std::string profileName, std::string portSetName);
+	PortSet* GetPortSet(std::string profileName, int portSetIndex);
 
 	//This function allows easy access to all profiles
 	// Returns a vector of strings containing the names of all profiles

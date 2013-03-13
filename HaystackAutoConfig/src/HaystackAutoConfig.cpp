@@ -580,20 +580,7 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 			// If we've found the <ports> tag within the <host> xml node
 			else if(!value.first.compare("ports"))
 			{
-				string portName;
-				if(!newHost->m_addresses.empty())
-				{
-					portName = "Autoconfig-PortSet-" + newHost->m_addresses[0];
-				}
-				else
-				{
-					stringstream ss;
-					static uint portSetCount = 0;
-					ss << "Autoconfig-PortSet-" << portSetCount++;
-					portName = ss.str();
-				}
-
-				PortSet *newPortSet = new PortSet(portName);
+				PortSet *newPortSet = new PortSet();
 				newHost->m_portSets.push_back(newPortSet);
 
 				BOOST_FOREACH(ptree::value_type &portValue, value.second.get_child(""))

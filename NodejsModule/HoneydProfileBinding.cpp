@@ -90,7 +90,7 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 
 
 
-	string portSetName = cvv8::CastFromJS<string>( args[0] );
+	int portSetIndex = cvv8::CastFromJS<int>( args[0] );
 	string portBehavior = cvv8::CastFromJS<string>( args[1] );
 	string portProtcol = cvv8::CastFromJS<string>( args[2] );
 	uint portNumber = cvv8::CastFromJS<uint>( args[3] );
@@ -98,10 +98,10 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 	vector<string> scriptConfigurationKeys = cvv8::CastFromJS<vector<string>>( args[5] );
 	vector<string> scriptConfigurationValues = cvv8::CastFromJS<vector<string>>( args[6] );
 
-	PortSet *portSet = obj->m_profile->GetPortSet(portSetName);
+	PortSet *portSet = obj->m_profile->GetPortSet(portSetIndex);
 	if(portSet == NULL)
 	{
-		cout << "ERROR: Unable to get portset " << portSetName << endl;
+		cout << "ERROR: Unable to get portset " << portSetIndex << endl;
 		return scope.Close(Boolean::New(false));
 	}
 
@@ -131,16 +131,10 @@ Handle<Value> HoneydProfileBinding::AddPort(const Arguments& args)
 	return scope.Close(Boolean::New(true));
 }
 
-bool HoneydProfileBinding::AddPortSet(std::string portSetName)
+int HoneydProfileBinding::AddPortSet()
 {
-	if(m_profile->GetPortSet(portSetName) != NULL)
-	{
-		return false;
-	}
-
-	m_profile->m_portSets.push_back(new PortSet(portSetName));
-
-	return true;
+	m_profile->m_portSets.push_back(new PortSet());
+	return m_profile->m_portSets.size() - 1;
 }
 
 Handle<Value> HoneydProfileBinding::SetPortSetBehavior(const Arguments& args)
@@ -153,11 +147,11 @@ Handle<Value> HoneydProfileBinding::SetPortSetBehavior(const Arguments& args)
 	HandleScope scope;
 	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
 
-	string portSetName = cvv8::CastFromJS<string>( args[0] );
+	int portSetIndex = cvv8::CastFromJS<int>( args[0] );
 	string protocol = cvv8::CastFromJS<string>( args[1] );
 	string behavior = cvv8::CastFromJS<string>( args[2] );
 	
-	PortSet *portSet = obj->m_profile->GetPortSet(portSetName);
+	PortSet *portSet = obj->m_profile->GetPortSet(portSetIndex);
 	if(portSet == NULL)
 	{
 		return scope.Close(Boolean::New(false));
@@ -217,11 +211,6 @@ bool HoneydProfileBinding::Save() {
 	return ret;
 }
 
-bool HoneydProfileBinding::WouldAddProfileCauseNodeDeletions()
-{
-	return HoneydConfiguration::Inst()->WouldAddProfileCauseNodeDeletions(m_profile);
-}
-
 void HoneydProfileBinding::Init(v8::Handle<Object> target)
 {
 	// Prepare constructor template
@@ -233,13 +222,12 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 
 	proto->Set("SetPersonality",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::SetPersonality>));
 	proto->Set("SetCount",			FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  int, 		&HoneydProfileBinding::SetCount>));
-	proto->Set("AddPortSet",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::AddPortSet>));
+	proto->Set("AddPortSet",		FunctionTemplate::New(InvokeMethod<int, HoneydProfileBinding,  &HoneydProfileBinding::AddPortSet>));
 	proto->Set("ClearPorts",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  &HoneydProfileBinding::ClearPorts>));
 	proto->Set("SetIsPersonalityInherited",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsPersonalityInherited>));
 	proto->Set("SetIsDropRateInherited",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsDropRateInherited>));
 	proto->Set("SetIsUptimeInherited",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsUptimeInherited>));
 	proto->Set("Save",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding, &HoneydProfileBinding::Save>));
-	proto->Set("WouldAddProfileCauseNodeDeletions",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding, &HoneydProfileBinding::WouldAddProfileCauseNodeDeletions>));
 
 	proto->Set("SetUptimeMin",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, uint, &Profile::SetUptimeMin>));
 	proto->Set("SetUptimeMax",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile,  uint, 		&Profile::SetUptimeMax>));

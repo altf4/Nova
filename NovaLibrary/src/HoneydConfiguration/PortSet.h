@@ -33,7 +33,7 @@ class PortSet
 
 public:
 
-	PortSet(std::string name);
+	PortSet();
 
 	//Add a port into the set.
 	bool AddPort(Port port);
@@ -47,13 +47,9 @@ public:
 	std::string ToString(const std::string &profileName);
 
 	//Javascript compatibility functions
-	std::string GetName() {return m_name;}
 	std::string GetTCPBehavior() {return Port::PortBehaviorToString(m_defaultTCPBehavior);}
 	std::string GetUDPBehavior() {return Port::PortBehaviorToString(m_defaultUDPBehavior);}
 	std::string GetICMPBehavior() {return Port::PortBehaviorToString(m_defaultICMPBehavior);}
-
-	//A unique identifier
-	std::string m_name;
 
 	enum PortBehavior m_defaultTCPBehavior;
 	enum PortBehavior m_defaultUDPBehavior;
