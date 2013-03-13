@@ -343,56 +343,10 @@ script
     updatePortSetLists();
   };
 
-  var renamePortset = function(){
-    var oldName = $('#portSetSelection').val();
-    var newName = $('#newPortsetName').val();
-    var profile = $('#name').val();
-    if(newName.length == 0)
-    {
-      alert('Cannot rename portset to empty string!');
-      return;
-    }
-    var check = $('#portSetSelection')[0].childNodes;
-    for(var i in check)
-    {
-      if(check[i].value == newName)
-      {
-        alert('The name ' + newName + ' is taken by another portset');
-        return;
-      }
-    }
-    try
-    {
-      now.RenamePortset(profile, oldName, newName, function(){
-        location.reload(true);
-      });
-    }
-    catch(err)
-    {
-      alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
-      console.log('err was: ' + err);
-    }
-  }
-
   var addNewPortset = function addNewPortSet(){
-      var setName = $('#newPortSetName').val();
-
-      if(setName == '')
-      {
-        alert('Port sets must have a name.');
-        return;
-      }
-      
       if(!updatePortsModel()) {return};
 
-      for(var i in profile.portSets)
-      {
-        if(profile.portSets[i].setName == setName)
-        {
-          alert('A port set by that name already exists');
-          return;
-        }
-      }
+      var setName = String(profile.portSets[profile.portSets.length - 1].setName + 1);
 
       var portSet = {setName: setName
         , ICMPBehavior: 'open'
@@ -512,28 +466,16 @@ script
         profile.isUptimeInherited = $('#inheritUptime').checked;
         if(!updatePortsModel()) {return};
 
-        now.WouldProfileSaveDeleteNodes(profile, function(result)
+        //need conditional here for add vs. edit, false == edit, true == add
+        try 
         {
-          var userConfirmed = true;
-          if(result == true)
-          {
-            userConfirmed = confirm('Warning: this will delete nodes that used deleted portsets');
-          }
-
-          if(userConfirmed)
-          {
-            //need conditional here for add vs. edit, false == edit, true == add
-            try 
-            {
-              now.SaveProfile(profile, newProfile == 'true', savedChanges);
-            } 
-            catch(err)
-            {
-              alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
-              console.log('err was: ' + err);
-            }
-          }
-        });
+          now.SaveProfile(profile, newProfile == 'true', savedChanges);
+        } 
+        catch(err)
+        {
+          alert('Action failed because unable to connect to server! Please try refreshing the page and trying again.');
+          console.log('err was: ' + err);
+        }
       };
 
       savedChanges = function(err){

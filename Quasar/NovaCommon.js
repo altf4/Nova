@@ -103,9 +103,9 @@ var NovaCommon = new function() {
                 {
                     if(scriptBindings[ports[p].GetScriptName()] == undefined)
                     {
-                        scriptBindings[ports[p].GetScriptName()] = profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
+                        scriptBindings[ports[p].GetScriptName()] = profileName + "(" + portSetName + ")" + ':' + ports[p].GetPortNum();
                     } else {
-                        scriptBindings[ports[p].GetScriptName()] += '<br>' + profileName + "(" + portSet.GetName() + ")" + ':' + ports[p].GetPortNum();
+                        scriptBindings[ports[p].GetScriptName()] += '<br>' + profileName + "(" + portSetName + ")" + ':' + ports[p].GetPortNum();
                     }
                 }
             }

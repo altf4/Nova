@@ -514,8 +514,8 @@ function jsProfileToHoneydProfile(profile)
     for(var i = 0; i < profile.portSets.length; i++) 
     {
         //Make a new port set
-        var encodedName = sanitizeCheck(profile.portSets[i].setName).entityEncode();
-        honeydProfile.AddPortSet(encodedName);
+        var encodedName = sanitizeCheck(String(profile.portSets[i].setName)).entityEncode();
+        honeydProfile.AddPortSet();
 
         honeydProfile.SetPortSetBehavior(encodedName, "tcp", profile.portSets[i].TCPBehavior);
         honeydProfile.SetPortSetBehavior(encodedName, "udp", profile.portSets[i].UDPBehavior);
@@ -657,13 +657,6 @@ everyone.now.RenamePortset = function(profile, oldName, newName, cb)
   {
     cb();
   }
-};
-
-everyone.now.WouldProfileSaveDeleteNodes = function (profile, cb)
-{
-    var honeydProfile = jsProfileToHoneydProfile(profile);
-
-    cb(honeydProfile.WouldAddProfileCauseNodeDeletions());
 };
 
 everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, subnets, groupName, append, cb, route)
@@ -1206,7 +1199,7 @@ var GetPortSets = function (profileName, cb)
     for(var i = 0; i < portSetNames.length; i++)
     {
         var portSet = NovaCommon.honeydConfig.GetPortSet( profileName, portSetNames[i] );
-        portSet.setName = portSet.GetName();
+        portSet.setName = i;
         portSet.TCPBehavior = portSet.GetTCPBehavior();
         portSet.UDPBehavior = portSet.GetUDPBehavior();
         portSet.ICMPBehavior = portSet.GetICMPBehavior();
