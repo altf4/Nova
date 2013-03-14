@@ -57,7 +57,6 @@ struct CallbackChange CallbackHandler::ProcessCallbackMessage()
 		{
 			change.m_type = CALLBACK_ERROR;
 		}
-		//TODO: Do we care about the other error message types here?
 
 		errorMessage->DeleteContents();
 		delete errorMessage;

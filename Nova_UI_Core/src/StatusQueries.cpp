@@ -214,6 +214,7 @@ Suspect *GetSuspect(SuspectID_pb address)
 	RequestMessage request(REQUEST_SUSPECT);
 	SuspectID_pb *suspectID = request.m_contents.add_m_suspectid();
 	*suspectID = address;
+	request.m_contents.set_m_featuremode(NO_FEATURE_DATA);
 
 	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
@@ -242,23 +243,33 @@ Suspect *GetSuspect(SuspectID_pb address)
 	if(requestReply->m_contents.m_requesttype() != REQUEST_SUSPECT_REPLY)
 	{
 		//Received the wrong kind of control message
-		reply->DeleteContents();
+		requestReply->DeleteContents();
 		delete requestReply;
 		return NULL;
 	}
 
-	Suspect *suspect = requestReply->m_suspect;
-	delete requestReply;
-	return suspect;
+	if(requestReply->m_suspects.size() == 1)
+	{
+		Suspect *suspect = requestReply->m_suspects[0];
+		delete requestReply;
+		return suspect;
+	}
+	else
+	{
+		requestReply->DeleteContents();
+		delete requestReply;
+		return NULL;
+	}
 }
 
 Suspect *GetSuspectWithData(SuspectID_pb address)
 {
 	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
 
-	RequestMessage request(REQUEST_SUSPECT_WITHDATA);
+	RequestMessage request(REQUEST_SUSPECT);
 	SuspectID_pb *ID = request.m_contents.add_m_suspectid();
 	*ID = address;
+	request.m_contents.set_m_featuremode(MAIN_FEATURE_DATA);
 
 	if(!MessageManager::Instance().WriteMessage(ticket, &request))
 	{
@@ -283,17 +294,71 @@ Suspect *GetSuspectWithData(SuspectID_pb address)
 	}
 
 	RequestMessage *requestReply = (RequestMessage*)reply;
-	if(requestReply->m_contents.m_requesttype() != REQUEST_SUSPECT_WITHDATA_REPLY)
+	if(requestReply->m_contents.m_requesttype() != REQUEST_SUSPECT_REPLY)
 	{
 		//Received the wrong kind of control message
 		delete requestReply;
 		return NULL;
 	}
 
-	Suspect *returnSuspect = requestReply->m_suspect;
-	delete requestReply;
+	if(requestReply->m_suspects.size() == 1)
+	{
+		Suspect *suspect = requestReply->m_suspects[0];
+		delete requestReply;
+		return suspect;
+	}
+	else
+	{
+		requestReply->DeleteContents();
+		delete requestReply;
+		return NULL;
+	}
+}
 
-	return returnSuspect;
+vector<Suspect*> GetSuspects(enum SuspectListType listType)
+{
+	vector<Suspect*> suspects;
+
+	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
+
+	RequestMessage request(REQUEST_ALL_SUSPECTS);
+	request.m_contents.set_m_listtype(listType);
+
+	if(!MessageManager::Instance().WriteMessage(ticket, &request))
+	{
+		//There was an error in sending the message
+		return suspects;
+	}
+
+	Message *reply = MessageManager::Instance().ReadMessage(ticket);
+	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
+	{
+		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		reply->DeleteContents();
+		delete reply;
+		return suspects;
+	}
+
+	if(reply->m_messageType != REQUEST_MESSAGE)
+	{
+		//Received the wrong kind of message
+		reply->DeleteContents();
+		delete reply;
+		return suspects;
+	}
+
+	RequestMessage *requestReply = (RequestMessage*)reply;
+	if(requestReply->m_contents.m_requesttype() != REQUEST_ALL_SUSPECTS_REPLY)
+	{
+		//Received the wrong kind of control message
+		requestReply->DeleteContents();
+		delete requestReply;
+		return suspects;
+	}
+
+	suspects = requestReply->m_suspects;
+	delete requestReply;
+	return suspects;
 }
 
 }
