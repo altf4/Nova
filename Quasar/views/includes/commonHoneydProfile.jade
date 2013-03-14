@@ -313,8 +313,8 @@ script
       for(var i in profile.portSets)
       {
           var option = document.createElement('option');
-          option.value = profile.portSets[i].setName;
-          option.innerHTML = profile.portSets[i].setName;
+          option.value = i;
+          option.innerHTML = i;
           $('#portSetSelection').append(option);
       }
     }
@@ -329,24 +329,37 @@ script
   };
 
   var deletePortset = function(){
-    var setName = $('#portSetSelection').val();
-    
-    for(var i in profile.portSets)
+    if (profile.portSets.length <= 1)
     {
-      if(profile.portSets[i].setName == setName)
-      {
-        profile.portSets.splice(i, 1);
-        break;
-      }
+        alert("You must have at least one portset");
+        return;
+        
     }
+    var setName = $('#portSetSelection').val();
+    console.log("Deleting portset " + setName);
+    
+    profile.portSets.splice(setName, 1);
   
     updatePortSetLists();
+    lastPortSet = "";
+    portSetSelectionChanged();
+
+    if (newProfile != 'true') {
+        now.DeletePortSet(profile.name, setName, function(err) {
+            if (err) {
+                console.log("ERROR deleting portset: " + err);
+            }
+        });
+    }
   };
 
   var addNewPortset = function addNewPortSet(){
       if(!updatePortsModel()) {return};
 
-      var setName = String(profile.portSets[profile.portSets.length - 1].setName + 1);
+      var setName = 0;
+      if (profile.portSets.length > 0) {
+        setName = String(profile.portSets[profile.portSets.length - 1].setName + 1);
+      }
 
       var portSet = {setName: setName
         , ICMPBehavior: 'open'
@@ -357,6 +370,14 @@ script
 
       // Push to the profile object
       profile.portSets.push(portSet);
+    
+      if (newProfile != 'true') {
+          now.AddPortSet(profile.name, function(err) {
+              if (err) {
+                  console.log("ERROR deleting portset!");
+              }
+          });
+      }
 
       // Add into the port set dropdown box
       updatePortSetLists();
@@ -372,6 +393,9 @@ script
   };
   // Currently edited port set has changed
   var portSetSelectionChanged = function(){
+    if (profile.portSets.length == 0) {
+        return;
+    }
     if(lastPortSet != '')
     {
       if(!updatePortsModel())
@@ -389,19 +413,14 @@ script
     scriptConfigurations = {};
 
     portIndexes = [];
-    for(var i in profile.portSets)
-    {
-      if(profile.portSets[i].setName == newPortSet)
-      {
-        $('#defaultICMPAction').val(profile.portSets[i].ICMPBehavior);
-        $('#defaultTCPAction').val(profile.portSets[i].TCPBehavior);
-        $('#defaultUDPAction').val(profile.portSets[i].UDPBehavior);
+    var i = newPortSet;
+    $('#defaultICMPAction').val(profile.portSets[i].ICMPBehavior);
+    $('#defaultTCPAction').val(profile.portSets[i].TCPBehavior);
+    $('#defaultUDPAction').val(profile.portSets[i].UDPBehavior);
             
-        for(var port in profile.portSets[i].PortExceptions)
-        {
-          addPort(profile.portSets[i].PortExceptions[port]);
-        }
-      }
+    for(var port in profile.portSets[i].PortExceptions)
+    {
+      addPort(profile.portSets[i].PortExceptions[port]);
     }
   };
 

@@ -18,6 +18,7 @@
 //============================================================================
 
 #include "Profile.h"
+#include "Logger.h"
 #include "HoneydConfiguration.h"
 #include <map>
 #include <sstream>
@@ -93,14 +94,24 @@ string Profile::ToString(int portSetIndex, const std::string &nodeName)
 	{
 		if(!m_portSets.empty())
 		{
-			out << "set " << nodeName << " default tcp action " << Port::PortBehaviorToString(m_portSets[0]->m_defaultTCPBehavior) << '\n';
-			out << "set " << nodeName << " default udp action " << Port::PortBehaviorToString(m_portSets[0]->m_defaultUDPBehavior) << '\n';
-			out << "set " << nodeName << " default icmp action " << Port::PortBehaviorToString(m_portSets[0]->m_defaultICMPBehavior) << '\n';
+			if (m_portSets.size() > 0)
+			{
+				out << "set " << nodeName << " default tcp action " << Port::PortBehaviorToString(m_portSets[0]->m_defaultTCPBehavior) << '\n';
+				out << "set " << nodeName << " default udp action " << Port::PortBehaviorToString(m_portSets[0]->m_defaultUDPBehavior) << '\n';
+				out << "set " << nodeName << " default icmp action " << Port::PortBehaviorToString(m_portSets[0]->m_defaultICMPBehavior) << '\n';
+			}
 		}
 	}
 	else
 	{
-		out << m_portSets[portSetIndex]->ToString(nodeName);
+		if (portSetIndex < 0 || portSetIndex >= (int)m_portSets.size())
+		{
+			LOG(ERROR, "Port set index is out of range for this profile", "");
+		}
+		else
+		{
+			out << m_portSets[portSetIndex]->ToString(nodeName);
+		}
 	}
 
 	//Use the recursive personality, here
@@ -179,25 +190,19 @@ std::string Profile::GetRandomVendor()
 	return "";
 }
 
-PortSet *Profile::GetRandomPortSet()
+int Profile::GetRandomPortSet()
 {
 	if(m_portSets.empty())
 	{
-		if (m_parent != NULL)
-		{
-			return m_parent->GetRandomPortSet();
-		}
-		else
-		{
-			return NULL;
-		}
+		LOG(ERROR, "Profile has no portsets", "");
+		return -1;
 	}
 
 	//Now we pick a random number between 1 and totalOccurrences
 	// Not technically a proper distribution, but we'll live
 	int random = rand() % m_portSets.size();
 
-	return m_portSets[random];
+	return random;
 }
 
 PortSet *Profile::GetPortSet(int portSetIndex)

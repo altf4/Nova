@@ -89,11 +89,14 @@ public:
 	//	portSet: The PortSet to be used for the created node
 	//	Returns true if successful and false if not
 	bool AddNode(std::string profileName, std::string ipAddress, std::string macAddress,
-			std::string interface, PortSet *portSet);
+			std::string interface, int portSetIndex);
 	bool AddNode(Node node);
 
 	bool AddNodes(std::string profileName, int portSetIndex, std::string macVendor, std::string ipAddress, std::string interface, int numberOfNodes);
 
+
+	bool DeletePortSet(std::string profileName, int portSetIndex);
+	bool AddPortSet(std::string profileName);
 
 
 	//Inserts the profile into the honeyd configuration

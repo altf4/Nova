@@ -701,7 +701,7 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 }
 
 bool HoneydConfiguration::AddNode(string profileName, string ipAddress, string macAddress,
-		string interface, PortSet *portSet)
+		string interface, int portSetIndex)
 {
 	Node newNode;
 	uint macPrefix = m_macAddresses.AtoMACPrefix(macAddress);
@@ -711,6 +711,7 @@ bool HoneydConfiguration::AddNode(string profileName, string ipAddress, string m
 	newNode.m_interface = interface;
 	newNode.m_pfile = profileName;
 	newNode.m_enabled = true;
+	newNode.m_portSetIndex = portSetIndex;
 
 	//Check the IP  and MAC address
 	if(ipAddress.compare("DHCP"))
@@ -745,11 +746,6 @@ bool HoneydConfiguration::AddNode(string profileName, string ipAddress, string m
 	if(profile == NULL)
 	{
 		return false;
-	}
-
-	if(portSet == NULL)
-	{
-		portSet = profile->GetRandomPortSet();
 	}
 
 	if(m_nodes.keyExists(newNode.m_MAC))
@@ -797,7 +793,7 @@ bool HoneydConfiguration::AddNodes(string profileName, int portSetIndex, string 
 		for(int i = 0; i < numberOfNodes; i++)
 		{
 			string macAddress = m_macAddresses.GenerateRandomMAC(macVendor);
-			if(!AddNode(profileName, ipAddress, macAddress, interface, GetPortSet(profileName, portSetIndex)))
+			if(!AddNode(profileName, ipAddress, macAddress, interface, portSetIndex))
 			{
 				LOG(WARNING, "Adding new nodes failed during node creation!", "");
 				return false;
@@ -822,7 +818,7 @@ bool HoneydConfiguration::AddNodes(string profileName, int portSetIndex, string 
 	{
 		currentAddr.s_addr = htonl(sAddr);
 		string macAddress = m_macAddresses.GenerateRandomMAC(macVendor);
-		if(!AddNode(profileName, string(inet_ntoa(currentAddr)), macAddress, interface, GetPortSet(profileName, portSetIndex)))
+		if(!AddNode(profileName, string(inet_ntoa(currentAddr)), macAddress, interface, portSetIndex))
 		{
 			LOG(ERROR, "Adding new nodes failed during node creation!", "");
 			return false;
@@ -1057,6 +1053,83 @@ PortSet* HoneydConfiguration::GetPortSet(string profileName, int portSetIndex)
 	}
 
 	return PortSets[portSetIndex];
+}
+
+bool HoneydConfiguration::AddPortSet(string profileName)
+{
+	Profile *profile = GetProfile(profileName);
+	if(profile == NULL)
+	{
+		LOG(DEBUG, "Attempt to delete portset of profile that doesn't exist: " + profileName, "");
+		return false;
+	}
+
+	profile->m_portSets.push_back(new PortSet());
+
+	return true;
+}
+
+bool HoneydConfiguration::DeletePortSet(string profileName, int portSetIndex)
+{
+	Profile *profile = GetProfile(profileName);
+	if(profile == NULL)
+	{
+		LOG(DEBUG, "Attempt to delete portset of profile that doesn't exist: " + profileName, "");
+		return false;
+	}
+
+	// If the index doesn't exist
+	if (portSetIndex < 0 || portSetIndex >= (int)profile->m_portSets.size())
+	{
+		LOG(DEBUG, "Attempt to delete invalid portset index of profile " + profileName, "");
+		return false;
+	}
+
+	// Delete any nodes that use this portset
+	NodeTable::iterator it = m_nodes.begin();
+	while (it != m_nodes.end())
+	{
+		if(it->second.m_pfile == profileName && it->second.m_portSetIndex == portSetIndex)
+		{
+			// Note: you need to increment it before deleting it,
+			// since it becomes invalidated once erased. it++ increments
+			// it but returns the original iterrator value for .erase();
+			m_nodes.erase(it++);
+		}
+		else
+		{
+			++it;
+		}
+	}
+
+	// If the doppelganger uses this portset, change it to default
+	if (m_doppelganger.m_pfile == profile->m_name && m_doppelganger.m_portSetIndex == portSetIndex)
+	{
+		// TODO: What do we do if the profile doesn't have any portsets left? Does the doppelganger even work anymore?
+		m_doppelganger.m_portSetIndex = 0;
+	}
+
+
+	// We have to adjust nodes so they point to the correct portsets that had index changes
+	if (portSetIndex != (int)(profile->m_portSets.size() - 1))
+	{
+		NodeTable::iterator it = m_nodes.begin();
+		while (it != m_nodes.end())
+		{
+			if(it->second.m_portSetIndex > portSetIndex)
+			{
+				// Because all of our indexes shifted with the delete, decrement the index
+				it->second.m_portSetIndex--;
+			}
+
+			++it;
+		}
+	}
+
+	delete profile->m_portSets[portSetIndex];
+	profile->m_portSets.erase(profile->m_portSets.begin() + portSetIndex);
+
+	return true;
 }
 
 bool HoneydConfiguration::DeleteProfile(string profileName)

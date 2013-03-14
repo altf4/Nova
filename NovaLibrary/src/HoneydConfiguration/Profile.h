@@ -36,7 +36,7 @@ public:
 	~Profile();
 
 	//Returns a string suitable for inserting into the honeyd configuration file
-	std::string ToString(const int portSetIndex = -1, const std::string &nodeName = "default");
+	std::string ToString(const int portSetIndex = 0, const std::string &nodeName = "default");
 
 	//Returns a random vendor from the internal list of MAC vendors, according to the given probabilities
 	// If a profile has no defined ethernet vendors, look to the parent profile
@@ -44,8 +44,8 @@ public:
 	std::string GetRandomVendor();
 
 	//Returns a random PortSet from the internal list
-	//	returns - NULL if no port sets present
-	PortSet *GetRandomPortSet();
+	//	returns - -1 if no port sets present
+	int GetRandomPortSet();
 
 	//Returns the PortSet with the given name
 	//	returns NULL if not found

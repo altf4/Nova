@@ -154,7 +154,7 @@ everyone.now.SaveHoneydNode = function(node, cb)
 
     if(node.oldName == "doppelganger")
     {
-        if(!NovaCommon.honeydConfig.SetDoppelganger(node.profile, node.portSet, ipAddress, node.mac, node.intface))
+        if(!NovaCommon.honeydConfig.SetDoppelganger(node.profile, parseInt(node.portSet), ipAddress, node.mac, node.intface))
         {
             cb && cb("doppelganger Failed");
             return;
@@ -174,7 +174,7 @@ everyone.now.SaveHoneydNode = function(node, cb)
     }
     else
     {
-        if(!NovaCommon.honeydConfig.AddNode(node.profile, node.portSet, ipAddress, node.mac, node.intface))
+        if(!NovaCommon.honeydConfig.AddNode(node.profile, parseInt(node.portSet), ipAddress, node.mac, node.intface))
         {
             cb && cb("AddNode Failed");
             return;
@@ -514,12 +514,11 @@ function jsProfileToHoneydProfile(profile)
     for(var i = 0; i < profile.portSets.length; i++) 
     {
         //Make a new port set
-        var encodedName = sanitizeCheck(String(profile.portSets[i].setName)).entityEncode();
         honeydProfile.AddPortSet();
 
-        honeydProfile.SetPortSetBehavior(encodedName, "tcp", profile.portSets[i].TCPBehavior);
-        honeydProfile.SetPortSetBehavior(encodedName, "udp", profile.portSets[i].UDPBehavior);
-        honeydProfile.SetPortSetBehavior(encodedName, "icmp", profile.portSets[i].ICMPBehavior);
+        honeydProfile.SetPortSetBehavior(i, "tcp", profile.portSets[i].TCPBehavior);
+        honeydProfile.SetPortSetBehavior(i, "udp", profile.portSets[i].UDPBehavior);
+        honeydProfile.SetPortSetBehavior(i, "icmp", profile.portSets[i].ICMPBehavior);
 
         for(var j = 0; j < profile.portSets[i].PortExceptions.length; j++)
         {
@@ -532,7 +531,7 @@ function jsProfileToHoneydProfile(profile)
                 scriptConfigValues.push(profile.portSets[i].PortExceptions[j].scriptConfiguration[key]);
             }
 
-            honeydProfile.AddPort(encodedName,
+            honeydProfile.AddPort(i,
                     profile.portSets[i].PortExceptions[j].behavior, 
                     profile.portSets[i].PortExceptions[j].protocol, 
                     Number(profile.portSets[i].PortExceptions[j].portNum), 
@@ -543,6 +542,20 @@ function jsProfileToHoneydProfile(profile)
     }
 
     return honeydProfile;
+}
+
+everyone.now.DeletePortSet = function(profile, portSetIndex, cb)
+{
+	var error = NovaCommon.honeydConfig.DeletePortSet(profile, portSetIndex);
+    NovaCommon.honeydConfig.SaveAll();
+	cb && cb(!error);
+}
+
+everyone.now.AddPortSet = function(profile, cb)
+{
+	var error = NovaCommon.honeydConfig.AddPortSet(profile);
+	NovaCommon.honeydConfig.SaveAll();
+	cb && cb(!error);
 }
 
 //portSets = A 2D array. (array of portSets, which are arrays of Ports)

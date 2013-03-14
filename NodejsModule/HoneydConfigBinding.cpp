@@ -59,6 +59,8 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteScriptFromPorts"),FunctionTemplate::New(DeleteScriptFromPorts)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("SaveAll"),FunctionTemplate::New(SaveAll)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeleteProfile"),FunctionTemplate::New(DeleteProfile)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("DeletePortSet"),FunctionTemplate::New(DeletePortSet)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddPortSet"),FunctionTemplate::New(AddPortSet)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPortSet"),FunctionTemplate::New(GetPortSet)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPortSetNames"),FunctionTemplate::New(GetPortSetNames)->GetFunction());
 
@@ -181,6 +183,37 @@ Handle<Value> HoneydConfigBinding::GetPortSetNames(const Arguments& args)
 	return scope.Close( portArray );
 }
 
+Handle<Value> HoneydConfigBinding::DeletePortSet(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 2)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 2 parameters")));
+	}
+
+	std::string profileToDeleteFrom = cvv8::CastFromJS<string>(args[0]);
+	int portSetIndex = cvv8::CastFromJS<int>(args[1]);
+
+	return scope.Close(Boolean::New(obj->m_conf->DeletePortSet(profileToDeleteFrom, portSetIndex)));
+}
+
+Handle<Value> HoneydConfigBinding::AddPortSet(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if(args.Length() != 1)
+	{
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 1 parameter")));
+	}
+
+	std::string profileToDeleteFrom = cvv8::CastFromJS<string>(args[0]);
+
+	return scope.Close(Boolean::New(obj->m_conf->AddPortSet(profileToDeleteFrom)));
+}
+
 Handle<Value> HoneydConfigBinding::DeleteProfile(const Arguments& args)
 {
 	HandleScope scope;
@@ -233,7 +266,7 @@ Handle<Value> HoneydConfigBinding::AddNode(const Arguments& args)
 	string mac = cvv8::CastFromJS<string>( args[3] );
 	string interface = cvv8::CastFromJS<string>( args[4] );
 
-	return scope.Close(Boolean::New(obj->m_conf->AddNode(profile,ipAddress,mac, interface, HoneydConfiguration::Inst()->GetPortSet(profile, portset))));
+	return scope.Close(Boolean::New(obj->m_conf->AddNode(profile,ipAddress,mac, interface, portset)));
 }
 
 
