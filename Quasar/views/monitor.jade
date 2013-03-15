@@ -31,8 +31,8 @@ block content
       td
         b#domain Waiting for reply...
 
-  a(class='button', href='#', onclick='markClassificationAs(1)') Mark as Hostile
-  a(class='button', href='#', onclick='markClassificationAs(0)') Mark as Benign
+  a(class='button', href='#', onclick='markClassificationAs(1)') Train as Hostile
+  a(class='button', href='#', onclick='markClassificationAs(0)') Train as Benign
   div
     div#ProtocolPiChart(style='display: inline-block;float: left; margin: 10px;')
     div#tcpPiChart(style='display: inline-block; margin: 20px')
@@ -54,9 +54,6 @@ block content
       p(id = 'p#{i}')     
   -}
 
-  br
-  a(href='GetSuspectDetails?ip=#{suspectIp}&interface=#{suspectInterface}') Get Debugging Information
-   
 block headerAdditions
   script(type='text/javascript', src='scripts/NovaPiChart.js')
   script

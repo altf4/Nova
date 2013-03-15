@@ -241,6 +241,12 @@ block headerAdditions
         var path = "/monitor?ip=" + ip + "&interface=" + interface;
         window.open(path);
     }
+    
+    function SuspectDetails(ip, interface, idString)
+    {
+        var path = "/GetSuspectDetails?ip=" + ip + "&interface=" + interface;
+        window.open(path);
+    }
 
     function buildLink(ip, interface)
     {
@@ -597,21 +603,28 @@ block headerAdditions
       
       var monitor = document.createElement('div');
       monitor.setAttribute('class', 'topcontainer');
-      monitor.innerHTML = '<img class="buttonIcon" src="images/details.png"/> Monitor ' + ip;
+      monitor.innerHTML = '<img class="buttonIcon" src="images/details.png"/> Live Monitor ' + ip;
       monitor.setAttribute('onclick', 'MonitorSuspect("' + ip + '", "' + iface + '")');
       monitor.setAttribute('oncontextmenu', 'MonitorSuspect("' + ip + '", "' + iface + '"); removeContextMenu(); return false;');
       contextMenuDiv.appendChild(monitor);
+      
+      var details = document.createElement('div');
+      details.setAttribute('class', 'topcontainer');
+      details.innerHTML = '<img class="buttonIcon" src="images/details.png"/> Detailed Report ' + ip;
+      details.setAttribute('onclick', 'SuspectDetails("' + ip + '", "' + iface + '")');
+      details.setAttribute('oncontextmenu', 'SuspectDetails("' + ip + '", "' + iface + '"); removeContextMenu(); return false;');
+      contextMenuDiv.appendChild(details);
      
       var markAsHostile = document.createElement('div');
       markAsHostile.setAttribute('class', 'middlecontainer');
-      markAsHostile.innerHTML = '<img class="buttonIcon" src="images/alert.png"/> Mark ' + ip + ' as Hostile';
+      markAsHostile.innerHTML = '<img class="buttonIcon" src="images/alert.png"/> Train ' + ip + ' as Hostile';
       markAsHostile.setAttribute('onclick', 'if(confirm("This will train the classification engine to match all suspects looking like this one as hostile. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "1" , addedCb)}');
       markAsHostile.setAttribute('oncontextmenu', 'if(confirm("This will train the classification engine to match all suspects looking like this one as hostile. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "1" , addedCb)}; removeContextMenu(); return false;');
       contextMenuDiv.appendChild(markAsHostile);
       
       var markAsBenign = document.createElement('div');
       markAsBenign.setAttribute('class', 'middlecontainer');
-      markAsBenign.innerHTML = '<img class="buttonIcon" src="images/benign.png"/> Mark ' + ip + ' as Benign';
+      markAsBenign.innerHTML = '<img class="buttonIcon" src="images/benign.png"/> Train ' + ip + ' as Benign';
       markAsBenign.setAttribute('onclick', 'if(confirm("This will train the classification engine to match all suspects looking like this one as benign. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "0" , addedCb)}');
       markAsBenign.setAttribute('oncontextmenu', 'if(confirm("This will train the classification engine to match all suspects looking like this one as benign. Are you sure you want to do this?")){now.addTrainingPoint("' + ip + '", "' + iface + '", "' + features + '", "0" , addedCb)}; removeContextMenu(); return false;');
       contextMenuDiv.appendChild(markAsBenign);
