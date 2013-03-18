@@ -1,3 +1,9 @@
+nova (13.02) quantal; urgency=low
+
+  * Update version to current Feb 2013 release
+
+ -- David Clark <david.clark@datasoft.com>  Mon, 18 Mar 2012 14:58:17 -0700
+
 nova (13.01.2) quantal; urgency=low
 
   * Update version to current Janauary 2013 release

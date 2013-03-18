@@ -3,13 +3,6 @@
 cleanup()
 {
 	echo "Quitting debian package generation..."
-	if [ -f Makefile.tmp ]
-	then
-		echo "Fixing Makefile..."
-		rm -f Makefile
-		mv Makefile.tmp Makefile
-	fi
-	echo "Finished"
 	exit 0
 }
 
@@ -43,11 +36,6 @@ rm -f ../$PACKAGE.orig.tar.gz
 mkdir $PACKAGE
 cp -a $(ls -1 | grep -v $PACKAGE | grep -v "debian") $PACKAGE
 
-#replace the Makefile with the debian version
-cp debian/Makefile $PACKAGE
-mv Makefile Makefile.tmp
-cp debian/Makefile .
-
 #tarball it up!
 tar -zcf ../$PACKAGE.orig.tar.gz $PACKAGE
 
@@ -55,12 +43,8 @@ tar -zcf ../$PACKAGE.orig.tar.gz $PACKAGE
 rm -rf $PACKAGE
 
 #Produce the debian package
-#dpkg-buildpackage -us -uc
+dpkg-buildpackage -k7F9F2E1F
 
 # Use this to make a signed source package for the PPA
-debuild -S -k7F9F2E1F
-
-#put the old makefile back in place
-rm Makefile
-mv Makefile.tmp Makefile
+#debuild -S -k7F9F2E1F
 
