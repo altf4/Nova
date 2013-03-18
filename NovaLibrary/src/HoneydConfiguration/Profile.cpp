@@ -256,7 +256,6 @@ bool Profile::Copy(Profile *source)
 	m_isDropRateInherited = source->m_isDropRateInherited;
 	m_isUptimeInherited = source->m_isUptimeInherited;
 
-	//TODO: Maybe want to copy the port sets too (rather than pointers)
 	m_portSets = source->m_portSets;
 
 	return true;
