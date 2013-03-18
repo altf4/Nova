@@ -269,7 +269,6 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 		}
 
 		// Make sure the length appears valid
-		// TODO: Assign some arbitrary max message size to avoid filling up memory by accident
 		if(length < MESSAGE_MIN_SIZE)
 		{
 			LOG(WARNING, "Error parsing message: message too small.", "");
