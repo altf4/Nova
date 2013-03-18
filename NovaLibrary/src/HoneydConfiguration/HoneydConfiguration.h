@@ -118,7 +118,7 @@ public:
 
 	std::vector<std::string> GetNodeMACs();
 
-	//TODO: Unsafe pointer access into table
+	//xxx: Unsafe pointer access into table
 	Node *GetNode(std::string nodeMAC);
 
 	//Get a vector of PortSets associated with a particular profile
