@@ -589,7 +589,6 @@ void Config::LoadConfig_Internal()
 			}
 
 			// SERVICE_PREFERENCES
-			//TODO: make method for parsing string to map criticality level to service
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
 			if(!line.substr(0, prefix.size()).compare(prefix))
