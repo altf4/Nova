@@ -71,8 +71,7 @@ Profile::~Profile()
 
 	for(uint i = 0; i < m_portSets.size(); i++)
 	{
-		//TODO: Double delete?
-		//delete m_portSets[i];
+		delete m_portSets[i];
 	}
 }
 
@@ -242,6 +241,7 @@ bool Profile::Copy(Profile *source)
 		return false;
 	}
 
+
 	m_count = source->m_count;
 	m_distribution = source->m_distribution;
 	m_name = source->m_name;
@@ -256,7 +256,11 @@ bool Profile::Copy(Profile *source)
 	m_isDropRateInherited = source->m_isDropRateInherited;
 	m_isUptimeInherited = source->m_isUptimeInherited;
 
-	m_portSets = source->m_portSets;
+	m_portSets.clear();
+	for (uint i = 0; i < source->m_portSets.size(); i++)
+	{
+		m_portSets.push_back(new PortSet(*source->m_portSets[i]));
+	}
 
 	return true;
 }
