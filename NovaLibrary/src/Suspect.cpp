@@ -523,7 +523,6 @@ Suspect Suspect::GetShallowCopy()
 	Suspect ret;
 
 	// We just copy the featureset instead of the hashtables too
-	// TODO: this entire thing should really be refactored so featureset isn't part of suspect
 	for (uint i = 0; i < DIM; i++)
 	{
 		ret.m_features.m_features[i] = m_features.m_features[i];
