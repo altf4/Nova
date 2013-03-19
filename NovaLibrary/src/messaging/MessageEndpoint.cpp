@@ -168,7 +168,6 @@ bool MessageEndpoint::RegisterCallback(Ticket &outTicket)
 			//Protection for the m_callbackDoWakeup bool
 			Lock condLock(&m_availableCBsMutex);
 
-			//TODO: Unprotected read of byte value m_isShutdown. Probably safe though.
 			while(m_availableCBs.empty() && !m_isShutDown)
 			{
 				pthread_cond_wait(&m_callbackWakeupCondition, &m_availableCBsMutex);
