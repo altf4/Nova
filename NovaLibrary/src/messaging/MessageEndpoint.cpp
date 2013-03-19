@@ -30,6 +30,8 @@
 #include <sys/time.h>
 #include "errno.h"
 
+#define CONSECUTIVETIMEOUTTHRESHOLD 5
+
 namespace Nova
 {
 
@@ -87,7 +89,11 @@ Message *MessageEndpoint::PopMessage(Ticket &ticket, int timeout)
 		if(((ErrorMessage*)ret)->m_errorType == ERROR_TIMEOUT)
 		{
 			m_consecutiveTimeouts++;
-			//TODO: deal with timeouts
+			if(m_consecutiveTimeouts > CONSECUTIVETIMEOUTTHRESHOLD)
+			{
+				delete ret;
+				return new ErrorMessage(ERROR_SOCKET_CLOSED);
+			}
 		}
 	}
 
