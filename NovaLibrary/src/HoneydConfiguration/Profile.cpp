@@ -121,22 +121,6 @@ string Profile::ToString(int portSetIndex, const std::string &nodeName)
 		out << "set " << nodeName << " personality \"" << personality << '"' << '\n';
 	}
 
-	//TODO: This always uses the vendor with the highest likelihood. Should get changed?
-	string vendor = "";
-	double maxDist = 0;
-	for(uint i = 0; i < m_vendors.size(); i++)
-	{
-		if(m_vendors[i].second > maxDist)
-		{
-			maxDist = m_vendors[i].second;
-			vendor = m_vendors[i].first;
-		}
-	}
-	if(vendor.compare(""))
-	{
-		out << "set " << nodeName << " ethernet \"" << vendor << '"' << '\n';
-	}
-
 	if(m_dropRate.compare(""))
 	{
 		out << "set " << nodeName << " droprate in " << m_dropRate << '\n';
