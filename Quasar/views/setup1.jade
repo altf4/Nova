@@ -20,7 +20,7 @@ block content
   div(style='text-align:center')
     h2 Create New User Account
     p Note that this new account will replace the default username and password.
-    form(method='post', action='/createInitialUser', autocomplete='off')
+    form#createUser(method='post', action='/createInitialUser', autocomplete='off')
       table(align='center', border='0', style='background-color: #D0E9FC; padding:15px; border-collapse:collapse; border: 2px solid black;')
         tr
           td
@@ -35,5 +35,12 @@ block content
         tr
           td
           td
-      button(type='button', onClick='location.href="/welcome"') Back
-      input(id='nextButton', type='submit', value='Continue to Basic Options')
+      button(type='button', onClick='location.href="/welcome"')
+        img.buttonIcon(src="images/back.png")
+        span.buttonSpan Back
+      
+      button(type='nextButton', onClick='$("#createUser").submit();')
+        span.buttonSpan Continue to basic options &nbsp
+        img.buttonIcon(src="images/forward.png")
+
+

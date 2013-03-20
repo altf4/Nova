@@ -30,7 +30,16 @@ block content
   form#basicConfigForm(method='post', action='/configureNovaSave')
     include includes/basicConfigForm
     input(id='route', name='route', type='hidden', value='route')
-  button(onClick='window.location='/'') Back
-  button(id='autoconfigButton', type='button', onclick='now.WizardHasRun(); setRoute("autoconfig"); document.getElementById("basicConfigForm").submit();', value='Automatically Configure Haystack') Automatically Configure Haystack 
+
+  button(onclick='window.location="/setup1"')
+    img.buttonIcon(src="images/back.png")
+    span.buttonSpan Back
+
+  button(id='autoconfigButton', type='button', onclick='now.WizardHasRun(); setRoute("autoconfig"); document.getElementById("basicConfigForm").submit();', value='Automatically Configure Haystack')
+    span.buttonSpan Configure haystack from network scan &nbsp
+    img.buttonIcon(src="images/forward.png")
+
   button(id='manconfigButton', type='button', onclick='now.WizardHasRun(); setRoute("manconfig"); document.getElementById("basicConfigForm").submit();', value='Manually configure Haystack') Manually configure Haystack
+    span.buttonSpan Configure haystack manually &nbsp
+    img.buttonIcon(src="images/forward.png")
   
