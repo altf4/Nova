@@ -881,10 +881,11 @@ everyone.now.GetConfigSummary = function(configName, cb)
   }
 };
 
-everyone.now.SwitchConfigurationTo = function(configName)
+everyone.now.SwitchConfigurationTo = function(configName, cb)
 {
     NovaCommon.honeydConfig.SwitchConfiguration(configName); 
     NovaCommon.config.WriteSetting('CURRENT_CONFIG', configName);
+	cb && cb();
 };
 
 everyone.now.RemoveConfiguration = function(configName, cb)

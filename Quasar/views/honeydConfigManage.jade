@@ -636,7 +636,8 @@ block headerAdditions
     function confirmHaystackRestart()
     {
       now.IsHaystackUp(function(status){
-        if(status == true && confirm('Restart the Haystack with current configuration ' + getConfig() + '?'))
+        var restartHaystack = confirm('You must restart the haystack for this to take effect. Restart it now?');
+        if(status == true && restartHaystack)
         {
           now.WriteHoneydConfig(function(){
             now.RestartHaystack();
@@ -654,7 +655,11 @@ block headerAdditions
       if(typeof now.SwitchConfigurationTo == 'function')
       {
         var config = $('#configurations').val();
-        now.SwitchConfigurationTo(config);
+        if (config == currentConfig) {return;}
+        currentConfig = config;
+        now.SwitchConfigurationTo(config, function() {
+            confirmHaystackRestart();
+        });
       }
     }
     
