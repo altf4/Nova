@@ -358,6 +358,7 @@ void Logger::SetLevel(uint16_t setLevel)
 
 size_t Logger::ReadCallback(void *ptr, size_t size, size_t nmemb, void * userp)
 {
+	string dateString = Logger::Inst()->GenerateDateString();
 	struct Writer *counter = (struct Writer *)userp;
 	const char *data;
 
@@ -385,10 +386,12 @@ size_t Logger::ReadCallback(void *ptr, size_t size, size_t nmemb, void * userp)
 				 break;
 	}
 
+	subject += "(" + dateString.substr(0, dateString.size() - 1) + ")";
+
 	subject += "\n";
 
 	const char *text[] = {
-			Logger::Inst()->GenerateDateString().c_str(),
+			dateString.c_str(),
 			Logger::Inst()->GetRecipient().c_str(),
 			Logger::Inst()->GetSenderString().c_str(),
 			subject.c_str(),
