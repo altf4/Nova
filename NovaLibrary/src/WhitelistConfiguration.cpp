@@ -150,7 +150,8 @@ vector<string> WhitelistConfiguration::GetWhitelistedIps(bool getRanges)
 			if(strcmp(line.c_str(), "") && line.at(0) != '#' )
 			{
 				// Shouldn't have any spaces if it's just an IP
-				// TODO: should trim whitespace at the end of the lines
+				line = rtrim(line);
+
 				if(line.find("/") == string::npos && !getRanges)
 				{
 					whitelistedAddresses.push_back(line);
