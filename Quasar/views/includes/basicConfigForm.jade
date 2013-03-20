@@ -249,24 +249,20 @@ script
   
   function onValueChange()
   {
-    var element;
     var newServicePrefString = '0:';
     
-    element = $('#syslogLevelSelect')[0];
-    newServicePrefString += element.options[element.selectedIndex].value;
-    element = $('#syslogModSelect');
-    var checkSysMod = element.options[element.selectedIndex].value;
+    newServicePrefString += $("#syslogLevelSelect").val();
 
+    var checkSysMod = $("#syslogModSelect").val();
     newServicePrefString += (checkSysMod != 'NA' ? checkSysMod : '');
     newServicePrefString += ';1:';
     
-    element = $('#emailLevelSelect');
-    newServicePrefString += element.options[element.selectedIndex].value;
+    newServicePrefString += $("#emailLevelSelect").val();
     
-    element = $('#emailModSelect');
-    var checkEmailMod = element.options[element.selectedIndex].value;
+    var checkEmailMod = $("#emailModSelect").val();
     newServicePrefString += (checkEmailMod != 'NA' ? checkEmailMod : '');
     newServicePrefString += ';';
+
     servicePrefs = newServicePrefString;
     setServicePreferences();
   }
