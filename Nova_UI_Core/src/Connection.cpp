@@ -152,7 +152,7 @@ bool ConnectToNovad()
 	Message *reply = MessageManager::Instance().ReadMessage(ticket);
 	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
 	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
+		LOG(DEBUG, "Timeout error when waiting for message reply", "");
 		delete reply;
 		return false;
 	}
@@ -161,7 +161,7 @@ bool ConnectToNovad()
 	{
 		stringstream s;
 		s << "Expected message type of REQUEST_MESSAGE but got " << reply->m_messageType;
-		LOG(ERROR, s.str(), "");
+		LOG(DEBUG, s.str(), "");
 
 		reply->DeleteContents();
 		delete reply;
@@ -172,7 +172,7 @@ bool ConnectToNovad()
 	{
 		stringstream s;
 		s << "Expected control type of CONTROL_CONNECT_REPLY but got " <<connectionReply->m_contents.m_requesttype();
-		LOG(ERROR, s.str(), "");
+		LOG(DEBUG, s.str(), "");
 
 		reply->DeleteContents();
 		delete reply;
