@@ -69,17 +69,11 @@ MessageEndpoint::~MessageEndpoint()
 //blocking call
 Message *MessageEndpoint::PopMessage(Ticket &ticket, int timeout)
 {
-	//TODO: This is not quite right. We should keep returning valid messages as long as
-	//	we have them. We should ask the MessageQueue for a new message (maybe peek?)
-	//	and only return a shutdown message if one doesn't exist there.
-
-	//If we're shut down, then return a shutdown message
+	//If we don't have anymore messages then return a shutdown message
+	if(m_queues.HasMessage(ticket.m_ourSerialNum) == false)
 	{
-		Lock shutdownLock(&m_isShutdownMutex);
-		if(m_isShutDown)
-		{
+			Lock shutdownLock(&m_isShutdownMutex);
 			return new ErrorMessage(ERROR_SOCKET_CLOSED);
-		}
 	}
 
 	Message *ret = m_queues.PopMessage(timeout, ticket.m_ourSerialNum);
@@ -96,7 +90,6 @@ Message *MessageEndpoint::PopMessage(Ticket &ticket, int timeout)
 			}
 		}
 	}
-
 	return ret;
 }
 

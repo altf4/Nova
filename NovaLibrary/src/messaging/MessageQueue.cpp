@@ -80,9 +80,9 @@ Message *MessageQueue::PopMessage(int timeout)
 			{
 				return new ErrorMessage(ERROR_SOCKET_CLOSED);
 			}
+				retMessage = m_queue.front();
+				m_queue.pop();
 
-			retMessage = m_queue.front();
-			m_queue.pop();
 		}
 		//Read with timeout
 		else

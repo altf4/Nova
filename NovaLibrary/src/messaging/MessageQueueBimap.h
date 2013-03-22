@@ -46,6 +46,7 @@ public:
 
 	//Functions for pushing and popping messages off the Message queue
 	Message *PopMessage(int timeout, uint32_t ourSerial);
+	bool HasMessage(uint32_t ourSerial);
 	enum PushSuccess PushMessage(Message *message, uint32_t &outSerial);
 
 	uint32_t GetTheirSerialNum(uint32_t ourSerial);
