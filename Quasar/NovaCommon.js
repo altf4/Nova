@@ -117,6 +117,7 @@ var NovaCommon = new function() {
 
 	var novaDb = new sql.Database(this.config.GetPathHome() + "/data/novadDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
 	var db = new sql.Database(this.config.GetPathHome() + "/data/quasarDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
+	var hostNameDb = new sql.Database(this.config.GetPathHome() + "/../honeyd/names", sql.OPEN_READWRITE, databaseOpenResult);
 
 
 	var databaseOpenResult = function(err){
@@ -174,6 +175,12 @@ var NovaCommon = new function() {
 	this.dbqMarkHoneydLogEntrySeen = db.prepare('UPDATE honeydlogSeen SET seen = 1 WHERE linenum = ?');
 	this.dbqMarkAllHoneydLogEntriesSeen = db.prepare('UPDATE honeydlogSeen SET seen = 1');
 	this.dbqGetUnseenHoneydLogs = db.prepare('SELECT * from honeydlogSeen WHERE seen = 0');
+
+
+	this.dbqGetHostnames = hostNameDb.prepare('SELECT * from allocs');
+	this.dbqInsertHostname = hostNameDb.prepare('INSERT into allocs(name) VALUES (?)');
+	this.dbqClearHostnameAllocations = hostNameDb.prepare('UPDATE allocs SET IP = NULL');
+	this.dbqDeleteHostname = hostNameDb.prepare('DELETE from allocs WHERE name = ?');
 
 
 	this.HashPassword = function (password, salt)

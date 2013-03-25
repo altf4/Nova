@@ -1337,6 +1337,37 @@ everyone.now.MarkAllHoneydLogEntriesSeen = function(cb) {
 };
 
 
+// Hostname related database calls
+everyone.now.GetHostnames = function(cb) {
+	NovaCommon.dbqGetHostnames.all(function(err, results) {
+        if (databaseError(err, cb)) {return;}
+        cb && cb(null, results);
+    });	
+};
+
+everyone.now.InsertHostname = function(hostname, cb) {
+	NovaCommon.dbqInsertHostname.run(hostname, function(err) {
+        if (databaseError(err, cb)) {return;}
+        cb && cb(null);
+	});
+};
+
+everyone.now.ClearHostnameAllocations = function(cb) {
+	NovaCommon.dbqClearHostnameAllocations.run(function(err) {
+        if (databaseError(err, cb)) {return;}
+        cb && cb(null);
+	});
+};
+
+everyone.now.DeleteHostname = function(hostname, cb) {
+	NovaCommon.dbqDeleteHostname.run(hostname, function(err) {
+        if (databaseError(err, cb)) {return;}
+        cb && cb(null);
+	});
+};
+
+
+
 }
 
 
