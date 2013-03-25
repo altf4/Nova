@@ -71,17 +71,6 @@ Message *MessageQueueBimap::PopMessage(int timeout, uint32_t ourSerial)
 	return queue->PopMessage(timeout);
 }
 
-bool MessageQueueBimap::HasMessage(uint32_t ourSerial)
-{
-	Lock lock = ReadLockQueue(ourSerial);
-	MessageQueue *queue = GetByOurSerial(ourSerial);
-	if(queue == NULL)
-	{
-		return false;
-	}
-	return true;
-}
-
 enum PushSuccess MessageQueueBimap::PushMessage(Message *message, uint32_t &outSerial)
 {
 	bool isNewCallback = false;
