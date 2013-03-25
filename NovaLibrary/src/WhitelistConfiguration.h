@@ -21,6 +21,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 namespace Nova
 {
@@ -41,6 +42,10 @@ public:
 	static std::string GetInterface(std::string whitelistEntry);
 	static std::string GetSubnet(std::string whitelistEntry);
 	static std::string GetIp(std::string whitelistEntry);
+	static inline std::string &rtrim(std::string &s) {
+	        s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+	        return s;
+	}
 
 private:
 	// Gets either IP addresses or IP + netmasks

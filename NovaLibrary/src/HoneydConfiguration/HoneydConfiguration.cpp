@@ -1105,7 +1105,6 @@ bool HoneydConfiguration::DeletePortSet(string profileName, int portSetIndex)
 	// If the doppelganger uses this portset, change it to default
 	if (m_doppelganger.m_pfile == profile->m_name && m_doppelganger.m_portSetIndex == portSetIndex)
 	{
-		// TODO: What do we do if the profile doesn't have any portsets left? Does the doppelganger even work anymore?
 		m_doppelganger.m_portSetIndex = 0;
 	}
 

@@ -596,7 +596,7 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 		// Not as many bytes left as the size of the entry?
 		if(lengthLeft < dataSize)
 		{
-			LOG(ERROR, "The CE state file may be corruput", "");
+			LOG(ERROR, "The CE state file may be corrupt", "");
 			return 0;
 		}
 		if(saveTime < expirationTime)
@@ -626,12 +626,14 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 			{
 				LOG(ERROR, "The state file may be corrupt, a hash table invalid key exception was caught during deserialization", "");
 				delete[] tableBuffer;
+				delete newSuspect;
 				return 0;
 			}
 			catch(Nova::serializationException &e)
 			{
 				LOG(ERROR, "The state file may be corrupt, deserialization of a suspect failed", "");
 				delete[] tableBuffer;
+				delete newSuspect;
 				return 0;
 			}
 
@@ -691,8 +693,8 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 					SetNeedsClassificationUpdate(key);
 				}
 			}
+			delete newSuspect;
 		}
-
 		delete[] tableBuffer;
 	}
 	ret = (uint32_t)in->tellg() - cur;
