@@ -693,8 +693,8 @@ uint32_t SuspectTable::ReadContents(ifstream *in, time_t expirationTime)
 					SetNeedsClassificationUpdate(key);
 				}
 			}
-			delete newSuspect;
 		}
+
 		delete[] tableBuffer;
 	}
 	ret = (uint32_t)in->tellg() - cur;
