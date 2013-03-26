@@ -65,15 +65,9 @@ namespace Nova
 			pthread_cond_wait(&m_cond, &m_lock);
 			lookup = m_processingList.Pop();
 		}
-		Evidence *ret = NULL;
-		//If we get any entry
-		if(lookup != NULL)
-		{
-			//This should never be invalid unless the workflow of this class is modified or bypassed
-			ret = m_table[lookup->m_evidencePacket.ip_src].PopAll();
-			delete lookup;
-			lookup = NULL;
-		}
+
+		Evidence *ret =  m_table[lookup->m_evidencePacket.ip_src].PopAll();;
+		delete lookup;
 		return ret;
 	}
 }
