@@ -650,9 +650,9 @@ void PrintAllSuspects(enum SuspectListType listType, bool csv)
 			{
 				cout << suspects[i]->GetIpString() << ",";
 				cout << suspects[i]->GetIdentifier().m_ifname() << ",";
-				for(int i = 0; i < DIM; i++)
+				for(int d = 0; d < DIM; d++)
 				{
-					cout << suspects[i]->GetFeatureSet().m_features[i] << ",";
+					cout << suspects[i]->GetFeatureSet().m_features[d] << ",";
 				}
 				cout << suspects[i]->GetClassification() << endl;
 			}
