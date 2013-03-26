@@ -79,11 +79,7 @@ class SuspectTable
 {
 
 public:
-
-	// Default Constructor for SuspectTable
 	SuspectTable();
-
-	// Default Deconstructor for SuspectTable
 	~SuspectTable();
 
 	// Adds the Suspect pointed to in 'suspect' into the table using suspect->GetIPAddress() as the key;

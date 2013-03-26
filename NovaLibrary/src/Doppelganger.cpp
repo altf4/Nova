@@ -31,7 +31,6 @@ using namespace std;
 namespace Nova
 {
 
-//Constructor for a doppelganger object
 // suspects: Uses the hostile suspects in this suspect table to determine Dopp routing
 Doppelganger::Doppelganger(SuspectTable& suspects)
 : m_suspectTable(suspects)
@@ -39,12 +38,11 @@ Doppelganger::Doppelganger(SuspectTable& suspects)
 	m_initialized = false;
 }
 
-//Deconstructor
 Doppelganger::~Doppelganger()
 {
 }
 
-//Synchrnoizes an initialized Doppelganger object with it's suspect table
+//Synchronizes an initialized Doppelganger object with it's suspect table
 // *Note if the Dopp was never initialized this function initializes it.
 void Doppelganger::UpdateDoppelganger()
 {

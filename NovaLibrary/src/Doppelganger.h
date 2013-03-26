@@ -30,14 +30,11 @@ class Doppelganger
 
 public:
 
-	//Constructor for a doppelganger object
 	// suspects: Uses the hostile suspects in this suspect table to determine Dopp routing
 	Doppelganger(SuspectTable& suspects);
-
-	//Deconstructor
 	~Doppelganger();
 
-	//Synchrnoizes an initialized Doppelganger object with it's suspect table
+	//Synchronizes an initialized Doppelganger object with it's suspect table
 	// *Note if the Dopp was never initialized this function initializes it.
 	void UpdateDoppelganger();
 

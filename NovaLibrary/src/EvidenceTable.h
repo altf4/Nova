@@ -33,11 +33,7 @@ class EvidenceTable
 {
 
 public:
-
-	// Default Constructor for EvidenceTable
 	EvidenceTable();
-
-	// Default Deconstructor for EvidenceTable
 	~EvidenceTable();
 
 	//Inserts the Evidence into the table at the location specified by the destination address

@@ -25,17 +25,12 @@ using namespace std;
 
 namespace Nova
 {
-	// Default Constructor for EvidenceTable
 	EvidenceTable::EvidenceTable()
 	{
 		pthread_mutex_init(&m_lock, NULL);
 		pthread_cond_init(&m_cond, NULL);
-		uint64_t initKey = 0;
-		initKey--;
-		initKey--;
 	}
 
-	// Default Deconstructor for EvidenceTable
 	EvidenceTable::~EvidenceTable()
 	{
 		pthread_mutex_destroy(&m_lock);
