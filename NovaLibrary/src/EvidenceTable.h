@@ -45,8 +45,14 @@ public:
 
 private:
 
-	GenericQueue<Evidence> m_processingList;
+	// This is a FIFO list of suspect IP addresses that we have evidence for and need processing
+	GenericQueue<IpWrapper> m_processingList;
+
+	// Contains evidence for the suspects, keyed by source IP address of the packets
+	// May contain multiple chunks of evidence per suspect (stored with a GenericQueue)
 	EvidenceHashTable m_table;
+
+
 	pthread_mutex_t m_lock;
 	pthread_cond_t m_cond;
 };

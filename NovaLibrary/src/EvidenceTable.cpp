@@ -47,7 +47,7 @@ namespace Nova
 		//Pushes the evidence and enters the conditional if it's the first piece of evidence
 		if(m_table[evidence->m_evidencePacket.ip_src].Push(evidence))
 		{
-			Evidence *temp = new Evidence(evidence);
+			IpWrapper *temp = new IpWrapper(evidence->m_evidencePacket.ip_src);
 			m_processingList.Push(temp);
 			//Wake up any consumers waiting for evidence
 			pthread_cond_signal(&m_cond);
@@ -57,7 +57,7 @@ namespace Nova
 	Evidence *EvidenceTable::GetEvidence()
 	{
 		Lock lock(&m_lock);
-		Evidence *lookup = m_processingList.Pop();
+		IpWrapper *lookup = m_processingList.Pop();
 		//While we are unable to get evidence (other consumers got it first)
 		while(lookup == NULL)
 		{
@@ -66,7 +66,7 @@ namespace Nova
 			lookup = m_processingList.Pop();
 		}
 
-		Evidence *ret =  m_table[lookup->m_evidencePacket.ip_src].PopAll();;
+		Evidence *ret =  m_table[lookup->ip].PopAll();;
 		delete lookup;
 		return ret;
 	}

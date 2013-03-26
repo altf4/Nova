@@ -65,6 +65,22 @@ public:
 	Evidence();
 };
 
+// The GenericQueue requires an m_next pointer, so this is just so
+// we can have a GenericQueue of IP addresses. This ends up having
+// a slight performance advantage over std::queue/std::dequeue.
+class IpWrapper
+{
+public:
+	IpWrapper *m_next;
+	uint32_t ip;
+
+	IpWrapper(uint32_t ip)
+	{
+		m_next = NULL;
+		this->ip = ip;
+	}
+};
+
 }
 
 #endif /* EVIDENCE_H_ */
