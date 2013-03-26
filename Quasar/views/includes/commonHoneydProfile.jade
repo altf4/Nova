@@ -113,13 +113,14 @@ script
 
   var closeLightbox = function(){
       enableBackground($('#setup')[0]);
-      var table = $('#configureScriptTable')[0];
+      var table = $('#configureScriptTable');
+      var tableChildren = table.find("*");
       scriptConfigurations[currentLightboxIndex] = {};
-      for(var i = 0; i < table.children.length; i++)
+      for(var i = 0; i < tableChildren.length; i++)
       {
-        if(table.children[i].tagName === 'TR')
+        if(tableChildren[i].tagName == 'TR')
         {
-          scriptConfigurations[currentLightboxIndex][table.children[i].children[0].innerHTML] = table.children[i].children[1].children[0].value;
+          scriptConfigurations[currentLightboxIndex][tableChildren[i].children[0].innerHTML] = tableChildren[i].children[1].children[0].value;
         }
       }
 
@@ -713,30 +714,32 @@ script
         {
           now.GetScript(scriptName, function(script){
             $('#configureScript').empty();
-            var table = $('#configureScript').append($('#TABLE')[0]);
-            table.id = 'configureScriptTable';
+            var table = $('<TABLE>').appendTo($('#configureScript'));
+            table.attr('id','configureScriptTable');
             
             var optionCount = 0;
             for(var option in script.GetOptions)
             {
-              var tr = table.appendChild(document.createElement('TR'));
-              var keyData = tr.appendChild(document.createElement('TD'));
-              var valueData = tr.appendChild(document.createElement('TD'));
-              var valueSelect = valueData.appendChild(document.createElement('SELECT'));
+              var tr = $('<TR>').appendTo(table);
+              var keyData = $('<TD>').appendTo(tr);
+              var valueData = $('<TD>').appendTo(tr);
+              var valueSelect = $('<SELECT>').appendTo(valueData);
 
               for(var i = 0; i < script.GetOptions[option].length; i++)
               {
-                var selectOption = document.createElement('OPTION');
-                selectOption.text = script.GetOptions[option][i];
-                valueSelect.add(selectOption, null);
+                var selectOption = $('<OPTION>');
+                selectOption.text(script.GetOptions[option][i]);
+                selectOption.val(script.GetOptions[option][i]);
+                valueSelect.append(selectOption);
 
                 if(scriptConfigurations[portIndex][option] === script.GetOptions[option][i])
                 {
-                  selectOption.selected = true;
+                  selectOption.attr('selected', 'selected');
+                  console.log("selected!")
                 }
               }
 
-              keyData.innerHTML = option;
+              keyData.html(option);
                
               optionCount++;
             }
