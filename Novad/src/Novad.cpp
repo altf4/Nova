@@ -692,9 +692,9 @@ string ConstructFilterString(string captureIdentifier)
 		{
 			hsAddresses.push_back(whitelistIpRanges.at(i));
 		}
-		else if (WhitelistConfiguration::GetInterface(whitelistIpAddresses.at(i)) == "All Interfaces")
+		else if (WhitelistConfiguration::GetInterface(whitelistIpRanges.at(i)) == "All Interfaces")
 		{
-			hsAddresses.push_back(whitelistIpAddresses.at(i));
+			hsAddresses.push_back(whitelistIpRanges.at(i));
 		}
 	}
 	while(hsAddresses.size())
