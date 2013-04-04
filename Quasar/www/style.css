@@ -220,6 +220,30 @@ html, body {
 	border: 1px solid #759DC0;
 }
 
+#rsyslogPane, #smtpPane, #pulsarPane, #doppelPane {
+  margin-top: 10px;
+  border: 2px solid black;
+  border-radius: 10px;
+  display: none;
+  background-color: #D0E9FC;
+  box-shadow: 0 0 5px 2px #AFD9FF inset;
+  width: 700px;
+}
+
+#rsyslogPane *, #smtpPane *, #pulsarPane *, #doppelPane * {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  margin-left: 10px;
+}
+
+#secondSlide {
+  display: none;
+  color: red;
+  font-style: italic;
+  background-color: #D0E9FC;
+  width: 600px;
+}
+
 .progressText {
 	top: -20px;
 	position: relative;

@@ -68,7 +68,10 @@ string Config::m_prefixes[] =
 	"SAVE_FREQUENCY",
 	"DATA_TTL",
 	"CE_SAVE_FILE",
+	"RSYSLOG_USE",
 	"RSYSLOG_IP",
+	"RSYSLOG_PORT",
+	"RSYSLOG_CONNTYPE",
 	"SMTP_ADDR",
 	"SMTP_PORT",
 	"SMTP_DOMAIN",
@@ -494,6 +497,27 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
+			// RSYSLOG_USE
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					if(!line.compare("true"))
+					{
+						m_rsyslogUse = true;
+					}
+					else
+					{
+						m_rsyslogUse = false;
+					}
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
 			// RSYSLOG_IP
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -502,7 +526,35 @@ void Config::LoadConfig_Internal()
 				line = line.substr(prefix.size() + 1, line.size());
 				if(line.size() > 0)
 				{
-					m_rsyslog = line;
+					m_rsyslogIP = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// RSYSLOG_PORT
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_rsyslogPort = line;
+					isValid[prefixIndex] = true;
+				}
+				continue;
+			}
+
+			// RSYSLOG_CONNTYPE
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+				if(line.size() > 0)
+				{
+					m_rsyslogConnType = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -2417,16 +2469,46 @@ vector<NormalizationType> Config::GetNormalizationFunctions()
 	return m_normalization;
 }
 
+bool Config::UseRsyslog()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_rsyslogUse;
+}
 std::string Config::GetRsyslogIP()
 {
 	Lock lock(&m_lock, READ_LOCK);
-	return m_rsyslog;
+	return m_rsyslogIP;
+}
+std::string Config::GetRsyslogPort()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_rsyslogPort;
+}
+std::string Config::GetRsyslogConnType()
+{
+	Lock lock(&m_lock, READ_LOCK);
+	return m_rsyslogConnType;
 }
 
+void Config::SetUseRsyslog(bool useRsyslog)
+{
+	Lock lock(&m_lock, WRITE_LOCK);
+	m_rsyslogUse = useRsyslog;
+}
 void Config::SetRsyslogIP(std::string newIp)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
-	m_rsyslog = newIp;
+	m_rsyslogIP = newIp;
+}
+void Config::SetRsyslogPort(std::string newPort)
+{
+	Lock lock(&m_lock, WRITE_LOCK);
+	m_rsyslogPort = newPort;
+}
+void Config::SetRsyslogConnType(std::string newConnType)
+{
+	Lock lock(&m_lock, WRITE_LOCK);
+	m_rsyslogConnType = newConnType;
 }
 
 }

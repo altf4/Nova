@@ -14,6 +14,7 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+script(type="text/javascript", src="scripts/jquery.js")
 script
   var ports = {};
   var lastPortSet = '';
@@ -332,9 +333,8 @@ script
   var deletePortset = function(){
     if (profile.portSets.length <= 1)
     {
-        alert("You must have at least one portset");
-        return;
-        
+      alert("You must have at least one portset");
+      return;
     }
     var setName = $('#portSetSelection').val();
     console.log("Deleting portset " + setName);
@@ -346,11 +346,12 @@ script
     portSetSelectionChanged();
 
     if (newProfile != 'true') {
-        now.DeletePortSet(profile.name, setName, function(err) {
-            if (err) {
-                console.log("ERROR deleting portset: " + err);
-            }
-        });
+      now.DeletePortSet(profile.name, setName, function(err) {
+        if (err)
+        {
+          console.log("ERROR deleting portset: " + err);
+        }
+      });
     }
   };
 

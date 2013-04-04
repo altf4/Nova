@@ -916,7 +916,6 @@ app.get('/advancedOptions', function (req, res)
             , THRESHOLD_HOSTILE_TRIGGERS: NovaCommon.config.ReadSetting("THRESHOLD_HOSTILE_TRIGGERS")
             , ONLY_CLASSIFY_HONEYPOT_TRAFFIC: NovaCommon.config.ReadSetting("ONLY_CLASSIFY_HONEYPOT_TRAFFIC")
             , TRAINING_DATA_PATH: NovaCommon.config.ReadSetting("TRAINING_DATA_PATH")
-      , RSYSLOG_IP: getRsyslogIp()
             , supportedEngines: NovaCommon.nova.GetSupportedEngines()
         }
     });
@@ -1014,6 +1013,10 @@ function renderBasicOptions(jadefile, res, req)
             SMTP_USER: NovaCommon.config.GetSMTPUser(),
             SMTP_PASS: NovaCommon.config.GetSMTPPass(),
             SMTP_USEAUTH: NovaCommon.config.GetSMTPUseAuth().toString(),
+            RSYSLOG_USE: NovaCommon.config.ReadSetting("RSYSLOG_USE"),
+            RSYSLOG_IP: NovaCommon.config.ReadSetting("RSYSLOG_IP"),
+            RSYSLOG_PORT: NovaCommon.config.ReadSetting("RSYSLOG_PORT"),
+            RSYSLOG_CONNTYPE: NovaCommon.config.ReadSetting("RSYSLOG_CONNTYPE"),
             EMAIL_ALERTS_ENABLED: NovaCommon.config.ReadSetting("EMAIL_ALERTS_ENABLED"),
             SERVICE_PREFERENCES: NovaCommon.config.ReadSetting("SERVICE_PREFERENCES"),
             RECIPIENTS: NovaCommon.config.ReadSetting("RECIPIENTS")
@@ -1743,7 +1746,7 @@ app.post('/customizeTrainingSave', function (req, res)
 
 app.post('/configureNovaSave', function (req, res)
 {
-    var configItems = ["DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
+    var configItems = ["ADVANCED", "DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
     "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
     "K", "EPS", "CLASSIFICATION_THRESHOLD", "DOPPELGANGER_IP", 
     "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", 
@@ -1767,51 +1770,59 @@ app.post('/configureNovaSave', function (req, res)
 
     NovaCommon.config.ClearInterfaces();
 
-  if(req.body["SMTP_USEAUTH"] == undefined)
-  {
-    req.body["SMTP_USEAUTH"] = "0";
-    NovaCommon.config.SetSMTPUseAuth("false");
-  }
-  else
-  {
-    req.body["SMTP_USEAUTH"] = "1";
-    NovaCommon.config.SetSMTPUseAuth("true");
-  }
-  
-  if(req.body["EMAIL_ALERTS_ENABLED"] == undefined)
-  {
-    req.body["EMAIL_ALERTS_ENABLED"] = "0";
-    NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
-  }
-  else
-  {
-    req.body["EMAIL_ALERTS_ENABLED"] = "1";
-    NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
-  }
-  
-  if(req.body["DM_ENABLED"] == undefined)
-  {
-    req.body["DM_ENABLED"] = "0";
-    NovaCommon.config.WriteSetting("DM_ENABLED", "0");
-  }
-  else
-  {
-    req.body["DM_ENABLED"] = "1";
-    NovaCommon.config.WriteSetting("DM_ENABLED", "1");
-  }
-
-  if(clientId != undefined && req.body["MASTER_UI_CLIENT_ID"] != clientId)
-  {
-    if(pulsar != undefined)
+    if(req.body["SMTP_USEAUTH"] == undefined)
     {
-      var renameMessage = {};
-      renameMessage.type = 'renameRequest';
-      renameMessage.id = clientId;
-      renameMessage.newId = req.body["MASTER_UI_CLIENT_ID"];
-      pulsar.sendUTF(JSON.stringify(renameMessage));
-      clientId = req.body["MASTER_UI_CLIENT_ID"];
+      req.body["SMTP_USEAUTH"] = "0";
+      NovaCommon.config.SetSMTPUseAuth("false");
     }
-  }
+    else
+    {
+      req.body["SMTP_USEAUTH"] = "1";
+      NovaCommon.config.SetSMTPUseAuth("true");
+    }
+    
+    if(req.body["EMAIL_ALERTS_ENABLED"] == undefined)
+    {
+      req.body["EMAIL_ALERTS_ENABLED"] = "0";
+      NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
+    }
+    else
+    {
+      req.body["EMAIL_ALERTS_ENABLED"] = "1";
+      NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
+    }
+    
+    if(req.body["DM_ENABLED"] == undefined)
+    {
+      req.body["DM_ENABLED"] = "0";
+      NovaCommon.config.WriteSetting("DM_ENABLED", "0");
+    }
+    else
+    {
+      req.body["DM_ENABLED"] = "1";
+      NovaCommon.config.WriteSetting("DM_ENABLED", "1");
+    }
+  
+    if(req.body["MASTER_UI_ENABLED"] != undefined)
+    {
+      if(clientId != undefined && req.body["MASTER_UI_CLIENT_ID"] != clientId)
+      {
+        if(pulsar != undefined)
+        {
+          var renameMessage = {};
+          renameMessage.type = 'renameRequest';
+          renameMessage.id = clientId;
+          renameMessage.newId = req.body["MASTER_UI_CLIENT_ID"];
+          pulsar.sendUTF(JSON.stringify(renameMessage));
+          clientId = req.body["MASTER_UI_CLIENT_ID"];
+        }
+      }
+      req.body['MASTER_UI_ENABLED'] = '1';
+    }
+    else
+    {
+      req.body['MASTER_UI_ENABLED'] = '0';
+    }
 
     var interfaces = "";
     var oneIface = false;
@@ -1876,14 +1887,6 @@ app.post('/configureNovaSave', function (req, res)
             validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
             break;
 
-        case "RSYSLOG_IP":
-          if(/^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]{1,5}){1}$/.test(req.body[configItems[item]]) == false 
-             && req.body[configItems[item]] != 'NULL')
-          {
-            validator.check(req.body[configItems[item]], 'Invalid format for Rsyslog server IP, must be IP:Port or the string "NULL"').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\:[0-9]{1,5})$');
-          }
-          break;
-      
         case "DOPPELGANGER_IP":
             validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
             var split = req.body[configItems[item]].split('.');
@@ -1929,15 +1932,7 @@ app.post('/configureNovaSave', function (req, res)
         case "SMTP_ADDR":
             validator.check(req.body[configItems[item]], 'SMTP Address is the wrong format').regex('^(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)$');
             break;
-            /*
-      case "SMTP_DOMAIN":
-        validator.check(req.body[configItems[item]], 'SMTP Domain is the wrong format').regex('^(([A-z]|[0-9])+\\.)+(([A-z]|[0-9])+)$');
-        break; 
-        
-      case "RECIPIENTS":
-        validator.check(req.body[configItems[item]], 'Recipients list should be a comma separated list of email addresses').regex('^(([A-z]|\d)+(\\.([A-z]|\d)+)*)\\@(([A-z]|\d)+(\\.([A-z]|\d)+)+)((\\,){1}( )?(([A-z]|\d)+(\\.([A-z]|\d)+)*)\\@(([A-z]|\d)+(\\.([A-z]|\d)+)+))*$');
-        break;
-      */
+            
         case "SERVICE_PREFERENCES":
             validator.check(req.body[configItems[item]], "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;$');
             break;
@@ -1947,108 +1942,130 @@ app.post('/configureNovaSave', function (req, res)
         }
     }
 
+    var useRsyslog = req.body["RSYSLOG_USE"];
+  
+    if(useRsyslog != undefined)
+    {
+      var spawn = require('sudo');
+      var options = {
+        cachePassword: true
+        , prompt: 'You have requested to change the target server for Rsyslog. This requires superuser permissions.'
+      };
+    
+      var writeIP = req.body['RSYSLOG_IP'];
+      var writePort = req.body['RSYSLOG_PORT'];
+      var writeConnType = req.body['RSYSLOG_CONNTYPE'];
+    
+      var execution = ['nova_rsyslog_helper', writeIP, writePort, writeConnType];
+    
+      var rsyslogHelper = spawn(execution, options);
+  
+      rsyslogHelper.on('exit', function(code){
+        if(code.toString() != '0')
+        {
+          console.log('nova_rsyslog_helper could not complete update of rsyslog configuration, exited with code ' + code);
+        }
+        else
+        {
+          console.log('nova_rsyslog_helper updated rsyslog configuration');
+          NovaCommon.config.WriteSetting('RSYSLOG_USE', 'true');
+          NovaCommon.config.WriteSetting('RSYSLOG_IP', writeIP);
+          NovaCommon.config.WriteSetting('RSYSLOG_PORT', writePort);
+          NovaCommon.config.WriteSetting('RSYSLOG_CONNTYPE', writeConnType);
+        }
+      });
+    }
+    else
+    {
+      if(req.body['ADVANCED'] == '0')
+      {
+        var spawn = require('sudo');
+        var options = {
+          cachePassword: true
+          , prompt: 'You have requested to change the target server for Rsyslog. This requires superuser permissions.'
+        };
+        
+        var execution = ['nova_rsyslog_helper','remove'];
+        var rm = spawn(execution, options); 
+        rm.on('exit', function(code){
+          if(code.toString() !='0')
+          {
+            console.log('Could not remove 41-node.conf from /etc/rsyslog.d/!');
+          }
+          else
+          {
+            console.log('41-nova.conf has been removed from /etc/rsyslog.d/');
+            NovaCommon.config.WriteSetting('RSYSLOG_USE', 'false');
+          }
+        });
+      }
+    }
+
     var errors = validator.getErrors();
 
-  var writeIP = req.body["RSYSLOG_IP"];
-
-  if(writeIP != undefined && writeIP != getRsyslogIp() && writeIP != 'NULL')
-  {
-    var spawn = require('sudo');
-    var options = {
-      cachePassword: true
-      , prompt: 'You have requested to change the target server for Rsyslog. This requires superuser permissions.'
-    };
-  
-    var execution = ['nova_rsyslog_helper', writeIP.toString()];
-  
-    var rsyslogHelper = spawn(execution, options);
-
-    rsyslogHelper.on('exit', function(code){
-      if(code.toString() != '0')
-      {
-        console.log('nova_rsyslog_helper could not complete update of rsyslog configuration, exited with code ' + code);
-      }
-      else
-      {
-        console.log('nova_rsyslog_helper updated rsyslog configuration');
-        NovaCommon.config.WriteSetting('RSYSLOG_IP', writeIP);
-      }
-    });
-  }
-  else if(writeIP == 'NULL')
-  {
-    var spawn = require('sudo');
-    var options = {
-      cachePassword: true
-      , prompt: 'You have requested to change the target server for Rsyslog. This requires superuser permissions.'
-    };
-    
-    var execution = ['nova_rsyslog_helper','remove'];
-    var rm = spawn(execution, options); 
-    rm.on('exit', function(code){
-      console.log('41-nova.conf has been removed from /etc/rsyslog.d/');
-      NovaCommon.config.WriteSetting('RSYSLOG_IP', writeIP);
-    });
-  }
-
-    if (errors.length > 0)
+    if(errors.length > 0)
     {
-        RenderError(res, errors, "/suspects");
+      RenderError(res, errors, "/suspects");
     } 
     else 
     {
-        if (req.body["INTERFACE"] !== undefined && req.body["DEFAULT"] === undefined)
-        {
-            req.body["DEFAULT"] = false;
-            NovaCommon.config.UseAllInterfaces(false);
-            NovaCommon.config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
-        } else if (req.body["INTERFACE"] === undefined)
-        {
-            req.body["DEFAULT"] = true;
-            NovaCommon.config.UseAllInterfaces(true);
-            NovaCommon.config.WriteSetting("INTERFACE", "default");
-        } else {
-            NovaCommon.config.UseAllInterfaces(req.body["DEFAULT"]);
-            NovaCommon.config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
-        }
+      if(req.body["INTERFACE"] !== undefined && req.body["DEFAULT"] === undefined)
+      {
+        req.body["DEFAULT"] = false;
+        NovaCommon.config.UseAllInterfaces(false);
+        NovaCommon.config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
+      }
+      else if(req.body["INTERFACE"] === undefined)
+      {
+        req.body["DEFAULT"] = true;
+        NovaCommon.config.UseAllInterfaces(true);
+        NovaCommon.config.WriteSetting("INTERFACE", "default");
+      }
+      else
+      {
+        NovaCommon.config.UseAllInterfaces(req.body["DEFAULT"]);
+        NovaCommon.config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
+      }
 
-        if (req.body["SMTP_USER"] !== undefined)
-        {
-            NovaCommon.config.SetSMTPUser(req.body["SMTP_USER"]);
-        }
-        if (req.body["SMTP_PASS"] !== undefined)
-        {
-            NovaCommon.config.SetSMTPPass(req.body["SMTP_PASS"]);
-        }
+      if (req.body["SMTP_USER"] !== undefined)
+      {
+        NovaCommon.config.SetSMTPUser(req.body["SMTP_USER"]);
+      }
+      if (req.body["SMTP_PASS"] !== undefined)
+      {
+        NovaCommon.config.SetSMTPPass(req.body["SMTP_PASS"]);
+      }
 
-        //if no errors, send the validated form data to the WriteSetting method
-        for (var item = 5; item < configItems.length; item++)
+      //if no errors, send the validated form data to the WriteSetting method
+      for (var item = 6; item < configItems.length; item++)
+      {
+        if (req.body[configItems[item]] != undefined)
         {
-            if (req.body[configItems[item]] != undefined)
-            {
-                NovaCommon.config.WriteSetting(configItems[item], req.body[configItems[item]]);
-            }
+          NovaCommon.config.WriteSetting(configItems[item], req.body[configItems[item]]);
         }
+      }
 
-        NovaCommon.config.ReloadConfiguration();
+      NovaCommon.config.ReloadConfiguration();
 
-        var route = "/suspects";
-        if (req.body['route'] != undefined)
+      var route = "/suspects";
+      if (req.body['route'] != undefined)
+      {
+        route = req.body['route'];
+        if(route == 'manconfig')
         {
-            route = req.body['route'];
-            if (route == 'manconfig')
-            {
-                route = 'honeydConfigManage';
-            } else {
-                route = 'autoConfig';
-            }
+          route = 'honeydConfigManage';
         }
+        else
+        {
+          route = 'autoConfig';
+        }
+      }
 
-        res.render('saveRedirect.jade', {
-            locals: {
-                redirectLink: route
-            }
-        })
+      res.render('saveRedirect.jade', {
+        locals: {
+          redirectLink: route
+        }
+      })
     }
 });
 

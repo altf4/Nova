@@ -244,17 +244,41 @@ CE_SAVE_FILE CESaveFile
 # Logging Stuff #
 
 ############################################
+# RSYSLOG_USE #
+############################################
+#
+# Whether to use Rsyslog or not
+#
+RSYSLOG_USE false
+
+############################################
 # RSYSLOG_IP #
 ############################################
 #
-# The IP:Port combination for rsyslog to send
-# messages to 
-# Example
-# 192.168.0.1:512
+# The IP for rsyslog to send messages to 
+# Example:
+# 192.168.0.1
 #
-# Note: If you do not wish to redirect any logging,
-# use string NULL here (case-sensitive)
-RSYSLOG_IP NULL
+RSYSLOG_IP 127.0.0.1
+
+############################################
+# RSYSLOG_PORT #
+############################################
+#
+# The port rsyslog will use in combination 
+# with the IP to send messages to:
+#
+RSYSLOG_PORT 514
+
+############################################
+# RSYSLOG_CONNTYPE
+############################################
+#
+# Connection type rsyslog will use to 
+# connect to the server.
+# Example:
+# TCP or UDP
+RSYSLOG_CONNTYPE UDP
 
 ############################################
 # SMTP_ADDR #

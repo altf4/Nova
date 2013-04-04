@@ -176,8 +176,14 @@ public:
 	bool SetSMTPUser(std::string SMTPUser);
 	bool SetSMTPPass(std::string STMP_Pass);
 
+	bool UseRsyslog();
 	std::string GetRsyslogIP();
+	std::string GetRsyslogPort();
+	std::string GetRsyslogConnType();
+	void SetUseRsyslog(bool useRsyslog);
 	void SetRsyslogIP(std::string newIp);
+	void SetRsyslogPort(std::string newPort);
+	void SetRsyslogConnType(std::string newConnType);
 
 	bool GetSMTPSettings_FromFile();
 	bool SaveSMTPSettings();
@@ -268,7 +274,10 @@ private:
 
 	__attribute__ ((visibility ("hidden"))) static std::string m_prefixes[];
 
-	std::string m_rsyslog;
+	bool m_rsyslogUse;
+	std::string m_rsyslogIP;
+	std::string m_rsyslogPort;
+	std::string m_rsyslogConnType;
 
 	std::string m_doppelIp;
 	std::string m_loopbackIF;

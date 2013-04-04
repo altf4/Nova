@@ -15,23 +15,25 @@
 //- ============================================================================
 
 script
-  function watermark(source, text){
-    var ele = $('#' + source)[0];
-    if(ele.value == '')
+  function handlePulsarPaneSlide()
+  {
+    if($('#PULSAR_ENABLE').is(':checked'))
     {
-      ele.value = text; 
-    } 
+      $('#pulsarPane').slideDown(400);
+    }
     else
     {
-       
+      $('#pulsarPane').slideUp(400);
     }
   }
-
+  
   function init()
   {
+    handlePulsarPaneSlide();
   }
   
 form(method="post", action="/configureNovaSave")
+  input(type='hidden', name='ADVANCED', value='1')
   h2 General Configuration
 
   h2 Web Interface
@@ -56,7 +58,6 @@ form(method="post", action="/configureNovaSave")
   br
   
   label Classification Training Data
-  br
   input(name="TRAINING_DATA_PATH",  value=TRAINING_DATA_PATH)
   br
   
@@ -71,7 +72,7 @@ form(method="post", action="/configureNovaSave")
   h2 Special Run Settings
   label Read pcap file?
   br
-  if READ_PCAP != "0"
+  if(READ_PCAP != "0")
     input(type="radio", name="READ_PCAP", value="1", checked)
     |Yes
     br
@@ -89,7 +90,7 @@ form(method="post", action="/configureNovaSave")
 
   label Go to live capture after pcap?
   br
-  if GO_TO_LIVE != "0"
+  if(GO_TO_LIVE != "0")
     input(type="radio", name="GO_TO_LIVE", value="1", checked)
     |Yes
     br
@@ -121,7 +122,7 @@ form(method="post", action="/configureNovaSave")
   
   label Only classify packets going to honeypots?
   br
-  if ONLY_CLASSIFY_HONEYPOT_TRAFFIC != "0"
+  if(ONLY_CLASSIFY_HONEYPOT_TRAFFIC != "0")
     input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="1", checked)
     |Yes
     br
@@ -163,7 +164,7 @@ form(method="post", action="/configureNovaSave")
 
   label Clear data after suspect logged as hostile?
   br
-  if CLEAR_AFTER_HOSTILE_EVENT != "0"
+  if(CLEAR_AFTER_HOSTILE_EVENT != "0")
     input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
     |Yes
     br
@@ -185,7 +186,7 @@ form(method="post", action="/configureNovaSave")
   
   label Custom pcap Filter String Mode
   br
-  if CUSTOM_PCAP_MODE != "0"
+  if(CUSTOM_PCAP_MODE != "0")
     input(type="radio", name="CUSTOM_PCAP_MODE", value="1", checked)
     |Override
     br
@@ -211,42 +212,25 @@ form(method="post", action="/configureNovaSave")
   label Doppelganger IP
   input(name="DOPPELGANGER_IP",  value=DOPPELGANGER_IP)
   br
- 
-  p(style="font-style: italic; float: left;") Note: To disable remote logging for Nova, use string "NULL"
-  br
-  p(style="font-style: italic; float: left;") Format for Rsyslog connections is IP:PORT
   br
   
-  label Remote Log Server IP
-  input(name="RSYSLOG_IP", value=RSYSLOG_IP, id='RSYSLOG_IP', placeholder='Required format is IP:PORT')
-  br
-
-  h2 Pulsar
-  if MASTER_UI_ENABLED != "0"
-    input(type="radio", name="MASTER_UI_ENABLED", value="1", checked)
-    |Yes
-    br
-    input(type="radio", name="MASTER_UI_ENABLED", value="0")
-    |No
-    br
+  label(style='font-size: 16px;') Use Pulsar?
+  if(MASTER_UI_ENABLED != "0")
+    input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", checked=true, onclick='handlePulsarPaneSlide()')
   else
-    input(type="radio", name="MASTER_UI_ENABLED", value="1")
-    |Yes
+    input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", onclick='handlePulsarPaneSlide()')
     br
-    input(type="radio", name="MASTER_UI_ENABLED", value="0", checked)
-    |No
+    
+  div#pulsarPane
     br
-
+    label Pulsar Server IP
+    input(name="MASTER_UI_IP",  value=MASTER_UI_IP)
+    br
+    
+    label Pulsar Client ID
+    input(name="MASTER_UI_CLIENT_ID",  value=MASTER_UI_CLIENT_ID)
+    br
+    
+    label Pulsar Reconnect Time
+    input(name="MASTER_UI_RECONNECT_TIME",  value=MASTER_UI_RECONNECT_TIME)
   br
-  label Pulsar Server IP
-  input(name="MASTER_UI_IP",  value=MASTER_UI_IP)
-  br
-  
-  label Pulsar Client ID
-  input(name="MASTER_UI_CLIENT_ID",  value=MASTER_UI_CLIENT_ID)
-  br
-  
-  label Pulsar Reconnect Time
-  input(name="MASTER_UI_RECONNECT_TIME",  value=MASTER_UI_RECONNECT_TIME)
-  br
-
