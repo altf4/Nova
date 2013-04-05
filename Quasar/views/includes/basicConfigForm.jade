@@ -17,6 +17,7 @@
 script
   var servicePrefs = '#{SERVICE_PREFERENCES}';
   var loaded = false;
+  var connType = '#{RSYSLOG_CONNTYPE}';
   
   function handleConnTypeChange()
   {
@@ -369,6 +370,15 @@ script
         setServicePreferences();
         fillServicePrefDiv();
         changeSMTPAuth();
+      }
+
+      if(connType == 'UDP')
+      {
+        $('#RSYSLOG_CONNTYPE').val('UDP');
+      }
+      else
+      {
+        $('#RSYSLOG_CONNTYPE').val('TCP');
       }
 
       handleRsyslogPane();
