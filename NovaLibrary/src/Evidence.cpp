@@ -52,7 +52,7 @@ Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 	m_next = NULL;
 
 	//offset += 2;
-	m_evidencePacket.ip_len = ip->ip_len;//ntohs(*(uint16_t *)offset);
+	m_evidencePacket.ip_len = ntohs(ip->ip_len);//ntohs(*(uint16_t *)offset);
 	//offset += 7; // @16 - read 1
 	m_evidencePacket.ip_p = ip->ip_p;//*(uint8_t *)offset;
 	//offset += 3; // @19 - read 4
