@@ -92,6 +92,9 @@ block headerAdditions
     var advancedFilters = new Object();
     var advancedFilterEnabled = false;
     var advancedIpFilter = null;
+    
+    // Used to render the suspect grid before the normal n second refresh if we've recieved some first suspects
+    var renderedAtLeastOnce = false;
 
     require(["dijit/form/TextBox"]);
 
@@ -313,6 +316,13 @@ block headerAdditions
         }
       }
       suspectGrid.PushEntry(row);
+
+      if (!renderedAtLeastOnce) {
+        if (Object.keys(suspectGrid.GetElements()).length > suspectGrid.GetRowsPerPage()) {
+            renderedAtLeastOnce = true;
+            suspectGrid.Render();
+        }
+      }
     };
 
     var applyAdvancedFilter = function(){
@@ -483,6 +493,8 @@ block headerAdditions
 
         setInterval(function(){
             if(!liveUpdate || lastNovadStatus == false) {return;}
+
+            renderedAtLeastOnce = true;
            
             var start = new Date().getTime();
             suspectGrid.Render(); 
