@@ -480,14 +480,18 @@ block headerAdditions
         });
 
         resendSuspects();
-
-        setInterval(function(){
+    
+        var renderSuspects = function(){
             if(!liveUpdate || lastNovadStatus == false) {return;}
            
             var start = new Date().getTime();
             suspectGrid.Render(); 
             console.log("Time to render grid of size " + suspectGrid.Size() + ": " + (new Date().getTime() - start) + "ms");
-        }, 3000);
+        };
+        
+        setTimeout(renderSuspects, 100);
+        setTimeout(renderSuspects, 500);
+        setInterval(renderSuspects, 3000);
     }
 
     function replacementContextMenu(e)
