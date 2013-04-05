@@ -44,23 +44,16 @@ Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 	struct ip_hdr *ip;
 	ip = (ip_hdr *) packet_at_ip_header;
 
-	//Get timestamp
 	m_evidencePacket.ts = pkthdr->ts.tv_sec;
 
-	// 00001111 mask to get the ip header length
-	uint8_t ip_hl = ip->ip_hl;//15;
+	uint8_t ip_hl = ip->ip_hl;
 	m_next = NULL;
 
-	//offset += 2;
-	m_evidencePacket.ip_len = ip->ip_len;//ntohs(*(uint16_t *)offset);
-	//offset += 7; // @16 - read 1
-	m_evidencePacket.ip_p = ip->ip_p;//*(uint8_t *)offset;
-	//offset += 3; // @19 - read 4
-	m_evidencePacket.ip_src = ntohl(ip->ip_src); //ntohl(*(uint32_t *)offset);
-	//offset += 4; // @23 - read 4
-	m_evidencePacket.ip_dst = ntohl(ip->ip_dst);//ntohl(*(uint32_t *)offset);
+	m_evidencePacket.ip_len = ntohs(ip->ip_len);
+	m_evidencePacket.ip_p = ip->ip_p;
+	m_evidencePacket.ip_src = ntohl(ip->ip_src);
+	m_evidencePacket.ip_dst = ntohl(ip->ip_dst);
 
-	//Initialize port to 0 in case we don't have a TCP or UDP packet
 	m_evidencePacket.dst_port = -1;
 
 	if((m_evidencePacket.ip_p == 6))
@@ -70,14 +63,14 @@ Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 		//read in the dest port
 		m_evidencePacket.dst_port = ntohs(tcp->th_dport);
 	}
-	else if(m_evidencePacket.ip_p == 17)//udp
+	else if(m_evidencePacket.ip_p == 17) // UDP
 	{
 		struct udp_hdr *udp;
 		udp = (udp_hdr *) (packet_at_ip_header + ip_hl*4);
 		m_evidencePacket.dst_port = ntohs(udp->uh_dport);
 	}
 
-	if(m_evidencePacket.ip_p == 6)
+	if(m_evidencePacket.ip_p == 6) // TCP
 	{
 		struct tcphdr *tcp;
 		tcp = (tcphdr*)(packet_at_ip_header + ip_hl*4);
