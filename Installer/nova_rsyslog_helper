@@ -1,8 +1,11 @@
 #!/bin/bash
 
-TARGET=$1
+TARGET_IP=$1
+TARGET_PORT=$2
+TARGET_CONNTYPE=$3
+TARGET=$TARGET_IP:$TARGET_PORT
 FILE=/usr/share/nova/sharedFiles/41-nova.conf
-NOT_IP=^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5}$
+NOT_IP=^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[1-9]{1}[0-9]{0,4}$
 
 if [[ -z $TARGET ]]
 then
@@ -18,7 +21,7 @@ then
 }
 else
 {
-  if [[ "$TARGET" -eq "remove"  ]]
+  if [[ "$TARGET_IP" -eq "remove" ]]
   then
   {
      echo 'in rm call'
@@ -39,14 +42,24 @@ sudo cp $FILE /etc/rsyslog.d/
 
 FILE=/etc/rsyslog.d/41-nova.conf
 
-if grep -qs $TARGET $FILE
+echo $TARGET
+echo $TARGET_CONNTYPE
+
+if grep -qs "CHANGEME" $FILE
 then
 {
-  sed -i "s|@@.*$|@@$TARGET|g" $FILE
-}
-else
-{
-  sed -i "s|@@.*$|@@$TARGET|g" $FILE
+  if [[ "$TARGET_CONNTYPE" == "TCP" ]]
+  then
+  {
+    echo "TCONNTYPE was TCP"
+    sed -i "s|CHANGEME|@@$TARGET|g" $FILE
+  }
+  else
+  {
+    echo "TCONNTYPE was UDP"
+    sed -i "s|CHANGEME|@$TARGET|g" $FILE
+  }
+  fi
 }
 fi
 

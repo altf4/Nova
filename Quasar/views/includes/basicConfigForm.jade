@@ -17,6 +17,31 @@
 script
   var servicePrefs = '#{SERVICE_PREFERENCES}';
   var loaded = false;
+  var connType = '#{RSYSLOG_CONNTYPE}';
+  
+  function handleConnTypeChange()
+  {
+    if($('#RSYSLOG_CONNTYPE').val() == 'TCP' && $('#RSYSLOG_PORT').val() == '514')
+    {
+      $('#secondSlide').slideDown(400);
+    }
+    else
+    {
+      $('#secondSlide').slideUp(400);
+    }
+  }
+  
+  function handleRsysPortChange()
+  {
+    if($('#RSYSLOG_PORT').val() == '514')
+    {
+      $('#secondSlide').slideDown(400);
+    }
+    else
+    {
+      $('#secondSlide').slideUp(400);
+    }
+  }
   
   function changeDisabled()
   {
@@ -82,6 +107,42 @@ script
   function setServicePreferences()
   {
     $('#sp')[0].value = servicePrefs;
+  }
+  
+  function handleRsyslogPane()
+  {
+    if($('#RSYSLOG_USE').is(':checked'))
+    {
+      $('#rsyslogPane').slideDown(400);
+    }
+    else
+    {
+      $('#rsyslogPane').slideUp(400);
+    }
+  }
+  
+  function handleSMTPPaneSlide()
+  {
+    if($('#EMAIL_ALERTS_ENABLED').is(':checked'))
+    {
+      $('#smtpPane').slideDown(400);
+    }
+    else
+    {
+      $('#smtpPane').slideUp(400);
+    }
+  }
+  
+  function handleDoppelPaneSlide()
+  {
+    if($('#DM_ENABLED').is(':checked'))
+    {
+      $('#doppelPane').slideDown(400);
+    }
+    else
+    {
+      $('#doppelPane').slideUp(400);
+    }
   }
   
   function fillServicePrefDiv()
@@ -293,73 +354,106 @@ script
   
   function init()
   {
-  now.ready(function()
-  {
-    if(loaded)
+    now.ready(function()
     {
-      return;
-    }
-    else
-    {
-      loaded = true;
-    }
-    
-    if($('#sp')[0] !== undefined)
-    {
-      setServicePreferences();
-      fillServicePrefDiv();
-      changeSMTPAuth();
-    }
-  });
+      if(loaded)
+      {
+        return;
+      }
+      else
+      {
+        loaded = true;
+      }
+      
+      if($('#sp')[0] !== undefined)
+      {
+        setServicePreferences();
+        fillServicePrefDiv();
+        changeSMTPAuth();
+      }
+
+      if(connType == 'UDP')
+      {
+        $('#RSYSLOG_CONNTYPE').val('UDP');
+      }
+      else
+      {
+        $('#RSYSLOG_CONNTYPE').val('TCP');
+      }
+
+      handleRsyslogPane();
+      handleSMTPPaneSlide();
+      handleDoppelPaneSlide();
+    });
   }
+
+input(type='hidden', name='ADVANCED', value='0')
 
 h2 Email Notifications
 label Enable email alerts?
 if(EMAIL_ALERTS_ENABLED == 1)
-  input(type='checkbox', id='EMAIL_ALERTS_ENABLED', name='EMAIL_ALERTS_ENABLED', value=EMAIL_ALERTS_ENABLED, checked)
+  input(type='checkbox', id='EMAIL_ALERTS_ENABLED', name='EMAIL_ALERTS_ENABLED', value=EMAIL_ALERTS_ENABLED, checked=true, onclick='handleSMTPPaneSlide()')
 else
-  input(type='checkbox', id='EMAIL_ALERTS_ENABLED', name='EMAIL_ALERTS_ENABLED', value=EMAIL_ALERTS_ENABLED)
+  input(type='checkbox', id='EMAIL_ALERTS_ENABLED', name='EMAIL_ALERTS_ENABLED', value=EMAIL_ALERTS_ENABLED, onclick='handleSMTPPaneSlide()')
 br
-br
-
-label Use SMTP Authentication?
-if(SMTP_USEAUTH == 'true')
-  input(type='checkbox', id='SMTP_USEAUTH', name='SMTP_USEAUTH', value=SMTP_USEAUTH, onclick='changeSMTPAuth()', checked)
-else
-  input(type='checkbox', id='SMTP_USEAUTH', name='SMTP_USEAUTH', value=SMTP_USEAUTH, onclick='changeSMTPAuth()')
-br
-br
-
-label SMTP Address
-input.wide(name='SMTP_ADDR', value=SMTP_ADDR)
-br
-
-label SMTP Port
-input.wide(type='number', min='0', max='65536', name='SMTP_PORT', id='SMTP_PORT', value=SMTP_PORT)
-br
-
-label SMTP Domain
-input.wide(name='SMTP_DOMAIN', id='SMTP_DOMAIN', value=SMTP_DOMAIN)
-br
-
-label SMTP Username
-input.wide(name='SMTP_USER',  id='SMTP_USER', value=SMTP_USER)
-br
-
-label SMTP Password
-input.wide(type='password', name='SMTP_PASS', id='SMTP_PASS', value=SMTP_PASS)
-br
-
-label Email Recipients
-input.wide(name='RECIPIENTS', value=RECIPIENTS)
+div#smtpPane
+  label Use SMTP Authentication?
+  if(SMTP_USEAUTH == 'true')
+    input(type='checkbox', id='SMTP_USEAUTH', name='SMTP_USEAUTH', value=SMTP_USEAUTH, onclick='changeSMTPAuth()', checked=true)
+  else
+    input(type='checkbox', id='SMTP_USEAUTH', name='SMTP_USEAUTH', value=SMTP_USEAUTH, onclick='changeSMTPAuth()')
   br
-br
+  br
+  
+  label SMTP Address
+  input.wide(name='SMTP_ADDR', value=SMTP_ADDR)
+  br
+  
+  label SMTP Port
+  input.wide(type='number', min='0', max='65536', name='SMTP_PORT', id='SMTP_PORT', value=SMTP_PORT)
+  br
+  
+  label SMTP Domain
+  input.wide(name='SMTP_DOMAIN', id='SMTP_DOMAIN', value=SMTP_DOMAIN)
+  br
+  
+  label SMTP Username
+  input.wide(name='SMTP_USER',  id='SMTP_USER', value=SMTP_USER)
+  br
+  
+  label SMTP Password
+  input.wide(type='password', name='SMTP_PASS', id='SMTP_PASS', value=SMTP_PASS)
+  br
+  
+  label Email Recipients
+  input.wide(name='RECIPIENTS', value=RECIPIENTS)
+  br
+  br
 
 h2 Logger Settings
 div(id='servicePrefs')
   input(id='sp', name='SERVICE_PREFERENCES', value='', readonly=true, type='hidden')
 br
 
+label(style='font-size: 16px') Use RSyslog?
+if(RSYSLOG_USE == 'true')
+  input#RSYSLOG_USE(type='checkbox', name='RSYSLOG_USE', checked=true, onclick='handleRsyslogPane()')
+else
+  input#RSYSLOG_USE(type='checkbox', name='RSYSLOG_USE', onclick='handleRsyslogPane()')
+
+div#rsyslogPane
+  label Remote Log Server IP Address
+  input#RSYSLOG_IP(name='RSYSLOG_IP', value=RSYSLOG_IP)
+  br
+  label Remote Log Server Port
+  input#RSYSLOG_PORT(name='RSYSLOG_PORT', type='number', min='1', max='65536', step='1', value=RSYSLOG_PORT, onchange='handleRsysPortChange()')
+  br
+  label UDP or TCP?
+  select#RSYSLOG_CONNTYPE(name='RSYSLOG_CONNTYPE', onchange='handleConnTypeChange()')
+    option UDP
+    option TCP
+  div#secondSlide
+    p Note: It is not recommended for Remote Log Server Port to have the value 514 for TCP!
     
 h2 Ethernet Interfaces
 - if (DEFAULT == 'true')
@@ -395,24 +489,24 @@ h2 Ethernet Interfaces
 br
 label Enable Doppelganger?
 if(DM_ENABLED == 1)
-  input(type='checkbox', id='DM_ENABLED', name='DM_ENABLED', value=DM_ENABLED, checked)
+  input(type='checkbox', id='DM_ENABLED', name='DM_ENABLED', value=DM_ENABLED, checked, onclick='handleDoppelPaneSlide()')
 else
-  input(type='checkbox', id='DM_ENABLED', name='DM_ENABLED', value=DM_ENABLED)
+  input(type='checkbox', id='DM_ENABLED', name='DM_ENABLED', value=DM_ENABLED, onclick='handleDoppelPaneSlide()')
 br
 
-br
-Label Doppelganger Interface
-br
-- for (var i = 0; i < DOPPELGANGER_INTERFACE.length; i++)
-  - if(DOPPELGANGER_INTERFACE[i].checked == 1)
-    div    
-      input(type='checkbox', value=DOPPELGANGER_INTERFACE[i].iface, id='dif#{i}', name='DOPPELGANGER_INTERFACE', width=10, onclick='checkOnlyOne("dif#{i}")', checked) 
-      #{DOPPELGANGER_INTERFACE[i].iface}
-  - else
-    div 
-      input(type='checkbox', value=DOPPELGANGER_INTERFACE[i].iface, id='dif#{i}', name='DOPPELGANGER_INTERFACE', width=10, onclick='checkOnlyOne("dif#{i}")') 
-      #{DOPPELGANGER_INTERFACE[i].iface}
-          
-hidden(id='doppel_length', value=DOPPELGANGER_INTERFACE.length)
+div#doppelPane
+  Label Doppelganger Interface
+  br
+  - for (var i = 0; i < DOPPELGANGER_INTERFACE.length; i++)
+    - if(DOPPELGANGER_INTERFACE[i].checked == 1)
+      div    
+        input(type='checkbox', value=DOPPELGANGER_INTERFACE[i].iface, id='dif#{i}', name='DOPPELGANGER_INTERFACE', width=10, onclick='checkOnlyOne("dif#{i}")', checked) 
+        #{DOPPELGANGER_INTERFACE[i].iface}
+    - else
+      div 
+        input(type='checkbox', value=DOPPELGANGER_INTERFACE[i].iface, id='dif#{i}', name='DOPPELGANGER_INTERFACE', width=10, onclick='checkOnlyOne("dif#{i}")') 
+        #{DOPPELGANGER_INTERFACE[i].iface}
+            
+  hidden(id='doppel_length', value=DOPPELGANGER_INTERFACE.length)
 br
 
