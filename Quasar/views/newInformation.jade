@@ -270,7 +270,8 @@ block headerAdditions
 
 
             newNovaLogGrid = new NovaGrid(gridStructure, 1, "newNovaLogGrid", 'newNovaLogGrid', false);
-            newNovaLogGrid.SetSortByKey(2);
+            newNovaLogGrid.SetSortByKey(1);
+            newNovaLogGrid.SetSortByKey(1);
             newNovaLogGrid.GenerateTableHeader();
             newNovaLogGrid.SetRowsPerPage(10);
             newNovaLogGrid.SetPageNumberDiv($("#newNovaLogPages").get(0));    
@@ -359,7 +360,8 @@ block headerAdditions
             columns.push({name: "Message", isDisabled: false});
 
             newHoneydLogGrid = new NovaGrid(columns, 1, "newHoneydLogGrid", 'newHoneydLogGrid', false);
-            newHoneydLogGrid.SetSortByKey(2);
+            newHoneydLogGrid.SetSortByKey(1);
+            newHoneydLogGrid.SetSortByKey(1);
             newHoneydLogGrid.GenerateTableHeader();
             newHoneydLogGrid.SetRowsPerPage(10);
             newHoneydLogGrid.SetPageNumberDiv($("#newHoneydLogPages").get(0));    
