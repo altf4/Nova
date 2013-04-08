@@ -23,15 +23,24 @@
 //     name: String name of the item
 //     value: Number of this item present
 var NovaPiChart = function(divId, title, size, deleteButtonFunction) {
-	this.m_title = title;
+    this.m_title = title;
     this.m_deleteFunction = deleteButtonFunction;
     this.SetSize(size);
-	
-	var mainDiv = document.createElement("div");
-	mainDiv.setAttribute("style", "text-align: left");
-	var div = document.getElementById(divId);
-	div.appendChild(mainDiv);
-	this.m_id = mainDiv;
+    
+    var mainDiv = document.createElement("div");
+    mainDiv.setAttribute("style", "text-align: left");
+
+    this.popupdiv = document.createElement("div");
+    $(this.popupdiv).css('display','none');  
+    $(this.popupdiv).css('background-color','white');  
+    $(this.popupdiv).css('border','2px solid black');  
+    $(this.popupdiv).css("position", "absolute"); 
+    $(this.popupdiv).css("z-index", "120"); 
+
+    var div = document.getElementById(divId);
+    div.appendChild(mainDiv);
+    div.appendChild(this.popupdiv);
+    this.m_id = mainDiv;
 }
 
 NovaPiChart.prototype = {
@@ -55,22 +64,84 @@ NovaPiChart.prototype = {
         // Reset the div
         this.m_id.innerHTML = "";
 
-		var title = document.createElement("h2");
-		title.innerHTML = this.m_title;
-		title.setAttribute("class", "novaGridTitle");
-		this.m_id.appendChild(title);
+        var title = document.createElement("h2");
+        title.innerHTML = this.m_title;
+        title.setAttribute("class", "novaGridTitle");
+        this.m_id.appendChild(title);
 
         // Make a canvas
         var canvas = document.createElement("canvas");
         canvas.setAttribute("width", this.m_size + "px");
         canvas.setAttribute("height", this.m_size + "px");
         this.m_id.appendChild(canvas);
+
         
         // Draw the pi chart on the canvas
         var ctx = canvas.getContext("2d");
         var lastend = 0;
         var randomColor;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        var self = this;
+
+
+        if (this.m_items.length >= 1) {
+        
+        // Hide the popup box when not in the canvas with mouse
+        $(canvas).mouseout(function() {
+            $(self.popupdiv).css('display', 'none'); 
+        });
+
+        // Make a popup box that follows mouse and tells you which slice is hovered over
+        canvas.onmousemove = function(e) {
+            if (!e) var e = window.event;
+           
+            var x = e.clientX - $(this).offset().left;
+            var y = self.m_size - (e.clientY - $(this).offset().top);
+
+            // Don't display the popup if we're not inside the circle
+            var sqrDistance = Math.pow((self.m_halfSize - x), 2) + Math.pow((self.m_halfSize - y), 2);
+            if (sqrDistance >= Math.pow(self.m_halfSize, 2)) {
+                $(self.popupdiv).css('display', 'none'); 
+                return;
+            }
+
+            // Angle only valid right now if Quadrant I
+            var m = (self.m_halfSize - y)/(self.m_halfSize - x);
+            var angle = Math.atan(m);
+
+            // Get proper angle based on quadrant
+            // Quadrant II
+            if (x <= self.m_halfSize && y > self.m_halfSize) {
+                angle += Math.PI;
+            // Quadrant III
+            } else if (x <= self.m_halfSize && y <= self.m_halfSize) {
+                angle += Math.PI;
+            // Quadrant IV
+            } else if (x >= self.m_halfSize && y < self.m_halfSize) {
+                angle += 2*Math.PI;
+            }
+           
+
+            // html5 canvas is being drawn clockwise instead of the usual counterclockwise, this fixes our angle for that
+            angle = 2*Math.PI - angle;
+
+            // Find the index of the currently hovered over pie slice
+            var current = 0;
+            for (var i = 0; i < self.m_items.length; i++) {
+                if (angle >= self.m_items[i].startArc && angle <= self.m_items[i].endArc) {
+                    current = i;
+                    break;
+                }
+            }
+
+            $(self.popupdiv).html(self.m_items[current].name + " (" + Number(100*self.m_items[current].value/self.m_numberOfItems).toFixed(2) + "%)"); 
+            $(self.popupdiv).css('left',e.clientX - 200); 
+            $(self.popupdiv).css('top',e.clientY - 200);
+            $(self.popupdiv).css('display', 'block'); 
+        };
+
+        }
 
         if (this.m_numberOfItems == 0) {
             ctx.fillStyle = "#A1A1A1";
@@ -82,7 +153,7 @@ NovaPiChart.prototype = {
 
             for (var i = 0; i < this.m_items.length; i++) {
                 var legend = document.createElement("div");
-				legend.setAttribute("class", "pieLegendElementDiv");
+                legend.setAttribute("class", "pieLegendElementDiv");
                 var text = document.createElement("p");
                 text.setAttribute('style', 'display: inline-block; margin: 2px');
                 text.innerHTML = "<span style='background-color: " + "#A1A1A1" + ";'>&nbsp &nbsp &nbsp</span>&nbsp 0% " + this.m_items[i].name;
@@ -112,11 +183,14 @@ NovaPiChart.prototype = {
             ctx.arc(this.m_halfSize,this.m_halfSize, this.m_halfSize,lastend,lastend+(Math.PI*2*(this.m_items[pfile].value/this.m_numberOfItems)),false);
             ctx.lineTo(this.m_halfSize, this.m_halfSize);
             ctx.fill();
+
+            this.m_items[pfile].startArc = lastend;
             lastend += Math.PI*2*(this.m_items[pfile].value/this.m_numberOfItems);
+            this.m_items[pfile].endArc = lastend;
 
             // Draw the legend and values
             var legend = document.createElement("div");
-			legend.setAttribute("class", "pieLegendElementDiv");
+            legend.setAttribute("class", "pieLegendElementDiv");
             var text = document.createElement("p");
             text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
             text.setAttribute('style', 'display: inline-block; margin: 2px');
