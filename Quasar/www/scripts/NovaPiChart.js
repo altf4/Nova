@@ -32,8 +32,10 @@ var NovaPiChart = function(divId, title, size, deleteButtonFunction) {
 
     this.popupdiv = document.createElement("div");
     $(this.popupdiv).css('display','none');  
-    $(this.popupdiv).css('background-color','white');  
-    $(this.popupdiv).css('border','2px solid black');  
+    $(this.popupdiv).css('background-color','#D0E9FC');  
+    $(this.popupdiv).css('padding','2px');  
+    $(this.popupdiv).css('border','1px solid black');  
+    $(this.popupdiv).css('border-radius','4px');  
     $(this.popupdiv).css("position", "absolute"); 
     $(this.popupdiv).css("z-index", "120"); 
 
