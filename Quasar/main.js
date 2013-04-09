@@ -223,13 +223,8 @@ var everyone = nowjs.initialize(app);
 var NowjsMethods = require('./NowjsMethods.js');
 var initEveryone = new NowjsMethods(everyone);
 
-
-
-
 // Testing some log watching stuff
 var logLines = new Array();
-
-
 
 function LiveFileReader(filePath, cb) {
     this.processedLines = new Array();
@@ -334,7 +329,7 @@ var initLogWatch = function ()
     var novadLogFileReader = new LiveFileReader(novadLogPath, function(err, line, lineNum) {
         if (err)
         {
-            console.log("CAllback got error" + err);
+            console.log("Callback got error" + err);
             return;
         }
 
@@ -359,7 +354,7 @@ var initLogWatch = function ()
     var novadLogFileReader = new LiveFileReader(honeydLogPath, function(err, line, lineNum) {
         if (err)
         {
-            console.log("CAllback got error" + err);
+            console.log("Callback got error" + err);
             return;
         }
         
@@ -732,9 +727,9 @@ app.get('/honeydConfigManage', function(req, res){
   
   for (var i = 0; i < nodeNames.length; i++)
   {
-      var node = NovaCommon.honeydConfig.GetNode(nodeNames[i]);
-      var push = NovaCommon.cNodeToJs(node);
-      nodeList.push(push);
+    var node = NovaCommon.honeydConfig.GetNode(nodeNames[i]);
+    var push = NovaCommon.cNodeToJs(node);
+    nodeList.push(push);
   }
 
   var interfaces = NovaCommon.config.ListInterfaces().sort();
@@ -747,6 +742,29 @@ app.get('/honeydConfigManage', function(req, res){
       INTERFACES: interfaces,
       interfaceAliases: ConvertInterfacesToAliases(interfaces),
       tab: tab
+    }
+  });
+});
+
+app.get('/wysiwyg', function(req, res){
+  var nodeNames = NovaCommon.honeydConfig.GetNodeMACs();
+  var nodeList = [];
+  
+  for (var i = 0; i < nodeNames.length; i++)
+  {
+    var node = NovaCommon.honeydConfig.GetNode(nodeNames[i]);
+    var push = NovaCommon.cNodeToJs(node);
+    nodeList.push(push);
+  }
+  
+  var interfaces = NovaCommon.config.ListInterfaces().sort();
+  
+  res.render('wysiwyg.jade', {
+    locals: {
+      configurations: NovaCommon.honeydConfig.GetConfigurationsList(),
+      current: NovaCommon.config.GetCurrentConfig(),
+      nodes: nodeList,
+      interfaces: interfaces
     }
   });
 });
@@ -1712,6 +1730,7 @@ app.post('/honeydConfigManage', function (req, res){
   {
     NovaCommon.honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
     NovaCommon.honeydConfig.SwitchConfiguration(newName);
+    NovaCommon.config.SetCurrentConfig(newName);
     NovaCommon.honeydConfig.LoadAllTemplates();
   
     res.render('saveRedirect.jade', {
@@ -1855,39 +1874,41 @@ app.post('/configureNovaSave', function (req, res)
 
         req.body["INTERFACE"] = interfaces;
     }
-
-    for (var item = 0; item < configItems.length; item++) 
+  
+    var portChanged = false;
+  
+    for(var item = 0; item < configItems.length; item++) 
     {
-        if (req.body[configItems[item]] == undefined) 
+        if(req.body[configItems[item]] == undefined) 
         {
-            continue;
+          continue;
         }
-        switch (configItems[item])
+        switch(configItems[item])
         {
-        case "WEB_UI_PORT":
+          case "WEB_UI_PORT":
             validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
             break;
-
-        case "ENABLED_FEATURES":
+  
+          case "ENABLED_FEATURES":
             validator.check(req.body[configItems[item]], 'Enabled Features mask must be ' + NovaCommon.nova.GetDIM() + 'characters long').len(NovaCommon.nova.GetDIM(), NovaCommon.nova.GetDIM());
             validator.check(req.body[configItems[item]], 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{9}');
             break;
-
-        case "CLASSIFICATION_THRESHOLD":
+  
+          case "CLASSIFICATION_THRESHOLD":
             validator.check(req.body[configItems[item]], 'Classification threshold must be a floating point value').isFloat();
             validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').max(1);
             validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').min(0);
             break;
-
-        case "EPS":
+  
+          case "EPS":
             validator.check(req.body[configItems[item]], 'EPS must be a positive number').isFloat();
             break;
-
-        case "THINNING_DISTANCE":
+  
+          case "THINNING_DISTANCE":
             validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
             break;
-
-        case "DOPPELGANGER_IP":
+  
+          case "DOPPELGANGER_IP":
             validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
             var split = req.body[configItems[item]].split('.');
 
@@ -1928,16 +1949,16 @@ app.post('/configureNovaSave', function (req, res)
                 validator.check(checkIPZero, '255.255.255.255 is not a valid IP address').is("200");
             }
             break;
-
-        case "SMTP_ADDR":
+  
+          case "SMTP_ADDR":
             validator.check(req.body[configItems[item]], 'SMTP Address is the wrong format').regex('^(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)$');
             break;
-            
-        case "SERVICE_PREFERENCES":
+              
+          case "SERVICE_PREFERENCES":
             validator.check(req.body[configItems[item]], "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;$');
             break;
-
-        default:
+  
+          default:
             break;
         }
     }
@@ -2120,61 +2141,58 @@ everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
 var distributeSuspect = function (suspect)
 {
-    var d = new Date(suspect.GetLastPacketTime() * 1000);
-    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-    
-    
-    var s = new Object();
-    objCopy(suspect, s);
-    s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
-    
-    // Save to unseen db
-    NovaCommon.dbqIsNewSuspect.all(s.GetIpString, s.GetInterface, function(err, results) {
-        if (err)
+  var d = new Date(suspect.GetLastPacketTime() * 1000);
+  var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  
+  
+  var s = new Object();
+  objCopy(suspect, s);
+  s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
+  
+  // Save to unseen db
+  NovaCommon.dbqIsNewSuspect.all(s.GetIpString, s.GetInterface, function(err, results) {
+    if(err)
+    {
+      LOG("ERROR", err);
+      return;
+    }
+      
+    if(results[0].rows === 0)
+    {
+      NovaCommon.dbqAddNewSuspect.run(s.GetIpString, s.GetInterface, function()
+      {
+        try {
+          everyone.now.OnNewSuspectInserted(s.GetIpString, s.GetInterface);
+          everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
+        } catch(err) {}
+      });
+    } 
+    else
+    {
+      NovaCommon.dbqSeenAllData.all(s.GetIpString, s.GetInterface, function(err, results) {
+        if(err)
         {
-            LOG("ERROR", err);
-            return;
+          LOG("ERROR", err);
+          return;
         }
         
-        if (results[0].rows === 0)
+        if(results[0].seenAllData)
         {
-            NovaCommon.dbqAddNewSuspect.run(s.GetIpString, s.GetInterface, function()
+          NovaCommon.dbqMarkSuspectDataUnseen.run(s.GetIpString, s.GetInterface, function() {
+            try
             {
-                try {
-                    everyone.now.OnNewSuspectInserted(s.GetIpString, s.GetInterface);
-                    everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
-                } catch(err) {}
-            });
-        } 
-        else
-        {
-            NovaCommon.dbqSeenAllData.all(s.GetIpString, s.GetInterface, function(err, results) {
-                if (err)
-                {
-                    LOG("ERROR", err);
-                    return;
-                }
-                
-                if (results[0].seenAllData)
-                {
-                    NovaCommon.dbqMarkSuspectDataUnseen.run(s.GetIpString, s.GetInterface, function() {
-                        try {
-                            everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
-                        } catch(err) {}
-                    });
-                }
-            });
-         }
-    });
+              everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
+            } catch(err) {}
+          });
+        }
+      });
+     }
+  });
 
-
-    
-    
-    
-    try 
-    {
-        everyone.now.OnNewSuspect(s);
-    } catch (err) {};
+  try 
+  {
+    everyone.now.OnNewSuspect(s);
+  } catch(err) {};
   
   if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) >= 0)
   {
@@ -2334,8 +2352,7 @@ function ConvertInterfaceToAlias(iface)
     }
 }
 
-setInterval(function()
-{
+setInterval(function(){
     try 
     {
         everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp());

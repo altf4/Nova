@@ -225,8 +225,8 @@ html, body {
   border: 2px solid black;
   border-radius: 10px;
   display: none;
-  background-color: #D0E9FC;
-  box-shadow: 0 0 5px 2px #AFD9FF inset;
+  background-color: #F1CC91;
+  box-shadow: 0 0 5px 2px #E8A02F inset;
   width: 700px;
 }
 
@@ -242,6 +242,18 @@ html, body {
   font-style: italic;
   background-color: #D0E9FC;
   width: 600px;
+}
+
+#restartQuasar, #restartNovad {
+  border: 2px solid black;
+  border-radius: 10px;
+  box-shadow: 0 0 5px 2px #AFD9FF inset;
+  background-color: #D0E9FC;
+  width: 725px;
+}
+
+#restartQuasar > *, #restartNovad > * {
+  margin-left: 10px;
 }
 
 .progressText {

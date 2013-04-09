@@ -36,201 +36,202 @@ form(method="post", action="/configureNovaSave")
   input(type='hidden', name='ADVANCED', value='1')
   h2 General Configuration
 
-  h2 Web Interface
-
-  label Web interface port
-  input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
-  br
-
-  a(href="/editTLSCerts")
-    label Click to upload new TLS certificates
-  br
-  br
-
-  a(href="/shutdown")
-    label Shut down Quasar
-  br
-
-  br
-  h2 File Paths
-  label Path to state save file
-  input.wide(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
-  br
+  div#restartQuasar
+    p(style='text-align: center; font-style: italic; color: #B00000;') Quasar must be restarted for these changes to take effect
+    h2 Quasar
   
-  label Classification Training Data
-  input(name="TRAINING_DATA_PATH",  value=TRAINING_DATA_PATH)
-  br
+    label Quasar port
+    input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
+    br
   
-  label Path to pcap file
-  input.wide(type="text", name="PCAP_FILE",  value=PCAP_FILE)
-  br
+    a(style='text-decoration: none; font-weight: bold;', href="/editTLSCerts") Click to upload new TLS certificates
+    br
+    br
   
-  label Path to Haystack Honeyd Config File
-  input.wide(type="text", name="HS_HONEYD_CONFIG",  value=HS_HONEYD_CONFIG)
-  br
-
-  h2 Special Run Settings
-  label Read pcap file?
-  br
-  if(READ_PCAP != "0")
-    input(type="radio", name="READ_PCAP", value="1", checked)
-    |Yes
+    a(style='text-decoration: none; font-weight: bold;', href="/shutdown") Shut down Quasar
     br
-    input(type="radio", name="READ_PCAP", value="0")
-    |No
-    br
-  else
-    input(type="radio", name="READ_PCAP", value="1")
-    |Yes
-    br
-    input(type="radio", name="READ_PCAP", value="0", checked)
-    |No
-    br
-  br
-
-  label Go to live capture after pcap?
-  br
-  if(GO_TO_LIVE != "0")
-    input(type="radio", name="GO_TO_LIVE", value="1", checked)
-    |Yes
-    br
-    input(type="radio", name="GO_TO_LIVE", value="0")
-    |No
-    br
-  else
-    input(type="radio", name="GO_TO_LIVE", value="1")
-    |Yes
-    br
-    input(type="radio", name="GO_TO_LIVE", value="0", checked)
-    |No
-    br
-  br
-  
-  label Packet Capture Buffer Size (in bytes)
-  input(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE",  value=CAPTURE_BUFFER_SIZE)
-  br
-  
-  br
-  h2 Classification Settings
-  a(href='/editClassifiers')
-    label Edit Classifiers (advanced users only)
-  br
-  
-  label Neighbors
-  input(type="number", step="1", min="1", name="K",  value=K)
-  br
-  
-  label Only classify packets going to honeypots?
-  br
-  if(ONLY_CLASSIFY_HONEYPOT_TRAFFIC != "0")
-    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="1", checked)
-    |Yes
-    br
-    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="0")
-    |No
-    br
-  else
-    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="1")
-    |Yes
-    br
-    input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="0", checked)
-    |No
-    br
-  br
-  
-  label Classification Timeout
-  input(type="number", step="1", min="0", name="CLASSIFICATION_TIMEOUT",  value=CLASSIFICATION_TIMEOUT)
-  br
-
-  label EPS
-  input(name="EPS",  value=EPS)
-  br
-
-  label Classification Threshold
-  input(name="CLASSIFICATION_THRESHOLD",  value=CLASSIFICATION_THRESHOLD)
-  br
-
-  label Packets Needed Before Classification
-  input(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
-  br
-  
-  label State data save frequency
-  input(type="number", min="0", name="SAVE_FREQUENCY",  value=SAVE_FREQUENCY)
-  br
-
-  label Sate data chunk TTL
-  input(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
-  br
-
-  label Clear data after suspect logged as hostile?
-  br
-  if(CLEAR_AFTER_HOSTILE_EVENT != "0")
-    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
-    |Yes
-    br
-    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0")
-    |No
-    br
-  else
-    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1")
-    |Yes
-    br
-    input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0", checked)
-    |No
-    br
-  br
-
-  label Custom pcap Filter String
-  input.wide(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
-  br
-  
-  label Custom pcap Filter String Mode
-  br
-  if(CUSTOM_PCAP_MODE != "0")
-    input(type="radio", name="CUSTOM_PCAP_MODE", value="1", checked)
-    |Override
-    br
-    input(type="radio", name="CUSTOM_PCAP_MODE", value="0")
-    |Append
-    br
-  else
-    input(type="radio", name="CUSTOM_PCAP_MODE", value="1")
-    |Override
-    br
-    input(type="radio", name="CUSTOM_PCAP_MODE", value="0", checked)
-    |Append
-    br
-  br
-
-  h2 Training Mode Settings
-
-  label Thinning Distance
-  input(name="THINNING_DISTANCE",  value=THINNING_DISTANCE)
-  br
-
-  h2 Doppelganger
-  label Doppelganger IP
-  input(name="DOPPELGANGER_IP",  value=DOPPELGANGER_IP)
-  br
-  br
-  
-  label(style='font-size: 16px;') Use Pulsar?
-  if(MASTER_UI_ENABLED != "0")
-    input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", checked=true, onclick='handlePulsarPaneSlide()')
-  else
-    input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", onclick='handlePulsarPaneSlide()')
     br
     
-  div#pulsarPane
+    label(style='font-size: 16px;') Use Pulsar?
+    if(MASTER_UI_ENABLED != "0")
+      input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", checked=true, onclick='handlePulsarPaneSlide()')
+    else
+      input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", onclick='handlePulsarPaneSlide()')
+      br
+      
+    div#pulsarPane
+      label Pulsar Server IP
+      input.wide(name="MASTER_UI_IP",  value=MASTER_UI_IP)
+      br
+      
+      label Pulsar Client ID
+      input.wide(name="MASTER_UI_CLIENT_ID",  value=MASTER_UI_CLIENT_ID)
+      br
+      
+      label Pulsar Reconnect Time
+      input.wide(name="MASTER_UI_RECONNECT_TIME",  value=MASTER_UI_RECONNECT_TIME)
     br
-    label Pulsar Server IP
-    input(name="MASTER_UI_IP",  value=MASTER_UI_IP)
+
+  div#restartNovad
+    p(style='text-align: center; font-style: italic; color: #B00000;') Novad must be restarted for these changes to take effect
+    h2 File Paths
+    label Path to state save file
+    input.wide(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
     br
     
-    label Pulsar Client ID
-    input(name="MASTER_UI_CLIENT_ID",  value=MASTER_UI_CLIENT_ID)
+    label Classification Training Data
+    input.wide(name="TRAINING_DATA_PATH",  value=TRAINING_DATA_PATH)
     br
     
-    label Pulsar Reconnect Time
-    input(name="MASTER_UI_RECONNECT_TIME",  value=MASTER_UI_RECONNECT_TIME)
-  br
+    label Path to pcap file
+    input.wide(type="text", name="PCAP_FILE",  value=PCAP_FILE)
+    br
+    
+    label Path to Haystack Honeyd Config File
+    input.wide(type="text", name="HS_HONEYD_CONFIG",  value=HS_HONEYD_CONFIG)
+    br
+  
+    h2 Special Run Settings
+    label Read pcap file?
+    br
+    if(READ_PCAP != "0")
+      input(type="radio", name="READ_PCAP", value="1", checked)
+      |Yes
+      br
+      input(type="radio", name="READ_PCAP", value="0")
+      |No
+      br
+    else
+      input(type="radio", name="READ_PCAP", value="1")
+      |Yes
+      br
+      input(type="radio", name="READ_PCAP", value="0", checked)
+      |No
+      br
+    br
+  
+    label Go to live capture after pcap?
+    br
+    if(GO_TO_LIVE != "0")
+      input(type="radio", name="GO_TO_LIVE", value="1", checked)
+      |Yes
+      br
+      input(type="radio", name="GO_TO_LIVE", value="0")
+      |No
+      br
+    else
+      input(type="radio", name="GO_TO_LIVE", value="1")
+      |Yes
+      br
+      input(type="radio", name="GO_TO_LIVE", value="0", checked)
+      |No
+      br
+    br
+    
+    label Packet Capture Buffer Size (in bytes)
+    input.wide(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE",  value=CAPTURE_BUFFER_SIZE)
+    br
+    
+    h2 Classification Settings
+    a(style='text-decoration: none; font-weight: bold;', href='/editClassifiers') Edit Classifiers (advanced users only)
+    br
+    br
+    
+    label Neighbors
+    input.wide(type="number", step="1", min="1", name="K",  value=K)
+    br
+    
+    label Only classify packets going to honeypots?
+    br
+    if(ONLY_CLASSIFY_HONEYPOT_TRAFFIC != "0")
+      input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="1", checked)
+      |Yes
+      br
+      input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="0")
+      |No
+      br
+    else
+      input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="1")
+      |Yes
+      br
+      input(type="radio", name="ONLY_CLASSIFY_HONEYPOT_TRAFFIC", value="0", checked)
+      |No
+      br
+    br
+    
+    label Classification Timeout
+    input.wide(type="number", step="1", min="0", name="CLASSIFICATION_TIMEOUT",  value=CLASSIFICATION_TIMEOUT)
+    br
+  
+    label EPS
+    input.wide(name="EPS",  value=EPS)
+    br
+  
+    label Classification Threshold
+    input.wide(name="CLASSIFICATION_THRESHOLD",  value=CLASSIFICATION_THRESHOLD)
+    br
+  
+    label Packets Needed Before Classification
+    input.wide(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
+    br
+    
+    label State data save frequency
+    input.wide(type="number", min="0", name="SAVE_FREQUENCY",  value=SAVE_FREQUENCY)
+    br
+  
+    label State data chunk TTL
+    input.wide(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
+    br
+  
+    label Clear data after suspect logged as hostile?
+    br
+    if(CLEAR_AFTER_HOSTILE_EVENT != "0")
+      input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1", checked)
+      |Yes
+      br
+      input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0")
+      |No
+      br
+    else
+      input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="1")
+      |Yes
+      br
+      input(type="radio", name="CLEAR_AFTER_HOSTILE_EVENT", value="0", checked)
+      |No
+      br
+    br
+  
+    label Custom pcap Filter String
+    input.wide(type="text", name="CUSTOM_PCAP_FILTER", value=CUSTOM_PCAP_FILTER)
+    br
+    
+    label Custom pcap Filter String Mode
+    br
+    if(CUSTOM_PCAP_MODE != "0")
+      input(type="radio", name="CUSTOM_PCAP_MODE", value="1", checked)
+      |Override
+      br
+      input(type="radio", name="CUSTOM_PCAP_MODE", value="0")
+      |Append
+      br
+    else
+      input(type="radio", name="CUSTOM_PCAP_MODE", value="1")
+      |Override
+      br
+      input(type="radio", name="CUSTOM_PCAP_MODE", value="0", checked)
+      |Append
+      br
+    br
+  
+    h2 Training Mode Settings
+  
+    label Thinning Distance
+    input.wide(name="THINNING_DISTANCE",  value=THINNING_DISTANCE)
+    br
+  
+    h2 Doppelganger
+    label Doppelganger IP
+    input.wide(name="DOPPELGANGER_IP",  value=DOPPELGANGER_IP)
+    br
+    br
+   
