@@ -176,10 +176,13 @@ var NovaCommon = new function() {
 	this.dbqMarkAllHoneydLogEntriesSeen = db.prepare('UPDATE honeydlogSeen SET seen = 1');
 	this.dbqGetUnseenHoneydLogs = db.prepare('SELECT * from honeydlogSeen WHERE seen = 0');
 
-
-	this.dbqAddLastHoneydNodeIP = db.prepare('INSERT INTO lastHoneydNodeIPs VALUES(?, ?)');
 	this.dbqGetLastHoneydNodeIPs = db.prepare('SELECT * FROM lastHoneydNodeIPs');
+	this.dbqAddLastHoneydNodeIP = db.prepare('INSERT INTO lastHoneydNodeIPs VALUES(?, ?)');
 	this.dbqClearLastHoneydNodeIPs = db.prepare('DELETE FROM lastHoneydNodeIPs');
+
+	this.dbqGetLastTrainingDataSelection = db.prepare('SELECT * FROM lastTrainingDataSelection');
+	this.dbqAddLastTrainingDataSelection = db.prepare('INSERT INTO lastTrainingDataSelection VALUES(?, ?)');
+	this.dbqClearLastTrainingDataSelection = db.prepare('DELETE FROM lastTrainingDataSelection');
 
 	this.dbqGetHostnames = hostNameDb.prepare('SELECT * from allocs');
 	this.dbqInsertHostname = hostNameDb.prepare('INSERT into allocs(name) VALUES (?)');
