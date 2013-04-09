@@ -119,7 +119,7 @@ script
       scriptConfigurations[currentLightboxIndex] = {};
       for(var i = 0; i < tableChildren.length; i++)
       {
-        if(tableChildren[i].tagName == 'TR')
+        if(tableChildren[i].tagName == 'TR' && tableChildren[i].className != 'description')
         {
           scriptConfigurations[currentLightboxIndex][tableChildren[i].children[0].innerHTML] = tableChildren[i].children[1].children[0].value;
         }
@@ -721,6 +721,19 @@ script
             var optionCount = 0;
             for(var option in script.GetOptions)
             {
+              var description = script.GetOptionDescriptions[option];
+              if (description && description != "") {
+                var descriptionTr = $('<TR>').appendTo(table);
+                var keyDescription = $('<TD>').appendTo(descriptionTr);
+                keyDescription.attr('colspan', 2);
+                descriptionTr.addClass("description");
+                
+                var descriptionText = $('<P>').appendTo(keyDescription);
+                descriptionText.css('font-weight', 'bold');
+                descriptionText.html(description);
+                    
+              }
+
               var tr = $('<TR>').appendTo(table);
               var keyData = $('<TD>').appendTo(tr);
               var valueData = $('<TD>').appendTo(tr);
