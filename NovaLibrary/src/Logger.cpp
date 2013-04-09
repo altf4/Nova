@@ -96,7 +96,8 @@ void Logger::Log(Nova::Levels messageLevel, const char *messageBasic,  const cha
 void Logger::LogToFile(uint16_t level, string message)
 {
 	openlog("Nova", OPEN_SYSL, LOG_AUTHPRIV);
-	syslog(level, "%s %s", (m_levels[level].second).c_str(), message.c_str());
+	// Need to invert the levels for Rsyslog transmission, thus the (7 - level)
+	syslog((7 - level), "%s %s", (m_levels[level].second).c_str(), message.c_str());
 	closelog();
 }
 

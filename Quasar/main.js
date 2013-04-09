@@ -1984,7 +1984,6 @@ app.post('/configureNovaSave', function (req, res)
       var writeIP = req.body['RSYSLOG_IP'];
       var writePort = req.body['RSYSLOG_PORT'];
       var writeConnType = req.body['RSYSLOG_CONNTYPE'];
-      console.log('writeConnType == ' + writeConnType);
     
       var execution = ['nova_rsyslog_helper', writeIP, writePort, writeConnType];
     
