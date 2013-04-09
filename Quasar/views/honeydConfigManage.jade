@@ -978,7 +978,11 @@ block headerAdditions
             if (grid.GetElements()[mac] !== undefined)
             {
                 var oldRow = grid.m_elements[mac];
-                oldRow[1] = 'DHCP (currently ' + dhcpNodes[i].ip + ')';
+                if (dhcpNodes[i].current) {
+                    oldRow[1] = 'DHCP (currently ' + dhcpNodes[i].ip + ')';
+                } else {
+                    oldRow[1] = 'DHCP (last seen as ' + dhcpNodes[i].ip + ')';
+                }
                 oldRow.addressSet = true;
                 grid.PushEntry(oldRow);
                 grid.Render();

@@ -177,6 +177,10 @@ var NovaCommon = new function() {
 	this.dbqGetUnseenHoneydLogs = db.prepare('SELECT * from honeydlogSeen WHERE seen = 0');
 
 
+	this.dbqAddLastHoneydNodeIP = db.prepare('INSERT INTO lastHoneydNodeIPs VALUES(?, ?)');
+	this.dbqGetLastHoneydNodeIPs = db.prepare('SELECT * FROM lastHoneydNodeIPs');
+	this.dbqClearLastHoneydNodeIPs = db.prepare('DELETE FROM lastHoneydNodeIPs');
+
 	this.dbqGetHostnames = hostNameDb.prepare('SELECT * from allocs');
 	this.dbqInsertHostname = hostNameDb.prepare('INSERT into allocs(name) VALUES (?)');
 	this.dbqClearHostnameAllocations = hostNameDb.prepare('UPDATE allocs SET IP = NULL');
