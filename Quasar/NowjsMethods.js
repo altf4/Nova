@@ -1007,22 +1007,56 @@ everyone.now.GetHaystackDHCPStatus = function(cb)
         if(err)
         {
             RenderError(res, "Unable to open Honeyd status file for reading due to error: " + err);
+			NovaCommon.dbqClearLastHoneydNodeIPs.run();
             return;
         }
         else
         {
             data = data.toString().split("\n");
-            for(var i = 0; i < data.length; i++)
-            {
-                if (data[i] == "") {continue};
-                var entry = {
-                    ip: data[i].toString().split(",")[0],
-                    mac: data[i].toString().split(",")[1]
-                };
-                DHCPIps.push(entry);
-            }   
+			var tmp = [];
+			for (var i = 0; i < data.length; i++) {
+               	if (data[i] == "") {
+					continue
+				} else {
+					tmp.push(data[i]);
+				}
+			}
 
-            cb(DHCPIps);
+			data = tmp;
+
+			if (data.length > 0) {
+				NovaCommon.dbqClearLastHoneydNodeIPs.run(function(err) {
+					if (err) {LOG("ERROR", "Database error:" + err);}
+				
+            		for(var i = 0; i < data.length; i++)
+            		{
+                		if (data[i] == "") {continue};
+                		var entry = {
+                    		ip: data[i].toString().split(",")[0],
+                   		 	mac: data[i].toString().split(",")[1],
+							current: 1
+                		};
+
+
+						NovaCommon.dbqAddLastHoneydNodeIP.run(entry.mac, entry.ip, function(err) {
+							if (err) {LOG("ERROR", "Database error:" + err);}
+						});
+                		DHCPIps.push(entry);
+            		}
+            		cb(DHCPIps);
+				});
+			} else {
+				// If iplist file is empty, resort to pulling a version out of our db cache
+				NovaCommon.dbqGetLastHoneydNodeIPs.all(function(err, results) {
+					if (err) {LOG("ERROR", "Database error:" + err);}
+
+					for (var i = 0; i < results.length; i++) {
+						results[i].current = 0;
+						DHCPIps.push(results[i]);
+					}
+					cb(DHCPIps);
+				});
+			}
         }
     });
 };
