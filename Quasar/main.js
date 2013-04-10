@@ -1187,13 +1187,24 @@ app.get('/addHoneydProfile', function (req, res)
 app.get('/customizeTraining', function (req, res)
 {
     NovaCommon.trainingDb = new NovaCommon.novaconfig.CustomizeTrainingBinding();
-    res.render('customizeTraining.jade', {
-        locals: {
-            desc: NovaCommon.trainingDb.GetDescriptions(),
-            uids: NovaCommon.trainingDb.GetUIDs(),
-            hostiles: NovaCommon.trainingDb.GetHostile()
+    
+    NovaCommon.dbqGetLastTrainingDataSelection.all(function(err, results) {
+        if (err) {LOG("ERROR", "Database error: " + err)};
+        var includedLastTime = {};
+
+        for (var i = 0; i < results.length; i++) {
+            includedLastTime[results[i].uid] = results[i].included;
         }
-    })
+
+        res.render('customizeTraining.jade', {
+            locals: {
+                includedLastTime: includedLastTime,
+                desc: NovaCommon.trainingDb.GetDescriptions(),
+                uids: NovaCommon.trainingDb.GetUIDs(),
+                hostiles: NovaCommon.trainingDb.GetHostile()
+            }
+        });
+    });
 });
 
 app.get('/importCapture', function (req, res)
@@ -1747,6 +1758,24 @@ app.post('/honeydConfigManage', function (req, res){
 
 app.post('/customizeTrainingSave', function (req, res)
 {
+    var uids = NovaCommon.trainingDb.GetUIDs();
+
+    NovaCommon.dbqClearLastTrainingDataSelection.run(function(err) {
+        if (err) {LOG("ERROR", 'Database error: ' + err);}
+     });
+
+    for (var uid in uids) {
+        if (req.body[uid] == undefined) {
+            NovaCommon.dbqAddLastTrainingDataSelection.run(uid, 0, function(err) {
+                if (err) {LOG("ERROR", 'Database error: ' + err);}
+            });
+        } else {
+            NovaCommon.dbqAddLastTrainingDataSelection.run(uid, 1, function(err) {
+                if (err) {LOG("ERROR", 'Database error: ' + err);}
+            });
+        }
+    }
+
     for (var uid in req.body)
     {
         NovaCommon.trainingDb.SetIncluded(uid, true);

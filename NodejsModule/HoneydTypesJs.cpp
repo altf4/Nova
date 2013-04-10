@@ -89,6 +89,7 @@ Handle<Object> HoneydNodeJs::WrapScript(Nova::Script *script)
         proto->Set("GetPath",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Script, &Nova::Script::GetPath>) );
         proto->Set("GetIsConfigurable",	FunctionTemplate::New(InvokeMethod<bool, Nova::Script, &Nova::Script::GetIsConfigurable>) );
         proto->Set("GetOptions",	FunctionTemplate::New(InvokeMethod<std::map<std::string, std::vector<std::string>> , Nova::Script, &Nova::Script::GetOptions>) );
+        proto->Set("GetOptionDescriptions",	FunctionTemplate::New(InvokeMethod<std::map<std::string, std::string> , Nova::Script, &Nova::Script::GetOptionDescriptions>) );
 
 
     }

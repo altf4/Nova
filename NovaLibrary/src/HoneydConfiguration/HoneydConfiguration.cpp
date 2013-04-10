@@ -384,6 +384,7 @@ bool HoneydConfiguration::ReadScriptsXML()//write complex test that moves the xm
 						{
 							vector<string> possibleValues;
 							string key = it->second.get<string>("key");
+							script.optionDescriptions[key] = "";
 							//cout << "Key is " << key << endl;
 
 							for (ptree::const_iterator valIt = it->second.begin(); valIt != it->second.end(); ++valIt) {
@@ -391,6 +392,10 @@ bool HoneydConfiguration::ReadScriptsXML()//write complex test that moves the xm
 								{
 									possibleValues.push_back(valIt->second.data());
 									//cout << "value is " << possibleValues.at(possibleValues.size() - 1) << endl;
+								}
+								else if(valIt->first == "description")
+								{
+									script.optionDescriptions[key] = valIt->second.data();
 								}
 							}
 

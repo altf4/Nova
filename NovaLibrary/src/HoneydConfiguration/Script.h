@@ -45,6 +45,7 @@ public:
 	// Configuration options for the script
 	bool m_isConfigurable;
 	std::map<std::string, std::vector<std::string>> options;
+	std::map<std::string, std::string> optionDescriptions;
 
 	// Getters for the binding code
 	std::string GetName() {return m_name;}
@@ -53,6 +54,7 @@ public:
 	std::string GetPath() {return m_path;}
 	bool GetIsConfigurable() {return m_isConfigurable;}
 	std::map<std::string, std::vector<std::string>> GetOptions() {return options;}
+	std::map<std::string, std::string> GetOptionDescriptions() {return optionDescriptions;}
 };
 
 }

@@ -78,6 +78,11 @@ CREATE TABLE lastHoneydNodeIPs(
 	ip varchar(100)
 );
 
+CREATE TABLE lastTrainingDataSelection(
+	uid INTEGER PRIMARY KEY,
+	included INTEGER
+);
+
 "
 
 
