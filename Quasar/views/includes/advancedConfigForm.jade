@@ -19,12 +19,32 @@ script
   {
     if($('#PULSAR_ENABLE').is(':checked'))
     {
-      $('#pulsarPane').slideDown(400);
+      $('#pulsarPane').stop().slideDown(400);
     }
     else
     {
-      $('#pulsarPane').slideUp(400);
+      $('#pulsarPane').stop().slideUp(400);
     }
+  }
+  
+  function handleQuasarPaneME()
+  {
+    $('#qWarn').stop().slideDown(400);
+  }
+  
+  function handleQuasarPaneML()
+  {
+    $('#qWarn').stop().slideUp(400);
+  }
+  
+  function handleNovadPaneME()
+  {
+    $('#nWarn').stop().slideDown(400);
+  }
+
+  function handleNovadPaneML()
+  {
+    $('#nWarn').stop().slideUp(400);
   }
   
   function init()
@@ -36,8 +56,8 @@ form(method="post", action="/configureNovaSave")
   input(type='hidden', name='ADVANCED', value='1')
   h2 General Configuration
 
-  div#restartQuasar
-    p(style='text-align: center; font-style: italic; color: #B00000;') Quasar must be restarted for these changes to take effect
+  div#restartQuasar(onmouseover='handleQuasarPaneME()', onmouseout='handleQuasarPaneML()')
+    p#qWarn(style='text-align: center; font-style: italic; color: #B00000; display: none;') Quasar must be restarted for any changes to take effect
     h2 Quasar
   
     label Quasar port
@@ -72,8 +92,8 @@ form(method="post", action="/configureNovaSave")
       input.wide(name="MASTER_UI_RECONNECT_TIME",  value=MASTER_UI_RECONNECT_TIME)
     br
 
-  div#restartNovad
-    p(style='text-align: center; font-style: italic; color: #B00000;') Novad must be restarted for these changes to take effect
+  div#restartNovad(onmouseover='handleNovadPaneME()', onmouseout='handleNovadPaneML()')
+    p#nWarn(style='text-align: center; font-style: italic; color: #B00000; display: none;') Novad must be restarted for any changes to take effect
     h2 File Paths
     label Path to state save file
     input.wide(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
