@@ -15,6 +15,9 @@
 //- ============================================================================
 
 script
+  var ifaces = !{JSON.stringify(INTERFACES)};
+  var used = '#{WEB_UI_IFACE}';
+  
   function handlePulsarPaneSlide()
   {
     if($('#PULSAR_ENABLE').is(':checked'))
@@ -50,6 +53,16 @@ script
   function init()
   {
     handlePulsarPaneSlide();
+    for(var i in ifaces)
+    {
+      var option = document.createElement('option');
+      option.innerHTML = ifaces[i];
+      if(ifaces[i] == used)
+      {
+        option.selected = true;
+      }
+      $('#WEB_UI_IFACE').append(option);
+    }
   }
   
 form(method="post", action="/configureNovaSave")
@@ -60,8 +73,12 @@ form(method="post", action="/configureNovaSave")
     p#qWarn(style='text-align: center; font-style: italic; color: #B00000; display: none;') Quasar must be restarted for any changes to take effect
     h2 Quasar
   
-    label Quasar port
+    label Quasar Port
     input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
+    br
+  
+    label Management Interface
+    select#WEB_UI_IFACE(name='WEB_UI_IFACE')
     br
   
     a(style='text-decoration: none; font-weight: bold;', href="/editTLSCerts") Click to upload new TLS certificates
