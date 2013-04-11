@@ -43,6 +43,9 @@ namespace Nova
 
 void InitMessaging()
 {
+	// Make sure config singleton is up
+	Config::Inst();
+
 	pthread_mutex_init(&messageQueueMutex, NULL);
 	pthread_cond_init(&popWakeupCondition, NULL);
 

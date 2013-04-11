@@ -58,7 +58,6 @@ void NovaNode::CheckInitNova()
 
 void NovaNode::NovaCallbackHandling(eio_req*)
 {
-	InitMessaging();
 	LOG(DEBUG, "Initializing Novad callback processing","");
 
 	while(true)
@@ -308,6 +307,8 @@ void NovaNode::Init(Handle<Object> target)
 
 	// Javascript object constructor
 	target->Set(String::NewSymbol("Instance"), s_ct->GetFunction());
+
+	InitMessaging();
 	InitNovaCallbackProcessing();
 }
 
