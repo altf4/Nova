@@ -290,20 +290,19 @@ everyone.now.IsHaystackUp = function(cb)
     cb(NovaCommon.nova.IsHaystackUp());
 };
 
-everyone.now.IsNovadUp = function(cb)
+everyone.now.IsNovadConnected = function(cb)
 {
-    cb(NovaCommon.nova.IsNovadUp(false));
+    cb(NovaCommon.nova.IsNovadConnected());
 };
 
 everyone.now.StartNovad = function()
 {
     var result = NovaCommon.StartNovad(false);
-
     setTimeout(function(){
     result = NovaCommon.nova.CheckConnection();
       try 
       {
-          everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadUp(false));
+          everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadConnected());
       }
       catch(err){};
     }, 1000);
@@ -319,7 +318,7 @@ everyone.now.StopNovad = function(cb)
   NovaCommon.nova.CloseNovadConnection();
   try 
   {
-    everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadUp(false));
+    everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadConnected());
   }
   catch(err){};
 };
@@ -330,7 +329,7 @@ everyone.now.HardStopNovad = function(passwd)
   NovaCommon.nova.CloseNovadConnection();
   try 
   {
-    everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadUp(false));
+    everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadConnected());
   }
   catch(err){};
 };
@@ -343,15 +342,12 @@ everyone.now.sendAllSuspects = function (cb)
 
 everyone.now.sendSuspect = function (ethinterface, ip, cb)
 {
-    var suspect = NovaCommon.nova.sendSuspect(ethinterface, ip);
-    if(suspect.GetIdString === undefined)
+    NovaCommon.nova.RequestSuspectCallback(ip, ethinterface, function(suspect)
     {
-        console.log("Failed to get suspect");
-        return;
-    }
-    var s = new Object();
-    objCopy(suspect, s);
-    cb(s);
+        var s = new Object();
+        objCopy(suspect, s);
+        cb && cb(s);
+    })
 };
 
 // Deletes a honeyd node

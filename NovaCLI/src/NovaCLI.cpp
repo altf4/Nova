@@ -22,6 +22,7 @@
 #include "NovaCLI.h"
 #include "Logger.h"
 #include "protobuf/marshalled_classes.pb.h"
+#include "messaging/MessageManager.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -44,9 +45,11 @@ int main(int argc, const char *argv[])
 	Config::Inst();
 	HoneydConfiguration::Inst();
 
-
+	MessageManager::Instance();
 	// Disable notifications and email in the CLI
 	Logger::Inst()->SetUserLogPreferences(EMAIL, EMERGENCY, '+');
+
+	InitMessaging();
 
 	// We parse the input arguments here,
 	// but refer to other functions to do any
@@ -440,7 +443,10 @@ void StatusNovaWrapper()
 	}
 	else
 	{
-		if(IsNovadUp(false))
+		Ping(1);
+		MonitorCallback(1);
+
+		if(IsNovadConnected())
 		{
 			cout << "Novad Status: Running and responding" << endl;
 		}
@@ -485,8 +491,26 @@ void StartNovaWrapper(bool debug)
 	}
 	else
 	{
-		cout << "Novad is already running" << endl;
-		DisconnectFromNovad();
+		//Verify that the connection is good
+		Ping(1);
+		MonitorCallback(1);
+
+		if(IsNovadConnected())
+		{
+			cout << "Novad is already running" << endl;
+			DisconnectFromNovad();
+		}
+		else
+		{
+			if(StartNovad(debug))
+			{
+				cout << "Started Novad" << endl;
+			}
+			else
+			{
+				cout << "Failed to start Novad" << endl;
+			}
+		}
 	}
 }
 
@@ -512,15 +536,8 @@ void StartHaystackWrapper(bool debug)
 void StopNovaWrapper()
 {
 	Connect();
-
-	if(StopNovad())
-	{
-		cout << "Novad has been stopped" << endl;
-	}
-	else
-	{
-		cout << "There was a problem stopping Novad" << endl;
-	}
+	StopNovad();
+	MonitorCallback();
 }
 
 void StopHaystackWrapper()
@@ -538,19 +555,20 @@ void StopHaystackWrapper()
 void StartCaptureWrapper()
 {
 	Connect();
-	StartPacketCapture();
+	StartPacketCapture(1);
+	MonitorCallback(1);
 }
 
 void StopCaptureWrapper()
 {
 	Connect();
-	StopPacketCapture();
+	StopPacketCapture(1);
+	MonitorCallback(1);
 }
 
 bool StartQuasarWrapper(bool debug)
 {
-	StopQuasarWrapper();
-	if (debug)
+	if(StopQuasarWrapper())
 	{
 		return system("quasar --debug");
 	}
@@ -574,19 +592,8 @@ void PrintSuspect(in_addr_t address, string interface)
 	id.set_m_ifname(interface);
 	id.set_m_ip(ntohl(address));
 
-	Suspect *suspect = GetSuspect(id);
-
-	if(suspect != NULL)
-	{
-		cout << suspect->ToString() << endl;
-	}
-	else
-	{
-		cout << "Error: No suspect received" << endl;
-	}
-
-	delete suspect;
-
+	RequestSuspect(id, 1);
+	MonitorCallback(1);
 	DisconnectFromNovad();
 }
 
@@ -598,107 +605,69 @@ void PrintSuspectData(in_addr_t address, string interface)
 	id.set_m_ifname(interface);
 	id.set_m_ip(ntohl(address));
 
-	Suspect *suspect = GetSuspectWithData(id);
-
-	if (suspect != NULL)
-	{
-		cout << suspect->ToString() << endl;
-
-
-		cout << "Details follow" << endl;
-		cout << suspect->GetFeatureSet(MAIN_FEATURES).toString() << endl;
-	}
-	else
-	{
-		cout << "Error: No suspect received" << endl;
-	}
-
-	delete suspect;
-
-	DisconnectFromNovad();
-
-
+	RequestSuspectWithData(id, 1);
+	MonitorCallback(1);
 }
 
 void PrintAllSuspects(enum SuspectListType listType, bool csv)
 {
 	Connect();
-
-	vector<Suspect*> suspects = GetSuspects(listType);
+	RequestSuspects(listType, 1);
+	MonitorCallback(1);
 
 	// Print the CSV header
-	if(csv)
-	{
-		cout << "IP,";
-		cout << "INTERFACE,";
-		for(int i = 0; i < DIM; i++)
-		{
-			cout << FeatureSet::m_featureNames[i] << ",";
-		}
-		cout << "CLASSIFICATION" << endl;
-	}
-
-	for(uint i = 0; i < suspects.size(); i++)
-	{
-		if(suspects[i] != NULL)
-		{
-			if(!csv)
-			{
-				cout << suspects[i]->ToString() << endl;
-			}
-			else
-			{
-				cout << suspects[i]->GetIpString() << ",";
-				cout << suspects[i]->GetIdentifier().m_ifname() << ",";
-				for(int d = 0; d < DIM; d++)
-				{
-					cout << suspects[i]->GetFeatureSet().m_features[d] << ",";
-				}
-				cout << suspects[i]->GetClassification() << endl;
-			}
-
-			delete suspects[i];
-		}
-		else
-		{
-			cout << "Error: No suspect received" << endl;
-		}
-	}
+//	if(csv)
+//	{
+//		cout << "IP,";
+//		cout << "INTERFACE,";
+//		for(int i = 0; i < DIM; i++)
+//		{
+//			cout << FeatureSet::m_featureNames[i] << ",";
+//		}
+//		cout << "CLASSIFICATION" << endl;
+//	}
+//
+//	for(uint i = 0; i < suspects.size(); i++)
+//	{
+//		if(suspects[i] != NULL)
+//		{
+//			if(!csv)
+//			{
+//				cout << suspects[i]->ToString() << endl;
+//			}
+//			else
+//			{
+//				cout << suspects[i]->GetIpString() << ",";
+//				cout << suspects[i]->GetIdentifier().m_ifname() << ",";
+//				for(int d = 0; d < DIM; d++)
+//				{
+//					cout << suspects[i]->GetFeatureSet().m_features[d] << ",";
+//				}
+//				cout << suspects[i]->GetClassification() << endl;
+//			}
+//		}
+//		else
+//		{
+//			cout << "Error: No suspect received" << endl;
+//		}
+//	}
 
 	DisconnectFromNovad();
-
 }
 
 void PrintSuspectList(enum SuspectListType listType)
 {
 	Connect();
-
-	vector<SuspectID_pb> suspects = GetSuspectList(listType);
-
-	for(uint i = 0; i < suspects.size(); i++)
-	{
-		in_addr tmp;
-		tmp.s_addr = htonl(suspects.at(i).m_ip());
-		char *address = inet_ntoa((tmp));
-		cout << suspects.at(i).m_ifname() << " " << address << endl;
-	}
-
+	RequestSuspectList(listType, 1);
+	MonitorCallback(1);
 	DisconnectFromNovad();
 }
 
 void ClearAllSuspectsWrapper()
 {
 	Connect();
-
-	if(ClearAllSuspects())
-	{
-		cout << "Suspects have been cleared" << endl;
-	}
-	else
-	{
-		cout << "There was an error when clearing the suspects" << endl;
-	}
-
+	ClearAllSuspects(1);
+	MonitorCallback(1);
 	DisconnectFromNovad();
 }
 
@@ -710,22 +679,16 @@ void ClearSuspectWrapper(in_addr_t address, string interface)
 	id.set_m_ifname(interface);
 	id.set_m_ip(ntohl(address));
 
-	if(ClearSuspect(id))
-	{
-		cout << "Suspect data has been cleared for this suspect" << endl;
-	}
-	else
-	{
-		cout << "There was an error when trying to clear the suspect data for this suspect" << endl;
-	}
-
+	ClearSuspect(id, 1);
+	MonitorCallback(1);
 	DisconnectFromNovad();
 }
 
 void PrintUptime()
 {
 	Connect();
-	cout << "Uptime is: " << GetStartTime() << endl;
+	RequestStartTime(1);
+	MonitorCallback(1);
 	DisconnectFromNovad();
 }
 
@@ -741,14 +704,10 @@ void Connect()
 void ReclassifySuspects()
 {
 	Connect();
-	if (ReclassifyAllSuspects())
-	{
-		cout << "All suspects were reclassified" << endl;
-	}
-	else
-	{
-		cout << "Unable to reclassify suspects" << endl;
-	}
+	ReclassifyAllSuspects(1);
+
+	MonitorCallback(1);
+	DisconnectFromNovad();
 }
 
 void ResetPassword()
@@ -758,59 +717,111 @@ void ResetPassword()
 	db.ResetPassword();
 }
 
-void MonitorCallback()
+void MonitorCallback(int32_t messageID)
 {
-    while (true)
+    if(!Nova::ConnectToNovad())
     {
-	    if( ! Nova::ConnectToNovad() )
-	    {
-	        LOG(ERROR, "CLI Unable to connect to Novad right now. Trying again in 3 seconds...","");
-	        sleep(3);
-	        continue;
-	    }
+    	LOG(ERROR, "CLI Unable to connect to Novad","");
+    	return;
+    }
 
+	while(true)
+	{
+    	Message *message = DequeueUIMessage();
 
-		CallbackChange cb;
-		CallbackHandler callbackHandler;
-	    Suspect s;
+    	//If the connection shut down, then just quit no matter what
+    	if(message->m_contents.m_type() == CONNECTION_SHUTDOWN)
+    	{
+    		cout << "Connection Terminated" << endl;
+    		delete message;
+    		return;
+    	}
 
-		do
+    	//Only process a message if it was the one we're looking for OR if we're watching them all
+    	if((messageID == -1) || (message->m_contents.has_m_messageid() && (message->m_contents.m_messageid() == messageID)))
+    	{
+    		switch(message->m_contents.m_type())
+    		{
+    			case UPDATE_SUSPECT:
+    			case REQUEST_ALL_SUSPECTS_REPLY:
+    			{
+    				for(uint i = 0; i < message->m_suspects.size(); i++)
+    				{
+    					cout << message->m_suspects[i]->ToString() << endl;
+    				}
+    				message->DeleteContents();
+    				break;
+    			}
+    			case REQUEST_SUSPECT_REPLY:
+    			{
+    				if(message->m_suspects.size() == 0)
+					{
+						cout << "No suspects to list" << endl;
+						break;
+					}
+    				cout << message->m_suspects[0]->ToString() << endl;
+    				message->DeleteContents();
+    				break;
+    			}
+    			case REQUEST_SUSPECTLIST_REPLY:
+    			{
+    				if(message->m_contents.m_suspectids_size() == 0)
+    				{
+    					cout << "No suspects to list" << endl;
+    					break;
+    				}
+    				for(int i = 0; i < message->m_contents.m_suspectids_size(); i++)
+    				{
+    					in_addr tmp;
+    					tmp.s_addr = htonl(message->m_contents.m_suspectids(i).m_ip());
+    					char *address = inet_ntoa((tmp));
+    					cout << message->m_contents.m_suspectids(i).m_ifname() << " " << address << endl;
+    				}
+    				break;
+    			}
+    			case UPDATE_ALL_SUSPECTS_CLEARED:
+    			{
+					cout << "All suspects were cleared" << endl;
+    				break;
+    			}
+    			case UPDATE_SUSPECT_CLEARED:
+    			{
+    				if(message->m_contents.m_success())
+    				{
+    					cout << "Suspect: " << message->m_suspects[0]->GetIpString() << " was cleared" << endl;
+    				}
+    				else
+    				{
+    					cout << "Failed to clear Suspect: " << message->m_suspects[0]->GetIpString() << endl;
+    				}
+    				break;
+    			}
+    			case REQUEST_PONG:
+    			{
+    				cout << "Pong" << endl;
+    				break;
+    			}
+    			case REQUEST_UPTIME_REPLY:
+    			{
+    				cout << "Uptime is: " << message->m_contents.m_starttime() << endl;
+    				break;
+    			}
+    			default:
+    			{
+    				break;
+    			}
+    		}
+    	}
+	    //If we're waiting only for a specific message, and it has arrived, then quit
+    	if((messageID != -1) && message->m_contents.has_m_messageid() && (message->m_contents.m_messageid() == messageID))
 		{
-			cb = callbackHandler.ProcessCallbackMessage();
-			switch( cb.m_type )
-			{
-			case CALLBACK_NEW_SUSPECT:
-				cout << "Got new suspect: " << cb.m_suspect->GetIdString() << + " with classification of " << cb.m_suspect->GetClassification() << endl;
-
-				// We get a suspect pointer and are responsible for deleting it
-				delete cb.m_suspect;
-				break;
-
-			case CALLBACK_ERROR:
-				cout << "WARNING: Recieved a callback error message!" << endl;
-				break;
-
-			case CALLBACK_ALL_SUSPECTS_CLEARED:
-				cout << "Got notice that all suspects were cleared" << endl;
-				break;
-
-			case CALLBACK_SUSPECT_CLEARED:
-				s.SetIdentifier(cb.m_suspectIP);
-				cout << "Got a notice that suspect was cleared: " + s.GetIdString() << endl;
-				break;
-			case CALLBACK_HUNG_UP:
-				cout << "Got CALLBACK_HUNG_UP" << endl;
-				break;
-			default:
-				cout << "WARNING: Got a callback message we don't know what to do with. Type " << cb.m_type << endl;
-				break;
-			}
+			message->DeleteContents();
+			delete message;
+			return;
 		}
-		while(cb.m_type != CALLBACK_HUNG_UP);
-		cout << "Novad hung up, closing callback processing and trying again in 3 seconds" << endl;
-		sleep(3);
-   }
-}
 
+		delete message;
+	}
+}
 
 }

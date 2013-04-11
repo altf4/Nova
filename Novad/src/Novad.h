@@ -42,6 +42,8 @@ namespace Nova
 
 int RunNovaD();
 
+void StartServer();
+
 // Locks to ensure only one instance of novad running
 bool LockNovad();
 

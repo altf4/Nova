@@ -19,7 +19,6 @@
 #include "MessageManager.h"
 #include "../Lock.h"
 #include "../Logger.h"
-#include "messages/ErrorMessage.h"
 
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -36,8 +35,11 @@ MessageManager *MessageManager::m_instance = NULL;
 
 MessageManager::MessageManager()
 {
-	pthread_mutex_init(&m_endpointsMutex, NULL);
-	pthread_mutex_init(&m_deleteEndpointMutex, NULL);
+	pthread_mutex_init(&m_queueMutex, NULL);
+	pthread_mutex_init(&m_sessionIndexMutex, NULL);
+	pthread_mutex_init(&m_bevMapMutex, NULL);
+	pthread_cond_init(&m_popWakeupCondition, NULL);
+	m_sessionIndex = 1;
 }
 
 MessageManager &MessageManager::Instance()
@@ -49,194 +51,173 @@ MessageManager &MessageManager::Instance()
 	return *MessageManager::m_instance;
 }
 
-Message *MessageManager::ReadMessage(Ticket &ticket, int timeout)
+Message *MessageManager::DequeueMessage()
 {
-	if(ticket.m_endpoint == NULL)
+	Lock lock(&m_queueMutex);
+
+	while(m_queue.empty())
 	{
-		return new ErrorMessage(ERROR_SOCKET_CLOSED);
+		pthread_cond_wait(&m_popWakeupCondition, &m_queueMutex);
 	}
 
-	return ticket.m_endpoint->PopMessage(ticket, timeout);
+	Message *ret = m_queue.front();
+	m_queue.pop();
+	return ret;
 }
 
-bool MessageManager::WriteMessage(const Ticket &ticket, Message *message)
+void MessageManager::EnqueueMessage(Message *message)
 {
-	if(ticket.m_socketFD == -1)
+	Lock lock(&m_queueMutex);
+	m_queue.push(message);
+	pthread_cond_signal(&m_popWakeupCondition);
+}
+
+bool MessageManager::WriteMessage(Message *message, uint32_t sessionIndex)
+{
+	if(message == NULL)
 	{
 		return false;
 	}
 
-	struct bufferevent *bufferevent;
-	Lock lock = ticket.m_endpoint->LockBufferevent(&bufferevent);
-	if(bufferevent == NULL)
+	if(sessionIndex != 0)
+	{
+		Lock lock(&m_bevMapMutex);
+		if(m_bevMap.count(sessionIndex) == 0)
+		{
+			return false;
+		}
+		struct bufferevent *bev = m_bevMap[sessionIndex];
+
+		uint32_t length = message->GetLength();
+		char *buffer = new char[length + sizeof(uint32_t)];
+
+		memcpy(buffer, &length, sizeof(length));
+
+		if(!message->Serialize(buffer + sizeof(uint32_t), length))
+		{
+			delete[] buffer;
+			return false;
+		}
+		bufferevent_lock(bev);
+		if(bufferevent_write(bev, buffer, length + sizeof(uint32_t)) == -1)
+		{
+			delete[] buffer;
+			bufferevent_unlock(bev);
+			return false;
+		}
+
+		delete[] buffer;
+		bufferevent_unlock(bev);
+		return true;
+	}
+	else
+	{
+		Lock lock(&m_bevMapMutex);
+		if(m_bevMap.empty())
+		{
+			return false;
+		}
+		map<uint32_t, struct bufferevent*>::iterator it;
+		for(it = m_bevMap.begin(); it != m_bevMap.end(); it++)
+		{
+			struct bufferevent *bev = it->second;
+
+			if(bev == NULL)
+			{
+				continue;
+			}
+
+			uint32_t length = message->GetLength();
+			char *buffer = new char[length + sizeof(uint32_t)];
+
+			memcpy(buffer, &length, sizeof(length));
+
+			if(!message->Serialize(buffer + sizeof(uint32_t), length))
+			{
+				delete[] buffer;
+				continue;
+			}
+			bufferevent_lock(bev);
+			if(bufferevent_write(bev, buffer, length + sizeof(uint32_t)) == -1)
+			{
+				delete[] buffer;
+				bufferevent_unlock(bev);
+				continue;
+			}
+
+			delete[] buffer;
+			bufferevent_unlock(bev);
+		}
+		return true;
+	}
+}
+
+bool MessageManager::WriteMessageExcept(Message *message, uint32_t sessionIndex)
+{
+	if(message == NULL)
+	{
+		return false;
+	}
+	if(sessionIndex == 0)
 	{
 		return false;
 	}
 
-	message->m_ourSerialNumber = ticket.m_ourSerialNum;
-	message->m_theirSerialNumber = ticket.m_theirSerialNum;
-
-	uint32_t length;
-	char *buffer = message->Serialize(&length);
-	bufferevent_lock(bufferevent);
-	if(bufferevent_write(bufferevent, buffer, length) == -1)
+	Lock lock(&m_bevMapMutex);
+	if(m_bevMap.empty())
 	{
-		free(buffer);
-		bufferevent_unlock(bufferevent);
 		return false;
 	}
 
-	free(buffer);
-	bufferevent_unlock(bufferevent);
+	map<uint32_t, struct bufferevent*>::iterator it;
+	for(it = m_bevMap.begin(); it != m_bevMap.end(); it++)
+	{
+		struct bufferevent *bev = it->second;
+
+		if((it->first == sessionIndex) || (bev == NULL))
+		{
+			continue;
+		}
+
+		uint32_t length = message->GetLength();
+		char *buffer = new char[length + sizeof(uint32_t)];
+
+		memcpy(buffer, &length, sizeof(length));
+
+		if(!message->Serialize(buffer + sizeof(uint32_t), length))
+		{
+			delete[] buffer;
+			continue;
+		}
+		bufferevent_lock(bev);
+		if(bufferevent_write(bev, buffer, length + sizeof(uint32_t)) == -1)
+		{
+			delete[] buffer;
+			bufferevent_unlock(bev);
+			continue;
+		}
+
+		delete[] buffer;
+		bufferevent_unlock(bev);
+	}
 	return true;
 }
 
-void MessageManager::StartSocket(int socketFD, struct bufferevent *bufferevent)
+void MessageManager::WriteDispatcher(struct bufferevent *bev, void *ctx)
 {
-	//Initialize the MessageEndpoint if it doesn't yet exist
-	Lock lock(&m_endpointsMutex);
+	bufferevent_lock(bev);
 
-	//If this socket doesn't even exist yet in the map, then it must be brand new
-	if(m_endpoints.count(socketFD) == 0)
+	struct evbuffer *output = bufferevent_get_output(bev);
+	uint32_t evbufferLength = evbuffer_get_length(output);
+
+	bufferevent_unlock(bev);
+
+	if(evbufferLength == 0)
 	{
-		pthread_rwlock_t *rwLock = new pthread_rwlock_t;
-		pthread_rwlock_init(rwLock, NULL);
-		//Write lock this new lock because we don't want someone trying to read from it or write to it halfway through our addition
-		Lock endLock(rwLock, WRITE_LOCK);
-		m_endpoints[socketFD] = std::pair<MessageEndpoint*, pthread_rwlock_t*>(
-				new MessageEndpoint(socketFD, bufferevent), rwLock);
-		return;
+		Message *shutdown = new Message();
+		shutdown->m_contents.set_m_type(CONNECTION_SHUTDOWN);
+		MessageManager::Instance().EnqueueMessage(shutdown);
 	}
-
-	//Write lock the message endpoint. Now we're allowed to access and write to it
-	Lock endLock(m_endpoints[socketFD].second, WRITE_LOCK);
-
-	if(m_endpoints[socketFD].first == NULL)
-	{
-		m_endpoints[socketFD].first = new MessageEndpoint(socketFD, bufferevent);
-	}
-
-}
-
-Ticket MessageManager::StartConversation(int socketFD)
-{
-	Lock lock(&m_endpointsMutex);
-
-	//If the endpoint doesn't exist, then it was closed. Just exit with failure
-	if(m_endpoints.count(socketFD) == 0)
-	{
-		return Ticket();
-	}
-
-	//We don't use a Lock() here, because we need to pass the rwlock as read-locked to Ticket()
-	pthread_rwlock_rdlock(m_endpoints[socketFD].second);
-	if(m_endpoints[socketFD].first == NULL)
-	{
-		pthread_rwlock_unlock(m_endpoints[socketFD].second);
-		return Ticket();
-	}
-
-	return Ticket(m_endpoints[socketFD].first->StartConversation(), 0,
-			false, false, socketFD, m_endpoints[socketFD].second, m_endpoints[socketFD].first);
-}
-
-void MessageManager::DeleteEndpoint(int socketFD)
-{
-	//Ensure that only one thread can be deleting an Endpoint at a time
-	Lock functionLock(&m_deleteEndpointMutex);
-
-	//Deleting the message endpoint requires that nobody else is using it!
-	Lock lock(&m_endpointsMutex);
-	if(m_endpoints.count(socketFD) > 0)
-	{
-		//First, shut down the endpoint, so as to signal anyone using it to clear out
-		{
-			Lock lock(m_endpoints[socketFD].second, READ_LOCK);
-			if(m_endpoints[socketFD].first == NULL)
-			{
-				//If there is no endpoint, then just quit
-				return;
-			}
-			m_endpoints[socketFD].first->Shutdown();
-		}
-
-		Lock lock(m_endpoints[socketFD].second, WRITE_LOCK);
-
-		delete m_endpoints[socketFD].first;
-		m_endpoints[socketFD].first = NULL;
-	}
-}
-
-bool MessageManager::RegisterCallback(int socketFD, Ticket &outTicket)
-{
-	MessageEndpoint *endpoint = NULL;
-	{
-		Lock lock(&m_endpointsMutex);
-		if(m_endpoints.count(socketFD) > 0)
-		{
-			if(m_endpoints[socketFD].first == NULL)
-			{
-				//Endpoint doesn't exist
-				return false;
-			}
-			//Read lock the enpoint's lock for our ticket, and assign it in
-			//	We now have access to this endpoint for the duration of the Ticket
-			//	The ticket will automatically unlock it for us later
-			pthread_rwlock_rdlock(m_endpoints[socketFD].second);
-			outTicket.m_endpointLock = m_endpoints[socketFD].second;
-			endpoint = m_endpoints[socketFD].first;
-		}
-		else
-		{
-			//Endpoint doesn't exist
-			return false;
-		}
-	}
-	return endpoint->RegisterCallback(outTicket);
-}
-
-std::vector <int>MessageManager::GetSocketList()
-{
-	Lock lock(&m_endpointsMutex);
-	std::vector<int> sockets;
-
-	std::map<int, std::pair<MessageEndpoint*, pthread_rwlock_t*>>::iterator it;
-	for(it = m_endpoints.begin(); it != m_endpoints.end(); ++it)
-	{
-		//If the MessageEndpoint is NULL, don't count it
-		if(it->second.first != NULL)
-		{
-			//Don't add the socket if the endpoint is shut down (is old)
-			if(!it->second.first->m_isShutDown)
-			{
-				sockets.push_back(it->first);
-			}
-		}
-	}
-
-	return sockets;
-}
-
-MessageEndpointLock MessageManager::GetEndpoint(int socketFD)
-{
-	pthread_rwlock_t *endpointLock;
-
-	//get the rw lock for the endpoint
-	{
-		Lock lock(&m_endpointsMutex);
-
-		if(m_endpoints.count(socketFD) > 0)
-		{
-			endpointLock = m_endpoints[socketFD].second;
-		}
-		else
-		{
-			return MessageEndpointLock();
-		}
-	}
-
-	pthread_rwlock_rdlock(endpointLock);
-	return MessageEndpointLock( m_endpoints[socketFD].first, endpointLock);
 }
 
 void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
@@ -247,7 +228,6 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 		bufferevent_lock(bev);
 
 		struct evbuffer *input = bufferevent_get_input(bev);
-		evutil_socket_t socketFD = bufferevent_getfd(bev);
 
 		uint32_t length = 0;
 		uint32_t evbufferLength = evbuffer_get_length(input);
@@ -268,93 +248,39 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			continue;
 		}
 
-		// Make sure the length appears valid
-		if(length < MESSAGE_MIN_SIZE)
-		{
-			LOG(WARNING, "Error parsing message: message too small.", "");
-			evbuffer_drain(input, sizeof(length));
-			keepGoing = false;
-			continue;
-		}
-
 		//If we don't yet have enough data, then just quit and wait for more
 		if(evbufferLength < length)
 		{
-			MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
-			if(endpoint.m_endpoint != NULL)
-			{
-				//Copy out the message header (and length)
-				char buffer[MESSAGE_HDR_SIZE + sizeof(uint32_t)];
-				ev_ssize_t copiedLen = evbuffer_copyout(input, buffer, sizeof(buffer));
-				if(copiedLen == -1)
-				{
-					keepGoing = false;
-					continue;
-				}
-				size_t uCopiedLen = (size_t)copiedLen;
-				if(uCopiedLen < sizeof(buffer))
-				{
-					keepGoing = false;
-					continue;
-				}
-				ErrorMessage *keepAlive = new ErrorMessage(ERROR_KEEP_WAITING,
-						Message::GetOurSerial(buffer),
-						Message::GetTheirSerial(buffer));
-				if(!endpoint.m_endpoint->PushMessage(keepAlive))
-				{
-					LOG(DEBUG, "Ignoring message chunk. Error in pushing it to a queue.", "");
-				}
-			}
-			else
-			{
-				LOG(DEBUG, "Ignoring message chunk. Received it for a non-existent endpoint.", "");
-			}
 			keepGoing = false;
 			continue;
 		}
 
+		//Remove the length from the buffer
 		evbuffer_drain(input, sizeof(length));
 
-		//Remove the length of the "length" variable itself
-		length -= sizeof(length);
-		char *buffer = (char*)malloc(length);
-
+		char *buffer = (char*)evbuffer_pullup(input, length - sizeof(length));
 		if(buffer == NULL)
 		{
 			// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
-			LOG(WARNING, "Error parsing message: malloc returned NULL. Out of memory?.", "");
-			free(buffer);
+			LOG(WARNING, "Error getting libevent data in message read", "");
 			keepGoing = false;
 			continue;
 		}
 
-		// Read in the actual message
-		int bytesRead = evbuffer_remove(input, buffer, length);
-		bufferevent_unlock(bev);
-		if(bytesRead == -1)
+		Message *message = new Message();
+		if(message->Deserialize(buffer, length) == true)
 		{
-			LOG(WARNING, "Error parsing message: couldn't remove data from buffer.", "");
-		}
-		else if((uint32_t)bytesRead != length)
-		{
-			LOG(WARNING, "Error parsing message: incorrect amount of data received than what expected.", "");
-		}
-
-		MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(socketFD);
-		if(endpoint.m_endpoint != NULL)
-		{
-			Message *message = Message::Deserialize(buffer, bytesRead);
-			if(!endpoint.m_endpoint->PushMessage(message))
-			{
-				LOG(DEBUG, "Discarding message. Error in pushing it to a queue.", "");
-			}
+			uint32_t *index = (uint32_t*)ctx;
+			message->m_contents.set_m_sessionindex(*index);
+			MessageManager::Instance().EnqueueMessage(message);
 		}
 		else
 		{
-			LOG(DEBUG, "Discarding message. Received it for a non-existent endpoint.", "");
+			delete message;
 		}
 
-		free(buffer);
+		evbuffer_drain(input, length);
+		bufferevent_unlock(bev);
 	}
 
 	bufferevent_unlock(bev);
@@ -364,34 +290,27 @@ void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void 
 {
 	if(error & BEV_EVENT_CONNECTED)
 	{
-		LOG(DEBUG, "New connection established", "");
 		return;
 	}
 
+	//If the socket has closed, clean up the bufferevent
 	if(error & (BEV_EVENT_EOF | BEV_EVENT_ERROR))
 	{
-		int sockFD = bufferevent_getfd(bev);
+		LOG(DEBUG, "Connection has terminated", "");
+		uint32_t *index = (uint32_t*)ctx;
+		MessageManager::Instance().RemoveSessionIndex(*index);
 
-		Lock lock;
-		struct bufferevent *bufferevent = NULL;
-		{
-			MessageEndpointLock endpoint = MessageManager::Instance().GetEndpoint(sockFD);
-			if(endpoint.m_endpoint != NULL)
-			{
-				lock = endpoint.m_endpoint->LockBufferevent(&bufferevent);
-			}
-		}
-		if(bufferevent != NULL)
-		{
-			bufferevent_free(bufferevent);
-			MessageManager::Instance().DeleteEndpoint(sockFD);
-		}
+		Message *shutdown = new Message();
+		shutdown->m_contents.set_m_type(CONNECTION_SHUTDOWN);
+		MessageManager::Instance().EnqueueMessage(shutdown);
+		delete index;
 	}
 }
 
 void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
 {
-	struct CallbackArg *cbArg = (struct CallbackArg *)arg;
+	LOG(DEBUG, "Connected to client", "");
+
     struct sockaddr_storage ss;
     socklen_t slen = sizeof(ss);
     int fd = accept(listener, (struct sockaddr*)&ss, &slen);
@@ -403,81 +322,54 @@ void MessageManager::DoAccept(evutil_socket_t listener, short event, void *arg)
     {
 		struct bufferevent *bev;
 		evutil_make_socket_nonblocking(fd);
-		bev = bufferevent_socket_new(cbArg->m_base, fd,
+		bev = bufferevent_socket_new((event_base*)arg, fd,
 				BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE |  BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS );
 		if(bev == NULL)
 		{
 			LOG(ERROR, "Failed to connect to UI: socket_new", "");
 			return;
 		}
-		bufferevent_setcb(bev, MessageDispatcher, NULL, ErrorDispatcher, NULL);
+
+		//Get a new session index and assign it to the bufferevent
+		uint32_t *sessionIndex = new uint32_t;
+		*sessionIndex = MessageManager::Instance().GetNextSessionIndex();
+		MessageManager::Instance().AddSessionIndex(*sessionIndex, bev);
+
+		bufferevent_setcb(bev, MessageDispatcher, NULL, ErrorDispatcher, sessionIndex);
 		bufferevent_setwatermark(bev, EV_READ, 0, 0);
 		if(bufferevent_enable(bev, EV_READ|EV_WRITE) == -1)
 		{
 			LOG(ERROR, "Failed to connect to UI: bufferevent_enable", "");
 			return;
 		}
-
-		//Start the callback thread for this new connection
-		cbArg->m_callback->StartServerCallbackThread(fd, bev);
     }
 }
 
-void MessageManager::StartServer(ServerCallback *callback)
+uint32_t MessageManager::GetNextSessionIndex()
 {
-	int len;
-	string inKeyPath = Config::Inst()->GetPathHome() + "/config/keys" + NOVAD_LISTEN_FILENAME;
-	evutil_socket_t IPCParentSocket;
-	struct event_base *base;
-	struct event *listener_event;
-	struct sockaddr_un msgLocal;
+	Lock lock(&m_sessionIndexMutex);
+	return m_sessionIndex++;
+}
 
-	evthread_use_pthreads();
-	base = event_base_new();
-	if (!base)
+void MessageManager::RemoveSessionIndex(uint32_t index)
+{
+	Lock lock(&m_bevMapMutex);
+	if(m_bevMap.count(index) > 0)
 	{
-		LOG(ERROR, "Failed to set up socket base", "");
-		return;
+		struct bufferevent *bev = m_bevMap[index];
+		bufferevent_free(bev);
+		m_bevMap.erase(index);
 	}
+}
 
-	if((IPCParentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+void MessageManager::AddSessionIndex(uint32_t index, struct bufferevent *bev)
+{
+	Lock lock(&m_bevMapMutex);
+	if(m_bevMap.count(index) > 0)
 	{
-		LOG(ERROR, "Failed to create socket for accept()", "socket: "+string(strerror(errno)));
-		return;
+		LOG(WARNING, "An old bufferevent is stuck, this shouldn't be. Clobbering it.", "");
 	}
-
-	evutil_make_socket_nonblocking(IPCParentSocket);
-
-	msgLocal.sun_family = AF_UNIX;
-	memset(msgLocal.sun_path, '\0', sizeof(msgLocal.sun_path));
-	strncpy(msgLocal.sun_path, inKeyPath.c_str(), inKeyPath.length());
-	unlink(msgLocal.sun_path);
-	len = strlen(msgLocal.sun_path) + sizeof(msgLocal.sun_family);
-
-	if(::bind(IPCParentSocket, (struct sockaddr *)&msgLocal, len) == -1)
-	{
-		LOG(ERROR, "Failed to bind to socket", "bind: "+string(strerror(errno)));
-		close(IPCParentSocket);
-		return;
-	}
-
-	if(listen(IPCParentSocket, SOMAXCONN) == -1)
-	{
-		LOG(ERROR, "Failed to listen for UIs", "listen: "+string(strerror(errno)));
-		close(IPCParentSocket);
-		return;
-	}
-
-	struct CallbackArg *cbArg = new struct CallbackArg;
-	cbArg->m_base = base;
-	cbArg->m_callback = callback;
-
-	listener_event = event_new(base, IPCParentSocket, EV_READ|EV_PERSIST, DoAccept, (void*)cbArg);
-	event_add(listener_event, NULL);
-	event_base_dispatch(base);
-
-	LOG(ERROR, "Main accept dispatcher returned. This should not occur.", "");
-	return;
+	m_bevMap[index] = bev;
 }
 
 }

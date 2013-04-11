@@ -19,46 +19,35 @@
 #ifndef PROTOCOLHANDLER_H_
 #define PROTOCOLHANDLER_H_
 
-#include "messaging/messages/Message.h"
-#include "messaging/messages/ControlMessage.h"
-#include "messaging/messages/RequestMessage.h"
-#include "messaging/messages/UpdateMessage.h"
-#include "messaging/Ticket.h"
+#include "messaging/Message.h"
 #include "Suspect.h"
 
 namespace Nova
 {
 
-struct UI_NotificationPackage
-{
-	UpdateMessage *m_updateMessage;
-	enum UpdateType m_ackType;
-	int m_socketFD_sender;
-};
+void HandleExitRequest(Message *incoming);
 
-//Processes a single ControlMessage received from the UI
-//	controlMessage - A reference to the received ControlMessage
-//	socketFD - The socket on which to contact the UI
-void HandleControlMessage(ControlMessage &controlMessage, Ticket &ticket);
-void HandleRequestMessage(RequestMessage &requestMessage, Ticket &ticket);
+void HandleClearAllRequest(Message *incoming);
 
-//Commands and Updates to UI:
+void HandleClearSuspectRequest(Message *incoming);
 
-//Sends (updates) a single suspect to all UIs for display to the user
-//	suspect - The suspect to send
-//	socket - The socket of the UI to send to
-void SendSuspectToUIs(Suspect *suspect);
+void HandleSaveSuspectsRequest(Message *incoming);
 
-//Sends notification messages to all UIs (except one), expecting an ACK message in response from each
-//	notificationType - The update message type to send
-//	updateMessage - The message to send to each UI. Transfers control of life cycle to this function!
-//	socketFD_sender - The sender's socket. Don't send a notification to this socket
-//	NOTE: Spawns a separate thread and returns immediately. NOT blocking
-void NotifyUIs(UpdateMessage *updateMessage, enum UpdateType ackType, int socketFD_sender);
+void HandleReclassifyAllRequest(Message *incoming);
 
-//Helper function to NotifyUIs. Runs the actual pthread
-//	ptr - Pointer to a UI_NotificationPackage struct containing the actual arguments needed
-void *NotifyUIsHelper(void *ptr);
+void HandleStartCaptureRequest(Message *incoming);
+
+void HandleStopCaptureRequest(Message *incoming);
+
+void HandleRequestSuspectList(Message *incoming);
+
+void HandleRequestSuspect(Message *incoming);
+
+void HandleRequestAllSuspects(Message *incoming);
+
+void HandleRequestUptime(Message *incoming);
+
+void HandlePing(Message *incoming);
 
 }
 #endif /* PROTOCOLHANDLER_H_ */

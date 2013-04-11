@@ -21,6 +21,5 @@
 #define NOVA_UI_CORE_H_
 
 #include "Commands.h"
-#include "CallbackHandler.h"
 
 #endif /* NOVA_UI_CORE_H_ */

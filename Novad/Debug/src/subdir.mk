@@ -11,7 +11,6 @@ CPP_SRCS += \
 ../src/KnnClassification.cpp \
 ../src/Main.cpp \
 ../src/Novad.cpp \
-../src/NovadCallback.cpp \
 ../src/ProtocolHandler.cpp \
 ../src/Threads.cpp \
 ../src/ThresholdTriggerClassification.cpp 
@@ -24,7 +23,6 @@ OBJS += \
 ./src/KnnClassification.o \
 ./src/Main.o \
 ./src/Novad.o \
-./src/NovadCallback.o \
 ./src/ProtocolHandler.o \
 ./src/Threads.o \
 ./src/ThresholdTriggerClassification.o 
@@ -37,7 +35,6 @@ CPP_DEPS += \
 ./src/KnnClassification.d \
 ./src/Main.d \
 ./src/Novad.d \
-./src/NovadCallback.d \
 ./src/ProtocolHandler.d \
 ./src/Threads.d \
 ./src/ThresholdTriggerClassification.d 

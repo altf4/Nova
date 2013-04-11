@@ -380,6 +380,11 @@ uint32_t Suspect::Deserialize(u_char *buf, uint32_t bufferSize, SuspectFeatureMo
 		}
 	}
 
+	if(suspectSize < offset)
+	{
+		return 0;
+	}
+
 	//Deserialize the m_id last so that we know its length
 	if(!m_id.ParseFromArray(buf + offset, suspectSize - offset))
 	{

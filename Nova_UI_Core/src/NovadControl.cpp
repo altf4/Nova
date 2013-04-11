@@ -17,9 +17,6 @@
 //============================================================================
 
 #include "messaging/MessageManager.h"
-#include "messaging/messages/Message.h"
-#include "messaging/messages/ControlMessage.h"
-#include "messaging/messages/ErrorMessage.h"
 #include "Commands.h"
 #include "Logger.h"
 #include "Lock.h"
@@ -27,22 +24,43 @@
 #include <iostream>
 #include <stdio.h>
 #include <unistd.h>
+#include "event2/thread.h"
 
 using namespace Nova;
 using namespace std;
 
-extern int IPCSocketFD;
+
+pthread_mutex_t messageQueueMutex;
+queue<Message*> messageQueue;
+pthread_cond_t popWakeupCondition;
+
+extern bool isConnected;
+extern struct event_base *libeventBase;
+extern pthread_mutex_t bufferevent_mutex;
 
 namespace Nova
 {
+
+void InitMessaging()
+{
+	// Make sure config singleton is up
+	Config::Inst();
+
+	pthread_mutex_init(&messageQueueMutex, NULL);
+	pthread_cond_init(&popWakeupCondition, NULL);
+
+	evthread_use_pthreads();
+	libeventBase = event_base_new();
+	pthread_mutex_init(&bufferevent_mutex, NULL);
+
+	pthread_t messageWorker;
+	pthread_create(&messageWorker, NULL, Nova::ClientMessageWorker, NULL);
+	pthread_detach(messageWorker);
+}
+
 bool StartNovad(bool blocking)
 {
-	if(IsNovadUp(false))
-	{
-		return true;
-	}
-
-	if (!blocking)
+	if(!blocking)
 	{
 		if(system("nohup novad > /dev/null&") != 0)
 		{
@@ -63,55 +81,18 @@ bool StartNovad(bool blocking)
 		{
 			return true;
 		}
-
 	}
 }
 
-bool StopNovad()
+void StopNovad(int32_t messageID)
 {
-	bool retSuccess;
-	//Keep the scope of the following Ticket out of the call to Disconnect
+	Message killRequest;
+	killRequest.m_contents.set_m_type(CONTROL_EXIT_REQUEST);
+	if(messageID != -1)
 	{
-		Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-		ControlMessage killRequest(CONTROL_EXIT_REQUEST);
-		if(!MessageManager::Instance().WriteMessage(ticket, &killRequest))
-		{
-			LOG(ERROR, "Error sending command to NOVAD (CONTROL_EXIT_REQUEST)", "");
-			return false;
-		}
-
-		Message *reply = MessageManager::Instance().ReadMessage(ticket);
-		if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-		{
-			LOG(ERROR, "Timeout error when waiting for message reply", "");
-			delete ((ErrorMessage*)reply);
-			return false;
-		}
-		if(reply->m_messageType != CONTROL_MESSAGE )
-		{
-			LOG(ERROR, "Received the wrong kind of reply message", "");
-			reply->DeleteContents();
-			delete reply;
-			return false;
-		}
-
-		ControlMessage *killReply = (ControlMessage*)reply;
-		if( killReply->m_contents.m_controltype() != CONTROL_EXIT_REPLY )
-		{
-			LOG(ERROR, "Received the wrong kind of control message", "");
-			reply->DeleteContents();
-			delete reply;
-			return false;
-		}
-		retSuccess = killReply->m_contents.m_success();
-		delete killReply;
-
-		LOG(DEBUG, "Call to StopNovad complete", "");
+		killRequest.m_contents.set_m_messageid(messageID);
 	}
-	DisconnectFromNovad();
-
-	return retSuccess;
+	MessageManager::Instance().WriteMessage(&killRequest, 0);
 }
 
 bool HardStopNovad()
@@ -126,233 +107,139 @@ bool HardStopNovad()
 	return false;
 }
 
-bool SaveAllSuspects(std::string file)
+void SaveAllSuspects(std::string file, int32_t messageID)
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	ControlMessage saveRequest(CONTROL_SAVE_SUSPECTS_REQUEST);
+	Message saveRequest;
+	saveRequest.m_contents.set_m_type(CONTROL_SAVE_SUSPECTS_REQUEST);
 	saveRequest.m_contents.set_m_filepath(file.c_str());
-
-	if(!MessageManager::Instance().WriteMessage(ticket, &saveRequest))
+	if(messageID != -1)
 	{
-		LOG(ERROR, "Error sending command to NOVAD (CONTROL_SAVE_SUSPECTS_REQUEST)", "");
-		return false;
+		saveRequest.m_contents.set_m_messageid(messageID);
 	}
-
-	Message *reply = MessageManager::Instance().ReadMessage(ticket, IPCSocketFD);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-	if(reply->m_messageType != CONTROL_MESSAGE )
-	{
-		LOG(ERROR, "Received the wrong kind of reply message", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-
-	ControlMessage *saveReply = (ControlMessage*)reply;
-	if( saveReply->m_contents.m_controltype() != CONTROL_SAVE_SUSPECTS_REPLY )
-	{
-		LOG(ERROR, "Received the wrong kind of control message", "");
-		saveReply->DeleteContents();
-		delete saveReply;
-		return false;
-	}
-	bool retSuccess = saveReply->m_contents.m_success();
-	delete saveReply;
-	return retSuccess;
+	MessageManager::Instance().WriteMessage(&saveRequest, 0);
 }
 
-bool ClearAllSuspects()
+void ClearAllSuspects(int32_t messageID)
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	ControlMessage clearRequest(CONTROL_CLEAR_ALL_REQUEST);
-	if(!MessageManager::Instance().WriteMessage(ticket, &clearRequest))
+	Message clearRequest;
+	clearRequest.m_contents.set_m_type(CONTROL_CLEAR_ALL_REQUEST);
+	if(messageID != -1)
 	{
-		LOG(ERROR, "Error sending command to NOVAD (CONTROL_CLEAR_ALL_REQUEST)", "");
-		return false;
+		clearRequest.m_contents.set_m_messageid(messageID);
 	}
-
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-	if(reply->m_messageType != CONTROL_MESSAGE )
-	{
-		LOG(ERROR, "Received the wrong kind of reply message", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-
-	ControlMessage *clearReply = (ControlMessage*)reply;
-	if( clearReply->m_contents.m_controltype() != CONTROL_CLEAR_ALL_REPLY )
-	{
-		LOG(ERROR, "Received the wrong kind of control message", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-	bool retSuccess = clearReply->m_contents.m_success();
-	delete clearReply;
-	return retSuccess;
+	MessageManager::Instance().WriteMessage(&clearRequest, 0);
 }
 
-bool ClearSuspect(SuspectID_pb suspectId)
+void ClearSuspect(SuspectID_pb suspectId, int32_t messageID)
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	ControlMessage clearRequest(CONTROL_CLEAR_SUSPECT_REQUEST);
-	//XXX Watch out for this
+	Message clearRequest;
+	clearRequest.m_contents.set_m_type(CONTROL_CLEAR_SUSPECT_REQUEST);
 	*clearRequest.m_contents.mutable_m_suspectid() = suspectId;
-	if(!MessageManager::Instance().WriteMessage(ticket, &clearRequest))
+	if(messageID != -1)
 	{
-		LOG(ERROR, "Unable to send CONTROL_CLEAR_SUSPECT_REQUEST to NOVAD" ,"");
-		return false;
+		clearRequest.m_contents.set_m_messageid(messageID);
 	}
-
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-	if(reply->m_messageType != CONTROL_MESSAGE )
-	{
-		LOG(ERROR, "Received the wrong kind of reply message", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-
-	ControlMessage *clearReply = (ControlMessage*)reply;
-	if( clearReply->m_contents.m_controltype() != CONTROL_CLEAR_SUSPECT_REPLY )
-	{
-		LOG(ERROR, "Received the wrong kind of control message", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-	bool retSuccess = clearReply->m_contents.m_success();
-	delete clearReply;
-	return retSuccess;
+	MessageManager::Instance().WriteMessage(&clearRequest, 0);
 }
 
-bool ReclassifyAllSuspects()
+void ReclassifyAllSuspects(int32_t messageID)
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	ControlMessage reclassifyRequest(CONTROL_RECLASSIFY_ALL_REQUEST);
-	if(!MessageManager::Instance().WriteMessage(ticket, &reclassifyRequest))
+	Message request;
+	request.m_contents.set_m_type(CONTROL_RECLASSIFY_ALL_REQUEST);
+	if(messageID != -1)
 	{
-		LOG(ERROR, "Error sending command to NOVAD (CONTROL_RECLASSIFY_ALL_REQUEST)", "");
-		return false;
+		request.m_contents.set_m_messageid(messageID);
 	}
-
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-
-	if(reply->m_messageType != CONTROL_MESSAGE )
-	{
-		LOG(ERROR, "Received the wrong kind of reply message", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-
-	ControlMessage *reclassifyReply = (ControlMessage*)reply;
-	if( reclassifyReply->m_contents.m_controltype() != CONTROL_RECLASSIFY_ALL_REPLY )
-	{
-		LOG(ERROR, "Received the wrong kind of control message", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-	bool retSuccess = reclassifyReply->m_contents.m_success();
-	delete reclassifyReply;
-	return retSuccess;
+	MessageManager::Instance().WriteMessage(&request, 0);
 }
 
-bool StartPacketCapture()
+void StartPacketCapture(int32_t messageID)
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	ControlMessage request(CONTROL_START_CAPTURE);
-	if(!MessageManager::Instance().WriteMessage(ticket, &request))
+	Message request;
+	request.m_contents.set_m_type(CONTROL_START_CAPTURE);
+	if(messageID != -1)
 	{
-		LOG(ERROR, "Error sending command to NOVAD (CONTROL_STOP_CAPTURE)", "");
-		return false;
+		request.m_contents.set_m_messageid(messageID);
 	}
-
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
-		return false;
-	}
-
-	ControlMessage *controlReply = dynamic_cast<ControlMessage*>(reply);
-	if(controlReply == NULL || controlReply->m_contents.m_controltype() != CONTROL_START_CAPTURE_ACK )
-	{
-		LOG(ERROR, "Received the wrong kind of reply message", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-
-	delete reply;
-	return true;
+	MessageManager::Instance().WriteMessage(&request, 0);
 }
 
-bool StopPacketCapture()
+void StopPacketCapture(int32_t messageID)
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	ControlMessage request(CONTROL_STOP_CAPTURE);
-	if(!MessageManager::Instance().WriteMessage(ticket, &request))
+	Message request;
+	request.m_contents.set_m_type(CONTROL_STOP_CAPTURE);
+	if(messageID != -1)
 	{
-		LOG(ERROR, "Error sending command to NOVAD (CONTROL_STOP_CAPTURE)", "");
-		return false;
+		request.m_contents.set_m_messageid(messageID);
+	}
+	MessageManager::Instance().WriteMessage(&request, 0);
+}
+
+void *ClientMessageWorker(void *arg)
+{
+	while(true)
+	{
+		Message *message = MessageManager::Instance().DequeueMessage();
+
+		//If we got a message, then we know we're connected
+		//Unless the message is a shutdown message, which we handle below
+		isConnected = true;
+
+		//Handle the message in the context of the UI_Core
+		switch(message->m_contents.m_type())
+		{
+			case UPDATE_SUSPECT:
+			{
+				break;
+			}
+			case REQUEST_ALL_SUSPECTS_REPLY:
+			{
+				break;
+			}
+			case UPDATE_ALL_SUSPECTS_CLEARED:
+			{
+				break;
+			}
+			case UPDATE_SUSPECT_CLEARED:
+			{
+				break;
+			}
+			case REQUEST_PONG:
+			{
+				break;
+			}
+			case CONNECTION_SHUTDOWN:
+			{
+				isConnected = false;
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+
+		//Hand the message off to the UI for further handling
+		Lock lock(&messageQueueMutex);
+		messageQueue.push(message);
+		pthread_cond_signal(&popWakeupCondition);
+	}
+	LOG(ERROR, "Messaging worker thread died, should not happen", "");
+	return NULL;
+}
+
+Message *DequeueUIMessage()
+{
+	Lock lock(&messageQueueMutex);
+
+	while(messageQueue.empty())
+	{
+		pthread_cond_wait(&popWakeupCondition, &messageQueueMutex);
 	}
 
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
-		return false;
-	}
-
-	ControlMessage *controlReply = dynamic_cast<ControlMessage*>(reply);
-	if(controlReply == NULL || controlReply->m_contents.m_controltype() != CONTROL_STOP_CAPTURE_ACK )
-	{
-		LOG(ERROR, "Received the wrong kind of reply message", "");
-		reply->DeleteContents();
-		delete reply;
-		return false;
-	}
-
-	delete reply;
-	return true;
+	Message *ret = messageQueue.front();
+	messageQueue.pop();
+	return ret;
 }
 
 }

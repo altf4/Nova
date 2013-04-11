@@ -4,7 +4,6 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/CallbackHandler.cpp \
 ../src/Connection.cpp \
 ../src/NovadControl.cpp \
 ../src/StatusQueries.cpp \
@@ -12,7 +11,6 @@ CPP_SRCS += \
 ../src/TrainingDump.cpp 
 
 OBJS += \
-./src/CallbackHandler.o \
 ./src/Connection.o \
 ./src/NovadControl.o \
 ./src/StatusQueries.o \
@@ -20,7 +18,6 @@ OBJS += \
 ./src/TrainingDump.o 
 
 CPP_DEPS += \
-./src/CallbackHandler.d \
 ./src/Connection.d \
 ./src/NovadControl.d \
 ./src/StatusQueries.d \
@@ -32,7 +29,7 @@ CPP_DEPS += \
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -I../../NovaLibrary/src/ -O0 -g3 -Wall -c -fmessage-length=0 -std=c++0x -fPIC -fprofile-arcs -ftest-coverage -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	g++ -I../../NovaLibrary/src/ -O0 -g3 -Wall -c -fmessage-length=0 -std=c++0x -fPIC -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

@@ -4,7 +4,6 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/CallbackHandler.cpp \
 ../src/Connection.cpp \
 ../src/NovadControl.cpp \
 ../src/StatusQueries.cpp \
@@ -12,7 +11,6 @@ CPP_SRCS += \
 ../src/TrainingDump.cpp 
 
 OBJS += \
-./src/CallbackHandler.o \
 ./src/Connection.o \
 ./src/NovadControl.o \
 ./src/StatusQueries.o \
@@ -20,7 +18,6 @@ OBJS += \
 ./src/TrainingDump.o 
 
 CPP_DEPS += \
-./src/CallbackHandler.d \
 ./src/Connection.d \
 ./src/NovadControl.d \
 ./src/StatusQueries.d \

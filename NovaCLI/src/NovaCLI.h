@@ -19,8 +19,8 @@
 #ifndef NOVACLI_H_
 #define NOVACLI_H_
 
-#include "messaging/messages/RequestMessage.h"
 #include "protobuf/marshalled_classes.pb.h"
+#include "messaging/Message.h"
 
 // Name of the CLI executable
 #define EXECUTABLE_NAME "novacli"
@@ -59,7 +59,10 @@ void PrintUptime();
 
 void PrintUsage();
 
-void MonitorCallback();
+//Keep waiting for messages until one with the specified message ID arrives
+//	NOTE: messageID of -1 indicates to always keep reading messages indefinitely
+void MonitorCallback(int32_t messageID = -1);
+
 void ReclassifySuspects();
 
 void ResetPassword();

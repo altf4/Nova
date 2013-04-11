@@ -97,6 +97,7 @@ coverageTests: test-prepare
 
 #Unit tests
 test: test-prepare
+	#$(MAKE) debug
 	$(MAKE) -C NovaTest/Debug
 
 test-prepare:
