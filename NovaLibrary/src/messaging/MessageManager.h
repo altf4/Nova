@@ -19,30 +19,18 @@
 #ifndef MESSAGEMANAGER_H_
 #define MESSAGEMANAGER_H_
 
-#include "messages/Message.h"
-#include "MessageQueue.h"
-#include "MessageEndpoint.h"
-#include "MessageEndpointLock.h"
-#include "ServerCallback.h"
-#include "../Lock.h"
-#include "Ticket.h"
-
+#include <queue>
 #include <map>
-#include <vector>
 #include "pthread.h"
 #include "event.h"
+
+#include "Message.h"
 
 namespace Nova
 {
 
 // Filename of the IPC file Novad will listen on
 #define NOVAD_LISTEN_FILENAME "/Novad_Listen"
-
-struct CallbackArg
-{
-	struct event_base *m_base;
-	ServerCallback *m_callback;
-};
 
 class MessageManager
 {
@@ -51,58 +39,28 @@ public:
 
 	static MessageManager &Instance();
 
-	//Grabs a message off of the given socket and returns a pointer to it
-	//	ticket - Ticket object holding all the necessary conversation info to pop a new message
-	//	timeout - How long (in seconds) to wait for incoming data before giving up
+	//Grabs a message off of the message queue
 	// Returns - A pointer to a valid Message object. Never NULL. Caller is responsible for life cycle of this message
-	//		On error, this function returns an ErrorMessage with the details of the error
-	//		IE: Returns ErrorMessage of type ERROR_TIMEOUT if timeout has been exceeded
-	//	NOTE: You can get a Ticket by calling StartConversation()
-	//	NOTE: Blocking function
-	//	NOTE: Due to physical constraints, this function may block for longer than timeout. Don't rely on it being very precise.
-	Nova::Message *ReadMessage(Ticket &ticket, int timeout = REPLY_TIMEOUT);
+	// NOTE: Blocking call. To be called from worker threads
+	Nova::Message *DequeueMessage();
 
-	//Writes a given Message to the provided socket
-	//	ticket - Ticket object holding all the necessary conversation info to send this message
+	//Writes a given Message to the provided sessionIndex (0 for all sessions)
 	//	message - A pointer to the message object to send
+	//	sessionIndex - The index of the session to send the message to. (0 for all sessions)
 	// Returns - true on successfully sending the object, false on error
-	bool WriteMessage(const Ticket &ticket, Message *message);
+	bool WriteMessage(Message *message, uint32_t sessionIndex);
 
-	//Informs the message manager that you would like to use the specified socket.
-	//	socketFD - The socket file descriptor to use
-	//	returns - A Ticket object which contains all the information necessary to have a conversation
-	//		on error, the Ticket object will be set with m_socketFD = -1
-	Ticket StartConversation(int socketFD);
+	//Writes a given Message to the all sessions except the given one
+	//	message - A pointer to the message object to send
+	//	sessionIndex - The index of the session to exclude
+	// Returns - true on successfully sending the object, false on error
+	bool WriteMessageExcept(Message *message, uint32_t sessionIndex);
 
-	//Initializes the socket and its underlying MessageQueues. Should be called prior to other socket operations on this socketFD
-	//	Failing to call StartSocket prior to use will cause you to get get ErrorMessges (but not crash)
-	//TODO: Maybe make the other functions automatically check and call this function for us. So we can make this private
-	//	socketFD - The socket file descriptor for which to make the initialization
-	//	bufferevent - The libevent structure used for i/o to this socket
-	//NOTE: Safely does nothing if socketFD already exists in the manager
-	void StartSocket(int socketFD, struct bufferevent *bufferevent);
+	//The following functions are only used internally (used from static functions, thus needing to be public)
+	//Users of the messaging subsystem will not need to call these:
 
-	//Deletes the MessageQueue object to which socketFD belongs
-	//	NOTE: Does not close the underlying socket.
-	void DeleteEndpoint(int socketFD);
-
-	//Waits for a new callback message to arrive on the given socketFD
-	//	socketFD - The socket file descriptor to wait on
-	//	outTicket - Output parameter which provides all the information necessary to talk on the new callback conversation
-	//	NOTE: Blocking call
-	bool RegisterCallback(int socketFD, Ticket &outTicket);
-
-	//Gets a current list of all the open sockets in the manager
-	//	Returns - A vector of socket file descriptors
-	//	NOTE: No locks are provided for these sockets. You're just given the descriptors. This necessarily means that by the time you
-	//		get around to trying to read/write to the socket, it might have been closed. Or a new socket might have appeared that won't
-	//		be included in this list. You'll just have to deal with this fact.
-	std::vector <int>GetSocketList();
-
-	//Begins server accept() loop. Only run this function if you want to be a server (not a UI)
-	//	callback - Pointer to a user defined ServerCallback object that contains the callback function to be run
-	//	NOTE: Blocking function. Begins the server main loop. Does not return.
-	void StartServer(ServerCallback *callback);
+	//Puts a message onto the message queue
+	void EnqueueMessage(Message *message);
 
 	//Function that gets called for every received packet
 	//	Deserializes the bytes into a message, pushes that message into the right MessageQueue,
@@ -112,7 +70,24 @@ public:
 	//Function that gets called for every socket meta-event, such as errors, shutdowns, and connections
 	//	Contains logic to clean up after a dead socket, and setup new connections, or print errors
 	static void ErrorDispatcher(struct bufferevent *bev, short error, void *ctx);
+	static void DoAccept(evutil_socket_t listener, short event, void *arg);
+	static void WriteDispatcher(struct bufferevent *bev, void *ctx);
+	static void *AcceptDispatcher(void *);
 
+	//Blocks until a WriteDispatch event has occurred with an empty buffer
+	void WaitForFlush();
+
+	//Return the next monotonically increasing session index number
+	uint32_t GetNextSessionIndex();
+
+	//When a socket closes, remove the session index from the current list
+	void RemoveSessionIndex(uint32_t index);
+	//When a new socket is created, add the session index to the list
+	void AddSessionIndex(uint32_t index, struct bufferevent *bev);
+
+	//Map of session indices to bufferevents
+	pthread_mutex_t m_bevMapMutex;
+	std::map<uint32_t, struct bufferevent*> m_bevMap;
 private:
 
 	static MessageManager *m_instance;
@@ -120,20 +95,13 @@ private:
 	//Constructor for MessageManager
 	MessageManager();
 
-	//Function returns a read-locked MessageEndpoint
-	//	socketFD - The socket file descriptor of the endpoint you want
-	//	returns - An RAII MessageEndpointLock object that contains a read-locked MessageEndpoint
-	//		on error, the m_endpint  pointer will be NULL
-	MessageEndpointLock GetEndpoint(int socketFD);
+	std::queue<Message*> m_queue;
+	pthread_mutex_t m_queueMutex;
 
-	static void DoAccept(evutil_socket_t listener, short event, void *arg);
+	uint32_t m_sessionIndex;
+	pthread_mutex_t m_sessionIndexMutex;
 
-	static void *AcceptDispatcher(void *);
-
-	std::map<int, std::pair<MessageEndpoint*, pthread_rwlock_t*>> m_endpoints;
-	pthread_mutex_t m_endpointsMutex;
-
-	pthread_mutex_t m_deleteEndpointMutex;;
+	pthread_cond_t m_popWakeupCondition;
 };
 
 }

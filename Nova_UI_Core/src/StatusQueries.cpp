@@ -18,9 +18,6 @@
 
 #include "Commands.h"
 #include "messaging/MessageManager.h"
-#include "messaging/messages/ControlMessage.h"
-#include "messaging/messages/RequestMessage.h"
-#include "messaging/messages/ErrorMessage.h"
 #include "Logger.h"
 #include "Lock.h"
 
@@ -29,336 +26,86 @@
 using namespace Nova;
 using namespace std;
 
-extern int IPCSocketFD;
+extern bool isConnected;
 
 namespace Nova
 {
-bool IsNovadUp(bool tryToConnect)
+
+bool IsNovadConnected()
 {
-	bool isUp = true;
-	if(tryToConnect)
-	{
-		//If we couldn't connect, then it's definitely not up
-		if(!ConnectToNovad())
-		{
-			return false;
-		}
-	}
-
-	//Funny syntax just so I can break; out of the context
-	do
-	{
-		Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-		RequestMessage ping(REQUEST_PING);
-		if(!MessageManager::Instance().WriteMessage(ticket, &ping))
-		{
-			//There was an error in sending the message
-			isUp = false;
-			break;
-		}
-
-		Message *reply = MessageManager::Instance().ReadMessage(ticket);
-		if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-		{
-			LOG(WARNING, "Timeout error when waiting for message reply", "");
-			reply->DeleteContents();
-			delete reply;
-			isUp = false;
-			break;
-		}
-
-		if(reply->m_messageType == ERROR_MESSAGE )
-		{
-			ErrorMessage *error = (ErrorMessage*)reply;
-			if(error->m_errorType == ERROR_SOCKET_CLOSED)
-			{
-				// This was breaking things during the mess of isNovadUp calls
-				// when the QT GUi starts and connects to novad. If there was some
-				// important reason for it being here that I don't know about, we
-				// might need to put it back and track down why exactly it was
-				// causing problems.
-				//CloseNovadConnection();
-			}
-			delete error;
-			isUp = false;
-			break;
-		}
-		if(reply->m_messageType != REQUEST_MESSAGE )
-		{
-			//Received the wrong kind of message
-			reply->DeleteContents();
-			delete reply;
-			isUp = false;
-			break;
-		}
-
-		RequestMessage *pong = (RequestMessage*)reply;
-		if(pong->m_contents.m_requesttype() != REQUEST_PONG)
-		{
-			//Received the wrong kind of control message
-			pong->DeleteContents();
-			isUp = false;
-		}
-		delete pong;
-	}while(0);
-
-	if(isUp == false)
-	{
-		DisconnectFromNovad();
-	}
-	return isUp;
+	return isConnected;
 }
 
-uint64_t GetStartTime()
+void Ping(int32_t messageID)
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	RequestMessage request(REQUEST_UPTIME);
-
-	if(!MessageManager::Instance().WriteMessage(ticket, &request))
+	Message ping;
+	ping.m_contents.set_m_type(REQUEST_PING);
+	if(messageID != -1)
 	{
-		return 0;
+		ping.m_contents.set_m_messageid(messageID);
 	}
-
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		reply->DeleteContents();
-		delete reply;
-		return 0;
-	}
-
-	if(reply->m_messageType != REQUEST_MESSAGE )
-	{
-		//Received the wrong kind of message
-		reply->DeleteContents();
-		delete reply;
-		return 0;
-	}
-
-	RequestMessage *requestReply = (RequestMessage*)reply;
-	if(requestReply->m_contents.m_requesttype() != REQUEST_UPTIME_REPLY)
-	{
-		//Received the wrong kind of control message
-		requestReply->DeleteContents();
-		delete requestReply;
-		return 0;
-	}
-
-	uint64_t ret = requestReply->m_contents.m_starttime();
-
-	delete requestReply;
-	return ret;
+	MessageManager::Instance().WriteMessage(&ping, 0);
 }
 
-vector<SuspectID_pb> GetSuspectList(enum SuspectListType listType)
+void RequestStartTime(int32_t messageID)
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
+	Message getUptime;
+	getUptime.m_contents.set_m_type(REQUEST_UPTIME);
+	if(messageID != -1)
+	{
+		getUptime.m_contents.set_m_messageid(messageID);
+	}
+	MessageManager::Instance().WriteMessage(&getUptime, 0);
+}
 
-	RequestMessage request(REQUEST_SUSPECTLIST);
+void RequestSuspectList(enum SuspectListType listType, int32_t messageID)
+{
+	Message request;
+	request.m_contents.set_m_type(REQUEST_SUSPECTLIST);
 	request.m_contents.set_m_listtype(listType);
-
-	vector<SuspectID_pb> ret;
-
-	if(!MessageManager::Instance().WriteMessage(ticket, &request))
+	if(messageID != -1)
 	{
-		//There was an error in sending the message
-		return ret;
+		request.m_contents.set_m_messageid(messageID);
 	}
-
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
-		return ret;
-	}
-
-	if(reply->m_messageType != REQUEST_MESSAGE )
-	{
-		//Received the wrong kind of message
-		delete reply;
-		reply->DeleteContents();
-		LOG(ERROR, "Recieved wrong kind of message", "");
-		return ret;
-	}
-
-	RequestMessage *requestReply = (RequestMessage*)reply;
-	if(requestReply->m_contents.m_requesttype() != REQUEST_SUSPECTLIST_REPLY)
-	{
-		//Received the wrong kind of control message
-		reply->DeleteContents();
-		delete reply;
-		LOG(ERROR, "Recieved wrong kind of message", "");
-		return ret;
-	}
-
-	//XXX: Horrible kudge. We should just return the pb object, but this may be hard
-	//	this will make a deep copy of the list
-	for(int i = 0; i < requestReply->m_contents.m_suspectid_size(); i++)
-	{
-		ret.push_back(requestReply->m_contents.m_suspectid(i));
-	}
-	//ret = requestReply->m_suspectList.m_list().;
-
-	delete requestReply;
-	return ret;
+	MessageManager::Instance().WriteMessage(&request, 0);
 }
 
-Suspect *GetSuspect(SuspectID_pb address)
+void RequestSuspect(SuspectID_pb address, int32_t messageID)
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	RequestMessage request(REQUEST_SUSPECT);
-	SuspectID_pb *suspectID = request.m_contents.add_m_suspectid();
-	*suspectID = address;
+	Message request;
+	request.m_contents.set_m_type(REQUEST_SUSPECT);
+	*request.m_contents.mutable_m_suspectid() = address;
 	request.m_contents.set_m_featuremode(NO_FEATURE_DATA);
-
-	if(!MessageManager::Instance().WriteMessage(ticket, &request))
+	if(messageID != -1)
 	{
-		//There was an error in sending the message
-		return NULL;
+		request.m_contents.set_m_messageid(messageID);
 	}
-
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		reply->DeleteContents();
-		delete reply;
-		return NULL;
-	}
-
-	if(reply->m_messageType != REQUEST_MESSAGE)
-	{
-		//Received the wrong kind of message
-		reply->DeleteContents();
-		delete reply;
-		return NULL;
-	}
-
-	RequestMessage *requestReply = (RequestMessage*)reply;
-	if(requestReply->m_contents.m_requesttype() != REQUEST_SUSPECT_REPLY)
-	{
-		//Received the wrong kind of control message
-		requestReply->DeleteContents();
-		delete requestReply;
-		return NULL;
-	}
-
-	if(requestReply->m_suspects.size() == 1)
-	{
-		Suspect *suspect = requestReply->m_suspects[0];
-		delete requestReply;
-		return suspect;
-	}
-	else
-	{
-		requestReply->DeleteContents();
-		delete requestReply;
-		return NULL;
-	}
+	MessageManager::Instance().WriteMessage(&request, 0);
 }
 
-Suspect *GetSuspectWithData(SuspectID_pb address)
+void RequestSuspectWithData(SuspectID_pb address, int32_t messageID)
 {
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	RequestMessage request(REQUEST_SUSPECT);
-	SuspectID_pb *ID = request.m_contents.add_m_suspectid();
-	*ID = address;
+	Message request;
+	request.m_contents.set_m_type(REQUEST_SUSPECT);
+	*request.m_contents.mutable_m_suspectid() = address;
 	request.m_contents.set_m_featuremode(MAIN_FEATURE_DATA);
-
-	if(!MessageManager::Instance().WriteMessage(ticket, &request))
+	if(messageID != -1)
 	{
-		//There was an error in sending the message
-		return NULL;
+		request.m_contents.set_m_messageid(messageID);
 	}
-
-
-	Message *reply = MessageManager::Instance().ReadMessage(ticket, IPCSocketFD);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		delete ((ErrorMessage*)reply);
-		return NULL;
-	}
-
-	if(reply->m_messageType != REQUEST_MESSAGE)
-	{
-		//Received the wrong kind of message
-		delete reply;
-		return NULL;
-	}
-
-	RequestMessage *requestReply = (RequestMessage*)reply;
-	if(requestReply->m_contents.m_requesttype() != REQUEST_SUSPECT_REPLY)
-	{
-		//Received the wrong kind of control message
-		delete requestReply;
-		return NULL;
-	}
-
-	if(requestReply->m_suspects.size() == 1)
-	{
-		Suspect *suspect = requestReply->m_suspects[0];
-		delete requestReply;
-		return suspect;
-	}
-	else
-	{
-		requestReply->DeleteContents();
-		delete requestReply;
-		return NULL;
-	}
+	MessageManager::Instance().WriteMessage(&request, 0);
 }
 
-vector<Suspect*> GetSuspects(enum SuspectListType listType)
+void RequestSuspects(enum SuspectListType listType, int32_t messageID)
 {
-	vector<Suspect*> suspects;
-
-	Ticket ticket = MessageManager::Instance().StartConversation(IPCSocketFD);
-
-	RequestMessage request(REQUEST_ALL_SUSPECTS);
+	Message request;
+	request.m_contents.set_m_type(REQUEST_ALL_SUSPECTS);
 	request.m_contents.set_m_listtype(listType);
-
-	if(!MessageManager::Instance().WriteMessage(ticket, &request))
+	if(messageID != -1)
 	{
-		//There was an error in sending the message
-		return suspects;
+		request.m_contents.set_m_messageid(messageID);
 	}
-
-	Message *reply = MessageManager::Instance().ReadMessage(ticket);
-	if(reply->m_messageType == ERROR_MESSAGE && ((ErrorMessage*)reply)->m_errorType == ERROR_TIMEOUT)
-	{
-		LOG(ERROR, "Timeout error when waiting for message reply", "");
-		reply->DeleteContents();
-		delete reply;
-		return suspects;
-	}
-
-	if(reply->m_messageType != REQUEST_MESSAGE)
-	{
-		//Received the wrong kind of message
-		reply->DeleteContents();
-		delete reply;
-		return suspects;
-	}
-
-	RequestMessage *requestReply = (RequestMessage*)reply;
-	if(requestReply->m_contents.m_requesttype() != REQUEST_ALL_SUSPECTS_REPLY)
-	{
-		//Received the wrong kind of control message
-		requestReply->DeleteContents();
-		delete requestReply;
-		return suspects;
-	}
-
-	suspects = requestReply->m_suspects;
-	delete requestReply;
-	return suspects;
+	MessageManager::Instance().WriteMessage(&request, 0);
 }
 
 }

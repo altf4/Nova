@@ -16,6 +16,7 @@
 // Description : Novad thread loops
 //============================================================================
 
+#include "messaging/MessageManager.h"
 #include "WhitelistConfiguration.h"
 #include "ClassificationEngine.h"
 #include "ProtocolHandler.h"
@@ -265,9 +266,10 @@ void *UpdateWhitelistIPFilter(void *ptr)
 
 						if(!whitelistUse.compare(string(str)) && suspects.Erase(all[j]))
 						{
-							UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
-							msg->m_contents.mutable_m_suspectid()->CopyFrom(all[j]);
-							NotifyUIs(msg, UPDATE_SUSPECT_CLEARED_ACK, -1);
+							Message msg;
+							msg.m_contents.set_m_type(UPDATE_SUSPECT_CLEARED);
+							msg.m_contents.mutable_m_suspectid()->CopyFrom(all[j]);
+							MessageManager::Instance().WriteMessage(&msg, 0);
 						}
 					}
 				}
@@ -298,6 +300,84 @@ void *ConsumerLoop(void *ptr)
 
 		//Consume evidence
 		suspects.ProcessEvidence(cur, false);
+	}
+	return NULL;
+}
+
+void *MessageWorker(void *ptr)
+{
+	while(true)
+	{
+		Message *message = MessageManager::Instance().DequeueMessage();
+		switch(message->m_contents.m_type())
+		{
+			case CONTROL_EXIT_REQUEST:
+			{
+				HandleExitRequest(message);
+				break;
+			}
+			case CONTROL_CLEAR_ALL_REQUEST:
+			{
+				HandleClearAllRequest(message);
+				break;
+			}
+			case CONTROL_CLEAR_SUSPECT_REQUEST:
+			{
+				HandleClearSuspectRequest(message);
+				break;
+			}
+			case CONTROL_SAVE_SUSPECTS_REQUEST:
+			{
+				HandleSaveSuspectsRequest(message);
+				break;
+			}
+			case CONTROL_RECLASSIFY_ALL_REQUEST:
+			{
+				HandleReclassifyAllRequest(message);
+				break;
+			}
+			case REQUEST_SUSPECTLIST:
+			{
+				HandleRequestSuspectList(message);
+				break;
+			}
+			case REQUEST_SUSPECT:
+			{
+				HandleRequestSuspect(message);
+				break;
+			}
+			case REQUEST_ALL_SUSPECTS:
+			{
+				HandleRequestAllSuspects(message);
+				break;
+			}
+			case REQUEST_UPTIME:
+			{
+				HandleRequestUptime(message);
+				break;
+			}
+			case REQUEST_PING:
+			{
+				HandlePing(message);
+				break;
+			}
+			case CONTROL_START_CAPTURE:
+			{
+				HandleStartCaptureRequest(message);
+				break;
+			}
+			case CONTROL_STOP_CAPTURE:
+			{
+				HandleStopCaptureRequest(message);
+				break;
+			}
+			default:
+			{
+				message->DeleteContents();
+				delete message;
+				break;
+			}
+		}
 	}
 	return NULL;
 }

@@ -25,7 +25,6 @@
 #include "FilePacketCapture.h"
 #include "ProtocolHandler.h"
 #include "PacketCapture.h"
-#include "NovadCallback.h"
 #include "EvidenceTable.h"
 #include "Doppelganger.h"
 #include "SuspectTable.h"
@@ -38,6 +37,7 @@
 #include "Logger.h"
 #include "Point.h"
 #include "Novad.h"
+#include "Lock.h"
 
 #include <vector>
 #include <math.h>
@@ -54,6 +54,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/inotify.h>
+#include "event2/thread.h"
 #include <netinet/if_ether.h>
 
 #define BOOST_FILESYSTEM_VERSION 2
@@ -111,6 +112,69 @@ pthread_cond_t shutdownClassificationCond;
 
 namespace Nova
 {
+
+void StartServer()
+{
+	int len;
+	string inKeyPath = Config::Inst()->GetPathHome() + "/config/keys" + NOVAD_LISTEN_FILENAME;
+	evutil_socket_t IPCParentSocket;
+	struct event_base *base;
+	struct event *listener_event;
+	struct sockaddr_un msgLocal;
+
+	evthread_use_pthreads();
+	base = event_base_new();
+	if (!base)
+	{
+		LOG(ERROR, "Failed to set up socket base", "");
+		return;
+	}
+
+	if((IPCParentSocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	{
+		LOG(ERROR, "Failed to create socket for accept()", "socket: "+string(strerror(errno)));
+		return;
+	}
+
+	evutil_make_socket_nonblocking(IPCParentSocket);
+
+	msgLocal.sun_family = AF_UNIX;
+	memset(msgLocal.sun_path, '\0', sizeof(msgLocal.sun_path));
+	strncpy(msgLocal.sun_path, inKeyPath.c_str(), inKeyPath.length());
+	unlink(msgLocal.sun_path);
+	len = strlen(msgLocal.sun_path) + sizeof(msgLocal.sun_family);
+
+	if(::bind(IPCParentSocket, (struct sockaddr *)&msgLocal, len) == -1)
+	{
+		LOG(ERROR, "Failed to bind to socket", "bind: "+string(strerror(errno)));
+		close(IPCParentSocket);
+		return;
+	}
+
+	if(listen(IPCParentSocket, SOMAXCONN) == -1)
+	{
+		LOG(ERROR, "Failed to listen for UIs", "listen: "+string(strerror(errno)));
+		close(IPCParentSocket);
+		return;
+	}
+
+	listener_event = event_new(base, IPCParentSocket, EV_READ|EV_PERSIST, MessageManager::DoAccept, (void*)base);
+	event_add(listener_event, NULL);
+
+	//Start our worker threads
+	//TODO: Unhardcode the 6!!!
+	for(int i = 0; i < 6; i++)
+	{
+		pthread_t workerThread;
+		pthread_create(&workerThread, NULL, MessageWorker, NULL);
+		pthread_detach(workerThread);
+	}
+
+	event_base_dispatch(base);
+
+	LOG(ERROR, "Main accept dispatcher returned. This should not occur.", "");
+	return;
+}
 
 int RunNovaD()
 {
@@ -214,8 +278,7 @@ int RunNovaD()
 	StartCapture();
 
 	//Go into the main accept() loop
-	NovadCallback *callback = new NovadCallback();
-	MessageManager::Instance().StartServer(callback);
+	StartServer();
 
 	return EXIT_FAILURE;
 }
@@ -760,7 +823,7 @@ void UpdateAndClassify(SuspectID_pb key)
 			LOG(ERROR, "Unable to insert hostile suspect event into database. " + string(e.what()), "");
 		}
 
-		if (Config::Inst()->GetClearAfterHostile())
+		if(Config::Inst()->GetClearAfterHostile())
 		{
 			stringstream ss;
 			ss << "Main suspect Erase returned: " << suspects.Erase(key);
@@ -771,21 +834,28 @@ void UpdateAndClassify(SuspectID_pb key)
 			ss2 << "LastSave suspect Erase returned: " << suspectsSinceLastSave.Erase(key);
 			LOG(DEBUG, ss2.str(), "");
 
-			UpdateMessage *msg = new UpdateMessage(UPDATE_SUSPECT_CLEARED);
+			Message *msg = new Message(UPDATE_SUSPECT_CLEARED);
 			msg->m_contents.mutable_m_suspectid()->CopyFrom(suspectCopy.GetIdentifier());
-			NotifyUIs(msg,UPDATE_SUSPECT_CLEARED_ACK, -1);
+			MessageManager::Instance().WriteMessage(msg, 0);
+			delete msg;
 		}
 		else
 		{
 			//Send to UI
-			SendSuspectToUIs(&suspectCopy);
+			Message suspectUpdate;
+			suspectUpdate.m_contents.set_m_type(UPDATE_SUSPECT);
+			suspectUpdate.m_suspects.push_back(&suspectCopy);
+			MessageManager::Instance().WriteMessage(&suspectUpdate, 0);
 		}
 
 		LOG(ALERT, "Detected potentially hostile traffic from: " + suspectCopy.ToString(), "");
 	}
 	else
 	{
-		SendSuspectToUIs(&suspectCopy);
+		Message suspectUpdate;
+		suspectUpdate.m_contents.set_m_type(UPDATE_SUSPECT);
+		suspectUpdate.m_suspects.push_back(&suspectCopy);
+		MessageManager::Instance().WriteMessage(&suspectUpdate, 0);
 	}
 
 }

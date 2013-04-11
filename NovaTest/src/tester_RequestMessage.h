@@ -17,14 +17,13 @@
 //============================================================================/*
 
 #include "gtest/gtest.h"
-
-#include "messaging/messages/RequestMessage.h"
+#include "messaging/Message.h"
 
 using namespace Nova;
 
 // The test fixture for testing class RequestMessage.
 
-class RequestMessageTestClass : RequestMessage
+class RequestMessageTestClass : Message
 {
 	// So we can access protected members
 };

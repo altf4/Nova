@@ -6,46 +6,43 @@ message SuspectID_pb
 	optional string m_ifname = 2;
 }
 
-enum ControlType
+enum MessageType
 {
-	CONTROL_EXIT_REQUEST = 0;			//Request for Novad to exit
-	CONTROL_EXIT_REPLY = 1;				//Reply from Novad with success
-	CONTROL_CLEAR_ALL_REQUEST = 2;		//Request for Novad to clear all suspects
-	CONTROL_CLEAR_ALL_REPLY = 3;		//Reply from Novad with success
-	CONTROL_CLEAR_SUSPECT_REQUEST = 4;	//Request for Novad to clear specified suspect
-	CONTROL_CLEAR_SUSPECT_REPLY = 5;	//Reply from Novad with success
-	CONTROL_SAVE_SUSPECTS_REQUEST = 6;	//Request for Novad to save the suspects list to persistent storage
-	CONTROL_SAVE_SUSPECTS_REPLY = 7;	//Reply from Novad with success
-	CONTROL_RECLASSIFY_ALL_REQUEST = 8;	//Request for Novad to reclassify all suspects
-	CONTROL_RECLASSIFY_ALL_REPLY = 9;	//Reply from Novad with success
-	CONTROL_START_CAPTURE = 10;			// Start packet capture on configured interfaces
+	CONTROL_EXIT_REQUEST = 0;
+	CONTROL_EXIT_REPLY = 1;
+	CONTROL_CLEAR_ALL_REQUEST = 2;
+	CONTROL_CLEAR_ALL_REPLY = 3;
+	CONTROL_CLEAR_SUSPECT_REQUEST = 4;
+	CONTROL_CLEAR_SUSPECT_REPLY = 5;
+	CONTROL_SAVE_SUSPECTS_REQUEST = 6;
+	CONTROL_SAVE_SUSPECTS_REPLY = 7;
+	CONTROL_RECLASSIFY_ALL_REQUEST = 8;
+	CONTROL_RECLASSIFY_ALL_REPLY = 9;
+	CONTROL_START_CAPTURE = 10;
 	CONTROL_START_CAPTURE_ACK = 11;
-	CONTROL_STOP_CAPTURE = 12;			// Stop packet capture on configured interfaces
+	CONTROL_STOP_CAPTURE = 12;
 	CONTROL_STOP_CAPTURE_ACK = 13;
 	CONTROL_INVALID = 14;
-};
 
-//The different message types
-enum RequestType
-{
-	// Requests for lists of suspect IPs
-	REQUEST_SUSPECTLIST = 0;
-	REQUEST_SUSPECTLIST_REPLY = 1;
+	REQUEST_SUSPECTLIST = 16;
+	REQUEST_SUSPECTLIST_REPLY = 17;
+	REQUEST_SUSPECT = 18;
+	REQUEST_SUSPECT_REPLY = 19;
+	REQUEST_ALL_SUSPECTS = 20;
+	REQUEST_ALL_SUSPECTS_REPLY = 21;
+	REQUEST_UPTIME = 22;
+	REQUEST_UPTIME_REPLY = 23;
+	REQUEST_PING = 24;
+	REQUEST_PONG = 25;
 
-	// Request for an individual suspect
-	REQUEST_SUSPECT = 2;
-	REQUEST_SUSPECT_REPLY = 3;
+	UPDATE_SUSPECT = 26;
+	UPDATE_SUSPECT_ACK = 27;
+	UPDATE_ALL_SUSPECTS_CLEARED = 28;
+	UPDATE_ALL_SUSPECTS_CLEARED_ACK = 29;
+	UPDATE_SUSPECT_CLEARED = 30;
+	UPDATE_SUSPECT_CLEARED_ACK = 31;
 
-	REQUEST_ALL_SUSPECTS = 4;
-	REQUEST_ALL_SUSPECTS_REPLY = 5;
-
-	// Request for the uptime of novad
-	REQUEST_UPTIME = 6;
-	REQUEST_UPTIME_REPLY = 7;
-
-	//Request to Novad to see if it's still alive
-	REQUEST_PING = 8;
-	REQUEST_PONG = 9;
+	CONNECTION_SHUTDOWN = 32;
 };
 
 enum SuspectFeatureMode
@@ -56,16 +53,6 @@ enum SuspectFeatureMode
 	ALL_FEATURE_DATA = 3;
 };
 
-enum UpdateType
-{
-	UPDATE_SUSPECT = 0;						//A new or updated suspect being sent to a UI
-	UPDATE_SUSPECT_ACK = 1;					//Reply from Novad with success
-	UPDATE_ALL_SUSPECTS_CLEARED = 2;		//A UI has cleared all suspect records
-	UPDATE_ALL_SUSPECTS_CLEARED_ACK = 3;	//Acknowledgment of UPDATE_ALL_SUSPECTS_CLEARED
-	UPDATE_SUSPECT_CLEARED = 4;				//A single suspect was cleared by a UI
-	UPDATE_SUSPECT_CLEARED_ACK = 5;			//Acknowledgment of UPDATE_ALL_SUSPECTS_CLEARED_ACK
-};
-
 enum SuspectListType
 {
 	SUSPECTLIST_ALL = 0;
@@ -73,26 +60,16 @@ enum SuspectListType
 	SUSPECTLIST_BENIGN = 2;
 };
 
-message ControlMessage_pb
+message Message_pb
 {
-	required ControlType m_controlType = 1;
-	optional string m_filePath = 2;
-	optional bool m_success = 3;
-	optional SuspectID_pb m_suspectID = 4;
+	required MessageType m_type = 1;
+	optional int32 m_messageID = 2;
+	optional uint32 m_sessionIndex = 3;
+	optional string m_filePath = 4;
+	optional bool m_success = 5;
+	optional SuspectID_pb m_suspectID = 6;
+	repeated SuspectID_pb m_suspectIDs = 7;
+	optional SuspectListType m_listType = 8;
+	optional uint32 m_startTime = 9;
+	optional SuspectFeatureMode m_featureMode = 10;
 }
-
-message RequestMessage_pb
-{
-	required RequestType m_requestType = 1;
-	optional SuspectListType m_listType = 2;
-	repeated SuspectID_pb m_SuspectID = 3;
-	optional uint32 m_startTime = 4;
-	optional SuspectFeatureMode m_featureMode = 5;
-}
-
-message UpdateMessage_pb
-{
-	required UpdateType m_updateType = 1;
-	optional SuspectID_pb m_SuspectID = 2;
-}
-
