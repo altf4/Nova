@@ -2104,6 +2104,15 @@ app.post('/configureNovaSave', function (req, res)
         NovaCommon.config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
       }
 
+      if(req.body['MANAGE_IFACE_ENABLE'] == 'on')
+      {
+        req.body['MANAGE_IFACE_ENABLE'] = '1';
+      }
+      else
+      {
+        req.body['MANAGE_IFACE_ENABLE'] = '0';
+      }
+
       if(req.body['MANAGE_IFACE_ENABLE'] != NovaCommon.config.ReadSetting("MANAGE_IFACE_ENABLE"))
       {
         NovaCommon.config.WriteSetting('MANAGE_IFACE_ENABLE', req.body['MANAGE_IFACE_ENABLE']);
