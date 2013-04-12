@@ -26,6 +26,8 @@
 #include <string.h>
 #include "event2/thread.h"
 
+#include <sstream>
+
 using namespace std;
 
 namespace Nova
@@ -244,25 +246,32 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 		//	we'll want the whole buffer still present here, undrained
 		if(evbuffer_copyout(input, &length, sizeof(length)) != sizeof(length))
 		{
+			LOG(ERROR, "evbuffer_copyout failed", "");
 			keepGoing = false;
 			continue;
 		}
 
 		//If we don't yet have enough data, then just quit and wait for more
-		if(evbufferLength < length)
+		if(evbufferLength < (length + sizeof(length)))
 		{
 			keepGoing = false;
 			continue;
 		}
 
 		//Remove the length from the buffer
-		evbuffer_drain(input, sizeof(length));
+		int res = evbuffer_drain(input, sizeof(length));
+		if (res != 0)
+		{
+			LOG(ERROR, "Error draining the event buffer. This shouldn't happen.", "");
+			keepGoing = false;
+			continue;
+		}
 
-		char *buffer = (char*)evbuffer_pullup(input, length - sizeof(length));
+		char *buffer = (char*)evbuffer_pullup(input, length);
 		if(buffer == NULL)
 		{
 			// This should never happen. If it does, probably because length is an absurd value (or we're out of memory)
-			LOG(WARNING, "Error getting libevent data in message read", "");
+			LOG(ERROR, "Error getting libevent data in message read", "");
 			keepGoing = false;
 			continue;
 		}
@@ -279,7 +288,11 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			delete message;
 		}
 
-		evbuffer_drain(input, length);
+		res = evbuffer_drain(input, length);
+		if (res != 0)
+		{
+			LOG(ERROR, "Error draining the event buffer. This shouldn't happen.", "");
+		}
 		bufferevent_unlock(bev);
 	}
 
