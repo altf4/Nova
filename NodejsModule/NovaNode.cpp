@@ -274,6 +274,7 @@ void NovaNode::Init(Handle<Object> target)
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetDIM", GetDIM);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "GetSupportedEngines", GetSupportedEngines);
 
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspect", sendCachedSuspect);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspectList", sendSuspectList);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "RequestSuspectCallback", RequestSuspectCallback);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", ClearAllSuspects);
@@ -463,6 +464,36 @@ Handle<Value> NovaNode::RequestSuspectCallback(const Arguments& args)
 	
 	return scope.Close(Null());
 }
+
+
+Handle<Value> NovaNode::sendCachedSuspect(const Arguments& args)
+{
+	HandleScope scope;
+
+ 	string suspectIp = cvv8::CastFromJS<string>(args[0]);
+ 	string suspectInterface = cvv8::CastFromJS<string>(args[1]);
+	Local<Function> callbackFunction = Local<Function>::Cast(args[2]);
+
+ 	struct in_addr address;
+ 	inet_pton(AF_INET, suspectIp.c_str(), &address);
+
+ 	SuspectID_pb id;
+ 	id.set_m_ifname(suspectInterface);
+ 	id.set_m_ip(htonl(address.s_addr));
+
+	if (!m_suspects.keyExists(id)) {
+		Local<Boolean> result = Local<Boolean>::New( Boolean::New(false) );
+		return scope.Close(result);
+	}
+
+	Nova::Suspect *suspect = new Suspect();
+	(*suspect) = *m_suspects[id];
+
+	v8::Persistent<Value> weak_handle = Persistent<Value>::New(SuspectJs::WrapSuspect(suspect));
+	weak_handle.MakeWeak(suspect, &DoneWithSuspectCallback);
+	return scope.Close(weak_handle);
+}
+
 
 Handle<Value> NovaNode::sendSuspectList(const Arguments& args)
 {
