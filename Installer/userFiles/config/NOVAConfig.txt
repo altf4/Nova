@@ -410,6 +410,18 @@ CUSTOM_PCAP_MODE 0
 TRAINING_SESSION null
 
 ############################################
+# MANAGE_IFACE_ENABLE #
+############################################
+#
+# Enable management interface; if 0 (false),
+# Quasar will be available on all interfaces.
+# Otherwise, if 1 (true) then Quasar will only
+# be available on localhost/127.0.0.1 and the
+# address of the selected interface
+MANAGE_IFACE_ENABLE 0
+
+
+############################################
 # WEB_UI_PORT #
 ############################################
 #
