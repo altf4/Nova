@@ -162,8 +162,7 @@ void StartServer()
 	event_add(listener_event, NULL);
 
 	//Start our worker threads
-	//TODO: Unhardcode the 6!!!
-	for(int i = 0; i < 6; i++)
+	for(int i = 0; i < Config::Inst()->GetNumMessageWorkerThreads(); i++)
 	{
 		pthread_t workerThread;
 		pthread_create(&workerThread, NULL, MessageWorker, NULL);

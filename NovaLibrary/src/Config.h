@@ -212,6 +212,8 @@ public:
 	MAKE_GETTER_SETTER(bool, m_emailAlertsEnabled, GetAreEmailAlertsEnabled, SetAreEmailAlertsEnabled);
 	MAKE_GETTER_SETTER(std::string,m_pathTrainingData, GetPathTrainingData, SetPathTrainingData);
 
+	MAKE_GETTER_SETTER(int, m_messageWorkerThreads, GetNumMessageWorkerThreads, SetNumMEssageWorkerThreads);
+
 protected:
 	Config();
 

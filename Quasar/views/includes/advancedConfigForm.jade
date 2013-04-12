@@ -198,6 +198,10 @@ form(method="post", action="/configureNovaSave")
     input.wide(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE",  value=CAPTURE_BUFFER_SIZE)
     br
     
+    label Number of message worker threads
+    input.wide(type="number", step="1", min="1", name="MESSAGE_WORKER_THREADS",  value=MESSAGE_WORKER_THREADS)
+    br
+    
     h2 Classification Settings
     a(style='text-decoration: none; font-weight: bold;', href='/editClassifiers') Edit Classifiers (advanced users only)
     br

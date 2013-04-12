@@ -567,3 +567,7 @@ COMMAND_STOP_HAYSTACK novacli stop haystack
 #COMMAND_START_HAYSTACK sudo start haystack
 #COMMAND_STOP_HAYSTACK sudo stop haystack
 
+
+# Number of message worker threads in novad
+MESSAGE_WORKER_THREADS 6
+

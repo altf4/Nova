@@ -106,7 +106,8 @@ string Config::m_prefixes[] =
 	"COMMAND_START_NOVAD",
 	"COMMAND_STOP_NOVAD",
 	"COMMAND_START_HAYSTACK",
-	"COMMAND_STOP_HAYSTACK"
+	"COMMAND_STOP_HAYSTACK",
+	"MESSAGE_WORKER_THREADS"
 };
 
 Config *Config::m_instance = NULL;
@@ -1089,6 +1090,22 @@ void Config::LoadConfig_Internal()
 					m_commandStopHaystack = line;
 					isValid[prefixIndex] = true;
 				}
+			}
+
+			//MESSAGE_WORKER_THREADS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					m_messageWorkerThreads = atoi(line.c_str());
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
 			}
 		}
 	}
