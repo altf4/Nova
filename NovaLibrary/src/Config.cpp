@@ -41,6 +41,7 @@
 #include "NovaUtil.h"
 #include "Lock.h"
 
+
 using namespace std;
 
 namespace Nova
@@ -144,11 +145,6 @@ Config::Config()
 	LoadVersionFile();
 }
 
-Config::~Config()
-{
-
-}
-
 void Config::LoadCustomSettings(int argc,  char** argv)
 {
 	string pCAPFilePath;
@@ -189,6 +185,7 @@ void Config::LoadConfig()
 	LoadVersionFile();
 	LoadInterfaces();
 }
+
 
 vector<string> Config::GetPrefixes()
 {
@@ -285,7 +282,7 @@ void Config::LoadConfig_Internal()
 				line = line.substr(prefix.size() + 1, line.size());
 				if(line.size() > 0)
 				{
-					m_pathConfigHoneydHs  = line;
+					m_pathConfigHoneydHS  = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;
@@ -1135,7 +1132,6 @@ bool Config::LoadUserConfig()
 	uint i = 0;
 	bool returnValue = true;
 	ifstream settings(m_userConfigFilePath.c_str());
-	in_addr_t nbr;
 
 	if(settings.is_open())
 	{
@@ -1143,46 +1139,6 @@ bool Config::LoadUserConfig()
 		{
 			getline(settings, line);
 			i++;
-			prefix = "neighbor";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				if(line.size() > 0)
-				{
-					//Note inet_addr() not compatible with 255.255.255.255 as this is == the error condition of -1
-					nbr = inet_addr(line.c_str());
-
-					if((int)nbr == -1)
-					{
-						stringstream ss;
-						ss << "Invalid IP address parsed on line " << i << " of the settings file.";
-						LOG(ERROR, "Invalid IP address parsed.", ss.str());
-						returnValue = false;
-					}
-					else if(nbr)
-					{
-						m_neighbors.push_back(nbr);
-					}
-					nbr = 0;
-				}
-			}
-			prefix = "key";
-			if(!line.substr(0,prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size()+1,line.size());
-				
-				if((line.size() > 0) && (line.size() < 257))
-				{
-					m_key = line;
-				}
-				else
-				{
-					stringstream ss;
-					ss << "Invalid Key parsed on line " << i << " of the settings file.";
-					LOG(ERROR, "Invalid Key parsed.", ss.str());
-					returnValue = false;
-				}
-			}
 
 			prefix = "group";
 			if(!line.substr(0,prefix.size()).compare(prefix))
@@ -1346,12 +1302,6 @@ bool Config::LoadVersionFile()
 version Config::GetVersion()
 {
 	return m_version;
-}
-
-string Config::GetCurrentConfig()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_currentConfig;
 }
 
 string Config::GetVersionString()
@@ -1551,54 +1501,6 @@ bool Config::WriteSetting(std::string key, std::string value)
 	}
 }
 
-double Config::GetClassificationThreshold()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_classificationThreshold;
-}
-
-int Config::GetClassificationTimeout()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_classificationTimeout;
-}
-
-string Config::GetConfigFilePath()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_configFilePath;
-}
-
-int Config::GetDataTTL()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_dataTTL;
-}
-
-string Config::GetDoppelInterface()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_loopbackIF;
-}
-
-string Config::GetDoppelIp()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_doppelIp;
-}
-
-double Config::GetEps()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_eps;
-}
-
-bool Config::GetGotoLive()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_gotoLive;
-}
-
 bool Config::GetUseAllInterfaces()
 {
 	Lock lock(&m_lock, READ_LOCK);
@@ -1676,90 +1578,6 @@ uint Config::GetInterfaceCount()
 	return m_interfaces.size();
 }
 
-bool Config::GetIsDmEnabled()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_isDmEnabled;
-}
-
-int Config::GetK()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_k;
-}
-
-string Config::GetPathCESaveFile()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathCESaveFile;
-}
-
-string Config::GetPathConfigHoneydUser()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathConfigHoneydUser;
-}
-
-string Config::GetPathConfigHoneydHS()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathConfigHoneydHs;
-}
-
-string Config::GetPathPcapFile()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathPcapFile;
-}
-
-string Config::GetPathWhitelistFile()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathHome + "/" + m_pathWhitelistFile;
-}
-
-bool Config::GetReadPcap()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_readPcap;
-}
-
-bool Config::GetCustomReadPcap()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_readCustomPcap;
-}
-
-int Config::GetSaveFreq()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_saveFreq;
-}
-
-double Config::GetThinningDistance()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_thinningDistance;
-}
-
-string Config::GetKey()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_key;
-}
-
-vector<in_addr_t> Config::GetNeighbors()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_neighbors;
-}
-
-string Config::GetGroup()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_group;
-}
-
 bool Config::GetSMTPSettings_FromFile()
 {
 	string debugPath = m_pathHome + "/config/smtp.txt";
@@ -1829,54 +1647,6 @@ bool Config::SetUseAnyLoopbackBinding(bool which)
 	Lock lock(&m_lock, WRITE_LOCK);
 	m_loIsDefault = which;
 	return true;
-}
-
-void Config::SetClassificationThreshold(double classificationThreshold)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_classificationThreshold = classificationThreshold;
-}
-
-void Config::SetClassificationTimeout(int classificationTimeout)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_classificationTimeout = classificationTimeout;
-}
-
-void Config::SetConfigFilePath(string configFilePath)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_configFilePath = configFilePath;
-}
-
-void Config::SetDataTTL(int dataTTL)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_dataTTL = dataTTL;
-}
-
-void Config::SetDoppelInterface(string doppelInterface)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_loopbackIF = doppelInterface;
-}
-
-void Config::SetDoppelIp(string doppelIp)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_doppelIp = doppelIp;
-}
-
-void Config::SetEps(double eps)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_eps = eps;
-}
-
-void Config::SetGotoLive(bool gotoLive)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_gotoLive = gotoLive;
 }
 
 void Config::AddInterface(string interface)
@@ -1978,174 +1748,6 @@ std::vector<std::string> Config::ListLoopbacks()
 	return ret;
 }
 
-void Config::SetIsDmEnabled(bool isDmEnabled)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_isDmEnabled = isDmEnabled;
-}
-
-void Config::SetK(int k)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_k = k;
-}
-
-void Config::SetPathCESaveFile(string pathCESaveFile)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_pathCESaveFile = pathCESaveFile;
-}
-
-void Config::SetPathConfigHoneydUser(string pathConfigHoneydUser)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_pathConfigHoneydUser = pathConfigHoneydUser;
-}
-
-void Config::SetPathConfigHoneydHs(string pathConfigHoneydHs)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_pathConfigHoneydHs = pathConfigHoneydHs;
-}
-
-void Config::SetPathPcapFile(string pathPcapFile)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_pathPcapFile = pathPcapFile;
-}
-
-void Config::SetPathWhitelistFile(string pathWhitelistFile)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_pathWhitelistFile = pathWhitelistFile;
-}
-
-void Config::SetReadPcap(bool readPcap)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_readPcap = readPcap;
-}
-
-void Config::SetReadCustomPcap(bool readCustomPcap)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_readCustomPcap = readCustomPcap;
-}
-
-void Config::SetSaveFreq(int saveFreq)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_saveFreq = saveFreq;
-}
-
-void Config::SetThinningDistance(double thinningDistance)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_thinningDistance = thinningDistance;
-}
-
-void Config::SetKey(string key)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_key = key;
-}
-
-void Config::SetNeigbors(vector<in_addr_t> neighbors)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_neighbors = neighbors;
-}
-
-void Config::SetGroup(string group)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_group = group;
-}
-
-string Config::GetLoggerPreferences()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_loggerPreferences;
-}
-
-string Config::GetSMTPAddr()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_SMTPAddr;
-}
-
-string Config::GetSMTPDomain()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_SMTPDomain;
-}
-
-vector<string> Config::GetSMTPEmailRecipients()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_SMTPEmailRecipients;
-}
-
-in_port_t Config::GetSMTPPort()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_SMTPPort;
-}
-
-std::string Config::GetSMTPUser()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_SMTPUser;
-}
-
-std::string Config::GetSMTPPass()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_SMTPPass;
-}
-
-void Config::SetLoggerPreferences(string loggerPreferences)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_loggerPreferences = loggerPreferences;
-
-}
-
-bool Config::SetSMTPUser(std::string SMTPUser)
-{
-	Lock lock(&m_lock, READ_LOCK);
-	m_SMTPUser = SMTPUser;
-	return SaveSMTPSettings();
-}
-
-bool Config::SetSMTPPass(std::string SMTP_Pass)
-{
-	Lock lock(&m_lock, READ_LOCK);
-	m_SMTPPass = SMTP_Pass;
-	return SaveSMTPSettings();
-}
-
-void Config::SetSMTPAddr(string SMTPAddr)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_SMTPAddr = SMTPAddr;
-
-}
-
-void Config::SetSMTPDomain(string SMTPDomain)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_SMTPDomain = SMTPDomain;
-
-}
-
-void Config::SetSMTPEmailRecipients(vector<string> SMTPEmailRecipients)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_SMTPEmailRecipients = SMTPEmailRecipients;
-
-}
-
 void Config::SetSMTPEmailRecipients_noLocking(string SMTPEmailRecipients)
 {
 	vector<string> addresses;
@@ -2170,65 +1772,16 @@ void Config::SetSMTPEmailRecipients_noLocking(string SMTPEmailRecipients)
 	m_SMTPEmailRecipients = out;
 }
 
-void Config::SetSMTPPort(in_port_t SMTPPort)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_SMTPPort = SMTPPort;
-
-}
-
 string Config::GetPathReadFolder()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_pathReadFolder;
 }
 
-string Config::GetPathIcon()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathIcon;
-}
-
 string Config::GetPathHome()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_pathHome;
-}
-
-uint Config::GetMinPacketThreshold()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_minPacketThreshold;
-}
-
-void Config::SetMinPacketThreshold(uint packets)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_minPacketThreshold = packets;
-}
-
-string Config::GetCustomPcapString()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_customPcapString;
-}
-
-void Config::SetCustomPcapString(std::string customPcapString)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_customPcapString = customPcapString;
-}
-
-bool Config::GetOverridePcapString()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_overridePcapString;
-}
-
-void Config::SetOverridePcapString(bool overridePcapString)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_overridePcapString = overridePcapString;
 }
 
 vector <string> Config::GetIpAddresses(string ipListFile)
@@ -2336,214 +1889,5 @@ vector <string> Config::GetHaystackAddresses(string honeyDConfigPath)
 	return retAddresses;
 }
 
-string Config::GetTrainingSession()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_trainingSession;
-}
-
-string Config::SetTrainingSession(string trainingSession)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_trainingSession = trainingSession;
-	return m_trainingSession;
-}
-
-int Config::GetWebUIPort()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_webUIPort;
-}
-
-void Config::SetWebUIPort(int port)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_webUIPort = port;
-}
-
-bool Config::GetClearAfterHostile()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_clearAfterHostile;
-}
-
-void Config::SetClearAfterHostile(bool clearAfterHostile)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_clearAfterHostile = clearAfterHostile;
-}
-
-int Config::GetCaptureBufferSize()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_captureBufferSize;
-}
-
-void Config::SetCaptureBufferSize(int bufferSize)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_captureBufferSize = bufferSize;
-}
-
-void Config::SetSMTPUseAuth(bool useAuth)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_SMTPUseAuth = useAuth;
-}
-
-bool Config::GetSMTPUseAuth()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_SMTPUseAuth;
-}
-
-vector<string> Config::GetClassificationEngines()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_classifierEngines;
-}
-
-
-vector<string> Config::GetClassifierConfigs()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_classifierConfigs;
-}
-
-
-vector<CLASSIFIER_MODES> Config::GetClassifierModes()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_classifierTypes;
-}
-
-vector<int> Config::GetClassifierWeights()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_classifierWeights;
-}
-
-bool Config::GetOnlyClassifyHoneypotTraffic()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_onlyClassifyHoneypotTraffic;
-}
-
-bool Config::SetCurrentConfig(string configName)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_currentConfig = configName;
-	return true;
-}
-
-int Config::GetMasterUIPort()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_masterUIPort;
-}
-
-void Config::SetMasterUIPort(int newPort)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_masterUIPort = newPort;
-}
-
-bool Config::GetAreEmailAlertsEnabled()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_emailAlertsEnabled;
-}
-
-string Config::GetPathTrainingData()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_pathTrainingData;
-}
-
-std::string Config::GetCommandStartNovad()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_commandStartNovad;
-}
-
-
-std::string Config::GetCommandStopNovad()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_commandStopNovad;
-}
-
-
-std::string Config::GetCommandStartHaystack()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_commandStartHaystack;
-}
-
-std::string Config::GetCommandStopHaystack()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_commandStopHaystack;
-}
-
-std::string Config::GetIpListPath()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_iplistPath;
-}
-
-void Config::SetIpListPath(string path)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_iplistPath = path;
-}
-
-vector<NormalizationType> Config::GetNormalizationFunctions()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_normalization;
-}
-
-bool Config::UseRsyslog()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_rsyslogUse;
-}
-std::string Config::GetRsyslogIP()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_rsyslogIP;
-}
-std::string Config::GetRsyslogPort()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_rsyslogPort;
-}
-std::string Config::GetRsyslogConnType()
-{
-	Lock lock(&m_lock, READ_LOCK);
-	return m_rsyslogConnType;
-}
-
-void Config::SetUseRsyslog(bool useRsyslog)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_rsyslogUse = useRsyslog;
-}
-void Config::SetRsyslogIP(std::string newIp)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_rsyslogIP = newIp;
-}
-void Config::SetRsyslogPort(std::string newPort)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_rsyslogPort = newPort;
-}
-void Config::SetRsyslogConnType(std::string newConnType)
-{
-	Lock lock(&m_lock, WRITE_LOCK);
-	m_rsyslogConnType = newConnType;
-}
 
 }

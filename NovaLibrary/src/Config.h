@@ -21,6 +21,17 @@
 
 #include "HashMapStructs.h"
 #include "ClassificationEngine.h"
+#include "Lock.h"
+
+
+#define MAKE_GETTER_SETTER(type,name,getName,setName) \
+    type name; \
+    type getName()          {Nova::Lock lock(&m_lock, READ_LOCK); return name;} \
+    bool setName(type name) {Nova::Lock lock(&m_lock, WRITE_LOCK); this->name = name; return true;}
+
+#define MAKE_GETTER(type,name,getName) \
+    type name; \
+    type getName()          {Nova::Lock lock(&m_lock, READ_LOCK); return name;}
 
 namespace Nova
 {
@@ -63,8 +74,6 @@ public:
 	// This is a singleton class, use this to access it
 	static Config *Inst();
 
-	~Config();
-
 	// Loads and parses a NOVA configuration file
 	//      module - added s.t. rsyslog  will output NovaConfig messages as the parent process that called LoadConfig
 	void LoadConfig();
@@ -81,45 +90,16 @@ public:
     std::string ReadSetting(std::string key);
     bool WriteSetting(std::string key, std::string value);
 
-    // Getters
-    std::string GetConfigFilePath();
-    std::string GetDoppelInterface();
-    std::string GetDoppelIp();
     std::string GetInterface(uint i);
     std::vector<std::string> GetInterfaces();
     std::vector<std::string> GetIPv4HostInterfaceList();
     std::vector<std::string> GetIPv4LoopbackInterfaceList();
     uint GetInterfaceCount();
-    std::string GetPathCESaveFile();
-    std::string GetPathConfigHoneydUser();
-    std::string GetPathConfigHoneydHS();
-    std::string GetPathPcapFile();
-    std::string GetPathWhitelistFile();
-    std::string GetKey();
-    std::vector<in_addr_t> GetNeighbors();
-
-    bool GetReadPcap();
-    bool GetCustomReadPcap();
-    bool GetUseTerminals();
-    bool GetIsDmEnabled();
-    bool GetGotoLive();
 
     bool GetUseAllInterfaces();
     bool GetUseAnyLoopback();
     std::string GetUseAllInterfacesBinding();
 
-    int GetClassificationTimeout();
-    int GetDataTTL();
-    int GetK();
-    int GetSaveFreq();
-    double GetThinningDistance();
-
-    double GetClassificationThreshold();
-    double GetEps();
-
-    std::string GetGroup();
-
-    // Setters
     void AddInterface(std::string interface);
     void RemoveInterface(std::string interface);
     void ClearInterfaces();
@@ -131,66 +111,10 @@ public:
     bool SetUseAllInterfacesBinding(bool which);
     bool SetUseAnyLoopbackBinding(bool which);
 
-    void SetClassificationThreshold(double classificationThreshold);
-    void SetClassificationTimeout(int classificationTimeout);
-    void SetConfigFilePath(std::string configFilePath);
-    void SetDataTTL(int dataTTL);
-    void SetDoppelInterface(std::string doppelInterface);
-    void SetDoppelIp(std::string doppelIp);
-    void SetEps(double eps);
-    void SetGotoLive(bool gotoLive);
-    void SetIsDmEnabled(bool isDmEnabled);
-    void SetK(int k);
-    void SetPathCESaveFile(std::string pathCESaveFile);
-    void SetPathConfigHoneydUser(std::string pathConfigHoneydUser);
-    void SetPathConfigHoneydHs(std::string pathConfigHoneydHs);
-    void SetPathPcapFile(std::string pathPcapFile);
-    void SetPathWhitelistFile(std::string pathWhitelistFile);
-    void SetReadPcap(bool readPcap);
-    void SetReadCustomPcap(bool readCustomPcap);
-    void SetSaveFreq(int saveFreq);
-    void SetThinningDistance(double thinningDistance);
-    void SetUseTerminals(bool useTerminals);
-    void SetKey(std::string key);
-    void SetNeigbors(std::vector<in_addr_t> neighbors);
-    void SetGroup(std::string group);
-    bool SetCurrentConfig(std::string configName);
-
-    void SetIpListPath(std::string path);
-    std::string GetIpListPath();
-
-    std::string GetLoggerPreferences();
-    std::string GetSMTPAddr();
-    std::string GetSMTPDomain();
-    std::vector<std::string> GetSMTPEmailRecipients();
-    in_port_t GetSMTPPort();
-    std::string GetSMTPUser();
-    std::string GetSMTPPass();
-    bool GetSMTPUseAuth();
-
-    void SetLoggerPreferences(std::string loggerPreferences);
-    void SetSMTPUseAuth(bool useAuth);
-    void SetSMTPAddr(std::string SMTPAddr);
-    void SetSMTPDomain(std::string SMTPDomain);
-	void SetSMTPPort(in_port_t SMTPPort);
-	bool SetSMTPUser(std::string SMTPUser);
-	bool SetSMTPPass(std::string STMP_Pass);
-
-	bool UseRsyslog();
-	std::string GetRsyslogIP();
-	std::string GetRsyslogPort();
-	std::string GetRsyslogConnType();
-	void SetUseRsyslog(bool useRsyslog);
-	void SetRsyslogIP(std::string newIp);
-	void SetRsyslogPort(std::string newPort);
-	void SetRsyslogConnType(std::string newConnType);
-
 	bool GetSMTPSettings_FromFile();
 	bool SaveSMTPSettings();
 
-    // Set with a vector of email addresses
-    void SetSMTPEmailRecipients(std::vector<std::string> SMTPEmailRecipients);
-    // Set with a CSV std::string from the config file
+	// Set with a CSV std::string from the config file
     void SetSMTPEmailRecipients(std::string SMTPEmailRecipients);
 
     // Getters for the paths stored in /etc
@@ -201,29 +125,6 @@ public:
     	return m_pathPrefix + "/usr/share/nova/sharedFiles";
     }
 
-    std::string GetPathIcon();
-
-    char GetHaystackStorage();
-    void SetHaystackStorage(char haystackStorage);
-
-    std::string GetUserPath();
-    void SetUserPath(std::string userPath);
-
-    uint GetMinPacketThreshold();
-    void SetMinPacketThreshold(uint packets);
-
-	std::string GetCustomPcapString();
-	void SetCustomPcapString(std::string customPcapString);
-
-	bool GetOverridePcapString();
-	void SetOverridePcapString(bool overridePcapString);
-
-	std::string GetTrainingSession();
-	std::string SetTrainingSession(std::string trainingSession);
-	int GetWebUIPort();
-	void SetWebUIPort(int port);
-
-	std::string GetCurrentConfig();
 
 	version GetVersion();
 	std::string GetVersionString();
@@ -234,37 +135,82 @@ public:
 
 	std::vector<std::string> GetPrefixes();
 
-	bool GetClearAfterHostile();
-	void SetClearAfterHostile(bool clearAfterHostile);
-
-	int GetCaptureBufferSize();
-	void SetCaptureBufferSize(int bufferSize);
-
-	std::vector<std::string> GetClassificationEngines();
-	std::vector<std::string> GetClassifierConfigs();
-	std::vector<CLASSIFIER_MODES> GetClassifierModes();
-	std::vector<int> GetClassifierWeights();
-
-	bool GetOnlyClassifyHoneypotTraffic();
-
-	void SetMasterUIPort(int newPort);
-	int GetMasterUIPort();
-
 	//Attempts to detect and use intefaces returned by pcap_lookupdev
 	void LoadInterfaces();
 
-	bool GetAreEmailAlertsEnabled();
-	std::string GetPathTrainingData();
-
 	vector<string> GetSupportedEngines();
 
+	MAKE_GETTER_SETTER(int, m_k, GetK, SetK);
+	MAKE_GETTER_SETTER(std::string, m_configFilePath, GetConfigFilePath, SetConfigFilePath);
 
-	std::string GetCommandStartNovad();
-	std::string GetCommandStopNovad();
-	std::string GetCommandStartHaystack();
-	std::string GetCommandStopHaystack();
+	MAKE_GETTER(std::string, m_commandStartNovad, GetCommandStartNovad);
+	MAKE_GETTER(std::string, m_commandStopNovad, GetCommandStopNovad);
+	MAKE_GETTER(std::string, m_commandStartHaystack, GetCommandStartHaystack);
+	MAKE_GETTER(std::string, m_commandStopHaystack, GetCommandStopHaystack);
 
-	vector<NormalizationType> GetNormalizationFunctions();
+	MAKE_GETTER(std::vector<std::string>, m_classifierEngines, GetClassificationEngines);
+	MAKE_GETTER(std::vector<std::string>, m_classifierConfigs, GetClassifierConfigs);
+	MAKE_GETTER(std::vector<CLASSIFIER_MODES>, m_classifierTypes, GetClassifierModes);
+	MAKE_GETTER(std::vector<int>, m_classifierWeights, GetClassifierWeights);
+	MAKE_GETTER(std::vector<NormalizationType>, m_normalization, GetNormalizationFunctions);
+
+	MAKE_GETTER(bool, m_onlyClassifyHoneypotTraffic, GetOnlyClassifyHoneypotTraffic);
+	MAKE_GETTER(std::string, m_pathIcon, GetPathIcon);
+
+	MAKE_GETTER_SETTER(double, m_classificationThreshold, GetClassificationThreshold, SetClassificationThreshold);
+	MAKE_GETTER_SETTER(int, m_classificationTimeout, GetClassificationTimeout, SetClassificationTimeout);
+	MAKE_GETTER_SETTER(int, m_dataTTL, GetDataTTL, SetDataTTL);
+	MAKE_GETTER_SETTER(std::string, m_doppelInterface, GetDoppelInterface, SetDoppelInterface);
+	MAKE_GETTER_SETTER(double, m_eps, GetEps, SetEps);
+	MAKE_GETTER_SETTER(bool, m_isDmEnabled, GetIsDmEnabled, SetIsDmEnabled);
+	MAKE_GETTER_SETTER(std::string, m_pathCESaveFile, GetPathCESaveFile, SetPathCESaveFile);
+	MAKE_GETTER_SETTER(std::string, m_pathConfigHoneydUser, GetPathConfigHoneydUser , SetPathConfigHoneydUser);
+	MAKE_GETTER_SETTER(std::string, m_pathConfigHoneydHS, GetPathConfigHoneydHS, SetPathConfigHoneydHS);
+	MAKE_GETTER_SETTER(std::string, m_pathPcapFile, GetPathPcapFile, SetPathPcapFile);
+	MAKE_GETTER_SETTER(std::string, m_pathWhitelistFile, GetPathWhitelistFile, SetPathWhitelistFile);
+	MAKE_GETTER_SETTER(bool, m_readPcap, GetReadPcap, SetReadPcap);
+	MAKE_GETTER_SETTER(bool, m_readCustomPcap, GetCustomReadPcap, SetReadCustomPcap);
+	MAKE_GETTER_SETTER(int, m_saveFreq, GetSaveFreq, SetSaveFreq);
+	MAKE_GETTER_SETTER(double, m_thinningDistance, GetThinningDistance, SetThinningDistance);
+	MAKE_GETTER_SETTER(std::string, m_group, GetGroup, SetGroup);
+	MAKE_GETTER_SETTER(std::string, m_currentConfig, GetCurrentConfig, SetCurrentConfig);
+	MAKE_GETTER_SETTER(std::string, m_doppelIp, GetDoppelIp, SetDoppelIp);
+	MAKE_GETTER_SETTER(std::string, m_iplistPath, GetIpListPath, SetIpListPath);
+
+	MAKE_GETTER_SETTER(std::string, m_loggerPreferences, GetLoggerPreferences, SetLoggerPreferences);
+
+	// the SMTP server domain name for display purposes
+	MAKE_GETTER_SETTER(std::string, m_SMTPDomain, GetSMTPDomain, SetSMTPDomain);
+	// the email address that will be set as sender
+	MAKE_GETTER_SETTER(std::string, m_SMTPAddr, GetSMTPAddr, SetSMTPAddr);
+	// the port for SMTP send; normally 25 if I'm not mistaken, 465 for SSL and 5 hundred something for TLS
+	MAKE_GETTER_SETTER(in_port_t, m_SMTPPort, GetSMTPPort, SetSMTPPort);
+	MAKE_GETTER_SETTER(bool, m_SMTPUseAuth, GetSMTPUseAuth, SetSMTPUseAuth);
+
+	// username:password combination for interacting with the SMTP account that acts
+	// as the relay for Nova mail alerts
+	// need to find some way to store the password in an encrypted fashion yet
+	// still have it as a Config private attribute
+	MAKE_GETTER_SETTER(std::string, m_SMTPUser, GetSMTPUser, SetSMTPUser);
+	MAKE_GETTER_SETTER(std::string, m_SMTPPass, GetSMTPPass, SetSMTPPass);
+	MAKE_GETTER_SETTER(std::vector<std::string>, m_SMTPEmailRecipients, GetSMTPEmailRecipients, SetSMTPEmailRecipients);
+
+	MAKE_GETTER_SETTER(bool, m_rsyslogUse, UseRsyslog, SetUseRsyslog);
+	MAKE_GETTER_SETTER(std::string, m_rsyslogIP, GetRsyslogIP, SetRsyslogIP);
+	MAKE_GETTER_SETTER(std::string, m_rsyslogPort, GetRsyslogPort, SetRsyslogPort);
+	MAKE_GETTER_SETTER(std::string, m_rsyslogConnType, GetRsyslogConnType, SetRsyslogConnType);
+
+	MAKE_GETTER_SETTER(uint, m_minPacketThreshold , GetMinPacketThreshold, SetMinPacketThreshold);
+	MAKE_GETTER_SETTER(std::string, m_customPcapString , GetCustomPcapString, SetCustomPcapString);
+	MAKE_GETTER_SETTER(bool, m_overridePcapString, GetOverridePcapString, SetOverridePcapString);
+	MAKE_GETTER_SETTER(std::string, m_trainingSession , GetTrainingSession, SetTrainingSession);
+	MAKE_GETTER_SETTER(int, m_webUIPort , GetWebUIPort, SetWebUIPort);
+
+	MAKE_GETTER_SETTER(bool, m_clearAfterHostile, GetClearAfterHostile, SetClearAfterHostile);
+	MAKE_GETTER_SETTER(int, m_captureBufferSize, GetCaptureBufferSize, SetCaptureBufferSize);
+	MAKE_GETTER_SETTER(int, m_masterUIPort, GetMasterUIPort, SetMasterUIPort);
+	MAKE_GETTER_SETTER(bool, m_emailAlertsEnabled, GetAreEmailAlertsEnabled, SetAreEmailAlertsEnabled);
+	MAKE_GETTER_SETTER(std::string,m_pathTrainingData, GetPathTrainingData, SetPathTrainingData);
 
 protected:
 	Config();
@@ -274,12 +220,6 @@ private:
 
 	__attribute__ ((visibility ("hidden"))) static std::string m_prefixes[];
 
-	bool m_rsyslogUse;
-	std::string m_rsyslogIP;
-	std::string m_rsyslogPort;
-	std::string m_rsyslogConnType;
-
-	std::string m_doppelIp;
 	std::string m_loopbackIF;
 	std::string m_loopbackIFString;
 	bool m_loIsDefault;
@@ -291,111 +231,29 @@ private:
 	// What the actual config file contains
 	std::string m_interfaceLine;
 
-	std::string m_pathConfigHoneydHs;
-	std::string m_pathConfigHoneydUser;
-	std::string m_pathPcapFile;
-	std::string m_pathWhitelistFile;
-	std::string m_pathCESaveFile;
-	std::string m_pathTrainingData;
-
-	std::string m_customPcapString;
-
-	std::string m_group;
-
 	int m_tcpTimout;
 	int m_tcpCheckFreq;
-	int m_classificationTimeout;
-	int m_k;
-	double m_thinningDistance;
-	int m_saveFreq;
-	int m_dataTTL;
-	uint m_minPacketThreshold;
 	bool m_manIfaceEnable;
-	int m_webUIPort;
 	std::string m_webUIIface;
-	int m_masterUIPort;
-
-	int m_captureBufferSize;
-
-	double m_eps;
-	double m_classificationThreshold;
-
-	bool m_readPcap;
-	bool m_readCustomPcap;
 	bool m_gotoLive;
-	bool m_isDmEnabled;
-
-	bool m_overridePcapString;
-
-	bool m_emailAlertsEnabled;
 
 	version m_version;
 
-	std::string m_iplistPath;
-
 	static std::string m_pathsFile;
 
-	vector<NormalizationType> m_normalization;
-
-	// the SMTP server domain name for display purposes
-	std::string m_SMTPDomain;
-	// the email address that will be set as sender
-	std::string m_SMTPAddr;
-	// the port for SMTP send; normally 25 if I'm not mistaken, 465 for SSL and 5 hundred something for TLS
-	in_port_t m_SMTPPort;
-
-	// username:password combination for interacting with the SMTP account that acts
-	// as the relay for Nova mail alerts
-	// need to find some way to store the password in an encrypted fashion yet
-	// still have it as a Config private attribute
-	std::string m_SMTPUser;
-	std::string m_SMTPPass;
-
-	bool m_SMTPUseAuth;
-
-	bool m_clearAfterHostile;
-
-	std::string m_loggerPreferences;
-	// a vector containing the email recipients; may move this into the actual classes
-	// as opposed to being in this struct
-	std::vector<std::string> m_SMTPEmailRecipients;
-
-	// User config options
-	std::vector<in_addr_t> m_neighbors;
-	std::string m_key;
-
-	std::string m_configFilePath;
 	std::string m_userConfigFilePath;
 
 	// Options from the PATHS file (currently /etc/nova/paths)
 	std::string m_pathReadFolder;
 	std::string m_pathHomeConfig;
 	std::string m_pathHome;
-	std::string m_pathIcon;
 
-	std::string m_trainingSession;
-
-	std::vector<std::string> m_classifierEngines;
-	std::vector<std::string> m_classifierConfigs;
-	std::vector<CLASSIFIER_MODES> m_classifierTypes;
-	std::vector<int> m_classifierWeights;
 
 	bool m_masterUIEnabled;
 	int m_masterUIReconnectTime;
 	std::string m_masterUIIP;
 	std::string m_masterUIClientID;
-
-	bool m_onlyClassifyHoneypotTraffic;
-
-	std::string m_currentConfig;
-
 	static std::string m_pathPrefix;
-
-	std::string m_commandStartNovad;
-	std::string m_commandStopNovad;
-
-	std::string m_commandStartHaystack;
-	std::string m_commandStopHaystack;
 
 	pthread_rwlock_t m_lock;
 
