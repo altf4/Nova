@@ -311,6 +311,7 @@ private:
 	int m_dataTTL;
 	uint m_minPacketThreshold;
 	int m_webUIPort;
+	std::string m_webUIIface;
 	int m_masterUIPort;
 
 	int m_captureBufferSize;
