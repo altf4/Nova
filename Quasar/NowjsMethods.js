@@ -342,12 +342,15 @@ everyone.now.sendAllSuspects = function (cb)
 
 everyone.now.sendSuspect = function (ethinterface, ip, cb)
 {
-    NovaCommon.nova.RequestSuspectCallback(ip, ethinterface, function(suspect)
+    var suspect = NovaCommon.nova.sendSuspect(ethinterface, ip);
+    if(suspect.GetIdString === undefined)
     {
-        var s = new Object();
-        objCopy(suspect, s);
-        cb && cb(s);
-    })
+        console.log("Failed to get suspect");
+        return;
+    }
+    var s = new Object();
+    objCopy(suspect, s);
+    cb(s);
 };
 
 // Deletes a honeyd node

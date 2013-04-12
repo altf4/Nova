@@ -86,6 +86,7 @@ public:
 	static Handle<Value> GetFeatureNames(const Arguments& args);
 	static Handle<Value> GetDIM(const Arguments& args);
 	static Handle<Value> GetSupportedEngines(const Arguments& args);
+	static Handle<Value> sendCachedSuspect(const Arguments& args);
 	static Handle<Value> sendSuspectList(const Arguments& args);
 	static Handle<Value> RequestSuspectCallback(const Arguments& args);
 	static Handle<Value> ClearAllSuspects(const Arguments& args);
