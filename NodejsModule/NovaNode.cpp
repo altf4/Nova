@@ -127,7 +127,7 @@ int NovaNode::HandleMessageWithIDOnV8Thread(eio_req *arg)
 	{
 		HandleScope scope;
 		Persistent<Function> function = jsCallbacks[message->m_contents.m_messageid()];
-		Local<Value> argv[1] = { Local<Value>::New(String::New(message->m_suspects[0]->ToString().c_str())) };
+		Local<Value> argv[1] = { Local<Value>::New(String::New((message->m_suspects[0]->ToString() + message->m_suspects[0]->m_features.toString()).c_str())) };
 		function->Call(Context::GetCurrent()->Global(), 1, argv);
 		jsCallbacks.erase(message->m_contents.m_messageid());
 	}
