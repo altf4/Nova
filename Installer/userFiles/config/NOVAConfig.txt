@@ -420,7 +420,6 @@ TRAINING_SESSION null
 # address of the selected interface
 MANAGE_IFACE_ENABLE 0
 
-
 ############################################
 # WEB_UI_PORT #
 ############################################

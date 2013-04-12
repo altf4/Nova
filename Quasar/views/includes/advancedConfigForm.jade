@@ -50,6 +50,18 @@ script
     $('#nWarn').stop().slideUp(400);
   }
   
+  function handleManifaceSlide()
+  {
+    if($('#slideManiface').is(':checked'))
+    {
+      $('#manifacePane').stop().slideDown(400);
+    }
+    else
+    {
+      $('#manifacePane').stop().slideUp(400);
+    }
+  }
+  
   function init()
   {
     handlePulsarPaneSlide();
@@ -77,8 +89,13 @@ form(method="post", action="/configureNovaSave")
     input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
     br
   
-    label Management Interface
-    select#WEB_UI_IFACE(name='WEB_UI_IFACE')
+    label Enable Management Interface?
+    input#slideManiface(type='checkbox', name='MANAGE_IFACE_ENABLE', onclick='handleManifaceSlide()')
+    br
+    div#manifacePane
+      label Management Interface
+      select#WEB_UI_IFACE(name='WEB_UI_IFACE')
+      br
     br
   
     a(style='text-decoration: none; font-weight: bold;', href="/editTLSCerts") Click to upload new TLS certificates
