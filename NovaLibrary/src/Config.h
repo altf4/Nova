@@ -310,6 +310,7 @@ private:
 	int m_saveFreq;
 	int m_dataTTL;
 	uint m_minPacketThreshold;
+	bool m_manIfaceEnable;
 	int m_webUIPort;
 	std::string m_webUIIface;
 	int m_masterUIPort;

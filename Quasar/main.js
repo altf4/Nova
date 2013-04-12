@@ -118,62 +118,62 @@ passport.use(new BasicStrategy(
 
 function (username, password, done)
 {
-    var user = username;
-    process.nextTick(function (){
-    NovaCommon.dbqCredentialsRowCount.all(function (err, rowcount)
-    {
-        if(err)
-        {
-            console.log("Database error: " + err);
-        }
+  var user = username;
+  process.nextTick(function (){
+  NovaCommon.dbqCredentialsRowCount.all(function (err, rowcount)
+  {
+      if(err)
+      {
+        console.log("Database error: " + err);
+      }
 
-        // If there are no users, add default nova and log in
-        if(rowcount[0].rows === 0)
+      // If there are no users, add default nova and log in
+      if(rowcount[0].rows === 0)
+      {
+        console.log("No users in user database. Creating default user.");
+        NovaCommon.dbqCredentialsInsertUser.run('nova', NovaCommon.HashPassword('toor', 'root'), 'root', function (err)
         {
-            console.log("No users in user database. Creating default user.");
-            NovaCommon.dbqCredentialsInsertUser.run('nova', NovaCommon.HashPassword('toor', 'root'), 'root', function (err)
-            {
-                if(err)
-                {
-                    throw err;
-                }
-
-                switcher(err, user, true, done);
-            });
-        }
-        else
-        {
-          NovaCommon.dbqCredentialsGetSalt.all(user, function cb(err, salt)
+          if(err)
           {
-            if(err || (salt[0] == undefined))
-            {
-              switcher(err, user, false, done);
-            }
-            else
-            {
-              NovaCommon.dbqCredentialsCheckLogin.all(user, NovaCommon.HashPassword(password, salt[0].salt),
-              function selectCb(err, results)
-              {
-                  if(err)
-                  {
-                      console.log("Database error: " + err);
-                  }
-                  if(results[0] === undefined)
-                  {
-                      switcher(err, user, false, done);
-                  } 
-                  else if(user === results[0].user)
-                  {
-                      switcher(err, user, true, done);
-                  } 
-                  else
-                  {
-                      switcher(err, user, false, done);
-                  }
-              });
-           }});
+            throw err;
           }
+
+          switcher(err, user, true, done);
         });
+      }
+      else
+      {
+        NovaCommon.dbqCredentialsGetSalt.all(user, function cb(err, salt)
+        {
+          if(err || (salt[0] == undefined))
+          {
+            switcher(err, user, false, done);
+          }
+          else
+          {
+            NovaCommon.dbqCredentialsCheckLogin.all(user, NovaCommon.HashPassword(password, salt[0].salt),
+            function selectCb(err, results)
+            {
+              if(err)
+              {
+                console.log("Database error: " + err);
+              }
+              if(results[0] === undefined)
+              {
+                switcher(err, user, false, done);
+              } 
+              else if(user === results[0].user)
+              {
+                switcher(err, user, true, done);
+              } 
+              else
+              {
+                switcher(err, user, false, done);
+              }
+            });
+         }});
+        }
+      });
     });
 }));
 
@@ -218,36 +218,53 @@ var logFile = fs.createWriteStream('./serverLog.log', {flags: 'a'});
 app.use(express.logger({stream: logFile}));
 
 var WEB_UI_PORT = NovaCommon.config.ReadSetting("WEB_UI_PORT");
-var WEB_UI_IFACE = NovaCommon.config.ReadSetting("WEB_UI_IFACE");
+var WEB_UI_IFACE = '';
 var WEB_UI_ADDRESS = '';
-var interfaces = os.networkInterfaces();
-
-for(var i in interfaces)
+if(NovaCommon.config.ReadSetting("MANAGE_IFACE_ENABLE") == '1')
 {
-  if(i == WEB_UI_IFACE)
+  WEB_UI_IFACE = NovaCommon.config.ReadSetting("WEB_UI_IFACE");
+  WEB_UI_ADDRESS = '';
+  var interfaces = os.networkInterfaces();
+  var length = 0;
+  
+  for(var i in interfaces)
   {
-    for(var j in interfaces[i])
+    length++;
+    if(i == WEB_UI_IFACE)
     {
-      var address = interfaces[i][j];
-      if(address.family == 'IPv4' && !address.internal)
+      for(var j in interfaces[i])
       {
-        WEB_UI_ADDRESS = address.address;
+        var address = interfaces[i][j];
+        if(address.family == 'IPv4' && !address.internal)
+        {
+          WEB_UI_ADDRESS = address.address;
+        }
       }
     }
   }
-}
-interfaces = undefined;
-
-if(WEB_UI_ADDRESS == '')
-{
-  console.log('Could not procure a value for WEB_UI_ADDRESS, using none.');
-  console.info("Listening on port " + WEB_UI_PORT);
-  app.listen(WEB_UI_PORT); 
+  
+  if(WEB_UI_ADDRESS == '')
+  {
+    console.log('Could not procure a value for WEB_UI_ADDRESS, using none.');
+    console.info("Listening on port " + WEB_UI_PORT);
+    app.listen(WEB_UI_PORT); 
+  }
+  else if(length == 2)
+  {
+    console.log('Only one interface available, defaulting');
+    console.info("Listening on port " + WEB_UI_PORT);
+    app.listen(WEB_UI_PORT); 
+  }
+  else
+  {
+    console.info("Listening on address " + WEB_UI_ADDRESS + ":" + WEB_UI_PORT + " (" + WEB_UI_IFACE + ")");
+    app.listen(WEB_UI_PORT, WEB_UI_ADDRESS);
+  }
 }
 else
 {
-  console.info("Listening on address " + WEB_UI_ADDRESS + ":" + WEB_UI_PORT + " (" + WEB_UI_IFACE + ")");
-  app.listen(WEB_UI_PORT, WEB_UI_ADDRESS);
+  app.listen(WEB_UI_PORT);
+  console.info("Listening on port " + WEB_UI_PORT);
 }
 
 var everyone = nowjs.initialize(app);
@@ -931,6 +948,7 @@ app.get('/advancedOptions', function (req, res)
             , MIN_PACKET_THRESHOLD: NovaCommon.config.ReadSetting("MIN_PACKET_THRESHOLD")
             , CUSTOM_PCAP_FILTER: NovaCommon.config.ReadSetting("CUSTOM_PCAP_FILTER")
             , CUSTOM_PCAP_MODE: NovaCommon.config.ReadSetting("CUSTOM_PCAP_MODE")
+            , MANAGE_IFACE_ENABLE: NovaCommon.config.ReadSetting("MANAGE_IFACE_ENABLE")
             , WEB_UI_PORT: NovaCommon.config.ReadSetting("WEB_UI_PORT")
             , WEB_UI_IFACE: NovaCommon.config.ReadSetting("WEB_UI_IFACE")
             , CLEAR_AFTER_HOSTILE_EVENT: NovaCommon.config.ReadSetting("CLEAR_AFTER_HOSTILE_EVENT")
@@ -1100,16 +1118,14 @@ app.get('/GetSuspectDetails', function (req, res)
     
     var suspectIp = req.query["ip"];
     var suspectInterface = req.query["interface"];
-    NovaCommon.nova.RequestSuspectDetailsString(suspectIp, suspectInterface, function(suspectString) {
-
-    res.render('suspectDetails.jade', {
-        locals: {
-            suspect: suspectIp
-            , interface: suspectInterface
-            , details: suspectString
-        }
-    })
-
+    NovaCommon.nova.RequestSuspectDetailsString(suspectIp, suspectInterface, function(suspectString){
+		res.render('suspectDetails.jade', {
+		    locals: {
+		        suspect: suspectIp
+		        , interface: suspectInterface
+		        , details: suspectString
+		    }
+		})
 	});
 });
 
@@ -2088,6 +2104,20 @@ app.post('/configureNovaSave', function (req, res)
         NovaCommon.config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
       }
 
+      if(req.body['MANAGE_IFACE_ENABLE'] == 'on')
+      {
+        req.body['MANAGE_IFACE_ENABLE'] = '1';
+      }
+      else
+      {
+        req.body['MANAGE_IFACE_ENABLE'] = '0';
+      }
+
+      if(req.body['MANAGE_IFACE_ENABLE'] != NovaCommon.config.ReadSetting("MANAGE_IFACE_ENABLE"))
+      {
+        NovaCommon.config.WriteSetting('MANAGE_IFACE_ENABLE', req.body['MANAGE_IFACE_ENABLE']);
+      }
+      
       if(req.body['WEB_UI_IFACE'] != WEB_UI_IFACE)
       {
         NovaCommon.config.WriteSetting('WEB_UI_IFACE', req.body['WEB_UI_IFACE']);

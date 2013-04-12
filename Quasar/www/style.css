@@ -220,7 +220,7 @@ html, body {
 	border: 1px solid #759DC0;
 }
 
-#rsyslogPane, #smtpPane, #pulsarPane, #doppelPane {
+#rsyslogPane, #smtpPane, #pulsarPane, #doppelPane, #manifacePane {
   margin-top: 10px;
   border: 2px solid black;
   border-radius: 10px;
@@ -230,7 +230,7 @@ html, body {
   width: 700px;
 }
 
-#rsyslogPane *, #smtpPane *, #pulsarPane *, #doppelPane * {
+#rsyslogPane *, #smtpPane *, #pulsarPane *, #doppelPane *, #manifacePane * {
   margin-top: 5px;
   margin-bottom: 5px;
   margin-left: 10px;

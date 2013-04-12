@@ -17,6 +17,7 @@
 script
   var ifaces = !{JSON.stringify(INTERFACES)};
   var used = '#{WEB_UI_IFACE}';
+  var manageEnabled = '#{MANAGE_IFACE_ENABLE}';
   
   function handlePulsarPaneSlide()
   {
@@ -32,22 +33,34 @@ script
   
   function handleQuasarPaneME()
   {
-    $('#qWarn').stop().slideDown(400);
+    $('#qWarn').fadeIn(400);
   }
   
   function handleQuasarPaneML()
   {
-    $('#qWarn').stop().slideUp(400);
+    $('#qWarn').stop().fadeOut(400);
   }
   
   function handleNovadPaneME()
   {
-    $('#nWarn').stop().slideDown(400);
+    $('#nWarn').fadeIn(400);
   }
 
   function handleNovadPaneML()
   {
-    $('#nWarn').stop().slideUp(400);
+    $('#nWarn').stop().fadeOut(400);
+  }
+  
+  function handleManifaceSlide()
+  {
+    if($('#slideManiface').is(':checked'))
+    {
+      $('#manifacePane').stop().slideDown(400);
+    }
+    else
+    {
+      $('#manifacePane').stop().slideUp(400);
+    }
   }
   
   function init()
@@ -63,6 +76,12 @@ script
       }
       $('#WEB_UI_IFACE').append(option);
     }
+    console.log('manageEnabled == ' + manageEnabled);
+    if(manageEnabled != '0')
+    {
+      $('#slideManiface').prop('checked', true);
+    }
+    handleManifaceSlide();
   }
   
 form(method="post", action="/configureNovaSave")
@@ -70,15 +89,23 @@ form(method="post", action="/configureNovaSave")
   h2 General Configuration
 
   div#restartQuasar(onmouseover='handleQuasarPaneME()', onmouseout='handleQuasarPaneML()')
-    p#qWarn(style='text-align: center; font-style: italic; color: #B00000; display: none;') Quasar must be restarted for any changes to take effect
-    h2 Quasar
+    div(style='height: 20px;')
+      label(style='font-size: 16px; margin-top: 10px;') Quasar
+      p#qWarn(style='margin-right: 10px; float: right; text-align: center; font-style: italic; color: #B00000; display: none;') Quasar must be restarted for any changes to take effect
+    br
+    br
   
     label Quasar Port
     input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
     br
-  
-    label Management Interface
-    select#WEB_UI_IFACE(name='WEB_UI_IFACE')
+
+    label Enable Management Interface?
+    input#slideManiface(type='checkbox', name='MANAGE_IFACE_ENABLE', onclick='handleManifaceSlide()')
+    br
+    div#manifacePane
+      label Management Interface
+      select#WEB_UI_IFACE(name='WEB_UI_IFACE')
+      br
     br
   
     a(style='text-decoration: none; font-weight: bold;', href="/editTLSCerts") Click to upload new TLS certificates
@@ -110,8 +137,10 @@ form(method="post", action="/configureNovaSave")
     br
 
   div#restartNovad(onmouseover='handleNovadPaneME()', onmouseout='handleNovadPaneML()')
-    p#nWarn(style='text-align: center; font-style: italic; color: #B00000; display: none;') Novad must be restarted for any changes to take effect
-    h2 File Paths
+    div(style='height: 20px;')
+      label(style='font-size: 16px; margin-top: 10px;') File Paths
+      p#nWarn(style='margin-right: 10px; float: right; text-align: center; font-style: italic; color: #B00000; display: none;') Novad must be restarted for any changes to take effect
+    br
     label Path to state save file
     input.wide(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
     br
