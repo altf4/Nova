@@ -102,8 +102,7 @@ bool ConnectToNovad()
 		uint32_t *sessionIndex = new uint32_t;
 		*sessionIndex = MessageManager::Instance().GetNextSessionIndex();
 
-		bufferevent_setcb(bufferevent, MessageManager::MessageDispatcher, MessageManager::WriteDispatcher,
-				MessageManager::ErrorDispatcher, sessionIndex);
+		bufferevent_setcb(bufferevent, MessageManager::MessageDispatcher, NULL, MessageManager::ErrorDispatcher, sessionIndex);
 
 		if(bufferevent_enable(bufferevent, EV_READ) == -1)
 		{

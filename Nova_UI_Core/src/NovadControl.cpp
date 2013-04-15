@@ -36,6 +36,7 @@ pthread_cond_t popWakeupCondition;
 
 extern bool isConnected;
 extern struct event_base *libeventBase;
+extern struct bufferevent *bufferevent;
 extern pthread_mutex_t bufferevent_mutex;
 
 namespace Nova
@@ -86,6 +87,11 @@ bool StartNovad(bool blocking)
 
 void StopNovad(int32_t messageID)
 {
+	{
+		Lock buffereventLock(&bufferevent_mutex);
+		bufferevent_setcb(bufferevent, NULL, MessageManager::WriteDispatcher, NULL, NULL);
+	}
+
 	Message killRequest;
 	killRequest.m_contents.set_m_type(CONTROL_EXIT_REQUEST);
 	if(messageID != -1)
