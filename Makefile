@@ -303,7 +303,6 @@ install-nodejsmodule:
 uninstall: uninstall-files uninstall-permissions
 
 uninstall-files:
-	rm -rf ~/.config/nova
 	rm -rf /var/log/nova
 	rm -rf "$(DESTDIR)/usr/share/nova"
 	rm -f "$(DESTDIR)/usr/bin/novacli"
@@ -343,5 +342,6 @@ reset-debug:
 	$(MAKE) clean
 	$(MAKE) debug
 	$(MAKE) test
+	rm -rf ~/.config/nova
 	$(MAKE) reinstall-debug
 
