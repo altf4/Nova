@@ -34,6 +34,8 @@ using namespace std;
 using namespace Nova;
 using namespace NovaCLI;
 
+bool printCsv = false;
+
 int main(int argc, const char *argv[])
 {
 	// Fail if no arguments
@@ -611,46 +613,24 @@ void PrintSuspectData(in_addr_t address, string interface)
 
 void PrintAllSuspects(enum SuspectListType listType, bool csv)
 {
+	printCsv = csv;
 	Connect();
 	RequestSuspects(listType, 1);
-	MonitorCallback(1);
 
 	// Print the CSV header
-//	if(csv)
-//	{
-//		cout << "IP,";
-//		cout << "INTERFACE,";
-//		for(int i = 0; i < DIM; i++)
-//		{
-//			cout << FeatureSet::m_featureNames[i] << ",";
-//		}
-//		cout << "CLASSIFICATION" << endl;
-//	}
-//
-//	for(uint i = 0; i < suspects.size(); i++)
-//	{
-//		if(suspects[i] != NULL)
-//		{
-//			if(!csv)
-//			{
-//				cout << suspects[i]->ToString() << endl;
-//			}
-//			else
-//			{
-//				cout << suspects[i]->GetIpString() << ",";
-//				cout << suspects[i]->GetIdentifier().m_ifname() << ",";
-//				for(int d = 0; d < DIM; d++)
-//				{
-//					cout << suspects[i]->GetFeatureSet().m_features[d] << ",";
-//				}
-//				cout << suspects[i]->GetClassification() << endl;
-//			}
-//		}
-//		else
-//		{
-//			cout << "Error: No suspect received" << endl;
-//		}
-//	}
+	if(csv)
+	{
+		cout << "IP,";
+		cout << "INTERFACE,";
+		for(int i = 0; i < DIM; i++)
+		{
+			cout << FeatureSet::m_featureNames[i] << ",";
+		}
+		cout << "CLASSIFICATION" << endl;
+	}
+
+
+	MonitorCallback(1);
 
 	DisconnectFromNovad();
 }
@@ -747,7 +727,20 @@ void MonitorCallback(int32_t messageID)
     			{
     				for(uint i = 0; i < message->m_suspects.size(); i++)
     				{
-    					cout << message->m_suspects[i]->ToString() << endl;
+    					if (printCsv)
+    					{
+    						cout << message->m_suspects[i]->GetIpString() << ",";
+    						cout << message->m_suspects[i]->GetIdentifier().m_ifname() << ",";
+    						for(int d = 0; d < DIM; d++)
+    						{
+    							cout << message->m_suspects[i]->GetFeatureSet().m_features[d] << ",";
+    						}
+    						cout << message->m_suspects[i]->GetClassification() << endl;
+    					}
+    					else
+    					{
+    						cout << message->m_suspects[i]->ToString() << endl;
+    					}
     				}
     				message->DeleteContents();
     				break;
