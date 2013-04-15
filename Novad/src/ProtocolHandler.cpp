@@ -260,11 +260,10 @@ void HandleRequestSuspect(Message *incoming)
 		}
 	}
 
-	Suspect test;
-
-	if(tempSuspect != test)
+	if(!suspects.IsEmptySuspect(&tempSuspect))
 	{
 		reply.m_suspects.push_back(&tempSuspect);
+		reply.m_contents.set_m_success(true);
 	}
 	else
 	{

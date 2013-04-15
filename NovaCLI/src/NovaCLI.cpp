@@ -754,18 +754,18 @@ void MonitorCallback(int32_t messageID)
     			}
     			case REQUEST_SUSPECT_REPLY:
     			{
-    				if(message->m_suspects.size() == 0)
-					{
-						cout << "No suspects to list" << endl;
-						break;
-					}
     				if(!message->m_contents.m_success())
     				{
     					cout << "Suspect not found" << endl;
     				}
+    				else if(message->m_suspects.size() == 0)
+					{
+						cout << "No suspects to list" << endl;
+						break;
+					}
     				else
     				{
-    					cout << "Suspect: " << message->m_suspects[0]->ToString() << endl;
+    					cout << message->m_suspects[0]->ToString() << endl;
     				}
     				message->DeleteContents();
     				break;
