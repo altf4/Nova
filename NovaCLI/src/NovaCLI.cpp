@@ -759,7 +759,14 @@ void MonitorCallback(int32_t messageID)
 						cout << "No suspects to list" << endl;
 						break;
 					}
-    				cout << message->m_suspects[0]->ToString() << endl;
+    				if(!message->m_contents.m_success())
+    				{
+    					cout << "Suspect not found" << endl;
+    				}
+    				else
+    				{
+    					cout << "Suspect: " << message->m_suspects[0]->ToString() << endl;
+    				}
     				message->DeleteContents();
     				break;
     			}
@@ -815,6 +822,7 @@ void MonitorCallback(int32_t messageID)
 	    //If we're waiting only for a specific message, and it has arrived, then quit
     	if((messageID != -1) && message->m_contents.has_m_messageid() && (message->m_contents.m_messageid() == messageID))
 		{
+    		cout << "Connection Terminated" << endl;
 			message->DeleteContents();
 			delete message;
 			return;

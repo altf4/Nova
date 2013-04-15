@@ -127,7 +127,15 @@ int NovaNode::HandleMessageWithIDOnV8Thread(eio_req *arg)
 	{
 		HandleScope scope;
 		Persistent<Function> function = jsCallbacks[message->m_contents.m_messageid()];
-		Local<Value> argv[1] = { Local<Value>::New(String::New((message->m_suspects[0]->ToString() + message->m_suspects[0]->m_features.toString()).c_str())) };
+		Local<Value> argv[1];
+		if(message->m_contents.m_success())
+		{
+			argv[0] = {Local<Value>::New(String::New((message->m_suspects[0]->ToString() + message->m_suspects[0]->m_features.toString()).c_str()))};
+		}
+		else
+		{
+			argv[0] = {Local<Value>::New(String::New(""))};
+		}
 		function->Call(Context::GetCurrent()->Global(), 1, argv);
 		jsCallbacks.erase(message->m_contents.m_messageid());
 	}
@@ -190,7 +198,8 @@ int NovaNode::HandleNewSuspectOnV8Thread(eio_req* req)
 		
 		m_suspects[suspect->GetIdentifier()] = suspect;
 		SendSuspect(suspect);
-	} else
+	}
+	else
 	{
 		LOG(DEBUG, "HandleNewSuspectOnV8Thread got a NULL suspect pointer. Ignoring.", "");
 	}

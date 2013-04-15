@@ -260,7 +260,17 @@ void HandleRequestSuspect(Message *incoming)
 		}
 	}
 
-	reply.m_suspects.push_back(&tempSuspect);
+	Suspect test;
+
+	if(tempSuspect != test)
+	{
+		reply.m_suspects.push_back(&tempSuspect);
+	}
+	else
+	{
+		reply.m_contents.set_m_success(false);
+	}
+
 	MessageManager::Instance().WriteMessage(&reply, incoming->m_contents.m_sessionindex());
 }
 
