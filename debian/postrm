@@ -2,8 +2,4 @@
 
 set -e
 
-if ((`groupdel nova`))
-	then
-		echo
-fi
-
+exit 0
