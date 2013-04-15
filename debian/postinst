@@ -41,4 +41,3 @@ sysctl -p /etc/sysctl.conf
 
 chgrp -R nova $novaHomePath
 
-if [ -x /usr/bin/update-menus ] ; then update-menus ; fi
