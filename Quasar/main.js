@@ -1132,7 +1132,7 @@ app.get('/getSuspectDetails', function (req, res)
   	}
   	else
   	{
-      RenderError(res, 'The suspect ' + suspectIp + ' does not exist', '/');
+      RenderError(res, 'The suspect ' + suspectIp + ' does not exist', '/suspects');
       return;
   	}
   });
