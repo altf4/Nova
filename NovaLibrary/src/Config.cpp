@@ -1127,7 +1127,7 @@ void Config::LoadConfig_Internal()
 		{
 			failAndExit = true;
 			stringstream ss;
-			ss << "ERROR File: " << __FILE__ << "at line: " << __LINE__ << "Configuration option '"
+			ss << "File: " << __FILE__ << " at line " << __LINE__ << ": Configuration option '"
 				<< m_prefixes[i] << "' is invalid.";
 			::openlog("Nova", OPEN_SYSL, LOG_AUTHPRIV);
 			syslog(ERROR, "%s %s", "ERROR", ss.str().c_str());
