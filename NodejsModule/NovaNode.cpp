@@ -109,6 +109,10 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 			{
 				break;
 			}
+			case CONNECTION_SHUTDOWN:
+			{
+				break;
+			}
 			default:
 			{
 				HandleCallbackError();
