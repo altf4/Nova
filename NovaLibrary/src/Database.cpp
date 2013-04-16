@@ -35,10 +35,13 @@ if (res != val ) \
 	return;\
 }
 
+
 using namespace std;
 
 namespace Nova
 {
+
+Database *Database::m_instance = NULL;
 
 int Database::callback(void *NotUsed, int argc, char **argv, char **azColName){
 	int i;
@@ -49,6 +52,14 @@ int Database::callback(void *NotUsed, int argc, char **argv, char **azColName){
 	return 0;
 }
 
+Database *Database::Inst(std::string databaseFile)
+{
+	if(m_instance == NULL)
+	{
+		m_instance = new Database(databaseFile);
+	}
+	return m_instance;
+}
 
 Database::Database(std::string databaseFile)
 {
@@ -90,12 +101,33 @@ bool Database::Connect()
 			"isHostile, "
 			"classificationNotes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	  -1, &insertSuspect,  NULL);
-	expectReturnValue(SQLITE_OK);
+
+	if (res != SQLITE_OK) {
+		LOG(ERROR, "SQL error: " + string(sqlite3_errmsg(db)), "");
+		return false;
+	}
+
+
+	res = sqlite3_prepare_v2(db,
+	  "INSERT OR IGNORE INTO  packet_counts VALUES(?1, ?2, ?3, 0);"
+			"UPDATE packet_counts SET count = count + 1 WHERE ip = ?1 AND interface = ?2;",
+	  -1, &insertPacketCount,  NULL);
+
+	if (res != SQLITE_OK) {
+		LOG(ERROR, "SQL error: " + string(sqlite3_errmsg(db)), "");
+		return false;
+	}
+
+
 }
 
 bool Database::Disconnect()
 {
-	sqlite3_finalize(insertSuspect);
+	if (sqlite3_finalize(insertSuspect) != SQLITE_OK)
+	{
+		LOG(ERROR, "Unable to finalize sql statement: " + string(sqlite3_errmsg(db)), "");
+	}
+	return true;
 }
 
 void Database::ResetPassword()
@@ -136,9 +168,29 @@ void Database::InsertSuspect(Suspect *suspect)
 	res = sqlite3_bind_text(insertSuspect, 9, suspect->m_classificationNotes.c_str(), -1, SQLITE_TRANSIENT);
 	expectReturnValue(SQLITE_OK);
 
-
 	res = sqlite3_step(insertSuspect);
 	expectReturnValue(SQLITE_DONE);
+
+	res = sqlite3_reset(insertSuspect);
+	expectReturnValue(SQLITE_OK);
+}
+
+void Database::IncrementPacketCount(SuspectID_pb id, std::string type)
+{
+	int res;
+
+	res = sqlite3_bind_text(insertPacketCount, 1, Suspect::GetIpString(id).c_str(), -1, SQLITE_TRANSIENT);
+	expectReturnValue(SQLITE_OK);
+	res = sqlite3_bind_text(insertPacketCount, 2, id.m_ifname().c_str(), -1, SQLITE_TRANSIENT);
+	expectReturnValue(SQLITE_OK);
+	res = sqlite3_bind_text(insertPacketCount, 3, type.c_str(), -1, SQLITE_TRANSIENT);
+	expectReturnValue(SQLITE_OK);
+
+	res = sqlite3_step(insertPacketCount);
+	expectReturnValue(SQLITE_DONE);
+
+	res = sqlite3_reset(insertPacketCount);
+	expectReturnValue(SQLITE_OK);
 }
 
 void Database::InsertSuspectHostileAlert(Suspect *suspect)

@@ -692,9 +692,9 @@ void ReclassifySuspects()
 
 void ResetPassword()
 {
-	Database db(Config::Inst()->GetPathHome() + "/data/quasarDatabase.db");
-	db.Connect();
-	db.ResetPassword();
+	Database::Inst(Config::Inst()->GetPathHome() + "/data/quasarDatabase.db");
+	Database::Inst()->Connect();
+	Database::Inst()->ResetPassword();
 }
 
 void MonitorCallback(int32_t messageID)

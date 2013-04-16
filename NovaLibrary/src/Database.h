@@ -40,13 +40,14 @@ public:
 class Database
 {
 public:
-	Database(std::string databaseFile = "");
+	static Database *Inst(std::string = "");
 	~Database();
 
 	bool Connect();
 	bool Disconnect();
 
 	void InsertSuspectHostileAlert(Suspect *suspect);
+	void IncrementPacketCount(SuspectID_pb id, std::string type);
 
 	void InsertSuspect(Suspect *suspect);
 	void ResetPassword();
@@ -55,11 +56,16 @@ public:
 
 
 private:
+	Database(std::string databaseFile = "");
+
 	std::string m_databaseFile;
+
+	static Database * m_instance;
 
 	sqlite3 *db;
 
-	sqlite3_stmt * insertSuspect;
+	sqlite3_stmt *insertSuspect;
+	sqlite3_stmt *insertPacketCount;
 };
 
 } /* namespace Nova */

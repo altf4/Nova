@@ -83,8 +83,6 @@ time_t lastSaveTime;
 // Time novad started, used for uptime and pcap capture names
 time_t startTime;
 
-Database *db;
-
 
 //HS Vars
 string dhcpListFile;
@@ -194,10 +192,9 @@ int RunNovaD()
 
 	pthread_mutex_init(&packetCapturesLock, NULL);
 
-	db = new Database();
 	try
 	{
-		db->Connect();
+		Database::Inst()->Connect();
 	} catch (Nova::DatabaseException &e)
 	{
 		LOG(ERROR, "Unable to connect to SQL database. " + string(e.what()), "");
@@ -812,13 +809,13 @@ void UpdateAndClassify(SuspectID_pb key)
 	}
 
 	// Add to the db
-	db->InsertSuspect(&suspectCopy);
+	Database::Inst()->InsertSuspect(&suspectCopy);
 
 	if(suspectCopy.GetIsHostile() && (!oldIsHostile || Config::Inst()->GetClearAfterHostile()))
 	{
 		try
 		{
-			db->InsertSuspectHostileAlert(&suspectCopy);
+			Database::Inst()->InsertSuspectHostileAlert(&suspectCopy);
 		} catch (Nova::DatabaseException &e)
 		{
 			LOG(ERROR, "Unable to insert hostile suspect event into database. " + string(e.what()), "");

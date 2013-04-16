@@ -52,11 +52,16 @@ Suspect::~Suspect()
 
 string Suspect::GetIpString()
 {
+	return Suspect::GetIpString(this->m_id);
+}
+
+string Suspect::GetIpString(SuspectID_pb &id)
+{
 	stringstream ss;
-	ss << ((m_id.m_ip() & 0xFF000000) >> 24) << ".";
-	ss << ((m_id.m_ip() & 0x00FF0000) >> 16) << ".";
-	ss << ((m_id.m_ip() & 0x0000FF00) >> 8) << ".";
-	ss << ((m_id.m_ip() & 0x000000FF) >> 0);
+	ss << ((id.m_ip() & 0xFF000000) >> 24) << ".";
+	ss << ((id.m_ip() & 0x00FF0000) >> 16) << ".";
+	ss << ((id.m_ip() & 0x0000FF00) >> 8) << ".";
+	ss << ((id.m_ip() & 0x000000FF) >> 0);
 	return ss.str();
 }
 
@@ -64,10 +69,7 @@ string Suspect::GetIdString()
 {
 	stringstream ss;
 	ss << m_id.m_ifname() << " ";
-	ss << ((m_id.m_ip() & 0xFF000000) >> 24) << ".";
-	ss << ((m_id.m_ip() & 0x00FF0000) >> 16) << ".";
-	ss << ((m_id.m_ip() & 0x0000FF00) >> 8) << ".";
-	ss << ((m_id.m_ip() & 0x000000FF) >> 0);
+	ss << GetIpString(m_id);
 	return ss.str();
 }
 
