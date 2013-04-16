@@ -1,59 +1,31 @@
 #!/bin/bash
 
 QUERY1="
+PRAGMA page_size = 4096;
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
+PRAGMA synchronous = NORMAL;
 
-CREATE TABLE packet_count_types(
-	type TEXT PRIMARY KEY NOT NULL
-);
-INSERT INTO packet_count_types VALUES('tcp');
-INSERT INTO packet_count_types VALUES('udp');
-INSERT INTO packet_count_types VALUES('icmp');
-INSERT INTO packet_count_types VALUES('other');
-INSERT INTO packet_count_types VALUES('total');
-INSERT INTO packet_count_types VALUES('tcpRst');
-INSERT INTO packet_count_types VALUES('tcpAck');
-INSERT INTO packet_count_types VALUES('tcpSyn');
-INSERT INTO packet_count_types VALUES('tcpFin');
-INSERT INTO packet_count_types VALUES('tcpSynAck');
-INSERT INTO packet_count_types VALUES('bytes');
-	
 CREATE TABLE packet_counts(
-	ip TEXT REFERENCES suspect(ip),
-	interface TEXT REFERENCES suspect(interface),
+	ip TEXT,
+	interface TEXT,
 
-	count INTEGER,
-	type TEXT NOT NULL REFERENCES packet_count_types(type)
+	count_tcp INTEGER,
+	count_udp INTEGER,
+	count_icmp INTEGER,
+	count_other INTEGER,
+	count_total INTEGER,
+	count_tcpRst INTEGER,
+	count_tcpAck INTEGER,
+	count_tcpSyn INTEGER,
+	count_tcpFin INTEGER,
+	count_tcpSynAck INTEGER,
+	count_bytes INTEGER,
+
+	FOREIGN KEY (ip, interface) REFERENCES suspects(ip, interface),
+	PRIMARY KEY(ip, interface)
 );
 
-
-CREATE TABLE features(
-	id INTEGER PRIMARY KEY,
-	name TEXT NOT NULL
-);
-INSERT INTO features VALUES(0, 'ip_traffic_distribution');
-INSERT INTO features VALUES(1, 'port_traffic_distribution');
-INSERT INTO features VALUES(2, 'packet_size_mean');
-INSERT INTO features VALUES(3, 'packet_size_deviation');
-INSERT INTO features VALUES(4, 'distinct_ips');
-INSERT INTO features VALUES(5, 'distinct_tcp_ports');
-INSERT INTO features VALUES(6, 'distinct_udp_ports');
-INSERT INTO features VALUES(7, 'avg_tcp_ports_per_host');
-INSERT INTO features VALUES(8, 'avg_udp_ports_per_host');
-INSERT INTO features VALUES(9, 'tcp_percent_syn');
-INSERT INTO features VALUES(10, 'tcp_percent_fin');
-INSERT INTO features VALUES(11, 'tcp_percent_rst');
-INSERT INTO features VALUES(12, 'tcp_percent_synack');
-INSERT INTO features VALUES(13, 'haystack_percent_contacted');
-
-CREATE TABLE suspect_features(
-	ip TEXT REFERENCES suspect(ip),
-	interface TEXT REFERENCES suspect(interface),
-
-	value DOUBLE,
-	name TEXT NOT NULL REFERENCES features(name)
-);
 
 CREATE TABLE suspects (
 	ip TEXT,
@@ -68,25 +40,89 @@ CREATE TABLE suspects (
 	isHostile INTEGER,
 
 	classificationNotes TEXT,
-	
+
+	ip_traffic_distribution DOUBLE,
+	port_traffic_distribution DOUBLE,
+	packet_size_mean DOUBLE,
+	packet_size_deviation DOUBLE,
+	distinct_ips DOUBLE,
+	distinct_tcp_ports DOUBLE,
+	distinct_udp_ports DOUBLE,
+	avg_tcp_ports_per_host DOUBLE,
+	avg_udp_ports_per_host DOUBLE,
+	tcp_percent_syn DOUBLE,
+	tcp_percent_fin DOUBLE,
+	tcp_percent_rst DOUBLE,
+	tcp_percent_synack DOUBLE,
+	haystack_percent_contacted DOUBLE,
+
 	PRIMARY KEY(ip, interface)
 );
 
-CREATE TABLE packetSizeTable (
-	ip TEXT REFERENCES suspect(ip),
-	interface TEXT REFERENCES suspect(interface),
+CREATE INDEX idx ON suspects(classification);
 
-	packetSize INTEGER,
-	count INTEGER
+
+/* Basically a copy of the suspects table with a new key added. Annoying there isn't a good way to copy the schema in sqlite */
+CREATE TABLE suspect_alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+	ip TEXT,
+	interface TEXT,
+
+	startTime INTEGER,
+	endTime INTEGER,
+	lastTime INTEGER,
+
+	classification DOUBLE,
+	hostileNeighbors INTEGER,
+	isHostile INTEGER,
+
+	classificationNotes TEXT,
+
+	ip_traffic_distribution DOUBLE,
+	port_traffic_distribution DOUBLE,
+	packet_size_mean DOUBLE,
+	packet_size_deviation DOUBLE,
+	distinct_ips DOUBLE,
+	distinct_tcp_ports DOUBLE,
+	distinct_udp_ports DOUBLE,
+	avg_tcp_ports_per_host DOUBLE,
+	avg_udp_ports_per_host DOUBLE,
+	tcp_percent_syn DOUBLE,
+	tcp_percent_fin DOUBLE,
+	tcp_percent_rst DOUBLE,
+	tcp_percent_synack DOUBLE,
+	haystack_percent_contacted DOUBLE
 );
 
-CREATE TABLE ipPortTable (
-	ip TEXT REFERENCES suspect(ip),
-	interface TEXT REFERENCES suspect(interface),
+CREATE TABLE packet_sizes (
+	ip TEXT,
+	interface,
 
+	packetSize INTEGER,
+	count INTEGER,
+	
+	PRIMARY KEY(ip, interface, packetSize),
+	FOREIGN KEY (ip, interface) REFERENCES suspects(ip, interface)
+);
+
+CREATE TABLE ip_port_counts (
+	ip TEXT,
+	interface,
+
+	type TEXT,
 	dstip TEXT,
 	port INTEGER,
-	count INTEGER
+	count INTEGER,
+	
+	FOREIGN KEY (ip, interface) REFERENCES suspects(ip, interface),
+	PRIMARY KEY(ip, interface, type, dstip, port)
+);
+
+
+/* We keep track of what honeypot IPs are currently up so we can join against the ip_port_counts for haystack_percent_contacted */
+CREATE TABLE honeypots (
+	ip TEXT,
+	PRIMARY KEY (ip)
 );
 
 "

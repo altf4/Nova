@@ -19,7 +19,7 @@
 #ifndef DOPPELGANGER_H_
 #define DOPPELGANGER_H_
 
-#include "SuspectTable.h"
+#include "DatabaseQueue.h"
 #include "protobuf/marshalled_classes.pb.h"
 
 namespace Nova
@@ -31,7 +31,7 @@ class Doppelganger
 public:
 
 	// suspects: Uses the hostile suspects in this suspect table to determine Dopp routing
-	Doppelganger(SuspectTable& suspects);
+	Doppelganger(DatabaseQueue& suspects);
 	~Doppelganger();
 
 	//Synchronizes an initialized Doppelganger object with it's suspect table
@@ -51,7 +51,7 @@ public:
 
 private:
 
-	SuspectTable& m_suspectTable;
+	DatabaseQueue& m_suspectTable;
 	std::vector<SuspectID_pb> m_suspectKeys;
 	bool m_initialized;
 

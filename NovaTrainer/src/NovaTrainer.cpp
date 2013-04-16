@@ -43,6 +43,10 @@
 using namespace std;
 using namespace Nova;
 
+// TODO DTC
+// This is all broken since the suspecttable -> database change
+
+/*
 // Maintains a list of suspects and information on network activity
 SuspectTable suspects;
 
@@ -359,3 +363,6 @@ void SaveToDatabaseFile(string captureFolder, string databaseFile)
 }
 
 }
+
+
+*/

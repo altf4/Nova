@@ -24,8 +24,6 @@
 #include <pcap.h>
 #include <arpa/inet.h>
 
-using namespace std;
-
 namespace Nova
 {
 

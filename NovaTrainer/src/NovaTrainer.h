@@ -24,6 +24,7 @@
 
 #include "protobuf/marshalled_classes.pb.h"
 
+/*
 // Name of the CLI executable
 #define EXECUTABLE_NAME "novatrainer"
 
@@ -53,4 +54,8 @@ namespace Nova
 	void UpdateHaystackFeatures();
 }
 
+*/
+
 #endif /* NOVATRAINER_H_ */
+
+

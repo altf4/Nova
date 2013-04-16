@@ -17,5 +17,121 @@
 extends layout
 
 block content
-  h1 Details for !{suspect}
-  p(style='white-space:PRE') !{details.replace(/\n/g, '<br>')}
+  h1 Details for !{suspect} on !{interface}
+
+  div#genericInfo
+ 
+  h1 Packet Counts
+  div.novaGrid
+    div#packetCountTable
+  div#tablePages
+
+block headerAdditions
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
+  script(type="text/javascript", src="scripts/NovaGrid.js")
+
+  script
+    var grid;
+    function init(ready){
+        var columns = new Array();
+        columns.push({name: "Dst IP:Port:Protocol", isDisabled: true});
+        columns.push({name: "Dst IP"});
+        columns.push({name: "Dst Port"});
+        columns.push({name: "Protocol"});
+        columns.push({name: "Packets"});
+
+        grid = new NovaGrid(columns, 0, "packetCountTable", "grid");
+        grid.SetSortByKey(4);
+        grid.SetRowsPerPage(20);
+        grid.SetPageNumberDiv($('#tablePages').get(0));
+        grid.Render();
+
+        now.ready(function()
+        {
+            now.GetSuspect('!{suspect}', '!{interface}', OnNewSuspect);
+            now.GetIpPortsContacted('!{suspect}', '!{interface}', OnIpPorts);
+        });
+    }
+
+    function OnNewSuspect(err, suspect) {
+        if (err) {
+            alert("Unable to fetch suspect details. See Javascript console for detailed errors.");
+            console.log(err);
+            return;
+        }
+
+        console.log(suspect);
+    
+        var info = "<table>";
+        info += "<TR><TD> IP Address </TD> <TD>" + suspect.ip + "</TD></TR>";
+        info += "<TR><TD> Interface </TD> <TD>" + suspect.interface + "</TD></TR>";
+        info += "<TR><TD> Classification </TD> <TD>" + suspect.classification + "</TD></TR>";
+       
+       
+       info += "<TR><TD></TD></TR>";
+        info += "<TR><TD></TD></TR>";
+        info += "<TR><TD> # Bytes </TD> <TD>" + (suspect.count_bytes || 0) + "</TD></TR>";
+        info += "<TR><TD> # TCP Packets </TD> <TD>" + (suspect.count_tcp || 0) + "</TD></TR>";
+        info += "<TR><TD> # UDP Packets </TD> <TD>" + (suspect.count_udp || 0) + "</TD></TR>";
+        info += "<TR><TD> # ICMP Packets </TD> <TD>" + (suspect.count_icmp || 0) + "</TD></TR>";
+        info += "<TR><TD> # Other Packets </TD> <TD>" + (suspect.count_other || 0) + "</TD></TR>";
+      
+      
+      info += "<TR><TD></TD></TR>";
+        info += "<TR><TD></TD></TR>";
+        info += "<TR><TD> # TCP SYN Packets </TD> <TD>" + (suspect.count_tcpSyn || 0) + "</TD></TR>";
+        info += "<TR><TD> # TCP ACK Packets </TD> <TD>" + (suspect.count_tcpAck || 0) + "</TD></TR>";
+        info += "<TR><TD> # TCP SYN/ACK Packets </TD> <TD>" + (suspect.count_tcpSynAck || 0) + "</TD></TR>";
+        info += "<TR><TD> # TCP FIN Packets </TD> <TD>" + (suspect.count_tcpFin || 0) + "</TD></TR>";
+        info += "<TR><TD> # TCP RST Packets </TD> <TD>" + (suspect.count_tcpRst || 0) + "</TD></TR>";
+        
+        
+        info += "<TR><TD></TD></TR>";
+        info += "<TR><TD></TD></TR>";
+        info += "<TR><TD> IP Traffic Distribution </TD> <TD>" + suspect.ip_traffic_distribution + "</TD></TR>";
+        info += "<TR><TD> Port Traffic Distribution </TD> <TD>" + suspect.port_traffic_distribution + "</TD></TR>";
+        info += "<TR><TD> Packet Size Mean </TD> <TD>" + suspect.packet_size_mean + "</TD></TR>";
+        info += "<TR><TD> Packet Size Deviation </TD> <TD>" + suspect.packet_size_deviation + "</TD></TR>";
+        info += "<TR><TD> Distinct IPs Contacted </TD> <TD>" + suspect.distinct_ips + "</TD></TR>";
+        info += "<TR><TD> Distinct TCP Ports Contacted </TD> <TD>" + suspect.distinct_tcp_ports + "</TD></TR>";
+        info += "<TR><TD> Distinct UDP Ports Contacted </TD> <TD>" + suspect.distinct_udp_ports + "</TD></TR>";
+        info += "<TR><TD> Average TCP Ports Per Host</TD> <TD>" + suspect.avg_tcp_ports_per_host + "</TD></TR>";
+        info += "<TR><TD> Average UDP Ports Per Host</TD> <TD>" + suspect.avg_udp_ports_per_host + "</TD></TR>";
+        info += "<TR><TD> Percent TCP SYN Packets </TD> <TD>" + suspect.tcp_percent_syn * 100 + "%</TD></TR>";
+        info += "<TR><TD> Percent TCP SYN ACK Packets </TD> <TD>" + suspect.tcp_percent_synack * 100 + "%</TD></TR>";
+        info += "<TR><TD> Percent TCP FIN Packets </TD> <TD>" + suspect.tcp_percent_fin * 100 + "%</TD></TR>";
+        info += "<TR><TD> Percent TCP RST Packets </TD> <TD>" + suspect.tcp_percent_rst * 100 + "%</TD></TR>";
+        info += "<TR><TD> Percent Haystack Contacted </TD> <TD>" + suspect.haystack_percent_contacted * 100 + "%</TD></TR>";
+        
+        
+        info += "<TR><TD></TD></TR>";
+        info += "<TR><TD></TD></TR>";
+        info += "<TR><TD> Hostile KNN neighbors </TD> <TD>" + suspect.hostileNeighbors + "</TD></TR>";
+        info += "<TR><TD> Classification Notes </TD> <TD>" + String(suspect.classificationNotes).replace(/\\n/g, "<BR />") + "</TD></TR>";
+        
+        info += "</TABLE><BR><BR>";
+        $('#genericInfo').html(info);
+
+    }
+
+    function OnIpPorts(err, results) {
+        if (err) {
+            alert("Unable to fetch suspect details. See Javascript console for detailed errors.");
+            console.log(err);
+            return;
+        }
+
+        for (var r in results) {
+            var row = new Array();
+            row.push(results[r].dstip + String(results[r].port) + results[r].type);
+            row.push(results[r].dstip);
+            row.push(results[r].port);
+            row.push(results[r].type);
+            row.push(results[r].count);
+            console.log(row)
+
+            grid.PushEntry(row);
+        }
+        
+        grid.Render();
+    };

@@ -309,7 +309,7 @@ void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void 
 	//If the socket has closed, clean up the bufferevent
 	if(error & (BEV_EVENT_EOF | BEV_EVENT_ERROR))
 	{
-		LOG(DEBUG, "Connection has terminated", "");
+		//LOG(DEBUG, "Connection has terminated", "");
 		uint32_t *index = (uint32_t*)ctx;
 		MessageManager::Instance().RemoveSessionIndex(*index);
 

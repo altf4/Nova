@@ -143,10 +143,26 @@ block headerAdditions
               for(var i = 0; i < results.length; i++)
               {
                   var row = new Array();
-                  for(var j in results[0])
-                  {
-                      row.push(results[i][j]);
-                  }
+                  row.push(results[i].id);
+                  row.push(results[i].lastTime);
+                  row.push(results[i].ip);
+                  row.push(results[i].interface);
+                  row.push(results[i].classification);
+                  
+                  row.push(results[i].ip_traffic_distribution);
+                  row.push(results[i].port_traffic_distribution);
+                  row.push(results[i].packet_size_mean);
+                  row.push(results[i].packet_size_deviation);
+                  row.push(results[i].distinct_ips);
+                  row.push(results[i].distinct_tcp_ports);
+                  row.push(results[i].distinct_udp_ports);
+                  row.push(results[i].avg_tcp_ports_per_host);
+                  row.push(results[i].avg_udp_ports_per_host);
+                  row.push(results[i].tcp_percent_syn);
+                  row.push(results[i].tcp_percent_fin);
+                  row.push(results[i].tcp_percent_rst);
+                  row.push(results[i].tcp_percent_synack);
+                  row.push(results[i].haystack_percent_contacted);
 
                   suspectGrid.PushEntry(row);
               }

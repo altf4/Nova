@@ -112,11 +112,11 @@ block headerAdditions
             return;
         }
 
-        var features = String(lastSuspectObject.GetFeatures).split(',').join(' ');
+        var features = lastSuspectObject.features.join(' ');
  
         try
         {
-           now.addTrainingPoint(lastSuspectObject.GetIpString, lastSuspectObject.GetInterface, features, hostility, addedCb);
+           now.addTrainingPoint(lastSuspectObject.ip, lastSuspectObject.interface, features, hostility, addedCb);
         }
         catch(err)
         {
@@ -160,22 +160,47 @@ block headerAdditions
         }
     }
 
-    function OnNewSuspect(suspect)
+    function OnNewSuspect(err, suspect)
     {
+        if (err) {
+            console.log(err);
+            return;
+        }
+
         // We throw the first suspect in the graphs twice so it'll have a line instead of nothing
         if(initialized)
         {
             initialized = false;
-            OnNewSuspect(suspect);
+            OnNewSuspect(err, suspect);
         }
+
+        console.log(suspect);
         
-        if(suspect.GetIpString == '#{suspectIp}' && suspect.GetInterface == '#{suspectInterface}')
+        if(suspect.ip == '#{suspectIp}' && suspect.interface == '#{suspectInterface}')
         {
+            var row = new Array();
+            row.push(suspect.ip_traffic_distribution);
+            row.push(suspect.port_traffic_distribution);
+            row.push(suspect.packet_size_mean);
+            row.push(suspect.packet_size_deviation);
+            row.push(suspect.distinct_ips);
+            row.push(suspect.distinct_tcp_ports);
+            row.push(suspect.distinct_udp_ports);
+            row.push(suspect.avg_tcp_ports_per_host);
+            row.push(suspect.avg_udp_ports_per_host);
+            row.push(suspect.tcp_percent_syn);
+            row.push(suspect.tcp_percent_fin);
+            row.push(suspect.tcp_percent_rst);
+            row.push(suspect.tcp_percent_synack);
+            row.push(suspect.haystack_percent_contacted);
+            suspect.features = row;
+            
             lastSuspectObject = suspect;
-            data.push(suspect.GetFeatures);
+            data.push(row);
+
 
             var classificationArrayWrapper = new Array();
-            classificationArrayWrapper.push(suspect.GetClassification);
+            classificationArrayWrapper.push(suspect.classification);
             classificationData.push(classificationArrayWrapper);
 
             var maxNumberOfPoints = 100;
@@ -192,21 +217,21 @@ block headerAdditions
             redrawGraphs();
 
             arr = new Array();
-            arr.push({name: 'SYN Packets', value: suspect.GetSynCount});
-            arr.push({name: 'RST Packets', value: suspect.GetRstCount});
-            arr.push({name: 'ACK Packets', value: suspect.GetAckCount});
-            arr.push({name: 'FIN Packets', value: suspect.GetFinCount});
-            arr.push({name: 'SYN ACK Packets', value: suspect.GetSynAckCount});
+            arr.push({name: 'SYN Packets', value: suspect.count_tcpSyn || 0});
+            arr.push({name: 'RST Packets', value: suspect.count_tcpRst || 0});
+            arr.push({name: 'ACK Packets', value: suspect.count_tcpAck || 0});
+            arr.push({name: 'FIN Packets', value: suspect.count_tcpFin || 0});
+            arr.push({name: 'SYN ACK Packets', value: suspect.count_tcpSynAck || 0});
             arr = arr.sort(function(a,b) {return b.value - a.value});
             tcpChart.Render(arr);
 
 
 
             arr = new Array();
-            arr.push({name: 'TCP Packets', value: suspect.GetTcpPacketCount});
-            arr.push({name: 'UDP Packets', value: suspect.GetUdpPacketCount});
-            arr.push({name: 'ICMP Packets', value: suspect.GetIcmpPacketCount});
-            arr.push({name: 'Other', value: suspect.GetOtherPacketCount});
+            arr.push({name: 'TCP Packets', value: suspect.count_tcp || 0});
+            arr.push({name: 'UDP Packets', value: suspect.count_udp || 0});
+            arr.push({name: 'ICMP Packets', value: suspect.count_icmp || 0});
+            arr.push({name: 'Other', value: suspect.count_other || 0});
             arr = arr.sort(function(a,b) {return b.value - a.value});
             protocolChart.Render(arr);
 
@@ -378,9 +403,12 @@ block headerAdditions
         
         now.ready(function()
         {
-            now.OnNewSuspect = OnNewSuspect;
-            now.sendSuspect('#{suspectIp}', '#{suspectInterface}', OnNewSuspect)
             now.reverseDNS('#{suspectIp}', reverseDNScb);
+            now.GetSuspect('#{suspectIp}', '#{suspectInterface}', OnNewSuspect)
+            
+            setInterval(function() {
+                now.GetSuspect('#{suspectIp}', '#{suspectInterface}', OnNewSuspect)
+            }, 3000);
         });
     };
 

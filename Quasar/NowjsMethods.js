@@ -337,12 +337,6 @@ everyone.now.HardStopNovad = function(passwd)
   catch(err){};
 };
 
-everyone.now.sendAllSuspects = function (cb)
-{
-    NovaCommon.nova.CheckConnection();
-    NovaCommon.nova.sendSuspectList(cb);
-};
-
 everyone.now.sendSuspect = function (ethinterface, ip, cb)
 {
     var suspect = NovaCommon.nova.sendSuspect(ethinterface, ip);
@@ -1160,7 +1154,6 @@ everyone.now.GetProfile = function (profileName, cb)
 };
 
 
-
 everyone.now.GetHostileEvents = function (cb)
 {
     NovaCommon.dbqSuspectAlertsGet.all(function(err, results){
@@ -1403,6 +1396,50 @@ everyone.now.DeleteHostname = function(hostname, cb) {
 };
 
 
+// TODO
+// Suspect related queries?
+everyone.now.GetSuspects = function(limit, offset, orderBy, direction, showUnclassified, cb) {
+    var classifiedFilter = "";
+    if (!showUnclassified) {
+        classifiedFilter = " WHERE classification != -2 ";
+    }
+    var queryString = "SELECT * FROM suspects " + classifiedFilter + "ORDER BY " + orderBy + " " + direction + " LIMIT " + limit + " OFFSET " + offset;
+    NovaCommon.novaDb.all(queryString, function(err, results) {
+        if (databaseError(err, cb)) {return;}
+        cb && cb(null, results);
+    });
+};
+
+everyone.now.GetNumberOfSuspects = function(showUnclassified, cb) {
+    if (showUnclassified) {
+        var queryString = "SELECT COUNT() as count FROM suspects";
+    } else {
+        var queryString = "SELECT COUNT() as count FROM suspects WHERE classification != -2";
+    }
+    NovaCommon.novaDb.all(queryString, function(err, results) {
+        if (databaseError(err, cb)) {return;}
+        cb && cb(null, results);
+    });
+};
+
+everyone.now.GetSuspect = function(ip, iface, cb) {
+    NovaCommon.dbqGetSuspect.all(ip, iface, function(err, results) {
+        if (databaseError(err, cb)) {return;}
+
+        if (results.length == 0) {
+            cb && cb("No such suspect", null);
+        } else {
+                cb && cb(null, results[0]);
+        }
+    });
+};
+
+everyone.now.GetIpPortsContacted = function(ip, iface, cb) {
+    NovaCommon.dbqGetIpPorts.all(ip, iface, function(err, results) {
+        if (databaseError(err, cb)) {return;}
+            cb && cb(null, results);
+    });
+};
 
 }
 
