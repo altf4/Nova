@@ -97,8 +97,8 @@ void HandleClearAllRequest(Message *incoming)
 
 void HandleClearSuspectRequest(Message *incoming)
 {
+	Suspect messageSuspect = suspects.GetSuspect(incoming->m_contents.m_suspectid());
 	bool result = suspects.Erase(incoming->m_contents.m_suspectid());
-
 	if(!result)
 	{
 		LOG(DEBUG, "Failed to Erase suspect from the main suspect table.", "");
@@ -110,6 +110,7 @@ void HandleClearSuspectRequest(Message *incoming)
 		LOG(DEBUG, "Failed to Erase suspect from the unsaved suspect table.", "");
 		// Send failure notice
 		Message updateMessage;
+		updateMessage.m_suspects.push_back(&messageSuspect);
 		updateMessage.m_contents.set_m_type(UPDATE_SUSPECT_CLEARED);
 		updateMessage.m_contents.set_m_success(false);
 		if(incoming->m_contents.has_m_messageid())
@@ -126,10 +127,11 @@ void HandleClearSuspectRequest(Message *incoming)
 
 	LOG(DEBUG, "Cleared a suspect due to UI request",
 			"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "
-			+string(inet_ntoa(suspectAddress))+ " on interface " + incoming->m_contents.m_suspectid().m_ifname() + ".");
+			+ string(inet_ntoa(suspectAddress)) + " on interface " + incoming->m_contents.m_suspectid().m_ifname() + ".");
 
 	//First, send the reply (wth message ID) to just the original sender
 	Message updateMessage;
+	updateMessage.m_suspects.push_back(&messageSuspect);
 	updateMessage.m_contents.set_m_type(UPDATE_SUSPECT_CLEARED);
 	updateMessage.m_contents.set_m_success(true);
 	if(incoming->m_contents.has_m_messageid())

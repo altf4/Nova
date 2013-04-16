@@ -788,11 +788,11 @@ void MonitorCallback(int32_t messageID)
     			{
     				if(message->m_contents.m_success())
     				{
-    					cout << "Suspect: " << message->m_suspects[0]->GetIpString() << " was cleared" << endl;
+    					cout << "Suspect " << message->m_suspects[0]->GetIpString() << " was cleared" << endl;
     				}
     				else
     				{
-    					cout << "Failed to clear Suspect: " << message->m_suspects[0]->GetIpString() << endl;
+    					cout << "Failed to clear Suspect " << message->m_suspects[0]->GetIpString() << endl;
     				}
     				break;
     			}

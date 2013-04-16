@@ -440,7 +440,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
   // credentials for reboots, etc. 
   
   // The reason for the + 1 at the end is because that's the port in use for the 
-  // server-to-server component of wbsockets on Pulsar. Have to do something in case 
+  // server-to-server component of websockets on Pulsar. Have to do something in case 
   // the port gets changed on the Pulsar machine
   var connected = NovaCommon.config.ReadSetting('MASTER_UI_IP') + ':' + (parseInt(NovaCommon.config.ReadSetting('MASTER_UI_PORT')) + 1);
   
@@ -760,7 +760,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
 
 app.get('/honeydConfigManage', function(req, res){
   var tab;
-  if (req.query["tab"] === undefined)
+  if(req.query["tab"] === undefined)
   {
     tab = "settingsGroups";
   }
@@ -769,11 +769,10 @@ app.get('/honeydConfigManage', function(req, res){
     tab = req.query["tab"];
   }
 
-
   var nodeNames = NovaCommon.honeydConfig.GetNodeMACs();
   var nodeList = [];
   
-  for (var i = 0; i < nodeNames.length; i++)
+  for(var i = 0; i < nodeNames.length; i++)
   {
     var node = NovaCommon.honeydConfig.GetNode(nodeNames[i]);
     var push = NovaCommon.cNodeToJs(node);
