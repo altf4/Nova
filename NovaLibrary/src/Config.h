@@ -160,7 +160,7 @@ public:
 	MAKE_GETTER_SETTER(double, m_classificationThreshold, GetClassificationThreshold, SetClassificationThreshold);
 	MAKE_GETTER_SETTER(int, m_classificationTimeout, GetClassificationTimeout, SetClassificationTimeout);
 	MAKE_GETTER_SETTER(int, m_dataTTL, GetDataTTL, SetDataTTL);
-	MAKE_GETTER_SETTER(std::string, m_doppelInterface, GetDoppelInterface, SetDoppelInterface);
+	MAKE_GETTER_SETTER(std::string, m_loopbackIF, GetDoppelInterface, SetDoppelInterface);
 	MAKE_GETTER_SETTER(double, m_eps, GetEps, SetEps);
 	MAKE_GETTER_SETTER(bool, m_isDmEnabled, GetIsDmEnabled, SetIsDmEnabled);
 	MAKE_GETTER_SETTER(std::string, m_pathCESaveFile, GetPathCESaveFile, SetPathCESaveFile);
@@ -222,7 +222,6 @@ private:
 
 	__attribute__ ((visibility ("hidden"))) static std::string m_prefixes[];
 
-	std::string m_loopbackIF;
 	std::string m_loopbackIFString;
 	bool m_loIsDefault;
 	bool m_ifIsDefault;

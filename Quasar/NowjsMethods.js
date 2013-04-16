@@ -161,7 +161,10 @@ everyone.now.SaveHoneydNode = function(node, cb)
         }
         else
         {
-            if(!NovaCommon.honeydConfig.SaveAll())
+			NovaCommon.config.WriteSetting('DOPPELGANGER_IP', ipAddress);
+			NovaCommon.config.WriteSetting('DOPPELGANGER_INTERFACE', node.intface);
+            
+			if(!NovaCommon.honeydConfig.SaveAll())
             {
                 cb && cb("Unable to save honeyd configuration");
             }
