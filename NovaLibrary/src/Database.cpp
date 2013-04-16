@@ -25,6 +25,15 @@
 
 #include <iostream>
 #include <sstream>
+#include <string>
+
+// Quick macro so we don't have to copy/paste this over and over
+#define checkForError \
+if (res != SQLITE_OK ) \
+{\
+	LOG(ERROR, "SQL error: " + string(sqlite3_errmsg(db)), "");\
+	return;\
+}
 
 using namespace std;
 
@@ -78,6 +87,52 @@ void Database::ResetPassword()
 		string errorMessage(zErrMsg);
 		sqlite3_free(zErrMsg);
 		throw DatabaseException(string(errorMessage));
+	}
+}
+
+void Database::InsertSuspect(Suspect *suspect)
+{
+	int res;
+
+	sqlite3_stmt *insertStatement;
+	res = sqlite3_prepare_v2(db,
+	  "INSERT OR REPLACE INTO suspects (ip, "
+			"interface, "
+			"startTime, "
+			"endTime, "
+			"lastTime, "
+			"classification, "
+			"hostileNeighbors, "
+			"isHostile, "
+			"classificationNotes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?))",
+	  -1, &insertStatement,  NULL);
+	checkForError;
+
+	res = sqlite3_bind_text(insertStatement, 0, suspect->GetIpString().c_str(), -1, SQLITE_TRANSIENT);
+	checkForError;
+	res = sqlite3_bind_text(insertStatement, 1, suspect->GetInterface().c_str(), -1, SQLITE_TRANSIENT);
+	checkForError;
+	res = sqlite3_bind_int64(insertStatement, 2, static_cast<long int>(suspect->m_features.m_startTime));
+	checkForError;
+	res = sqlite3_bind_int64(insertStatement, 3, static_cast<long int>(suspect->m_features.m_endTime));
+	checkForError;
+	res = sqlite3_bind_int64(insertStatement, 4, static_cast<long int>(suspect->m_features.m_lastTime));
+	checkForError;
+	res = sqlite3_bind_double(insertStatement, 5, suspect->GetClassification());
+	checkForError;
+	res = sqlite3_bind_int(insertStatement, 6, suspect->GetHostileNeighbors());
+	checkForError;
+	res = sqlite3_bind_int(insertStatement, 7, suspect->GetIsHostile());
+	checkForError;
+	res = sqlite3_bind_text(insertStatement, 8, suspect->m_classificationNotes.c_str(), -1, SQLITE_TRANSIENT);
+	checkForError;
+
+
+	res = sqlite3_step(insertStatement);
+
+	if (res != SQLITE_DONE )
+	{
+		LOG(ERROR, "Unable to execute query due to error: " + string(sqlite3_errmsg(db)), "");
 	}
 }
 

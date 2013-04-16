@@ -44,6 +44,8 @@ public:
 	bool Connect();
 
 	void InsertSuspectHostileAlert(Suspect *suspect);
+
+	void InsertSuspect(Suspect *suspect);
 	void ResetPassword();
 
 	static int callback(void *NotUsed, int argc, char **argv, char **azColName);

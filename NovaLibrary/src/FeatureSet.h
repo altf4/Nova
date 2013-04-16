@@ -223,6 +223,10 @@ public:
 	uint64_t m_finCount;
 	uint64_t m_synAckCount;
 
+	time_t m_startTime;
+	time_t m_endTime;
+	time_t m_lastTime;
+
 private:
 	//Temporary variables used to calculate Features
 
@@ -233,9 +237,7 @@ private:
 	Port_Table m_PortTCPTable;
 	Port_Table m_PortUDPTable;
 
-	time_t m_startTime;
-	time_t m_endTime;
-	time_t m_lastTime;
+
 	time_t m_totalInterval;
 
 	//Total number of bytes in all packets

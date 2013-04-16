@@ -811,6 +811,8 @@ void UpdateAndClassify(SuspectID_pb key)
 		return;
 	}
 
+	// Add to the db
+	db->InsertSuspect(&suspectCopy);
 
 	if(suspectCopy.GetIsHostile() && (!oldIsHostile || Config::Inst()->GetClearAfterHostile()))
 	{
