@@ -41,7 +41,10 @@ class Database
 {
 public:
 	Database(std::string databaseFile = "");
+	~Database();
+
 	bool Connect();
+	bool Disconnect();
 
 	void InsertSuspectHostileAlert(Suspect *suspect);
 
@@ -55,6 +58,8 @@ private:
 	std::string m_databaseFile;
 
 	sqlite3 *db;
+
+	sqlite3_stmt * insertSuspect;
 };
 
 } /* namespace Nova */

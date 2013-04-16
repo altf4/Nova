@@ -28,8 +28,8 @@
 #include <string>
 
 // Quick macro so we don't have to copy/paste this over and over
-#define checkForError \
-if (res != SQLITE_OK ) \
+#define expectReturnValue(val) \
+if (res != val ) \
 {\
 	LOG(ERROR, "SQL error: " + string(sqlite3_errmsg(db)), "");\
 	return;\
@@ -59,13 +59,18 @@ Database::Database(std::string databaseFile)
 	m_databaseFile = databaseFile;
 }
 
+Database::~Database()
+{
+	Disconnect();
+}
+
 bool Database::Connect()
 {
 	LOG(DEBUG, "Opening database " + m_databaseFile, "");
-	int rc;
-	rc = sqlite3_open(m_databaseFile.c_str(), &db);
+	int res;
+	res = sqlite3_open(m_databaseFile.c_str(), &db);
 
-	if (rc)
+	if (res)
 	{
 		throw DatabaseException(string(sqlite3_errmsg(db)));
 	}
@@ -73,6 +78,24 @@ bool Database::Connect()
 	{
 		return true;
 	}
+
+	res = sqlite3_prepare_v2(db,
+	  "INSERT OR REPLACE INTO suspects (ip, "
+			"interface, "
+			"startTime, "
+			"endTime, "
+			"lastTime, "
+			"classification, "
+			"hostileNeighbors, "
+			"isHostile, "
+			"classificationNotes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	  -1, &insertSuspect,  NULL);
+	expectReturnValue(SQLITE_OK);
+}
+
+bool Database::Disconnect()
+{
+	sqlite3_finalize(insertSuspect);
 }
 
 void Database::ResetPassword()
@@ -94,46 +117,28 @@ void Database::InsertSuspect(Suspect *suspect)
 {
 	int res;
 
-	sqlite3_stmt *insertStatement;
-	res = sqlite3_prepare_v2(db,
-	  "INSERT OR REPLACE INTO suspects (ip, "
-			"interface, "
-			"startTime, "
-			"endTime, "
-			"lastTime, "
-			"classification, "
-			"hostileNeighbors, "
-			"isHostile, "
-			"classificationNotes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?))",
-	  -1, &insertStatement,  NULL);
-	checkForError;
-
-	res = sqlite3_bind_text(insertStatement, 0, suspect->GetIpString().c_str(), -1, SQLITE_TRANSIENT);
-	checkForError;
-	res = sqlite3_bind_text(insertStatement, 1, suspect->GetInterface().c_str(), -1, SQLITE_TRANSIENT);
-	checkForError;
-	res = sqlite3_bind_int64(insertStatement, 2, static_cast<long int>(suspect->m_features.m_startTime));
-	checkForError;
-	res = sqlite3_bind_int64(insertStatement, 3, static_cast<long int>(suspect->m_features.m_endTime));
-	checkForError;
-	res = sqlite3_bind_int64(insertStatement, 4, static_cast<long int>(suspect->m_features.m_lastTime));
-	checkForError;
-	res = sqlite3_bind_double(insertStatement, 5, suspect->GetClassification());
-	checkForError;
-	res = sqlite3_bind_int(insertStatement, 6, suspect->GetHostileNeighbors());
-	checkForError;
-	res = sqlite3_bind_int(insertStatement, 7, suspect->GetIsHostile());
-	checkForError;
-	res = sqlite3_bind_text(insertStatement, 8, suspect->m_classificationNotes.c_str(), -1, SQLITE_TRANSIENT);
-	checkForError;
+	res = sqlite3_bind_text(insertSuspect, 1, suspect->GetIpString().c_str(), -1, SQLITE_TRANSIENT);
+	expectReturnValue(SQLITE_OK);
+	res = sqlite3_bind_text(insertSuspect, 2, suspect->GetInterface().c_str(), -1, SQLITE_TRANSIENT);
+	expectReturnValue(SQLITE_OK);
+	res = sqlite3_bind_int64(insertSuspect, 3, static_cast<long int>(suspect->m_features.m_startTime));
+	expectReturnValue(SQLITE_OK);
+	res = sqlite3_bind_int64(insertSuspect, 4, static_cast<long int>(suspect->m_features.m_endTime));
+	expectReturnValue(SQLITE_OK);
+	res = sqlite3_bind_int64(insertSuspect, 5, static_cast<long int>(suspect->m_features.m_lastTime));
+	expectReturnValue(SQLITE_OK);
+	res = sqlite3_bind_double(insertSuspect, 6, suspect->GetClassification());
+	expectReturnValue(SQLITE_OK);
+	res = sqlite3_bind_int(insertSuspect, 7, suspect->GetHostileNeighbors());
+	expectReturnValue(SQLITE_OK);
+	res = sqlite3_bind_int(insertSuspect, 8, suspect->GetIsHostile());
+	expectReturnValue(SQLITE_OK);
+	res = sqlite3_bind_text(insertSuspect, 9, suspect->m_classificationNotes.c_str(), -1, SQLITE_TRANSIENT);
+	expectReturnValue(SQLITE_OK);
 
 
-	res = sqlite3_step(insertStatement);
-
-	if (res != SQLITE_DONE )
-	{
-		LOG(ERROR, "Unable to execute query due to error: " + string(sqlite3_errmsg(db)), "");
-	}
+	res = sqlite3_step(insertSuspect);
+	expectReturnValue(SQLITE_DONE);
 }
 
 void Database::InsertSuspectHostileAlert(Suspect *suspect)
