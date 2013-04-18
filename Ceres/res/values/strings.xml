@@ -3,7 +3,11 @@
 
     <string name="app_name">Ceres</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello Android</string>
-    <string name="button_send">Click Me</string>
+    <string name="ceresConnect">Connect</string>
+    <string name="credID">Ceres ID</string>
+    <string name="credIP">Ceres IP</string>
+    <string name="credPW">Password</string>
+    <string name="spinText">Attempting to Connect</string>
+    <string name="error">Could not connect to Ceres</string>
 
 </resources>
