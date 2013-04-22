@@ -125,6 +125,7 @@ public class GridActivity extends ListActivity {
 			}
 		}
 		
+		
 		@Override
 		protected void onPostExecute(ArrayList<String> gridPop)
 		{
