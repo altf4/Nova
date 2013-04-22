@@ -88,6 +88,7 @@ public:
 	static Handle<Value> GetSupportedEngines(const Arguments& args);
 	static Handle<Value> sendCachedSuspect(const Arguments& args);
 	static Handle<Value> sendSuspectList(const Arguments& args);
+	static void sendSuspectListArray(const Arguments& args);
 	static Handle<Value> RequestSuspectCallback(const Arguments& args);
 	static Handle<Value> ClearAllSuspects(const Arguments& args);
 	static Handle<Value> registerOnNewSuspect(const Arguments& args);

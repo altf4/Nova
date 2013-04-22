@@ -7,7 +7,7 @@
 		, "passport"	:	"0.1.x"
 		, "passport-http"	:	""
 		, "js2xmlparser" : ""
-		, "websocket" : "1.x.x"
+		, "websocket-server" : ""
 		, "sqlite3" : ""
 	}
 }

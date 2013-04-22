@@ -90,8 +90,11 @@ public class GridActivity extends ListActivity {
 							case(XmlPullParser.START_DOCUMENT):
 								break;
 							case(XmlPullParser.START_TAG):
-								rowData += xpp.getAttributeValue(null, "ipaddress") + ":";
-								rowData += xpp.getAttributeValue(null, "interface") + ":";
+								if(xpp.getName().equals("suspect"))
+								{
+									rowData += xpp.getAttributeValue(null, "ipaddress") + ":";
+									rowData += xpp.getAttributeValue(null, "interface") + ":";
+								}
 								break;
 							case(XmlPullParser.TEXT): 
 								rowData += xpp.getText() + "%";
@@ -125,13 +128,12 @@ public class GridActivity extends ListActivity {
 			}
 		}
 		
-		
 		@Override
 		protected void onPostExecute(ArrayList<String> gridPop)
 		{
-			if(gridPop == null)
+			if(gridPop == null || gridPop.size() == 0)
 			{
-				// TODO: Show problem dialog
+				// TODO: Show 'no results' dialog
 			}
 			else
 			{

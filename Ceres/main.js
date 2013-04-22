@@ -38,15 +38,16 @@ wsServer.addListener('connection', function(client){
         hostConnection[client] = parsed.id;
         NovaCommon.nova.CheckConnection();
         var suspects = {};
-        var first = true;
         NovaCommon.nova.sendSuspectList(function(suspect){
+          console.log('************************* in sendSuspectList *************************');
           var ip = suspect.GetIpString;
           var iface = suspect.GetInterface;
           var classification = suspect.GetClassification;
-          var suspectXmlTemplate = {'@':[{'ipaddress':ip}, {'interface':iface}], '#':classification};
-          console.log('j2xp suspect == ' + j2xp('suspects', suspectXmlTemplate));
+          var suspectXmlTemplate = {'suspect':[{'@':{'ipaddress':ip, 'interface':iface}, '#':classification}]};
+          var js2xmlopt = {'prettyPrinting':false};
+          console.log('xxxYOYOYOxxx j2xp suspect == ' + j2xp('suspects', suspectXmlTemplate, js2xmlopt));
         });
-        client.send('<suspect ipaddress="192.168.11.10" interface="eth0">50</suspect><suspect ipaddress="255.255.255.255" interface="eth0">50</suspect>');
+        //client.send('<suspects><suspect ipaddress="192.168.11.10" interface="eth0">50</suspect><suspect ipaddress="255.255.255.255" interface="eth0">50</suspect></suspects>');
         break;
       default: 
         console.log('switched with no problem');
