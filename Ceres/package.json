@@ -6,6 +6,7 @@
 		"socket.io"	:	"0.9.10"
 		, "passport"	:	"0.1.x"
 		, "passport-http"	:	""
+		, "js2xmlparser" : ""
 		, "websocket" : "1.x.x"
 		, "sqlite3" : ""
 	}

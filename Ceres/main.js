@@ -19,21 +19,34 @@
 var NovaCommon = require('./NovaCommon.js');
 var BasicStrategy = require('passport-http').BasicStrategy;
 var ws = require('websocket-server');
+var j2xp = require('js2xmlparser');
 var http = require('http');
 
 var hostConnection = {};
 
+NovaCommon.nova.CheckConnection();
+NovaCommon.StartNovad(false);
+
 var wsServer = ws.createServer();
 
 wsServer.addListener('connection', function(client){
-  console.log('connection attempt');
   client.addListener('message', function(message){
     var parsed = JSON.parse(message);
-    console.log('parsed.type == ' + parsed.type);
     switch(parsed.type)
     {
       case 'getAll':
-        client.send('<suspect ipaddress="192.168.11.10" interface="eth0">50</suspect>');
+        hostConnection[client] = parsed.id;
+        NovaCommon.nova.CheckConnection();
+        var suspects = {};
+        var first = true;
+        NovaCommon.nova.sendSuspectList(function(suspect){
+          var ip = suspect.GetIpString;
+          var iface = suspect.GetInterface;
+          var classification = suspect.GetClassification;
+          var suspectXmlTemplate = {'@':[{'ipaddress':ip}, {'interface':iface}], '#':classification};
+          console.log('j2xp suspect == ' + j2xp('suspects', suspectXmlTemplate));
+        });
+        client.send('<suspect ipaddress="192.168.11.10" interface="eth0">50</suspect><suspect ipaddress="255.255.255.255" interface="eth0">50</suspect>');
         break;
       default: 
         console.log('switched with no problem');
