@@ -553,16 +553,23 @@ void NovaNode::sendSuspectListArray(const Arguments& args)
 	Local<Array> ret = Array::New();
 	uint i = 0;
 	stringstream ss;
+
 	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
 	{
-		Suspect temp = (*it).second;
-		ss << temp.GetIpString() << ":" << temp.GetInterface << ":" << temp.GetClassification();
-		ret.Set(Number::New(i), String::New(ss.str()));
+		Suspect* temp = (*it).second;
+		ss << temp->GetClassification();
+		string set = temp->GetIpString();
+		set += ":";
+		set += temp->GetInterface();
+		set += ":";
+		set += ss.str();
+		ret->Set(Number::New(i), String::New(set.c_str()));
 		ss.str("");
 		i++;
 	}
 
-	callbackFunction.Call(callbackFunction, 1, ret);
+	Handle<Value> result = ret;
+	callbackFunction->Call(callbackFunction, 1, &result);
 }
 
 Handle<Value> NovaNode::registerOnNewSuspect(const Arguments& args)
