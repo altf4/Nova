@@ -8,6 +8,9 @@
         android:minSdkVersion="8"
         android:targetSdkVersion="17" />
 
+    <uses-permission 
+        android:name="android.permission.INTERNET" ></uses-permission>
+    
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -16,11 +19,18 @@
         android:name=".CeresClient" >
         <activity
             android:name="com.datasoft.ceres.MainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:clearTaskOnLaunch="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity 
+            android:name="com.datasoft.ceres.GridActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.GRID"/>
             </intent-filter>
         </activity>
     </application>

@@ -41,7 +41,7 @@
         android:text="@string/ceresConnect" />
 
     <EditText
-        android:id="@+id/error"
+        android:id="@+id/notify"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:clickable="false"

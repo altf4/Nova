@@ -4,13 +4,14 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.graphics.Color;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import org.json.*;
-
-import java.net.URI;
 import java.net.URISyntaxException;
 import de.roderick.weberknecht.*;
 
@@ -19,7 +20,8 @@ public class MainActivity extends Activity {
 	EditText id;
 	EditText ip;
 	EditText passwd;
-	EditText error;
+	EditText notify;
+	EditText success;
 	ProgressDialog dialog;
 	CeresClient global;
 	
@@ -27,23 +29,38 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        global = new CeresClient();
+        global = (CeresClient)getApplicationContext();
         connect = (Button)findViewById(R.id.ceresConnect);
         id = (EditText)findViewById(R.id.credID);
         ip = (EditText)findViewById(R.id.credIP);
         passwd = (EditText)findViewById(R.id.credPW);
-        error = (EditText)findViewById(R.id.error);
+        notify = (EditText)findViewById(R.id.notify);
         dialog = new ProgressDialog(this);
-        
         connect.setOnClickListener(new Button.OnClickListener() {
         	public void onClick(View v){
-        		new CeresClientRequest().execute(ip.getText().toString(), "getAll", id.getText().toString());
-        		error.setVisibility(0);
+        		new CeresClientConnect().execute(ip.getText().toString(), "getAll", id.getText().toString());
         	}
         });
     }
 
-
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent keyEvent)
+    {
+    	if(keyCode == KeyEvent.KEYCODE_HOME)
+    	{
+    		// If home key is hit, close connection.
+    		try
+    		{
+    			global.ws.close();
+    		}
+    		catch(WebSocketException wse)
+    		{
+    			System.out.println("Could not close connection!");
+    		}
+    	}
+    	return false;
+    }
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -51,17 +68,16 @@ public class MainActivity extends Activity {
         return true;
     }
  
-    private class CeresClientRequest extends AsyncTask<String, Void, Integer>
-    {
+    private class CeresClientConnect extends AsyncTask<String, Void, Integer> {
     	@Override
     	protected void onPreExecute()
     	{
-    		super.onPreExecute();
     		// Display spinner here
     		dialog.setCancelable(true);
     		dialog.setMessage("Attempting to connect");
     		dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
     		dialog.show();
+    		super.onPreExecute();
     	}
     	@Override
     	protected Integer doInBackground(String... params)
@@ -69,35 +85,8 @@ public class MainActivity extends Activity {
     		// Negotiate connection to Ceres.js websocket server
     		try
     		{
-    			URI url = new URI("ws://" + params[0]);
-    			global.ws = new WebSocketConnection(url);
-    			global.ws.setEventHandler(new WebSocketEventHandler() {
-					@Override
-					public void onOpen() {
-						// TODO Auto-generated method stub
-					}
-					@Override
-					public void onMessage(WebSocketMessage message) {
-						// TODO Auto-generated method stub
-					}
-					@Override
-					public void onClose() {
-						// TODO Auto-generated method stub
-					}
-				});
-    			global.ws.connect();
-    			JSONObject message = new JSONObject();
-    			try
-    			{
-    				message.put("type", params[1]);
-    				message.put("id", params[2]);
-    			}
-    			catch(JSONException jse)
-    			{
-    				jse.printStackTrace();
-    				return 0;
-    			}
-    			global.ws.send(message.toString());
+    			global.initWebSocketConnection(params[0]);
+    			global.sendCeresRequest(params[1], params[2]);
     		}
     		catch(WebSocketException wse)
     		{
@@ -107,6 +96,16 @@ public class MainActivity extends Activity {
     		catch(URISyntaxException use)
     		{
     			use.printStackTrace();
+    			return 0;
+    		}
+			catch(JSONException jse)
+			{
+				jse.printStackTrace();
+				return 0;
+			}
+    		catch(Exception e)
+    		{
+    			e.printStackTrace();
     			return 0;
     		}
     		return 1;
@@ -129,12 +128,22 @@ public class MainActivity extends Activity {
     			{
     				wse.printStackTrace();
     			}
-    			error.setVisibility(1);
+    			// error
+    			notify.setText(R.string.error);
+    			notify.setTextColor(Color.RED);
+    			notify.setVisibility(1);
     		}
     		else
     		{
     			dialog.dismiss();
-    			// Move to new activity
+    			//success
+    			notify.setText(R.string.success);
+    			notify.setTextColor(Color.GREEN);
+    			notify.setVisibility(1);
+    			// wait a second, move to next activity
+    			Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
+    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    			getApplicationContext().startActivity(nextPage);
     		}
     	}
     }
