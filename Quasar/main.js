@@ -1833,7 +1833,8 @@ app.post('/customizeTrainingSave', function(req, res)
             NovaCommon.dbqAddLastTrainingDataSelection.run(uid, 0, function(err) {
                 if(err) {LOG("ERROR", 'Database error: ' + err);}
             });
-        if(
+        }
+        else {
             NovaCommon.dbqAddLastTrainingDataSelection.run(uid, 1, function(err) {
                 if(err) {LOG("ERROR", 'Database error: ' + err);}
             });
@@ -2255,7 +2256,6 @@ var distributeSuspect = function(suspect)
 {
   var d = new Date(suspect.GetLastPacketTime() * 1000);
   var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-  
   
   var s = new Object();
   objCopy(suspect, s);
