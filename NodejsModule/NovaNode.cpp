@@ -544,7 +544,7 @@ void NovaNode::sendSuspectListArray(const Arguments& args)
 	if(!args[0]->IsFunction())
 	{
 		LOG(DEBUG, "Attempted to register OnNewSuspect with non-function, excepting","");
-		return ThrowException(Exception::TypeError(String::New("Argument must be a function")));
+		ThrowException(Exception::TypeError(String::New("Argument must be a function")));
 	}
 
 	Local<Function> callbackFunction;
@@ -552,11 +552,13 @@ void NovaNode::sendSuspectListArray(const Arguments& args)
 
 	Local<Array> ret = Array::New();
 	uint i = 0;
-
+	stringstream ss;
 	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
 	{
 		Suspect temp = (*it).second;
-		ret.Set(Number::New(i), String::New(temp.GetIpString() + ":" + temp.GetInterface + ":" + temp.GetClassification()));
+		ss << temp.GetIpString() << ":" << temp.GetInterface << ":" << temp.GetClassification();
+		ret.Set(Number::New(i), String::New(ss.str()));
+		ss.str("");
 		i++;
 	}
 
