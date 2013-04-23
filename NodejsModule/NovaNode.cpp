@@ -590,7 +590,7 @@ Handle<Value> NovaNode::sendSuspectToCallback(const Arguments& args)
 	}
 
 	Local<Function> callbackFunction;
-	callbackFunction = Local<Function>::New(args[0].As<Function>());
+	callbackFunction = Local<Function>::New(args[2].As<Function>());
 
 	SuspectID_pb key;
 	key.set_m_ip(inet_network(ip.c_str()));

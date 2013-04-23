@@ -3,9 +3,12 @@ package com.datasoft.ceres;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.json.JSONException;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
+
+import de.roderick.weberknecht.WebSocketException;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -37,10 +40,26 @@ public class GridActivity extends ListActivity {
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		String[] item = ((String)getListAdapter().getItem(position)).split(":");
-		// Just to test that the clickables work, onListItemClick will switch intents
-		// and query for suspect data
 		String selected = item[0] + ":" + item[1];
 		Toast.makeText(this, selected + " selected", Toast.LENGTH_LONG).show();
+		try
+		{
+			wait.setCancelable(true);
+			wait.setMessage("Retrieving Suspect " + selected);
+			wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			wait.show();
+			global.sendCeresRequest("getSuspect", "doop", selected);
+		}
+		catch(JSONException jse)
+		{
+			wait.cancel();
+			Toast.makeText(this, "Could not get details for " + selected, Toast.LENGTH_LONG).show();
+		}
+		catch(WebSocketException wse)
+		{
+			wait.cancel();
+			Toast.makeText(this, "Could not get details for " + selected, Toast.LENGTH_LONG).show();
+		}
 	}
 	
 	private class ParseXml extends AsyncTask<Void, Integer, ArrayList<String>> {
