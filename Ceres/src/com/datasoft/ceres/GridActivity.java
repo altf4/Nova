@@ -23,42 +23,80 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 public class GridActivity extends ListActivity {
-	CeresClient global;
-	ProgressDialog wait;
-	ClassificationGridAdapter aa;
-	Context gridContext;
+	CeresClient m_global;
+	ProgressDialog m_wait;
+	ClassificationGridAdapter m_aa;
+	Context m_gridContext;
+	String m_selected;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        global = (CeresClient)getApplicationContext();
-        wait = new ProgressDialog(this);
-		gridContext = this;
+        m_global = (CeresClient)getApplicationContext();
+        m_wait = new ProgressDialog(this);
+		m_gridContext = this;
 		new ParseXml().execute();
 	}
 	
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		String[] item = ((String)getListAdapter().getItem(position)).split(":");
-		String selected = item[0] + ":" + item[1];
-		Toast.makeText(this, selected + " selected", Toast.LENGTH_LONG).show();
-		try
+		m_selected = item[0] + ":" + item[1];
+		Toast.makeText(this, m_selected + " selected", Toast.LENGTH_SHORT).show();
+	    new CeresSuspectRequest().execute();
+	}
+	
+	private class CeresSuspectRequest extends AsyncTask<Void, Void, Integer> {
+		@Override
+		protected void onPreExecute()
 		{
-			wait.setCancelable(true);
-			wait.setMessage("Retrieving Suspect " + selected);
-			wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-			wait.show();
-			global.sendCeresRequest("getSuspect", "doop", selected);
+			m_wait.setCancelable(true);
+			m_wait.setMessage("Retrieving Suspect " + m_selected);
+			m_wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			m_wait.show();
+			super.onPreExecute();
 		}
-		catch(JSONException jse)
+		@Override
+		protected Integer doInBackground(Void... vd)
 		{
-			wait.cancel();
-			Toast.makeText(this, "Could not get details for " + selected, Toast.LENGTH_LONG).show();
+			try
+			{
+				m_global.sendCeresRequest("getSuspect", "doop", m_selected);
+				// TEMP SLEEP FOR TESTING DIALOG POPUP
+				Thread.sleep(1000);
+				//while(!m_global.checkMessageReceived()){};
+			}
+			catch(JSONException jse)
+			{
+				return 0;
+			}
+			catch(WebSocketException wse)
+			{
+				return 0;
+			}
+			catch(InterruptedException e) 
+			{
+				return 0;
+			}
+			return 1;
 		}
-		catch(WebSocketException wse)
+		@Override
+		protected void onPostExecute(Integer result)
 		{
-			wait.cancel();
-			Toast.makeText(this, "Could not get details for " + selected, Toast.LENGTH_LONG).show();
+			if(result == 0)
+			{
+				m_wait.cancel();
+				Toast.makeText(m_gridContext, "Could not get details for " + m_selected, Toast.LENGTH_LONG).show();
+			}
+			else
+			{
+				/*Intent nextPage = new Intent(getApplicationContext(), DetailsActivity.class);
+				nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+				nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				getApplicationContext().startActivity(nextPage);*/
+				m_wait.cancel();
+				Toast.makeText(m_gridContext, "Would switch activity", Toast.LENGTH_LONG).show();
+			}
 		}
 	}
 	
@@ -66,10 +104,10 @@ public class GridActivity extends ListActivity {
 		@Override
 		protected void onPreExecute()
 		{
-			wait.setCancelable(true);
-			wait.setMessage("Retrieving Suspect List");
-			wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-			wait.show();
+			m_wait.setCancelable(true);
+			m_wait.setMessage("Retrieving Suspect List");
+			m_wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			m_wait.show();
     		super.onPreExecute();
 		}
 		
@@ -81,20 +119,24 @@ public class GridActivity extends ListActivity {
 				XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
 				factory.setNamespaceAware(true);
 				XmlPullParser xpp;
-				int i = 0;
+				// int i = 0;
 				// Ugly as hell, but I don't know what else to do. Just waits
 				// 3 seconds for the XML to be taken from the wire; if it takes
 				// longer, fail. Would rather wait until it comes, but there needs
 				// to be a cut off at some point or it'll spin forever.
-				while(!global.checkMessageReceived() && i < 5)
+				//
+				// Moved something similar to this into right after the 
+				// message send in MainActivity to test responsiveness.
+				// Works fine, will keep it there for now.
+				/*while(!m_global.checkMessageReceived() && i < 5)
 				{
 					Thread.sleep(1000);
 					i++;
-				}
-				if(global.checkMessageReceived())
+				}*/
+				if(m_global.checkMessageReceived())
 				{
 					xpp = factory.newPullParser();
-					xpp.setInput(global.getXmlReceive());
+					xpp.setInput(m_global.getXmlReceive());
 					int evt = xpp.getEventType();
 					ArrayList<String> al = new ArrayList<String>();
 					// On this page, we're receiving a format containing three things:
@@ -123,7 +165,7 @@ public class GridActivity extends ListActivity {
 						}
 						evt = xpp.next();
 					}
-					global.clearXmlReceive();
+					m_global.clearXmlReceive();
 					return al;
 				}
 				else
@@ -139,10 +181,6 @@ public class GridActivity extends ListActivity {
 			{
 				return null;
 			}
-			catch(InterruptedException ie)
-			{
-				return null;
-			}
 		}
 		
 		@Override
@@ -150,8 +188,8 @@ public class GridActivity extends ListActivity {
 		{
 			if(gridPop == null || gridPop.size() == 0)
 			{
-				wait.cancel();
-				AlertDialog.Builder build = new AlertDialog.Builder(gridContext);
+				m_wait.cancel();
+				AlertDialog.Builder build = new AlertDialog.Builder(m_gridContext);
 				build
 				.setTitle("Suspect list empty")
 				.setMessage("Ceres server returned no suspects. Try again?")
@@ -181,10 +219,10 @@ public class GridActivity extends ListActivity {
 			}
 			else
 			{
-				Toast.makeText(gridContext, gridPop.size() + " suspects loaded", Toast.LENGTH_LONG).show();
-				aa = new ClassificationGridAdapter(gridContext, gridPop);
-		        setListAdapter(aa);
-				wait.cancel();
+				Toast.makeText(m_gridContext, gridPop.size() + " suspects loaded", Toast.LENGTH_LONG).show();
+				m_aa = new ClassificationGridAdapter(m_gridContext, gridPop);
+		        setListAdapter(m_aa);
+				m_wait.cancel();
 			}
 		}
 	}
