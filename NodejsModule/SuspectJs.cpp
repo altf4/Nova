@@ -31,7 +31,6 @@ Handle<Object> SuspectJs::WrapSuspect(Suspect* suspect)
 		proto->Set("GetLastPacketTime", FunctionTemplate::New(InvokeMethod<long int, Suspect, &Suspect::GetLastPacketTime>) );
 		proto->Set("GetIsHostile", 		FunctionTemplate::New(InvokeMethod<bool, Suspect, &Suspect::GetIsHostile>) );
 		
-		
 		proto->Set("GetRstCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetRstCount>) );
 		proto->Set("GetAckCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetAckCount>) );
 		proto->Set("GetSynCount", FunctionTemplate::New(InvokeMethod<uint64_t, Suspect, &Suspect::GetSynCount>) );

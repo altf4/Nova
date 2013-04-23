@@ -289,6 +289,7 @@ void NovaNode::Init(Handle<Object> target)
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspect", sendCachedSuspect);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspectList", sendSuspectList);
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspectToCallback", sendSuspectToCallback);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspectListArray", sendSuspectListArray);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "RequestSuspectCallback", RequestSuspectCallback);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", ClearAllSuspects);
@@ -562,6 +563,43 @@ Handle<Value> NovaNode::sendSuspectListArray(const Arguments& args)
 	}
 
 	Handle<Value> result = ret;
+	callbackFunction->Call(callbackFunction, 1, &result);
+
+	return scope.Close(Null());
+}
+
+Handle<Value> NovaNode::sendSuspectToCallback(const Arguments& args)
+{
+	HandleScope scope;
+
+	LOG(DEBUG, "Triggered sendSuspectListArray", "");
+
+	if(args.Length() != 3)
+	{
+		ThrowException(Exception::TypeError(String::New("Must be called with 3 arguments")));
+		return scope.Close(Null());
+	}
+
+	string ip = cvv8::CastFromJS<string>(args[0]);
+	string iface = cvv8::CastFromJS<string>(args[1]);
+
+	if(!args[2]->IsFunction())
+	{
+		ThrowException(Exception::TypeError(String::New("Argument must be a function")));
+		LOG(DEBUG, "Attempted to register OnNewSuspect with non-function, excepting","");
+	}
+
+	Local<Function> callbackFunction;
+	callbackFunction = Local<Function>::New(args[0].As<Function>());
+
+	SuspectID_pb key;
+	key.set_m_ip(inet_network(ip.c_str()));
+	key.set_m_ifname(iface.c_str());
+
+	Nova::Suspect *suspect = new Suspect();
+	(*suspect) = *m_suspects[key];
+
+	Handle<Value> result = SuspectJs::WrapSuspect(suspect);
 	callbackFunction->Call(callbackFunction, 1, &result);
 
 	return scope.Close(Null());

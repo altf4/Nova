@@ -45,6 +45,18 @@ wsServer.addListener('connection', function(client){
           });
         }, 2000);
         break;
+      case 'getSuspect':
+        NovaCommon.nova.CheckConnection();
+        var ipiface = parsed.suspect.split(':');
+        setTimeout(function(){
+          NovaCommon.nova.sendSuspectToCallback(ipiface[0], ipiface[1], function(suspect){
+            detailedSuspectPage(suspect, function(xml){
+              console.log('xml == ' + xml);
+              //client.send(xml);
+            });
+          });
+        }, 2000);
+        break;
       default: 
         console.log('switched with no problem');
         break;
@@ -73,3 +85,38 @@ function gridPageSuspectList(suspects, cb){
   cb && cb(suspectRet);
 }
 
+function detailedSuspectPage(suspect, cb)
+{
+  var featureSet = ["IP Traffic Distribution",
+                  "Port Traffic Distribution",
+                  "Packet Size Mean",
+                  "Packet Size Deviation",
+                  "Protected IPs Contacted",
+                  "Distinct TCP Ports Contacted",
+                  "Distinct UDP Ports Contacted",
+                  "Average TCP Ports Per Host",
+                  "Average UDP Ports Per Host",
+                  "TCP Percent SYN",
+                  "TCP Percent FIN",
+                  "TCP Percent RST",
+                  "TCP Percent SYN ACK",
+                  "Haystack Percent Contacted"];
+  var ret = '<detailedSuspect>';
+  var js2xmlopt = {'declaration':{'include':false}, 'prettyPrinting':{'enabled':false}};
+  var classification = (Math.floor(parseFloat(suspects[i].GetClassification()) * 10000) / 100).toFixed(2);
+  var d = new Date(suspect.GetLastPacketTime * 1000);
+  var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  var idinfoXmlTemplate = {'@':{'id':suspect.GetIdString(), 'ip':suspect.GetIpString(), 'iface':suspect.GetInterface(), 'class':classification, 'lpt':dstring}};
+  ret += j2xp('idInfo', idinfoXmlTemplate, js2xmlopt) + '>';
+  console.log('ret == ' + ret);
+  var protoDataTemplate = {'@':{'tcp':suspect.GetTcpPacketCount(), 'udp':suspect.GetUdpPacketCount(), 'icmp':suspect.GetIcmpPacketCount(), 'other':suspect.GetOtherPacketCount()}};
+  ret += j2xp('protoInfo', protoDataTemplate, js2xmlopt) + '>';
+  console.log('ret == ' + ret);
+  var packetDataTemplate = {'@':{'rst':suspect.GetRstCount(), 'ack':suspect.GetAckCount(), 'syn':suspect.GetSynCount(), 'fin':suspect.GetFinCount(), 'synack':suspect.GetSynAckCount()}};
+  ret += j2xp('packetInfo', packetDataTemplate, js2xmlopt) + '>';
+  console.log('ret == ' + ret);
+  ret += '</detailedSuspect>';
+  console.log('ret == ' + ret);
+  cb && cb('');
+  //cb && cb(ret);
+}

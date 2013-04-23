@@ -89,6 +89,7 @@ public:
 	static Handle<Value> sendCachedSuspect(const Arguments& args);
 	static Handle<Value> sendSuspectList(const Arguments& args);
 	static Handle<Value> sendSuspectListArray(const Arguments& args);
+	static Handle<Value> sendSuspectToCallback(const Arguments& args);
 	static Handle<Value> RequestSuspectCallback(const Arguments& args);
 	static Handle<Value> ClearAllSuspects(const Arguments& args);
 	static Handle<Value> registerOnNewSuspect(const Arguments& args);

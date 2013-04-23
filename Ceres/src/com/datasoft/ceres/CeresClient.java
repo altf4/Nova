@@ -54,12 +54,24 @@ public class CeresClient extends Application {
 		});
 		ws.connect();
 	}
-	
+
 	public void sendCeresRequest(String type, String id) throws WebSocketException, JSONException
 	{
 		JSONObject message = new JSONObject();
 		message.put("type", type);
 		message.put("id", id);
+		ws.send(message.toString());
+	}
+	
+	public void sendCeresRequest(String type, String id, String suspect) throws WebSocketException, JSONException
+	{
+		JSONObject message = new JSONObject();
+		message.put("type", type);
+		message.put("id", id);
+		if(suspect != null && !suspect.equals(""))
+		{
+			message.put("suspect", suspect);
+		}
 		ws.send(message.toString());
 	}
 	

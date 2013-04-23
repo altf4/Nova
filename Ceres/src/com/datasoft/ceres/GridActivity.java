@@ -36,10 +36,11 @@ public class GridActivity extends ListActivity {
 	
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
-		String item = (String)getListAdapter().getItem(position);
+		String[] item = ((String)getListAdapter().getItem(position)).split(":");
 		// Just to test that the clickables work, onListItemClick will switch intents
 		// and query for suspect data
-		Toast.makeText(this, item + " selected", Toast.LENGTH_LONG).show();
+		String selected = item[0] + ":" + item[1];
+		Toast.makeText(this, selected + " selected", Toast.LENGTH_LONG).show();
 	}
 	
 	private class ParseXml extends AsyncTask<Void, Integer, ArrayList<String>> {
