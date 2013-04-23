@@ -39,6 +39,7 @@ public class MainActivity extends Activity {
         connect.setOnClickListener(new Button.OnClickListener() {
         	public void onClick(View v){
         		new CeresClientConnect().execute(ip.getText().toString(), "getAll", id.getText().toString());
+        		notify.setVisibility(View.INVISIBLE);
         	}
         });
     }
@@ -131,7 +132,7 @@ public class MainActivity extends Activity {
     			// error
     			notify.setText(R.string.error);
     			notify.setTextColor(Color.RED);
-    			notify.setVisibility(1);
+    			notify.setVisibility(View.VISIBLE);
     		}
     		else
     		{
@@ -139,7 +140,7 @@ public class MainActivity extends Activity {
     			//success
     			notify.setText(R.string.success);
     			notify.setTextColor(Color.GREEN);
-    			notify.setVisibility(1);
+    			notify.setVisibility(View.VISIBLE);
     			// wait a second, move to next activity
     			Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
     			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

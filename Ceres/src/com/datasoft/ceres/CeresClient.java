@@ -19,7 +19,6 @@ public class CeresClient extends Application {
 	@Override
 	public void onCreate()
 	{
-		System.out.println("In CeresClient onCreate()");
 		messageReceived = false;
 		super.onCreate();
 	}

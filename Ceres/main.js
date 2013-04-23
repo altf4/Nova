@@ -39,7 +39,9 @@ wsServer.addListener('connection', function(client){
         NovaCommon.nova.CheckConnection();
         setTimeout(function(){
           NovaCommon.nova.sendSuspectListArray(function(suspects){
-            gridPageSuspectList(suspects, function(xml){client.send(xml);});
+            gridPageSuspectList(suspects, function(xml){
+              client.send(xml);
+            });
           });
         }, 2000);
         break;

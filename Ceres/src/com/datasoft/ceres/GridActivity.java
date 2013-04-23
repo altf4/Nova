@@ -1,24 +1,21 @@
 package com.datasoft.ceres;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Vector;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
-import android.app.Activity;
+
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -69,7 +66,7 @@ public class GridActivity extends ListActivity {
 				// 3 seconds for the XML to be taken from the wire; if it takes
 				// longer, fail. Would rather wait until it comes, but there needs
 				// to be a cut off at some point or it'll spin forever.
-				while(!global.checkMessageReceived() && i < 3)
+				while(!global.checkMessageReceived() && i < 5)
 				{
 					Thread.sleep(1000);
 					i++;
@@ -133,14 +130,42 @@ public class GridActivity extends ListActivity {
 		{
 			if(gridPop == null || gridPop.size() == 0)
 			{
-				// TODO: Show 'no results' dialog
+				wait.cancel();
+				AlertDialog.Builder build = new AlertDialog.Builder(gridContext);
+				build
+				.setTitle("Suspect list empty")
+				.setMessage("Ceres server returned no suspects. Try again?")
+				.setCancelable(false)
+				.setPositiveButton("Yes", new DialogInterface.OnClickListener(){
+					@Override
+					public void onClick(DialogInterface dialog, int id)
+					{
+		    			Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
+		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		    			getApplicationContext().startActivity(nextPage);
+					}
+				})
+				.setNegativeButton("No", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which)
+					{
+		    			Intent nextPage = new Intent(getApplicationContext(), MainActivity.class);
+		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		    			getApplicationContext().startActivity(nextPage);
+					}
+				});
+				AlertDialog ad = build.create();
+				ad.show();
 			}
 			else
 			{
+				Toast.makeText(gridContext, gridPop.size() + " suspects loaded", Toast.LENGTH_LONG).show();
 				aa = new ClassificationGridAdapter(gridContext, gridPop);
 		        setListAdapter(aa);
+				wait.cancel();
 			}
-			wait.cancel();
 		}
 	}
 }
