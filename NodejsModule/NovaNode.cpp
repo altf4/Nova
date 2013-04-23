@@ -289,6 +289,7 @@ void NovaNode::Init(Handle<Object> target)
 
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspect", sendCachedSuspect);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspectList", sendSuspectList);
+	NODE_SET_PROTOTYPE_METHOD(s_ct, "sendSuspectListArray", sendSuspectListArray);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "RequestSuspectCallback", RequestSuspectCallback);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "ClearAllSuspects", ClearAllSuspects);
 	NODE_SET_PROTOTYPE_METHOD(s_ct, "registerOnNewSuspect", registerOnNewSuspect );
@@ -535,7 +536,7 @@ Handle<Value> NovaNode::sendSuspectList(const Arguments& args)
 	return scope.Close(result);
 }
 
-void NovaNode::sendSuspectListArray(const Arguments& args)
+Handle<Value> NovaNode::sendSuspectListArray(const Arguments& args)
 {
 	HandleScope scope;
 
@@ -556,20 +557,14 @@ void NovaNode::sendSuspectListArray(const Arguments& args)
 
 	for(SuspectHashTable::iterator it = m_suspects.begin(); it != m_suspects.end(); it++)
 	{
-		Suspect* temp = (*it).second;
-		ss << temp->GetClassification();
-		string set = temp->GetIpString();
-		set += ":";
-		set += temp->GetInterface();
-		set += ":";
-		set += ss.str();
-		ret->Set(Number::New(i), String::New(set.c_str()));
-		ss.str("");
+		ret->Set(Number::New(i), SuspectJs::WrapSuspect((*it).second));
 		i++;
 	}
 
 	Handle<Value> result = ret;
 	callbackFunction->Call(callbackFunction, 1, &result);
+
+	return scope.Close(Null());
 }
 
 Handle<Value> NovaNode::registerOnNewSuspect(const Arguments& args)

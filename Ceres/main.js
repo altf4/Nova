@@ -37,17 +37,11 @@ wsServer.addListener('connection', function(client){
       case 'getAll':
         hostConnection[client] = parsed.id;
         NovaCommon.nova.CheckConnection();
-        var suspects = {};
-        NovaCommon.nova.sendSuspectList(function(suspect){
-          console.log('************************* in sendSuspectList *************************');
-          var ip = suspect.GetIpString;
-          var iface = suspect.GetInterface;
-          var classification = suspect.GetClassification;
-          var suspectXmlTemplate = {'suspect':[{'@':{'ipaddress':ip, 'interface':iface}, '#':classification}]};
-          var js2xmlopt = {'prettyPrinting':false};
-          console.log('xxxYOYOYOxxx j2xp suspect == ' + j2xp('suspects', suspectXmlTemplate, js2xmlopt));
-        });
-        //client.send('<suspects><suspect ipaddress="192.168.11.10" interface="eth0">50</suspect><suspect ipaddress="255.255.255.255" interface="eth0">50</suspect></suspects>');
+        setTimeout(function(){
+          NovaCommon.nova.sendSuspectListArray(function(suspects){
+            gridPageSuspectList(suspects, function(xml){client.send(xml);});
+          });
+        }, 2000);
         break;
       default: 
         console.log('switched with no problem');
@@ -57,4 +51,23 @@ wsServer.addListener('connection', function(client){
 });
 
 wsServer.listen(8080);
+
+function gridPageSuspectList(suspects, cb){
+  var suspectRet = '<suspects>';
+  var js2xmlopt = {'declaration':{'include':false}, 'prettyPrinting':{'enabled':false}};
+  for(var i in suspects)
+  {
+    var ip = suspects[i].GetIpString();
+    var iface = suspects[i].GetInterface();
+    var classification = (Math.floor(parseFloat(suspects[i].GetClassification()) * 10000) / 100).toFixed(2);
+    if(classification == '-200.00')
+    {
+      continue;
+    }
+    var suspectXmlTemplate = {'@':{'ipaddress':ip, 'interface':iface}, '#':classification};
+    suspectRet += j2xp('suspect', suspectXmlTemplate, js2xmlopt) + '>';
+  }
+  suspectRet += '</suspects>'
+  cb && cb(suspectRet);
+}
 
