@@ -23,6 +23,9 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 public class GridActivity extends ListActivity {
+
+	public final static String DETAILS_MESSAGE = "com.datasoft.ceres.DETAILS_MESSAGE";
+	
 	CeresClient m_global;
 	ProgressDialog m_wait;
 	ClassificationGridAdapter m_aa;
@@ -42,8 +45,11 @@ public class GridActivity extends ListActivity {
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		String[] item = ((String)getListAdapter().getItem(position)).split(":");
 		m_selected = item[0] + ":" + item[1];
-		Toast.makeText(this, m_selected + " selected", Toast.LENGTH_SHORT).show();
-	    new CeresSuspectRequest().execute();
+		Toast.makeText(this, m_selected + " selected", Toast.LENGTH_LONG).show();
+
+		Intent intent = new Intent(this, DetailsActivity.class);
+		intent.putExtra(DETAILS_MESSAGE, m_selected);
+		startActivity(intent);
 	}
 	
 	private class CeresSuspectRequest extends AsyncTask<Void, Void, Integer> {
