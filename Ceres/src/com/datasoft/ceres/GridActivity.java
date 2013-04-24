@@ -23,6 +23,9 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 public class GridActivity extends ListActivity {
+	
+	public final static String DETAILS_MESSAGE = "com.datasoft.ceres.DETAILS_MESSAGE";
+	
 	CeresClient global;
 	ProgressDialog wait;
 	ClassificationGridAdapter aa;
@@ -42,24 +45,10 @@ public class GridActivity extends ListActivity {
 		String[] item = ((String)getListAdapter().getItem(position)).split(":");
 		String selected = item[0] + ":" + item[1];
 		Toast.makeText(this, selected + " selected", Toast.LENGTH_LONG).show();
-		try
-		{
-			wait.setCancelable(true);
-			wait.setMessage("Retrieving Suspect " + selected);
-			wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-			wait.show();
-			global.sendCeresRequest("getSuspect", "doop", selected);
-		}
-		catch(JSONException jse)
-		{
-			wait.cancel();
-			Toast.makeText(this, "Could not get details for " + selected, Toast.LENGTH_LONG).show();
-		}
-		catch(WebSocketException wse)
-		{
-			wait.cancel();
-			Toast.makeText(this, "Could not get details for " + selected, Toast.LENGTH_LONG).show();
-		}
+
+		Intent intent = new Intent(this, DetailsActivity.class);
+		intent.putExtra(DETAILS_MESSAGE, selected);
+		startActivity(intent);
 	}
 	
 	private class ParseXml extends AsyncTask<Void, Integer, ArrayList<String>> {
