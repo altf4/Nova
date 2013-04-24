@@ -33,8 +33,8 @@ public class ClassificationGridAdapter extends ArrayAdapter<String> {
 	  LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	  View rowView = inflater.inflate(R.layout.activity_grid, parent, false);
 	  
-	  TextView ip = (TextView) rowView.findViewById(R.id.suspectIp);
-	  TextView iface = (TextView) rowView.findViewById(R.id.suspectIface);
+	  TextView ip = (TextView) rowView.findViewById(R.id.suspectIpString);
+	  TextView iface = (TextView) rowView.findViewById(R.id.suspectIfaceString);
 	  TextView classification = (TextView) rowView.findViewById(R.id.suspectClass);
 	  
 	  String s = values.get(position);

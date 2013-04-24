@@ -47,9 +47,7 @@ public class GridActivity extends ListActivity {
 		m_selected = item[0] + ":" + item[1];
 		Toast.makeText(this, m_selected + " selected", Toast.LENGTH_LONG).show();
 
-		Intent intent = new Intent(this, DetailsActivity.class);
-		intent.putExtra(DETAILS_MESSAGE, m_selected);
-		startActivity(intent);
+		new CeresSuspectRequest().execute();
 	}
 	
 	private class CeresSuspectRequest extends AsyncTask<Void, Void, Integer> {
@@ -93,10 +91,10 @@ public class GridActivity extends ListActivity {
 			{
 				m_wait.cancel();
 				Toast.makeText(m_gridContext, "Would switch activity", Toast.LENGTH_LONG).show();
-				/*Intent nextPage = new Intent(getApplicationContext(), DetailsActivity.class);
+				Intent nextPage = new Intent(getApplicationContext(), DetailsActivity.class);
 				nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 				nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-				getApplicationContext().startActivity(nextPage);*/
+				getApplicationContext().startActivity(nextPage);
 			}
 		}
 	}

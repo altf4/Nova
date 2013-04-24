@@ -1,0 +1,78 @@
+package com.datasoft.ceres;
+
+public class Suspect
+{
+	String m_id;
+	String m_ip;
+	String m_iface;
+	String m_classification;
+	Boolean m_hostility;
+	String m_lastPacket;
+	String m_rstCount;
+	String m_ackCount;
+	String m_synCount;
+	String m_finCount;
+	String m_synAckCount;
+	String m_tcpCount;
+	String m_udpCount;
+	String m_icmpCount;
+	String m_otherCount;
+	
+	public Suspect()
+	{
+		m_id = "";
+		m_ip = "";
+		m_iface = "";
+		m_classification = "";
+		m_lastPacket = "";
+		m_rstCount = "";
+		m_ackCount = "";
+		m_synCount = "";
+		m_finCount = "";
+		m_synAckCount = "";
+		m_tcpCount = "";
+		m_udpCount = "";
+		m_icmpCount = "";
+		m_otherCount = "";
+		m_hostility = false;
+	}
+	
+	public Suspect(String ip, String iface)
+	{
+		m_ip = ip;
+		m_iface = iface;
+		m_id = ip + ":" + iface;
+		m_classification = "";
+		m_lastPacket = "";
+		m_rstCount = "";
+		m_ackCount = "";
+		m_synCount = "";
+		m_finCount = "";
+		m_synAckCount = "";
+		m_tcpCount = "";
+		m_udpCount = "";
+		m_icmpCount = "";
+		m_otherCount = "";
+		m_hostility = false;
+	}
+	
+	public void setIp(String ip)
+	{
+		m_ip = ip;
+	}
+	
+	public String getIp()
+	{
+		return m_ip;
+	}
+
+	public void setIface(String iface)
+	{
+		m_iface = iface;
+	}
+	
+	public String getIface()
+	{
+		return m_iface;
+	}
+}
