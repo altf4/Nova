@@ -51,8 +51,8 @@ wsServer.addListener('connection', function(client){
         setTimeout(function(){
           NovaCommon.nova.sendSuspectToCallback(ipiface[0], ipiface[1], function(suspect){
             detailedSuspectPage(suspect, function(xml){
-              console.log('xml == ' + xml);
-              //client.send(xml);
+              client.send(xml);
+              console.log('after client.send');
             });
           });
         }, 2000);
@@ -87,21 +87,20 @@ function gridPageSuspectList(suspects, cb){
 
 function detailedSuspectPage(suspect, cb)
 {
-  var featureSet = [
-    "IP Traffic Distribution",
-    "Port Traffic Distribution",
-    "Packet Size Mean",
-    "Packet Size Deviation",
-    "Protected IPs Contacted",
-    "Distinct TCP Ports Contacted",
-    "Distinct UDP Ports Contacted",
-    "Average TCP Ports Per Host",
-    "Average UDP Ports Per Host",
-    "TCP Percent SYN",
-    "TCP Percent FIN",
-    "TCP Percent RST",
-    "TCP Percent SYN ACK",
-    "Haystack Percent Contacted"];
+  var featureSet = ["IP Traffic Distribution",
+                  "Port Traffic Distribution",
+                  "Packet Size Mean",
+                  "Packet Size Deviation",
+                  "Protected IPs Contacted",
+                  "Distinct TCP Ports Contacted",
+                  "Distinct UDP Ports Contacted",
+                  "Average TCP Ports Per Host",
+                  "Average UDP Ports Per Host",
+                  "TCP Percent SYN",
+                  "TCP Percent FIN",
+                  "TCP Percent RST",
+                  "TCP Percent SYN ACK",
+                  "Haystack Percent Contacted"];
   var ret = '<detailedSuspect>';
   var js2xmlopt = {'declaration':{'include':false}, 'prettyPrinting':{'enabled':false}};
   var classification = (Math.floor(parseFloat(suspect.GetClassification()) * 10000) / 100).toFixed(2);
