@@ -33,9 +33,9 @@ public class ClassificationGridAdapter extends ArrayAdapter<String> {
 	  LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	  View rowView = inflater.inflate(R.layout.activity_grid, parent, false);
 	  
-	  TextView ip = (TextView) rowView.findViewById(R.id.suspectIpString);
-	  TextView iface = (TextView) rowView.findViewById(R.id.suspectIfaceString);
-	  TextView classification = (TextView) rowView.findViewById(R.id.suspectClass);
+	  TextView ip = (TextView)rowView.findViewById(R.id.suspectIpString);
+	  TextView iface = (TextView)rowView.findViewById(R.id.suspectIfaceString);
+	  TextProgressBar classification = (TextProgressBar)rowView.findViewById(R.id.suspectClass);
 	  
 	  String s = values.get(position);
 	  String[] splitStr = s.split(":");
@@ -43,6 +43,10 @@ public class ClassificationGridAdapter extends ArrayAdapter<String> {
 	  ip.setText(splitStr[0]);
 	  iface.setText(splitStr[1]);
 	  classification.setText(splitStr[2]);
+	  int progress = 0;
+	  double classVal = Double.parseDouble(splitStr[2].substring(0, splitStr[2].length() - 1));
+	  progress = (int)Math.round(classVal);
+	  classification.setProgress(progress);
 	
 	  return rowView;
   }

@@ -12,8 +12,8 @@
     	android:layout_marginRight="5sp"
     	android:layout_marginTop="2sp"
     	android:layout_marginBottom="2sp"
-    	android:textSize="18sp" >
-    </TextView>
+    	android:textSize="18sp"
+    	android:gravity="center" />
     <TextView
         android:id="@+id/suspectIfaceString"
         android:layout_width="wrap_content"
@@ -22,18 +22,17 @@
     	android:layout_marginRight="5sp"
     	android:layout_marginTop="2sp"
     	android:layout_marginBottom="2sp"
-    	android:textSize="18sp" >
-    </TextView>
-    <TextView
+    	android:textSize="18sp" />
+    <com.datasoft.ceres.TextProgressBar
         android:id="@+id/suspectClass"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:progressDrawable="@drawable/progressbar"
         android:layout_width="0dip"
     	android:layout_height="wrap_content"
     	android:text="@+id/suspectClass"
     	android:layout_marginTop="2sp"
     	android:layout_marginBottom="2sp"
-    	android:gravity="center"
-    	android:layout_weight="1"
-    	android:textSize="18sp" >
-    </TextView>
+    	android:layout_weight="1" 
+    	android:max="100" />
     
 </LinearLayout>
