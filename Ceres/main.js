@@ -103,20 +103,22 @@ function detailedSuspectPage(suspect, cb)
                   "Haystack Percent Contacted"];
   var ret = '<detailedSuspect>';
   var js2xmlopt = {'declaration':{'include':false}, 'prettyPrinting':{'enabled':false}};
-  var classification = (Math.floor(parseFloat(suspects[i].GetClassification()) * 10000) / 100).toFixed(2);
-  var d = new Date(suspect.GetLastPacketTime * 1000);
+  var classification = (Math.floor(parseFloat(suspect.GetClassification()) * 10000) / 100).toFixed(2);
+  var d = new Date(suspect.GetLastPacketTime() * 1000);
   var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-  var idinfoXmlTemplate = {'@':{'id':suspect.GetIdString(), 'ip':suspect.GetIpString(), 'iface':suspect.GetInterface(), 'class':classification, 'lpt':dstring}};
+  var idinfoXmlTemplate = {'@':{'id':suspect.GetIdString(), 'ip':suspect.GetIpString(), 'iface':suspect.GetInterface(), 'class':classification, 'lpt':dString}};
   ret += j2xp('idInfo', idinfoXmlTemplate, js2xmlopt) + '>';
-  console.log('ret == ' + ret);
   var protoDataTemplate = {'@':{'tcp':suspect.GetTcpPacketCount(), 'udp':suspect.GetUdpPacketCount(), 'icmp':suspect.GetIcmpPacketCount(), 'other':suspect.GetOtherPacketCount()}};
   ret += j2xp('protoInfo', protoDataTemplate, js2xmlopt) + '>';
-  console.log('ret == ' + ret);
   var packetDataTemplate = {'@':{'rst':suspect.GetRstCount(), 'ack':suspect.GetAckCount(), 'syn':suspect.GetSynCount(), 'fin':suspect.GetFinCount(), 'synack':suspect.GetSynAckCount()}};
   ret += j2xp('packetInfo', packetDataTemplate, js2xmlopt) + '>';
-  console.log('ret == ' + ret);
   ret += '</detailedSuspect>';
-  console.log('ret == ' + ret);
-  cb && cb('');
-  //cb && cb(ret);
+  cb && cb(ret);
 }
+
+function pad(num)
+{
+  return ("0" + num.toString()).slice(-2);
+}
+
+

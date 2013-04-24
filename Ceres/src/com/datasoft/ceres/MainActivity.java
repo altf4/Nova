@@ -16,30 +16,30 @@ import java.net.URISyntaxException;
 import de.roderick.weberknecht.*;
 
 public class MainActivity extends Activity {
-	Button connect;
-	EditText id;
-	EditText ip;
-	EditText passwd;
-	EditText notify;
-	EditText success;
-	ProgressDialog dialog;
-	CeresClient global;
+	Button m_connect;
+	EditText m_id;
+	EditText m_ip;
+	EditText m_passwd;
+	EditText m_notify;
+	EditText m_success;
+	ProgressDialog m_dialog;
+	CeresClient m_global;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        global = (CeresClient)getApplicationContext();
-        connect = (Button)findViewById(R.id.ceresConnect);
-        id = (EditText)findViewById(R.id.credID);
-        ip = (EditText)findViewById(R.id.credIP);
-        passwd = (EditText)findViewById(R.id.credPW);
-        notify = (EditText)findViewById(R.id.notify);
-        dialog = new ProgressDialog(this);
-        connect.setOnClickListener(new Button.OnClickListener() {
+        m_global = (CeresClient)getApplicationContext();
+        m_connect = (Button)findViewById(R.id.ceresConnect);
+        m_id = (EditText)findViewById(R.id.credID);
+        m_ip = (EditText)findViewById(R.id.credIP);
+        m_passwd = (EditText)findViewById(R.id.credPW);
+        m_notify = (EditText)findViewById(R.id.notify);
+        m_dialog = new ProgressDialog(this);
+        m_connect.setOnClickListener(new Button.OnClickListener() {
         	public void onClick(View v){
-        		new CeresClientConnect().execute(ip.getText().toString(), "getAll", id.getText().toString());
-        		notify.setVisibility(View.INVISIBLE);
+        		new CeresClientConnect().execute(m_ip.getText().toString(), "getAll", m_id.getText().toString());
+        		m_notify.setVisibility(View.INVISIBLE);
         	}
         });
     }
@@ -52,7 +52,7 @@ public class MainActivity extends Activity {
     		// If home key is hit, close connection.
     		try
     		{
-    			global.ws.close();
+    			m_global.m_ws.close();
     		}
     		catch(WebSocketException wse)
     		{
@@ -74,10 +74,10 @@ public class MainActivity extends Activity {
     	protected void onPreExecute()
     	{
     		// Display spinner here
-    		dialog.setCancelable(true);
-    		dialog.setMessage("Attempting to connect");
-    		dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-    		dialog.show();
+    		m_dialog.setCancelable(true);
+    		m_dialog.setMessage("Attempting to connect");
+    		m_dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+    		m_dialog.show();
     		super.onPreExecute();
     	}
     	@Override
@@ -86,8 +86,9 @@ public class MainActivity extends Activity {
     		// Negotiate connection to Ceres.js websocket server
     		try
     		{
-    			global.initWebSocketConnection(params[0]);
-    			global.sendCeresRequest(params[1], params[2]);
+    			m_global.initWebSocketConnection(params[0]);
+    			m_global.sendCeresRequest(params[1], params[2]);
+    			while(!m_global.checkMessageReceived()){};
     		}
     		catch(WebSocketException wse)
     		{
@@ -120,27 +121,27 @@ public class MainActivity extends Activity {
     		{
     			// Display dialog saying connection failed,
     			// redirect back to login page
-    			dialog.dismiss();
+    			m_dialog.dismiss();
     			try
     			{
-    				global.ws.close();	
+    				m_global.m_ws.close();	
     			}
     			catch(WebSocketException wse)
     			{
     				wse.printStackTrace();
     			}
     			// error
-    			notify.setText(R.string.error);
-    			notify.setTextColor(Color.RED);
-    			notify.setVisibility(View.VISIBLE);
+    			m_notify.setText(R.string.error);
+    			m_notify.setTextColor(Color.RED);
+    			m_notify.setVisibility(View.VISIBLE);
     		}
     		else
     		{
-    			dialog.dismiss();
+    			m_dialog.dismiss();
     			//success
-    			notify.setText(R.string.success);
-    			notify.setTextColor(Color.GREEN);
-    			notify.setVisibility(View.VISIBLE);
+    			m_notify.setText(R.string.success);
+    			m_notify.setTextColor(Color.GREEN);
+    			m_notify.setVisibility(View.VISIBLE);
     			// wait a second, move to next activity
     			Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
     			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

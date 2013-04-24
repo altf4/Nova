@@ -12,22 +12,22 @@ import android.content.Intent;
 import de.roderick.weberknecht.*;
 
 public class CeresClient extends Application {
-	WebSocket ws;
-	StringReader xmlReceive;
-	Boolean messageReceived;
+	WebSocket m_ws;
+	StringReader m_xmlReceive;
+	Boolean m_messageReceived;
 	
 	@Override
 	public void onCreate()
 	{
-		messageReceived = false;
+		m_messageReceived = false;
 		super.onCreate();
 	}
 	
 	public void initWebSocketConnection(String loc) throws WebSocketException, URISyntaxException
 	{
 		URI url = new URI("ws://" + loc + "/");
-		ws = new WebSocketConnection(url);
-		ws.setEventHandler(new WebSocketEventHandler() {
+		m_ws = new WebSocketConnection(url);
+		m_ws.setEventHandler(new WebSocketEventHandler() {
 			@Override
 			public void onOpen() {
 				// TODO Auto-generated method stub
@@ -36,8 +36,8 @@ public class CeresClient extends Application {
 			public void onMessage(WebSocketMessage message) {
 				String parse = message.getText();
 				System.out.println("parse == " + parse);
-				xmlReceive = new StringReader(parse);
-				messageReceived = true;
+				m_xmlReceive = new StringReader(parse);
+				m_messageReceived = true;
 			}
 			@Override
 			public void onClose() {
@@ -52,7 +52,7 @@ public class CeresClient extends Application {
 				// (more of a measure to see how the intent stuff works at present)
 			}
 		});
-		ws.connect();
+		m_ws.connect();
 	}
 
 	public void sendCeresRequest(String type, String id) throws WebSocketException, JSONException
@@ -60,7 +60,7 @@ public class CeresClient extends Application {
 		JSONObject message = new JSONObject();
 		message.put("type", type);
 		message.put("id", id);
-		ws.send(message.toString());
+		m_ws.send(message.toString());
 	}
 	
 	public void sendCeresRequest(String type, String id, String suspect) throws WebSocketException, JSONException
@@ -72,22 +72,22 @@ public class CeresClient extends Application {
 		{
 			message.put("suspect", suspect);
 		}
-		ws.send(message.toString());
+		m_ws.send(message.toString());
 	}
 	
 	public Boolean checkMessageReceived()
 	{
-		return messageReceived;
+		return m_messageReceived;
 	}
 	
 	public StringReader getXmlReceive()
 	{
-		return xmlReceive;
+		return m_xmlReceive;
 	}
 	
 	public void clearXmlReceive()
 	{
-		xmlReceive = null;
-		messageReceived = false;
+		m_xmlReceive = null;
+		m_messageReceived = false;
 	}
 }
