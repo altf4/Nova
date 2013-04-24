@@ -13,6 +13,7 @@ import de.roderick.weberknecht.*;
 
 public class CeresClient extends Application {
 	WebSocket m_ws;
+	String m_xmlBase;
 	StringReader m_xmlReceive;
 	Boolean m_messageReceived;
 	
@@ -35,7 +36,7 @@ public class CeresClient extends Application {
 			@Override
 			public void onMessage(WebSocketMessage message) {
 				String parse = message.getText();
-				m_xmlReceive = new StringReader(parse);
+				m_xmlBase = parse;
 				m_messageReceived = true;
 			}
 			@Override
@@ -81,6 +82,7 @@ public class CeresClient extends Application {
 	
 	public StringReader getXmlReceive()
 	{
+		m_xmlReceive = new StringReader(m_xmlBase);
 		return m_xmlReceive;
 	}
 	

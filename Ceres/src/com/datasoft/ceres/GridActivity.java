@@ -104,7 +104,7 @@ public class GridActivity extends ListActivity {
 		protected void onPreExecute()
 		{
 			m_wait.setCancelable(true);
-			m_wait.setMessage("Retrieving Suspect List");
+			m_wait.setMessage("Constructing Suspect List");
 			m_wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			m_wait.show();
     		super.onPreExecute();
