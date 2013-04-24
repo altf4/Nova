@@ -50,8 +50,9 @@ public class GridActivity extends ListActivity {
 		@Override
 		protected void onPreExecute()
 		{
+			m_global.clearXmlReceive();
 			m_wait.setCancelable(true);
-			m_wait.setMessage("Retrieving Suspect " + m_selected);
+			m_wait.setMessage("Retrieving details for " + m_selected);
 			m_wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			m_wait.show();
 			super.onPreExecute();
@@ -62,19 +63,13 @@ public class GridActivity extends ListActivity {
 			try
 			{
 				m_global.sendCeresRequest("getSuspect", "doop", m_selected);
-				// TEMP SLEEP FOR TESTING DIALOG POPUP
-				Thread.sleep(1000);
-				//while(!m_global.checkMessageReceived()){};
+				while(!m_global.checkMessageReceived()){};
 			}
 			catch(JSONException jse)
 			{
 				return 0;
 			}
 			catch(WebSocketException wse)
-			{
-				return 0;
-			}
-			catch(InterruptedException e) 
 			{
 				return 0;
 			}
@@ -90,12 +85,12 @@ public class GridActivity extends ListActivity {
 			}
 			else
 			{
+				m_wait.cancel();
+				Toast.makeText(m_gridContext, "Would switch activity", Toast.LENGTH_LONG).show();
 				/*Intent nextPage = new Intent(getApplicationContext(), DetailsActivity.class);
 				nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 				nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				getApplicationContext().startActivity(nextPage);*/
-				m_wait.cancel();
-				Toast.makeText(m_gridContext, "Would switch activity", Toast.LENGTH_LONG).show();
 			}
 		}
 	}
@@ -165,7 +160,6 @@ public class GridActivity extends ListActivity {
 						}
 						evt = xpp.next();
 					}
-					m_global.clearXmlReceive();
 					return al;
 				}
 				else
@@ -198,6 +192,7 @@ public class GridActivity extends ListActivity {
 					@Override
 					public void onClick(DialogInterface dialog, int id)
 					{
+						m_global.clearXmlReceive();
 		    			Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
 		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -208,6 +203,7 @@ public class GridActivity extends ListActivity {
 					@Override
 					public void onClick(DialogInterface dialog, int which)
 					{
+						m_global.clearXmlReceive();
 		    			Intent nextPage = new Intent(getApplicationContext(), MainActivity.class);
 		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

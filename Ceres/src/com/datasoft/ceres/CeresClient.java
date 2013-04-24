@@ -35,7 +35,6 @@ public class CeresClient extends Application {
 			@Override
 			public void onMessage(WebSocketMessage message) {
 				String parse = message.getText();
-				System.out.println("parse == " + parse);
 				m_xmlReceive = new StringReader(parse);
 				m_messageReceived = true;
 			}
