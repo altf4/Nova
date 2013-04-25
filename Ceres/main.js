@@ -52,7 +52,6 @@ wsServer.addListener('connection', function(client){
           NovaCommon.nova.sendSuspectToCallback(ipiface[0], ipiface[1], function(suspect){
             detailedSuspectPage(suspect, function(xml){
               client.send(xml);
-              console.log('after client.send');
             });
           });
         }, 2000);

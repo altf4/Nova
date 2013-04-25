@@ -90,7 +90,6 @@ public class GridActivity extends ListActivity {
 			else
 			{
 				m_wait.cancel();
-				Toast.makeText(m_gridContext, "Would switch activity", Toast.LENGTH_LONG).show();
 				Intent nextPage = new Intent(getApplicationContext(), DetailsActivity.class);
 				nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 				nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
