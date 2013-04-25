@@ -24,6 +24,15 @@ var http = require('http');
 
 var hostConnection = {};
 
+process.on('SIGINT', function(){
+  NovaCommon.nova.Shutdown();
+  process.exit();
+});
+
+process.on('exit', function(){
+  console.log('Ceres has closed cleanly');
+});
+
 NovaCommon.nova.CheckConnection();
 NovaCommon.StartNovad(false);
 
@@ -46,8 +55,8 @@ wsServer.addListener('connection', function(client){
         }, 2000);
         break;
       case 'getSuspect':
-        NovaCommon.nova.CheckConnection();
         var ipiface = parsed.suspect.split(':');
+        NovaCommon.nova.CheckConnection();
         setTimeout(function(){
           NovaCommon.nova.sendSuspectToCallback(ipiface[0], ipiface[1], function(suspect){
             detailedSuspectPage(suspect, function(xml){

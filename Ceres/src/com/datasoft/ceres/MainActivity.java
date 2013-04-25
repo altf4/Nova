@@ -43,7 +43,7 @@ public class MainActivity extends Activity {
         	}
         });
     }
-
+    
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent keyEvent)
     {

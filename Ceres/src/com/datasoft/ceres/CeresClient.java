@@ -13,6 +13,7 @@ import de.roderick.weberknecht.*;
 
 public class CeresClient extends Application {
 	WebSocket m_ws;
+	String m_clientId;
 	String m_xmlBase;
 	StringReader m_xmlReceive;
 	Boolean m_messageReceived;
@@ -21,6 +22,7 @@ public class CeresClient extends Application {
 	public void onCreate()
 	{
 		m_messageReceived = false;
+		m_clientId = "";
 		super.onCreate();
 	}
 	
@@ -60,6 +62,10 @@ public class CeresClient extends Application {
 		JSONObject message = new JSONObject();
 		message.put("type", type);
 		message.put("id", id);
+		if(m_clientId == "")
+		{
+			m_clientId = id;
+		}
 		m_ws.send(message.toString());
 	}
 	
@@ -68,6 +74,10 @@ public class CeresClient extends Application {
 		JSONObject message = new JSONObject();
 		message.put("type", type);
 		message.put("id", id);
+		if(m_clientId == "")
+		{
+			m_clientId = id;
+		}
 		if(suspect != null && !suspect.equals(""))
 		{
 			message.put("suspect", suspect);
@@ -90,5 +100,15 @@ public class CeresClient extends Application {
 	{
 		m_xmlReceive = null;
 		m_messageReceived = false;
+	}
+	
+	public String getClientId()
+	{
+		return m_clientId;
+	}
+	
+	public void setClientId(String id)
+	{
+		m_clientId = id;
 	}
 }

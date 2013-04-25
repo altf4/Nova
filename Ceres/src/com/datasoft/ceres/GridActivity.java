@@ -2,14 +2,11 @@ package com.datasoft.ceres;
 
 import java.io.IOException;
 import java.util.ArrayList;
-
 import org.json.JSONException;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
-
 import de.roderick.weberknecht.WebSocketException;
-
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
@@ -18,6 +15,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -28,9 +27,132 @@ public class GridActivity extends ListActivity {
 	
 	CeresClient m_global;
 	ProgressDialog m_wait;
-	ClassificationGridAdapter m_aa;
+	ClassificationGridAdapter m_gridAdapter;
 	Context m_gridContext;
 	String m_selected;
+	ArrayList<String> m_gridValues;
+	
+	final Handler m_handler = new Handler();
+	
+	final Runnable m_updateGrid = new Runnable() {
+		public void run() {
+			resetAdapter();
+		}
+	};
+	
+	Thread m_updateThread = new Thread() {
+		public void run() {
+			try
+			{
+				while(true)
+				{
+					sleep(3000);
+					m_global.clearXmlReceive();
+					m_global.sendCeresRequest("getAll", m_global.getClientId());
+					while(!m_global.checkMessageReceived()){};
+					m_gridValues = constructGridValues();
+					if(m_gridValues != null)
+					{
+						m_handler.post(m_updateGrid);
+					}
+				}
+			}
+			catch(InterruptedException ie)
+			{
+				m_gridValues = null;
+			}
+			catch(JSONException jse)
+			{
+				m_gridValues = null;
+			}
+			catch(WebSocketException wse)
+			{
+				m_gridValues = null;	
+			}
+			catch(IOException ioe)
+			{
+				m_gridValues = null;
+			}
+			catch(XmlPullParserException xpe)
+			{
+				m_gridValues = null;
+			}
+		}
+	};
+	
+	private ArrayList<String> constructGridValues() throws XmlPullParserException, IOException 
+	{
+		XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+		factory.setNamespaceAware(true);
+		XmlPullParser xpp;
+
+		if(m_global.checkMessageReceived())
+		{
+			xpp = factory.newPullParser();
+			xpp.setInput(m_global.getXmlReceive());
+			int evt = xpp.getEventType();
+			ArrayList<String> al = new ArrayList<String>();
+			// On this page, we're receiving a format containing three things:
+			// ip, interface and classification
+			String rowData = "";
+			while(evt != XmlPullParser.END_DOCUMENT)
+			{
+				switch(evt)
+				{
+					case(XmlPullParser.START_DOCUMENT):
+						break;
+					case(XmlPullParser.START_TAG):
+						if(xpp.getName().equals("suspect"))
+						{
+							rowData += xpp.getAttributeValue(null, "ipaddress") + ":";
+							rowData += xpp.getAttributeValue(null, "interface") + ":";
+						}
+						break;
+					case(XmlPullParser.TEXT): 
+						rowData += xpp.getText() + "%";
+						al.add(rowData);
+						rowData = "";
+						break;
+					default: 
+						break;
+				}
+				evt = xpp.next();
+			}
+			return al;
+		}
+		else
+		{
+			return null;
+		}
+	}
+	
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent keyEvent)
+    {
+    	if(keyCode == KeyEvent.KEYCODE_HOME)
+    	{
+    		try
+    		{
+    			m_updateThread.interrupt();
+    			m_global.m_ws.close();
+    		}
+    		catch(WebSocketException wse)
+    		{
+    			System.out.println("Could not close connection!");
+    		}
+    	}
+    	else if(keyCode == KeyEvent.KEYCODE_BACK)
+    	{
+    		m_updateThread.interrupt();
+    	}
+    	return super.onKeyDown(keyCode, keyEvent);
+    }
+	
+	private void resetAdapter()
+	{
+		m_gridAdapter = new ClassificationGridAdapter(m_gridContext, m_gridValues);
+		setListAdapter(m_gridAdapter);
+	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -114,61 +236,8 @@ public class GridActivity extends ListActivity {
 		{
 			try
 			{
-				XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-				factory.setNamespaceAware(true);
-				XmlPullParser xpp;
-				// int i = 0;
-				// Ugly as hell, but I don't know what else to do. Just waits
-				// 3 seconds for the XML to be taken from the wire; if it takes
-				// longer, fail. Would rather wait until it comes, but there needs
-				// to be a cut off at some point or it'll spin forever.
-				//
-				// Moved something similar to this into right after the 
-				// message send in MainActivity to test responsiveness.
-				// Works fine, will keep it there for now.
-				/*while(!m_global.checkMessageReceived() && i < 5)
-				{
-					Thread.sleep(1000);
-					i++;
-				}*/
-				if(m_global.checkMessageReceived())
-				{
-					xpp = factory.newPullParser();
-					xpp.setInput(m_global.getXmlReceive());
-					int evt = xpp.getEventType();
-					ArrayList<String> al = new ArrayList<String>();
-					// On this page, we're receiving a format containing three things:
-					// ip, interface and classification
-					String rowData = "";
-					while(evt != XmlPullParser.END_DOCUMENT)
-					{
-						switch(evt)
-						{
-							case(XmlPullParser.START_DOCUMENT):
-								break;
-							case(XmlPullParser.START_TAG):
-								if(xpp.getName().equals("suspect"))
-								{
-									rowData += xpp.getAttributeValue(null, "ipaddress") + ":";
-									rowData += xpp.getAttributeValue(null, "interface") + ":";
-								}
-								break;
-							case(XmlPullParser.TEXT): 
-								rowData += xpp.getText() + "%";
-								al.add(rowData);
-								rowData = "";
-								break;
-							default: 
-								break;
-						}
-						evt = xpp.next();
-					}
-					return al;
-				}
-				else
-				{
-					return null;
-				}
+				m_gridValues = constructGridValues();
+				return m_gridValues;
 			}
 			catch(XmlPullParserException xppe)
 			{
@@ -196,6 +265,7 @@ public class GridActivity extends ListActivity {
 					public void onClick(DialogInterface dialog, int id)
 					{
 						m_global.clearXmlReceive();
+						m_updateThread.interrupt();
 		    			Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
 		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -207,6 +277,7 @@ public class GridActivity extends ListActivity {
 					public void onClick(DialogInterface dialog, int which)
 					{
 						m_global.clearXmlReceive();
+						m_updateThread.interrupt();
 		    			Intent nextPage = new Intent(getApplicationContext(), MainActivity.class);
 		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -219,8 +290,9 @@ public class GridActivity extends ListActivity {
 			else
 			{
 				Toast.makeText(m_gridContext, gridPop.size() + " suspects loaded", Toast.LENGTH_LONG).show();
-				m_aa = new ClassificationGridAdapter(m_gridContext, gridPop);
-		        setListAdapter(m_aa);
+				m_gridAdapter = new ClassificationGridAdapter(m_gridContext, gridPop);
+		        setListAdapter(m_gridAdapter);
+		        m_updateThread.start();
 				m_wait.cancel();
 			}
 		}
