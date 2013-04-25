@@ -117,7 +117,7 @@ var NovaCommon = new function() {
 
 	var novaDb = new sql.Database(this.config.GetPathHome() + "/data/novadDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
 	var db = new sql.Database(this.config.GetPathHome() + "/data/quasarDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
-	var hostNameDb = new sql.Database(this.config.GetPathHome() + "/../honeyd/names", sql.OPEN_READWRITE, databaseOpenResult);
+	//var hostNameDb = new sql.Database(this.config.GetPathHome() + "/../honeyd/names", sql.OPEN_READWRITE, databaseOpenResult);
 
 
 	var databaseOpenResult = function(err){
@@ -184,10 +184,10 @@ var NovaCommon = new function() {
 	this.dbqAddLastTrainingDataSelection = db.prepare('INSERT INTO lastTrainingDataSelection VALUES(?, ?)');
 	this.dbqClearLastTrainingDataSelection = db.prepare('DELETE FROM lastTrainingDataSelection');
 
-	this.dbqGetHostnames = hostNameDb.prepare('SELECT * from allocs');
+	/*this.dbqGetHostnames = hostNameDb.prepare('SELECT * from allocs');
 	this.dbqInsertHostname = hostNameDb.prepare('INSERT into allocs(name) VALUES (?)');
 	this.dbqClearHostnameAllocations = hostNameDb.prepare('UPDATE allocs SET IP = NULL');
-	this.dbqDeleteHostname = hostNameDb.prepare('DELETE from allocs WHERE name = ?');
+	this.dbqDeleteHostname = hostNameDb.prepare('DELETE from allocs WHERE name = ?');*/
 
 
 	this.HashPassword = function (password, salt)
