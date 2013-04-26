@@ -2,6 +2,11 @@ package com.datasoft.ceres;
 
 import java.io.IOException;
 
+import org.achartengine.ChartFactory;
+import org.achartengine.GraphicalView;
+import org.achartengine.model.CategorySeries;
+import org.achartengine.renderer.DefaultRenderer;
+import org.achartengine.renderer.SimpleSeriesRenderer;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -12,8 +17,10 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,6 +43,9 @@ public class DetailsActivity extends Activity
 	ProgressDialog m_wait;
 	Context m_detailsContext;
 	CeresClient m_global;
+	
+	GraphicalView m_protocolPie;
+	DefaultRenderer m_renderer = new DefaultRenderer();
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -60,6 +70,15 @@ public class DetailsActivity extends Activity
 	    m_synack = (TextView)findViewById(R.id.suspectSynAckCount);
 	    m_detailsContext = this;
 	    new ParseXml().execute();
+	    
+	    m_renderer.setApplyBackgroundColor(true);
+	    m_renderer.setBackgroundColor(Color.argb(100, 50, 50, 50));
+	    m_renderer.setChartTitleTextSize(20);
+	    m_renderer.setLabelsTextSize(15);
+	    m_renderer.setLegendTextSize(15);
+	    m_renderer.setMargins(new int[]{20, 30, 15, 0});
+	    m_renderer.setZoomButtonsVisible(false);
+	    m_renderer.setStartAngle(90);
 	}
 	
 	private class ParseXml extends AsyncTask<Void, Void, Suspect> {
@@ -195,6 +214,36 @@ public class DetailsActivity extends Activity
 				m_synack.setText(suspect.m_synAckCount);
 				Toast.makeText(m_detailsContext, "Suspect " + suspect.getIp() + ":" + suspect.getIface() + " loaded", Toast.LENGTH_LONG).show();
 				m_wait.cancel();
+				
+				CategorySeries protocolSeries = new CategorySeries("");
+		    	protocolSeries.add("TCP Packets", Integer.parseInt(suspect.m_tcpCount));
+		    	protocolSeries.add("UDP Packets", Integer.parseInt(suspect.m_udpCount));
+		    	protocolSeries.add("ICMP Packets", Integer.parseInt(suspect.m_icmpCount));
+		    	
+		    	SimpleSeriesRenderer renderer = new SimpleSeriesRenderer();
+		    	renderer.setColor(Color.BLUE);
+		    	m_renderer.addSeriesRenderer(renderer);
+
+		    	renderer = new SimpleSeriesRenderer();
+		    	renderer.setColor(Color.RED);
+		    	m_renderer.addSeriesRenderer(renderer);
+		    	
+		    	renderer = new SimpleSeriesRenderer();
+		    	renderer.setColor(Color.GREEN);
+		    	m_renderer.addSeriesRenderer(renderer);
+		    	
+			    if(m_protocolPie == null)
+			    {
+			    	LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
+			    	m_protocolPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, m_renderer);
+			    	m_renderer.setClickEnabled(true);
+			    	m_renderer.setSelectableBuffer(10);
+			    	layout.addView(m_protocolPie);
+			    }
+			    else
+			    {
+			    	m_protocolPie.repaint();
+			    }
 			}
 		}
 	}

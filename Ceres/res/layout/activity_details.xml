@@ -1,15 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/linearLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical" >
+
+    <LinearLayout
+        android:id="@+id/chartsLayout"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_weight="1"
+        android:orientation="horizontal" >
+    </LinearLayout>
 
     <TextView
         android:id="@+id/suspectId"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectId"
-        android:ems="10" >
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectId" >
+
         <requestFocus />
     </TextView>
 
@@ -17,91 +28,104 @@
         android:id="@+id/suspectIpString"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectIpString"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectIpString" />
 
     <TextView
         android:id="@+id/suspectIfaceString"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectIfaceString"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectIfaceString" />
 
     <TextView
         android:id="@+id/suspectClassification"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectClassification"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectClassification" />
 
     <TextView
         android:id="@+id/suspectLastPacket"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectLastPacket"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectLastPacket" />
 
     <TextView
         android:id="@+id/suspectTcpCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectTcpCount"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectTcpCount" />
 
     <TextView
         android:id="@+id/suspectUdpCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectUdpCount"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectUdpCount" />
 
     <TextView
         android:id="@+id/suspectIcmpCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectIcmpCount"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectIcmpCount" />
 
     <TextView
         android:id="@+id/suspectOtherCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectOtherCount"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectOtherCount" />
 
     <TextView
         android:id="@+id/suspectRstCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectRstCount"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectRstCount" />
 
     <TextView
         android:id="@+id/suspectAckCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectAckCount"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectAckCount" />
 
     <TextView
         android:id="@+id/suspectSynCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectSynCount"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectSynCount" />
 
     <TextView
         android:id="@+id/suspectFinCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectFinCount"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectFinCount" />
 
     <TextView
         android:id="@+id/suspectSynAckCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@+id/suspectSynAckCount"
-        android:ems="10" />
+        android:layout_weight="1"
+        android:ems="10"
+        android:text="@+id/suspectSynAckCount" />
 
 </LinearLayout>
