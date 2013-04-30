@@ -11,6 +11,8 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import de.roderick.weberknecht.WebSocketException;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -20,6 +22,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -79,6 +82,27 @@ public class DetailsActivity extends Activity
 	    m_renderer.setMargins(new int[]{20, 30, 15, 0});
 	    m_renderer.setZoomButtonsVisible(false);
 	    m_renderer.setStartAngle(90);
+	}
+	
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent keyEvent)
+	{
+    	if(keyCode == KeyEvent.KEYCODE_HOME)
+    	{
+    		try
+    		{
+    			m_global.m_ws.close();
+    		}
+    		catch(WebSocketException wse)
+    		{
+    			System.out.println("Could not close connection!");
+    		}
+    	}
+    	else if(keyCode == KeyEvent.KEYCODE_BACK)
+    	{
+    		m_global.clearXmlReceive();
+    	}
+    	return super.onKeyDown(keyCode, keyEvent);
 	}
 	
 	private class ParseXml extends AsyncTask<Void, Void, Suspect> {
@@ -168,8 +192,8 @@ public class DetailsActivity extends Activity
 				m_wait.cancel();
 				AlertDialog.Builder build = new AlertDialog.Builder(m_detailsContext);
 				build
-				.setTitle("Suspect list empty")
-				.setMessage("Ceres server returned no suspect data. Try again?")
+				.setTitle("Suspect Info Empty")
+				.setMessage("Ceres server returned no data for suspect. Try again?")
 				.setCancelable(false)
 				.setPositiveButton("Yes", new DialogInterface.OnClickListener(){
 					@Override
@@ -187,9 +211,10 @@ public class DetailsActivity extends Activity
 					public void onClick(DialogInterface dialog, int which)
 					{
 						m_global.clearXmlReceive();
-		    			Intent nextPage = new Intent(getApplicationContext(), MainActivity.class);
-		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		    			Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
 		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		    			getApplicationContext().startActivity(nextPage);
 					}
 				});
@@ -216,9 +241,18 @@ public class DetailsActivity extends Activity
 				m_wait.cancel();
 				
 				CategorySeries protocolSeries = new CategorySeries("");
-		    	protocolSeries.add("TCP Packets", Integer.parseInt(suspect.m_tcpCount));
-		    	protocolSeries.add("UDP Packets", Integer.parseInt(suspect.m_udpCount));
-		    	protocolSeries.add("ICMP Packets", Integer.parseInt(suspect.m_icmpCount));
+				try
+				{
+					protocolSeries.add("TCP Packets", Integer.parseInt(suspect.m_tcpCount));
+					protocolSeries.add("UDP Packets", Integer.parseInt(suspect.m_udpCount));
+					protocolSeries.add("ICMP Packets", Integer.parseInt(suspect.m_icmpCount));
+				}
+				catch(NumberFormatException nfe)
+				{
+					protocolSeries.add("TCP Packets", 0);
+					protocolSeries.add("UDP Packets", 0);
+					protocolSeries.add("ICMP Packets", 0);
+				}
 		    	
 		    	SimpleSeriesRenderer renderer = new SimpleSeriesRenderer();
 		    	renderer.setColor(Color.BLUE);

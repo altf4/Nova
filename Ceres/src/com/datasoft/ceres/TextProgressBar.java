@@ -11,8 +11,8 @@ import android.widget.ProgressBar;
 public class TextProgressBar extends ProgressBar {
 	
 	private String m_text = "";
-	private int m_textColor = Color.BLACK;
-	private float m_textSize = 18;
+	private int m_textColor = Color.WHITE;
+	private float m_textSize = 24;
 	private Paint tp = new Paint();
 	private Rect bounds = new Rect();
 	

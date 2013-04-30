@@ -4,6 +4,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.view.KeyEvent;
@@ -11,11 +12,21 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+
 import org.json.*;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.net.URISyntaxException;
 import de.roderick.weberknecht.*;
 
 public class MainActivity extends Activity {
+	Context m_ctx;
 	Button m_connect;
 	EditText m_id;
 	EditText m_ip;
@@ -24,12 +35,52 @@ public class MainActivity extends Activity {
 	EditText m_success;
 	ProgressDialog m_dialog;
 	CeresClient m_global;
+	Boolean m_keepMeLoggedIn = true;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        m_ctx = this;
         m_global = (CeresClient)getApplicationContext();
+        m_id = (EditText)findViewById(R.id.credID);
+        m_ip = (EditText)findViewById(R.id.credIP);
+        m_passwd = (EditText)findViewById(R.id.credPW);
+    	InputStream in = null;
+        try
+        {
+        	File networkTarget = new File(getFilesDir(), "networkTarget");
+        	if(networkTarget.exists() && networkTarget.length() != 0)
+        	{
+        		in = new BufferedInputStream(new FileInputStream(networkTarget));
+        		byte[] buf = new byte[512];
+        		if(in.read(buf, 0, 512) != -1)
+        		{
+        			String json = new String(buf);
+        			JSONObject net = new JSONObject(json);
+        			if(net.has("ip") && net.has("id"))
+        			{
+        				m_ip.setText(net.get("ip").toString());
+        				m_id.setText(net.get("id").toString());
+        				new CeresClientConnect().execute(net.get("ip").toString(), "getAll", net.get("id").toString());
+        			}
+        		}
+        		else
+        		{
+                	if(in != null)
+                	{
+                		in.close();
+                	}
+        		}
+        	}
+        }
+        catch(IOException ioe)
+        {
+        }
+        catch(JSONException jse)
+        {
+        }
+        
         m_connect = (Button)findViewById(R.id.ceresConnect);
         m_id = (EditText)findViewById(R.id.credID);
         m_ip = (EditText)findViewById(R.id.credIP);
@@ -38,10 +89,79 @@ public class MainActivity extends Activity {
         m_dialog = new ProgressDialog(this);
         m_connect.setOnClickListener(new Button.OnClickListener() {
         	public void onClick(View v){
+        		if(m_keepMeLoggedIn)
+        		{
+        			try
+        			{
+        				File file = new File(getFilesDir(), "networkTarget");
+        				OutputStreamWriter bos = new OutputStreamWriter(new FileOutputStream(file));
+        				String writeToFile;
+        				JSONObject json = new JSONObject();
+        				json.put("ip", m_ip.getText().toString());
+        				json.put("id", m_id.getText().toString());
+        				writeToFile = json.toString();
+        				bos.write(writeToFile);
+        				bos.flush();
+        				bos.close();
+        			}
+        			catch(IOException ioe)
+        			{
+        				
+        			}
+        			catch(JSONException jse)
+        			{
+        				
+        			}
+        		}
+        		else
+        		{
+    				File file = new File(getFilesDir(), "networkTarget");
+    				file.delete();
+        		}
         		new CeresClientConnect().execute(m_ip.getText().toString(), "getAll", m_id.getText().toString());
         		m_notify.setVisibility(View.INVISIBLE);
         	}
         });
+    }
+    
+    @Override
+    public void onRestart()
+    {
+    	InputStream in = null;
+        try
+        {
+        	File networkTarget = new File(getFilesDir(), "networkTarget");
+        	if(networkTarget.exists() && networkTarget.length() != 0)
+        	{
+        		in = new BufferedInputStream(new FileInputStream(networkTarget));
+        		byte[] buf = new byte[512];
+        		if(in.read(buf, 0, 512) != -1)
+        		{
+        			String json = new String(buf);
+        			JSONObject net = new JSONObject(json);
+        			if(net.has("ip") && net.has("id"))
+        			{
+        				new CeresClientConnect().execute(net.get("ip").toString(), "getAll", net.get("id").toString());
+        			}
+        		}
+        		else
+        		{
+                	if(in != null)
+                	{
+                		in.close();
+                	}
+        		}
+        	}
+        }
+        catch(IOException ioe)
+        {
+        	
+        }
+        catch(JSONException jse)
+        {
+        	
+        }
+        super.onRestart();
     }
     
     @Override
@@ -74,6 +194,10 @@ public class MainActivity extends Activity {
     	protected void onPreExecute()
     	{
     		// Display spinner here
+    		if(m_dialog == null)
+    		{
+    			m_dialog = new ProgressDialog(m_ctx);
+    		}
     		m_dialog.setCancelable(true);
     		m_dialog.setMessage("Attempting to connect");
     		m_dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
@@ -145,6 +269,7 @@ public class MainActivity extends Activity {
     			// wait a second, move to next activity
     			Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
     			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
     			getApplicationContext().startActivity(nextPage);
     		}
     	}

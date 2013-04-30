@@ -6,33 +6,32 @@
 	
     <TextView
         android:id="@+id/suspectIpString"
-        android:layout_width="140sp"
+        android:layout_width="200dp"
     	android:layout_height="wrap_content"
     	android:text="@+id/suspectIpString"
-    	android:layout_marginRight="5sp"
-    	android:layout_marginTop="2sp"
-    	android:layout_marginBottom="2sp"
-    	android:textSize="18sp"
+    	android:layout_marginRight="5dp"
+    	android:layout_marginTop="2dp"
+    	android:layout_marginBottom="2dp"
+    	android:textSize="24sp"
     	android:gravity="center" />
     <TextView
         android:id="@+id/suspectIfaceString"
-        android:layout_width="wrap_content"
+        android:layout_width="100dp"
     	android:layout_height="wrap_content"
     	android:text="@+id/suspectIfaceString"
-    	android:layout_marginRight="5sp"
-    	android:layout_marginTop="2sp"
-    	android:layout_marginBottom="2sp"
-    	android:textSize="18sp" />
+    	android:layout_marginRight="5dp"
+    	android:layout_marginTop="2dp"
+    	android:layout_marginBottom="2dp"
+    	android:textSize="24sp"
+    	android:gravity="center" />
     <com.datasoft.ceres.TextProgressBar
         android:id="@+id/suspectClass"
         style="@android:style/Widget.ProgressBar.Horizontal"
         android:progressDrawable="@drawable/progressbar"
-        android:layout_width="0dip"
-    	android:layout_height="wrap_content"
+        android:layout_width="0dp"
+    	android:layout_height="fill_parent"
     	android:text="@+id/suspectClass"
-    	android:layout_marginTop="2sp"
-    	android:layout_marginBottom="2sp"
-    	android:layout_weight="1" 
+    	android:layout_weight="1"
     	android:max="100" />
     
 </LinearLayout>

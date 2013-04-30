@@ -75,4 +75,17 @@ public class Suspect
 	{
 		return m_iface;
 	}
+	
+	public boolean isEmpty()
+	{
+		if(m_id.compareTo("") != 0 && m_iface.compareTo("") != 0 && m_ip.compareTo("") != 0
+        && m_classification.compareTo("") != 0 && m_lastPacket.compareTo("") != 0 && m_rstCount.compareTo("") != 0
+        && m_ackCount.compareTo("") != 0 && m_synCount.compareTo("") != 0 && m_finCount.compareTo("") != 0
+        && m_synAckCount.compareTo("") != 0 && m_tcpCount.compareTo("") != 0 && m_udpCount.compareTo("") != 0
+        && m_icmpCount.compareTo("") != 0 && m_otherCount.compareTo("") != 0)
+		{
+			return true;
+		}
+		return false;
+	}
 }

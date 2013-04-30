@@ -59,33 +59,43 @@ public class GridActivity extends ListActivity {
 			}
 			catch(InterruptedException ie)
 			{
-				m_gridValues = null;
+				return;
 			}
 			catch(JSONException jse)
 			{
-				m_gridValues = null;
+				return;
 			}
 			catch(WebSocketException wse)
 			{
-				m_gridValues = null;	
+				return;
 			}
 			catch(IOException ioe)
 			{
-				m_gridValues = null;
+				return;
 			}
 			catch(XmlPullParserException xpe)
 			{
-				m_gridValues = null;
+				return;
 			}
 		}
 	};
+	
+	private void resetAdapter()
+	{
+		if(m_wait.isShowing())
+		{
+			m_wait.cancel();
+		}
+		m_gridAdapter.clear();
+		m_gridAdapter.addAll(m_gridValues);
+		m_gridAdapter.notifyDataSetChanged();
+	}
 	
 	private ArrayList<String> constructGridValues() throws XmlPullParserException, IOException 
 	{
 		XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
 		factory.setNamespaceAware(true);
 		XmlPullParser xpp;
-
 		if(m_global.checkMessageReceived())
 		{
 			xpp = factory.newPullParser();
@@ -118,11 +128,96 @@ public class GridActivity extends ListActivity {
 				}
 				evt = xpp.next();
 			}
+			if(al.size() > 0)
+			{
+				m_global.setGridCache(al);
+			}
 			return al;
+		}
+		else if(m_global.getGridCache().size() != 0)
+		{
+			return m_global.getGridCache();
 		}
 		else
 		{
 			return null;
+		}
+	}
+	
+	@Override
+	public void onPause()
+	{
+		super.onPause();
+		m_updateThread.interrupt();
+	}
+	
+	@Override
+	public void onStop()
+	{
+		super.onStop();
+		if(m_updateThread.getState() != Thread.State.TERMINATED)
+		{
+			m_updateThread.interrupt();
+		}
+	}
+	
+	@Override
+	public void onRestart()
+	{
+		super.onRestart();
+		if(m_wait != null)
+		{
+			m_wait.setCancelable(true);
+			m_wait.setMessage("Constructing Suspect List");
+			m_wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			m_wait.show();
+		}
+		if(m_updateThread.getState() == Thread.State.TERMINATED)
+		{
+			m_updateThread = new Thread() {
+				public void run() {
+					try
+					{
+						while(true)
+						{
+							sleep(3000);
+							m_global.clearXmlReceive();
+							m_global.sendCeresRequest("getAll", m_global.getClientId());
+							while(!m_global.checkMessageReceived()){};
+							m_gridValues = constructGridValues();
+							if(m_gridValues != null)
+							{
+								m_handler.post(m_updateGrid);
+							}
+						}
+					}
+					catch(InterruptedException ie)
+					{
+						return;
+					}
+					catch(JSONException jse)
+					{
+						return;
+					}
+					catch(WebSocketException wse)
+					{
+						return;
+					}
+					catch(IOException ioe)
+					{
+						return;
+					}
+					catch(XmlPullParserException xpe)
+					{
+						return;
+					}
+				}
+			};
+			m_updateThread.start();
+		}
+		else
+		{
+			m_updateThread.start();
 		}
 	}
 	
@@ -147,12 +242,6 @@ public class GridActivity extends ListActivity {
     	}
     	return super.onKeyDown(keyCode, keyEvent);
     }
-	
-	private void resetAdapter()
-	{
-		m_gridAdapter = new ClassificationGridAdapter(m_gridContext, m_gridValues);
-		setListAdapter(m_gridAdapter);
-	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -212,8 +301,8 @@ public class GridActivity extends ListActivity {
 			else
 			{
 				m_wait.cancel();
+				m_updateThread.interrupt();
 				Intent nextPage = new Intent(getApplicationContext(), DetailsActivity.class);
-				nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 				nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				getApplicationContext().startActivity(nextPage);
 			}
@@ -266,10 +355,19 @@ public class GridActivity extends ListActivity {
 					{
 						m_global.clearXmlReceive();
 						m_updateThread.interrupt();
-		    			Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
-		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		    			getApplicationContext().startActivity(nextPage);
+						try
+						{
+							dialog.dismiss();
+							m_global.sendCeresRequest("getAll", "doop");
+							while(!m_global.checkMessageReceived()){};
+							new ParseXml().execute();
+						}
+						catch(JSONException jse)
+						{
+						}
+						catch(WebSocketException wse)
+						{
+						}
 					}
 				})
 				.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -292,7 +390,10 @@ public class GridActivity extends ListActivity {
 				Toast.makeText(m_gridContext, gridPop.size() + " suspects loaded", Toast.LENGTH_LONG).show();
 				m_gridAdapter = new ClassificationGridAdapter(m_gridContext, gridPop);
 		        setListAdapter(m_gridAdapter);
-		        m_updateThread.start();
+		        if(!m_updateThread.isAlive())
+		        {
+		        	m_updateThread.start();
+		        }
 				m_wait.cancel();
 			}
 		}

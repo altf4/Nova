@@ -3,12 +3,12 @@ package com.datasoft.ceres;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Application;
-import android.content.Intent;
 import de.roderick.weberknecht.*;
 
 public class CeresClient extends Application {
@@ -17,13 +17,25 @@ public class CeresClient extends Application {
 	String m_xmlBase;
 	StringReader m_xmlReceive;
 	Boolean m_messageReceived;
+	ArrayList<String> m_gridCache;
 	
 	@Override
 	public void onCreate()
 	{
 		m_messageReceived = false;
 		m_clientId = "";
+		m_gridCache = new ArrayList<String>();
 		super.onCreate();
+	}
+	
+	public ArrayList<String> getGridCache()
+	{
+		return m_gridCache;
+	}
+	
+	public void setGridCache(ArrayList<String> newCache)
+	{
+		m_gridCache = newCache;
 	}
 	
 	public void initWebSocketConnection(String loc) throws WebSocketException, URISyntaxException
@@ -44,10 +56,10 @@ public class CeresClient extends Application {
 			@Override
 			public void onClose() {
 				System.out.println("Lost connection!");
-				Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+				/*Intent intent = new Intent(getApplicationContext(), MainActivity.class);
 				intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-				getApplicationContext().startActivity(intent);
+				getApplicationContext().startActivity(intent);*/
 				// TODO: Need to find a way to pop a dialog to tell the user they've 
 				// lost connection and need to reconnect. Right now, if the server quits
 				// on you while connected, it just shoves you back to the login screen
