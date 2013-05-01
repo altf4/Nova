@@ -21,6 +21,10 @@ var BasicStrategy = require('passport-http').BasicStrategy;
 var ws = require('websocket-server');
 var j2xp = require('js2xmlparser');
 var http = require('http');
+var fs = require('fs');
+var NovaHomePath = NovaCommon.config.GetPathHome();
+
+var interfaceAlias = {};
 
 var hostConnection = {};
 
@@ -35,6 +39,7 @@ process.on('exit', function(){
 
 NovaCommon.nova.CheckConnection();
 NovaCommon.StartNovad(false);
+ReloadInterfaceAliasFile();
 
 var wsServer = ws.createServer();
 
@@ -74,16 +79,34 @@ wsServer.addListener('connection', function(client){
 
 wsServer.listen(8080);
 
-function gridPageSuspectList(suspects, cb){
+function ReloadInterfaceAliasFile() 
+{
+    var aliasFileData = fs.readFileSync(NovaHomePath + "/config/interface_aliases.txt");
+    interfaceAliases = JSON.parse(aliasFileData);
+}
+
+function ConvertInterfaceToAlias(iface) 
+{
+    if(interfaceAliases[iface] !== undefined) 
+    {
+        return interfaceAliases[iface];
+    } 
+    else 
+    {
+        return iface;
+    }
+}
+
+function gridPageSuspectList(suspects, cb)
+{
   var suspectRet = '<suspects>';
   var js2xmlopt = {'declaration':{'include':false}, 'prettyPrinting':{'enabled':false}};
   for(var i in suspects)
   {
     var ip = suspects[i].GetIpString();
-    var iface = suspects[i].GetInterface();
+    var iface = ConvertInterfaceToAlias(suspects[i].GetInterface());
     var classification = (Math.floor(parseFloat(suspects[i].GetClassification()) * 10000) / 100).toFixed(2);
     var hostile = (suspects[i].GetIsHostile() == true ? '1' : '0');
-    console.log('hostile == ' + hostile);
     if(classification == '-200.00')
     {
       continue;
