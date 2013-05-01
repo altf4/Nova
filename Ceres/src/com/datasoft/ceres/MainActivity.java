@@ -269,7 +269,6 @@ public class MainActivity extends Activity {
     			{
     				wse.printStackTrace();
     			}
-    			// error
     			m_notify.setText(R.string.error);
     			m_notify.setTextColor(Color.RED);
     			m_notify.setVisibility(View.VISIBLE);
@@ -277,11 +276,9 @@ public class MainActivity extends Activity {
     		else
     		{
     			m_dialog.dismiss();
-    			//success
     			m_notify.setText(R.string.success);
     			m_notify.setTextColor(Color.GREEN);
     			m_notify.setVisibility(View.VISIBLE);
-    			// wait a second, move to next activity
     			Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
     			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);

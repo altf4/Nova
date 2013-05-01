@@ -9,6 +9,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Application;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
+import android.content.Context;
+import android.content.Intent;
 import de.roderick.weberknecht.*;
 
 public class CeresClient extends Application {
@@ -59,15 +65,24 @@ public class CeresClient extends Application {
 			}
 			@Override
 			public void onClose() {
-				System.out.println("Lost connection!");
-				/*Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-				intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-				getApplicationContext().startActivity(intent);*/
 				// TODO: Need to find a way to pop a dialog to tell the user they've 
 				// lost connection and need to reconnect. Right now, if the server quits
 				// on you while connected, it just shoves you back to the login screen
 				// (more of a measure to see how the intent stuff works at present)
+				Context ctx = getApplicationContext();
+				Notification.Builder build = new Notification.Builder(ctx)
+					.setSmallIcon(R.drawable.ic_launcher)
+					.setContentTitle("Ceres Lost Connection")
+					.setContentText("The Ceres app has lost connection with the server")
+					.setAutoCancel(true);
+				Intent intent = new Intent(ctx, MainActivity.class);
+				TaskStackBuilder tsbuild = TaskStackBuilder.create(ctx);
+				tsbuild.addParentStack(MainActivity.class);
+				tsbuild.addNextIntent(intent);
+				PendingIntent rpintent = tsbuild.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+				build.setContentIntent(rpintent);
+				NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+				nm.notify(0, build.build());
 			}
 		});
 		m_ws.connect();
