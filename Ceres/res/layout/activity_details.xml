@@ -8,7 +8,7 @@
     <LinearLayout
         android:id="@+id/chartsLayout"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="140dp"
         android:layout_weight="1"
         android:orientation="horizontal" >
     </LinearLayout>
@@ -57,75 +57,11 @@
         android:text="@+id/suspectLastPacket" />
 
     <TextView
-        android:id="@+id/suspectTcpCount"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:ems="10"
-        android:text="@+id/suspectTcpCount" />
-
-    <TextView
-        android:id="@+id/suspectUdpCount"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:ems="10"
-        android:text="@+id/suspectUdpCount" />
-
-    <TextView
-        android:id="@+id/suspectIcmpCount"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:ems="10"
-        android:text="@+id/suspectIcmpCount" />
-
-    <TextView
         android:id="@+id/suspectOtherCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:ems="10"
         android:text="@+id/suspectOtherCount" />
-
-    <TextView
-        android:id="@+id/suspectRstCount"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:ems="10"
-        android:text="@+id/suspectRstCount" />
-
-    <TextView
-        android:id="@+id/suspectAckCount"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:ems="10"
-        android:text="@+id/suspectAckCount" />
-
-    <TextView
-        android:id="@+id/suspectSynCount"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:ems="10"
-        android:text="@+id/suspectSynCount" />
-
-    <TextView
-        android:id="@+id/suspectFinCount"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:ems="10"
-        android:text="@+id/suspectFinCount" />
-
-    <TextView
-        android:id="@+id/suspectSynAckCount"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:ems="10"
-        android:text="@+id/suspectSynAckCount" />
 
 </LinearLayout>

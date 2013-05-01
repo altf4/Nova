@@ -34,21 +34,13 @@ public class DetailsActivity extends Activity
 	TextView m_iface;
 	TextView m_class;
 	TextView m_lpt;
-	TextView m_tcp;
-	TextView m_udp;
-	TextView m_icmp;
 	TextView m_other;
-	TextView m_rst;
-	TextView m_syn;
-	TextView m_ack;
-	TextView m_fin;
-	TextView m_synack;
 	ProgressDialog m_wait;
 	Context m_detailsContext;
 	CeresClient m_global;
 	
 	GraphicalView m_protocolPie;
-	DefaultRenderer m_renderer = new DefaultRenderer();
+	GraphicalView m_flagsPie;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -62,26 +54,10 @@ public class DetailsActivity extends Activity
 	    m_iface = (TextView)findViewById(R.id.suspectIfaceString);
 	    m_class = (TextView)findViewById(R.id.suspectClassification);
 	    m_lpt = (TextView)findViewById(R.id.suspectLastPacket);
-	    m_tcp = (TextView)findViewById(R.id.suspectTcpCount);
-	    m_udp = (TextView)findViewById(R.id.suspectUdpCount);
-	    m_icmp = (TextView)findViewById(R.id.suspectIcmpCount);
 	    m_other = (TextView)findViewById(R.id.suspectOtherCount);
-	    m_rst = (TextView)findViewById(R.id.suspectRstCount);
-	    m_syn = (TextView)findViewById(R.id.suspectSynCount);
-	    m_ack = (TextView)findViewById(R.id.suspectAckCount);
-	    m_fin = (TextView)findViewById(R.id.suspectFinCount);
-	    m_synack = (TextView)findViewById(R.id.suspectSynAckCount);
 	    m_detailsContext = this;
 	    new ParseXml().execute();
-	    
-	    m_renderer.setApplyBackgroundColor(true);
-	    m_renderer.setBackgroundColor(Color.argb(100, 50, 50, 50));
-	    m_renderer.setChartTitleTextSize(20);
-	    m_renderer.setLabelsTextSize(15);
-	    m_renderer.setLegendTextSize(15);
-	    m_renderer.setMargins(new int[]{20, 30, 15, 0});
-	    m_renderer.setZoomButtonsVisible(false);
-	    m_renderer.setStartAngle(90);
+
 	}
 	
 	@Override
@@ -228,51 +204,137 @@ public class DetailsActivity extends Activity
 				m_iface.setText(suspect.m_iface);
 				m_class.setText(suspect.m_classification);
 				m_lpt.setText(suspect.m_lastPacket);
-				m_tcp.setText(suspect.m_tcpCount);
-				m_udp.setText(suspect.m_udpCount);
-				m_icmp.setText(suspect.m_icmpCount);
 				m_other.setText(suspect.m_otherCount);
-				m_rst.setText(suspect.m_rstCount);
-				m_syn.setText(suspect.m_synCount);
-				m_ack.setText(suspect.m_ackCount);
-				m_fin.setText(suspect.m_finCount);
-				m_synack.setText(suspect.m_synAckCount);
-				Toast.makeText(m_detailsContext, "Suspect " + suspect.getIp() + ":" + suspect.getIface() + " loaded", Toast.LENGTH_SHORT).show();
+				Toast.makeText(m_detailsContext, "Suspect " + suspect.getIp() + ":" + suspect.getIface() + " loaded", Toast.LENGTH_LONG).show();
 				m_wait.cancel();
-				
-				CategorySeries protocolSeries = new CategorySeries("");
-				try
-				{
-					protocolSeries.add("TCP Packets", Integer.parseInt(suspect.m_tcpCount));
-					protocolSeries.add("UDP Packets", Integer.parseInt(suspect.m_udpCount));
-					protocolSeries.add("ICMP Packets", Integer.parseInt(suspect.m_icmpCount));
-				}
-				catch(NumberFormatException nfe)
-				{
-					protocolSeries.add("TCP Packets", 0);
-					protocolSeries.add("UDP Packets", 0);
-					protocolSeries.add("ICMP Packets", 0);
-				}
 		    	
-		    	SimpleSeriesRenderer renderer = new SimpleSeriesRenderer();
-		    	renderer.setColor(Color.BLUE);
-		    	m_renderer.addSeriesRenderer(renderer);
-
-		    	renderer = new SimpleSeriesRenderer();
-		    	renderer.setColor(Color.RED);
-		    	m_renderer.addSeriesRenderer(renderer);
-		    	
-		    	renderer = new SimpleSeriesRenderer();
-		    	renderer.setColor(Color.GREEN);
-		    	m_renderer.addSeriesRenderer(renderer);
-		    	
-			    if(m_protocolPie == null)
+				//Make the protocol Pie Chart
+				if(m_protocolPie == null)
+			    {	
+					try
+					{
+						CategorySeries protocolSeries = new CategorySeries("");
+						
+				    	DefaultRenderer defaultRenderer = new DefaultRenderer();
+	
+					    defaultRenderer.setApplyBackgroundColor(true);
+					    defaultRenderer.setBackgroundColor(Color.argb(0xff, 0xe4, 0xf2, 0xff));
+					    defaultRenderer.setChartTitleTextSize(25);
+					    defaultRenderer.setChartTitle("Protocol Used");
+					    defaultRenderer.setLabelsTextSize(15);
+					    defaultRenderer.setLabelsColor(Color.BLACK);
+					    defaultRenderer.setShowLegend(false);
+					    defaultRenderer.setZoomButtonsVisible(false);
+					    defaultRenderer.setStartAngle(180);
+					    
+						if(Integer.parseInt(suspect.m_tcpCount) > 0)
+						{
+							protocolSeries.add("TCP", Integer.parseInt(suspect.m_tcpCount));
+					    	SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+					    	simpleSeriesRenderer.setColor(Color.argb(0xff, 0x00, 0x5a, 0xff));  //blue
+					    	defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+						}
+						if(Integer.parseInt(suspect.m_udpCount) > 0)
+						{
+							protocolSeries.add("UDP", Integer.parseInt(suspect.m_udpCount));
+							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+					    	simpleSeriesRenderer.setColor(Color.RED);
+					    	defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+						}
+						if(Integer.parseInt(suspect.m_icmpCount) > 0)
+						{
+							protocolSeries.add("ICMP", Integer.parseInt(suspect.m_icmpCount));
+							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+							simpleSeriesRenderer.setColor(Color.argb(0xff, 0x36, 0x8f, 0x00)); //green
+					    	defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+						}
+	
+				    	LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
+				    	m_protocolPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, defaultRenderer);
+				    	defaultRenderer.setClickEnabled(true);
+				    	defaultRenderer.setSelectableBuffer(10);
+				    	layout.addView(m_protocolPie, 250, 200);
+					}
+					catch(NumberFormatException ex)
+					{
+						LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
+						TextView view = new TextView(DetailsActivity.this);
+						view.setText("Invalid data found");
+						layout.addView(view);	
+					}
+			    }
+			    else
 			    {
-			    	LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
-			    	m_protocolPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, m_renderer);
-			    	m_renderer.setClickEnabled(true);
-			    	m_renderer.setSelectableBuffer(10);
-			    	layout.addView(m_protocolPie);
+			    	m_protocolPie.repaint();
+			    }
+			    
+			    //Make the flags Pie Chart
+			    if(m_flagsPie == null)
+			    {
+					try
+					{
+						CategorySeries protocolSeries = new CategorySeries("");
+						DefaultRenderer defaultRenderer = new DefaultRenderer();
+						
+						defaultRenderer.setApplyBackgroundColor(true);
+						defaultRenderer.setBackgroundColor(Color.argb(0xff, 0xe4, 0xf2, 0xff));
+						defaultRenderer.setChartTitleTextSize(25);
+						defaultRenderer.setChartTitle("TCP Flags Used");
+						defaultRenderer.setLabelsTextSize(15);
+						defaultRenderer.setLabelsColor(Color.BLACK);
+						defaultRenderer.setShowLegend(false);
+						defaultRenderer.setZoomButtonsVisible(false);
+						defaultRenderer.setStartAngle(180);
+						
+						if(Integer.parseInt(suspect.m_rstCount) > 0)
+						{
+							protocolSeries.add("RST", Integer.parseInt(suspect.m_rstCount));
+							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+							simpleSeriesRenderer.setColor(Color.argb(0xff, 0x00, 0x5a, 0xff));  //blue
+							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+						}
+						if(Integer.parseInt(suspect.m_synCount) > 0)
+						{
+							protocolSeries.add("SYN", Integer.parseInt(suspect.m_synCount));
+							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+							simpleSeriesRenderer.setColor(Color.RED);
+							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+						}
+						if(Integer.parseInt(suspect.m_finCount) > 0)
+						{
+							protocolSeries.add("FIN", Integer.parseInt(suspect.m_finCount));
+							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+							simpleSeriesRenderer.setColor(Color.argb(0xff, 0x36, 0x8f, 0x00)); //green
+							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+						}
+						if(Integer.parseInt(suspect.m_ackCount) > 0)
+						{
+							protocolSeries.add("ACK", Integer.parseInt(suspect.m_ackCount));
+							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+							simpleSeriesRenderer.setColor(Color.argb(0xff, 0xf9, 0xe4, 0x00)); //yellow
+							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+						}
+						if(Integer.parseInt(suspect.m_synAckCount) > 0)
+						{
+							protocolSeries.add("SYN/ACK", Integer.parseInt(suspect.m_synAckCount));
+							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+							simpleSeriesRenderer.setColor(Color.LTGRAY);
+							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+						}
+						
+						LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
+						m_flagsPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, defaultRenderer);
+						defaultRenderer.setClickEnabled(true);
+						defaultRenderer.setSelectableBuffer(10);
+						layout.addView(m_flagsPie, 250, 200);
+					}
+					catch(NumberFormatException ex)
+					{
+						LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
+						TextView view = new TextView(DetailsActivity.this);
+						view.setText("Invalid data found");
+						layout.addView(view);
+					}
 			    }
 			    else
 			    {
