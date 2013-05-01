@@ -165,9 +165,15 @@ public class GridActivity extends ListActivity {
 	public void onRestart()
 	{
 		super.onRestart();
-		if(m_wait != null)
+		if(m_global.getGridCache().size() > 0)
 		{
-			m_wait.setCancelable(true);
+			m_gridAdapter.clear();
+			m_gridAdapter.addAll(m_global.getGridCache());
+			m_gridAdapter.notifyDataSetChanged();
+		}
+		else
+		{
+			m_wait.setCancelable(false);
 			m_wait.setMessage("Constructing Suspect List");
 			m_wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			m_wait.show();
@@ -181,7 +187,7 @@ public class GridActivity extends ListActivity {
 					{
 						while(true)
 						{
-							sleep(3000);
+							sleep(60000);
 							m_global.clearXmlReceive();
 							m_global.sendCeresRequest("getAll", m_global.getClientId());
 							while(!m_global.checkMessageReceived()){};
@@ -314,7 +320,7 @@ public class GridActivity extends ListActivity {
 		@Override
 		protected void onPreExecute()
 		{
-			m_wait.setCancelable(true);
+			m_wait.setCancelable(false);
 			m_wait.setMessage("Constructing Suspect List");
 			m_wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			m_wait.show();

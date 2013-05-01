@@ -35,7 +35,11 @@ public class CeresClient extends Application {
 	
 	public void setGridCache(ArrayList<String> newCache)
 	{
-		m_gridCache = newCache;
+		m_gridCache.clear();
+		for(String s : newCache)
+		{
+			m_gridCache.add(s);
+		}
 	}
 	
 	public void initWebSocketConnection(String loc) throws WebSocketException, URISyntaxException
