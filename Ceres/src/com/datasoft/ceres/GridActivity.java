@@ -172,8 +172,9 @@ public class GridActivity extends ListActivity {
 			m_wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			m_wait.show();
 		}
-		if(m_updateThread.getState() == Thread.State.TERMINATED)
+		if(m_updateThread.getState() != Thread.State.NEW)
 		{
+			m_updateThread.interrupt();
 			m_updateThread = new Thread() {
 				public void run() {
 					try

@@ -237,7 +237,7 @@ public class DetailsActivity extends Activity
 				m_ack.setText(suspect.m_ackCount);
 				m_fin.setText(suspect.m_finCount);
 				m_synack.setText(suspect.m_synAckCount);
-				Toast.makeText(m_detailsContext, "Suspect " + suspect.getIp() + ":" + suspect.getIface() + " loaded", Toast.LENGTH_LONG).show();
+				Toast.makeText(m_detailsContext, "Suspect " + suspect.getIp() + ":" + suspect.getIface() + " loaded", Toast.LENGTH_SHORT).show();
 				m_wait.cancel();
 				
 				CategorySeries protocolSeries = new CategorySeries("");
