@@ -43,6 +43,20 @@ public class DetailsActivity extends Activity
 	GraphicalView m_flagsPie;
 	
 	@Override
+	protected void onPause()
+	{
+		super.onPause();
+		m_global.setForeground(false);
+	}
+
+	@Override
+	protected void onResume()
+	{
+		super.onResume();
+		m_global.setForeground(true);
+	}
+	
+	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 	    super.onCreate(savedInstanceState);
