@@ -11,6 +11,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 
 import org.json.*;
@@ -30,12 +31,14 @@ public class MainActivity extends Activity {
 	Button m_connect;
 	EditText m_id;
 	EditText m_ip;
+	EditText m_port;
 	EditText m_passwd;
 	EditText m_notify;
 	EditText m_success;
+	CheckBox m_keepLogged;
 	ProgressDialog m_dialog;
 	CeresClient m_global;
-	Boolean m_keepMeLoggedIn = true;
+	Boolean m_keepMeLoggedIn;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,24 +48,28 @@ public class MainActivity extends Activity {
         m_global = (CeresClient)getApplicationContext();
         m_id = (EditText)findViewById(R.id.credID);
         m_ip = (EditText)findViewById(R.id.credIP);
+        m_port = (EditText)findViewById(R.id.credPort);
         m_passwd = (EditText)findViewById(R.id.credPW);
+        m_keepMeLoggedIn = false;
+        
     	InputStream in = null;
         try
         {
         	File networkTarget = new File(getFilesDir(), "networkTarget");
         	if(networkTarget.exists() && networkTarget.length() != 0)
         	{
+        		m_keepMeLoggedIn = true;
         		in = new BufferedInputStream(new FileInputStream(networkTarget));
         		byte[] buf = new byte[512];
         		if(in.read(buf, 0, 512) != -1)
         		{
         			String json = new String(buf);
         			JSONObject net = new JSONObject(json);
-        			if(net.has("ip") && net.has("id"))
+        			if(net.has("ip") && net.has("id") && net.has("port"))
         			{
         				m_ip.setText(net.get("ip").toString());
+        				m_port.setText(net.get("port").toString());
         				m_id.setText(net.get("id").toString());
-        				new CeresClientConnect().execute(net.get("ip").toString(), "getAll", net.get("id").toString());
         			}
         		}
         		else
@@ -81,6 +88,8 @@ public class MainActivity extends Activity {
         {
         }
         
+        m_keepLogged = (CheckBox)findViewById(R.id.keepLogged);
+        m_keepLogged.setChecked(m_keepMeLoggedIn);
         m_connect = (Button)findViewById(R.id.ceresConnect);
         m_id = (EditText)findViewById(R.id.credID);
         m_ip = (EditText)findViewById(R.id.credIP);
@@ -89,6 +98,7 @@ public class MainActivity extends Activity {
         m_dialog = new ProgressDialog(this);
         m_connect.setOnClickListener(new Button.OnClickListener() {
         	public void onClick(View v){
+        		m_keepMeLoggedIn = ((CheckBox)findViewById(R.id.keepLogged)).isChecked();
         		if(m_keepMeLoggedIn)
         		{
         			try
@@ -98,6 +108,7 @@ public class MainActivity extends Activity {
         				String writeToFile;
         				JSONObject json = new JSONObject();
         				json.put("ip", m_ip.getText().toString());
+        				json.put("port", m_port.getText().toString());
         				json.put("id", m_id.getText().toString());
         				writeToFile = json.toString();
         				bos.write(writeToFile);
@@ -106,11 +117,9 @@ public class MainActivity extends Activity {
         			}
         			catch(IOException ioe)
         			{
-        				
         			}
         			catch(JSONException jse)
         			{
-        				
         			}
         		}
         		else
@@ -118,10 +127,16 @@ public class MainActivity extends Activity {
     				File file = new File(getFilesDir(), "networkTarget");
     				file.delete();
         		}
-        		new CeresClientConnect().execute(m_ip.getText().toString(), "getAll", m_id.getText().toString());
+        		String netString = (m_ip.getText().toString() + ":" + m_port.getText().toString());
+        		new CeresClientConnect().execute(netString, "getAll", m_id.getText().toString());
         		m_notify.setVisibility(View.INVISIBLE);
         	}
         });
+    }
+    
+    public void onCheckboxClicked(View view)
+    {
+    	m_keepMeLoggedIn = ((CheckBox) view).isChecked();
     }
     
     @Override
@@ -139,9 +154,11 @@ public class MainActivity extends Activity {
         		{
         			String json = new String(buf);
         			JSONObject net = new JSONObject(json);
-        			if(net.has("ip") && net.has("id"))
+        			if(net.has("ip") && net.has("id") && net.has("port"))
         			{
-        				new CeresClientConnect().execute(net.get("ip").toString(), "getAll", net.get("id").toString());
+        				m_ip.setText(net.get("ip").toString());
+        				m_port.setText(net.get("port").toString());
+        				m_id.setText(net.get("id").toString());
         			}
         		}
         		else
@@ -155,11 +172,9 @@ public class MainActivity extends Activity {
         }
         catch(IOException ioe)
         {
-        	
         }
         catch(JSONException jse)
         {
-        	
         }
         super.onRestart();
     }

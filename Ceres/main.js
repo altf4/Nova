@@ -82,11 +82,13 @@ function gridPageSuspectList(suspects, cb){
     var ip = suspects[i].GetIpString();
     var iface = suspects[i].GetInterface();
     var classification = (Math.floor(parseFloat(suspects[i].GetClassification()) * 10000) / 100).toFixed(2);
+    var hostile = (suspects[i].GetIsHostile() == true ? '1' : '0');
+    console.log('hostile == ' + hostile);
     if(classification == '-200.00')
     {
       continue;
     }
-    var suspectXmlTemplate = {'@':{'ipaddress':ip, 'interface':iface}, '#':classification};
+    var suspectXmlTemplate = {'@':{'ipaddress':ip, 'interface':iface, 'hostile':hostile}, '#':classification};
     suspectRet += j2xp('suspect', suspectXmlTemplate, js2xmlopt) + '>';
   }
   suspectRet += '</suspects>'

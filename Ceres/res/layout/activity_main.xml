@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="#E4F2FF"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
@@ -27,6 +28,14 @@
         android:ems="10"
     	android:textSize="24sp"
         android:hint="@string/credIP" />
+    
+    <EditText
+        android:id="@+id/credPort"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+    	android:textSize="24sp"
+        android:hint="@string/credPort" />
 
     <EditText
         android:id="@+id/credPW"
@@ -37,6 +46,15 @@
         android:textSize="24sp"
         android:inputType="textPassword" />
 
+    <CheckBox 
+        android:id="@+id/keepLogged"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="@string/keepLogged"
+        android:onClick="onCheckboxClicked"
+        android:textSize="24sp" />
+    
     <Button
         android:id="@+id/ceresConnect"
         android:layout_width="match_parent"

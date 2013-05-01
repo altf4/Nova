@@ -182,7 +182,7 @@ public class DetailsActivity extends Activity
 		    			getApplicationContext().startActivity(nextPage);
 					}
 				})
-				.setNegativeButton("No", new DialogInterface.OnClickListener() {
+				.setNegativeButton("No", new DialogInterface.OnClickListener(){
 					@Override
 					public void onClick(DialogInterface dialog, int which)
 					{
@@ -205,7 +205,7 @@ public class DetailsActivity extends Activity
 				m_class.setText(suspect.m_classification);
 				m_lpt.setText(suspect.m_lastPacket);
 				m_other.setText(suspect.m_otherCount);
-				Toast.makeText(m_detailsContext, "Suspect " + suspect.getIp() + ":" + suspect.getIface() + " loaded", Toast.LENGTH_LONG).show();
+				Toast.makeText(m_detailsContext, ("Suspect " + suspect.getIp() + ":" + suspect.getIface() + " loaded"), Toast.LENGTH_LONG).show();
 				m_wait.cancel();
 		    	
 				//Make the protocol Pie Chart

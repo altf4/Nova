@@ -17,7 +17,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -46,7 +48,7 @@ public class GridActivity extends ListActivity {
 			{
 				while(true)
 				{
-					sleep(3000);
+					sleep(60000);
 					m_global.clearXmlReceive();
 					m_global.sendCeresRequest("getAll", m_global.getClientId());
 					while(!m_global.checkMessageReceived()){};
@@ -116,6 +118,7 @@ public class GridActivity extends ListActivity {
 						{
 							rowData += xpp.getAttributeValue(null, "ipaddress") + ":";
 							rowData += xpp.getAttributeValue(null, "interface") + ":";
+							rowData += xpp.getAttributeValue(null, "hostile") + ":";
 						}
 						break;
 					case(XmlPullParser.TEXT): 
@@ -256,6 +259,9 @@ public class GridActivity extends ListActivity {
         m_global = (CeresClient)getApplicationContext();
         m_wait = new ProgressDialog(this);
 		m_gridContext = this;
+		LayoutInflater inf = getLayoutInflater();
+		View header = inf.inflate(R.layout.grid_header, (ViewGroup)findViewById(R.id.header_layout_root));
+		getListView().addHeaderView(header, null, false);
 		new ParseXml().execute();
 	}
 	

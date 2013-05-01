@@ -50,9 +50,13 @@ public class ClassificationGridAdapter extends ArrayAdapter<String> {
 	  
 	  ip.setText(splitStr[0]);
 	  iface.setText(splitStr[1]);
-	  classification.setText(splitStr[2]);
+	  classification.setText(splitStr[3]);
+	  if(splitStr[2].equals("0"))
+	  {
+		  classification.setProgressDrawable(classification.getResources().getDrawable(R.drawable.greenbar));
+	  }
 	  int progress = 0;
-	  double classVal = Double.parseDouble(splitStr[2].substring(0, splitStr[2].length() - 1));
+	  double classVal = Double.parseDouble(splitStr[3].substring(0, splitStr[3].length() - 1));
 	  progress = (int)Math.round(classVal);
 	  classification.setProgress(progress);
 	
@@ -64,8 +68,8 @@ public class ClassificationGridAdapter extends ArrayAdapter<String> {
 	  @Override
 	  public int compare(String left, String right)
 	  {
-		  String leftClass = left.split(":")[2];
-		  String rightClass = right.split(":")[2];
+		  String leftClass = left.split(":")[3];
+		  String rightClass = right.split(":")[3];
 		  String splitleft = leftClass.substring(0, leftClass.length() - 1);
 		  String splitright = rightClass.substring(0, rightClass.length() - 1);
 		  
