@@ -11,8 +11,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
-import de.roderick.weberknecht.WebSocketException;
-
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -21,11 +20,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
+import android.view.ScaleGestureDetector.OnScaleGestureListener;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import de.roderick.weberknecht.WebSocketException;
 
 public class DetailsActivity extends Activity
 {
@@ -34,13 +39,14 @@ public class DetailsActivity extends Activity
 	TextView m_iface;
 	TextView m_class;
 	TextView m_lpt;
-	TextView m_other;
 	ProgressDialog m_wait;
 	Context m_detailsContext;
 	CeresClient m_global;
 	
 	GraphicalView m_protocolPie;
 	GraphicalView m_flagsPie;
+	
+	private ScaleGestureDetector m_scaleGuesture;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -54,10 +60,46 @@ public class DetailsActivity extends Activity
 	    m_iface = (TextView)findViewById(R.id.suspectIfaceString);
 	    m_class = (TextView)findViewById(R.id.suspectClassification);
 	    m_lpt = (TextView)findViewById(R.id.suspectLastPacket);
-	    m_other = (TextView)findViewById(R.id.suspectOtherCount);
 	    m_detailsContext = this;
 	    new ParseXml().execute();
-
+	    
+	    m_scaleGuesture = new ScaleGestureDetector(this, new OnScaleGestureListener()
+	    {
+			@Override
+			public void onScaleEnd(ScaleGestureDetector detector)
+			{
+				// TODO Auto-generated method stub
+			}
+			
+			@Override
+			public boolean onScaleBegin(ScaleGestureDetector detector)
+			{
+				// TODO Auto-generated method stub
+				return true;
+			}
+			
+			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+			@Override
+			public boolean onScale(ScaleGestureDetector detector)
+			{
+				// TODO Auto-generated method stub
+				Log.d("omgwtfbbq", "zoom ongoing, scale: " + detector.getScaleFactor());
+				LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
+				if(android.os.Build.VERSION.SDK_INT >= 11)
+				{
+					layout.setScaleX(detector.getCurrentSpanX());
+					layout.setScaleY(detector.getCurrentSpanY());
+				}
+				return false;
+			}
+		});
+	}
+	
+	@Override
+	public boolean onTouchEvent(MotionEvent event)
+	{
+		m_scaleGuesture.onTouchEvent(event);
+		return true;
 	}
 	
 	@Override
@@ -182,7 +224,7 @@ public class DetailsActivity extends Activity
 		    			getApplicationContext().startActivity(nextPage);
 					}
 				})
-				.setNegativeButton("No", new DialogInterface.OnClickListener(){
+				.setNegativeButton("No", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which)
 					{
@@ -204,8 +246,7 @@ public class DetailsActivity extends Activity
 				m_iface.setText(suspect.m_iface);
 				m_class.setText(suspect.m_classification);
 				m_lpt.setText(suspect.m_lastPacket);
-				m_other.setText(suspect.m_otherCount);
-				Toast.makeText(m_detailsContext, ("Suspect " + suspect.getIp() + ":" + suspect.getIface() + " loaded"), Toast.LENGTH_LONG).show();
+				Toast.makeText(m_detailsContext, "Suspect " + suspect.getIp() + ":" + suspect.getIface() + " loaded", Toast.LENGTH_LONG).show();
 				m_wait.cancel();
 		    	
 				//Make the protocol Pie Chart
@@ -248,19 +289,28 @@ public class DetailsActivity extends Activity
 							simpleSeriesRenderer.setColor(Color.argb(0xff, 0x36, 0x8f, 0x00)); //green
 					    	defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
 						}
-	
+						if(Integer.parseInt(suspect.m_otherCount) > 0)
+						{
+							protocolSeries.add("Other", Integer.parseInt(suspect.m_otherCount));
+							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+							simpleSeriesRenderer.setColor(Color.argb(0xff, 0xfa, 0x7d, 0x00)); //orange
+					    	defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+						}
+						
 				    	LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
 				    	m_protocolPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, defaultRenderer);
+				    	m_protocolPie.setMinimumWidth(250);
+				    	m_protocolPie.setMinimumHeight(200);
 				    	defaultRenderer.setClickEnabled(true);
 				    	defaultRenderer.setSelectableBuffer(10);
-				    	layout.addView(m_protocolPie, 250, 200);
+				    	layout.addView(m_protocolPie);
 					}
 					catch(NumberFormatException ex)
 					{
 						LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
 						TextView view = new TextView(DetailsActivity.this);
 						view.setText("Invalid data found");
-						layout.addView(view);	
+						layout.addView(view, 0);	
 					}
 			    }
 			    else
@@ -324,16 +374,18 @@ public class DetailsActivity extends Activity
 						
 						LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
 						m_flagsPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, defaultRenderer);
+						m_flagsPie.setMinimumWidth(250);
+						m_flagsPie.setMinimumHeight(200);
 						defaultRenderer.setClickEnabled(true);
 						defaultRenderer.setSelectableBuffer(10);
-						layout.addView(m_flagsPie, 250, 200);
+						layout.addView(m_flagsPie);
 					}
 					catch(NumberFormatException ex)
 					{
 						LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
 						TextView view = new TextView(DetailsActivity.this);
 						view.setText("Invalid data found");
-						layout.addView(view);
+						layout.addView(view, 1);
 					}
 			    }
 			    else
