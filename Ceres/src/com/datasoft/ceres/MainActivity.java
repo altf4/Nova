@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         m_ctx = this;
         m_global = (CeresClient)getApplicationContext();
+        m_global.setForeground(true);
         m_id = (EditText)findViewById(R.id.credID);
         m_ip = (EditText)findViewById(R.id.credIP);
         m_port = (EditText)findViewById(R.id.credPort);
@@ -140,7 +141,21 @@ public class MainActivity extends Activity {
     }
     
     @Override
-    public void onRestart()
+    protected void onPause()
+    {
+    	super.onPause();
+    	m_global.setForeground(false);
+    }
+    
+    @Override
+    protected void onResume()
+    {
+    	super.onResume();
+    	m_global.setForeground(true);
+    }
+    
+    @Override
+    protected void onRestart()
     {
     	InputStream in = null;
         try

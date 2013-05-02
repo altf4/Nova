@@ -148,14 +148,22 @@ public class GridActivity extends ListActivity {
 	}
 	
 	@Override
-	public void onPause()
+	protected void onPause()
 	{
 		super.onPause();
 		m_updateThread.interrupt();
+		m_global.setForeground(false);
 	}
 	
 	@Override
-	public void onStop()
+	protected void onResume()
+	{
+		super.onResume();
+		m_global.setForeground(true);
+	}
+	
+	@Override
+	protected void onStop()
 	{
 		super.onStop();
 		if(m_updateThread.getState() != Thread.State.TERMINATED)
@@ -165,7 +173,7 @@ public class GridActivity extends ListActivity {
 	}
 	
 	@Override
-	public void onRestart()
+	protected void onRestart()
 	{
 		super.onRestart();
 		if(m_global.getGridCache().size() > 0)

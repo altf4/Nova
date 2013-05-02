@@ -8,13 +8,16 @@ import java.util.ArrayList;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.AlertDialog;
 import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.widget.Toast;
 import de.roderick.weberknecht.*;
 
 public class CeresClient extends Application {
@@ -24,6 +27,7 @@ public class CeresClient extends Application {
 	StringReader m_xmlReceive;
 	Boolean m_messageReceived;
 	ArrayList<String> m_gridCache;
+	Boolean m_isInForeground;
 	
 	@Override
 	public void onCreate()
@@ -65,24 +69,72 @@ public class CeresClient extends Application {
 			}
 			@Override
 			public void onClose() {
-				// TODO: Need to find a way to pop a dialog to tell the user they've 
-				// lost connection and need to reconnect. Right now, if the server quits
-				// on you while connected, it just shoves you back to the login screen
-				// (more of a measure to see how the intent stuff works at present)
-				Context ctx = getApplicationContext();
-				Notification.Builder build = new Notification.Builder(ctx)
-					.setSmallIcon(R.drawable.ic_launcher)
-					.setContentTitle("Ceres Lost Connection")
-					.setContentText("The Ceres app has lost connection with the server")
-					.setAutoCancel(true);
-				Intent intent = new Intent(ctx, MainActivity.class);
-				TaskStackBuilder tsbuild = TaskStackBuilder.create(ctx);
-				tsbuild.addParentStack(MainActivity.class);
-				tsbuild.addNextIntent(intent);
-				PendingIntent rpintent = tsbuild.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-				build.setContentIntent(rpintent);
-				NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-				nm.notify(0, build.build());
+				if(isInForeground())
+				{
+					System.out.println("Connection lost!");
+					/*AlertDialog.Builder build = new AlertDialog.Builder(getApplicationContext());
+					build
+					.setTitle("Connection Lost")
+					.setMessage("Ceres has lost connection with the Server. Stay on page?")
+					.setCancelable(false)
+					.setPositiveButton("Yes", new DialogInterface.OnClickListener(){
+						@Override
+						public void onClick(DialogInterface dialog, int id)
+						{
+							dialog.cancel();
+						}
+					})
+					.setNegativeButton("No, go to login", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which)
+						{
+			    			Intent nextPage = new Intent(getApplicationContext(), MainActivity.class);
+			    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			    			getApplicationContext().startActivity(nextPage);
+						}
+					});
+					AlertDialog ad = build.create();
+					ad.show();*/
+					
+					// TODO: For now, it seems like there's now way to call the UI Thread from 
+					// the Application level; no access to the current Activity, and any call
+					// to something that should be fired on the UI Thread will cause an exception
+					// to be thrown. Until I can find a tricky way to have a dialog activated here,
+					// both inForeground and !inForeground will trigger an alert.
+					
+					Context ctx = getApplicationContext();
+					Notification.Builder build = new Notification.Builder(ctx)
+						.setSmallIcon(R.drawable.ic_launcher)
+						.setContentTitle("Ceres Lost Connection")
+						.setContentText("The Ceres app has lost connection with the server")
+						.setAutoCancel(true);
+					Intent intent = new Intent(ctx, MainActivity.class);
+					TaskStackBuilder tsbuild = TaskStackBuilder.create(ctx);
+					tsbuild.addParentStack(MainActivity.class);
+					tsbuild.addNextIntent(intent);
+					PendingIntent rpintent = tsbuild.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+					build.setContentIntent(rpintent);
+					NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+					nm.notify(0, build.build());
+				}
+				else
+				{
+					Context ctx = getApplicationContext();
+					Notification.Builder build = new Notification.Builder(ctx)
+						.setSmallIcon(R.drawable.ic_launcher)
+						.setContentTitle("Ceres Lost Connection")
+						.setContentText("The Ceres app has lost connection with the server")
+						.setAutoCancel(true);
+					Intent intent = new Intent(ctx, MainActivity.class);
+					TaskStackBuilder tsbuild = TaskStackBuilder.create(ctx);
+					tsbuild.addParentStack(MainActivity.class);
+					tsbuild.addNextIntent(intent);
+					PendingIntent rpintent = tsbuild.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+					build.setContentIntent(rpintent);
+					NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+					nm.notify(0, build.build());
+				}
 			}
 		});
 		m_ws.connect();
@@ -141,5 +193,15 @@ public class CeresClient extends Application {
 	public void setClientId(String id)
 	{
 		m_clientId = id;
+	}
+	
+	public Boolean isInForeground()
+	{
+		return m_isInForeground;
+	}
+	
+	public void setForeground(Boolean inForeground)
+	{
+		m_isInForeground = inForeground;
 	}
 }
