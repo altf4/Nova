@@ -4,13 +4,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" 
-    android:background="@color/detailsBackground"
-    >
+    android:background="@color/detailsBackground" >
 
     <LinearLayout
         android:id="@+id/chartsLayout"
         android:layout_width="match_parent"
-        android:layout_height="160dp"
+        android:layout_height="140dp"
         android:layout_weight="1"
         android:orientation="horizontal" >
     </LinearLayout>
