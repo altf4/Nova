@@ -12,7 +12,7 @@ public class TextProgressBar extends ProgressBar {
 	
 	private String m_text = "";
 	private int m_textColor = Color.WHITE;
-	private float m_textSize = 20;
+	private float m_textSize = 16;
 	private Paint tp = new Paint();
 	private Rect bounds = new Rect();
 	
@@ -42,7 +42,9 @@ public class TextProgressBar extends ProgressBar {
 		super.onDraw(canvas);
 		tp.setAntiAlias(true);
 		tp.setColor(m_textColor);
-		tp.setTextSize(m_textSize);
+		float scale = getContext().getResources().getDisplayMetrics().density;
+		float adjustedTextSize = ((m_textSize * scale) + 0.5f);
+		tp.setTextSize(adjustedTextSize);
 		tp.getTextBounds(m_text, 0, m_text.length(), bounds);
 		int x = (getWidth() / 2) - bounds.centerX();
 		int y = (getHeight() / 2) - bounds.centerY();
