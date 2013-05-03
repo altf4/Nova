@@ -15,5 +15,6 @@
     <string name="ipHeader">IP Address</string>
     <string name="ifHeader">Interface</string>
     <string name="clHeader">Classification</string>
+    <color name="detailsBackground">#e4f2ff</color>
 
 </resources>

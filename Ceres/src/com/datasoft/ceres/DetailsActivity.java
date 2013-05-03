@@ -11,7 +11,6 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -20,14 +19,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
-import android.view.ScaleGestureDetector.OnScaleGestureListener;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.LinearLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 import de.roderick.weberknecht.WebSocketException;
@@ -45,8 +41,6 @@ public class DetailsActivity extends Activity
 	
 	GraphicalView m_protocolPie;
 	GraphicalView m_flagsPie;
-	
-	private ScaleGestureDetector m_scaleGuesture;
 	
 	@Override
 	protected void onPause()
@@ -77,43 +71,6 @@ public class DetailsActivity extends Activity
 	    m_detailsContext = this;
 	    new ParseXml().execute();
 	    
-	    m_scaleGuesture = new ScaleGestureDetector(this, new OnScaleGestureListener()
-	    {
-			@Override
-			public void onScaleEnd(ScaleGestureDetector detector)
-			{
-				// TODO Auto-generated method stub
-			}
-			
-			@Override
-			public boolean onScaleBegin(ScaleGestureDetector detector)
-			{
-				// TODO Auto-generated method stub
-				return true;
-			}
-			
-			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-			@Override
-			public boolean onScale(ScaleGestureDetector detector)
-			{
-				// TODO Auto-generated method stub
-				Log.d("omgwtfbbq", "zoom ongoing, scale: " + detector.getScaleFactor());
-				LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
-				if(android.os.Build.VERSION.SDK_INT >= 11)
-				{
-					layout.setScaleX(detector.getCurrentSpanX());
-					layout.setScaleY(detector.getCurrentSpanY());
-				}
-				return false;
-			}
-		});
-	}
-	
-	@Override
-	public boolean onTouchEvent(MotionEvent event)
-	{
-		m_scaleGuesture.onTouchEvent(event);
-		return true;
 	}
 	
 	@Override
@@ -310,14 +267,23 @@ public class DetailsActivity extends Activity
 							simpleSeriesRenderer.setColor(Color.argb(0xff, 0xfa, 0x7d, 0x00)); //orange
 					    	defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
 						}
+						if(protocolSeries.getItemCount() == 0)
+						{
+							protocolSeries.add("No Packets", 1);
+							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+							simpleSeriesRenderer.setColor(Color.LTGRAY);
+							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+						}
 						
 				    	LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
 				    	m_protocolPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, defaultRenderer);
-				    	m_protocolPie.setMinimumWidth(250);
-				    	m_protocolPie.setMinimumHeight(200);
 				    	defaultRenderer.setClickEnabled(true);
 				    	defaultRenderer.setSelectableBuffer(10);
-				    	layout.addView(m_protocolPie);
+				    	LinearLayout containerLayout = new LinearLayout(DetailsActivity.this);
+				    	LayoutParams params = new TableRow.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
+				    	containerLayout.setLayoutParams(params);
+				    	containerLayout.addView(m_protocolPie);
+				    	layout.addView(containerLayout);
 					}
 					catch(NumberFormatException ex)
 					{
@@ -382,17 +348,26 @@ public class DetailsActivity extends Activity
 						{
 							protocolSeries.add("SYN/ACK", Integer.parseInt(suspect.m_synAckCount));
 							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+							simpleSeriesRenderer.setColor(Color.argb(0xff, 0x8c, 0x00, 0xff)); //purple
+							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+						}
+						if(protocolSeries.getItemCount() == 0)
+						{
+							protocolSeries.add("No TCP Flags", 1);
+							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
 							simpleSeriesRenderer.setColor(Color.LTGRAY);
 							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
 						}
 						
 						LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
 						m_flagsPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, defaultRenderer);
-						m_flagsPie.setMinimumWidth(250);
-						m_flagsPie.setMinimumHeight(200);
 						defaultRenderer.setClickEnabled(true);
 						defaultRenderer.setSelectableBuffer(10);
-						layout.addView(m_flagsPie);
+						LinearLayout containerLayout = new LinearLayout(DetailsActivity.this);
+				    	LayoutParams params = new TableRow.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
+				    	containerLayout.setLayoutParams(params);
+				    	containerLayout.addView(m_flagsPie);
+				    	layout.addView(containerLayout);
 					}
 					catch(NumberFormatException ex)
 					{
