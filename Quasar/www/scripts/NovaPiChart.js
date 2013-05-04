@@ -191,20 +191,22 @@ NovaPiChart.prototype = {
             this.m_items[pfile].endArc = lastend;
 
             // Draw the legend and values
-            var legend = document.createElement("div");
-            legend.setAttribute("class", "pieLegendElementDiv");
-            var text = document.createElement("p");
-            text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
-            text.setAttribute('style', 'display: inline-block; margin: 2px');
-            if(this.m_deleteFunction != undefined) {
-                var deleteButton = document.createElement("button");
-                deleteButton.setAttribute('style', 'display: inline-block;');
-                deleteButton.innerHTML = "<img src='images/delete.png' class='buttonIcon'/><span class='buttonSpan'>Delete All</span>";
-                deleteButton.setAttribute('onclick', this.m_deleteFunction + '("' + this.m_items[pfile].name + '")');
-                legend.appendChild(deleteButton);
+            if (!this.m_disableLegend) {
+                var legend = document.createElement("div");
+                legend.setAttribute("class", "pieLegendElementDiv");
+                var text = document.createElement("p");
+                text.innerHTML = "<span style='background-color: " + randomColor + ";'>&nbsp &nbsp &nbsp</span>&nbsp " +  (100*this.m_items[pfile].value/this.m_numberOfItems).toFixed(2) + "% (" + this.m_items[pfile].value + ") " + this.m_items[pfile].name;
+                text.setAttribute('style', 'display: inline-block; margin: 2px');
+                if(this.m_deleteFunction != undefined) {
+                    var deleteButton = document.createElement("button");
+                    deleteButton.setAttribute('style', 'display: inline-block;');
+                    deleteButton.innerHTML = "<img src='images/delete.png' class='buttonIcon'/><span class='buttonSpan'>Delete All</span>";
+                    deleteButton.setAttribute('onclick', this.m_deleteFunction + '("' + this.m_items[pfile].name + '")');
+                    legend.appendChild(deleteButton);
+                }
+                legend.appendChild(text);
+                this.m_id.appendChild(legend);
             }
-            legend.appendChild(text);
-            this.m_id.appendChild(legend);
         }
         
     }

@@ -17,22 +17,84 @@
 extends layout
 
 block content
-  h1 Details for !{suspect} on !{interface}
+  h1 Details for suspect
 
   div#genericInfo
- 
-  h1 Packet Counts
+  
+  div(style="width: 1024px;")
+    div#tcpPortChart(style='display: inline-block; width: 30%; margin: 10px')
+    div#tcpIpChart(style='display: inline-block; width: 30%; margin: 10px')
+    div#tcpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
+
+  br
+  div(style="width: 1024px;")
+    div#udpPortChart(style='display: inline-block; width: 30%; margin: 10px')
+    div#udpIpChart(style='display: inline-block; width: 30%; margin: 10px')
+    div#udpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
+  
+  
+  br
+  h1 Detailed counts of connections from !{suspect}
   div.novaGrid
     div#packetCountTable
+  
+
   div#tablePages
 
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
+  script(type='text/javascript', src='scripts/NovaPiChart.js')
+
+
+  style
+    .innerVertBar {
+        height: 60%;
+        position: absolute;
+        bottom: 0px;
+        left: 0px;
+        width: 20px;
+        margin: 0px;
+        
+        background-image: url('images/gradient.jpg');
+        background-repeat: repeat-x;
+        background-color: #ABD6FF;
+        border: 0;
+    }
+
+    .outerVertBar {
+        height: 100px;
+        width: 20px;
+        border: 1px solid black;
+        position: relative;
+        background-color: #F5F5F9;
+    }
+
+    .containerVertBar {
+        display: inline-block;
+        margin-right: 10px;
+    }
 
   script
     var grid;
+    var protocolChart, tcpPortChart, udpPortChart, tcpIpChart, udpIpChart, tcpIpPortChart, udpIpPortChart;
     function init(ready){
+        tcpIpChart = new NovaPiChart('tcpIpChart', 'TCP Connections by IP', 200);
+        tcpPortChart = new NovaPiChart('tcpPortChart', 'TCP Connections by port', 200);
+        tcpIpPortChart = new NovaPiChart('tcpIpPortChart', 'TCP Packets by IP and port', 200);
+        
+        
+        udpIpChart = new NovaPiChart('udpIpChart', 'UDP Packets by IP', 200);
+        udpPortChart = new NovaPiChart('udpPortChart', 'UDP Packets by port', 200);
+        udpIpPortChart = new NovaPiChart('udpIpPortChart', 'UDP Packets by IP and port', 200);
+        
+        tcpIpChart.m_disableLegend = true;
+        tcpPortChart.m_disableLegend = true;
+        tcpIpPortChart.m_disableLegend = true;
+        udpIpChart.m_disableLegend = true;
+        udpPortChart.m_disableLegend = true;
+        udpIpPortChart.m_disableLegend = true;
+        
         var columns = new Array();
         columns.push({name: "Dst IP:Port:Protocol", isDisabled: true});
         columns.push({name: "Dst IP"});
@@ -60,16 +122,15 @@ block headerAdditions
             return;
         }
 
-        console.log(suspect);
     
         var info = "<table>";
         info += "<TR><TD> IP Address </TD> <TD>" + suspect.ip + "</TD></TR>";
         info += "<TR><TD> Interface </TD> <TD>" + suspect.interface + "</TD></TR>";
-        info += "<TR><TD> Classification </TD> <TD>" + suspect.classification + "</TD></TR>";
+        info += "</TABLE>";
        
        
-       info += "<TR><TD></TD></TR>";
-        info += "<TR><TD></TD></TR>";
+        info += "<div style='display: inline-block; float: left; margin-right: 20px'><H1>Packet Count Totals</H1>";
+        info += "<TABLE>";
         info += "<TR><TD> # Bytes </TD> <TD>" + (suspect.count_bytes || 0) + "</TD></TR>";
         info += "<TR><TD> # TCP Packets </TD> <TD>" + (suspect.count_tcp || 0) + "</TD></TR>";
         info += "<TR><TD> # UDP Packets </TD> <TD>" + (suspect.count_udp || 0) + "</TD></TR>";
@@ -77,14 +138,36 @@ block headerAdditions
         info += "<TR><TD> # Other Packets </TD> <TD>" + (suspect.count_other || 0) + "</TD></TR>";
       
       
-      info += "<TR><TD></TD></TR>";
+        info += "<TR><TD></TD></TR>";
         info += "<TR><TD></TD></TR>";
         info += "<TR><TD> # TCP SYN Packets </TD> <TD>" + (suspect.count_tcpSyn || 0) + "</TD></TR>";
         info += "<TR><TD> # TCP ACK Packets </TD> <TD>" + (suspect.count_tcpAck || 0) + "</TD></TR>";
         info += "<TR><TD> # TCP SYN/ACK Packets </TD> <TD>" + (suspect.count_tcpSynAck || 0) + "</TD></TR>";
         info += "<TR><TD> # TCP FIN Packets </TD> <TD>" + (suspect.count_tcpFin || 0) + "</TD></TR>";
         info += "<TR><TD> # TCP RST Packets </TD> <TD>" + (suspect.count_tcpRst || 0) + "</TD></TR>";
+        info += "</TABLE>";
         
+        
+        info += "</div><div style='display: inline-block;'><H1>Packet Count Summaries</H1>";
+        info += '<div id="ProtocolPiChart"></div></div>';
+        
+        info += "<H2>Percent of TCP packets with flags set</H2>";
+        info += "<TABLE>";
+        var num = 100*(suspect.count_tcpSyn || 0) / (1.0 * suspect.count_tcp);
+        info += '<TR><TD> Percent with SYN </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
+        var num = 100*(suspect.count_tcpAck || 0) / (1.0 * suspect.count_tcp);
+        info += '<TR><TD> Percent with ACK </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
+        var num = 100*(suspect.count_tcpFin || 0) / (1.0 * suspect.count_tcp);
+        info += '<TR><TD> Percent with FIN </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
+        var num = 100*(suspect.count_tcpRst || 0) / (1.0 * suspect.count_tcp);
+        info += '<TR><TD> Percent with RST </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
+        info += "</TABLE>";
+        
+        
+        
+     
+        info += "<H1>Computed KNN Classification Features </H1>";
+        info += "<TABLE>";
         
         info += "<TR><TD></TD></TR>";
         info += "<TR><TD></TD></TR>";
@@ -102,16 +185,27 @@ block headerAdditions
         info += "<TR><TD> Percent TCP FIN Packets </TD> <TD>" + suspect.tcp_percent_fin * 100 + "%</TD></TR>";
         info += "<TR><TD> Percent TCP RST Packets </TD> <TD>" + suspect.tcp_percent_rst * 100 + "%</TD></TR>";
         info += "<TR><TD> Percent Haystack Contacted </TD> <TD>" + suspect.haystack_percent_contacted * 100 + "%</TD></TR>";
+        info += "</TABLE>";
         
-        
-        info += "<TR><TD></TD></TR>";
-        info += "<TR><TD></TD></TR>";
+     
+        info += "<H1>Output of KNN classification engine </H1>";
+        info += "<TABLE>";
+        info += "<TR><TD> Classification </TD> <TD>" + suspect.classification + "</TD></TR>";
         info += "<TR><TD> Hostile KNN neighbors </TD> <TD>" + suspect.hostileNeighbors + "</TD></TR>";
         info += "<TR><TD> Classification Notes </TD> <TD>" + String(suspect.classificationNotes).replace(/\\n/g, "<BR />") + "</TD></TR>";
         
         info += "</TABLE><BR><BR>";
         $('#genericInfo').html(info);
-
+        
+        
+        arr = new Array();
+        arr.push({name: 'TCP Packets', value: suspect.count_tcp || 0});
+        arr.push({name: 'UDP Packets', value: suspect.count_udp || 0});
+        arr.push({name: 'ICMP Packets', value: suspect.count_icmp || 0});
+        arr.push({name: 'Other', value: suspect.count_other || 0});
+        arr = arr.sort(function(a,b) {return b.value - a.value});
+        protocolChart = new NovaPiChart('ProtocolPiChart', '', 200);
+        protocolChart.Render(arr);
     }
 
     function OnIpPorts(err, results) {
@@ -121,6 +215,14 @@ block headerAdditions
             return;
         }
 
+        var tcparr = new Array(); 
+        var udparr = new Array(); 
+
+        var tcpPortCounts = {};
+        var tcpIpCounts = {};
+        var udpPortCounts = {};
+        var udpIpCounts = {};
+
         for (var r in results) {
             var row = new Array();
             row.push(results[r].dstip + String(results[r].port) + results[r].type);
@@ -128,10 +230,55 @@ block headerAdditions
             row.push(results[r].port);
             row.push(results[r].type);
             row.push(results[r].count);
-            console.log(row)
 
+            if (results[r].type == "tcp") {
+                if (!tcpPortCounts[results[r].port]) {tcpPortCounts[results[r].port] = 0;}
+                if (!tcpIpCounts[results[r].dstip]) {tcpIpCounts[results[r].dstip] = 0;}
+
+                tcpPortCounts[results[r].port] += results[r].count;
+                tcpIpCounts[results[r].dstip] += results[r].count;
+
+                tcparr.push({name: results[r].dstip + " " + results[r].port, value: results[r].count});
+            } else if (results[r].type == "udp") { 
+                if (!udpPortCounts[results[r].port]) {udpPortCounts[results[r].port] = 0;}
+                if (!udpIpCounts[results[r].dstip]) {udpIpCounts[results[r].dstip] = 0;}
+                
+                udpPortCounts[results[r].port] += results[r].count;
+                udpIpCounts[results[r].dstip] += results[r].count;
+                udparr.push({name: results[r].dstip + " " + results[r].port, value: results[r].count});
+            }
+            
             grid.PushEntry(row);
+
         }
+
+        tcparr = tcparr.sort(function(a,b) {return b.value - a.value});
+        tcpIpPortChart.Render(tcparr);
+        
+        udparr = udparr.sort(function(a,b) {return b.value - a.value});
+        udpIpPortChart.Render(udparr);
+
+        var arr = new Array();
+        for (var r in tcpPortCounts) {arr.push({name: r, value: tcpPortCounts[r]});}
+        arr = arr.sort(function(a,b) {return b.value - a.value});
+        tcpPortChart.Render(arr);
+        
+        var arr = new Array();
+        for (var r in tcpIpCounts) {arr.push({name: r, value: tcpIpCounts[r]});}
+        arr = arr.sort(function(a,b) {return b.value - a.value});
+        tcpIpChart.Render(arr);
+        
+        var arr = new Array();
+        for (var r in udpIpCounts) {arr.push({name: r, value: udpIpCounts[r]});}
+        arr = arr.sort(function(a,b) {return b.value - a.value});
+        udpIpChart.Render(arr);
+        
+        var arr = new Array();
+        for (var r in udpPortCounts) {arr.push({name: r, value: udpPortCounts[r]});}
+        arr = arr.sort(function(a,b) {return b.value - a.value});
+        udpPortChart.Render(arr);
+        
+
         
         grid.Render();
     };
