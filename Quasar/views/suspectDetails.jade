@@ -41,11 +41,19 @@ block content
   
   br
   h1 Detailed counts of connections from !{suspect}
-  div.novaGrid
-    div#packetCountTable
+  div(style="width: 1024px")
+    div(style="float: left; margin-right: 100px")
+      div.novaGrid
+        div#packetCountTable
+      div#tablePages
+    div
+      div.novaGrid
+        div#packetSizeTable
+      div#packetSizeTablePages
   
+  br
 
-  div#tablePages
+
 
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
@@ -168,10 +176,23 @@ block headerAdditions
         grid.SetPageNumberDiv($('#tablePages').get(0));
         grid.Render();
 
+        
+        var columns = new Array();
+        columns.push({name: "Packet Size (in bytes)"});
+        columns.push({name: "Packets seen"});
+       
+        sizeGrid = new NovaGrid(columns, 0, "packetSizeTable", "sizeGrid");
+        sizeGrid.SetSortByKey(1);
+        sizeGrid.SetRowsPerPage(20);
+        sizeGrid.SetPageNumberDiv($('#packetSizeTablePages').get(0));
+        sizeGrid.Render();
+
+
         now.ready(function()
         {
             now.GetSuspect('!{suspect}', '!{interface}', OnNewSuspect);
             now.GetIpPortsContacted('!{suspect}', '!{interface}', OnIpPorts);
+            now.GetPacketSizes('!{suspect}', '!{interface}', OnPacketSizes);
         });
     }
 
@@ -266,6 +287,23 @@ block headerAdditions
         arr = arr.sort(function(a,b) {return b.value - a.value});
         protocolChart = new NovaPiChart('ProtocolPiChart', '', 200);
         protocolChart.Render(arr);
+    }
+
+    function OnPacketSizes(err, results) {
+        if (err) {
+            alert("Unable to fetch suspect details. See Javascript console for detailed errors.");
+            console.log(err);
+            return;
+        }
+
+        for (var r in results) {
+            var row = new Array();
+            row.push(results[r].packetSize);
+            row.push(results[r].count);
+            sizeGrid.PushEntry(row);
+        }
+        sizeGrid.Render();
+
     }
 
     function OnIpPorts(err, results) {

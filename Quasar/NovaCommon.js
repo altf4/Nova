@@ -201,6 +201,7 @@ var NovaCommon = new function() {
 	this.dbqGetSuspect = novaDb.prepare("SELECT * from suspects JOIN packet_counts ON suspects.ip = packet_counts.ip AND suspects.interface = packet_counts.interface WHERE suspects.ip = ? AND suspects.interface = ?");
 	this.dbqGetIpPorts = novaDb.prepare("SELECT * from ip_port_counts where ip = ? AND interface = ?");
 	this.dbqGetSuspectPacketCounts = novaDb.prepare("SELECT * from packet_counts WHERE ip = ? AND interface = ?");
+	this.dbqGetSuspectPacketSizes = novaDb.prepare("SELECT * from packet_sizes WHERE ip = ? AND interface = ?");
 
 
 	this.HashPassword = function (password, salt)

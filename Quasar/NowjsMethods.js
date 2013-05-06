@@ -1483,6 +1483,13 @@ everyone.now.GetIpPortsContacted = function(ip, iface, cb) {
     });
 };
 
+everyone.now.GetPacketSizes = function(ip, iface, cb) {
+    NovaCommon.dbqGetSuspectPacketSizes.all(ip, iface, function(err, results) {
+        if (databaseError(err, cb)) {return;}
+            cb && cb(null, results);
+    });
+};
+
 }
 
 
