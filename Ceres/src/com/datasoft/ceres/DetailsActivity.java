@@ -30,11 +30,11 @@ import de.roderick.weberknecht.WebSocketException;
 
 public class DetailsActivity extends Activity
 {
-	TextView m_id;
 	TextView m_ip;
 	TextView m_iface;
 	TextView m_class;
 	TextView m_lpt;
+	
 	ProgressDialog m_wait;
 	Context m_detailsContext;
 	CeresClient m_global;
@@ -59,42 +59,41 @@ public class DetailsActivity extends Activity
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
-	    super.onCreate(savedInstanceState);
-	    setContentView(R.layout.activity_details);
-	    m_global = (CeresClient)getApplicationContext();
-	    m_wait = new ProgressDialog(this);
-	    m_id = (TextView)findViewById(R.id.suspectId);
-	    m_ip = (TextView)findViewById(R.id.suspectIpString);
-	    m_iface = (TextView)findViewById(R.id.suspectIfaceString);
-	    m_class = (TextView)findViewById(R.id.suspectClassification);
-	    m_lpt = (TextView)findViewById(R.id.suspectLastPacket);
-	    m_detailsContext = this;
-	    new ParseXml().execute();
-	    
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_details);
+		m_global = (CeresClient)getApplicationContext();
+		m_wait = new ProgressDialog(this);
+		m_ip = (TextView)findViewById(R.id.suspectIP);
+		m_iface = (TextView)findViewById(R.id.suspectIface);
+		m_class = (TextView)findViewById(R.id.suspectClassification);
+		m_lpt = (TextView)findViewById(R.id.suspectLastPacket);
+		m_detailsContext = this;
+		new ParseXml().execute();
 	}
 	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent keyEvent)
 	{
-    	if(keyCode == KeyEvent.KEYCODE_HOME)
-    	{
-    		try
-    		{
-    			m_global.m_ws.close();
-    		}
-    		catch(WebSocketException wse)
-    		{
-    			System.out.println("Could not close connection!");
-    		}
-    	}
-    	else if(keyCode == KeyEvent.KEYCODE_BACK)
-    	{
-    		m_global.clearXmlReceive();
-    	}
-    	return super.onKeyDown(keyCode, keyEvent);
+		if(keyCode == KeyEvent.KEYCODE_HOME)
+		{
+			try
+			{
+				m_global.m_ws.close();
+			}
+			catch(WebSocketException wse)
+			{
+				System.out.println("Could not close connection!");
+			}
+		}
+		else if(keyCode == KeyEvent.KEYCODE_BACK)
+		{
+			m_global.clearXmlReceive();
+		}
+		return super.onKeyDown(keyCode, keyEvent);
 	}
 	
-	private class ParseXml extends AsyncTask<Void, Void, Suspect> {
+	private class ParseXml extends AsyncTask<Void, Void, Suspect>
+	{
 		@Override
 		protected void onPreExecute()
 		{
@@ -102,7 +101,7 @@ public class DetailsActivity extends Activity
 			m_wait.setMessage("Retrieving Suspect Data");
 			m_wait.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			m_wait.show();
-    		super.onPreExecute();
+			super.onPreExecute();
 		}
 		
 		@Override
@@ -173,214 +172,213 @@ public class DetailsActivity extends Activity
 			}
 		}
 		
-		@Override
-		protected void onPostExecute(Suspect suspect)
+	@Override
+	protected void onPostExecute(Suspect suspect)
+	{
+		if(suspect == null)
 		{
-			if(suspect == null)
-			{
-				m_wait.cancel();
-				AlertDialog.Builder build = new AlertDialog.Builder(m_detailsContext);
-				build
-				.setTitle("Suspect Info Empty")
-				.setMessage("Ceres server returned no data for suspect. Try again?")
-				.setCancelable(false)
-				.setPositiveButton("Yes", new DialogInterface.OnClickListener(){
-					@Override
-					public void onClick(DialogInterface dialog, int id)
+			m_wait.cancel();
+			AlertDialog.Builder build = new AlertDialog.Builder(m_detailsContext);
+			build
+			.setTitle("Suspect Info Empty")
+			.setMessage("Ceres server returned no data for suspect. Try again?")
+			.setCancelable(false)
+			.setPositiveButton("Yes", new DialogInterface.OnClickListener(){
+				@Override
+				public void onClick(DialogInterface dialog, int id)
+				{
+					m_global.clearXmlReceive();
+					Intent nextPage = new Intent(getApplicationContext(), DetailsActivity.class);
+					nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+					nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					getApplicationContext().startActivity(nextPage);
+				}
+			})
+			.setNegativeButton("No", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which)
+				{
+					m_global.clearXmlReceive();
+					Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
+					nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+					nextPage.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+					getApplicationContext().startActivity(nextPage);
+				}
+			});
+			AlertDialog ad = build.create();
+			ad.show();
+		}
+		else
+		{
+			m_ip.setText(suspect.m_ip);
+			m_iface.setText(suspect.m_iface);
+			m_class.setText(suspect.m_classification + "%");
+			m_lpt.setText(suspect.m_lastPacket);
+			Toast.makeText(m_detailsContext, "Suspect " + suspect.getIp() + ":" + suspect.getIface() + " loaded", Toast.LENGTH_LONG).show();
+			m_wait.cancel();
+			
+			//Make the protocol Pie Chart
+			if(m_protocolPie == null)
+			{	
+				try
+				{
+					CategorySeries protocolSeries = new CategorySeries("");
+					
+					DefaultRenderer defaultRenderer = new DefaultRenderer();
+	
+					defaultRenderer.setApplyBackgroundColor(true);
+					defaultRenderer.setBackgroundColor(Color.argb(0xff, 0xe4, 0xf2, 0xff));
+					defaultRenderer.setChartTitleTextSize(25);
+					defaultRenderer.setChartTitle("Protocol Used");
+					defaultRenderer.setLabelsTextSize(15);
+					defaultRenderer.setLabelsColor(Color.BLACK);
+					defaultRenderer.setShowLegend(false);
+					defaultRenderer.setZoomButtonsVisible(false);
+					defaultRenderer.setStartAngle(180);
+					
+					if(Integer.parseInt(suspect.m_tcpCount) > 0)
 					{
-						m_global.clearXmlReceive();
-		    			Intent nextPage = new Intent(getApplicationContext(), DetailsActivity.class);
-		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		    			getApplicationContext().startActivity(nextPage);
+						protocolSeries.add("TCP", Integer.parseInt(suspect.m_tcpCount));
+						SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+						simpleSeriesRenderer.setColor(Color.argb(0xff, 0x00, 0x5a, 0xff));  //blue
+						defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
 					}
-				})
-				.setNegativeButton("No", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which)
+					if(Integer.parseInt(suspect.m_udpCount) > 0)
 					{
-						m_global.clearXmlReceive();
-		    			Intent nextPage = new Intent(getApplicationContext(), GridActivity.class);
-		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-		    			nextPage.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		    			getApplicationContext().startActivity(nextPage);
+						protocolSeries.add("UDP", Integer.parseInt(suspect.m_udpCount));
+						SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+						simpleSeriesRenderer.setColor(Color.RED);
+						defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
 					}
-				});
-				AlertDialog ad = build.create();
-				ad.show();
+					if(Integer.parseInt(suspect.m_icmpCount) > 0)
+					{
+						protocolSeries.add("ICMP", Integer.parseInt(suspect.m_icmpCount));
+						SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+						simpleSeriesRenderer.setColor(Color.argb(0xff, 0x36, 0x8f, 0x00)); //green
+						defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+					}
+					if(Integer.parseInt(suspect.m_otherCount) > 0)
+					{
+						protocolSeries.add("Other", Integer.parseInt(suspect.m_otherCount));
+						SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+						simpleSeriesRenderer.setColor(Color.argb(0xff, 0xfa, 0x7d, 0x00)); //orange
+						defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+					}
+					if(protocolSeries.getItemCount() == 0)
+					{
+						protocolSeries.add("No Packets", 1);
+						SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+						simpleSeriesRenderer.setColor(Color.LTGRAY);
+						defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+					}
+					
+					LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
+					m_protocolPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, defaultRenderer);
+					defaultRenderer.setClickEnabled(true);
+					defaultRenderer.setSelectableBuffer(10);
+					LinearLayout containerLayout = new LinearLayout(DetailsActivity.this);
+					LayoutParams params = new TableRow.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
+					containerLayout.setLayoutParams(params);
+					containerLayout.addView(m_protocolPie);
+					layout.addView(containerLayout);
+				}
+				catch(NumberFormatException ex)
+				{
+					LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
+					TextView view = new TextView(DetailsActivity.this);
+					view.setText("Invalid data found");
+					layout.addView(view, 0);	
+				}
 			}
 			else
 			{
-				m_id.setText(suspect.m_id);
-				m_ip.setText(suspect.m_ip);
-				m_iface.setText(suspect.m_iface);
-				m_class.setText(suspect.m_classification);
-				m_lpt.setText(suspect.m_lastPacket);
-				Toast.makeText(m_detailsContext, "Suspect " + suspect.getIp() + ":" + suspect.getIface() + " loaded", Toast.LENGTH_LONG).show();
-				m_wait.cancel();
-		    	
-				//Make the protocol Pie Chart
-				if(m_protocolPie == null)
-			    {	
-					try
+				m_protocolPie.repaint();
+			}
+			
+			//Make the flags Pie Chart
+			if(m_flagsPie == null)
+			{
+				try
+				{
+					CategorySeries protocolSeries = new CategorySeries("");
+					DefaultRenderer defaultRenderer = new DefaultRenderer();
+					
+					defaultRenderer.setApplyBackgroundColor(true);
+					defaultRenderer.setBackgroundColor(Color.argb(0xff, 0xe4, 0xf2, 0xff));
+					defaultRenderer.setChartTitleTextSize(25);
+					defaultRenderer.setChartTitle("TCP Flags Used");
+					defaultRenderer.setLabelsTextSize(15);
+					defaultRenderer.setLabelsColor(Color.BLACK);
+					defaultRenderer.setShowLegend(false);
+					defaultRenderer.setZoomButtonsVisible(false);
+					defaultRenderer.setStartAngle(180);
+					
+					if(Integer.parseInt(suspect.m_rstCount) > 0)
 					{
-						CategorySeries protocolSeries = new CategorySeries("");
-						
-				    	DefaultRenderer defaultRenderer = new DefaultRenderer();
-	
-					    defaultRenderer.setApplyBackgroundColor(true);
-					    defaultRenderer.setBackgroundColor(Color.argb(0xff, 0xe4, 0xf2, 0xff));
-					    defaultRenderer.setChartTitleTextSize(25);
-					    defaultRenderer.setChartTitle("Protocol Used");
-					    defaultRenderer.setLabelsTextSize(15);
-					    defaultRenderer.setLabelsColor(Color.BLACK);
-					    defaultRenderer.setShowLegend(false);
-					    defaultRenderer.setZoomButtonsVisible(false);
-					    defaultRenderer.setStartAngle(180);
-					    
-						if(Integer.parseInt(suspect.m_tcpCount) > 0)
-						{
-							protocolSeries.add("TCP", Integer.parseInt(suspect.m_tcpCount));
-					    	SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
-					    	simpleSeriesRenderer.setColor(Color.argb(0xff, 0x00, 0x5a, 0xff));  //blue
-					    	defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
-						}
-						if(Integer.parseInt(suspect.m_udpCount) > 0)
-						{
-							protocolSeries.add("UDP", Integer.parseInt(suspect.m_udpCount));
-							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
-					    	simpleSeriesRenderer.setColor(Color.RED);
-					    	defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
-						}
-						if(Integer.parseInt(suspect.m_icmpCount) > 0)
-						{
-							protocolSeries.add("ICMP", Integer.parseInt(suspect.m_icmpCount));
-							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
-							simpleSeriesRenderer.setColor(Color.argb(0xff, 0x36, 0x8f, 0x00)); //green
-					    	defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
-						}
-						if(Integer.parseInt(suspect.m_otherCount) > 0)
-						{
-							protocolSeries.add("Other", Integer.parseInt(suspect.m_otherCount));
-							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
-							simpleSeriesRenderer.setColor(Color.argb(0xff, 0xfa, 0x7d, 0x00)); //orange
-					    	defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
-						}
-						if(protocolSeries.getItemCount() == 0)
-						{
-							protocolSeries.add("No Packets", 1);
-							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
-							simpleSeriesRenderer.setColor(Color.LTGRAY);
-							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
-						}
-						
-				    	LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
-				    	m_protocolPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, defaultRenderer);
-				    	defaultRenderer.setClickEnabled(true);
-				    	defaultRenderer.setSelectableBuffer(10);
-				    	LinearLayout containerLayout = new LinearLayout(DetailsActivity.this);
-				    	LayoutParams params = new TableRow.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
-				    	containerLayout.setLayoutParams(params);
-				    	containerLayout.addView(m_protocolPie);
-				    	layout.addView(containerLayout);
+						protocolSeries.add("RST", Integer.parseInt(suspect.m_rstCount));
+						SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+						simpleSeriesRenderer.setColor(Color.argb(0xff, 0x00, 0x5a, 0xff));  //blue
+						defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
 					}
-					catch(NumberFormatException ex)
+					if(Integer.parseInt(suspect.m_synCount) > 0)
 					{
-						LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
-						TextView view = new TextView(DetailsActivity.this);
-						view.setText("Invalid data found");
-						layout.addView(view, 0);	
+						protocolSeries.add("SYN", Integer.parseInt(suspect.m_synCount));
+						SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+						simpleSeriesRenderer.setColor(Color.RED);
+						defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
 					}
-			    }
-			    else
-			    {
-			    	m_protocolPie.repaint();
-			    }
-			    
-			    //Make the flags Pie Chart
-			    if(m_flagsPie == null)
-			    {
-					try
+					if(Integer.parseInt(suspect.m_finCount) > 0)
 					{
-						CategorySeries protocolSeries = new CategorySeries("");
-						DefaultRenderer defaultRenderer = new DefaultRenderer();
-						
-						defaultRenderer.setApplyBackgroundColor(true);
-						defaultRenderer.setBackgroundColor(Color.argb(0xff, 0xe4, 0xf2, 0xff));
-						defaultRenderer.setChartTitleTextSize(25);
-						defaultRenderer.setChartTitle("TCP Flags Used");
-						defaultRenderer.setLabelsTextSize(15);
-						defaultRenderer.setLabelsColor(Color.BLACK);
-						defaultRenderer.setShowLegend(false);
-						defaultRenderer.setZoomButtonsVisible(false);
-						defaultRenderer.setStartAngle(180);
-						
-						if(Integer.parseInt(suspect.m_rstCount) > 0)
-						{
-							protocolSeries.add("RST", Integer.parseInt(suspect.m_rstCount));
-							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
-							simpleSeriesRenderer.setColor(Color.argb(0xff, 0x00, 0x5a, 0xff));  //blue
-							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
-						}
-						if(Integer.parseInt(suspect.m_synCount) > 0)
-						{
-							protocolSeries.add("SYN", Integer.parseInt(suspect.m_synCount));
-							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
-							simpleSeriesRenderer.setColor(Color.RED);
-							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
-						}
-						if(Integer.parseInt(suspect.m_finCount) > 0)
-						{
-							protocolSeries.add("FIN", Integer.parseInt(suspect.m_finCount));
-							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
-							simpleSeriesRenderer.setColor(Color.argb(0xff, 0x36, 0x8f, 0x00)); //green
-							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
-						}
-						if(Integer.parseInt(suspect.m_ackCount) > 0)
-						{
-							protocolSeries.add("ACK", Integer.parseInt(suspect.m_ackCount));
-							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
-							simpleSeriesRenderer.setColor(Color.argb(0xff, 0xf9, 0xe4, 0x00)); //yellow
-							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
-						}
-						if(Integer.parseInt(suspect.m_synAckCount) > 0)
-						{
-							protocolSeries.add("SYN/ACK", Integer.parseInt(suspect.m_synAckCount));
-							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
-							simpleSeriesRenderer.setColor(Color.argb(0xff, 0x8c, 0x00, 0xff)); //purple
-							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
-						}
-						if(protocolSeries.getItemCount() == 0)
-						{
-							protocolSeries.add("No TCP Flags", 1);
-							SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
-							simpleSeriesRenderer.setColor(Color.LTGRAY);
-							defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
-						}
-						
-						LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
-						m_flagsPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, defaultRenderer);
-						defaultRenderer.setClickEnabled(true);
-						defaultRenderer.setSelectableBuffer(10);
-						LinearLayout containerLayout = new LinearLayout(DetailsActivity.this);
-				    	LayoutParams params = new TableRow.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
-				    	containerLayout.setLayoutParams(params);
-				    	containerLayout.addView(m_flagsPie);
-				    	layout.addView(containerLayout);
+						protocolSeries.add("FIN", Integer.parseInt(suspect.m_finCount));
+						SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+						simpleSeriesRenderer.setColor(Color.argb(0xff, 0x36, 0x8f, 0x00)); //green
+						defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
 					}
-					catch(NumberFormatException ex)
+					if(Integer.parseInt(suspect.m_ackCount) > 0)
 					{
-						LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
-						TextView view = new TextView(DetailsActivity.this);
-						view.setText("Invalid data found");
+						protocolSeries.add("ACK", Integer.parseInt(suspect.m_ackCount));
+						SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+						simpleSeriesRenderer.setColor(Color.argb(0xff, 0xf9, 0xe4, 0x00)); //yellow
+						defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+					}
+					if(Integer.parseInt(suspect.m_synAckCount) > 0)
+					{
+						protocolSeries.add("SYN/ACK", Integer.parseInt(suspect.m_synAckCount));
+						SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+						simpleSeriesRenderer.setColor(Color.argb(0xff, 0x8c, 0x00, 0xff)); //purple
+						defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+					}
+					if(protocolSeries.getItemCount() == 0)
+					{
+						protocolSeries.add("No TCP Flags", 1);
+						SimpleSeriesRenderer simpleSeriesRenderer = new SimpleSeriesRenderer();
+						simpleSeriesRenderer.setColor(Color.LTGRAY);
+						defaultRenderer.addSeriesRenderer(simpleSeriesRenderer);
+					}
+					
+					LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
+					m_flagsPie = ChartFactory.getPieChartView(DetailsActivity.this, protocolSeries, defaultRenderer);
+					defaultRenderer.setClickEnabled(true);
+					defaultRenderer.setSelectableBuffer(10);
+					LinearLayout containerLayout = new LinearLayout(DetailsActivity.this);
+					LayoutParams params = new TableRow.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
+					containerLayout.setLayoutParams(params);
+					containerLayout.addView(m_flagsPie);
+					layout.addView(containerLayout);
+				}
+				catch(NumberFormatException ex)
+				{
+					LinearLayout layout = (LinearLayout) findViewById(R.id.chartsLayout);
+					TextView view = new TextView(DetailsActivity.this);
+					view.setText("Invalid data found");
 						layout.addView(view, 1);
 					}
-			    }
-			    else
-			    {
-			    	m_protocolPie.repaint();
-			    }
+				}
+				else
+				{
+					m_protocolPie.repaint();
+				}
 			}
 		}
 	}
