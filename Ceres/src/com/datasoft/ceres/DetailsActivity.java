@@ -76,18 +76,7 @@ public class DetailsActivity extends Activity
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent keyEvent)
 	{
-    	if(keyCode == KeyEvent.KEYCODE_HOME)
-    	{
-    		try
-    		{
-    			m_global.m_ws.close();
-    		}
-    		catch(WebSocketException wse)
-    		{
-    			System.out.println("Could not close connection!");
-    		}
-    	}
-    	else if(keyCode == KeyEvent.KEYCODE_BACK)
+    	if(keyCode == KeyEvent.KEYCODE_BACK)
     	{
     		m_global.clearXmlReceive();
     	}

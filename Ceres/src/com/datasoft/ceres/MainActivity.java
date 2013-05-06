@@ -7,14 +7,16 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
+import org.apache.http.conn.scheme.SocketFactory;
 import org.json.*;
+
+import com.loopj.android.http.AsyncHttpResponseHandler;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -23,8 +25,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.net.URISyntaxException;
-import de.roderick.weberknecht.*;
+
+import javax.net.ssl.SSLSocketFactory;
 
 public class MainActivity extends Activity {
 	Context m_ctx;
@@ -195,24 +197,6 @@ public class MainActivity extends Activity {
     }
     
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent keyEvent)
-    {
-    	if(keyCode == KeyEvent.KEYCODE_HOME)
-    	{
-    		// If home key is hit, close connection.
-    		try
-    		{
-    			m_global.m_ws.close();
-    		}
-    		catch(WebSocketException wse)
-    		{
-    			System.out.println("Could not close connection!");
-    		}
-    	}
-    	return false;
-    }
-    
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
@@ -238,33 +222,44 @@ public class MainActivity extends Activity {
     	protected Integer doInBackground(String... params)
     	{
     		// Negotiate connection to Ceres.js websocket server
+    		// params[0] == url
+    		// params[1] == messageType
+    		// params[2] == clientId
     		try
     		{
-    			m_global.initWebSocketConnection(params[0]);
-    			m_global.sendCeresRequest(params[1], params[2]);
+    			m_global.setURL(params[0]);
+    			System.out.println("https://" + m_global.getURL() + "/" + params[1]);
+    			NetworkHandler.get("https://" + m_global.getURL() + "/" + params[1], null, new AsyncHttpResponseHandler(){
+    				@Override
+    				public void onSuccess(String xml)
+    				{
+    					System.out.println("xml == " + xml);
+    					m_global.setXmlBase(xml);
+    					m_global.setMessageReceived(true);
+    				}
+    				
+    				@Override
+    				public void onFailure(Throwable err, String content)
+    				{
+    					m_global.setXmlBase("");
+    					m_global.setMessageReceived(true);
+    				}
+    			});
     			while(!m_global.checkMessageReceived()){};
     		}
-    		catch(WebSocketException wse)
-    		{
-    			wse.printStackTrace();
-    			return 0;
-    		}
-    		catch(URISyntaxException use)
-    		{
-    			use.printStackTrace();
-    			return 0;
-    		}
-			catch(JSONException jse)
-			{
-				jse.printStackTrace();
-				return 0;
-			}
     		catch(Exception e)
     		{
     			e.printStackTrace();
     			return 0;
     		}
-    		return 1;
+    		if(m_global.getXmlBase() != "")
+    		{
+    			return 1;
+    		}
+    		else
+    		{
+    			return 0;
+    		}
     	}
     	@Override
     	protected void onPostExecute(Integer result)
@@ -276,14 +271,6 @@ public class MainActivity extends Activity {
     			// Display dialog saying connection failed,
     			// redirect back to login page
     			m_dialog.dismiss();
-    			try
-    			{
-    				m_global.m_ws.close();	
-    			}
-    			catch(WebSocketException wse)
-    			{
-    				wse.printStackTrace();
-    			}
     			m_notify.setText(R.string.error);
     			m_notify.setTextColor(Color.RED);
     			m_notify.setVisibility(View.VISIBLE);

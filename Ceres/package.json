@@ -3,11 +3,7 @@
 	, "version" : "0.1.0"
 	, "author"	: "Datasoft"
 	, "dependencies" : {
-		"socket.io"	:	"0.9.10"
-		, "passport"	:	"0.1.x"
-		, "passport-http"	:	""
-		, "js2xmlparser" : ""
-		, "websocket-server" : ""
+		"js2xmlparser" : ""
 		, "sqlite3" : ""
 	}
 }

@@ -50,8 +50,6 @@ public class GridActivity extends ListActivity {
 				{
 					sleep(60000);
 					m_global.clearXmlReceive();
-					m_global.sendCeresRequest("getAll", m_global.getClientId());
-					while(!m_global.checkMessageReceived()){};
 					m_gridValues = constructGridValues();
 					if(m_gridValues != null)
 					{
@@ -60,14 +58,6 @@ public class GridActivity extends ListActivity {
 				}
 			}
 			catch(InterruptedException ie)
-			{
-				return;
-			}
-			catch(JSONException jse)
-			{
-				return;
-			}
-			catch(WebSocketException wse)
 			{
 				return;
 			}
@@ -200,8 +190,6 @@ public class GridActivity extends ListActivity {
 						{
 							sleep(60000);
 							m_global.clearXmlReceive();
-							m_global.sendCeresRequest("getAll", m_global.getClientId());
-							while(!m_global.checkMessageReceived()){};
 							m_gridValues = constructGridValues();
 							if(m_gridValues != null)
 							{
@@ -210,14 +198,6 @@ public class GridActivity extends ListActivity {
 						}
 					}
 					catch(InterruptedException ie)
-					{
-						return;
-					}
-					catch(JSONException jse)
-					{
-						return;
-					}
-					catch(WebSocketException wse)
 					{
 						return;
 					}
@@ -244,15 +224,7 @@ public class GridActivity extends ListActivity {
     {
     	if(keyCode == KeyEvent.KEYCODE_HOME)
     	{
-    		try
-    		{
-    			m_updateThread.interrupt();
-    			m_global.m_ws.close();
-    		}
-    		catch(WebSocketException wse)
-    		{
-    			System.out.println("Could not close connection!");
-    		}
+    		m_updateThread.interrupt();
     	}
     	else if(keyCode == KeyEvent.KEYCODE_BACK)
     	{
@@ -296,20 +268,7 @@ public class GridActivity extends ListActivity {
 		@Override
 		protected Integer doInBackground(Void... vd)
 		{
-			try
-			{
-				m_global.sendCeresRequest("getSuspect", "doop", m_selected);
-				while(!m_global.checkMessageReceived()){};
-			}
-			catch(JSONException jse)
-			{
-				return 0;
-			}
-			catch(WebSocketException wse)
-			{
-				return 0;
-			}
-			return 1;
+			return 0;
 		}
 		@Override
 		protected void onPostExecute(Integer result)
@@ -376,19 +335,6 @@ public class GridActivity extends ListActivity {
 					{
 						m_global.clearXmlReceive();
 						m_updateThread.interrupt();
-						try
-						{
-							dialog.dismiss();
-							m_global.sendCeresRequest("getAll", "doop");
-							while(!m_global.checkMessageReceived()){};
-							new ParseXml().execute();
-						}
-						catch(JSONException jse)
-						{
-						}
-						catch(WebSocketException wse)
-						{
-						}
 					}
 				})
 				.setNegativeButton("No", new DialogInterface.OnClickListener() {
