@@ -60,12 +60,16 @@ string Suspect::GetIpString()
 
 string Suspect::GetIpString(const SuspectID_pb &id)
 {
-	stringstream ss;
-	ss << ((id.m_ip() & 0xFF000000) >> 24) << ".";
-	ss << ((id.m_ip() & 0x00FF0000) >> 16) << ".";
-	ss << ((id.m_ip() & 0x0000FF00) >> 8) << ".";
-	ss << ((id.m_ip() & 0x000000FF) >> 0);
-	return ss.str();
+	return Suspect::GetIpString(id.m_ip());
+}
+
+string Suspect::GetIpString(uint32_t ip)
+{
+	string ipString = to_string((ip & 0xFF000000) >> 24) + "." +
+			to_string((ip & 0x00FF0000) >> 16) + "." +
+			to_string((ip & 0x0000FF00) >> 8) + "." +
+			to_string((ip & 0x000000FF) >> 0);
+	return ipString;
 }
 
 string Suspect::GetIdString()
