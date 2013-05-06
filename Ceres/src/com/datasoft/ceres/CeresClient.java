@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.Activity;
 import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -25,6 +26,7 @@ public class CeresClient extends Application {
 	Boolean m_messageReceived;
 	ArrayList<String> m_gridCache;
 	Boolean m_isInForeground;
+	Activity m_onUiThread;
 	
 	@Override
 	public void onCreate()
