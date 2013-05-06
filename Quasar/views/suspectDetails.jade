@@ -32,6 +32,12 @@ block content
     div#udpIpChart(style='display: inline-block; width: 30%; margin: 10px')
     div#udpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
   
+  br
+  div(style="width: 1024px;")
+    div#icmpPortChart(style='display: inline-block; width: 30%; margin: 10px')
+    div#icmpIpChart(style='display: inline-block; width: 30%; margin: 10px')
+    div#icmpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
+  
   
   br
   h1 Detailed counts of connections from !{suspect}
@@ -77,16 +83,67 @@ block headerAdditions
 
   script
     var grid;
-    var protocolChart, tcpPortChart, udpPortChart, tcpIpChart, udpIpChart, tcpIpPortChart, udpIpPortChart;
+    var protocolChart, tcpPortChart, udpPortChart, tcpIpChart, udpIpChart, tcpIpPortChart, udpIpPortChart, icmpIpChart, icmpIpPortChart, icmpPortChart;
+
+    // For converting numeric icmp code to something nicer to display to the user
+    var icmpTypes = {
+          0:"Echo Reply", 
+          1:"Unassigned", 
+          2:"Unassigned", 
+          3:"Destination Unreachable", 
+          4:"Source Quench", 
+          5:"Redirect", 
+          6:"Alternate Host Address", 
+          7:"Unassigned", 
+          8:"Echo", 
+          9:"Router Advertisement", 
+          10:"Router Selection", 
+          11:"Time Exceeded", 
+          12:"Parameter Problem", 
+          13:"Timestamp", 
+          14:"Timestamp Reply", 
+          15:"Information Request", 
+          16:"Information Reply", 
+          17:"Address Mask Request", 
+          18:"Address Mask Reply", 
+          19:"Reserved (for Security)", 
+          20:"Reserved (for Robustness Experiment)", 
+          30:"Traceroute", 
+          31:"Datagram Conversion Error", 
+          32:"Mobile Host Redirect",
+          33:"IPv6 Where-Are-You",
+          34:"IPv6 I-Am-Here",
+          35:"Mobile Registration Request",
+          36:"Mobile Registration Reply",
+          37:"Domain Name Request"
+    };
+
+    function numberWithCommas(x) {
+        var x = String(x);
+        var out = String();
+        
+        for (var i = (x.length - 1); i >= 0; i--) {
+            out += x[(x.length - 1) - i];
+            if (i % 3 == 0 && i != 0) {
+                out += ",";
+            }
+        }
+
+        return out;
+    }
+
     function init(ready){
         tcpIpChart = new NovaPiChart('tcpIpChart', 'TCP Connections by IP', 200);
         tcpPortChart = new NovaPiChart('tcpPortChart', 'TCP Connections by port', 200);
         tcpIpPortChart = new NovaPiChart('tcpIpPortChart', 'TCP Packets by IP and port', 200);
         
-        
         udpIpChart = new NovaPiChart('udpIpChart', 'UDP Packets by IP', 200);
         udpPortChart = new NovaPiChart('udpPortChart', 'UDP Packets by port', 200);
         udpIpPortChart = new NovaPiChart('udpIpPortChart', 'UDP Packets by IP and port', 200);
+        
+        icmpIpChart = new NovaPiChart('icmpIpChart', 'ICMP Packets by IP', 200);
+        icmpPortChart = new NovaPiChart('icmpPortChart', 'ICMP Packets by type', 200);
+        icmpIpPortChart = new NovaPiChart('icmpIpPortChart', 'ICMP Packets by IP and type', 200);
         
         tcpIpChart.m_disableLegend = true;
         tcpPortChart.m_disableLegend = true;
@@ -94,11 +151,14 @@ block headerAdditions
         udpIpChart.m_disableLegend = true;
         udpPortChart.m_disableLegend = true;
         udpIpPortChart.m_disableLegend = true;
+        icmpIpChart.m_disableLegend = true;
+        icmpPortChart.m_disableLegend = true;
+        icmpIpPortChart.m_disableLegend = true;
         
         var columns = new Array();
         columns.push({name: "Dst IP:Port:Protocol", isDisabled: true});
         columns.push({name: "Dst IP"});
-        columns.push({name: "Dst Port"});
+        columns.push({name: "Details"});
         columns.push({name: "Protocol"});
         columns.push({name: "Packets"});
 
@@ -131,20 +191,20 @@ block headerAdditions
        
         info += "<div style='display: inline-block; float: left; margin-right: 20px'><H1>Packet Count Totals</H1>";
         info += "<TABLE>";
-        info += "<TR><TD> # Bytes </TD> <TD>" + (suspect.count_bytes || 0) + "</TD></TR>";
-        info += "<TR><TD> # TCP Packets </TD> <TD>" + (suspect.count_tcp || 0) + "</TD></TR>";
-        info += "<TR><TD> # UDP Packets </TD> <TD>" + (suspect.count_udp || 0) + "</TD></TR>";
-        info += "<TR><TD> # ICMP Packets </TD> <TD>" + (suspect.count_icmp || 0) + "</TD></TR>";
-        info += "<TR><TD> # Other Packets </TD> <TD>" + (suspect.count_other || 0) + "</TD></TR>";
+        info += "<TR><TD> # Bytes </TD> <TD>" + numberWithCommas(suspect.count_bytes) + "</TD></TR>";
+        info += "<TR><TD> # TCP Packets </TD> <TD>" + numberWithCommas(suspect.count_tcp)  + "</TD></TR>";
+        info += "<TR><TD> # UDP Packets </TD> <TD>" + numberWithCommas(suspect.count_udp)  + "</TD></TR>";
+        info += "<TR><TD> # ICMP Packets </TD> <TD>" + numberWithCommas(suspect.count_icmp) + "</TD></TR>";
+        info += "<TR><TD> # Other Packets </TD> <TD>" + numberWithCommas(suspect.count_other) + "</TD></TR>";
       
       
         info += "<TR><TD></TD></TR>";
         info += "<TR><TD></TD></TR>";
-        info += "<TR><TD> # TCP SYN Packets </TD> <TD>" + (suspect.count_tcpSyn || 0) + "</TD></TR>";
-        info += "<TR><TD> # TCP ACK Packets </TD> <TD>" + (suspect.count_tcpAck || 0) + "</TD></TR>";
-        info += "<TR><TD> # TCP SYN/ACK Packets </TD> <TD>" + (suspect.count_tcpSynAck || 0) + "</TD></TR>";
-        info += "<TR><TD> # TCP FIN Packets </TD> <TD>" + (suspect.count_tcpFin || 0) + "</TD></TR>";
-        info += "<TR><TD> # TCP RST Packets </TD> <TD>" + (suspect.count_tcpRst || 0) + "</TD></TR>";
+        info += "<TR><TD> # TCP SYN Packets </TD> <TD>" + numberWithCommas(suspect.count_tcpSyn) + "</TD></TR>";
+        info += "<TR><TD> # TCP ACK Packets </TD> <TD>" + numberWithCommas(suspect.count_tcpAck) + "</TD></TR>";
+        info += "<TR><TD> # TCP SYN/ACK Packets </TD> <TD>" + numberWithCommas(suspect.count_tcpSynAck) + "</TD></TR>";
+        info += "<TR><TD> # TCP FIN Packets </TD> <TD>" + numberWithCommas(suspect.count_tcpFin) + "</TD></TR>";
+        info += "<TR><TD> # TCP RST Packets </TD> <TD>" + numberWithCommas(suspect.count_tcpRst) + "</TD></TR>";
         info += "</TABLE>";
         
         
@@ -199,10 +259,10 @@ block headerAdditions
         
         
         arr = new Array();
-        arr.push({name: 'TCP Packets', value: suspect.count_tcp || 0});
-        arr.push({name: 'UDP Packets', value: suspect.count_udp || 0});
-        arr.push({name: 'ICMP Packets', value: suspect.count_icmp || 0});
-        arr.push({name: 'Other', value: suspect.count_other || 0});
+        arr.push({name: 'TCP Packets', value: suspect.count_tcp});
+        arr.push({name: 'UDP Packets', value: suspect.count_udp});
+        arr.push({name: 'ICMP Packets', value: suspect.count_icmp});
+        arr.push({name: 'Other', value: suspect.count_other});
         arr = arr.sort(function(a,b) {return b.value - a.value});
         protocolChart = new NovaPiChart('ProtocolPiChart', '', 200);
         protocolChart.Render(arr);
@@ -217,22 +277,24 @@ block headerAdditions
 
         var tcparr = new Array(); 
         var udparr = new Array(); 
+        var icmparr = new Array();
 
         var tcpPortCounts = {};
         var tcpIpCounts = {};
         var udpPortCounts = {};
         var udpIpCounts = {};
+        var icmpTypeCodeCounts = {};
+        var icmpIpCounts = {};
 
         for (var r in results) {
             var row = new Array();
             row.push(results[r].dstip + String(results[r].port) + results[r].type);
             row.push(results[r].dstip);
-            row.push(results[r].port);
-            row.push(results[r].type);
-            row.push(results[r].count);
 
             if (results[r].type == "tcp") {
-                if (!tcpPortCounts[results[r].port]) {tcpPortCounts[results[r].port] = 0;}
+                row.push("Dst port: " + results[r].port);
+               
+               if (!tcpPortCounts[results[r].port]) {tcpPortCounts[results[r].port] = 0;}
                 if (!tcpIpCounts[results[r].dstip]) {tcpIpCounts[results[r].dstip] = 0;}
 
                 tcpPortCounts[results[r].port] += results[r].count;
@@ -240,13 +302,35 @@ block headerAdditions
 
                 tcparr.push({name: results[r].dstip + " " + results[r].port, value: results[r].count});
             } else if (results[r].type == "udp") { 
+                row.push("Dst port: " + results[r].port);
                 if (!udpPortCounts[results[r].port]) {udpPortCounts[results[r].port] = 0;}
                 if (!udpIpCounts[results[r].dstip]) {udpIpCounts[results[r].dstip] = 0;}
                 
                 udpPortCounts[results[r].port] += results[r].count;
                 udpIpCounts[results[r].dstip] += results[r].count;
                 udparr.push({name: results[r].dstip + " " + results[r].port, value: results[r].count});
+            } else if (results[r].type == "icmp") {
+                var icmpType = results[r].port & 0xF;
+                var icmpCode = (results[r].port & 0x0F) >> 8;
+
+                // Replace with string version if we have it
+                if (icmpTypes[icmpType]) {
+                    icmpType = icmpTypes[icmpType];
+                }
+                var icmp = "Type: " + icmpType + " | Code: " + icmpCode;
+                row.push(icmp);
+                
+                if (!icmpTypeCodeCounts[icmp]) {icmpTypeCodeCounts[icmp] = 0;}
+                if (!icmpIpCounts[results[r].dstip]) {icmpIpCounts[results[r].dstip] = 0;}
+                
+                icmpTypeCodeCounts[icmp] += results[r].count;
+                icmpIpCounts[results[r].dstip] += results[r].count;
+                icmparr.push({name: results[r].dstip + " " + icmp, value: results[r].count});
             }
+            
+            
+            row.push(results[r].type);
+            row.push(results[r].count);
             
             grid.PushEntry(row);
 
@@ -257,7 +341,11 @@ block headerAdditions
         
         udparr = udparr.sort(function(a,b) {return b.value - a.value});
         udpIpPortChart.Render(udparr);
+        
+        icmparr = icmparr.sort(function(a,b) {return b.value - a.value});
+        icmpIpPortChart.Render(icmparr);
 
+        
         var arr = new Array();
         for (var r in tcpPortCounts) {arr.push({name: r, value: tcpPortCounts[r]});}
         arr = arr.sort(function(a,b) {return b.value - a.value});
@@ -267,7 +355,8 @@ block headerAdditions
         for (var r in tcpIpCounts) {arr.push({name: r, value: tcpIpCounts[r]});}
         arr = arr.sort(function(a,b) {return b.value - a.value});
         tcpIpChart.Render(arr);
-        
+       
+
         var arr = new Array();
         for (var r in udpIpCounts) {arr.push({name: r, value: udpIpCounts[r]});}
         arr = arr.sort(function(a,b) {return b.value - a.value});
@@ -277,7 +366,17 @@ block headerAdditions
         for (var r in udpPortCounts) {arr.push({name: r, value: udpPortCounts[r]});}
         arr = arr.sort(function(a,b) {return b.value - a.value});
         udpPortChart.Render(arr);
+       
+
+        var arr = new Array();
+        for (var r in icmpIpCounts) {arr.push({name: r, value: icmpIpCounts[r]});}
+        arr = arr.sort(function(a,b) {return b.value - a.value});
+        icmpIpChart.Render(arr);
         
+        var arr = new Array();
+        for (var r in icmpTypeCodeCounts) {arr.push({name: r, value: icmpTypeCodeCounts[r]});}
+        arr = arr.sort(function(a,b) {return b.value - a.value});
+        icmpPortChart.Render(arr);
 
         
         grid.Render();

@@ -82,8 +82,7 @@ void EvidenceAccumulator::Add(const Evidence &evidence)
 {
 	switch(evidence.m_evidencePacket.ip_p)
 	{
-		//If UDP
-		case 17:
+		case IPPROTO_UDP:
 		{
 			m_udpPacketCount++;
 
@@ -101,8 +100,7 @@ void EvidenceAccumulator::Add(const Evidence &evidence)
 
 			break;
 		}
-		//If TCP
-		case 6:
+		case IPPROTO_TCP:
 		{
 			m_tcpPacketCount++;
 
@@ -149,11 +147,21 @@ void EvidenceAccumulator::Add(const Evidence &evidence)
 
 			break;
 		}
-		//If ICMP
-		case 1:
+		case IPPROTO_ICMP:
 		{
 			m_icmpPacketCount++;
-			m_IPTable[evidence.m_evidencePacket.ip_dst]++;
+			IpPortCombination t;
+			t.m_ip = evidence.m_evidencePacket.ip_dst;
+			t.m_port = evidence.m_evidencePacket.dst_port;
+
+			if (!m_icmpCodeTypes.keyExists(t))
+			{
+				m_icmpCodeTypes[t] = 1;
+			}
+			else
+			{
+				m_icmpCodeTypes[t]++;
+			}
 			break;
 		}
 		//If untracked IP protocol or error case ignore it

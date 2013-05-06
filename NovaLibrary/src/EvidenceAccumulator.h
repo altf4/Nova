@@ -159,13 +159,12 @@ public:
 	uint64_t m_bytesTotal;
 
 
-	// Tracks ICMP/misc packets
-	// TODO refactor this into an ICMP specific hashmap that tracks types/codes and a generic one that tracks raw counts from 'other' protocols
 	IP_Table m_IPTable;
 
 	// Maps IP/port to a bool, used for checking if m_portContactedPerIP needs incrementing for this IP
 	IpPortTable m_hasTcpPortIpBeenContacted;
 	IpPortTable m_hasUdpPortIpBeenContacted;
+	IpPortTable m_icmpCodeTypes;
 };
 }
 

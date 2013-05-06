@@ -129,6 +129,13 @@ void DatabaseQueue::WriteToDatabase()
 				Database::Inst()->IncrementPortContactedCount(ip, interface, "udp", Suspect::GetIpString(dst), it->first.m_port, it->second);
 			}
 
+			for (IpPortTable::iterator it = s->m_features.m_icmpCodeTypes.begin(); it != s->m_features.m_icmpCodeTypes.end(); it++)
+			{
+				SuspectID_pb dst;
+				dst.set_m_ip(it->first.m_ip);
+				Database::Inst()->IncrementPortContactedCount(ip, interface, "icmp", Suspect::GetIpString(dst), it->first.m_port, it->second);
+			}
+
 			// Random non TCP/UDP packets, we just keep a generic "other" count
 			for (IP_Table::iterator it = s->m_features.m_IPTable.begin(); it != s->m_features.m_IPTable.end(); it++)
 			{
