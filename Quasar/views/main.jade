@@ -351,6 +351,11 @@ block headerAdditions
     }
 
     function parseSuspects(err, suspects) {
+        if (err) {
+            alert(err);
+            return;
+        }
+        
         suspectGrid.Clear();
         console.log("Got " + suspects.length + " suspects.");
         for (var s in suspects) {
