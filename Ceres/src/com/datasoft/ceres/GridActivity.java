@@ -275,7 +275,7 @@ public class GridActivity extends ListActivity {
 	
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
-		String[] item = ((String)getListAdapter().getItem(position)).split(":");
+		String[] item = ((String)getListAdapter().getItem(position - 1)).split(":");
 		m_selected = item[0] + ":" + item[1];
 		Toast.makeText(this, m_selected + " selected", Toast.LENGTH_LONG).show();
 
