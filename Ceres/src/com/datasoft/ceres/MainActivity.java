@@ -13,7 +13,6 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
-import org.apache.http.conn.scheme.SocketFactory;
 import org.json.*;
 
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -25,8 +24,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-
-import javax.net.ssl.SSLSocketFactory;
 
 public class MainActivity extends Activity {
 	Context m_ctx;
@@ -218,6 +215,7 @@ public class MainActivity extends Activity {
     		m_dialog.show();
     		super.onPreExecute();
     	}
+    	
     	@Override
     	protected Integer doInBackground(String... params)
     	{
@@ -229,7 +227,14 @@ public class MainActivity extends Activity {
     		{
     			m_global.setURL(params[0]);
     			System.out.println("https://" + m_global.getURL() + "/" + params[1]);
-    			NetworkHandler.get("https://" + m_global.getURL() + "/" + params[1], null, new AsyncHttpResponseHandler(){
+    			NetworkHandler.setSSL(m_passwd.getText().toString().toCharArray());
+    			NetworkHandler.get(("https://" + m_global.getURL() + "/" + params[1]), null, new AsyncHttpResponseHandler(){
+    				@Override
+    				public void onStart()
+    				{
+    					System.out.println("In onStart");
+    				}
+    				
     				@Override
     				public void onSuccess(String xml)
     				{
@@ -244,6 +249,12 @@ public class MainActivity extends Activity {
     					m_global.setXmlBase("");
     					m_global.setMessageReceived(true);
     				}
+    				
+    				@Override
+    				public void onFinish()
+    				{
+    					System.out.println("In onFinish()");
+    				}
     			});
     			while(!m_global.checkMessageReceived()){};
     		}
@@ -252,6 +263,7 @@ public class MainActivity extends Activity {
     			e.printStackTrace();
     			return 0;
     		}
+    		
     		if(m_global.getXmlBase() != "")
     		{
     			return 1;
