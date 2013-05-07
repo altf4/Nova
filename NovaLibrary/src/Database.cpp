@@ -141,7 +141,7 @@ void Database::Connect()
 
 	SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db,
 		"UPDATE suspects "
-		" SET startTime = ?3, endTime = ?4, lastTime = ?5"
+		" SET startTime = ?3, endTime = ?4, lastTime = ?5, mac = ?6"
 		" WHERE ip = ?1 AND interface = ?2",
 		-1, &updateSuspectTimestamps,  NULL));
 
@@ -242,7 +242,7 @@ void Database::Connect()
 		-1, &updateClassification, NULL));
 
 	SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db,
-		"INSERT INTO suspect_alerts (ip, interface, startTime, endTime, lastTime, classification, hostileNeighbors, isHostile, classificationNotes, ip_traffic_distribution, port_traffic_distribution, packet_size_mean, packet_size_deviation, distinct_ips, distinct_tcp_ports, distinct_udp_ports, avg_tcp_ports_per_host, avg_udp_ports_per_host, tcp_percent_syn, tcp_percent_fin, tcp_percent_rst, tcp_percent_synack, haystack_percent_contacted) "
+		"INSERT INTO suspect_alerts (ip, interface, mac, startTime, endTime, lastTime, classification, hostileNeighbors, isHostile, classificationNotes, ip_traffic_distribution, port_traffic_distribution, packet_size_mean, packet_size_deviation, distinct_ips, distinct_tcp_ports, distinct_udp_ports, avg_tcp_ports_per_host, avg_udp_ports_per_host, tcp_percent_syn, tcp_percent_fin, tcp_percent_rst, tcp_percent_synack, haystack_percent_contacted) "
 		" SELECT * FROM suspects"
 		" WHERE ip = ? AND interface = ?",
 		-1 , &createHostileAlert, NULL));
@@ -285,6 +285,7 @@ void Database::WriteTimestamps(Suspect *s)
 	SQL_RUN(SQLITE_OK,sqlite3_bind_int64(updateSuspectTimestamps, 3, static_cast<long int>(s->m_features.m_startTime)));
 	SQL_RUN(SQLITE_OK,sqlite3_bind_int64(updateSuspectTimestamps, 4, static_cast<long int>(s->m_features.m_endTime)));
 	SQL_RUN(SQLITE_OK,sqlite3_bind_int64(updateSuspectTimestamps, 5, static_cast<long int>(s->m_features.m_lastTime)));
+	SQL_RUN(SQLITE_OK,sqlite3_bind_int64(updateSuspectTimestamps, 6, static_cast<long int>(s->m_lastMac)));
 
 	m_count++;
 	SQL_RUN(SQLITE_DONE,sqlite3_step(updateSuspectTimestamps));

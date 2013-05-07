@@ -30,6 +30,7 @@ CREATE TABLE packet_counts(
 CREATE TABLE suspects (
 	ip TEXT,
 	interface TEXT,
+	mac INTEGER,
 
 	startTime INTEGER,
 	endTime INTEGER,
@@ -66,6 +67,7 @@ CREATE INDEX idx ON suspects(classification);
 CREATE TABLE suspect_alerts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 	ip TEXT,
+	mac INTEGER,
 	interface TEXT,
 
 	startTime INTEGER,

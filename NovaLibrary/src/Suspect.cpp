@@ -122,6 +122,8 @@ string Suspect::ToString()
 void Suspect::ReadEvidence(Evidence *evidence, bool deleteEvidence)
 {
 
+	m_lastMac = evidence->m_evidencePacket.srcmac;
+
 	if(m_id.m_ip() == 0)
 	{
 		m_id.set_m_ip(evidence->m_evidencePacket.ip_src);

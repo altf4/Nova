@@ -117,6 +117,9 @@ public:
 
 	std::string m_classificationNotes;
 
+	// Last MAC address we saw for the suspect
+	uint64_t m_lastMac;
+
 private:
 	SuspectID_pb m_id;
 

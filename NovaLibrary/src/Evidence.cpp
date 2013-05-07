@@ -20,6 +20,7 @@
 #include "Evidence.h"
 #include "netinet/tcp.h"
 #include <dumbnet.h>
+#include <netinet/if_ether.h>
 #include <iostream>
 
 using namespace std;
@@ -39,9 +40,10 @@ Evidence::Evidence()
 	m_evidencePacket.ts = 0;
 }
 
-Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
+Evidence::Evidence(const u_char *packet, const pcap_pkthdr *pkthdr)
 {
-
+	m_evidencePacket.srcmac = ((uint64_t)(packet + 7 + ETH_ADDR_LEN) & (uint64_t)0xFFFFFFFFFFFF0000);
+	const u_char *packet_at_ip_header = packet + ETH_HDR_LEN;
 	struct ip_hdr *ip;
 	ip = (ip_hdr *) packet_at_ip_header;
 

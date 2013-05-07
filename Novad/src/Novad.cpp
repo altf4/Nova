@@ -404,7 +404,7 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 		{
 
 			//Prepare Packet structure
-			Evidence *evidencePacket = new Evidence(packet + sizeof(struct ether_header), pkthdr);
+			Evidence *evidencePacket = new Evidence(packet, pkthdr);
 			PacketCapture* cap = reinterpret_cast<PacketCapture*>(index);
 
 			if (cap == NULL)
