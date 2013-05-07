@@ -9,11 +9,17 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
+import android.view.View.OnKeyListener;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
+
 import org.json.*;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import java.io.BufferedInputStream;
@@ -46,9 +52,9 @@ public class MainActivity extends Activity {
         m_global = (CeresClient)getApplicationContext();
         m_global.setForeground(true);
         m_id = (EditText)findViewById(R.id.credID);
+        m_passwd = (EditText)findViewById(R.id.credPW);
         m_ip = (EditText)findViewById(R.id.credIP);
         m_port = (EditText)findViewById(R.id.credPort);
-        m_passwd = (EditText)findViewById(R.id.credPW);
         m_keepMeLoggedIn = false;
         
     	InputStream in = null;
@@ -90,47 +96,41 @@ public class MainActivity extends Activity {
         m_keepLogged = (CheckBox)findViewById(R.id.keepLogged);
         m_keepLogged.setChecked(m_keepMeLoggedIn);
         m_connect = (Button)findViewById(R.id.ceresConnect);
-        m_id = (EditText)findViewById(R.id.credID);
-        m_ip = (EditText)findViewById(R.id.credIP);
-        m_passwd = (EditText)findViewById(R.id.credPW);
         m_notify = (EditText)findViewById(R.id.notify);
         m_dialog = new ProgressDialog(this);
         m_connect.setOnClickListener(new Button.OnClickListener() {
         	public void onClick(View v){
-        		m_keepMeLoggedIn = ((CheckBox)findViewById(R.id.keepLogged)).isChecked();
-        		if(m_keepMeLoggedIn)
-        		{
-        			try
-        			{
-        				File file = new File(getFilesDir(), "networkTarget");
-        				OutputStreamWriter bos = new OutputStreamWriter(new FileOutputStream(file));
-        				String writeToFile;
-        				JSONObject json = new JSONObject();
-        				json.put("ip", m_ip.getText().toString());
-        				json.put("port", m_port.getText().toString());
-        				json.put("id", m_id.getText().toString());
-        				writeToFile = json.toString();
-        				bos.write(writeToFile);
-        				bos.flush();
-        				bos.close();
-        			}
-        			catch(IOException ioe)
-        			{
-        			}
-        			catch(JSONException jse)
-        			{
-        			}
-        		}
-        		else
-        		{
-    				File file = new File(getFilesDir(), "networkTarget");
-    				file.delete();
-        		}
-        		String netString = (m_ip.getText().toString() + ":" + m_port.getText().toString());
-        		if(m_id.getText().toString() == "" || m_passwd.getText().toString() == "")
+        		if(m_ip.getText().toString() == "" || m_port.getText().toString() == "")
         		{
         			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
-        			builder.setMessage("Please fill out both Username and Password!")
+        			builder.setMessage("Ip address or port fields were empty")
+        			       .setCancelable(false)
+        			       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        			           public void onClick(DialogInterface dialog, int id) {
+        			                dialog.cancel();
+        			           }
+        			       });
+        			AlertDialog alert = builder.create();
+        			alert.show();
+        		}
+        		else if(Integer.parseInt(m_port.getText().toString()) < 0 
+                		|| Integer.parseInt(m_port.getText().toString()) > 65536)
+        		{
+        			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
+        			builder.setMessage("The port number you provided is invalid")
+        			       .setCancelable(false)
+        			       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        			           public void onClick(DialogInterface dialog, int id) {
+        			                dialog.cancel();
+        			           }
+        			       });
+        			AlertDialog alert = builder.create();
+        			alert.show();
+        		}
+        		else if(!m_ip.getText().toString().matches("(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"))
+        		{
+        			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
+        			builder.setMessage("The provided IP address format is invalid")
         			       .setCancelable(false)
         			       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
         			           public void onClick(DialogInterface dialog, int id) {
@@ -142,9 +142,55 @@ public class MainActivity extends Activity {
         		}
         		else
         		{
-        			new CeresClientConnect().execute(netString);
+	        		m_keepMeLoggedIn = ((CheckBox)findViewById(R.id.keepLogged)).isChecked();
+	        		if(m_keepMeLoggedIn)
+	        		{
+	        			try
+	        			{
+	        				File file = new File(getFilesDir(), "networkTarget");
+	        				OutputStreamWriter bos = new OutputStreamWriter(new FileOutputStream(file));
+	        				String writeToFile;
+	        				JSONObject json = new JSONObject();
+	        				json.put("ip", m_ip.getText().toString());
+	        				json.put("port", m_port.getText().toString());
+	        				json.put("id", m_id.getText().toString());
+	        				writeToFile = json.toString();
+	        				bos.write(writeToFile);
+	        				bos.flush();
+	        				bos.close();
+	        			}
+	        			catch(IOException ioe)
+	        			{
+	        			}
+	        			catch(JSONException jse)
+	        			{
+	        			}
+	        		}
+	        		else
+	        		{
+	    				File file = new File(getFilesDir(), "networkTarget");
+	    				file.delete();
+	        		}
+	        		String netString = (m_ip.getText().toString() + ":" + m_port.getText().toString());
+	        		if(m_id.getText().toString() == "" || m_passwd.getText().toString() == "")
+	        		{
+	        			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
+	        			builder.setMessage("Please fill out both Username and Password!")
+	        			       .setCancelable(false)
+	        			       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	        			           public void onClick(DialogInterface dialog, int id) {
+	        			                dialog.cancel();
+	        			           }
+	        			       });
+	        			AlertDialog alert = builder.create();
+	        			alert.show();
+	        		}
+	        		else
+	        		{
+	        			new CeresClientConnect().execute(netString);
+	        		}
+	        		m_notify.setVisibility(View.INVISIBLE);
         		}
-        		m_notify.setVisibility(View.INVISIBLE);
         	}
         });
     }
@@ -224,7 +270,7 @@ public class MainActivity extends Activity {
     		{
     			m_dialog = new ProgressDialog(m_ctx);
     		}
-    		m_dialog.setCancelable(true);
+    		m_dialog.setCancelable(false);
     		m_dialog.setMessage("Attempting to connect");
     		m_dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
     		m_dialog.show();
