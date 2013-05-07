@@ -7,19 +7,21 @@ import android.app.Application;
 
 public class CeresClient extends Application {
 	String m_clientId;
+	String m_pass;
 	String m_xmlBase;
 	StringReader m_xmlReceive;
 	Boolean m_messageReceived;
 	ArrayList<String> m_gridCache;
 	Boolean m_isInForeground;
 	Activity m_onUiThread;
-	String m_serverUrl;
+	String m_serverUrl;	
 	
 	@Override
 	public void onCreate()
 	{
 		m_messageReceived = false;
 		m_clientId = "";
+		m_pass = "";
 		m_gridCache = new ArrayList<String>();
 		super.onCreate();
 	}
@@ -104,6 +106,16 @@ public class CeresClient extends Application {
 	public void setClientId(String id)
 	{
 		m_clientId = id;
+	}
+	
+	public String getPass()
+	{
+		return m_pass;
+	}
+	
+	public void setPass(String newPass)
+	{
+		m_pass = newPass;
 	}
 	
 	public Boolean isInForeground()

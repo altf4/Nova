@@ -33,38 +33,64 @@ NovaCommon.nova.CheckConnection();
 NovaCommon.StartNovad(false);
 ReloadInterfaceAliasFile();
 
+var creds = {};
+creds["nova"] = "toor";
+
 var handler = function(req, res) {
   var reqSwitch = url.parse(req.url).pathname;
   var params = url.parse(req.url, true).query;
-  
-  switch(reqSwitch)
+  var head = req.headers['authorization'] || '';
+  console.log('head == ' + head);
+  for(var i in req.headers)
   {
-    case '/getAll': 
-              res.writeHead(200, {'Content-Type':'text/plain'});
-              NovaCommon.nova.CheckConnection();
-              setTimeout(function(){
-                NovaCommon.nova.sendSuspectListArray(function(suspects){
-                  gridPageSuspectList(suspects, function(xml){
-                    res.end(xml);
-                  });
-                });
-              }, 2000);
-              break;
+    console.log('req.head[' + i + '] == ' + req.headers[i]);
+  }
+  var token = head.split(/\s+/).pop() || '';
+  var auth = new Buffer(token, 'base64').toString();
+  var parts = auth.split(/:/);
+  var username = parts[0];
+  var password = parts[1];
+  
+  console.log('username == ' + username);
+  console.log('password == ' + password);
+  
+  if(username == "nova" && password == creds["nova"])
+  {
+    switch(reqSwitch)
+    {
+      case '/getAll': 
+        res.writeHead(200, {'Content-Type':'text/plain'});
+        NovaCommon.nova.CheckConnection();
+        setTimeout(function(){
+          NovaCommon.nova.sendSuspectListArray(function(suspects){
+            gridPageSuspectList(suspects, function(xml){
+              res.end(xml);
+            });
+          });
+        }, 2000);
+        break;
       case '/getSuspect':
-              res.writeHead(200, {'Content-Type':'text/plain'});
-              var ipiface = params.suspect.split(':');
-              NovaCommon.nova.CheckConnection();
-              setTimeout(function(){
-                NovaCommon.nova.sendSuspectToCallback(ipiface[0], ipiface[1], function(suspect){
-                  detailedSuspectPage(suspect, function(xml){
-                    res.end(xml);
-                  });
-                });
-              }, 2000);
-              break;
-    default:  res.writeHead(404);
-              res.end('404, yo\n');
-              break;
+        res.writeHead(200, {'Content-Type':'text/plain'});
+        var ipiface = params.suspect.split(':');
+        NovaCommon.nova.CheckConnection();
+        setTimeout(function(){
+          NovaCommon.nova.sendSuspectToCallback(ipiface[0], ipiface[1], function(suspect){
+            detailedSuspectPage(suspect, function(xml){
+              res.end(xml);
+            });
+          });
+        }, 2000);
+        break;
+      default:  
+        res.writeHead(404);
+        res.end('404, yo\n');
+        break;
+    }
+  }
+  else
+  {
+    res.writeHead(404);
+    res.end('404, yo\n');
   }
 };
 

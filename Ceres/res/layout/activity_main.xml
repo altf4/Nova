@@ -22,6 +22,15 @@
     </EditText>
 
     <EditText
+        android:id="@+id/credPW"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="@string/credPW"
+        android:textSize="24sp"
+        android:inputType="textPassword" />
+    
+    <EditText
         android:id="@+id/credIP"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -36,15 +45,6 @@
         android:ems="10"
     	android:textSize="24sp"
         android:hint="@string/credPort" />
-
-    <EditText
-        android:id="@+id/credPW"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:hint="@string/credPW"
-        android:textSize="24sp"
-        android:inputType="textPassword" />
 
     <CheckBox 
         android:id="@+id/keepLogged"

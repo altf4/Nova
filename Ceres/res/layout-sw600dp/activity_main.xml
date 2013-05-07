@@ -15,27 +15,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:textSize="24sp"
+        android:textSize="40sp"
         android:hint="@string/credID" >
 
         <requestFocus />
     </EditText>
-
-    <EditText
-        android:id="@+id/credIP"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-    	android:textSize="24sp"
-        android:hint="@string/credIP" />
-    
-    <EditText
-        android:id="@+id/credPort"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-    	android:textSize="24sp"
-        android:hint="@string/credPort" />
 
     <EditText
         android:id="@+id/credPW"
@@ -43,8 +27,24 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/credPW"
-        android:textSize="24sp"
+        android:textSize="40sp"
         android:inputType="textPassword" />
+    
+    <EditText
+        android:id="@+id/credIP"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+    	android:textSize="40sp"
+        android:hint="@string/credIP" />
+    
+    <EditText
+        android:id="@+id/credPort"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+    	android:textSize="40sp"
+        android:hint="@string/credPort" />
 
     <CheckBox 
         android:id="@+id/keepLogged"
@@ -53,13 +53,13 @@
         android:ems="10"
         android:hint="@string/keepLogged"
         android:onClick="onCheckboxClicked"
-        android:textSize="24sp" />
+        android:textSize="40sp" />
     
     <Button
         android:id="@+id/ceresConnect"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-    	android:textSize="24sp"        
+    	android:textSize="40sp"        
         android:text="@string/ceresConnect" />
 
     <EditText
@@ -76,6 +76,6 @@
         android:textColor="#FF0000"
         android:textColorHint="@android:color/primary_text_light"
         android:visibility="invisible"
-    	android:textSize="24sp" />
+    	android:textSize="30sp" />
 
 </LinearLayout>

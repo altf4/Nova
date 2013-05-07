@@ -3,8 +3,10 @@ package com.datasoft.ceres;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.view.Menu;
@@ -125,7 +127,23 @@ public class MainActivity extends Activity {
     				file.delete();
         		}
         		String netString = (m_ip.getText().toString() + ":" + m_port.getText().toString());
-        		new CeresClientConnect().execute(netString);
+        		if(m_id.getText().toString() == "" || m_passwd.getText().toString() == "")
+        		{
+        			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
+        			builder.setMessage("Please fill out both Username and Password!")
+        			       .setCancelable(false)
+        			       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        			           public void onClick(DialogInterface dialog, int id) {
+        			                dialog.cancel();
+        			           }
+        			       });
+        			AlertDialog alert = builder.create();
+        			alert.show();
+        		}
+        		else
+        		{
+        			new CeresClientConnect().execute(netString);
+        		}
         		m_notify.setVisibility(View.INVISIBLE);
         	}
         });
@@ -221,7 +239,7 @@ public class MainActivity extends Activity {
     		try
     		{
     			m_global.setURL(params[0]);
-    			NetworkHandler.setSSL(m_ctx, R.raw.test, m_passwd.getText().toString().toCharArray());
+    			NetworkHandler.setSSL(m_ctx, R.raw.test, m_passwd.getText().toString(), m_id.getText().toString());
     			NetworkHandler.get(("https://" + m_global.getURL() + "/getAll"), null, new AsyncHttpResponseHandler(){
     				@Override
     				public void onSuccess(String xml)
