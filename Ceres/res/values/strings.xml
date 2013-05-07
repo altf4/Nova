@@ -17,5 +17,9 @@
     <string name="ifHeaderSmall">Iface</string>
     <string name="clHeader">Classification</string>
     <color name="detailsBackground">#e4f2ff</color>
+    <string name="IPLabel">Suspect IP: </string>
+    <string name="ifaceLabel">Network Interface: </string>
+    <string name="classificationLabel">Classification: </string>
+    <string name="lastSeenLabel">Last Seen:</string>
 
 </resources>
