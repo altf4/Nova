@@ -26,7 +26,6 @@ import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
-import de.roderick.weberknecht.WebSocketException;
 
 public class DetailsActivity extends Activity
 {

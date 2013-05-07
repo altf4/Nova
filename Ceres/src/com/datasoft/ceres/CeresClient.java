@@ -1,20 +1,9 @@
 package com.datasoft.ceres;
 
 import java.io.StringReader;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.Activity;
 import android.app.Application;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.TaskStackBuilder;
-import android.content.Context;
-import android.content.Intent;
 
 public class CeresClient extends Application {
 	String m_clientId;
@@ -49,24 +38,21 @@ public class CeresClient extends Application {
 		}
 	}
 	
-	public void initWebSocketConnection(String loc) throws URISyntaxException
-	{
-		/*
-		Context ctx = getApplicationContext();
-		Notification.Builder build = new Notification.Builder(ctx)
-			.setSmallIcon(R.drawable.ic_launcher)
-			.setContentTitle("Ceres Lost Connection")
-			.setContentText("The Ceres app has lost connection with the server")
-			.setAutoCancel(true);
-		Intent intent = new Intent(ctx, MainActivity.class);
-		TaskStackBuilder tsbuild = TaskStackBuilder.create(ctx);
-		tsbuild.addParentStack(MainActivity.class);
-		tsbuild.addNextIntent(intent);
-		PendingIntent rpintent = tsbuild.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-		build.setContentIntent(rpintent);
-		NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-		nm.notify(0, build.build());*/
-	}
+	/*
+	Context ctx = getApplicationContext();
+	Notification.Builder build = new Notification.Builder(ctx)
+		.setSmallIcon(R.drawable.ic_launcher)
+		.setContentTitle("Ceres Lost Connection")
+		.setContentText("The Ceres app has lost connection with the server")
+		.setAutoCancel(true);
+	Intent intent = new Intent(ctx, MainActivity.class);
+	TaskStackBuilder tsbuild = TaskStackBuilder.create(ctx);
+	tsbuild.addParentStack(MainActivity.class);
+	tsbuild.addNextIntent(intent);
+	PendingIntent rpintent = tsbuild.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+	build.setContentIntent(rpintent);
+	NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+	nm.notify(0, build.build());*/
 	
 	public void setURL(String url)
 	{

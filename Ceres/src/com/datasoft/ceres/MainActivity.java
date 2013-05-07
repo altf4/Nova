@@ -12,11 +12,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-
 import org.json.*;
-
 import com.loopj.android.http.AsyncHttpResponseHandler;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -128,7 +125,7 @@ public class MainActivity extends Activity {
     				file.delete();
         		}
         		String netString = (m_ip.getText().toString() + ":" + m_port.getText().toString());
-        		new CeresClientConnect().execute(netString, "getAll", m_id.getText().toString());
+        		new CeresClientConnect().execute(netString);
         		m_notify.setVisibility(View.INVISIBLE);
         	}
         });
@@ -221,24 +218,14 @@ public class MainActivity extends Activity {
     	{
     		// Negotiate connection to Ceres.js websocket server
     		// params[0] == url
-    		// params[1] == messageType
-    		// params[2] == clientId
     		try
     		{
     			m_global.setURL(params[0]);
-    			System.out.println("https://" + m_global.getURL() + "/" + params[1]);
-    			NetworkHandler.setSSL(m_passwd.getText().toString().toCharArray());
-    			NetworkHandler.get(("https://" + m_global.getURL() + "/" + params[1]), null, new AsyncHttpResponseHandler(){
-    				@Override
-    				public void onStart()
-    				{
-    					System.out.println("In onStart");
-    				}
-    				
+    			NetworkHandler.setSSL(m_ctx, R.raw.test, m_passwd.getText().toString().toCharArray());
+    			NetworkHandler.get(("https://" + m_global.getURL() + "/getAll"), null, new AsyncHttpResponseHandler(){
     				@Override
     				public void onSuccess(String xml)
     				{
-    					System.out.println("xml == " + xml);
     					m_global.setXmlBase(xml);
     					m_global.setMessageReceived(true);
     				}
@@ -248,12 +235,6 @@ public class MainActivity extends Activity {
     				{
     					m_global.setXmlBase("");
     					m_global.setMessageReceived(true);
-    				}
-    				
-    				@Override
-    				public void onFinish()
-    				{
-    					System.out.println("In onFinish()");
     				}
     			});
     			while(!m_global.checkMessageReceived()){};
@@ -266,10 +247,12 @@ public class MainActivity extends Activity {
     		
     		if(m_global.getXmlBase() != "")
     		{
+    			System.out.println("returning 1");
     			return 1;
     		}
     		else
     		{
+    			System.out.println("returning 0");
     			return 0;
     		}
     	}

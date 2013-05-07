@@ -5,19 +5,12 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
-
 import org.apache.http.conn.ssl.SSLSocketFactory;
-
+import org.apache.http.conn.ssl.X509HostnameVerifier;
 import android.content.Context;
 import android.content.res.Resources.NotFoundException;
-
 import com.loopj.android.http.*;
 
 public class NetworkHandler {
@@ -30,6 +23,7 @@ public class NetworkHandler {
 			KeyStore keystore = KeyStore.getInstance("BKS");
 			keystore.load(ctx.getResources().openRawResource(keyid), keystorePass);
 			SSLSocketFactory sslsf = new SSLSocketFactory(keystore);
+			sslsf.setHostnameVerifier((X509HostnameVerifier)SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
 			m_client.setSSLSocketFactory(sslsf);
 		}
 		catch(KeyStoreException e)

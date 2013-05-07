@@ -2,11 +2,12 @@ package com.datasoft.ceres;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import org.json.JSONException;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
-import de.roderick.weberknecht.WebSocketException;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
+
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
@@ -50,11 +51,46 @@ public class GridActivity extends ListActivity {
 				{
 					sleep(60000);
 					m_global.clearXmlReceive();
-					m_gridValues = constructGridValues();
-					if(m_gridValues != null)
-					{
-						m_handler.post(m_updateGrid);
-					}
+					try
+		    		{
+		    			NetworkHandler.get(("https://" + m_global.getURL() + "/getAll"), null, new AsyncHttpResponseHandler(){
+		    				@Override
+		    				public void onSuccess(String xml)
+		    				{
+		    					m_global.setXmlBase(xml);
+		    					m_global.setMessageReceived(true);
+		    				}
+		    				
+		    				@Override
+		    				public void onFailure(Throwable err, String content)
+		    				{
+		    					m_global.setXmlBase("");
+		    					m_global.setMessageReceived(true);
+		    				}
+		    			});
+		    			while(!m_global.checkMessageReceived()){};
+		    		}
+		    		catch(Exception e)
+		    		{
+		    			e.printStackTrace();
+		    			return;
+		    		}
+		    		
+		    		if(m_global.getXmlBase() != "")
+		    		{
+						m_gridValues = constructGridValues();
+						if(m_gridValues != null)
+						{
+							m_handler.post(m_updateGrid);
+						}
+		    			System.out.println("returning 1");
+		    			return;
+		    		}
+		    		else
+		    		{
+		    			System.out.println("returning 0");
+		    			return;
+		    		}
 				}
 			}
 			catch(InterruptedException ie)
@@ -190,11 +226,46 @@ public class GridActivity extends ListActivity {
 						{
 							sleep(60000);
 							m_global.clearXmlReceive();
-							m_gridValues = constructGridValues();
-							if(m_gridValues != null)
-							{
-								m_handler.post(m_updateGrid);
-							}
+							try
+				    		{
+				    			NetworkHandler.get(("https://" + m_global.getURL() + "/getAll"), null, new AsyncHttpResponseHandler(){
+				    				@Override
+				    				public void onSuccess(String xml)
+				    				{
+				    					m_global.setXmlBase(xml);
+				    					m_global.setMessageReceived(true);
+				    				}
+				    				
+				    				@Override
+				    				public void onFailure(Throwable err, String content)
+				    				{
+				    					m_global.setXmlBase("");
+				    					m_global.setMessageReceived(true);
+				    				}
+				    			});
+				    			while(!m_global.checkMessageReceived()){};
+				    		}
+				    		catch(Exception e)
+				    		{
+				    			e.printStackTrace();
+				    			return;
+				    		}
+				    		
+				    		if(m_global.getXmlBase() != "")
+				    		{
+								m_gridValues = constructGridValues();
+								if(m_gridValues != null)
+								{
+									m_handler.post(m_updateGrid);
+								}
+				    			System.out.println("returning 1");
+				    			return;
+				    		}
+				    		else
+				    		{
+				    			System.out.println("returning 0");
+				    			return;
+				    		}
 						}
 					}
 					catch(InterruptedException ie)
@@ -268,7 +339,42 @@ public class GridActivity extends ListActivity {
 		@Override
 		protected Integer doInBackground(Void... vd)
 		{
-			return 0;
+			try
+    		{
+				RequestParams params = new RequestParams("suspect", m_selected);
+    			NetworkHandler.get(("https://" + m_global.getURL() + "/getSuspect"), params, new AsyncHttpResponseHandler(){
+    				@Override
+    				public void onSuccess(String xml)
+    				{
+    					m_global.setXmlBase(xml);
+    					m_global.setMessageReceived(true);
+    				}
+    				
+    				@Override
+    				public void onFailure(Throwable err, String content)
+    				{
+    					m_global.setXmlBase("");
+    					m_global.setMessageReceived(true);
+    				}
+    			});
+    			while(!m_global.checkMessageReceived()){};
+    		}
+    		catch(Exception e)
+    		{
+    			e.printStackTrace();
+    			return 0;
+    		}
+    		
+    		if(m_global.getXmlBase() != "")
+    		{
+    			System.out.println("returning 1");
+    			return 1;
+    		}
+    		else
+    		{
+    			System.out.println("returning 0");
+    			return 0;
+    		}
 		}
 		@Override
 		protected void onPostExecute(Integer result)
