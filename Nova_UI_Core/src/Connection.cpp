@@ -135,7 +135,7 @@ bool ConnectToNovad()
 		}
 
 		MessageManager::Instance().AddSessionIndex(*sessionIndex, bufferevent);
-		LOG(DEBUG, "New connection established", "");
+		//LOG(DEBUG, "New connection established", "");
 	}
 
 	shouldDispatch = true;

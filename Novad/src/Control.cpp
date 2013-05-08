@@ -33,12 +33,13 @@ extern bool shutdownClassification;
 extern pthread_cond_t shutdownClassificationCond;
 extern bool classificationRunning;
 
+using namespace std;
+
 namespace Nova
 {
 void SaveAndExit(int param)
 {	
 	StopCapture();
-	AppendToStateFile();
 
 	if(Config::Inst()->GetIsDmEnabled())
 	{

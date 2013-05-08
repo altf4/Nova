@@ -31,19 +31,11 @@ void HandleClearAllRequest(Message *incoming);
 
 void HandleClearSuspectRequest(Message *incoming);
 
-void HandleSaveSuspectsRequest(Message *incoming);
-
 void HandleReclassifyAllRequest(Message *incoming);
 
 void HandleStartCaptureRequest(Message *incoming);
 
 void HandleStopCaptureRequest(Message *incoming);
-
-void HandleRequestSuspectList(Message *incoming);
-
-void HandleRequestSuspect(Message *incoming);
-
-void HandleRequestAllSuspects(Message *incoming);
 
 void HandleRequestUptime(Message *incoming);
 

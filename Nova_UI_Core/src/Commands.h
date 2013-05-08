@@ -80,21 +80,6 @@ void DisconnectFromNovad();
 //**						Suspect Operations							**
 //************************************************************************
 
-// Requests a list of suspect addresses currently classified
-//	 listType: Type of list to get (all, just hostile, just benign)
-void RequestSuspectList(enum SuspectListType listType, int32_t messageID = -1);
-
-// Gets a suspect from the daemon
-// address: IP address of the suspect
-void RequestSuspect(SuspectID_pb address, int32_t messageID = -1);
-
-// Same as GetSuspect but returns all the featureset data
-// address: IP address of the suspect
-void RequestSuspectWithData(SuspectID_pb address, int32_t messageID = -1);
-
-//Request multiple suspects, filtered by listType (all, just hostile, just benign)
-void RequestSuspects(enum SuspectListType listType, int32_t messageID = -1);
-
 //Asks Novad to save the suspect list to persistent storage
 //	returns - true if saved correctly, false on error
 void SaveAllSuspects(std::string file, int32_t messageID = -1);

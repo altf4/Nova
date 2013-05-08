@@ -15,7 +15,7 @@
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 // Description : Main node.js file for the Ceres web interface of Nova
 //============================================================================
-var NovaCommon = require('./NovaCommon.js');
+var NovaCommon = require('../Quasar/NovaCommon.js');
 var https = require('https');
 var http = require('http');
 var fs = require('fs');
@@ -50,34 +50,43 @@ var handler = function(req, res) {
   {
     switch(reqSwitch)
     {
-      case '/getAll': 
-        res.writeHead(200, {'Content-Type':'text/plain'});
-        NovaCommon.nova.CheckConnection();
-        setTimeout(function(){
-          NovaCommon.nova.sendSuspectListArray(function(suspects){
-            gridPageSuspectList(suspects, function(xml){
-              res.end(xml);
-            });
-          });
-        }, 2000);
-        break;
+    case '/getAll': 
+              res.writeHead(200, {'Content-Type':'text/plain'});
+              NovaCommon.nova.CheckConnection();
+                NovaCommon.GetSuspects(-1, 0, "classification", "DESC", true, function(err, suspects){
+                  if(err) {
+                    console.log("Error fetching suspects: " + err);
+                    return;
+                  }
+                  gridPageSuspectList(suspects, function(xml){
+                    res.end(xml);
+                  });
+                });
+              break;
       case '/getSuspect':
-        res.writeHead(200, {'Content-Type':'text/plain'});
-        var ipiface = params.suspect.split(':');
-        NovaCommon.nova.CheckConnection();
-        setTimeout(function(){
-          NovaCommon.nova.sendSuspectToCallback(ipiface[0], ipiface[1], function(suspect){
-            detailedSuspectPage(suspect, function(xml){
-              res.end(xml);
-            });
-          });
-        }, 2000);
-        break;
-      default:  
-        res.writeHead(404);
-        res.end('404, yo\n');
-        break;
-    }
+              res.writeHead(200, {'Content-Type':'text/plain'});
+              var ipiface = params.suspect.split(':');
+              NovaCommon.nova.CheckConnection();
+                NovaCommon.dbqGetSuspect.all(ipiface[0], ipiface[1], function(err, suspect){
+                  if (err) {
+                    console.log("ERROR: " + err);
+                    return;
+                  }
+
+                  if (suspect.length != 1) {
+                    console.log("ERROR: could not fetch suspect " + ipiface[0] + "/" + ipiface[1]);
+                    return;
+                  }
+
+                  detailedSuspectPage(suspect[0], function(xml){
+                    res.end(xml);
+                  });
+                });
+              break;
+    default:  res.writeHead(404);
+              res.end('404, yo\n');
+              break;
+  }
   }
   else
   {
@@ -112,10 +121,10 @@ function gridPageSuspectList(suspects, cb)
   var js2xmlopt = {'declaration':{'include':false}, 'prettyPrinting':{'enabled':false}};
   for(var i in suspects)
   {
-    var ip = suspects[i].GetIpString();
-    var iface = ConvertInterfaceToAlias(suspects[i].GetInterface());
-    var classification = (Math.floor(parseFloat(suspects[i].GetClassification()) * 10000) / 100).toFixed(2);
-    var hostile = (suspects[i].GetIsHostile() == true ? '1' : '0');
+    var ip = suspects[i].ip;
+    var iface = ConvertInterfaceToAlias(suspects[i].interface);
+    var classification = (Math.floor(parseFloat(suspects[i].classification) * 10000) / 100).toFixed(2);
+    var hostile = (suspects[i].isHostile == true ? '1' : '0');
     if(classification == '-200.00')
     {
       continue;
@@ -145,14 +154,15 @@ function detailedSuspectPage(suspect, cb)
                     "Haystack Percent Contacted"];
   var ret = '<detailedSuspect>';
   var js2xmlopt = {'declaration':{'include':false}, 'prettyPrinting':{'enabled':false}};
-  var classification = (Math.floor(parseFloat(suspect.GetClassification()) * 10000) / 100).toFixed(2);
-  var d = new Date(suspect.GetLastPacketTime() * 1000);
+  var classification = (Math.floor(parseFloat(suspect.classification) * 10000) / 100).toFixed(2);
+  var d = new Date(suspect.lastTime * 1000);
   var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-  var idinfoXmlTemplate = {'@':{'id':suspect.GetIdString(), 'ip':suspect.GetIpString(), 'iface':suspect.GetInterface(), 'class':classification, 'lpt':dString}};
+  var idinfoXmlTemplate = {'@':{'id':suspect.interface + " " + suspect.ip, 'ip':suspect.ip, 'iface':suspect.interface, 'class':classification, 'lpt':dString}};
   ret += j2xp('idInfo', idinfoXmlTemplate, js2xmlopt) + '>';
-  var protoDataTemplate = {'@':{'tcp':suspect.GetTcpPacketCount(), 'udp':suspect.GetUdpPacketCount(), 'icmp':suspect.GetIcmpPacketCount(), 'other':suspect.GetOtherPacketCount()}};
+  var protoDataTemplate = {'@':{'tcp':suspect.count_tcp, 'udp':suspect.count_udp, 'icmp':suspect.count_icmp, 'other':suspect.count_other}};
   ret += j2xp('protoInfo', protoDataTemplate, js2xmlopt) + '>';
-  var packetDataTemplate = {'@':{'rst':suspect.GetRstCount(), 'ack':suspect.GetAckCount(), 'syn':suspect.GetSynCount(), 'fin':suspect.GetFinCount(), 'synack':suspect.GetSynAckCount()}};
+  var packetDataTemplate = {'@':{'rst':suspect.count_tcpRst, 'ack':suspect.count_tcpAck, 'syn':suspect.count_tcpSyn, 'fin':suspect.count_tcpFin, 'synack':suspect.count_tcpSynAck}};
+
   ret += j2xp('packetInfo', packetDataTemplate, js2xmlopt) + '>';
   ret += '</detailedSuspect>';
   cb && cb(ret);

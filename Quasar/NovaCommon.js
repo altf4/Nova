@@ -115,9 +115,18 @@ var NovaCommon = new function() {
       return scriptBindings;
     }
 
-	var novaDb = new sql.Database(this.config.GetPathHome() + "/data/novadDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
-	var db = new sql.Database(this.config.GetPathHome() + "/data/quasarDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
-	var hostNameDb = new sql.Database(this.config.GetPathHome() + "/../honeyd/names", sql.OPEN_READWRITE, databaseOpenResult);
+	this.novaDb = new sql.Database(this.config.GetPathHome() + "/data/novadDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
+	this.db = new sql.Database(this.config.GetPathHome() + "/data/quasarDatabase.db", sql.OPEN_READWRITE, databaseOpenResult);
+	this.hostNameDb = new sql.Database(this.config.GetPathHome() + "/../honeyd/names", sql.OPEN_READWRITE, databaseOpenResult);
+
+	var db = this.db;
+	var novaDb = this.novaDb;
+	var hostNameDb = this.hostNameDb;
+
+
+	// We set a few pragmas to speed up access to novadb
+	novaDb.run("PRAGMA cache_size = 100000");
+	novaDb.run("PRAGMA temp_store = MEMORY");
 
 
 	var databaseOpenResult = function(err){
@@ -143,7 +152,7 @@ var NovaCommon = new function() {
 	this.dbqFirstrunCount = db.prepare("SELECT COUNT(*) AS rows from firstrun");
 	this.dbqFirstrunInsert = db.prepare("INSERT INTO firstrun values(datetime('now'))");
 
-	this.dbqSuspectAlertsGet = novaDb.prepare('SELECT suspect_alerts.id, timestamp, suspect, interface, classification, ip_traffic_distribution,port_traffic_distribution,packet_size_mean,packet_size_deviation,distinct_ips,distinct_tcp_ports,distinct_udp_ports,avg_tcp_ports_per_host,avg_udp_ports_per_host,tcp_percent_syn,tcp_percent_fin,tcp_percent_rst,tcp_percent_synack,haystack_percent_contacted FROM suspect_alerts LEFT JOIN statistics ON statistics.id = suspect_alerts.statistics');
+	this.dbqSuspectAlertsGet = novaDb.prepare('SELECT * FROM suspect_alerts');
 	this.dbqSuspectAlertsDeleteAll = novaDb.prepare('DELETE FROM suspect_alerts');
 	this.dbqSuspectAlertsDeleteAlert = novaDb.prepare('DELETE FROM suspect_alerts where id = ?');
 
@@ -189,7 +198,75 @@ var NovaCommon = new function() {
 	this.dbqClearHostnameAllocations = hostNameDb.prepare('UPDATE allocs SET IP = NULL');
 	this.dbqDeleteHostname = hostNameDb.prepare('DELETE from allocs WHERE name = ?');
 
+	this.dbqGetSuspect = novaDb.prepare("SELECT * from suspects JOIN packet_counts ON suspects.ip = packet_counts.ip AND suspects.interface = packet_counts.interface WHERE suspects.ip = ? AND suspects.interface = ?");
+	this.dbqGetIpPorts = novaDb.prepare("SELECT * from ip_port_counts where ip = ? AND interface = ?");
+	this.dbqGetSuspectPacketCounts = novaDb.prepare("SELECT * from packet_counts WHERE ip = ? AND interface = ?");
+	this.dbqGetSuspectPacketSizes = novaDb.prepare("SELECT * from packet_sizes WHERE ip = ? AND interface = ?");
 
+
+
+	this.GetSuspects = function(limit, offset, orderBy, direction, showUnclassified, cb) {
+    	var classifiedFilter = "";
+    	if (!showUnclassified) {
+    	    classifiedFilter = " WHERE classification != -2 ";
+    	}
+
+
+    	// We only allow classifiedFilter to be one of the following
+    	var allowedOrderBy = new Array("classification", 
+    	    "ip",
+    	    "interface",
+    	    "lastTime",
+    	    "ip_traffic_distribution", 
+    	    "port_traffic_distribution",
+    	    "packet_size_mean",
+    	    "packet_size_deviation",
+    	    "distinct_ips",
+    	    "distinct_tcp_ports",
+    	    "distinct_udp_ports",
+    	    "avg_tcp_ports_per_host",
+    	    "avg_udp_ports_per_host",
+    	    "tcp_percent_syn",
+    	    "tcp_percent_fin",
+    	    "tcp_percent_rst",
+    	    "tcp_percent_synack",
+    	    "haystack_percent_contacted"
+    	);
+
+    	if (allowedOrderBy.indexOf(orderBy) == -1) {
+    	    cb("ERROR: Invalid arg orderBy. Must be one of the sqlite columns for the suspect table");
+    	    return;
+    	}
+
+    	if (direction != "ASC" && direction != "DESC") {
+    	    cb("ERROR: Invalid arg direction. Must be ASC or DESC.");
+    	    return;
+    	}
+
+    	if (isNaN(parseInt(limit))) {
+    	    cb("ERROR: Invalid arg limit. Must be an integer.");
+    	    return;
+    	}
+    	
+    	if (isNaN(parseInt(offset))) {
+    	    cb("ERROR: Invalid arg offset. Must be an integer.");
+    	    return;
+    	}
+
+
+    	var queryString = "SELECT * FROM suspects " + classifiedFilter + "ORDER BY " + orderBy + " " + direction + " LIMIT " + limit + " OFFSET " + offset;
+    	NovaCommon.novaDb.all(queryString, function(err, results) {
+            if (err) {
+				LOG("ERROR", "Database error: " + err);
+            	cb && cb(err);
+				return;
+			}
+			
+    	    cb && cb(null, results);
+    	});
+
+	};
+	
 	this.HashPassword = function (password, salt)
 	{
 		var shasum = crypto.createHash('sha1');

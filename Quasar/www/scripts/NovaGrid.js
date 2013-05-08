@@ -21,7 +21,8 @@
 //     Each should contain a "name" attribute and optionally a "formatter"
 //   keyIndex: index of column used as a UID for a row
 //   tableElement: DOM object of the <table> 
-//   selection: boolean. Enable or disable the ability to select table rows
+//   selection (optional): boolean. Enable or disable the ability to select table rows
+//   rightclick (optional): TODO document this
 var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection, rightclick) {
     this.m_columns = columns;
     this.m_keyIndex = keyIndex;
@@ -31,13 +32,32 @@ var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection, ri
     this.m_elements = new Object();
     this.m_pageElements = [];
     this.m_pagesElement = null;
+    
+    // Called whenever the grid is redrawn
     this.m_renderCallback = function() {};
+
+    // Called when the grid is redrawn without explicit Render call (page change, sort order change, etc)
+    this.m_autoRenderCallback = function() {};
+    
+    
     this.m_selected = [];
-    this.m_selection = selection;
     this.m_currentPage = 0;
     this.m_relativePageNumbersToShow = 2;
     this.m_rowsPerPage = Number.MAX_VALUE;
     this.m_name = gridName;
+
+    this.m_remotePaging = false;
+    this.m_numberOfPages = 1;
+
+    if (selection == undefined)
+    {
+        this.m_selection = false;
+    }
+    else
+    {
+        this.m_selection = selection;
+    }
+
     if(rightclick == undefined)
     {
       this.m_rightClick = false;
@@ -92,8 +112,9 @@ NovaGrid.prototype = {
                    throw "Can't push entry of size " + entry.length + " into table of size " + this.m_columns.length
                } else {
                    this.m_elements[entry[this.m_keyIndex]] = entry;
-                   this.m_elements[entry[this.m_keyIndex]]._newRow = true;
-				   
+                   // Disabling row blinking for now
+                   //this.m_elements[entry[this.m_keyIndex]]._newRow = true;
+                   
                }
            }
 
@@ -128,6 +149,7 @@ NovaGrid.prototype = {
                if (page >= 0 && page < this.GetNumberOfPages()) {
                    this.m_currentPage = page;
                    this.m_selected.length = 0;
+                   this.m_autoRenderCallback();
                    this.Render();
                }
            }
@@ -151,7 +173,11 @@ NovaGrid.prototype = {
            }
 
            , GetNumberOfPages: function() {
-               return Math.ceil(Object.keys(this.m_elements).length/this.m_rowsPerPage);
+               if (!this.m_remotePaging) {
+                    this.m_numberOfPages = Math.ceil(Object.keys(this.m_elements).length/this.m_rowsPerPage);
+               }
+
+               return this.m_numberOfPages;
            }
 
            // Returns the HTML for the table
@@ -182,11 +208,22 @@ NovaGrid.prototype = {
                  }
                });
 
-               if (arrayRep.length < this.m_currentPage * this.m_rowsPerPage) {
-                   return innerTableString; 
+
+               if (!this.m_remotePaging) {
+                    if (arrayRep.length < this.m_currentPage * this.m_rowsPerPage) {
+                        return innerTableString; 
+                    }
                }
 
-               for (var i = this.m_currentPage * this.m_rowsPerPage; (i < arrayRep.length) && (i < (this.m_currentPage + 1)* this.m_rowsPerPage); i++) {
+
+               var i = this.m_currentPage * this.m_rowsPerPage;
+               var maxi = (this.m_currentPage + 1)* this.m_rowsPerPage;
+               if (this.m_remotePaging) {
+                 i = 0;
+                 maxi = this.m_rowsPerPage;
+               }
+
+               for (; (i < arrayRep.length) && i < maxi; i++) {
                    var sub = '';
                    var idx = keys[i].indexOf('>');
                    // All this magic because the grid is keyed to an html
@@ -278,6 +315,7 @@ NovaGrid.prototype = {
         }
         this.m_sortByKey = key;
         this.GenerateTableHeader();
+        this.m_autoRenderCallback();
         this.Render();
     }
 

@@ -24,8 +24,6 @@
 #include <pcap.h>
 #include <arpa/inet.h>
 
-using namespace std;
-
 namespace Nova
 {
 
@@ -45,7 +43,7 @@ struct _evidencePacket // Total of 18 bytes
 	uint8_t ip_p;		//Ip protocol (UDP, TCP or ICMP)
 	uint32_t ip_src;	//Source IPv4 address
 	uint32_t ip_dst;	//Destination IPv4 address
-	uint16_t dst_port;	//Destination Port (UDP or TCP Only)
+	uint16_t dst_port;	//Destination Port (UDP or TCP Only) or type/code if ICMP
 	time_t ts;		//Arrival Timestamp (in seconds)
 	_tcpFlags tcp_hdr;
 };

@@ -44,11 +44,7 @@ Message::~Message()
 
 void Message::DeleteContents()
 {
-	for(uint i = 0; i < m_suspects.size(); i++)
-	{
-		delete m_suspects[i];
-	}
-	m_suspects.clear();
+
 }
 
 uint32_t Message::GetLength()
@@ -56,10 +52,6 @@ uint32_t Message::GetLength()
 	uint32_t length = m_contents.ByteSize();
 	length += sizeof(uint32_t);
 
-	for(uint i = 0; i < m_suspects.size(); i++)
-	{
-		length += m_suspects[i]->GetSerializeLength(m_contents.m_featuremode());
-	}
 	return length;
 }
 
@@ -83,24 +75,6 @@ bool Message::Serialize(char *buffer, uint32_t length)
 	}
 	buffer += protobufLength;
 
-	uint32_t runningLength = protobufLength + sizeof(protobufLength);
-	//Serialize in any Suspects
-	for(uint i = 0; i < m_suspects.size(); i++)
-	{
-		// Serialize our suspect
-		uint32_t suspectLength = m_suspects[i]->GetSerializeLength(m_contents.m_featuremode());
-		if(m_suspects[i]->Serialize((u_char*)buffer, suspectLength, m_contents.m_featuremode()) != suspectLength)
-		{
-			return false;
-		}
-		buffer += suspectLength;
-		runningLength += suspectLength;
-		if(runningLength > length)
-		{
-			return false;
-		}
-	}
-
 	return true;
 }
 
@@ -116,29 +90,6 @@ bool Message::Deserialize(char *buffer, uint32_t length)
 		return false;
 	}
 	buffer += protobufLength;
-
-	uint32_t bytesToGo = length - protobufLength;
-	while(bytesToGo > 0)
-	{
-		Suspect *suspect = new Suspect();
-		try
-		{
-			uint32_t suspectSize = suspect->Deserialize((u_char*)buffer, bytesToGo, m_contents.m_featuremode());
-			if(suspectSize == 0)
-			{
-				delete suspect;
-				return false;
-			}
-			bytesToGo -= suspectSize;
-			buffer += suspectSize;
-		}
-		catch(Nova::serializationException &e)
-		{
-			delete suspect;
-			return false;
-		}
-		m_suspects.push_back(suspect);
-	}
 
 	return true;
 }

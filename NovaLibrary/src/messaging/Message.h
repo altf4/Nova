@@ -60,7 +60,6 @@ public:
 	uint32_t GetLength();
 
 	Message_pb m_contents;
-	std::vector <Suspect*> m_suspects;
 };
 
 }

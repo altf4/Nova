@@ -41,153 +41,6 @@ block headerAdditions
     var newSuspectGrid;
     var newSuspectDataGrid;
 
-    function newSuspectWidget() {
-        var self = this;
-        this.markSeen = function(ip, interface)
-        {
-            now.MarkSuspectSeen(ip, interface);
-            newSuspectGrid.DeleteRow(ip + interface);
-            newSuspectGrid.Render();
-        }
-
-        this.markAllSeen = function()
-        {
-            now.MarkAllSuspectSeen();
-            newSuspectGrid.Clear();
-        }
-
-
-        this.addRow = function(ip, interface) {
-            var row = new Array();
-            row.push(ip + interface);
-            row.push(ip);
-            row.push(interface);
-
-            var buttonString = "<button class='gridButton' onclick='widget1.markSeen(";
-            buttonString += '"' + ip + '", "' + interface + '"';
-            buttonString += ")'><img src='images/delete.png' class='gridIcon'/> <span class='buttonSpan'>Mark as seen</span></button>";
-            row.push(buttonString);
-            
-            newSuspectGrid.PushEntry(row);
-        }
-        
-        this.addRowAndRender = function(ip, interface) {
-            self.addRow(ip, interface);
-            newSuspectGrid.Render();
-        }
-
-        this.initNewSuspects = function()
-        {
-            var columns = new Array();
-            columns.push({name: "hiddenkey"});
-            columns.push({name: "IP"});
-            columns.push({name: "Interface"});
-            columns.push({name: "Mark as seen"});
-
-            newSuspectGrid = new NovaGrid(columns, 0, "newSuspectGrid", 'newSuspectGrid', false);
-            newSuspectGrid.DisableColumn(0);
-            newSuspectGrid.SetSortByKey(1);
-            newSuspectGrid.GenerateTableHeader();
-            newSuspectGrid.SetRowsPerPage(10);
-            newSuspectGrid.SetPageNumberDiv($("#newSuspectPages").get(0));    
-            
-            now.OnNewSuspectInserted = self.addRowAndRender;
-
-
-            now.GetUnseenSuspects(function(err, suspects) 
-            {
-                if (err)
-                {
-                    alert("Error fetching unseen suspects: " + err);
-                    return;
-                }
-
-                for (var i in suspects)
-                {
-                    self.addRow(suspects[i].ip, suspects[i].interface);
-                }
-                
-                newSuspectGrid.Render();
-            }
-        )}
-    }
-
-
-    function newSuspectDataWidget() {
-        var self = this;
-        this.markSeen = function(ip, interface)
-        {
-            now.MarkSuspectDataSeen(ip, interface);
-            newSuspectDataGrid.DeleteRow(ip + interface);
-            newSuspectDataGrid.Render();
-        }
-
-        this.markAllSeen = function()
-        {
-            now.MarkAllSuspectDataSeen();
-            newSuspectDataGrid.Clear();
-        }
-
-
-        this.addRow = function(ip, interface) {
-            var row = new Array();
-            row.push(ip + interface);
-            row.push(ip);
-            row.push(interface);
-
-            var buttonString = "<button class='gridButton' onclick='widget2.markSeen(";
-            buttonString += '"' + ip + '", "' + interface + '"';
-            buttonString += ")'><img src='images/delete.png' class='gridIcon'/> <span class='buttonSpan'>Mark as seen</span></button>";
-            row.push(buttonString);
-            
-            newSuspectDataGrid.PushEntry(row);
-        }
-       
-        this.renderTimeout = null;
-        this.addRowAndRender = function(ip, interface) {
-            self.addRow(ip, interface);
-            // Use a timer to only render once a second even if we get a bunch of suspects. Keeps things from rendering too often from new data.
-            if (self.renderTimeout == null) {
-                self.renderTimeout = setTimeout(function() {newSuspectDataGrid.Render(); self.renderTimeout = null;}, 1000);
-            }
-        }
-
-        this.initNewSuspects = function()
-        {
-            var columns = new Array();
-            columns.push({name: "hiddenkey"});
-            columns.push({name: "IP"});
-            columns.push({name: "Interface"});
-            columns.push({name: "Mark as seen"});
-
-            newSuspectDataGrid = new NovaGrid(columns, 0, "newSuspectDataGrid", 'newSuspectDataGrid', false);
-            newSuspectDataGrid.DisableColumn(0);
-            newSuspectDataGrid.SetSortByKey(1);
-            newSuspectDataGrid.GenerateTableHeader();
-            newSuspectDataGrid.SetRowsPerPage(10);
-            newSuspectDataGrid.SetPageNumberDiv($("#newSuspectDataPages").get(0));    
-            
-            now.OnNewSuspectData = self.addRowAndRender;
-
-
-            now.GetUnseenDataSuspects(function(err, suspects) 
-            {
-                if (err)
-                {
-                    alert("Error fetching unseen suspects: " + err);
-                    return;
-                }
-
-                for (var i in suspects)
-                {
-                    self.addRow(suspects[i].ip, suspects[i].interface);
-                }
-                
-                newSuspectDataGrid.Render();
-            }
-        )}
-    }
-
     function newNovaLogWidget() {
         var self = this;
         this.markSeen = function(linenum)
@@ -398,11 +251,11 @@ block headerAdditions
         img = new Image();
         img.src = "images/delete.png";
 
-        widget1 = new newSuspectWidget();
-        widget1.initNewSuspects();
+        //widget1 = new newSuspectWidget();
+        //widget1.initNewSuspects();
 
-        widget2 = new newSuspectDataWidget();
-        widget2.initNewSuspects();
+        //widget2 = new newSuspectDataWidget();
+        //widget2.initNewSuspects();
 
         widget3 = new newNovaLogWidget();
         widget3.init();
@@ -413,31 +266,6 @@ block headerAdditions
     };
   
 block content
-  div#newSuspects(style="display: inline-block; width: 400px; vertical-align: top; margin: 5px;")
-    h1 New Suspects
-
-    div#newSuspectPages
-    div.novaGrid
-      div#newSuspectGrid
-    br
-    
-    button.button(onclick = 'widget1.markAllSeen()')
-      img.buttonIcon(src='images/delete.png');
-      span.buttonSpan Mark all as seen
-
-  div#newSuspectData(style="display: inline-block; width: 400px; vertical-align: top; margin: 5px")
-    h1 Suspects with new data
-
-    div#newSuspectDataPages
-    div.novaGrid
-      div#newSuspectDataGrid
-    br
-    
-    button.button(onclick = 'widget2.markAllSeen()')
-      img.buttonIcon(src='images/delete.png');
-      span.buttonSpan Mark all as seen
- 
-  br
   div#newNovaLogs(style="display: inline-block; width: 400px; vertical-align: top; margin: 5px")
     h1 New Nova Log Entries
 

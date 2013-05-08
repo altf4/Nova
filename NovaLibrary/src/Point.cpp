@@ -18,7 +18,7 @@
 //============================================================================
 
 #include "Point.h"
-#include "FeatureSet.h"
+#include "EvidenceAccumulator.h"
 
 using namespace std;
 

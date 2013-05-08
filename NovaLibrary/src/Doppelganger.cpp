@@ -20,6 +20,7 @@
 #include "Logger.h"
 #include "NovaUtil.h"
 #include "Doppelganger.h"
+#include "Database.h"
 
 #include <string>
 #include <sstream>
@@ -32,7 +33,7 @@ namespace Nova
 {
 
 // suspects: Uses the hostile suspects in this suspect table to determine Dopp routing
-Doppelganger::Doppelganger(SuspectTable& suspects)
+Doppelganger::Doppelganger(DatabaseQueue& suspects)
 : m_suspectTable(suspects)
 {
 	m_initialized = false;
@@ -55,8 +56,11 @@ void Doppelganger::UpdateDoppelganger()
 	{
 		InitDoppelganger();
 	}
-	//Get latest list of hostile suspects
-	vector<SuspectID_pb> keys = m_suspectTable.GetKeys_of_HostileSuspects();
+
+	Database::Inst()->StartTransaction();
+	vector<SuspectID_pb> keys = Database::Inst()->GetHostileSuspects();
+	Database::Inst()->StopTransaction();
+
 	vector<SuspectID_pb> keysCopy = keys;
 
 	//A few variable declarations
@@ -97,6 +101,8 @@ void Doppelganger::UpdateDoppelganger()
 			ss.str("");
 			inAddr.s_addr = htonl((in_addr_t)temp.m_ip());
 			ss << prefix << inet_ntoa(inAddr) << suffix;
+
+			LOG(DEBUG, "Doppelganger running command: " + ss.str(), "");
 			if(system(ss.str().c_str()) != 0)
 			{
 				LOG(ERROR, "Error routing suspect to Doppelganger", "Command '"+ss.str()+"' was unsuccessful.");
@@ -249,7 +255,10 @@ void Doppelganger::ResetDoppelganger()
 		LOG(DEBUG, "Unable to flush Doppelganger rules.", "Command '"+commandLine+"' was unsuccessful.");
 	}
 	m_suspectKeys.clear();
-	m_suspectKeys = m_suspectTable.GetKeys_of_HostileSuspects();
+
+	Database::Inst()->StartTransaction();
+	m_suspectKeys = Database::Inst()->GetHostileSuspects();
+	Database::Inst()->StopTransaction();
 
 	prefix = "sudo iptables -t nat -I DOPP -s ";
 	string suffix = " -j DNAT --to-destination " + Config::Inst()->GetDoppelIp();

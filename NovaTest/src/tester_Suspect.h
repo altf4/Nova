@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "Suspect.h"
-#include "FeatureSet.h"
+#include "EvidenceAccumulator.h"
 
 using namespace Nova;
 using namespace std;
@@ -76,63 +76,6 @@ TEST_F(SuspectTest, EvidenceAddingRemoving)
 	*t2 = p2;
 	EXPECT_NO_FATAL_FAILURE(suspect->ReadEvidence(t1, true));
 	EXPECT_NO_FATAL_FAILURE(suspect->ReadEvidence(t2, true));
-}
-
-TEST_F(SuspectTest, EvidenceProcessing)
-{
-	Evidence *t1 = new Evidence();
-	Evidence *t2 = new Evidence();
-	*t1 = p1;
-	*t2 = p2;
-	EXPECT_NO_FATAL_FAILURE(suspect->ReadEvidence(t1, true));
-	EXPECT_NO_FATAL_FAILURE(suspect->ReadEvidence(t2, true));
-
-	// Calculate the feature values from the evidence
-	EXPECT_NO_FATAL_FAILURE(suspect->CalculateFeatures());
-	// Move this stuff from the unsent evidence to the normal evidence
-	//EXPECT_NO_FATAL_FAILURE(suspect->UpdateFeatureData(true));
-
-	// Do we have the correct packet count?
-	EXPECT_EQ((uint)2, suspect->GetFeatureSet(MAIN_FEATURES).m_packetCount);
-
-
-	FeatureSet fset = suspect->GetFeatureSet(MAIN_FEATURES);
-
-	// Note: This is stolen from our featureSet test code
-	EXPECT_EQ(fset.m_features[IP_TRAFFIC_DISTRIBUTION], 1);
-	EXPECT_EQ(fset.m_features[PORT_TRAFFIC_DISTRIBUTION], 1);
-	EXPECT_EQ(fset.m_features[PACKET_SIZE_DEVIATION], 0);
-	EXPECT_EQ(fset.m_features[PACKET_SIZE_MEAN], 256);
-	EXPECT_EQ(fset.m_features[DISTINCT_IPS], 2);
-	EXPECT_EQ(fset.m_features[DISTINCT_TCP_PORTS], 2);
-	EXPECT_EQ(fset.m_features[DISTINCT_UDP_PORTS], 0);
-	EXPECT_EQ(fset.m_features[AVG_TCP_PORTS_PER_HOST], 1);
-	EXPECT_EQ(fset.m_features[AVG_UDP_PORTS_PER_HOST], 0);
-}
-
-
-TEST_F(SuspectTest, Serialization)
-{
-	Evidence *t1 = new Evidence();
-	Evidence *t2 = new Evidence();
-	*t1 = p1;
-	*t2 = p2;
-	// Just setup to get a suspect to serialize
-	suspect->ReadEvidence(t1, true);
-	suspect->ReadEvidence(t2, true);
-	suspect->CalculateFeatures();
-
-	u_char buffer[LARGE_BUFFER_SIZE];
-	uint32_t bytesSerialized = suspect->Serialize(&buffer[0], LARGE_BUFFER_SIZE, MAIN_FEATURE_DATA);
-	EXPECT_EQ(bytesSerialized, suspect->GetSerializeLength(MAIN_FEATURE_DATA));
-
-
-	Suspect *suspectCopy = new Suspect();
-	suspectCopy->Deserialize(&buffer[0], LARGE_BUFFER_SIZE, MAIN_FEATURE_DATA);
-
-	EXPECT_EQ(*suspect, *suspectCopy);
-
-	delete suspectCopy;
 }
 
 }
