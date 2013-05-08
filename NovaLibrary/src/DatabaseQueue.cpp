@@ -160,7 +160,13 @@ void DatabaseQueue::WriteToDatabase()
 
 				if (generateHostileAlert)
 				{
+					LOG(ALERT, "Detected potentially hostile traffic from: " + s->ToString(), "");
 					Database::Inst()->InsertSuspectHostileAlert(s->GetIpString(), s->GetInterface());
+
+					if(Config::Inst()->GetClearAfterHostile())
+					{
+						Database::Inst()->ClearSuspect(s->GetIpString(), s->GetInterface());
+					}
 				}
 			}
 
