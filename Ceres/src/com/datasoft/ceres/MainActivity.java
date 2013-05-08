@@ -9,17 +9,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
-import android.view.View.OnKeyListener;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.TextView.OnEditorActionListener;
-
 import org.json.*;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import java.io.BufferedInputStream;
@@ -43,12 +37,14 @@ public class MainActivity extends Activity {
 	ProgressDialog m_dialog;
 	CeresClient m_global;
 	Boolean m_keepMeLoggedIn;
+	CeresClientConnect m_ceresClient;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         m_ctx = this;
+        m_ceresClient = new CeresClientConnect();
         m_global = (CeresClient)getApplicationContext();
         m_global.setForeground(true);
         m_id = (EditText)findViewById(R.id.credID);
@@ -70,10 +66,11 @@ public class MainActivity extends Activity {
         		{
         			String json = new String(buf);
         			JSONObject net = new JSONObject(json);
-        			if(net.has("ip") && net.has("id") && net.has("port"))
+        			if(net.has("ip") && net.has("id") && net.has("port") && net.has("pword"))
         			{
         				m_ip.setText(net.get("ip").toString());
         				m_port.setText(net.get("port").toString());
+        				m_passwd.setText(net.get("pword").toString());
         				m_id.setText(net.get("id").toString());
         			}
         		}
@@ -100,7 +97,7 @@ public class MainActivity extends Activity {
         m_dialog = new ProgressDialog(this);
         m_connect.setOnClickListener(new Button.OnClickListener() {
         	public void onClick(View v){
-        		if(m_ip.getText().toString() == "" || m_port.getText().toString() == "")
+        		if(m_ip.getText().toString().isEmpty() || m_port.getText().toString().isEmpty())
         		{
         			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
         			builder.setMessage("Ip address or port fields were empty")
@@ -154,6 +151,7 @@ public class MainActivity extends Activity {
 	        				json.put("ip", m_ip.getText().toString());
 	        				json.put("port", m_port.getText().toString());
 	        				json.put("id", m_id.getText().toString());
+	        				json.put("pword", m_passwd.getText().toString());
 	        				writeToFile = json.toString();
 	        				bos.write(writeToFile);
 	        				bos.flush();
@@ -172,7 +170,7 @@ public class MainActivity extends Activity {
 	    				file.delete();
 	        		}
 	        		String netString = (m_ip.getText().toString() + ":" + m_port.getText().toString());
-	        		if(m_id.getText().toString() == "" || m_passwd.getText().toString() == "")
+	        		if(m_id.getText().toString().isEmpty() || m_passwd.getText().toString().isEmpty())
 	        		{
 	        			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
 	        			builder.setMessage("Please fill out both Username and Password!")
@@ -187,7 +185,14 @@ public class MainActivity extends Activity {
 	        		}
 	        		else
 	        		{
-	        			new CeresClientConnect().execute(netString);
+	        			if(m_ceresClient.getStatus() == AsyncTask.Status.FINISHED)
+	        			{
+	        				m_ceresClient = new CeresClientConnect();
+	        			}
+	        			if(m_ceresClient.getStatus() != AsyncTask.Status.RUNNING)
+	        			{
+	        				m_ceresClient.execute(netString);
+	        			}
 	        		}
 	        		m_notify.setVisibility(View.INVISIBLE);
         		}
@@ -197,7 +202,7 @@ public class MainActivity extends Activity {
     
     public void onCheckboxClicked(View view)
     {
-    	m_keepMeLoggedIn = ((CheckBox) view).isChecked();
+    	m_keepMeLoggedIn = ((CheckBox)view).isChecked();
     }
     
     @Override
@@ -211,6 +216,7 @@ public class MainActivity extends Activity {
     protected void onResume()
     {
     	super.onResume();
+    	m_notify.setVisibility(View.INVISIBLE);
     	m_global.setForeground(true);
     }
     
@@ -229,11 +235,12 @@ public class MainActivity extends Activity {
         		{
         			String json = new String(buf);
         			JSONObject net = new JSONObject(json);
-        			if(net.has("ip") && net.has("id") && net.has("port"))
+        			if(net.has("ip") && net.has("id") && net.has("port") && net.has("pword"))
         			{
         				m_ip.setText(net.get("ip").toString());
         				m_port.setText(net.get("port").toString());
         				m_id.setText(net.get("id").toString());
+        				m_passwd.setText(net.get("pword").toString());
         			}
         		}
         		else
@@ -256,7 +263,6 @@ public class MainActivity extends Activity {
     
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
@@ -271,6 +277,7 @@ public class MainActivity extends Activity {
     			m_dialog = new ProgressDialog(m_ctx);
     		}
     		m_dialog.setCancelable(false);
+    		m_dialog.setCanceledOnTouchOutside(false);
     		m_dialog.setMessage("Attempting to connect");
     		m_dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
     		m_dialog.show();
@@ -280,11 +287,10 @@ public class MainActivity extends Activity {
     	@Override
     	protected Integer doInBackground(String... params)
     	{
-    		// Negotiate connection to Ceres.js websocket server
-    		// params[0] == url
     		try
     		{
     			m_global.setURL(params[0]);
+    			m_global.clearXmlReceive();
     			NetworkHandler.setSSL(m_ctx, R.raw.test, m_passwd.getText().toString(), m_id.getText().toString());
     			NetworkHandler.get(("https://" + m_global.getURL() + "/getAll"), null, new AsyncHttpResponseHandler(){
     				@Override
@@ -323,12 +329,8 @@ public class MainActivity extends Activity {
     	@Override
     	protected void onPostExecute(Integer result)
     	{
-    		// After doInBackground is done the return value for it
-    		// is sent to this method
     		if(result == 0)
-    		{
-    			// Display dialog saying connection failed,
-    			// redirect back to login page
+    		{   
     			m_dialog.dismiss();
     			m_notify.setText(R.string.error);
     			m_notify.setTextColor(Color.RED);

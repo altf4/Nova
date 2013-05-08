@@ -7,7 +7,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
-
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
@@ -25,9 +24,6 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 public class GridActivity extends ListActivity {
-
-	public final static String DETAILS_MESSAGE = "com.datasoft.ceres.DETAILS_MESSAGE";
-	
 	CeresClient m_global;
 	ProgressDialog m_wait;
 	ClassificationGridAdapter m_gridAdapter;
@@ -270,14 +266,20 @@ public class GridActivity extends ListActivity {
 					}
 					catch(InterruptedException ie)
 					{
+    					m_global.setXmlBase("");
+    					m_global.clearXmlReceive();
 						return;
 					}
 					catch(IOException ioe)
 					{
+    					m_global.setXmlBase("");
+    					m_global.clearXmlReceive();
 						return;
 					}
 					catch(XmlPullParserException xpe)
 					{
+    					m_global.setXmlBase("");
+    					m_global.clearXmlReceive();
 						return;
 					}
 				}
@@ -293,13 +295,12 @@ public class GridActivity extends ListActivity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent keyEvent)
     {
-    	if(keyCode == KeyEvent.KEYCODE_HOME)
+    	if(keyCode == KeyEvent.KEYCODE_HOME || keyCode == KeyEvent.KEYCODE_BACK)
     	{
-    		m_updateThread.interrupt();
-    	}
-    	else if(keyCode == KeyEvent.KEYCODE_BACK)
-    	{
-    		m_updateThread.interrupt();
+    		if(m_updateThread.getState() != Thread.State.TERMINATED)
+    		{
+    			m_updateThread.interrupt();
+    		}
     	}
     	return super.onKeyDown(keyCode, keyEvent);
     }

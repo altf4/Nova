@@ -40,19 +40,11 @@ var handler = function(req, res) {
   var reqSwitch = url.parse(req.url).pathname;
   var params = url.parse(req.url, true).query;
   var head = req.headers['authorization'] || '';
-  console.log('head == ' + head);
-  for(var i in req.headers)
-  {
-    console.log('req.head[' + i + '] == ' + req.headers[i]);
-  }
   var token = head.split(/\s+/).pop() || '';
   var auth = new Buffer(token, 'base64').toString();
   var parts = auth.split(/:/);
   var username = parts[0];
   var password = parts[1];
-  
-  console.log('username == ' + username);
-  console.log('password == ' + password);
   
   if(username == "nova" && password == creds["nova"])
   {
