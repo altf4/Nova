@@ -25,6 +25,8 @@
 #include "Config.h"
 #include "ThresholdTriggerClassification.h"
 
+using namespace std;
+
 namespace Nova
 {
 

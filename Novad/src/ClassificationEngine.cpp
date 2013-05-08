@@ -22,6 +22,7 @@
 #include <string>
 
 using namespace Nova;
+using namespace std;
 
 ClassificationEngine::ClassificationEngine() {}
 ClassificationEngine::~ClassificationEngine() {}

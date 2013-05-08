@@ -260,6 +260,7 @@ html, body {
 	top: -20px;
 	position: relative;
 	left: 0;
+    text-align: center;
 }
 
 button::-moz-focus-inner {

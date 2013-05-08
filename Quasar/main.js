@@ -131,7 +131,7 @@ function(username, password, done)
       if(rowcount[0].rows === 0)
       {
         console.log("No users in user database. Creating default user.");
-        NovaCommon.dbqCredentialsInsertUser.run('nova', NovaCommon.HashPassword('toor', 'root'), 'root', function(err)
+        NovaCommon.dbqCredentialsInsertUser.run('nova', NovaCommon.HashPassword('toor', 'root'), 'root', function (err)
         {
           if(err)
           {
@@ -592,11 +592,13 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
               pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'getHostileSuspects':
-              NovaCommon.nova.sendSuspectList(distributeSuspect);
+              // TODO Broken during the suspecttable -> sqlite refactor
+              //NovaCommon.nova.sendSuspectList(distributeSuspect);
               break;
             case 'requestBenign':
               benignRequest = true;
-              NovaCommon.nova.sendSuspectList(distributeSuspect);
+              // TODO broken during the suspecttable -> sqlite refactor
+              //NovaCommon.nova.sendSuspectList(distributeSuspect);
               break;
             case 'cancelRequestBenign':
               benignRequest = false;
@@ -812,7 +814,7 @@ app.get('/nodeState.csv', function(req, res)
 
   var csvString = "ENABLED,IP,INTERFACE,MAC,PROFILE\n";
   
-  for(var i = 0; i < nodeNames.length; i++)
+  for (var i = 0; i < nodeNames.length; i++)
   {
       var node = NovaCommon.honeydConfig.GetNode(nodeNames[i]);
       csvString += node.IsEnabled() + ",";
@@ -1131,26 +1133,15 @@ app.get('/getSuspectDetails', function(req, res)
   var suspectIp = req.query['ip'];
   var suspectInterface = req.query['interface'];
   
-  NovaCommon.nova.RequestSuspectDetailsString(suspectIp, suspectInterface, function(suspectString){
-    if(suspectString != '')
-    {
-    	res.render('suspectDetails.jade', {
+    res.render('suspectDetails.jade', {
         locals: {
           suspect: suspectIp
           , interface: suspectInterface
-          , details: suspectString
         }
-    	});
-  	}
-  	else
-  	{
-      RenderError(res, 'The suspect ' + suspectIp + ' does not exist', '/suspects');
-      return;
-  	}
-  });
+    });
 });
 
-app.get('/editHoneydNode', function(req, res)
+app.get('/editHoneydNode', function (req, res)
 {
   if(req.query["node"] === undefined)
   {
@@ -1213,7 +1204,7 @@ app.get('/editHoneydProfile', function(req, res)
     })
 });
 
-app.get('/addHoneydProfile', function(req, res)
+app.get('/addHoneydProfile', function (req, res)
 {
     if(req.query["parent"] === undefined)
     {
@@ -1234,7 +1225,7 @@ app.get('/addHoneydProfile', function(req, res)
     })
 });
 
-app.get('/customizeTraining', function(req, res)
+app.get('/customizeTraining', function (req, res)
 {
     NovaCommon.trainingDb = new NovaCommon.novaconfig.CustomizeTrainingBinding();
     
@@ -1534,7 +1525,7 @@ app.post('/createNewUser', function(req, res)
     });
 });
 
-app.post('/createInitialUser', function(req, res)
+app.post('/createInitialUser', function (req, res)
 {
     var password = req.body["password"];
     var userName = req.body["username"];
@@ -1642,7 +1633,7 @@ app.get("/editClassifier", function(req, res)
         var weightString = classifier.strings["FEATURE_WEIGHTS"];
         var thresholdString = classifier.strings["THRESHOLD_HOSTILE_TRIGGERS"];
         var features = [];
-        for(var i = 0; i < featureNames.length; i++)
+        for (var i = 0; i < featureNames.length; i++)
         {
             var feature = {
                 name: featureNames[i]
@@ -1820,7 +1811,7 @@ app.post('/honeydConfigManage', function(req, res){
   }
 });
 
-app.post('/customizeTrainingSave', function(req, res)
+app.post('/customizeTrainingSave', function (req, res)
 {
     var uids = NovaCommon.trainingDb.GetUIDs();
 
@@ -1869,12 +1860,12 @@ app.post('/configureNovaSave', function(req, res)
     "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", 
     "THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC", "EMAIL_ALERTS_ENABLED", "TRAINING_DATA_PATH", "MESSAGE_WORKER_THREADS"];
 
-    Validator.prototype.error = function(msg)
+    Validator.prototype.error = function (msg)
     {
         this._errors.push(msg);
     }
 
-    Validator.prototype.getErrors = function()
+    Validator.prototype.getErrors = function ()
     {
         return this._errors;
     }
@@ -2208,7 +2199,7 @@ app.get('/scripts', function(req, res){
   
   var scriptNames = NovaCommon.honeydConfig.GetScriptNames();
 
-  for(var i = 0; i < scriptNames.length; i++) {
+  for (var i = 0; i < scriptNames.length; i++) {
     var script = NovaCommon.honeydConfig.GetScript(scriptNames[i]);
     namesAndPaths.push({script: script.GetName(), path: script.GetPath(), configurable: script.GetIsConfigurable()});
   }
@@ -2252,134 +2243,20 @@ var SendBenignSuspectToPulsar = function(suspect)
 };
 everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
-var distributeSuspect = function(suspect)
-{
-  var d = new Date(suspect.GetLastPacketTime() * 1000);
-  var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-  
-  var s = new Object();
-  objCopy(suspect, s);
-  s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
-  
-  // Save to unseen db
-  NovaCommon.dbqIsNewSuspect.all(s.GetIpString, s.GetInterface, function(err, results) {
-    if(err)
-    {
-      LOG("ERROR", err);
-      return;
-    }
-      
-    if(results[0].rows === 0)
-    {
-      NovaCommon.dbqAddNewSuspect.run(s.GetIpString, s.GetInterface, function()
-      {
-        try {
-          everyone.now.OnNewSuspectInserted(s.GetIpString, s.GetInterface);
-          everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
-        } catch(err) {}
-      });
-    } 
-    else
-    {
-      NovaCommon.dbqSeenAllData.all(s.GetIpString, s.GetInterface, function(err, results) {
-        if(err)
-        {
-          LOG("ERROR", err);
-          return;
-        }
-        
-        if(results[0].seenAllData)
-        {
-          NovaCommon.dbqMarkSuspectDataUnseen.run(s.GetIpString, s.GetInterface, function() {
-            try
-            {
-              everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
-            } catch(err) {}
-          });
-        }
-      });
-     }
-  });
-
-  try 
-  {
-    everyone.now.OnNewSuspect(s);
-  } catch(err) {};
-  
-  if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) >= 0)
-  {
-    var send = {};
-    
-    send.ip = suspect.GetIpString();
-    send.classification = String(suspect.GetClassification());
-    send.lastpacket = dString;
-    send.ishostile = String(suspect.GetIsHostile());
-    send.interface = String(suspect.GetInterface());
-    
-    SendHostileEventToPulsar(send);
-  }
-  else if(suspect.GetIsHostile() == false && benignRequest && parseInt(suspect.GetClassification()) >= 0)
-  {
-    var d = new Date(suspect.GetLastPacketTime() * 1000);
-    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-    var send = {};
-    
-    send.ip = suspect.GetIpString();
-    send.classification = String(suspect.GetClassification());
-    send.lastpacket = dString;
-    send.ishostile = String(suspect.GetIsHostile());
-    send.interface = String(suspect.GetInterface());
-    
-    SendBenignSuspectToPulsar(send);
-  }
-  else
-  {
-
-  }
-};
-
-var distributeAllSuspectsCleared = function()
-{
-    try 
-    {
-        everyone.now.AllSuspectsCleared();
-    } 
-    catch(err) 
-    {
-        // We can safely ignore this, it's just because no browsers are connected
-    };
-}
-
-var distributeSuspectCleared = function(suspect)
-{
-    //var s = new Object;
-    
-    //s['interface'] = suspect.GetInterface();
-    //s['ip'] = suspect.GetIpString();
-    //s['idString'] = suspect.GetIdString();
-    
-    //everyone.now.SuspectCleared(s);
-}
-
-NovaCommon.nova.registerOnAllSuspectsCleared(distributeAllSuspectsCleared);
-NovaCommon.nova.registerOnSuspectCleared(distributeSuspectCleared);
-NovaCommon.nova.registerOnNewSuspect(distributeSuspect);
-
-
-process.on('SIGINT', function()
+process.on('SIGINT', function ()
 {
     NovaCommon.nova.Shutdown();
     process.exit();
 });
 
-process.on('exit', function()
+process.on('exit', function ()
 {
     LOG("ALERT", "Quasar is exiting cleanly.");
 });
 
 function objCopy(src, dst) 
 {
-    for(var member in src) 
+    for (var member in src) 
     {
         if(typeof src[member] == 'function') 
         {
@@ -2467,7 +2344,8 @@ function ConvertInterfaceToAlias(iface)
 setInterval(function(){
     try 
     {
-        everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp());
+        NovaCommon.nova.CheckConnection();
+        everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp(true));
         everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadConnected());
     } 
     catch(err) 

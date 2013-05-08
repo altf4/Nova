@@ -57,7 +57,7 @@ public:
 
 private:
 	// Types of normalization to apply to our features
-	vector<NormalizationType> m_normalization;
+	std::vector<NormalizationType> m_normalization;
 
 	std::vector <Point*> m_dataPtsWithClass;
 
@@ -77,7 +77,7 @@ private:
 	bool m_isFeatureEnabled[DIM];
 	uint m_enabledFeatureCount;
 	double m_squrtEnabledFeatures;
-	string m_pathTrainingFile;
+	std::string m_pathTrainingFile;
 
 	std::vector<double> m_featureWeights;
 };

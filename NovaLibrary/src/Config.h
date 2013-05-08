@@ -138,7 +138,7 @@ public:
 	//Attempts to detect and use intefaces returned by pcap_lookupdev
 	void LoadInterfaces();
 
-	vector<string> GetSupportedEngines();
+	std::vector<std::string> GetSupportedEngines();
 
 	MAKE_GETTER_SETTER(int, m_k, GetK, SetK);
 	MAKE_GETTER_SETTER(std::string, m_configFilePath, GetConfigFilePath, SetConfigFilePath);

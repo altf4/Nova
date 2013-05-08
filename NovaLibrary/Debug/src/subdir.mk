@@ -6,10 +6,11 @@
 CPP_SRCS += \
 ../src/Config.cpp \
 ../src/Database.cpp \
+../src/DatabaseQueue.cpp \
 ../src/Doppelganger.cpp \
 ../src/Evidence.cpp \
+../src/EvidenceAccumulator.cpp \
 ../src/EvidenceTable.cpp \
-../src/FeatureSet.cpp \
 ../src/FilePacketCapture.cpp \
 ../src/HaystackControl.cpp \
 ../src/InterfacePacketCapture.cpp \
@@ -18,16 +19,16 @@ CPP_SRCS += \
 ../src/PacketCapture.cpp \
 ../src/Point.cpp \
 ../src/Suspect.cpp \
-../src/SuspectTable.cpp \
 ../src/WhitelistConfiguration.cpp 
 
 OBJS += \
 ./src/Config.o \
 ./src/Database.o \
+./src/DatabaseQueue.o \
 ./src/Doppelganger.o \
 ./src/Evidence.o \
+./src/EvidenceAccumulator.o \
 ./src/EvidenceTable.o \
-./src/FeatureSet.o \
 ./src/FilePacketCapture.o \
 ./src/HaystackControl.o \
 ./src/InterfacePacketCapture.o \
@@ -36,16 +37,16 @@ OBJS += \
 ./src/PacketCapture.o \
 ./src/Point.o \
 ./src/Suspect.o \
-./src/SuspectTable.o \
 ./src/WhitelistConfiguration.o 
 
 CPP_DEPS += \
 ./src/Config.d \
 ./src/Database.d \
+./src/DatabaseQueue.d \
 ./src/Doppelganger.d \
 ./src/Evidence.d \
+./src/EvidenceAccumulator.d \
 ./src/EvidenceTable.d \
-./src/FeatureSet.d \
 ./src/FilePacketCapture.d \
 ./src/HaystackControl.d \
 ./src/InterfacePacketCapture.d \
@@ -54,7 +55,6 @@ CPP_DEPS += \
 ./src/PacketCapture.d \
 ./src/Point.d \
 ./src/Suspect.d \
-./src/SuspectTable.d \
 ./src/WhitelistConfiguration.d 
 
 

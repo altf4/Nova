@@ -19,12 +19,12 @@
 #include "messaging/MessageManager.h"
 #include "WhitelistConfiguration.h"
 #include "ClassificationEngine.h"
+#include "EvidenceAccumulator.h"
 #include "ProtocolHandler.h"
+#include "DatabaseQueue.h"
 #include "EvidenceTable.h"
 #include "PacketCapture.h"
 #include "Doppelganger.h"
-#include "SuspectTable.h"
-#include "FeatureSet.h"
 #include "NovaUtil.h"
 #include "Threads.h"
 #include "Control.h"
@@ -33,6 +33,7 @@
 #include "Point.h"
 #include "Novad.h"
 #include "Lock.h"
+#include "Database.h"
 
 #include <vector>
 #include <math.h>
@@ -49,19 +50,13 @@
 #include <sys/inotify.h>
 #include <netinet/if_ether.h>
 
-// ***DEBUG***
 #include <arpa/inet.h>
 
 using namespace std;
 using namespace Nova;
 
 // Maintains a list of suspects and information on network activity
-extern SuspectTable suspects;
-// Suspects not yet written to the state file
-extern SuspectTable suspectsSinceLastSave;
-
-extern time_t lastLoadTime;
-extern time_t lastSaveTime;
+extern DatabaseQueue suspects;
 
 //HS Vars
 extern string dhcpListFile;
@@ -122,32 +117,10 @@ void *ClassificationLoop(void *ptr)
 
 		CheckForDroppedPackets();
 
-		//Calculate the "true" Feature Set for each Suspect
-		vector<SuspectID_pb> updateKeys = suspects.GetKeys_of_ModifiedSuspects();
-		for(uint i = 0; i < updateKeys.size(); i++)
-		{
-			UpdateAndClassify(updateKeys[i]);
-		}
+		Database::Inst()->m_count = 0;
+		suspects.WriteToDatabase();
 		doppel->UpdateDoppelganger();
 
-		if(Config::Inst()->GetSaveFreq() > 0)
-		{
-			if((time(NULL) - lastSaveTime) > Config::Inst()->GetSaveFreq())
-			{
-				AppendToStateFile();
-			}
-		}
-
-		if(Config::Inst()->GetDataTTL() > 0)
-		{
-			if((time(NULL) - lastLoadTime) > Config::Inst()->GetDataTTL())
-			{
-				AppendToStateFile();
-				suspects.EraseAllSuspects();
-				RefreshStateFile();
-				LoadStateFile();
-			}
-		}
 	}while(Config::Inst()->GetClassificationTimeout() && !Config::Inst()->GetReadPcap());
 
 	if(Config::Inst()->GetReadPcap())
@@ -248,31 +221,6 @@ void *UpdateWhitelistIPFilter(void *ptr)
 						}
 					}
 				}
-
-
-				// Clear any suspects that were whitelisted from the GUIs
-				vector<SuspectID_pb> all = suspects.GetAllKeys();
-				for(uint i = 0; i < whitelistIpAddresses.size(); i++)
-				{
-					struct sockaddr_in doop;
-					uint32_t splitDex = whitelistIpAddresses.at(i).find_first_of(",");
-					string whitelistUse = whitelistIpAddresses.at(i).substr(splitDex + 1);
-
-					char str[INET_ADDRSTRLEN];
-					for(uint j = 0; j < all.size(); j++)
-					{
-						doop.sin_addr.s_addr = ntohl(all[j].m_ip());
-						inet_ntop(AF_INET, &(doop.sin_addr), str, INET_ADDRSTRLEN);
-
-						if(!whitelistUse.compare(string(str)) && suspects.Erase(all[j]))
-						{
-							Message msg;
-							msg.m_contents.set_m_type(UPDATE_SUSPECT_CLEARED);
-							msg.m_contents.mutable_m_suspectid()->CopyFrom(all[j]);
-							MessageManager::Instance().WriteMessage(&msg, 0);
-						}
-					}
-				}
 			}
 		}
 		else
@@ -295,10 +243,6 @@ void *ConsumerLoop(void *ptr)
 		//Blocks on a mutex/condition if there's no evidence to process
 		Evidence *cur = suspectEvidence.GetEvidence();
 
-		//Do not deallocate evidence, we still need it
-		suspectsSinceLastSave.ProcessEvidence(cur, true);
-
-		//Consume evidence
 		suspects.ProcessEvidence(cur, false);
 	}
 	return NULL;
@@ -326,29 +270,9 @@ void *MessageWorker(void *ptr)
 				HandleClearSuspectRequest(message);
 				break;
 			}
-			case CONTROL_SAVE_SUSPECTS_REQUEST:
-			{
-				HandleSaveSuspectsRequest(message);
-				break;
-			}
 			case CONTROL_RECLASSIFY_ALL_REQUEST:
 			{
 				HandleReclassifyAllRequest(message);
-				break;
-			}
-			case REQUEST_SUSPECTLIST:
-			{
-				HandleRequestSuspectList(message);
-				break;
-			}
-			case REQUEST_SUSPECT:
-			{
-				HandleRequestSuspect(message);
-				break;
-			}
-			case REQUEST_ALL_SUSPECTS:
-			{
-				HandleRequestAllSuspects(message);
 				break;
 			}
 			case REQUEST_UPTIME:
