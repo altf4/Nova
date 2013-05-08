@@ -140,6 +140,7 @@ block headerAdditions
         if(isIn(match[3], allowedLevels))
         {
           match[6] = "<span style='font-weight: bold;'>" + match[6] + "</span>";
+          match[6] = match[6].replace(/#012/g, "<BR>");
           
           switch (match[3])
           {
