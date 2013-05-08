@@ -1450,7 +1450,7 @@ app.get('/shutdown', function (req, res)
 
 app.get('/about', function (req, res)
 {
-    res.render('about.jade');
+    res.render('about.jade', {locals: {version: NovaCommon.config.GetVersionString()}});
 });
 
 app.get('/newInformation', function (req, res)
