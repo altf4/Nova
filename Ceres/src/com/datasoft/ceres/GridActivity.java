@@ -18,6 +18,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
@@ -104,6 +106,26 @@ public class GridActivity extends ListActivity {
 		}
 	};
 	
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+	
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+    	switch(item.getItemId())
+    	{
+    		case R.id.refresh:
+    			new CeresClientConnect().execute();
+    			return true;
+    		default:
+    			return super.onOptionsItemSelected(item);
+    	}
+    }
+    
 	private void resetAdapter()
 	{
 		if(m_wait.isShowing())
@@ -386,6 +408,60 @@ public class GridActivity extends ListActivity {
 			}
 		}
 	}
+	
+	private class CeresClientConnect extends AsyncTask<String, Void, Integer> {
+    	@Override
+    	protected void onPreExecute()
+    	{
+    		super.onPreExecute();
+    	}
+    	
+    	@Override
+    	protected Integer doInBackground(String... params)
+    	{
+    		try
+    		{
+    			m_global.clearXmlReceive();
+    			NetworkHandler.get(("https://" + m_global.getURL() + "/getAll"), null, new AsyncHttpResponseHandler(){
+    				@Override
+    				public void onSuccess(String xml)
+    				{
+    					m_global.setXmlBase(xml);
+    					m_global.setMessageReceived(true);
+    				}
+    				
+    				@Override
+    				public void onFailure(Throwable err, String content)
+    				{
+    					m_global.setXmlBase("");
+    					m_global.setMessageReceived(true);
+    				}
+    			});
+    			while(!m_global.checkMessageReceived()){};
+    		}
+    		catch(Exception e)
+    		{
+    			e.printStackTrace();
+    			return 0;
+    		}
+    		
+    		if(m_global.getXmlBase() != "")
+    		{
+    			System.out.println("returning 1");
+    			return 1;
+    		}
+    		else
+    		{
+    			System.out.println("returning 0");
+    			return 0;
+    		}
+    	}
+    	@Override
+    	protected void onPostExecute(Integer result)
+    	{
+			new ParseXml().execute();
+    	}
+    }
 	
 	private class ParseXml extends AsyncTask<Void, Integer, ArrayList<String>> {
 		@Override

@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">Ceres</string>
-    <string name="action_settings">Settings</string>
+    <string name="refresh_grid">Refresh Grid</string>
     <string name="ceresConnect">Log In</string>
     <string name="credID">Ceres Username</string>
     <string name="credIP">Ceres IP</string>
