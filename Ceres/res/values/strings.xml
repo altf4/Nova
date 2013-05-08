@@ -9,7 +9,6 @@
     <string name="credPort">Ceres Port</string>
     <string name="credPW">Password</string>
     <string name="keepLogged">Keep my log in info</string>
-    <string name="spinText">Attempting to Connect</string>
     <string name="error">Could not connect to Ceres</string>
     <string name="success">Connection successful!</string>
     <string name="ipHeader">IP Address</string>

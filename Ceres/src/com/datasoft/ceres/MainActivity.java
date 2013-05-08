@@ -38,6 +38,7 @@ public class MainActivity extends Activity {
 	CeresClient m_global;
 	Boolean m_keepMeLoggedIn;
 	CeresClientConnect m_ceresClient;
+	String m_regexIp = "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,7 +98,7 @@ public class MainActivity extends Activity {
         m_dialog = new ProgressDialog(this);
         m_connect.setOnClickListener(new Button.OnClickListener() {
         	public void onClick(View v){
-        		if(m_ip.getText().toString().isEmpty() || m_port.getText().toString().isEmpty())
+        		if(m_ip.getText().toString().equals("") || m_port.getText().toString().equals(""))
         		{
         			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
         			builder.setMessage("Ip address or port fields were empty")
@@ -124,7 +125,7 @@ public class MainActivity extends Activity {
         			AlertDialog alert = builder.create();
         			alert.show();
         		}
-        		else if(!m_ip.getText().toString().matches("(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"))
+        		else if(!m_ip.getText().toString().matches(m_regexIp))
         		{
         			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
         			builder.setMessage("The provided IP address format is invalid")
@@ -170,7 +171,7 @@ public class MainActivity extends Activity {
 	    				file.delete();
 	        		}
 	        		String netString = (m_ip.getText().toString() + ":" + m_port.getText().toString());
-	        		if(m_id.getText().toString().isEmpty() || m_passwd.getText().toString().isEmpty())
+	        		if(m_id.getText().toString().equals("") || m_passwd.getText().toString().equals(""))
 	        		{
 	        			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
 	        			builder.setMessage("Please fill out both Username and Password!")

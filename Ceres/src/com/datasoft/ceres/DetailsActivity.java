@@ -99,7 +99,7 @@ public class DetailsActivity extends Activity
 				XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
 				factory.setNamespaceAware(true);
 				XmlPullParser xpp;
-
+				
 				if(m_global.checkMessageReceived())
 				{
 					xpp = factory.newPullParser();

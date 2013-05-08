@@ -254,32 +254,24 @@ public class GridActivity extends ListActivity {
 								{
 									m_handler.post(m_updateGrid);
 								}
-				    			System.out.println("returning 1");
 				    			return;
 				    		}
 				    		else
 				    		{
-				    			System.out.println("returning 0");
 				    			return;
 				    		}
 						}
 					}
 					catch(InterruptedException ie)
 					{
-    					m_global.setXmlBase("");
-    					m_global.clearXmlReceive();
 						return;
 					}
 					catch(IOException ioe)
 					{
-    					m_global.setXmlBase("");
-    					m_global.clearXmlReceive();
 						return;
 					}
 					catch(XmlPullParserException xpe)
 					{
-    					m_global.setXmlBase("");
-    					m_global.clearXmlReceive();
 						return;
 					}
 				}
@@ -321,7 +313,7 @@ public class GridActivity extends ListActivity {
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		String[] item = ((String)getListAdapter().getItem(position - 1)).split(":");
 		m_selected = item[0] + ":" + item[1];
-		Toast.makeText(this, m_selected + " selected", Toast.LENGTH_LONG).show();
+		Toast.makeText(this, m_selected + " selected", Toast.LENGTH_SHORT).show();
 
 		new CeresSuspectRequest().execute();
 	}
@@ -368,12 +360,10 @@ public class GridActivity extends ListActivity {
     		
     		if(m_global.getXmlBase() != "")
     		{
-    			System.out.println("returning 1");
     			return 1;
     		}
     		else
     		{
-    			System.out.println("returning 0");
     			return 0;
     		}
 		}
@@ -461,7 +451,7 @@ public class GridActivity extends ListActivity {
 			}
 			else
 			{
-				Toast.makeText(m_gridContext, gridPop.size() + " suspects loaded", Toast.LENGTH_LONG).show();
+				Toast.makeText(m_gridContext, gridPop.size() + " suspects loaded", Toast.LENGTH_SHORT).show();
 				m_gridAdapter = new ClassificationGridAdapter(m_gridContext, gridPop);
 		        setListAdapter(m_gridAdapter);
 		        if(!m_updateThread.isAlive())
