@@ -33,8 +33,59 @@ NovaCommon.nova.CheckConnection();
 NovaCommon.StartNovad(false);
 ReloadInterfaceAliasFile();
 
-var creds = {};
-creds["nova"] = "toor";
+function checkCreds(user, password, cb)
+{
+  NovaCommon.dbqCredentialsRowCount.all(function(err, rowcount)
+  {
+    if(err)
+    {
+      console.log("Database error: " + err);
+    }
+    
+    // If there are no users, add default nova and log in
+    if(rowcount[0].rows === 0)
+    {
+      console.log("No users in user database. Add some for logging in with Ceres App");
+      cb && cb(false);
+    }
+    else
+    {
+      NovaCommon.dbqCredentialsGetSalt.all(user, function(err, salt)
+      {
+        if(err || salt == undefined || (salt[0] == undefined))
+        {
+          console.log('That user was not found');
+          cb && cb(false);
+        }
+        else
+        {
+          NovaCommon.dbqCredentialsCheckLogin.all(user, NovaCommon.HashPassword(password, salt[0].salt),
+          function(err, results)
+          {
+            if(err)
+            {
+              console.log("Database error: " + err);
+            }
+            if(results[0] === undefined)
+            {
+              console.log('That user was not found');
+              cb && cb(false);
+            } 
+            else if(user === results[0].user)
+            {
+              cb && cb(true);
+            } 
+            else
+            {
+              console.log('That user was not found');
+              cb && cb(false);
+            }
+          });
+        }
+      });
+    }
+  });
+}
 
 var handler = function(req, res) {
   var reqSwitch = url.parse(req.url).pathname;
@@ -46,53 +97,56 @@ var handler = function(req, res) {
   var username = parts[0];
   var password = parts[1];
   
-  if(username == "nova" && password == creds["nova"])
-  {
-    switch(reqSwitch)
+  checkCreds(username, password, function(forward){
+    if(forward == 'true' || forward)
     {
-    case '/getAll': 
-              res.writeHead(200, {'Content-Type':'text/plain'});
-              NovaCommon.nova.CheckConnection();
-                NovaCommon.GetSuspects(-1, 0, "classification", "DESC", true, function(err, suspects){
-                  if(err) {
-                    console.log("Error fetching suspects: " + err);
-                    return;
-                  }
-                  gridPageSuspectList(suspects, function(xml){
-                    res.end(xml);
-                  });
-                });
-              break;
-      case '/getSuspect':
-              res.writeHead(200, {'Content-Type':'text/plain'});
-              var ipiface = params.suspect.split(':');
-              NovaCommon.nova.CheckConnection();
-                NovaCommon.dbqGetSuspect.all(ipiface[0], ipiface[1], function(err, suspect){
-                  if (err) {
-                    console.log("ERROR: " + err);
-                    return;
-                  }
+      switch(reqSwitch)
+      {
+        case '/getAll': 
+          res.writeHead(200, {'Content-Type':'text/plain'});
+          NovaCommon.nova.CheckConnection();
+            NovaCommon.GetSuspects(-1, 0, "classification", "DESC", true, function(err, suspects){
+              if(err) {
+                console.log("Error fetching suspects: " + err);
+                return;
+              }
+              gridPageSuspectList(suspects, function(xml){
+                res.end(xml);
+              });
+            });
+          break;
+        case '/getSuspect':
+          res.writeHead(200, {'Content-Type':'text/plain'});
+          var ipiface = params.suspect.split(':');
+          NovaCommon.nova.CheckConnection();
+            NovaCommon.dbqGetSuspect.all(ipiface[0], ipiface[1], function(err, suspect){
+              if(err) {
+                console.log("ERROR: " + err);
+                return;
+              }
 
-                  if (suspect.length != 1) {
-                    console.log("ERROR: could not fetch suspect " + ipiface[0] + "/" + ipiface[1]);
-                    return;
-                  }
+              if(suspect.length != 1) {
+                console.log("ERROR: could not fetch suspect " + ipiface[0] + "/" + ipiface[1]);
+                return;
+              }
 
-                  detailedSuspectPage(suspect[0], function(xml){
-                    res.end(xml);
-                  });
-                });
-              break;
-    default:  res.writeHead(404);
-              res.end('404, yo\n');
-              break;
-  }
-  }
-  else
-  {
-    res.writeHead(404);
-    res.end('404, yo\n');
-  }
+              detailedSuspectPage(suspect[0], function(xml){
+                res.end(xml);
+              });
+            });
+          break;
+        default:  
+          res.writeHead(404);
+          res.end('404, yo\n');
+          break;
+      }
+    }
+    else
+    {
+      res.writeHead(404);
+      res.end('404, yo\n');
+    }
+  });
 };
 
 var server = https.createServer(options, handler).listen(8443);
