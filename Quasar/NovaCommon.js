@@ -204,6 +204,69 @@ var NovaCommon = new function() {
 	this.dbqGetSuspectPacketSizes = novaDb.prepare("SELECT * from packet_sizes WHERE ip = ? AND interface = ?");
 
 
+
+	this.GetSuspects = function(limit, offset, orderBy, direction, showUnclassified, cb) {
+    	var classifiedFilter = "";
+    	if (!showUnclassified) {
+    	    classifiedFilter = " WHERE classification != -2 ";
+    	}
+
+
+    	// We only allow classifiedFilter to be one of the following
+    	var allowedOrderBy = new Array("classification", 
+    	    "ip",
+    	    "interface",
+    	    "lastTime",
+    	    "ip_traffic_distribution", 
+    	    "port_traffic_distribution",
+    	    "packet_size_mean",
+    	    "packet_size_deviation",
+    	    "distinct_ips",
+    	    "distinct_tcp_ports",
+    	    "distinct_udp_ports",
+    	    "avg_tcp_ports_per_host",
+    	    "avg_udp_ports_per_host",
+    	    "tcp_percent_syn",
+    	    "tcp_percent_fin",
+    	    "tcp_percent_rst",
+    	    "tcp_percent_synack",
+    	    "haystack_percent_contacted"
+    	);
+
+    	if (allowedOrderBy.indexOf(orderBy) == -1) {
+    	    cb("ERROR: Invalid arg orderBy. Must be one of the sqlite columns for the suspect table");
+    	    return;
+    	}
+
+    	if (direction != "ASC" && direction != "DESC") {
+    	    cb("ERROR: Invalid arg direction. Must be ASC or DESC.");
+    	    return;
+    	}
+
+    	if (isNaN(parseInt(limit))) {
+    	    cb("ERROR: Invalid arg limit. Must be an integer.");
+    	    return;
+    	}
+    	
+    	if (isNaN(parseInt(offset))) {
+    	    cb("ERROR: Invalid arg offset. Must be an integer.");
+    	    return;
+    	}
+
+
+    	var queryString = "SELECT * FROM suspects " + classifiedFilter + "ORDER BY " + orderBy + " " + direction + " LIMIT " + limit + " OFFSET " + offset;
+    	NovaCommon.novaDb.all(queryString, function(err, results) {
+            if (err) {
+				LOG("ERROR", "Database error: " + err);
+            	cb && cb(err);
+				return;
+			}
+			
+    	    cb && cb(null, results);
+    	});
+
+	};
+	
 	this.HashPassword = function (password, salt)
 	{
 		var shasum = crypto.createHash('sha1');
