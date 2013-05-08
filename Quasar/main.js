@@ -1642,6 +1642,10 @@ app.get("/editClassifier", function (req, res)
 });
 
 app.get("/hostnames", function (req, res) {
+    if (!NovaCommon.dbqGetHostnames) {
+        RenderError(res, "Unable to access honeyd hostnames database. Something probably went wrong during the honeyd install.");
+        return;
+    }
     res.render('hostnames.jade', {
         locals: {}
     });
