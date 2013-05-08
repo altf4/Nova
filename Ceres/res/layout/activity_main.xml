@@ -16,26 +16,11 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:textSize="24sp"
-        android:hint="@string/credID" >
-
+        android:hint="@string/credID"
+        android:imeOptions="actionNext"
+        android:inputType="text" >
         <requestFocus />
     </EditText>
-
-    <EditText
-        android:id="@+id/credIP"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-    	android:textSize="24sp"
-        android:hint="@string/credIP" />
-    
-    <EditText
-        android:id="@+id/credPort"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-    	android:textSize="24sp"
-        android:hint="@string/credPort" />
 
     <EditText
         android:id="@+id/credPW"
@@ -45,6 +30,24 @@
         android:hint="@string/credPW"
         android:textSize="24sp"
         android:inputType="textPassword" />
+    
+    <EditText
+        android:id="@+id/credIP"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+    	android:textSize="24sp"
+        android:hint="@string/credIP"
+        android:inputType="textUri"/>
+    
+    <EditText
+        android:id="@+id/credPort"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+    	android:textSize="24sp"
+        android:hint="@string/credPort"
+        android:inputType="number" />
 
     <CheckBox 
         android:id="@+id/keepLogged"
@@ -77,5 +80,4 @@
         android:textColorHint="@android:color/primary_text_light"
         android:visibility="invisible"
     	android:textSize="24sp" />
-
 </LinearLayout>

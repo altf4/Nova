@@ -3,8 +3,10 @@ package com.datasoft.ceres;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.view.Menu;
@@ -35,18 +37,20 @@ public class MainActivity extends Activity {
 	ProgressDialog m_dialog;
 	CeresClient m_global;
 	Boolean m_keepMeLoggedIn;
+	CeresClientConnect m_ceresClient;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         m_ctx = this;
+        m_ceresClient = new CeresClientConnect();
         m_global = (CeresClient)getApplicationContext();
         m_global.setForeground(true);
         m_id = (EditText)findViewById(R.id.credID);
+        m_passwd = (EditText)findViewById(R.id.credPW);
         m_ip = (EditText)findViewById(R.id.credIP);
         m_port = (EditText)findViewById(R.id.credPort);
-        m_passwd = (EditText)findViewById(R.id.credPW);
         m_keepMeLoggedIn = false;
         
     	InputStream in = null;
@@ -62,10 +66,11 @@ public class MainActivity extends Activity {
         		{
         			String json = new String(buf);
         			JSONObject net = new JSONObject(json);
-        			if(net.has("ip") && net.has("id") && net.has("port"))
+        			if(net.has("ip") && net.has("id") && net.has("port") && net.has("pword"))
         			{
         				m_ip.setText(net.get("ip").toString());
         				m_port.setText(net.get("port").toString());
+        				m_passwd.setText(net.get("pword").toString());
         				m_id.setText(net.get("id").toString());
         			}
         		}
@@ -88,52 +93,116 @@ public class MainActivity extends Activity {
         m_keepLogged = (CheckBox)findViewById(R.id.keepLogged);
         m_keepLogged.setChecked(m_keepMeLoggedIn);
         m_connect = (Button)findViewById(R.id.ceresConnect);
-        m_id = (EditText)findViewById(R.id.credID);
-        m_ip = (EditText)findViewById(R.id.credIP);
-        m_passwd = (EditText)findViewById(R.id.credPW);
         m_notify = (EditText)findViewById(R.id.notify);
         m_dialog = new ProgressDialog(this);
         m_connect.setOnClickListener(new Button.OnClickListener() {
         	public void onClick(View v){
-        		m_keepMeLoggedIn = ((CheckBox)findViewById(R.id.keepLogged)).isChecked();
-        		if(m_keepMeLoggedIn)
+        		if(m_ip.getText().toString().isEmpty() || m_port.getText().toString().isEmpty())
         		{
-        			try
-        			{
-        				File file = new File(getFilesDir(), "networkTarget");
-        				OutputStreamWriter bos = new OutputStreamWriter(new FileOutputStream(file));
-        				String writeToFile;
-        				JSONObject json = new JSONObject();
-        				json.put("ip", m_ip.getText().toString());
-        				json.put("port", m_port.getText().toString());
-        				json.put("id", m_id.getText().toString());
-        				writeToFile = json.toString();
-        				bos.write(writeToFile);
-        				bos.flush();
-        				bos.close();
-        			}
-        			catch(IOException ioe)
-        			{
-        			}
-        			catch(JSONException jse)
-        			{
-        			}
+        			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
+        			builder.setMessage("Ip address or port fields were empty")
+        			       .setCancelable(false)
+        			       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        			           public void onClick(DialogInterface dialog, int id) {
+        			                dialog.cancel();
+        			           }
+        			       });
+        			AlertDialog alert = builder.create();
+        			alert.show();
+        		}
+        		else if(Integer.parseInt(m_port.getText().toString()) < 0 
+                		|| Integer.parseInt(m_port.getText().toString()) > 65536)
+        		{
+        			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
+        			builder.setMessage("The port number you provided is invalid")
+        			       .setCancelable(false)
+        			       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        			           public void onClick(DialogInterface dialog, int id) {
+        			                dialog.cancel();
+        			           }
+        			       });
+        			AlertDialog alert = builder.create();
+        			alert.show();
+        		}
+        		else if(!m_ip.getText().toString().matches("(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"))
+        		{
+        			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
+        			builder.setMessage("The provided IP address format is invalid")
+        			       .setCancelable(false)
+        			       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        			           public void onClick(DialogInterface dialog, int id) {
+        			                dialog.cancel();
+        			           }
+        			       });
+        			AlertDialog alert = builder.create();
+        			alert.show();
         		}
         		else
         		{
-    				File file = new File(getFilesDir(), "networkTarget");
-    				file.delete();
+	        		m_keepMeLoggedIn = ((CheckBox)findViewById(R.id.keepLogged)).isChecked();
+	        		if(m_keepMeLoggedIn)
+	        		{
+	        			try
+	        			{
+	        				File file = new File(getFilesDir(), "networkTarget");
+	        				OutputStreamWriter bos = new OutputStreamWriter(new FileOutputStream(file));
+	        				String writeToFile;
+	        				JSONObject json = new JSONObject();
+	        				json.put("ip", m_ip.getText().toString());
+	        				json.put("port", m_port.getText().toString());
+	        				json.put("id", m_id.getText().toString());
+	        				json.put("pword", m_passwd.getText().toString());
+	        				writeToFile = json.toString();
+	        				bos.write(writeToFile);
+	        				bos.flush();
+	        				bos.close();
+	        			}
+	        			catch(IOException ioe)
+	        			{
+	        			}
+	        			catch(JSONException jse)
+	        			{
+	        			}
+	        		}
+	        		else
+	        		{
+	    				File file = new File(getFilesDir(), "networkTarget");
+	    				file.delete();
+	        		}
+	        		String netString = (m_ip.getText().toString() + ":" + m_port.getText().toString());
+	        		if(m_id.getText().toString().isEmpty() || m_passwd.getText().toString().isEmpty())
+	        		{
+	        			AlertDialog.Builder builder = new AlertDialog.Builder(m_ctx);
+	        			builder.setMessage("Please fill out both Username and Password!")
+	        			       .setCancelable(false)
+	        			       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	        			           public void onClick(DialogInterface dialog, int id) {
+	        			                dialog.cancel();
+	        			           }
+	        			       });
+	        			AlertDialog alert = builder.create();
+	        			alert.show();
+	        		}
+	        		else
+	        		{
+	        			if(m_ceresClient.getStatus() == AsyncTask.Status.FINISHED)
+	        			{
+	        				m_ceresClient = new CeresClientConnect();
+	        			}
+	        			if(m_ceresClient.getStatus() != AsyncTask.Status.RUNNING)
+	        			{
+	        				m_ceresClient.execute(netString);
+	        			}
+	        		}
+	        		m_notify.setVisibility(View.INVISIBLE);
         		}
-        		String netString = (m_ip.getText().toString() + ":" + m_port.getText().toString());
-        		new CeresClientConnect().execute(netString);
-        		m_notify.setVisibility(View.INVISIBLE);
         	}
         });
     }
     
     public void onCheckboxClicked(View view)
     {
-    	m_keepMeLoggedIn = ((CheckBox) view).isChecked();
+    	m_keepMeLoggedIn = ((CheckBox)view).isChecked();
     }
     
     @Override
@@ -147,6 +216,7 @@ public class MainActivity extends Activity {
     protected void onResume()
     {
     	super.onResume();
+    	m_notify.setVisibility(View.INVISIBLE);
     	m_global.setForeground(true);
     }
     
@@ -165,11 +235,12 @@ public class MainActivity extends Activity {
         		{
         			String json = new String(buf);
         			JSONObject net = new JSONObject(json);
-        			if(net.has("ip") && net.has("id") && net.has("port"))
+        			if(net.has("ip") && net.has("id") && net.has("port") && net.has("pword"))
         			{
         				m_ip.setText(net.get("ip").toString());
         				m_port.setText(net.get("port").toString());
         				m_id.setText(net.get("id").toString());
+        				m_passwd.setText(net.get("pword").toString());
         			}
         		}
         		else
@@ -192,7 +263,6 @@ public class MainActivity extends Activity {
     
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
@@ -206,7 +276,8 @@ public class MainActivity extends Activity {
     		{
     			m_dialog = new ProgressDialog(m_ctx);
     		}
-    		m_dialog.setCancelable(true);
+    		m_dialog.setCancelable(false);
+    		m_dialog.setCanceledOnTouchOutside(false);
     		m_dialog.setMessage("Attempting to connect");
     		m_dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
     		m_dialog.show();
@@ -216,12 +287,11 @@ public class MainActivity extends Activity {
     	@Override
     	protected Integer doInBackground(String... params)
     	{
-    		// Negotiate connection to Ceres.js websocket server
-    		// params[0] == url
     		try
     		{
     			m_global.setURL(params[0]);
-    			NetworkHandler.setSSL(m_ctx, R.raw.test, m_passwd.getText().toString().toCharArray());
+    			m_global.clearXmlReceive();
+    			NetworkHandler.setSSL(m_ctx, R.raw.test, m_passwd.getText().toString(), m_id.getText().toString());
     			NetworkHandler.get(("https://" + m_global.getURL() + "/getAll"), null, new AsyncHttpResponseHandler(){
     				@Override
     				public void onSuccess(String xml)
@@ -259,12 +329,8 @@ public class MainActivity extends Activity {
     	@Override
     	protected void onPostExecute(Integer result)
     	{
-    		// After doInBackground is done the return value for it
-    		// is sent to this method
     		if(result == 0)
-    		{
-    			// Display dialog saying connection failed,
-    			// redirect back to login page
+    		{   
     			m_dialog.dismiss();
     			m_notify.setText(R.string.error);
     			m_notify.setTextColor(Color.RED);

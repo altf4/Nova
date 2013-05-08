@@ -33,12 +33,23 @@ NovaCommon.nova.CheckConnection();
 NovaCommon.StartNovad(false);
 ReloadInterfaceAliasFile();
 
+var creds = {};
+creds["nova"] = "toor";
+
 var handler = function(req, res) {
   var reqSwitch = url.parse(req.url).pathname;
   var params = url.parse(req.url, true).query;
-
-  switch(reqSwitch)
+  var head = req.headers['authorization'] || '';
+  var token = head.split(/\s+/).pop() || '';
+  var auth = new Buffer(token, 'base64').toString();
+  var parts = auth.split(/:/);
+  var username = parts[0];
+  var password = parts[1];
+  
+  if(username == "nova" && password == creds["nova"])
   {
+    switch(reqSwitch)
+    {
     case '/getAll': 
               res.writeHead(200, {'Content-Type':'text/plain'});
               NovaCommon.nova.CheckConnection();
@@ -79,6 +90,11 @@ var handler = function(req, res) {
     default:  res.writeHead(404);
               res.end('404, yo\n');
               break;
+  }
+  else
+  {
+    res.writeHead(404);
+    res.end('404, yo\n');
   }
 };
 
