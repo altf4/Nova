@@ -53,7 +53,6 @@ var handler = function(req, res) {
     case '/getAll': 
               res.writeHead(200, {'Content-Type':'text/plain'});
               NovaCommon.nova.CheckConnection();
-              setTimeout(function(){
                 NovaCommon.GetSuspects(-1, 0, "classification", "DESC", true, function(err, suspects){
                   if(err) {
                     console.log("Error fetching suspects: " + err);
@@ -63,13 +62,11 @@ var handler = function(req, res) {
                     res.end(xml);
                   });
                 });
-              }, 2000);
               break;
       case '/getSuspect':
               res.writeHead(200, {'Content-Type':'text/plain'});
               var ipiface = params.suspect.split(':');
               NovaCommon.nova.CheckConnection();
-              setTimeout(function(){
                 NovaCommon.dbqGetSuspect.all(ipiface[0], ipiface[1], function(err, suspect){
                   if (err) {
                     console.log("ERROR: " + err);
@@ -85,11 +82,11 @@ var handler = function(req, res) {
                     res.end(xml);
                   });
                 });
-              }, 2000);
               break;
     default:  res.writeHead(404);
               res.end('404, yo\n');
               break;
+  }
   }
   else
   {
