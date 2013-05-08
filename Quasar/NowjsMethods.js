@@ -161,10 +161,10 @@ everyone.now.SaveHoneydNode = function(node, cb)
         }
         else
         {
-			NovaCommon.config.WriteSetting('DOPPELGANGER_IP', ipAddress);
-			NovaCommon.config.WriteSetting('DOPPELGANGER_INTERFACE', node.intface);
+            NovaCommon.config.WriteSetting('DOPPELGANGER_IP', ipAddress);
+            NovaCommon.config.WriteSetting('DOPPELGANGER_INTERFACE', node.intface);
             
-			if(!NovaCommon.honeydConfig.SaveAll())
+            if(!NovaCommon.honeydConfig.SaveAll())
             {
                 cb && cb("Unable to save honeyd configuration");
             }
@@ -542,16 +542,16 @@ function jsProfileToHoneydProfile(profile)
 
 everyone.now.DeletePortSet = function(profile, portSetIndex, cb)
 {
-	var error = NovaCommon.honeydConfig.DeletePortSet(profile, portSetIndex);
+    var error = NovaCommon.honeydConfig.DeletePortSet(profile, portSetIndex);
     NovaCommon.honeydConfig.SaveAll();
-	cb && cb(!error);
+    cb && cb(!error);
 }
 
 everyone.now.AddPortSet = function(profile, cb)
 {
-	var error = NovaCommon.honeydConfig.AddPortSet(profile);
-	NovaCommon.honeydConfig.SaveAll();
-	cb && cb(!error);
+    var error = NovaCommon.honeydConfig.AddPortSet(profile);
+    NovaCommon.honeydConfig.SaveAll();
+    cb && cb(!error);
 }
 
 //portSets = A 2D array. (array of portSets, which are arrays of Ports)
@@ -881,7 +881,7 @@ everyone.now.SwitchConfigurationTo = function(configName, cb)
 {
     NovaCommon.honeydConfig.SwitchConfiguration(configName); 
     NovaCommon.config.WriteSetting('CURRENT_CONFIG', configName);
-	cb && cb();
+    cb && cb();
 };
 
 everyone.now.RemoveConfiguration = function(configName, cb)
@@ -1003,56 +1003,56 @@ everyone.now.GetHaystackDHCPStatus = function(cb)
         if(err)
         {
             RenderError(res, "Unable to open Honeyd status file for reading due to error: " + err);
-			NovaCommon.dbqClearLastHoneydNodeIPs.run();
+            NovaCommon.dbqClearLastHoneydNodeIPs.run();
             return;
         }
         else
         {
             data = data.toString().split("\n");
-			var tmp = [];
-			for (var i = 0; i < data.length; i++) {
-               	if (data[i] == "") {
-					continue
-				} else {
-					tmp.push(data[i]);
-				}
-			}
+            var tmp = [];
+            for (var i = 0; i < data.length; i++) {
+                if (data[i] == "") {
+                    continue
+                } else {
+                    tmp.push(data[i]);
+                }
+            }
 
-			data = tmp;
+            data = tmp;
 
-			if (data.length > 0) {
-				NovaCommon.dbqClearLastHoneydNodeIPs.run(function(err) {
-					if (err) {LOG("ERROR", "Database error:" + err);}
-				
-            		for(var i = 0; i < data.length; i++)
-            		{
-                		if (data[i] == "") {continue};
-                		var entry = {
-                    		ip: data[i].toString().split(",")[0],
-                   		 	mac: data[i].toString().split(",")[1],
-							current: 1
-                		};
+            if (data.length > 0) {
+                NovaCommon.dbqClearLastHoneydNodeIPs.run(function(err) {
+                    if (err) {LOG("ERROR", "Database error:" + err);}
+                
+                    for(var i = 0; i < data.length; i++)
+                    {
+                        if (data[i] == "") {continue};
+                        var entry = {
+                            ip: data[i].toString().split(",")[0],
+                            mac: data[i].toString().split(",")[1],
+                            current: 1
+                        };
 
 
-						NovaCommon.dbqAddLastHoneydNodeIP.run(entry.mac, entry.ip, function(err) {
-							if (err) {LOG("ERROR", "Database error:" + err);}
-						});
-                		DHCPIps.push(entry);
-            		}
-            		cb(DHCPIps);
-				});
-			} else {
-				// If iplist file is empty, resort to pulling a version out of our db cache
-				NovaCommon.dbqGetLastHoneydNodeIPs.all(function(err, results) {
-					if (err) {LOG("ERROR", "Database error:" + err);}
+                        NovaCommon.dbqAddLastHoneydNodeIP.run(entry.mac, entry.ip, function(err) {
+                            if (err) {LOG("ERROR", "Database error:" + err);}
+                        });
+                        DHCPIps.push(entry);
+                    }
+                    cb(DHCPIps);
+                });
+            } else {
+                // If iplist file is empty, resort to pulling a version out of our db cache
+                NovaCommon.dbqGetLastHoneydNodeIPs.all(function(err, results) {
+                    if (err) {LOG("ERROR", "Database error:" + err);}
 
-					for (var i = 0; i < results.length; i++) {
-						results[i].current = 0;
-						DHCPIps.push(results[i]);
-					}
-					cb(DHCPIps);
-				});
-			}
+                    for (var i = 0; i < results.length; i++) {
+                        results[i].current = 0;
+                        DHCPIps.push(results[i]);
+                    }
+                    cb(DHCPIps);
+                });
+            }
         }
     });
 };
@@ -1368,36 +1368,56 @@ everyone.now.MarkAllHoneydLogEntriesSeen = function(cb) {
 
 // Hostname related database calls
 everyone.now.GetHostnames = function(cb) {
-	NovaCommon.dbqGetHostnames.all(function(err, results) {
+    if (!NovaCommon.dbqGetHostnames) {
+        cb("Unable to access hostnames database");
+        return;
+    }
+
+    NovaCommon.dbqGetHostnames.all(function(err, results) {
         if (databaseError(err, cb)) {return;}
         cb && cb(null, results);
-    });	
+    }); 
 };
 
 everyone.now.InsertHostname = function(hostname, cb) {
-	NovaCommon.dbqInsertHostname.run(hostname, function(err) {
+    if (!NovaCommon.dbqGetHostnames) {
+        cb("Unable to access hostnames database");
+        return;
+    }
+
+    NovaCommon.dbqInsertHostname.run(hostname, function(err) {
         if (databaseError(err, cb)) {return;}
         cb && cb(null);
-	});
+    });
 };
 
 everyone.now.ClearHostnameAllocations = function(cb) {
-	NovaCommon.dbqClearHostnameAllocations.run(function(err) {
+    if (!NovaCommon.dbqGetHostnames) {
+        cb("Unable to access hostnames database");
+        return;
+    }
+
+    NovaCommon.dbqClearHostnameAllocations.run(function(err) {
         if (databaseError(err, cb)) {return;}
         cb && cb(null);
-	});
+    });
 };
 
 everyone.now.DeleteHostname = function(hostname, cb) {
-	NovaCommon.dbqDeleteHostname.run(hostname, function(err) {
+    if (!NovaCommon.dbqGetHostnames) {
+        cb("Unable to access hostnames database");
+        return;
+    }
+
+    NovaCommon.dbqDeleteHostname.run(hostname, function(err) {
         if (databaseError(err, cb)) {return;}
         cb && cb(null);
-	});
+    });
 };
 
 
 everyone.now.GetSuspects = function(limit, offset, orderBy, direction, showUnclassified, cb) {
-	NovaCommon.GetSuspects(limit, offset, orderBy, direction, showUnclassified, cb);
+    NovaCommon.GetSuspects(limit, offset, orderBy, direction, showUnclassified, cb);
 };
 
 everyone.now.GetNumberOfSuspects = function(showUnclassified, cb) {

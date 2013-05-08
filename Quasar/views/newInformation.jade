@@ -142,7 +142,7 @@ block headerAdditions
 
                 for (var i in entries)
                 {
-                    self.addRow(entries[i].linenum, entries[i].line);
+                    self.addRow(entries[i].linenum, entries[i].line.replace(/#012/g, "<BR>"));
                 }
                 
                 newNovaLogGrid.Render();
