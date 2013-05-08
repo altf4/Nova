@@ -266,20 +266,14 @@ public class GridActivity extends ListActivity {
 					}
 					catch(InterruptedException ie)
 					{
-    					m_global.setXmlBase("");
-    					m_global.clearXmlReceive();
 						return;
 					}
 					catch(IOException ioe)
 					{
-    					m_global.setXmlBase("");
-    					m_global.clearXmlReceive();
 						return;
 					}
 					catch(XmlPullParserException xpe)
 					{
-    					m_global.setXmlBase("");
-    					m_global.clearXmlReceive();
 						return;
 					}
 				}
