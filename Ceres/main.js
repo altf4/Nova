@@ -122,14 +122,14 @@ function gridPageSuspectList(suspects, cb)
   for(var i in suspects)
   {
     var ip = suspects[i].ip;
-    var iface = ConvertInterfaceToAlias(suspects[i].interface);
+    var ifacealias = ConvertInterfaceToAlias(suspects[i].interface);
     var classification = (Math.floor(parseFloat(suspects[i].classification) * 10000) / 100).toFixed(2);
     var hostile = (suspects[i].isHostile == true ? '1' : '0');
     if(classification == '-200.00')
     {
       continue;
     }
-    var suspectXmlTemplate = {'@':{'ipaddress':ip, 'interface':iface, 'hostile':hostile}, '#':classification};
+    var suspectXmlTemplate = {'@':{'ipaddress':ip, 'interface':suspects[i].interface, alias: ifacealias, 'hostile':hostile}, '#':classification};
     suspectRet += j2xp('suspect', suspectXmlTemplate, js2xmlopt) + '>';
   }
   suspectRet += '</suspects>'

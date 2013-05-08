@@ -139,8 +139,9 @@ public class GridActivity extends ListActivity {
 						if(xpp.getName().equals("suspect"))
 						{
 							rowData += xpp.getAttributeValue(null, "ipaddress") + ":";
-							rowData += xpp.getAttributeValue(null, "interface") + ":";
+							rowData += xpp.getAttributeValue(null, "alias") + ":";
 							rowData += xpp.getAttributeValue(null, "hostile") + ":";
+							rowData += xpp.getAttributeValue(null, "interface") + ":";
 						}
 						break;
 					case(XmlPullParser.TEXT): 
@@ -312,7 +313,7 @@ public class GridActivity extends ListActivity {
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		String[] item = ((String)getListAdapter().getItem(position - 1)).split(":");
-		m_selected = item[0] + ":" + item[1];
+		m_selected = item[0] + ":" + item[3];
 		Toast.makeText(this, m_selected + " selected", Toast.LENGTH_SHORT).show();
 
 		new CeresSuspectRequest().execute();

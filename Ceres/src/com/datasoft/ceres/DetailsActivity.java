@@ -118,6 +118,7 @@ public class DetailsActivity extends Activity
 									parsed.m_id = xpp.getAttributeValue(null, "id");
 									parsed.m_ip = xpp.getAttributeValue(null, "ip");
 									parsed.m_iface = xpp.getAttributeValue(null, "iface");
+									parsed.m_ifaceAlias = xpp.getAttributeValue(null, "alias");
 									parsed.m_classification = xpp.getAttributeValue(null, "class");
 									parsed.m_lastPacket = xpp.getAttributeValue(null, "lpt");
 								}

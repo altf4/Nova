@@ -11,6 +11,11 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 public class ClassificationGridAdapter extends ArrayAdapter<String> {
+  private static final int INDEX_IP = 0;
+  private static final int INDEX_INTERFACE_ALIAS = 1;
+  private static final int INDEX_IS_HOSTILE = 2;
+  private static final int INDEX_CLASSIFICATION = 4;
+	
   private final Context m_context;
   private List<String> m_values;
   private final Object m_lock = new Object();
@@ -48,15 +53,15 @@ public class ClassificationGridAdapter extends ArrayAdapter<String> {
 	  String s = m_values.get(position);
 	  String[] splitStr = s.split(":");
 	  
-	  ip.setText(splitStr[0]);
-	  iface.setText(splitStr[1]);
-	  classification.setText(splitStr[3]);
-	  if(splitStr[2].equals("0"))
+	  ip.setText(splitStr[INDEX_IP]);
+	  iface.setText(splitStr[INDEX_INTERFACE_ALIAS]);
+	  classification.setText(splitStr[INDEX_CLASSIFICATION]);
+	  if(splitStr[INDEX_IS_HOSTILE].equals("0"))
 	  {
 		  classification.setProgressDrawable(classification.getResources().getDrawable(R.drawable.greenbar));
 	  }
 	  int progress = 0;
-	  double classVal = Double.parseDouble(splitStr[3].substring(0, splitStr[3].length() - 1));
+	  double classVal = Double.parseDouble(splitStr[INDEX_CLASSIFICATION].substring(0, splitStr[INDEX_CLASSIFICATION].length() - 1));
 	  progress = (int)Math.round(classVal);
 	  classification.setProgress(progress);
 	
@@ -68,8 +73,8 @@ public class ClassificationGridAdapter extends ArrayAdapter<String> {
 	  @Override
 	  public int compare(String left, String right)
 	  {
-		  String leftClass = left.split(":")[3];
-		  String rightClass = right.split(":")[3];
+		  String leftClass = left.split(":")[INDEX_CLASSIFICATION];
+		  String rightClass = right.split(":")[INDEX_CLASSIFICATION];
 		  String splitleft = leftClass.substring(0, leftClass.length() - 1);
 		  String splitright = rightClass.substring(0, rightClass.length() - 1);
 		  
