@@ -325,10 +325,9 @@ SMTP_USEAUTH 1
 # A comma delimited list of the email addresses to send email
 # alerts to. 
 # Example:
-# RECIPIENTS first@email.send, second@email.send
-# Note: spaces after each comma
+# RECIPIENTS first@email.send,second@email.send
 #
-RECIPIENTS first@example.com, second@example.com
+RECIPIENTS first@example.com,second@example.com
 
 ############################################
 # SERVICE_PREFERENCES #

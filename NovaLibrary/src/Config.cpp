@@ -1769,24 +1769,18 @@ void Config::SetSMTPEmailRecipients_noLocking(string SMTPEmailRecipients)
 {
 	vector<string> addresses;
 	istringstream iss(SMTPEmailRecipients);
-
-	copy(istream_iterator<string>(iss),
-			istream_iterator<string>(),
-			back_inserter<vector <string> >(addresses));
-
-	vector<string> out = addresses;
+	string token;
+	while(getline(iss, token, ','))
+	{
+		addresses.push_back(token);
+	}
 
 	for(uint16_t i = 0; i < addresses.size(); i++)
 	{
-		uint16_t endSubStr = addresses[i].find(",", 0);
-
-		if(endSubStr != addresses[i].npos)
-		{
-			out[i] = addresses[i].substr(0, endSubStr);
-		}
+		cout << "addresses[" << i << "] == " << addresses[i] << endl;
 	}
 
-	m_SMTPEmailRecipients = out;
+	m_SMTPEmailRecipients = addresses;
 }
 
 string Config::GetPathReadFolder()

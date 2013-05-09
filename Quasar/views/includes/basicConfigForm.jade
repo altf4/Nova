@@ -15,7 +15,7 @@
 //- ============================================================================
 
 style
-  #protoheader {
+  label#protoheader {
     border-top-left-radius:4px;
     border-bottom-left-radius:4px;
     background-color: #E4F2FF;
@@ -43,14 +43,48 @@ style
     border-right: 1px solid #769DC0;
     border-top: 1px solid #769DC0;
     border-bottom: 1px solid #769DC0;
-    padding: 2px 2px 4px 0px;
+    padding: 2px 2px 4px 2px;
     width: 346px;
+  }
+
+  input.top {
+    border: 0;
+    border-radius: 0;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-top: 1px solid #769DC0;
+    border-left: 1px solid #769DC0;
+    border-right: 1px solid #769DC0;
+    border-bottom: 1px solid gray;
+    background-color: #E4F2FF;
+  }
+  
+  input.middle {
+    border: 0;
+    border-radius: 0;
+    border-left: 1px solid #769DC0;
+    border-right: 1px solid #769DC0;
+    border-bottom: 1px solid gray;
+    background-color: #E4F2FF;
+  }
+  
+  input.bottom {
+    border: 0;
+    border-radius: 0;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-bottom: 1px solid #769DC0;
+    border-left: 1px solid #769DC0;
+    border-right: 1px solid #769DC0;
+    background-color: #E4F2FF;
   }
 
 script
   var servicePrefs = '#{SERVICE_PREFERENCES}';
   var loaded = false;
   var connType = '#{RSYSLOG_CONNTYPE}';
+  var recipientNum = 1;
+  var recipList = [];
   
   function handleConnTypeChange()
   {
@@ -182,6 +216,8 @@ script
   {
     var arr = [];
     arr = servicePrefs.split(':');
+    
+    var recipientNum = 1;
     
     var syslogLevel = arr[1][0];
     var emailLevel = arr[2][0];
@@ -361,6 +397,92 @@ script
     setServicePreferences();
   }
   
+  function manageRecipientsList(src)
+  {
+    if($(src).attr('id') == 'recip' + recipientNum)
+    {
+      if($(src).val() == '')
+      {
+        delete recipList[recipientNum - 1];
+      }
+      else
+      {
+        recipList[recipientNum] = $(src).val();
+        recipientNum++;
+      }
+    }
+    else
+    {
+      if($(src).val() == '')
+      {
+        delete recipList[$(src).attr('id').substring(5) - 1];
+      }
+      else
+      {
+        recipList[$(src).attr('id').substring(5) - 1] = $(src).val();
+      }
+    }
+    setUpRecipients(recipList);
+  }
+
+  function setUpRecipients(recips)
+  {
+    $('#recipAnchor').empty();
+    recipientNum = 1;
+    recipList = [];
+    if(recips.length == 1)
+    {
+      var input = document.createElement('input');
+      $(input).attr('id', ('recip' + recipientNum));
+      $(input).val(recips[i]);
+      $(input).on('change', function(e){
+        manageRecipientsList(this);
+      });
+    }
+    else
+    {
+      for(var i in recips)
+      {
+        console.log('in recips loop');
+        if(recips[i] != undefined)
+        {
+          var input = document.createElement('input');
+          if(i == 0)
+          {
+            $(input).addClass('top wide').css('margin-bottom', '0');
+          }
+          else if(i > 0 && i < recips.length)
+          {
+            $(input).addClass('middle wide').css('margin-bottom', '0').css('margin-top', '0');
+          }
+          $(input).attr('id', ('recip' + recipientNum));
+          $(input).val(recips[i]);
+          $(input).keypress(function(e){
+            if(e.which == 13)
+            {
+              manageRecipientsList(this);
+            }
+          });
+          $('#recipAnchor').append(input);
+          recipList.push(recips[i]);
+          recipientNum++;
+        }
+      }
+      var input = document.createElement('input');
+      $(input).attr('id', ('recip' + recipientNum));
+      $(input).addClass('bottom wide').css('margin-top', '0');
+      $(input).keypress(function(e){
+        if(e.which == 13)
+        {
+          manageRecipientsList(this);
+        }
+      });
+      $('#recipAnchor').append(input);
+      
+      $('#recipAgg').val(recipList.toString());
+    }
+  }
+  
   function changeSMTPAuth()
   {
     if($('#SMTP_USEAUTH').is(':checked'))
@@ -416,6 +538,9 @@ script
         $('#RSYSLOG_CONNTYPE').val('TCP');
       }
 
+      var recips = '#{RECIPIENTS}'.split(',');
+      setUpRecipients(recips);
+      
       handleRsyslogPane();
       handleSMTPPaneSlide();
       handleDoppelPaneSlide();
@@ -463,16 +588,18 @@ div#smtpPane
   br
   
   label Email Recipients
-  input.wide(name='RECIPIENTS', value=RECIPIENTS)
+  div(id='recipAnchor', style='margin: 0;')
   br
-  br
+  
+  input(type='hidden', name='RECIPIENTS', id='recipAgg', value=RECIPIENTS)
 
 h2 Logger Settings
 div(id='servicePrefs')
   input(id='sp', name='SERVICE_PREFERENCES', value='', readonly=true, type='hidden')
 br
 
-label(style='font-size: 16px') Use RSyslog?
+h2 Rsyslog
+label Use RSyslog?
 if(RSYSLOG_USE == 'true')
   input#RSYSLOG_USE(type='checkbox', name='RSYSLOG_USE', checked=true, onclick='handleRsyslogPane()')
 else
