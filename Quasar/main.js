@@ -917,6 +917,10 @@ app.get('/advancedOptions', function (req, res)
         }
     }
 
+    var domain = NovaCommon.config.ReadSetting('SMTP_DOMAIN');
+    domain = domain.split('//');
+    domain = domain[1];
+
     res.render('advancedOptions.jade', {
         locals: {
             INTERFACES: NovaCommon.config.ListInterfaces().sort()
@@ -940,7 +944,7 @@ app.get('/advancedOptions', function (req, res)
             , CE_SAVE_FILE: NovaCommon.config.ReadSetting("CE_SAVE_FILE")
             , SMTP_ADDR: NovaCommon.config.ReadSetting("SMTP_ADDR")
             , SMTP_PORT: NovaCommon.config.ReadSetting("SMTP_PORT")
-            , SMTP_DOMAIN: NovaCommon.config.ReadSetting("SMTP_DOMAIN")
+            , SMTP_DOMAIN: domain
             , SMTP_USER: NovaCommon.config.GetSMTPUser()
             , SMTP_PASS: NovaCommon.config.GetSMTPPass()
             , RECIPIENTS: NovaCommon.config.ReadSetting("RECIPIENTS")
@@ -1041,11 +1045,16 @@ function renderBasicOptions(jadefile, res, req)
         }
     }
 
+    var domain = NovaCommon.config.ReadSetting('SMTP_DOMAIN');
+    domain = domain.split('//');
+    domain = domain[1];
+
     var ifaceForConversion = new Array();
     for (var i = 0; i < pass.length; i++)
     {
         ifaceForConversion.push(pass[i].iface);
     }
+    
     res.render(jadefile, {
         locals: {
             INTERFACES: pass,
@@ -1056,7 +1065,7 @@ function renderBasicOptions(jadefile, res, req)
             DM_ENABLED: NovaCommon.config.ReadSetting("DM_ENABLED"),
             SMTP_ADDR: NovaCommon.config.ReadSetting("SMTP_ADDR"),
             SMTP_PORT: NovaCommon.config.ReadSetting("SMTP_PORT"),
-            SMTP_DOMAIN: NovaCommon.config.ReadSetting("SMTP_DOMAIN"),
+            SMTP_DOMAIN: domain,
             SMTP_USER: NovaCommon.config.GetSMTPUser(),
             SMTP_PASS: NovaCommon.config.GetSMTPPass(),
             SMTP_USEAUTH: NovaCommon.config.GetSMTPUseAuth().toString(),
@@ -1854,11 +1863,13 @@ app.post('/configureNovaSave', function (req, res)
     {
       req.body["SMTP_USEAUTH"] = "0";
       NovaCommon.config.SetSMTPUseAuth("false");
+      req.body["SMTP_DOMAIN"] = 'smtp://' + req.body['SMTP_DOMAIN'];
     }
     else
     {
       req.body["SMTP_USEAUTH"] = "1";
       NovaCommon.config.SetSMTPUseAuth("true");
+      req.body["SMTP_DOMAIN"] = 'smtps://' + req.body['SMTP_DOMAIN'];
     }
     
     if(req.body["EMAIL_ALERTS_ENABLED"] == undefined)
