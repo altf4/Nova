@@ -365,7 +365,7 @@ block content
           input(data-bind='visible: isNewHaystack, value: newHaystackName, valueUpdate: "afterkeydown"', type='text')
           select(data-bind='visible: !isNewHaystack(), value: oldHaystackName')
             - for(var i = 0; i < GROUPS.length; i++)
-              - if(GROUPS[i] != '' && GROUPS[i] != undefined && GROUPS[i] != 'default')
+              - if(GROUPS[i] != '' && GROUPS[i] != undefined)
                 option #{GROUPS[i]}
       tr
         td
