@@ -549,9 +549,9 @@ block headerAdditions
     {
       var configToRemove = $('#configurations').val();
       
-      if(configToRemove == 'default')
+      if($("#configurations option").size() == 1)
       {
-        alert('Cannot remove default configuration');
+        alert('Cannot remove all haystack configurations! Must have at least one.');
         return;
       }
       else if(confirm('Are you sure you want to remove configuration ' + configToRemove + '? This cannot be undone.'))
@@ -636,6 +636,11 @@ block headerAdditions
     function confirmHaystackRestart()
     {
       now.IsHaystackUp(function(status){
+        // Nothing to do if the haystack is already down
+        if (!status) {
+            return;
+        }
+
         var restartHaystack = confirm('You must restart the haystack for this to take effect. Restart it now?');
         if(status == true && restartHaystack)
         {
