@@ -1775,11 +1775,6 @@ void Config::SetSMTPEmailRecipients_noLocking(string SMTPEmailRecipients)
 		addresses.push_back(token);
 	}
 
-	for(uint16_t i = 0; i < addresses.size(); i++)
-	{
-		cout << "addresses[" << i << "] == " << addresses[i] << endl;
-	}
-
 	m_SMTPEmailRecipients = addresses;
 }
 
