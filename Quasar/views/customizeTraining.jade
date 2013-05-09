@@ -34,7 +34,6 @@ block content
             th Hostility
             th UID
             th Description
-            th Checked
         tbody
           - for (var i = 0; i < hostiles.length; i++)
             tr
@@ -46,7 +45,6 @@ block content
               td #{hostiles[i]}
               td #{uids[i]}
               td #{desc[i]}
-              td #{includedLastTime[uids[i]]}
       br
       button.button()
         img.buttonIcon(src='images/ok.png')
