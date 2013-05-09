@@ -164,3 +164,8 @@ debian/nova/*
 #Google Protocol Buffer generated code
 *.pb.cc
 *.pb.h
+
+#Ceres
+/Ceres/bin/*
+/Ceres/gen/*
+/Ceres/node_modules/*
