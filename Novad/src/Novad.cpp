@@ -17,18 +17,18 @@
 //============================================================================
 
 #include "HoneydConfiguration/HoneydConfiguration.h"
-#include "messaging/MessageManager.h"
-#include "WhitelistConfiguration.h"
-#include "InterfacePacketCapture.h"
 #include "ClassificationAggregator.h"
-#include "HaystackControl.h"
+#include "messaging/MessageManager.h"
+#include "InterfacePacketCapture.h"
+#include "WhitelistConfiguration.h"
+#include "EvidenceAccumulator.h"
 #include "FilePacketCapture.h"
+#include "HaystackControl.h"
 #include "ProtocolHandler.h"
 #include "PacketCapture.h"
 #include "EvidenceTable.h"
 #include "Doppelganger.h"
-#include "SuspectTable.h"
-#include "FeatureSet.h"
+#include "DatabaseQueue.h"
 #include "NovaUtil.h"
 #include "Database.h"
 #include "Threads.h"
@@ -64,9 +64,7 @@ using namespace std;
 using namespace Nova;
 
 // Maintains a list of suspects and information on network activity
-SuspectTable suspects;
-// Suspects not yet written to the state file
-SuspectTable suspectsSinceLastSave;
+DatabaseQueue suspects;
 //Contains packet evidence yet to be included in a suspect
 EvidenceTable suspectEvidence;
 
@@ -76,14 +74,9 @@ vector<int> dropCounts;
 
 Doppelganger *doppel;
 
-// Timestamps for the CE state file exiration of data
-time_t lastLoadTime;
-time_t lastSaveTime;
 
 // Time novad started, used for uptime and pcap capture names
 time_t startTime;
-
-Database *db;
 
 
 //HS Vars
@@ -180,6 +173,7 @@ int RunNovaD()
 	dhcpListFile = Config::Inst()->GetIpListPath();
 	Logger::Inst();
 	HoneydConfiguration::Inst();
+	Database::Inst();
 
 	if(!LockNovad())
 	{
@@ -193,21 +187,6 @@ int RunNovaD()
 	}
 
 	pthread_mutex_init(&packetCapturesLock, NULL);
-
-	db = new Database();
-	try
-	{
-		db->Connect();
-	} catch (Nova::DatabaseException &e)
-	{
-		LOG(ERROR, "Unable to connect to SQL database. " + string(e.what()), "");
-	}
-
-	lastLoadTime = lastSaveTime = startTime = time(NULL);
-	if(lastLoadTime == ((time_t)-1))
-	{
-		LOG(ERROR, "Unable to get timestamp, call to time() failed", "");
-	}
 
 	//Need to load the configuration before making the Classification Engine for setting up the DM
 	//Reload requires a CE object so we do a partial config load here.
@@ -232,8 +211,6 @@ int RunNovaD()
 	whitelistIpAddresses = WhitelistConfiguration::GetIps();
 	whitelistIpRanges = WhitelistConfiguration::GetIpRanges();
 	UpdateHaystackFeatures();
-
-	LoadStateFile();
 
 	whitelistNotifyFd = inotify_init();
 	if(whitelistNotifyFd > 0)
@@ -316,228 +293,11 @@ void MaskKillSignals()
 	sigprocmask(SIG_BLOCK, &x, NULL);
 }
 
-//Appends the evidence gathered on suspects since the last save to the statefile
-void AppendToStateFile()
-{
-	//Store the time we started the save for ref later.
-	lastSaveTime = time(NULL);
-	//if time(NULL) failed
-	if(lastSaveTime == ~0)
-	{
-		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
-	}
-
-	//If there are no suspects to save
-	if(suspectsSinceLastSave.Size() <= 0)
-	{
-		return;
-	}
-
-	//Open the output file
-	ofstream out(Config::Inst()->GetPathCESaveFile().data(), ofstream::binary | ofstream::app);
-
-	//Update the feature set and dump the contents of the table to the output file
-	uint32_t dataSize;
-	dataSize = suspectsSinceLastSave.DumpContents(&out, lastSaveTime);
-
-	//Check that the dump was successful, print the results as a debug message.
-	stringstream ss;
-	if(dataSize)
-	{
-		ss << "Appending " << dataSize << " bytes to the CE state file at " << Config::Inst()->GetPathCESaveFile();
-	}
-	else
-	{
-		ss << "Unable to write any Suspects to the state file. func: 'DumpContents' returned 0.";
-	}
-	LOG(DEBUG,ss.str(),"");
-	out.close();
-	//Clear the table;
-	suspectsSinceLastSave.EraseAllSuspects();
-}
-
-//Loads the statefile by reading table state dumps that haven't expired yet.
-void LoadStateFile()
-{
-	lastLoadTime = time(NULL);
-	if(lastLoadTime == ((time_t)-1))
-	{
-		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
-	}
-
-	// Open input file
-	ifstream in(Config::Inst()->GetPathCESaveFile().data(), ios::binary | ios::in);
-	if(!in.is_open())
-	{
-		LOG(WARNING, "Unable to open CE state file.", "");
-		return;
-	}
-
-	// get length of input for error checking of partially written files
-	in.seekg (0, ios::end);
-	uint lengthLeft = in.tellg();
-	in.seekg (0, ios::beg);
-	uint expirationTime = lastLoadTime - Config::Inst()->GetDataTTL();
-	if(Config::Inst()->GetDataTTL() == 0)
-	{
-		expirationTime = 0;
-	}
-	uint numBytes = 0;
-	while(in.is_open() && !in.eof() && lengthLeft)
-	{
-		numBytes = suspects.ReadContents(&in, expirationTime);
-		if(numBytes == 0)
-		{
-
-			in.close();
-
-			// Back up the possibly corrupt state file
-			int suffix = 0;
-			string stateFileBackup = Config::Inst()->GetPathCESaveFile() + ".Corrupt";
-			struct stat st;
-
-			// Find an unused filename to move it to
-			string fileName;
-			do {
-				suffix++;
-				stringstream ss;
-				ss << stateFileBackup;
-				ss << suffix;
-				fileName = ss.str();
-			} while(stat(fileName.c_str(),&st) != -1);
-
-			LOG(WARNING, "Backing up possibly corrupt state file to file " + fileName, "");
-
-			// Copy the file
-			boost::filesystem::path CESaveFile = Config::Inst()->GetPathCESaveFile();
-			boost::filesystem::path target = fileName;
-
-			cout << "CESaveFile " << CESaveFile.string() << endl;
-			cout << "filename " << target.string() << endl;
-
-			try
-			{
-				boost::filesystem::rename(CESaveFile, target);
-			}
-			catch(boost::filesystem::filesystem_error const& e)
-			{
-				LOG(ERROR, "There was a problem when attempting to move the corrupt state file.", "");
-			}
-
-			// Recreate an empty file
-			stringstream touchCommand;
-			touchCommand << "touch \"" << Config::Inst()->GetPathCESaveFile() << "\"";
-			if(system(touchCommand.str().c_str()) == -1) {
-				LOG(ERROR, "There was a problem when attempting to recreate the state file. System call to 'touch' failed:" + touchCommand.str(), "");
-			}
-
-			break;
-		}
-		lengthLeft -= numBytes;
-	}
-	in.close();
-}
-
-//Refreshes the state file by parsing the contents and writing un-expired state dumps to the new state file
-void RefreshStateFile()
-{
-	//Variable assignments
-	uint32_t dataSize = 0;
-	vector<in_addr_t> deletedKeys;
-	uint bytesRead = 0, lengthLeft = 0;
-	time_t saveTime = 0;
-
-	string ceFile = Config::Inst()->GetPathCESaveFile();
-	string tmpFile = Config::Inst()->GetPathCESaveFile() + ".tmp";
-
-	boost::filesystem::path from = ceFile;
-	boost::filesystem::path to = tmpFile;
-
-	lastLoadTime = time(NULL);
-	time_t timestamp = lastLoadTime - Config::Inst()->GetDataTTL();
-
-	//Check that we have a valid timestamp for the last load time.
-	if(lastLoadTime == (~0)) // == -1 in signed vals
-	{
-		LOG(ERROR, "Problem with CE State File", "Unable to get timestamp, call to time() failed");
-	}
-	try
-	{
-		boost::filesystem::copy_file(from, to, boost::filesystem::copy_option::overwrite_if_exists);
-	}
-	catch(boost::filesystem::filesystem_error const& e)
-	{
-		LOG(ERROR, "Unable to refresh CE State File.",
-				string("Unable to refresh CE State File: " + string(e.what())));
-		return;
-	}
-	// Open input file
-	ifstream in(tmpFile.data(), ios::binary | ios::in);
-	if(!in.is_open())
-	{
-		LOG(ERROR,"Problem with CE State File",
-			"Unable to open the CE state file at "+Config::Inst()->GetPathCESaveFile());
-		return;
-	}
-
-	ofstream out(ceFile.data(), ios::binary | ios::trunc);
-	if(!out.is_open())
-	{
-		LOG(ERROR, "Problem with CE State File", "Unable to open the temporary CE state file.");
-		in.close();
-		return;
-	}
-
-	//Get some variables about the input size for error checking.
-	in.seekg (0, ios::end);
-	lengthLeft = in.tellg();
-	in.seekg (0, ios::beg);
-
-	while(in.is_open() && !in.eof() && lengthLeft)
-	{
-		//If we can get the timestamp and data size
-		if(lengthLeft < (sizeof timestamp + sizeof dataSize))
-		{
-			LOG(ERROR, "The CE state file may be corruput", "");
-			return;
-		}
-
-		//Read the timestamp and dataSize
-		in.read((char*)&saveTime, sizeof saveTime);
-		in.read((char*)&dataSize, sizeof dataSize);
-		bytesRead = dataSize + sizeof dataSize + sizeof saveTime;
-
-		//If the data has expired, skip past
-		if(saveTime < timestamp)
-		{
-			//Print debug msg
-			stringstream ss;
-			ss << "Throwing out old CE state at time: " << saveTime << ".";
-			LOG(DEBUG,"Throwing out old CE state.", ss.str());
-
-			//Skip past expired data
-			in.seekg(dataSize, ios::cur);
-		}
-		else
-		{
-			char buf[dataSize];
-			in.read(buf, dataSize);
-			out.write((char*)&saveTime, sizeof saveTime);
-			out.write((char*)&dataSize, sizeof dataSize);
-			out.write(buf, dataSize);
-		}
-		lengthLeft -= bytesRead;
-	}
-	in.close();
-	out.close();
-}
-
 void Reload()
 {
 	// Reload the configuration file
 	Config::Inst()->LoadConfig();
 	engine->Reload();
-	suspects.SetEveryoneNeedsClassificationUpdate();
 }
 
 void StartCapture()
@@ -664,7 +424,6 @@ void Packet_Handler(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char 
 			else
 			{
 				// If reading from pcap file no Consumer threads, so process the evidence right away
-				suspectsSinceLastSave.ProcessEvidence(evidencePacket, true);
 				suspects.ProcessEvidence(evidencePacket, false);
 			}
 			return;
@@ -788,77 +547,6 @@ string ConstructFilterString(string captureIdentifier)
 	return filterString;
 }
 
-
-void UpdateAndClassify(SuspectID_pb key)
-{
-	//Check for a valid suspect
-	Suspect suspectCopy = suspects.GetShallowSuspect(key);
-	if(suspects.IsEmptySuspect(&suspectCopy))
-	{
-		return;
-	}
-
-	//Get the old hostility bool
-	bool oldIsHostile = suspectCopy.GetIsHostile();
-
-	//Classify
-	suspects.ClassifySuspect(key);
-
-	//Check that we updated correctly
-	suspectCopy = suspects.GetShallowSuspect(key);
-	if(suspects.IsEmptySuspect(&suspectCopy))
-	{
-		return;
-	}
-
-
-	if(suspectCopy.GetIsHostile() && (!oldIsHostile || Config::Inst()->GetClearAfterHostile()))
-	{
-		try
-		{
-			db->InsertSuspectHostileAlert(&suspectCopy);
-		} catch (Nova::DatabaseException &e)
-		{
-			LOG(ERROR, "Unable to insert hostile suspect event into database. " + string(e.what()), "");
-		}
-
-		if(Config::Inst()->GetClearAfterHostile())
-		{
-			stringstream ss;
-			ss << "Main suspect Erase returned: " << suspects.Erase(key);
-			LOG(DEBUG, ss.str(), "");
-
-
-			stringstream ss2;
-			ss2 << "LastSave suspect Erase returned: " << suspectsSinceLastSave.Erase(key);
-			LOG(DEBUG, ss2.str(), "");
-
-			Message *msg = new Message(UPDATE_SUSPECT_CLEARED);
-			msg->m_contents.mutable_m_suspectid()->CopyFrom(suspectCopy.GetIdentifier());
-			MessageManager::Instance().WriteMessage(msg, 0);
-			delete msg;
-		}
-		else
-		{
-			//Send to UI
-			Message suspectUpdate;
-			suspectUpdate.m_contents.set_m_type(UPDATE_SUSPECT);
-			suspectUpdate.m_suspects.push_back(&suspectCopy);
-			MessageManager::Instance().WriteMessage(&suspectUpdate, 0);
-		}
-
-		LOG(ALERT, "Detected potentially hostile traffic from: " + suspectCopy.ToString(), "");
-	}
-	else
-	{
-		Message suspectUpdate;
-		suspectUpdate.m_contents.set_m_type(UPDATE_SUSPECT);
-		suspectUpdate.m_suspects.push_back(&suspectCopy);
-		MessageManager::Instance().WriteMessage(&suspectUpdate, 0);
-	}
-
-}
-
 void CheckForDroppedPackets()
 {
 	Lock lock(&packetCapturesLock);
@@ -881,24 +569,30 @@ void CheckForDroppedPackets()
 
 void UpdateHaystackFeatures()
 {
+	Database::Inst()->StartTransaction();
+
 	vector<uint32_t> haystackNodes;
 	for(uint i = 0; i < haystackAddresses.size(); i++)
 	{
+		Database::Inst()->InsertHoneypotIp(haystackAddresses[i]);
 		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));
 	}
+
+	for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
+	{
+		Database::Inst()->InsertHoneypotIp(haystackDhcpAddresses[i]);
+		haystackNodes.push_back(htonl(inet_addr(haystackDhcpAddresses[i].c_str())));
+	}
+
+	Database::Inst()->StopTransaction();
+
 	stringstream ss;
 	ss << "Currently monitoring " << haystackAddresses.size() << " static honeypot IP addresses";
 	LOG(DEBUG, ss.str(), "");
 
-	for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
-	{
-		haystackNodes.push_back(htonl(inet_addr(haystackDhcpAddresses[i].c_str())));
-	}
 	stringstream ss2;
 	ss2 << "Currently monitoring " << haystackDhcpAddresses.size() << " DHCP honeypot IP addresses";
 	LOG(DEBUG, ss2.str(), "");
-
-	suspects.SetHaystackNodes(haystackNodes);
 }
 
 }

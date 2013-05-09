@@ -14,4 +14,4 @@ def build(bld):
   obj.includes = [".", "../Nova_UI_Core/src", "../NovaLibrary/src", "/usr/include/cvv8/"]  
   obj.libs = ["Nova_UI_Core","ann","NovaLibrary","curl","boost_filesystem", "boost_program_options", "protobuf", "z"]
   obj.target = "novaconfig"
-  obj.source = "NovaNode.cpp NovaConfig.cpp NovaConfigBinding.cpp HoneydConfigBinding.cpp HoneydTypesJs.cpp VendorMacDbBinding.cpp OsPersonalityDbBinding.cpp SuspectJs.cpp HoneydProfileBinding.cpp CustomizeTraining.cpp WhitelistConfigurationBinding.cpp TrainingDumpBinding.cpp LoggerBinding.cpp"
+  obj.source = "NovaNode.cpp NovaConfig.cpp NovaConfigBinding.cpp HoneydConfigBinding.cpp HoneydTypesJs.cpp VendorMacDbBinding.cpp OsPersonalityDbBinding.cpp HoneydProfileBinding.cpp CustomizeTraining.cpp WhitelistConfigurationBinding.cpp TrainingDumpBinding.cpp LoggerBinding.cpp"

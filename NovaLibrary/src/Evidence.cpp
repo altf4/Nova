@@ -20,6 +20,7 @@
 #include "Evidence.h"
 #include "netinet/tcp.h"
 #include <dumbnet.h>
+#include <iostream>
 
 using namespace std;
 
@@ -56,29 +57,31 @@ Evidence::Evidence(const u_char *packet_at_ip_header, const pcap_pkthdr *pkthdr)
 
 	m_evidencePacket.dst_port = -1;
 
-	if((m_evidencePacket.ip_p == 6))
+	if((m_evidencePacket.ip_p == IPPROTO_TCP))
 	{
-		struct tcp_hdr *tcp;
-		tcp = (tcp_hdr *) (packet_at_ip_header + ip_hl*4);
-		//read in the dest port
+		struct tcp_hdr *tcp = (tcp_hdr*) (packet_at_ip_header + ip_hl*4);
+
 		m_evidencePacket.dst_port = ntohs(tcp->th_dport);
+
+		// Read in the tcp flags
+		m_evidencePacket.tcp_hdr.ack = tcp->th_flags & TH_ACK;
+		m_evidencePacket.tcp_hdr.rst = tcp->th_flags & TH_RST;
+		m_evidencePacket.tcp_hdr.syn = tcp->th_flags & TH_SYN;
+		m_evidencePacket.tcp_hdr.fin = tcp->th_flags & TH_FIN;
 	}
-	else if(m_evidencePacket.ip_p == 17) // UDP
+	else if(m_evidencePacket.ip_p == IPPROTO_UDP)
 	{
-		struct udp_hdr *udp;
-		udp = (udp_hdr *) (packet_at_ip_header + ip_hl*4);
+		struct udp_hdr *udp = (udp_hdr*) (packet_at_ip_header + ip_hl*4);
 		m_evidencePacket.dst_port = ntohs(udp->uh_dport);
 	}
-
-	if(m_evidencePacket.ip_p == 6) // TCP
+	else if (m_evidencePacket.ip_p == IPPROTO_ICMP)
 	{
-		struct tcphdr *tcp;
-		tcp = (tcphdr*)(packet_at_ip_header + ip_hl*4);
-		m_evidencePacket.tcp_hdr.ack = tcp->ack;
-		m_evidencePacket.tcp_hdr.rst = tcp->rst;
-		m_evidencePacket.tcp_hdr.syn = tcp->syn;
-		m_evidencePacket.tcp_hdr.fin = tcp->fin;
+		struct icmp_hdr *hdr = (icmp_hdr*) (packet_at_ip_header + ip_hl*4);
+		m_evidencePacket.dst_port = (uint16_t)0 | (uint16_t)hdr->icmp_type | ((uint16_t)hdr->icmp_code << 8);
 	}
+
+
+
 }
 
 Evidence::Evidence(Evidence *evidence)

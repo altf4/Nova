@@ -17,23 +17,22 @@
 extends layout
 
 block content
+  div(id="nova_suspects_error_view")
+    h3(style="color: red") Warning: The Packet Classifier is either not running or not connected. The data below may be old. Try starting the Packet Classifier.
   div#setup(onclick='handleOnclick(event)')
-    div#nova_suspects_header(style="width:600px; display: none")
+    div#nova_suspects_header
       br
       
-      button(onclick="toggleFilterBlock()", title='Only show rows that match a certain specific criteria')
-        img.buttonIcon(src="images/edit.png")
-        span.buttonSpan Filtering Options
       button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}')
         img.buttonIcon(src="images/erase.png")
         span.buttonSpan Clear All Suspects
 
       button(onclick="window.location='/novaState.csv'")
-        img.buttonIcon(src="images/save.png")
-        span.buttonSpan Save as CSV file
+       img.buttonIcon(src="images/save.png")
+       span.buttonSpan Save as CSV file
   
       br
-    div#nova_suspects(style="display: none;")      
+    div#nova_suspects      
       input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
       label Live Grid Update
       br
@@ -42,7 +41,7 @@ block content
       label Show Advanced Suspect Statistics
       br
       
-      input#showUnclassified(type="checkbox", onchange="showUnclassifiedChanged()")
+      input#showUnclassified(type="checkbox")
       label Show Unclassified Suspects
       br
       br
@@ -52,53 +51,16 @@ block content
         div#suspectTable
 
       p#numberOfSuspects Recieved data for 0 suspects
-    div(data-dojo-type="dijit.layout.ContentPane", title="Suspects", id="nova_suspects_error_view", style="display: block; width: 600px; margin: 0 auto; text-align: center")
-      h4 The Packet Classifier is not currently connected or running. If the status shows as offline, try starting it.
       
-  div#lightbox(class="white_content", style="display:none;")
-    div#advancedFiltering
-      br
-      p Filter by IP (supports standard regular expressions. Example: "192\.168\.10\..*|192\.168\.3\..*")
-      input#ipFilter(type="text", name="ipFilter", value="")
-      br
-      p Use 'x' in expressions to denote the specified feature value. Example: "x > 0 && x != 17"
-      -var count = 0;
-      each feature in featureNames
-        label #{feature}
-        br
-        input(type="text", id="advancedFilter#{count}")
-        br
-      - count++;
-      br
-      button(onclick='applyAdvancedFilter()')
-        img.buttonIcon(src="images/benign.png")
-        span.buttonSpan Apply Advanced Filters
-      br
-      button(onclick='disableAdvancedFilter()')
-        img.buttonIcon(src="images/alert.png")
-        span.buttonSpan Disable Advanced Filters
-    br
-    br
-    button#closeLB(onclick='closeLightbox()')
-     img.buttonIcon(src="images/cancel.png")
-     span.buttonSpan Cancel
-   
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
   script
-    // Performance boost accessing local var over document lookup
     var suspectGrid;
     var liveUpdate = true;
 
-    var advancedFilters = new Object();
-    var advancedFilterEnabled = false;
-    var advancedIpFilter = null;
-
     require(["dijit/form/TextBox"]);
 
-    var rmLb = false;
-    
     function handleOnclick(e)
     {
       var evt = (e ? e : window.event);
@@ -108,36 +70,10 @@ block headerAdditions
       {
         removeContextMenu(); 
       }
-      if(rmLb && checkIfLightboxChild(source) == 'false' && (loc.indexOf('/autoConfig') == -1))
-      {
-        closeLightbox();
-      }
-      else if($('#lightbox').css('display') == 'block')
-      {
-        rmLb = true;
-      }
-    }
-    
-    function checkIfLightboxChild(source)
-    {
-      if(source.id != 'lightbox' && source.tagName != 'HTML')
-      {
-        return checkIfLightboxChild(source.parentNode);
-      }        
-      else if(source.id == 'lightbox')
-      {
-        return 'true';
-      }
-      else if(source.tagName == 'HTML')
-      {
-        return 'false';
-      }
     }
 
     function isNovadUpChanged(isNovadUp)
     {
-        $("#nova_suspects_header").css('display', (isNovadUp ? "block" : "none"));
-        $("#nova_suspects").css('display', (isNovadUp ? "block" : "none"));
         $("#nova_suspects_error_view").css('display', (isNovadUp ? "none" : "block"));
     }
 
@@ -150,17 +86,9 @@ block headerAdditions
     var toggleFilterBlock = function()
     {
       $('#setup').css('opacity', '0.5');
-      $('#lightbox').css('display', 'block');
       disableBackground($('#setup')[0]);
     }
 
-    var closeLightbox = function()
-    {
-      $('#lightbox').css('display', 'none');
-      $('#setup').css('opacity', '1');
-      enableBackground($('#setup')[0]);
-      rmLb = false;
-    }
 
     function disableBackground(source)
     {
@@ -196,6 +124,10 @@ block headerAdditions
 
     var ClearAllSuspects = function()
     {
+      if (!lastNovadStatus) {
+        alert("Unable to clear suspects when not connected to novad");
+        return;
+      }
       try
       {
         now.ClearAllSuspects();
@@ -207,25 +139,6 @@ block headerAdditions
       } 
     }
     
-    function showUnclassifiedChanged()
-    {
-        resendSuspects();
-    }
-
-    var AllSuspectsCleared = function()
-    {
-        suspectGrid.Clear();
-    }
-    
-    var SuspectCleared = function(suspect)
-    {
-        console.log("Cleared suspect ");
-        console.log(suspect);
-        suspectGrid.DeleteRow(buildLink(suspect.ip, suspect.interface));
-        suspectGrid.Render();
-        return;
-    }
-      
     function pad(num)
     {
         return ("0" + num.toString()).slice(-2);
@@ -233,6 +146,10 @@ block headerAdditions
     
     function ClearSuspect(ip, interface, idString)
     {
+      if (!lastNovadStatus) {
+        alert("Unable to clear suspects when not connected to novad");
+        return;
+      }
       console.log('in ClearSuspect with ' + ip + ' ' + interface);
       now.ClearSuspect(ip, interface);
       suspectGrid.DeleteRow(buildLink(ip, interface));
@@ -257,23 +174,17 @@ block headerAdditions
     }
 
     var OnNewSuspect = function(suspect){
-       if(!$('#showUnclassified').is(':checked'))
-       {
-         if(suspect.GetClassification < 0) {return;}
-       }
-
-      var d = new Date(suspect.GetLastPacketTime*1000);
+      var d = new Date(suspect.lastTime*1000);
       var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-      suspect.LastPacketString = dString;
       
       var row = new Array();
         
-      var ip = suspect.GetIpString;
+      var ip = suspect.ip;
     
-      var suspectLink = buildLink(ip, suspect.GetInterface);
+      var suspectLink = buildLink(ip, suspect.interface);
 
       var imgSrc;
-      if(suspect.GetIsHostile)
+      if(suspect.isHostile)
       {
         imgSrc = "images/alert.png";
       } 
@@ -283,123 +194,29 @@ block headerAdditions
       }
 
       row.push("<img src='" + imgSrc + "' class='buttonIcon'/>");
-      row.push(String(suspect.interfaceAlias));
+      row.push(String(suspect.interface));
       row.push(String(suspectLink));
-      row.push(suspect.GetClassification);
-      row.push(String(suspect.LastPacketString));
+      row.push(suspect.classification);
+      row.push(String(dString));
 
-      for(var i in suspect.GetFeatures)
-      {
-        suspect[i] = suspect.GetFeatures[i];
-        row.push(Number(suspect.GetFeatures[i])); 
-      }
+      row.push(suspect.ip_traffic_distribution);
+      row.push(suspect.port_traffic_distribution);
+      row.push(suspect.packet_size_mean);
+      row.push(suspect.packet_size_deviation);
+      row.push(suspect.distinct_ips);
+      row.push(suspect.distinct_tcp_ports);
+      row.push(suspect.distinct_udp_ports);
+      row.push(suspect.avg_tcp_ports_per_host);
+      row.push(suspect.avg_udp_ports_per_host);
+      row.push(suspect.tcp_percent_syn);
+      row.push(suspect.tcp_percent_fin);
+      row.push(suspect.tcp_percent_rst);
+      row.push(suspect.tcp_percent_synack);
+      row.push(suspect.haystack_percent_contacted);
        
-      if(advancedFilterEnabled)
-      {
-        for(var i in advancedFilters)
-        {
-          var x = String(suspect[i]);
-          var expr = String(advancedFilters[i]);
-          if(!eval(expr))
-          {
-            return;
-          }
-        }
-
-        if(advancedIpFilter != null)
-        {
-          if(!advancedIpFilter.test(suspect.GetIdString))
-          {
-            return;
-          }
-        }
-      }
       suspectGrid.PushEntry(row);
 
-      $('#numberOfSuspects').text("Recieved data for " + String(Object.keys(suspectGrid.m_elements).length) + " suspects");
     };
-
-    var applyAdvancedFilter = function(){
-        var patt = new RegExp("^[1234567890x\. ()<>=!&|]+$");
-        var featureNames = String("#{featureNames}").split(",");
-        for(var i = 0; i < featureNames.length; i++)
-        {
-          var filter = "";
-          var id = "advancedFilter" + String(i);
-          var element = $('#' + id)[0];
-          if(element != null)
-          {
-            filter = element.value;
-          }
-
-          if(filter == "")
-          {
-            continue;
-          }
-
-          if(!patt.test(filter))
-          {
-            alert("Invalid filter: " + filter);
-            return;
-          }
-          else
-          {
-            try
-            {
-              var x = 2.5;
-              eval(filter);
-              advancedFilters[i] = filter;
-            } 
-            catch(err)
-            {
-              alert("Invalid filter: " + filter);
-              return;
-            }
-          }
-        }
-
-        var filter = $('#ipFilter').val();
-        if(filter != "")
-        {
-          try
-          {
-            advancedIpFilter = new RegExp(filter);
-          }
-          catch(err)
-          {
-            alert("Invalid filter: " + filter);
-            return;
-          }
-        }
-
-        advancedFilterEnabled = true;
-        closeLightbox();
-        resendSuspects();
-    };
-
-    function resendSuspects()
-    {
-      suspectGrid.Clear();
-      try
-      {
-        now.sendAllSuspects(OnNewSuspect);
-      }
-      catch(err)
-      {
-        alert("Action failed because unable to connect to server! Please try refreshing the page and trying again.");
-        console.log("err was: " + err);
-      }   
-    }
-
-    var disableAdvancedFilter = function()
-    {
-        $('#lightbox').css('display', 'none');
-        
-        advancedFilterEnabled = false;
-        var advancedFilters = new Object();
-        
-        resendSuspects();
-    }
 
     function showAdvancedChanged()
     {
@@ -470,6 +287,7 @@ block headerAdditions
         }
    
         suspectGrid = new NovaGrid(gridStructure, 2, $('#suspectTable')[0], 'suspectGrid', false);
+        suspectGrid.m_remotePaging = true;
         
         suspectGrid.SetRightClickEventListener("replacementContextMenu(event);");
     
@@ -478,25 +296,75 @@ block headerAdditions
         suspectGrid.SetRowsPerPage(20);
         suspectGrid.SetPageNumberDiv($('#tablePages').get(0));
 
-        suspectGrid.SetRenderCallback(function() {
-            $(".newRow").css({backgroundColor:"#E4F2FF"}).animate({backgroundColor:"transparent"}, 2500, null, 
-                function() { this.style.backgroundColor='transparent'; });
-        });
 
-        resendSuspects();
-    
+        suspectGrid.m_autoRenderCallback = function() {
+            querySuspects();
+            
+        };
+
         var renderSuspects = function(){
-            if(!liveUpdate || lastNovadStatus == false) {return;}
+            if(!liveUpdate) {return;}
            
             var start = new Date().getTime();
             suspectGrid.Render(); 
-            console.log("Time to render grid of size " + suspectGrid.Size() + ": " + (new Date().getTime() - start) + "ms");
+            //console.log("Time to render grid of size " + suspectGrid.Size() + ": " + (new Date().getTime() - start) + "ms");
         };
-        
-        setTimeout(renderSuspects, 100);
-        setTimeout(renderSuspects, 500);
-        setInterval(renderSuspects, 3000);
+       
+        querySuspects();
+        setInterval(querySuspects, 3000);
+    
+    function querySuspects() {
+        var rows = suspectGrid.m_rowsPerPage;
+        var offset = suspectGrid.m_currentPage * suspectGrid.m_rowsPerPage;
+        var sortOrder = suspectGrid.m_sortDescending ? "DESC" : "ASC";
+        var showUnclassified = $("#showUnclassified").prop("checked");
+
+        // Translate the grid column index to the actual SQL column name we want to sort by
+        var sortBy = "classification";
+        switch(suspectGrid.m_sortByKey) {
+            case 3: sortBy = "classification"; break;
+            case 4: sortBy = "lastTime"; break;
+            case 5: sortBy = "ip_traffic_distribution"; break;
+            case 6: sortBy = "port_traffic_distribution"; break;
+            case 7: sortBy = "packet_size_mean"; break;
+            case 8: sortBy = "packet_size_deviation"; break;
+            case 9: sortBy = "distinct_ips"; break;
+            case 10: sortBy = "distinct_tcp_ports"; break;
+            case 11: sortBy = "distinct_udp_ports"; break;
+            case 12: sortBy = "avg_tcp_ports_per_host"; break;
+            case 13: sortBy = "avg_udp_ports_per_host"; break;
+            case 14: sortBy = "tcp_percent_syn"; break;
+            case 15: sortBy = "tcp_percent_fin"; break;
+            case 16: sortBy = "tcp_percent_rst"; break;
+            case 17: sortBy = "tcp_percent_synack"; break;
+            case 18: sortBy = "haystack_percent_contacted"; break;
+        }
+  
+        now.GetNumberOfSuspects(showUnclassified, function(err, res) {
+            if (err) {return;}
+
+            suspectGrid.m_numberOfPages = Math.ceil(res[0].count/suspectGrid.m_rowsPerPage);
+            $('#numberOfSuspects').text("Recieved data for " + res[0].count + " suspects");
+        });
+
+        now.GetSuspects(rows, offset, sortBy, sortOrder, showUnclassified, parseSuspects);
     }
+
+    function parseSuspects(err, suspects) {
+        if (err) {
+            alert(err);
+            return;
+        }
+        
+        suspectGrid.Clear();
+        console.log("Got " + suspects.length + " suspects.");
+        for (var s in suspects) {
+            OnNewSuspect(suspects[s]);
+        }
+        renderSuspects();
+    }
+    }
+
 
     function replacementContextMenu(e)
     {
@@ -673,10 +541,6 @@ block headerAdditions
                 now.updateNovadStatus = updateNovadStatus;
                 now.IsHaystackUp(updateHaystackStatus);
                 now.IsNovadConnected(updateNovadStatus);
-
-                now.AllSuspectsCleared = AllSuspectsCleared;
-                now.SuspectCleared = SuspectCleared;
-                now.OnNewSuspect = OnNewSuspect;
 
                 Init();
             }

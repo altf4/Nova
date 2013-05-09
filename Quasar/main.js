@@ -81,7 +81,7 @@ var autoconfig;
 var interfaceAliases = new Object();
 ReloadInterfaceAliasFile();
 
-var RenderError = function(res, err, link)
+var RenderError = function (res, err, link)
 {
     // Redirect them to the main page if no link was set
     link = typeof link !== 'undefined' ? link : "/";
@@ -104,23 +104,23 @@ var DATABASE_HOST = NovaCommon.config.ReadSetting("DATABASE_HOST");
 var DATABASE_USER = NovaCommon.config.ReadSetting("DATABASE_USER");
 var DATABASE_PASS = NovaCommon.config.ReadSetting("DATABASE_PASS");
 
-passport.serializeUser(function(user, done)
+passport.serializeUser(function (user, done)
 {
     done(null, user);
 });
 
-passport.deserializeUser(function(user, done)
+passport.deserializeUser(function (user, done)
 {
     done(null, user);
 });
 
 passport.use(new BasicStrategy(
 
-function(username, password, done)
+function (username, password, done)
 {
   var user = username;
-  process.nextTick(function(){
-  NovaCommon.dbqCredentialsRowCount.all(function(err, rowcount)
+  process.nextTick(function (){
+  NovaCommon.dbqCredentialsRowCount.all(function (err, rowcount)
   {
       if(err)
       {
@@ -131,7 +131,7 @@ function(username, password, done)
       if(rowcount[0].rows === 0)
       {
         console.log("No users in user database. Creating default user.");
-        NovaCommon.dbqCredentialsInsertUser.run('nova', NovaCommon.HashPassword('toor', 'root'), 'root', function(err)
+        NovaCommon.dbqCredentialsInsertUser.run('nova', NovaCommon.HashPassword('toor', 'root'), 'root', function (err)
         {
           if(err)
           {
@@ -289,7 +289,7 @@ function LiveFileReader(filePath, cb) {
    
     fs.readFile(self.filePath, function(err, data)
     {
-        if(err)
+        if (err)
         {
             LOG("ERROR", "ERROR reading file: " + err);
             self.cb(err);
@@ -301,11 +301,11 @@ function LiveFileReader(filePath, cb) {
         self.processedLines = self.initialContent.split("\n");
         self.reading = false;
         
-        if(self.processedLines[self.processedLines.length - 1] == "") {
+        if (self.processedLines[self.processedLines.length - 1] == "") {
             self.processedLines.pop();
         }
 
-        for(var i = 0; i < self.processedLines.length; i++) {
+        for (var i = 0; i < self.processedLines.length; i++) {
             cb(null, self.processedLines[i], i);
         }
 
@@ -313,7 +313,7 @@ function LiveFileReader(filePath, cb) {
     
         fs.open(self.filePath, 'r', function(err, fd)
         {
-            if(err)
+            if (err)
             {
                 LOG("ERROR", "Unable to open log file for reading due to error: " + err);
                 self.cb(err);
@@ -326,7 +326,7 @@ function LiveFileReader(filePath, cb) {
         self.processData = function(err, bytecount, buff)
         {
             self.reading = false;
-            if(err)
+            if (err)
             {
                 LOG("ERROR", "Error reading log file: " + err);
                 self(err);
@@ -334,22 +334,20 @@ function LiveFileReader(filePath, cb) {
             }
         
             var lastLineFeed = buff.toString('ascii', 0, bytecount).lastIndexOf('\n');
-            if(lastLineFeed != -1)
+            if (lastLineFeed != -1)
             {
                 var lineArray = buff.toString('ascii', 0, bytecount).slice(0, lastLineFeed).split("\n");
             
-                for(var i = 0; i < lineArray.length; i++)
+                for (var i = 0; i < lineArray.length; i++)
                 {
-                    if(lineArray[i] != "") {
+                    if (lineArray[i] != "") {
                         self.cb(null, lineArray[i], self.processedLines.length);
                         self.processedLines.push(lineArray[i]);
                     }
                 }
 
                 self.readBytes += lastLineFeed + 1;
-            }
-            else
-            {
+            } else {
                 //self.readBytes += bytecount;
             }
     
@@ -363,7 +361,7 @@ function LiveFileReader(filePath, cb) {
         fs.watch(self.filePath, {persistent: true}, function(event, filename)
         //fs.watchFile(self.filePath, function(curr, prev)
         {
-            if(!self.reading)
+            if (!self.reading)
             {
                 self.reading = true;
                 self.readSomeData();
@@ -374,23 +372,23 @@ function LiveFileReader(filePath, cb) {
 
 
 
-var initLogWatch = function()
+var initLogWatch = function ()
 {
     var novadLogFileReader = new LiveFileReader(novadLogPath, function(err, line, lineNum) {
-        if(err)
+        if (err)
         {
             console.log("Callback got error" + err);
             return;
         }
 
         NovaCommon.dbqIsNewNovaLogEntry.all(lineNum, function(err, results) {
-            if(err)
+            if (err)
             {
                 LOG("ERROR", err);
                 return;
             }
         
-            if(results[0].rows === 0)
+            if (results[0].rows === 0)
             {
                 NovaCommon.dbqAddNovaLogEntry.run(lineNum, line);
             }
@@ -402,20 +400,20 @@ var initLogWatch = function()
     });
     
     var novadLogFileReader = new LiveFileReader(honeydLogPath, function(err, line, lineNum) {
-        if(err)
+        if (err)
         {
             console.log("Callback got error" + err);
             return;
         }
         
         NovaCommon.dbqIsNewHoneydLogEntry.all(lineNum, function(err, results) {
-            if(err)
+            if (err)
             {
                 LOG("ERROR", err);
                 return;
             }
         
-            if(results[0].rows === 0)
+            if (results[0].rows === 0)
             {
                 NovaCommon.dbqAddHoneydLogEntry.run(lineNum, line);
             }
@@ -592,11 +590,13 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
               pulsar.sendUTF(JSON.stringify(response));
               break;
             case 'getHostileSuspects':
-              NovaCommon.nova.sendSuspectList(distributeSuspect);
+              // TODO Broken during the suspecttable -> sqlite refactor
+              //NovaCommon.nova.sendSuspectList(distributeSuspect);
               break;
             case 'requestBenign':
               benignRequest = true;
-              NovaCommon.nova.sendSuspectList(distributeSuspect);
+              // TODO broken during the suspecttable -> sqlite refactor
+              //NovaCommon.nova.sendSuspectList(distributeSuspect);
               break;
             case 'cancelRequestBenign':
               benignRequest = false;
@@ -662,12 +662,12 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
               console.log("Args: " + hhconfigArgs);
               autoconfig = spawn(executionString.toString(), hhconfigArgs);
             
-              autoconfig.stdout.on('data', function(data){
+              autoconfig.stdout.on('data', function (data){
                 console.log('' + data);
               });
             
-              autoconfig.stderr.on('data', function(data){
-                if(/^execvp\(\)/.test(data))
+              autoconfig.stderr.on('data', function (data){
+                if (/^execvp\(\)/.test(data))
                 {
                   console.log("haystackautoconfig failed to start.");
                   var message = "haystackautoconfig failed to start.";
@@ -679,7 +679,7 @@ if(NovaCommon.config.ReadSetting('MASTER_UI_ENABLED') === '1')
                 }
               });
             
-              autoconfig.on('exit', function(code){
+              autoconfig.on('exit', function (code){
                 console.log("autoconfig exited with code " + code);
                 var message = "autoconfig exited with code " + code;
                 var response = {};
@@ -795,12 +795,12 @@ app.get('/honeydConfigManage', function(req, res){
   });
 });
 
-app.get('/downloadNovadLog.log', function(req, res)
+app.get('/downloadNovadLog.log', function (req, res)
 {
     res.download(novadLogPath, 'novadLog.log');
 });
 
-app.get('/downloadHoneydLog.log', function(req, res)
+app.get('/downloadHoneydLog.log', function (req, res)
 {
     res.download(honeydLogPath, 'honeydLog.log');
 });
@@ -812,7 +812,7 @@ app.get('/nodeState.csv', function(req, res)
 
   var csvString = "ENABLED,IP,INTERFACE,MAC,PROFILE\n";
   
-  for(var i = 0; i < nodeNames.length; i++)
+  for (var i = 0; i < nodeNames.length; i++)
   {
       var node = NovaCommon.honeydConfig.GetNode(nodeNames[i]);
       csvString += node.IsEnabled() + ",";
@@ -827,12 +827,12 @@ app.get('/nodeState.csv', function(req, res)
   res.send(csvString);
 });
 
-app.get('/novaState.csv', function(req, res)
+app.get('/novaState.csv', function (req, res)
 {
     exec('novacli get all csv > ' + NovaHomePath + "/state.csv",
     function(error, stdout, stderr)
     {
-        if(error != null)
+        if (error != null)
         {
             // Don't really care. Probably failed because novad was down.
             //console.log("exec error: " + error);
@@ -847,17 +847,15 @@ app.get('/novaState.csv', function(req, res)
     });
 });
 
-app.get('/viewNovadLog', function(req, res)
+app.get('/viewNovadLog', function (req, res)
 {
-    fs.readFile(novadLogPath, 'utf8', function(err, data)
+    fs.readFile(novadLogPath, 'utf8', function (err, data)
     {
-        if(err)
+        if (err)
         {
             RenderError(res, "Unable to open NOVA log file for reading due to error: " + err);
             return;
-        }
-        else
-        {
+        } else {
             res.render('viewNovadLog.jade', {
                 locals: {
                     log: data
@@ -867,17 +865,15 @@ app.get('/viewNovadLog', function(req, res)
     });
 });
 
-app.get('/viewHoneydLog', function(req, res)
+app.get('/viewHoneydLog', function (req, res)
 {
-    fs.readFile(honeydLogPath, 'utf8', function(err, data)
+    fs.readFile(honeydLogPath, 'utf8', function (err, data)
     {
-        if(err)
+        if (err)
         {
             RenderError(res, "Unable to open honeyd log file for reading due to error: " + err);
             return;
-        }
-        else
-        {
+        } else {
             res.render('viewHoneydLog.jade', {
                 locals: {
                     log: data
@@ -887,35 +883,33 @@ app.get('/viewHoneydLog', function(req, res)
     });
 });
 
-app.get('/advancedOptions', function(req, res)
+app.get('/advancedOptions', function (req, res)
 {
     var all = NovaCommon.config.ListInterfaces().sort();
     var used = NovaCommon.config.GetInterfaces().sort();
 
     var pass = [];
 
-    for(var i in all)
+    for (var i in all)
     {
         var checked = false;
 
-        for(var j in used)
+        for (var j in used)
         {
-            if(all[i] === used[j])
+            if (all[i] === used[j])
             {
                 checked = true;
                 break;
             }
         }
 
-        if(checked)
+        if (checked)
         {
             pass.push({
                 iface: all[i],
                 checked: 1
             });
-        }
-        else
-        {
+        } else {
             pass.push({
                 iface: all[i],
                 checked: 0
@@ -981,28 +975,26 @@ function renderBasicOptions(jadefile, res, req)
 
     var pass = [];
 
-    for(var i in all)
+    for (var i in all)
     {
         var checked = false;
 
-        for(var j in used)
+        for (var j in used)
         {
-            if(all[i] === used[j])
+            if (all[i] === used[j])
             {
                 checked = true;
                 break;
             }
         }
 
-        if(checked)
+        if (checked)
         {
             pass.push({
                 iface: all[i],
                 checked: 1
             });
-        }
-        else
-        {
+        } else {
             pass.push({
                 iface: all[i],
                 checked: 0
@@ -1015,20 +1007,19 @@ function renderBasicOptions(jadefile, res, req)
     all = NovaCommon.config.ListLoopbacks().sort();
     used = NovaCommon.config.GetDoppelInterface();
 
-    for(var i in all)
+    for (var i in all)
     {
         var checked = false;
 
-        for(var j in used)
+        for (var j in used)
         {
-            if(all[i] === used[j])
+            if (all[i] === used[j])
             {
                 checked = true;
                 break;
-            }
-            else if(used[j].length == 1 && used.length > 1)
+            } else if (used[j].length == 1 && used.length > 1)
             {
-                if(all[i] === used)
+                if (all[i] === used)
                 {
                     checked = true;
                     break;
@@ -1036,15 +1027,13 @@ function renderBasicOptions(jadefile, res, req)
             }
         }
 
-        if(checked)
+        if (checked)
         {
             doppelPass.push({
                 iface: all[i],
                 checked: 1
             });
-        }
-        else
-        {
+        } else {
             doppelPass.push({
                 iface: all[i],
                 checked: 0
@@ -1053,7 +1042,7 @@ function renderBasicOptions(jadefile, res, req)
     }
 
     var ifaceForConversion = new Array();
-    for(var i = 0; i < pass.length; i++)
+    for (var i = 0; i < pass.length; i++)
     {
         ifaceForConversion.push(pass[i].iface);
     }
@@ -1082,20 +1071,20 @@ function renderBasicOptions(jadefile, res, req)
     });
 }
 
-app.get('/error', function(req, res)
+app.get('/error', function (req, res)
 {
     RenderError(res, req.query["errorDetails"], req.query["redirectLink"]);
     return;
 });
 
-app.get('/basicOptions', function(req, res)
+app.get('/basicOptions', function (req, res)
 {
     renderBasicOptions('basicOptions.jade', res, req);
 });
 
-app.get('/configHoneydNodes', function(req, res)
+app.get('/configHoneydNodes', function (req, res)
 {
-  if(!NovaCommon.honeydConfig.LoadAllTemplates())
+  if (!NovaCommon.honeydConfig.LoadAllTemplates())
   {
     RenderError(res, "Unable to load honeyd configuration XML files");
     return;
@@ -1114,7 +1103,7 @@ app.get('/configHoneydNodes', function(req, res)
   });
 });
 
-app.get('/getSuspectDetails', function(req, res)
+app.get('/getSuspectDetails', function (req, res)
 {
   if(req.query['ip'] === undefined)
   {
@@ -1131,26 +1120,15 @@ app.get('/getSuspectDetails', function(req, res)
   var suspectIp = req.query['ip'];
   var suspectInterface = req.query['interface'];
   
-  NovaCommon.nova.RequestSuspectDetailsString(suspectIp, suspectInterface, function(suspectString){
-    if(suspectString != '')
-    {
-    	res.render('suspectDetails.jade', {
+    res.render('suspectDetails.jade', {
         locals: {
           suspect: suspectIp
           , interface: suspectInterface
-          , details: suspectString
         }
-    	});
-  	}
-  	else
-  	{
-      RenderError(res, 'The suspect ' + suspectIp + ' does not exist', '/suspects');
-      return;
-  	}
-  });
+    });
 });
 
-app.get('/editHoneydNode', function(req, res)
+app.get('/editHoneydNode', function (req, res)
 {
   if(req.query["node"] === undefined)
   {
@@ -1192,7 +1170,7 @@ app.get('/editHoneydNode', function(req, res)
   })
 });
 
-app.get('/editHoneydProfile', function(req, res)
+app.get('/editHoneydProfile', function (req, res)
 {
     if(req.query["profile"] === undefined)
     {
@@ -1213,7 +1191,7 @@ app.get('/editHoneydProfile', function(req, res)
     })
 });
 
-app.get('/addHoneydProfile', function(req, res)
+app.get('/addHoneydProfile', function (req, res)
 {
     if(req.query["parent"] === undefined)
     {
@@ -1234,7 +1212,7 @@ app.get('/addHoneydProfile', function(req, res)
     })
 });
 
-app.get('/customizeTraining', function(req, res)
+app.get('/customizeTraining', function (req, res)
 {
     NovaCommon.trainingDb = new NovaCommon.novaconfig.CustomizeTrainingBinding();
     
@@ -1242,7 +1220,7 @@ app.get('/customizeTraining', function(req, res)
         if(err) {LOG("ERROR", "Database error: " + err)};
         var includedLastTime = {};
 
-        for(var i = 0; i < results.length; i++) {
+        for (var i = 0; i < results.length; i++) {
             includedLastTime[results[i].uid] = results[i].included;
         }
 
@@ -1257,7 +1235,7 @@ app.get('/customizeTraining', function(req, res)
     });
 });
 
-app.get('/importCapture', function(req, res)
+app.get('/importCapture', function (req, res)
 {
     if(req.query["trainingSession"] === undefined)
     {
@@ -1273,9 +1251,7 @@ app.get('/importCapture', function(req, res)
     {
         RenderError(res, "Unable to read capture dump file");
         return;
-    }
-    else
-    {
+    } else {
         res.render('importCapture.jade', {
             locals: {
                 ips: NovaCommon.trainingDb.GetCaptureIPs(trainingSession),
@@ -1285,7 +1261,7 @@ app.get('/importCapture', function(req, res)
     }
 });
 
-app.post('/importCaptureSave', function(req, res)
+app.post('/importCaptureSave', function (req, res)
 {
     var hostileSuspects = new Array();
     var includedSuspects = new Array();
@@ -1303,7 +1279,7 @@ app.post('/importCaptureSave', function(req, res)
     trainingDump.SetAllIsIncluded(false);
     trainingDump.SetAllIsHostile(false);
 
-    for(var id in req.body)
+    for (var id in req.body)
     {
         id = id.toString();
         var type = id.split('_')[0];
@@ -1313,19 +1289,15 @@ app.post('/importCaptureSave', function(req, res)
         {
             includedSuspects.push(ip);
             trainingDump.SetIsIncluded(ip, true);
-        }
-        else if(type == 'hostile')
+        } else if(type == 'hostile')
         {
             hostileSuspects.push(ip);
             trainingDump.SetIsHostile(ip, true);
-        }
-        else if(type == 'description')
+        } else if(type == 'description')
         {
             descriptions[ip] = req.body[id];
             trainingDump.SetDescription(ip, req.body[id]);
-        }
-        else
-        {
+        } else {
             console.log("ERROR: Got invalid POST values for importCaptureSave");
         }
     }
@@ -1344,7 +1316,7 @@ app.post('/importCaptureSave', function(req, res)
 
 });
 
-app.get('/configWhitelist', function(req, res)
+app.get('/configWhitelist', function (req, res)
 {
     var interfaces = NovaCommon.config.ListInterfaces().sort();
     res.render('configWhitelist.jade', {
@@ -1357,12 +1329,12 @@ app.get('/configWhitelist', function(req, res)
     })
 });
 
-app.get('/editUsers', function(req, res)
+app.get('/editUsers', function (req, res)
 {
     var usernames = new Array();
     NovaCommon.dbqCredentialsGetUsers.all(
 
-    function(err, results)
+    function (err, results)
     {
         if(err)
         {
@@ -1371,7 +1343,7 @@ app.get('/editUsers', function(req, res)
         }
 
         var usernames = new Array();
-        for(var i in results)
+        for (var i in results)
         {
             usernames.push(results[i].user);
         }
@@ -1383,7 +1355,7 @@ app.get('/editUsers', function(req, res)
     });
 });
 
-app.get('/configWhitelist', function(req, res)
+app.get('/configWhitelist', function (req, res)
 {
     res.render('configWhitelist.jade', {
         locals: {
@@ -1393,7 +1365,7 @@ app.get('/configWhitelist', function(req, res)
     })
 });
 
-app.get('/suspects', function(req, res)
+app.get('/suspects', function (req, res)
 {
     res.render('main.jade', {
         user: req.user,
@@ -1401,7 +1373,7 @@ app.get('/suspects', function(req, res)
     });
 });
 
-app.get('/monitor', function(req, res)
+app.get('/monitor', function (req, res)
 {
     var suspectIp = req.query["ip"];
     var suspectInterface = req.query["interface"];
@@ -1413,18 +1385,18 @@ app.get('/monitor', function(req, res)
     });
 });
 
-app.get('/events', function(req, res)
+app.get('/events', function (req, res)
 {
     res.render('events.jade', {
         featureNames: NovaCommon.nova.GetFeatureNames()
     });
 });
 
-app.get('/', function(req, res)
+app.get('/', function (req, res)
 {
     NovaCommon.dbqFirstrunCount.all(
 
-    function(err, results)
+    function (err, results)
     {
         if(err)
         {
@@ -1435,36 +1407,34 @@ app.get('/', function(req, res)
         if(results[0].rows == 0)
         {
             res.redirect('/welcome');
-        }
-        else
-        {
+        } else {
             res.redirect('/suspects');
         }
 
     });
 });
 
-app.get('/createNewUser', function(req, res)
+app.get('/createNewUser', function (req, res)
 {
     res.render('createNewUser.jade');
 });
 
-app.get('/welcome', function(req, res)
+app.get('/welcome', function (req, res)
 {
     res.render('welcome.jade');
 });
 
-app.get('/setup1', function(req, res)
+app.get('/setup1', function (req, res)
 {
     res.render('setup1.jade');
 });
 
-app.get('/setup2', function(req, res)
+app.get('/setup2', function (req, res)
 {
     renderBasicOptions('setup2.jade', res, req)
 });
 
-app.get('/setup3', function(req, res)
+app.get('/setup3', function (req, res)
 {
     res.render('hhautoconfig.jade', {
         user: req.user,
@@ -1473,22 +1443,22 @@ app.get('/setup3', function(req, res)
     });
 });
 
-app.get('/shutdown', function(req, res)
+app.get('/shutdown', function (req, res)
 {
     res.render('shutdown.jade');
 });
 
-app.get('/about', function(req, res)
+app.get('/about', function (req, res)
 {
-    res.render('about.jade');
+    res.render('about.jade', {locals: {version: NovaCommon.config.GetVersionString()}});
 });
 
-app.get('/newInformation', function(req, res)
+app.get('/newInformation', function (req, res)
 {
     res.render('newInformation.jade');
 });
 
-app.post('/createNewUser', function(req, res)
+app.post('/createNewUser', function (req, res)
 {
     var password = req.body["password"];
     var userName = req.body["username"];
@@ -1516,7 +1486,7 @@ app.post('/createNewUser', function(req, res)
           {
             salt += possible[Math.floor(Math.random() * possible.length)];
           }
-            NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt, function()
+            NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt, function ()
             {
                 res.render('saveRedirect.jade', {
                     locals: {
@@ -1525,16 +1495,14 @@ app.post('/createNewUser', function(req, res)
                 });
             });
             return;
-        }
-        else
-        {
+        } else {
             RenderError(res, "Username you entered already exists. Please choose another.", "/createNewUser");
             return;
         }
     });
 });
 
-app.post('/createInitialUser', function(req, res)
+app.post('/createInitialUser', function (req, res)
 {
     var password = req.body["password"];
     var userName = req.body["username"];
@@ -1556,12 +1524,12 @@ app.post('/createInitialUser', function(req, res)
 
         if(results[0] == undefined)
         {
-            var salt = '';
-            var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            for(var i = 0; i < 8; i++)
-            {
-              salt += possible[Math.floor(Math.random() * possible.length)];
-            }
+          var salt = '';
+      var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      for(var i = 0; i < 8; i++)
+      {
+        salt += possible[Math.floor(Math.random() * possible.length)];
+      }
             NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt);
             NovaCommon.dbqCredentialsDeleteUser.run('nova');
             res.render('saveRedirect.jade', {
@@ -1570,16 +1538,14 @@ app.post('/createInitialUser', function(req, res)
                 }
             });
             return;
-        }
-        else
-        {
+        } else {
             RenderError(res, "Username already exists. Please choose another", "/setup1");
             return;
         }
     });
 });
 
-app.get('/autoConfig', function(req, res)
+app.get('/autoConfig', function (req, res)
 {
     var interfaces = NovaCommon.config.ListInterfaces().sort();
     res.render('hhautoconfig.jade', {
@@ -1591,12 +1557,12 @@ app.get('/autoConfig', function(req, res)
     });
 });
 
-app.get("/editTLSCerts", function(req, res)
+app.get("/editTLSCerts", function (req, res)
 {
     res.render('editTLSCerts.jade');    
 });
 
-app.get("/editClassifiers", function(req, res)
+app.get("/editClassifiers", function (req, res)
 {
     res.render('editClassifiers.jade', {
         locals: {
@@ -1605,7 +1571,7 @@ app.get("/editClassifiers", function(req, res)
     }); 
 });
 
-app.get("/editClassifier", function(req, res)
+app.get("/editClassifier", function (req, res)
 {
     var featureNames = NovaCommon.nova.GetFeatureNames();
     if(req.query['classifierIndex'] == undefined)
@@ -1620,7 +1586,7 @@ app.get("/editClassifier", function(req, res)
         };
         
         var features = [];
-        for(var i = 0; i < featureNames.length; i++) {
+        for (var i = 0; i < featureNames.length; i++) {
           var feature = {
             name: featureNames[i]
             , enabled: true
@@ -1632,9 +1598,7 @@ app.get("/editClassifier", function(req, res)
         }
 
         classifier.features = features;
-    }
-    else
-    {
+    } else {
         var index = req.query['classifierIndex'];
         var classifier = NovaCommon.classifiers.getClassifier(index);
      
@@ -1642,7 +1606,7 @@ app.get("/editClassifier", function(req, res)
         var weightString = classifier.strings["FEATURE_WEIGHTS"];
         var thresholdString = classifier.strings["THRESHOLD_HOSTILE_TRIGGERS"];
         var features = [];
-        for(var i = 0; i < featureNames.length; i++)
+        for (var i = 0; i < featureNames.length; i++)
         {
             var feature = {
                 name: featureNames[i]
@@ -1677,13 +1641,17 @@ app.get("/editClassifier", function(req, res)
     }); 
 });
 
-app.get("/hostnames", function(req, res) {
+app.get("/hostnames", function (req, res) {
+    if (!NovaCommon.dbqGetHostnames) {
+        RenderError(res, "Unable to access honeyd hostnames database. Something probably went wrong during the honeyd install.");
+        return;
+    }
     res.render('hostnames.jade', {
         locals: {}
     });
 });
 
-app.get("/interfaceAliases", function(req, res)
+app.get("/interfaceAliases", function (req, res)
 {
     ReloadInterfaceAliasFile();
     res.render('interfaceAliases.jade', {
@@ -1694,7 +1662,7 @@ app.get("/interfaceAliases", function(req, res)
     });
 });
 
-app.post("/editTLSCerts", function(req, res)
+app.post("/editTLSCerts", function (req, res)
 {
     if(req.files["cert"] == undefined || req.files["key"] == undefined)
     {
@@ -1708,12 +1676,12 @@ app.post("/editTLSCerts", function(req, res)
         return;
     }
 
-    fs.readFile(req.files["key"].path, function(readErrKey, data)
+    fs.readFile(req.files["key"].path, function (readErrKey, data)
     {
         fs.writeFile(NovaHomePath + "/config/keys/quasarKey.pem", data, function(writeErrKey)
         {
             
-            fs.readFile(req.files["cert"].path, function(readErrCert, certData)
+            fs.readFile(req.files["cert"].path, function (readErrCert, certData)
             {
                 fs.writeFile(NovaHomePath + "/config/keys/quasarCert.pem", certData, function(writeErrCert)
                 {
@@ -1792,7 +1760,7 @@ app.post('/scripts', function(req, res){
   });
 });
 
-app.post('/honeydConfigManage', function(req, res){
+app.post('/honeydConfigManage', function (req, res){
   var newName = (req.body['newName'] != undefined ? req.body['newName'] : req.body['newNameClone']);
   var configToClone = (req.body['cloneSelect'] != undefined ? req.body['cloneSelect'] : '');
   var cloneBool = false;
@@ -1820,7 +1788,7 @@ app.post('/honeydConfigManage', function(req, res){
   }
 });
 
-app.post('/customizeTrainingSave', function(req, res)
+app.post('/customizeTrainingSave', function (req, res)
 {
     var uids = NovaCommon.trainingDb.GetUIDs();
 
@@ -1828,19 +1796,19 @@ app.post('/customizeTrainingSave', function(req, res)
         if(err) {LOG("ERROR", 'Database error: ' + err);}
      });
 
-    for(var uid in uids) {
+    for (var uid in uids) {
         if(req.body[uid] == undefined) {
             NovaCommon.dbqAddLastTrainingDataSelection.run(uid, 0, function(err) {
                 if(err) {LOG("ERROR", 'Database error: ' + err);}
             });
-        if(
+        } else {
             NovaCommon.dbqAddLastTrainingDataSelection.run(uid, 1, function(err) {
                 if(err) {LOG("ERROR", 'Database error: ' + err);}
             });
         }
     }
 
-    for(var uid in req.body)
+    for (var uid in req.body)
     {
         NovaCommon.trainingDb.SetIncluded(uid, true);
     }
@@ -1856,7 +1824,7 @@ app.post('/customizeTrainingSave', function(req, res)
 
 
 
-app.post('/configureNovaSave', function(req, res)
+app.post('/configureNovaSave', function (req, res)
 {
     var configItems = ["ADVANCED", "DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
     "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
@@ -1868,12 +1836,12 @@ app.post('/configureNovaSave', function(req, res)
     "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", 
     "THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC", "EMAIL_ALERTS_ENABLED", "TRAINING_DATA_PATH", "MESSAGE_WORKER_THREADS"];
 
-    Validator.prototype.error = function(msg)
+    Validator.prototype.error = function (msg)
     {
         this._errors.push(msg);
     }
 
-    Validator.prototype.getErrors = function()
+    Validator.prototype.getErrors = function ()
     {
         return this._errors;
     }
@@ -2021,7 +1989,7 @@ app.post('/configureNovaSave', function(req, res)
             var checkIPZero = 0;
             var checkIPBroad = 0;
 
-            for(var val = 0; val < split.length; val++) 
+            for (var val = 0; val < split.length; val++) 
             {
                 if(split[val] == "0") 
                 {
@@ -2207,7 +2175,7 @@ app.get('/scripts', function(req, res){
   
   var scriptNames = NovaCommon.honeydConfig.GetScriptNames();
 
-  for(var i = 0; i < scriptNames.length; i++) {
+  for (var i = 0; i < scriptNames.length; i++) {
     var script = NovaCommon.honeydConfig.GetScript(scriptNames[i]);
     namesAndPaths.push({script: script.GetName(), path: script.GetPath(), configurable: script.GetIsConfigurable()});
   }
@@ -2251,135 +2219,20 @@ var SendBenignSuspectToPulsar = function(suspect)
 };
 everyone.now.SendBenignSuspectToPulsar = SendBenignSuspectToPulsar;
 
-var distributeSuspect = function(suspect)
-{
-  var d = new Date(suspect.GetLastPacketTime() * 1000);
-  var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-  
-  
-  var s = new Object();
-  objCopy(suspect, s);
-  s.interfaceAlias = ConvertInterfaceToAlias(s.GetInterface);
-  
-  // Save to unseen db
-  NovaCommon.dbqIsNewSuspect.all(s.GetIpString, s.GetInterface, function(err, results) {
-    if(err)
-    {
-      LOG("ERROR", err);
-      return;
-    }
-      
-    if(results[0].rows === 0)
-    {
-      NovaCommon.dbqAddNewSuspect.run(s.GetIpString, s.GetInterface, function()
-      {
-        try {
-          everyone.now.OnNewSuspectInserted(s.GetIpString, s.GetInterface);
-          everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
-        } catch(err) {}
-      });
-    } 
-    else
-    {
-      NovaCommon.dbqSeenAllData.all(s.GetIpString, s.GetInterface, function(err, results) {
-        if(err)
-        {
-          LOG("ERROR", err);
-          return;
-        }
-        
-        if(results[0].seenAllData)
-        {
-          NovaCommon.dbqMarkSuspectDataUnseen.run(s.GetIpString, s.GetInterface, function() {
-            try
-            {
-              everyone.now.OnNewSuspectData(s.GetIpString, s.GetInterface);
-            } catch(err) {}
-          });
-        }
-      });
-     }
-  });
-
-  try 
-  {
-    everyone.now.OnNewSuspect(s);
-  } catch(err) {};
-  
-  if(suspect.GetIsHostile() == true && parseInt(suspect.GetClassification()) >= 0)
-  {
-    var send = {};
-    
-    send.ip = suspect.GetIpString();
-    send.classification = String(suspect.GetClassification());
-    send.lastpacket = dString;
-    send.ishostile = String(suspect.GetIsHostile());
-    send.interface = String(suspect.GetInterface());
-    
-    SendHostileEventToPulsar(send);
-  }
-  else if(suspect.GetIsHostile() == false && benignRequest && parseInt(suspect.GetClassification()) >= 0)
-  {
-    var d = new Date(suspect.GetLastPacketTime() * 1000);
-    var dString = pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-    var send = {};
-    
-    send.ip = suspect.GetIpString();
-    send.classification = String(suspect.GetClassification());
-    send.lastpacket = dString;
-    send.ishostile = String(suspect.GetIsHostile());
-    send.interface = String(suspect.GetInterface());
-    
-    SendBenignSuspectToPulsar(send);
-  }
-  else
-  {
-
-  }
-};
-
-var distributeAllSuspectsCleared = function()
-{
-    try 
-    {
-        everyone.now.AllSuspectsCleared();
-    } 
-    catch(err) 
-    {
-        // We can safely ignore this, it's just because no browsers are connected
-    };
-}
-
-var distributeSuspectCleared = function(suspect)
-{
-    //var s = new Object;
-    
-    //s['interface'] = suspect.GetInterface();
-    //s['ip'] = suspect.GetIpString();
-    //s['idString'] = suspect.GetIdString();
-    
-    //everyone.now.SuspectCleared(s);
-}
-
-NovaCommon.nova.registerOnAllSuspectsCleared(distributeAllSuspectsCleared);
-NovaCommon.nova.registerOnSuspectCleared(distributeSuspectCleared);
-NovaCommon.nova.registerOnNewSuspect(distributeSuspect);
-
-
-process.on('SIGINT', function()
+process.on('SIGINT', function ()
 {
     NovaCommon.nova.Shutdown();
     process.exit();
 });
 
-process.on('exit', function()
+process.on('exit', function ()
 {
     LOG("ALERT", "Quasar is exiting cleanly.");
 });
 
 function objCopy(src, dst) 
 {
-    for(var member in src) 
+    for (var member in src) 
     {
         if(typeof src[member] == 'function') 
         {
@@ -2445,7 +2298,7 @@ function ReloadInterfaceAliasFile()
 function ConvertInterfacesToAliases(interfaces) 
 {
     var aliases = new Array();
-    for(var i in interfaces) 
+    for (var i in interfaces) 
     {
         aliases.push(ConvertInterfaceToAlias(interfaces[i]));
     }
@@ -2467,7 +2320,8 @@ function ConvertInterfaceToAlias(iface)
 setInterval(function(){
     try 
     {
-        everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp());
+        NovaCommon.nova.CheckConnection();
+        everyone.now.updateHaystackStatus(NovaCommon.nova.IsHaystackUp(true));
         everyone.now.updateNovadStatus(NovaCommon.nova.IsNovadConnected());
     } 
     catch(err) 

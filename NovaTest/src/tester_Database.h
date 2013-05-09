@@ -18,49 +18,67 @@
 
 #include "gtest/gtest.h"
 
+#include "ClassificationAggregator.h"
 #include "Database.h"
+#include "DatabaseQueue.h"
 
 using namespace Nova;
+
+extern ClassificationEngine *engine;
+
 
 // The test fixture for testing class Database.
 class DatabaseTest : public ::testing::Test {
 protected:
-	// Objects declared here can be used by all tests in the test case
-	Database testObject;
-
 	// Unused methods here may be deleted
 	DatabaseTest() {
 		// You can do set-up work for each test here.
-		testObject.Connect();
+		Database::Inst()->Connect();
 	}
 	virtual ~DatabaseTest() {
 		// You can do clean-up work that doesn't throw exceptions here.
 	}
-
-	// If the constructor and destructor are not enough for setting up
-	// and cleaning up each test, you can define the following methods:
-	virtual void SetUp() {
-		// Code here will be called immediately after the constructor (right before each test).
-	}
-
-	virtual void TearDown() {
-		// Code here will be called immediately after each test (right before the destructor).
-	}
 };
 
-// Tests go here. Multiple small tests are better than one large test, as each test
-// will get a pass/fail and debugging information associated with it.
+class dummyce : public ClassificationEngine {
+public:
+	 double Classify(Nova::Suspect*)
+	 {
+		 return 0.5;
+	 }
+};
 
-TEST_F(DatabaseTest, testInsertHostileSuspectEvent)
+/*
+
+TEST_F(DatabaseTest_DISABLED, testDatabase)
 {
-	FeatureSet f;
-	for (int i = 0; i < DIM; i++)
-	{
-		f.m_features[i] = i;
-	}
-	Suspect s;
-	s.SetFeatureSet(&f, MAIN_FEATURES);
-	s.SetClassification(0.42);
+	engine = new dummyce();
+	DatabaseQueue q;
+	Evidence f;
 
-	testObject.InsertSuspectHostileAlert(&s);
+	f.m_evidencePacket.ip_p = 17;
+	f.m_evidencePacket.interface = "eth0";
+	f.m_evidencePacket.ip_dst = 42;
+
+	for (int i = 0; i < 250000; i++) {
+		f.m_evidencePacket.dst_port = i;
+		f.m_evidencePacket.ip_src = i;
+
+		q.ProcessEvidence(&f, true);
+	}
+
+	struct timeval start, end;
+	long mtime, seconds, useconds;
+	gettimeofday(&start, NULL);
+
+	q.WriteToDatabase();
+
+	gettimeofday(&end, NULL);
+	seconds  = end.tv_sec  - start.tv_sec;
+	useconds = end.tv_usec - start.tv_usec;
+	mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+	cout << "Elapsed time in milliseconds: " << mtime << endl;
+
 }
+
+*/

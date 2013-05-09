@@ -26,27 +26,6 @@
 using namespace std;
 using namespace Nova;
 
-// Normalization method to use on each feature
-// TODO: Make this a configuration var somewhere in Novaconfig.txt?
-/*
-normalizationType KnnClassification::m_normalization[] =
-{
-		LINEAR_SHIFT, // Don't normalize IP traffic distribution, already between 0 and 1
-		LINEAR_SHIFT,
-		LOGARITHMIC,
-		LOGARITHMIC,
-		LOGARITHMIC,
-		LOGARITHMIC,
-		LOGARITHMIC,
-		LOGARITHMIC,
-		LOGARITHMIC,
-		LINEAR_SHIFT,
-		LINEAR_SHIFT,
-		LINEAR_SHIFT,
-		LINEAR_SHIFT,
-		LINEAR_SHIFT
-};*/
-
 KnnClassification::KnnClassification()
 {
 	pthread_rwlock_init(&m_lock, NULL);
@@ -168,16 +147,18 @@ double KnnClassification::Classify(Suspect *suspect)
 	double d;
 	FeatureIndex fi;
 
-	FeatureSet fs = suspect->m_features;
+	EvidenceAccumulator &fs = suspect->m_features;
 	uint ai = 0;
 
+	// TODO DTC fix after suspecttable->sqlite conversion
 	// Do we not have enough data to classify?
+	/*
 	if(fs.m_packetCount < Config::Inst()->GetMinPacketThreshold())
 	{
 		suspect->SetIsHostile(false);
 		suspect->SetClassification(-2);
 		return -2;
-	}
+	}*/
 
 	//Allocate the ANNpoint;
 	ANNpoint aNN = annAllocPt(m_enabledFeatureCount);

@@ -3,7 +3,7 @@
 
 #include <v8.h>
 #include "v8Helper.h"
-#include "FeatureSet.h"
+#include "EvidenceAccumulator.h"
 #include "HoneydConfiguration/Node.h"
 #include "HoneydConfiguration/Profile.h"
 #include "HoneydConfiguration/Port.h"

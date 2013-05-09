@@ -47,7 +47,6 @@ bool StartQuasarWrapper(bool debug);
 bool StopQuasarWrapper();
 
 void PrintSuspect(in_addr_t address, std::string interface);
-void PrintSuspectData(in_addr_t address, std::string interface);
 void PrintAllSuspects(enum Nova::SuspectListType listType, bool csv);
 
 void ClearSuspectWrapper(in_addr_t address, std::string interface);

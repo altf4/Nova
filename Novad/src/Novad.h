@@ -64,17 +64,6 @@ void StartCapture();
 void StopCapture();
 void StopCapture_noLocking();
 
-// Append to state file
-void AppendToStateFile();
-
-// Cleans up the state file
-//	- Removes old entries
-//	- Removes cleared suspects
-void RefreshStateFile();
-
-// Appends all entries in the state file to the suspect table
-void LoadStateFile();
-
 // Do any cleanup needed before exit when in training mode
 void CloseTrainingCapture();
 
@@ -102,9 +91,6 @@ void Packet_Handler(u_char *useless,const struct pcap_pkthdr *pkthdr,const u_cha
 // Masks the kill signals of a thread so they will get
 // sent to the main thread's signal handler.
 void MaskKillSignals();
-
-// Updates data and classification for a suspect
-void UpdateAndClassify(SuspectID_pb key);
 
 //Logs and prints if any packets were dropped since the last time this was called
 void CheckForDroppedPackets();

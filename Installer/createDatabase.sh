@@ -1,37 +1,134 @@
 #!/bin/bash
 
 QUERY1="
+PRAGMA page_size = 4096;
 PRAGMA journal_mode = WAL;
+PRAGMA foreign_keys = ON;
+PRAGMA synchronous = NORMAL;
 
-CREATE TABLE suspect_alerts (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	suspect VARCHAR(40),
-	interface VARCHAR(40),
-	timestamp TIMESTAMP,
-	statistics INT,
-	classification DOUBLE
+CREATE TABLE packet_counts(
+	ip TEXT,
+	interface TEXT,
+
+	count_tcp INTEGER,
+	count_udp INTEGER,
+	count_icmp INTEGER,
+	count_other INTEGER,
+	count_total INTEGER,
+	count_tcpRst INTEGER,
+	count_tcpAck INTEGER,
+	count_tcpSyn INTEGER,
+	count_tcpFin INTEGER,
+	count_tcpSynAck INTEGER,
+	count_bytes INTEGER,
+
+	FOREIGN KEY (ip, interface) REFERENCES suspects(ip, interface),
+	PRIMARY KEY(ip, interface)
 );
 
-CREATE TABLE statistics (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-		ip_traffic_distribution DOUBLE,
-		port_traffic_distribution DOUBLE,
-		packet_size_mean DOUBLE,
-		packet_size_deviation DOUBLE,
-		distinct_ips DOUBLE,
-		distinct_tcp_ports DOUBLE,
-		distinct_udp_ports DOUBLE,
-		avg_tcp_ports_per_host DOUBLE,
-		avg_udp_ports_per_host DOUBLE,
-		tcp_percent_syn DOUBLE,
-		tcp_percent_fin DOUBLE,
-		tcp_percent_rst DOUBLE,
-		tcp_percent_synack DOUBLE,
-		haystack_percent_contacted DOUBLE
-);"
+CREATE TABLE suspects (
+	ip TEXT,
+	interface TEXT,
+
+	startTime INTEGER,
+	endTime INTEGER,
+	lastTime INTEGER,
+
+	classification DOUBLE,
+	hostileNeighbors INTEGER,
+	isHostile INTEGER,
+
+	classificationNotes TEXT,
+
+	ip_traffic_distribution DOUBLE,
+	port_traffic_distribution DOUBLE,
+	packet_size_mean DOUBLE,
+	packet_size_deviation DOUBLE,
+	distinct_ips DOUBLE,
+	distinct_tcp_ports DOUBLE,
+	distinct_udp_ports DOUBLE,
+	avg_tcp_ports_per_host DOUBLE,
+	avg_udp_ports_per_host DOUBLE,
+	tcp_percent_syn DOUBLE,
+	tcp_percent_fin DOUBLE,
+	tcp_percent_rst DOUBLE,
+	tcp_percent_synack DOUBLE,
+	haystack_percent_contacted DOUBLE,
+
+	PRIMARY KEY(ip, interface)
+);
+
+CREATE INDEX idx ON suspects(classification);
+
+
+/* Basically a copy of the suspects table with a new key added. Annoying there isn't a good way to copy the schema in sqlite */
+CREATE TABLE suspect_alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+	ip TEXT,
+	interface TEXT,
+
+	startTime INTEGER,
+	endTime INTEGER,
+	lastTime INTEGER,
+
+	classification DOUBLE,
+	hostileNeighbors INTEGER,
+	isHostile INTEGER,
+
+	classificationNotes TEXT,
+
+	ip_traffic_distribution DOUBLE,
+	port_traffic_distribution DOUBLE,
+	packet_size_mean DOUBLE,
+	packet_size_deviation DOUBLE,
+	distinct_ips DOUBLE,
+	distinct_tcp_ports DOUBLE,
+	distinct_udp_ports DOUBLE,
+	avg_tcp_ports_per_host DOUBLE,
+	avg_udp_ports_per_host DOUBLE,
+	tcp_percent_syn DOUBLE,
+	tcp_percent_fin DOUBLE,
+	tcp_percent_rst DOUBLE,
+	tcp_percent_synack DOUBLE,
+	haystack_percent_contacted DOUBLE
+);
+
+CREATE TABLE packet_sizes (
+	ip TEXT,
+	interface,
+
+	packetSize INTEGER,
+	count INTEGER,
+	
+	PRIMARY KEY(ip, interface, packetSize),
+	FOREIGN KEY (ip, interface) REFERENCES suspects(ip, interface)
+);
+
+CREATE TABLE ip_port_counts (
+	ip TEXT,
+	interface,
+
+	type TEXT,
+	dstip TEXT,
+	port INTEGER,
+	count INTEGER,
+	
+	FOREIGN KEY (ip, interface) REFERENCES suspects(ip, interface),
+	PRIMARY KEY(ip, interface, type, dstip, port)
+);
+
+
+/* We keep track of what honeypot IPs are currently up so we can join against the ip_port_counts for haystack_percent_contacted */
+CREATE TABLE honeypots (
+	ip TEXT,
+	PRIMARY KEY (ip)
+);
+
+"
 
 novadDbFilePath="$DESTDIR/usr/share/nova/userFiles/data/novadDatabase.db"
+echo "Writing database $novadDbFilePath"
 rm -fr "$novadDbFilePath"
 sqlite3 "$novadDbFilePath" <<< $QUERY1
 chgrp nova "$novadDbFilePath"

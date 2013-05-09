@@ -26,7 +26,7 @@ public:
 
 	bool keyExists(KeyType key);
 	void erase(KeyType key);
-	void erase(typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator key);
+	typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator erase(typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator key);
 
 	// Expose generic methods we use
 	void clear();
@@ -69,9 +69,9 @@ typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator Has
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
-void HashMap<KeyType,ValueType,HashFcn,EqualKey>::erase(typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator key)
+typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator HashMap<KeyType,ValueType,HashFcn,EqualKey>::erase(typename std::unordered_map<KeyType, ValueType, HashFcn, EqualKey>::iterator key)
 {
-	m_map.erase(key);
+	return m_map.erase(key);
 }
 
 template<class KeyType, class ValueType, class HashFcn, class EqualKey>
