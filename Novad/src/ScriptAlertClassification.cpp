@@ -55,6 +55,7 @@ double ScriptAlertClassification::Classify(Suspect *suspect)
 	int res;
 	double classification = 0;
 
+	suspect->m_classificationNotes += "\n=== Notes from Script Alert Classification Engine ===\n";
 
 	SQL_RUN(SQLITE_OK, sqlite3_bind_text(getScriptAlerts, 1, suspect->GetIpString().c_str(), -1, SQLITE_TRANSIENT));
 	SQL_RUN(SQLITE_OK, sqlite3_bind_text(getScriptAlerts, 2, suspect->GetInterface().c_str(), -1, SQLITE_TRANSIENT));
@@ -62,9 +63,14 @@ double ScriptAlertClassification::Classify(Suspect *suspect)
 
 	res = sqlite3_step(getScriptAlerts);
 
-	if (res == SQLITE_ROW)
+	while(res == SQLITE_ROW)
 	{
+		suspect->m_classificationNotes += "Script '" + string((const char*)sqlite3_column_text(getScriptAlerts, 3)) +
+				"' threw alert '" + string((const char*)sqlite3_column_text(getScriptAlerts, 4)) + "'\n";
 		classification = 1;
+
+
+		res = sqlite3_step(getScriptAlerts);
 	}
 
 	SQL_RUN(SQLITE_OK, sqlite3_reset(getScriptAlerts));

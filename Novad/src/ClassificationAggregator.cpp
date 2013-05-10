@@ -101,6 +101,10 @@ void ClassificationAggregator::LoadConfiguration(std::string filePath)
 double ClassificationAggregator::Classify(Suspect *s)
 {
 	Lock(&this->lock);
+
+	// Clear the classification notes. The child engines will append to this.
+	s->m_classificationNotes = "";
+
 	double classification = 0;
 	for (uint i = 0; i < m_engines.size(); i++)
 	{
