@@ -1101,6 +1101,10 @@ everyone.now.saveClassifier = function(classifier, index, cb)
     {
         classifier.strings["THRESHOLD_HOSTILE_TRIGGERS"] = thresholdString;
     }
+    else if (classifier.type == "SCRIPT_ALERT")
+    {
+        classifier.strings = {};
+    }
 
     NovaCommon.classifiers.saveClassifier(classifier, index);
     if(cb) cb();

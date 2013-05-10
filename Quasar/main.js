@@ -1574,9 +1574,7 @@ app.get("/editTLSCerts", function (req, res)
 app.get("/editClassifiers", function (req, res)
 {
     res.render('editClassifiers.jade', {
-        locals: {
             classifiers: NovaCommon.classifiers.getClassifiers()
-        }
     }); 
 });
 
