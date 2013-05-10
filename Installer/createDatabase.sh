@@ -128,11 +128,35 @@ CREATE TABLE honeypots (
 "
 
 novadDbFilePath="$DESTDIR/usr/share/nova/userFiles/data/novadDatabase.db"
-echo "Writing database $novadDbFilePath"
+echo "Creating database schemas in $novadDbFilePath"
 rm -fr "$novadDbFilePath"
 sqlite3 "$novadDbFilePath" <<< $QUERY1
 chgrp nova "$novadDbFilePath"
 chmod g+rw "$novadDbFilePath"
+
+
+SCRIPT_ALERT_SCHEMA="
+PRAGMA page_size = 4096;
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = NORMAL;
+
+CREATE TABLE script_alerts(
+	id INTEGER PRIMARY KEY,
+
+	ip TEXT,
+	interface TEXT,
+	
+	script TEXT,
+	alert TEXT
+	);
+"
+
+scriptAlertDb="$DESTDIR/usr/share/nova/userFiles/data/scriptAlerts.db"
+echo "Creating database schemas in $scriptAlertDb"
+rm -fr "$scriptAlertDb"
+sqlite3 "$scriptAlertDb" <<< $SCRIPT_ALERT_SCHEMA
+chgrp nova "$scriptAlertDb"
+chmod o+rw "$scriptAlertDb"
 
 
 
@@ -184,12 +208,14 @@ CREATE TABLE lastTrainingDataSelection(
 
 
 quasarDbFilePath="$DESTDIR/usr/share/nova/userFiles/data/quasarDatabase.db"
+echo "Creating database schemas in $quasarDbFilePath"
 rm -fr "$quasarDbFilePath"
 sqlite3 "$quasarDbFilePath" <<< $QUERY2
 chgrp nova "$quasarDbFilePath"
 chmod g+rw "$quasarDbFilePath"
 
 pulsarDbFilePath="$DESTDIR/usr/share/nova/userFiles/data/pulsarDatabase.db"
+echo "Creating database schemas in $pulsarDbFilePath"
 rm -fr "$pulsarDbFilePath"
 sqlite3 "$pulsarDbFilePath" <<< $QUERY2
 chgrp nova "$pulsarDbFilePath"

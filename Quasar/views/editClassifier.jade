@@ -59,6 +59,7 @@ block content
         select(data-bind='value: type')
           option KNN
           option THRESHOLD_TRIGGER
+          option SCRIPT_ALERT
     tr
       td
         span Mode
@@ -75,12 +76,13 @@ block content
 
   br
 
-  table
+  table(data-bind='visible: classifier.type() != "SCRIPT_ALERT"')
     theader
       td Feature Name
       td Enabled
       td(data-bind='visible: classifier.type() == "KNN"') Weight
       td(data-bind='visible: classifier.type() == "THRESHOLD_TRIGGER"') Hostile Threshold
+      td(data-bind='visible: classifier.type() == "SCRIPT_ALERT"') Script Triggered Alerts
     tbody(data-bind='foreach: classifier.features')
       tr
         td(data-bind='text: name')

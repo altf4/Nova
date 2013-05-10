@@ -27,6 +27,14 @@
 #include <sqlite3.h>
 #include <stdexcept>
 
+// Quick error checking macro so we don't have to copy/paste this over and over
+#define SQL_RUN(val, stmt) \
+res = stmt; \
+if (res != val ) \
+{\
+	LOG(ERROR, "SQL error: " + string(sqlite3_errmsg(db)), "");\
+}
+
 namespace Nova
 {
 
