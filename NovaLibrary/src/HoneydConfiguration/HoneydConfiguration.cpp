@@ -652,7 +652,6 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 
 	stringstream out;
 
-	//Print the "default" profile
 	out << m_profiles.m_root->ToString() << "\n";
 
 	uint j = 0;
@@ -1391,10 +1390,7 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		addfile << configName << '\n';
 		addfile.close();
 		WriteAllTemplatesToXML();
-		boost::filesystem::path fromString = Config::Inst()->GetPathHome() + "/config/templates/default/routes.xml";
-		boost::filesystem::path toString = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/routes.xml";
 
-		boost::filesystem::copy_file(fromString, toString);
 		Config::Inst()->SetCurrentConfig(oldName);
 		return true;
 	}
@@ -1420,9 +1416,9 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 
 bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
 {
-	if(!configName.compare("default"))
+	if(m_configs.size() == 1)
 	{
-		cout << "Cannot delete default configuration" << endl;
+		LOG(ERROR, "You cannot delete all haystack configurations", "");
 		return false;
 	}
 

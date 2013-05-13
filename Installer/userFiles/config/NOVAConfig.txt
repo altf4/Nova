@@ -508,7 +508,7 @@ ONLY_CLASSIFY_HONEYPOT_TRAFFIC 0
 ############################################
 # CURRENT_CONFIG
 ############################################
-CURRENT_CONFIG default
+CURRENT_CONFIG sample
 
 ############################################
 # IPLIST_PATH

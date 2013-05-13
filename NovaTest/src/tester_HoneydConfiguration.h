@@ -299,7 +299,7 @@ TEST_F(HoneydConfigurationTest, test_SwitchToConfiguration)
 	EXPECT_TRUE(HC->AddNewConfiguration("NewConfig",false,""));
 	EXPECT_TRUE(HC->SwitchToConfiguration("NewConfig"));
 	EXPECT_TRUE(HC->RemoveConfiguration("NewConfig"));
-	EXPECT_TRUE(HC->SwitchToConfiguration("default"));
+	EXPECT_TRUE(HC->SwitchToConfiguration("sample"));
 }
 
 TEST_F(HoneydConfigurationTest, test_RemoveConfiguration)
