@@ -182,7 +182,11 @@ NovaGrid.prototype = {
 
            // Returns the HTML for the table
            , GetTable: function() {
-               var innerTableString = this.headerHTML + '<TBODY>';
+		       if (this.m_rightClick) {
+               	var innerTableString = this.headerHTML + '<TBODY' + ' oncontextmenu="' + this.m_rightClick + '" onclick="' + this.m_rightClick + '">';
+			   } else {
+               	var innerTableString = this.headerHTML + '<TBODY>';
+			   }
                var keys = Object.keys(this.m_elements);
                var arrayRep = new Array();
                for (var i = 0; i < keys.length; i++) 
@@ -249,15 +253,7 @@ NovaGrid.prototype = {
                    }
                    if(this.m_selection)
                    {
-                       innerTableString += '<TR class="novaGrid" id=\'' + sub + '\', onclick="' + this.m_name + '.AddToSelected(\'' + sub + '\', event);" ';
-                       if(this.m_rightClick != undefined)
-                       {
-                         innerTableString += 'oncontextmenu="' + this.m_rightClick + '">';
-                       }
-                       else
-                       {
-                         innerTableString += '>';
-                       }
+                       innerTableString += '<TR class="novaGrid" id=\'' + sub + '\', onclick="' + this.m_name + '.AddToSelected(\'' + sub + '\', event);" >';
                    }
                    else
                    {
@@ -273,11 +269,11 @@ NovaGrid.prototype = {
                      {
                        if(arrayRep[i].style != undefined)
                        {
-                         innerTableString += 'style="' + arrayRep[i].style + '" oncontextmenu="' + this.m_rightClick + '">';
+                         innerTableString += 'style="' + arrayRep[i].style + '">';
                        } 
                        else
                        {
-                         innerTableString += 'oncontextmenu="' + this.m_rightClick + '">';
+                         innerTableString += '>';
                        }     
                      }
                      else

@@ -20,18 +20,6 @@ block content
   div(id="nova_suspects_error_view")
     h3(style="color: red") Warning: The Packet Classifier is either not running or not connected. The data below may be old. Try starting the Packet Classifier.
   div#setup(onclick='handleOnclick(event)')
-    div#nova_suspects_header
-      br
-      
-      button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}')
-        img.buttonIcon(src="images/erase.png")
-        span.buttonSpan Clear All Suspects
-
-      button(onclick="window.location='/novaState.csv'")
-       img.buttonIcon(src="images/save.png")
-       span.buttonSpan Save as CSV file
-  
-      br
     div#nova_suspects      
       input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
       label Live Grid Update
@@ -45,17 +33,33 @@ block content
       label Show Unclassified Suspects
       br
       br
-      div#tablePages(style="width: 100%;")
-      p Right click suspects for more options
-      div.novaGrid
+      div.novaGrid(id="keepContext")
         div#suspectTable
+      div#tablePages(style="width: 100%;")
 
       p#numberOfSuspects Recieved data for 0 suspects
+    div#nova_suspects_header
+      br
+      
+      button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}')
+        img.buttonIcon(src="images/erase.png")
+        span.buttonSpan Clear All Suspects
+
+      button(onclick="window.location='/novaState.csv'")
+       img.buttonIcon(src="images/save.png")
+       span.buttonSpan Save as CSV file
+  
+      br
       
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
   script
+
+    function cancelEvents(e) {
+      e.stopPropagation()
+    }
+ 
     var suspectGrid;
     var liveUpdate = true;
 
@@ -63,6 +67,7 @@ block headerAdditions
 
     function handleOnclick(e)
     {
+      return;
       var evt = (e ? e : window.event);
       var source = evt.target || evt.srcElement;
       var loc = document.location.href;
@@ -169,7 +174,7 @@ block headerAdditions
 
     function buildLink(ip, interface)
     {
-      var res = "<div style='display: none;'>" + interface + "</div><div oncontextmenu='replacementContextMenu(event)'>" + ip + "</div>";
+      var res = "<div style='display: none;'>" + interface + "</div><div'>" + ip + "</div>";
       return res;
     }
 
@@ -263,7 +268,7 @@ block headerAdditions
         else if(d >= 0 && d <= 1)
         {
             var num = 100 * d;
-            return '<div class="classification_entry" oncontextmenu="replacementContextMenu(event);"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div>';
+            return '<div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div>';
         }
         else
         {
@@ -273,6 +278,8 @@ block headerAdditions
 
     function Init()
     {
+        document.getElementById("keepContext").onclick = cancelEvents;
+       
         var gridStructure = [];
         gridStructure.push({name: "Hostility", isDisabled: false});
         gridStructure.push({name: "Interface", isDisabled: false});
@@ -314,6 +321,7 @@ block headerAdditions
         setInterval(querySuspects, 3000);
     
     function querySuspects() {
+        if(!liveUpdate) {return;}
         var rows = suspectGrid.m_rowsPerPage;
         var offset = suspectGrid.m_currentPage * suspectGrid.m_rowsPerPage;
         var sortOrder = suspectGrid.m_sortDescending ? "DESC" : "ASC";
@@ -472,7 +480,7 @@ block headerAdditions
         clickX = evt.pageX;
         clickY = evt.pageY;
       }
-      
+
       var contextMenuDiv = document.createElement('div');
       contextMenuDiv.setAttribute('style', 'border-radius: 5px; box-shadow: 0 0 5px #AAA; width: 250px; z-index: 1002; position: absolute; top: ' + clickY + 'px; left:' + clickX + 'px; opacity: 1;');
       contextMenuDiv.id = 'contextMenu';
