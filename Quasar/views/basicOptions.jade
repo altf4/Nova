@@ -22,6 +22,7 @@ block headerAdditions
 
 block content
   form#basicConfigForm(method='post', action='/configureNovaSave')
+    input(type="hidden", value="/basicOptions", name="ERROR_REDIRECT")
     include includes/basicConfigForm
   button(onClick='document.getElementById("basicConfigForm").submit()')
     img.buttonIcon(src='images/ok.png')

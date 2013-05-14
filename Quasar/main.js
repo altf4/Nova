@@ -2105,7 +2105,12 @@ app.post('/configureNovaSave', function (req, res)
 
     if(errors.length > 0)
     {
-      RenderError(res, errors, "/suspects");
+      var errorRedirect = "/suspects";
+      if (req.body["ERROR_REDIRECT"] != undefined) {
+        errorRedirect = req.body["ERROR_REDIRECT"];
+      }
+    
+      RenderError(res, errors, errorRedirect);
     } 
     else 
     {
