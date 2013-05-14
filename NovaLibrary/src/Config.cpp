@@ -182,6 +182,7 @@ void Config::LoadCustomSettings(int argc,  char** argv)
 
 void Config::LoadConfig()
 {
+	SaveSMTPSettings();
 	LoadConfig_Internal();
 	LoadVersionFile();
 	LoadInterfaces();
