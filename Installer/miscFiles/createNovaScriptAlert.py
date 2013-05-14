@@ -21,7 +21,7 @@ if len(sys.argv) != 5:
 ip = sys.argv[1]
 interface = sys.argv[2]
 script = sys.argv[3]
-alert = sys.argv[4]
+alert = sys.argv[4].encode("utf8")
 
 
 db = sqlite3.connect(databasepath)
