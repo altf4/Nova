@@ -1384,15 +1384,40 @@ everyone.now.GetHostnames = function(cb) {
 };
 
 everyone.now.InsertHostname = function(hostname, cb) {
+	// Convert hostname to lower case and check if it is valid
+	if (typeof(hostname) != "string") {
+        cb("Hostname must be a string! Invalid type.");
+        return;	
+	}
+
+	hostname = hostname.toLowerCase();
+
+	if (!(new RegExp("^[a-zA-Z0-9\-]+$")).test(hostname)) {
+		cb("Hostname must not be blank and must contain only letters, numbers, and hyphens. Invalid hostname given.");
+		return;
+	}
+
     if (!NovaCommon.dbqGetHostnames) {
         cb("Unable to access hostnames database");
         return;
     }
-
-    NovaCommon.dbqInsertHostname.run(hostname, function(err) {
+	
+	// Check if it exists already
+	
+    NovaCommon.dbqGetHostnames.all(function(err, results) {
         if (databaseError(err, cb)) {return;}
-        cb && cb(null);
-    });
+
+		if (results.length != 0) {
+			cb && cb("Hostname already exists! Can not insert it.");
+			return;
+		} else {
+    		NovaCommon.dbqInsertHostname.run(hostname, function(err) {
+        		if (databaseError(err, cb)) {return;}
+        		cb && cb(null);
+    		});
+		}
+    }); 
+
 };
 
 everyone.now.ClearHostnameAllocations = function(cb) {
