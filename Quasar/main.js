@@ -1775,7 +1775,7 @@ app.post('/honeydConfigManage', function (req, res){
     cloneBool = true;
   }
   
-  if((new RegExp('^[a-zA-Z0-9 -_]+$')).test(newName))
+  if((new RegExp('^[a-zA-Z0-9 \\-_]+$')).test(newName))
   {
     NovaCommon.honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
     NovaCommon.honeydConfig.SwitchConfiguration(newName);
