@@ -947,7 +947,6 @@ app.get('/advancedOptions', function (req, res)
             , SMTP_DOMAIN: domain
             , SMTP_USER: NovaCommon.config.GetSMTPUser()
             , SMTP_PASS: NovaCommon.config.GetSMTPPass()
-            , RECIPIENTS: NovaCommon.config.ReadSetting("RECIPIENTS")
             , SERVICE_PREFERENCES: NovaCommon.config.ReadSetting("SERVICE_PREFERENCES")
             , CAPTURE_BUFFER_SIZE: NovaCommon.config.ReadSetting("CAPTURE_BUFFER_SIZE")
             , MIN_PACKET_THRESHOLD: NovaCommon.config.ReadSetting("MIN_PACKET_THRESHOLD")

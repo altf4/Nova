@@ -84,7 +84,7 @@ script
   var loaded = false;
   var connType = '#{RSYSLOG_CONNTYPE}';
   var recipientNum = 1;
-  var recipList = [];
+  var myvm;
   
   function handleConnTypeChange()
   {
@@ -397,103 +397,6 @@ script
     setServicePreferences();
   }
   
-  function manageRecipientsList(src)
-  {
-    if($(src).attr('id') == 'recip' + recipientNum)
-    {
-      if($(src).val() == '')
-      {
-        delete recipList[recipientNum - 1];
-      }
-      else
-      {
-        recipList[recipientNum] = $(src).val();
-        recipientNum++;
-      }
-    }
-    else
-    {
-      if($(src).val() == '')
-      {
-        delete recipList[$(src).attr('id').substring(5) - 1];
-      }
-      else
-      {
-        recipList[$(src).attr('id').substring(5) - 1] = $(src).val();
-      }
-    }
-    setUpRecipients(recipList);
-  }
-
-  function setUpRecipients(recips)
-  {
-    $('#recipAnchor').empty();
-    recipientNum = 1;
-    recipList = [];
-    if(recips.length == 1)
-    {
-      var input = document.createElement('input');
-      $(input).attr('id', ('recip' + recipientNum));
-      $(input).val(recips[i]);
-      $(input)
-        .on('blur', function(e){
-          manageRecipientsList(this);
-        })
-        .on('change', function(e){
-          manageRecipientsList(this);
-        }) 
-    }
-    else
-    {
-      for(var i in recips)
-      {
-        console.log('in recips loop');
-        if(recips[i] != undefined)
-        {
-          var input = document.createElement('input');
-          if(i == 0)
-          {
-            $(input).addClass('top wide').css('margin-bottom', '0');
-          }
-          else if(i > 0 && i < recips.length)
-          {
-            $(input).addClass('middle wide').css('margin-bottom', '0').css('margin-top', '0');
-          }
-          $(input).attr('id', ('recip' + recipientNum));
-          $(input).val(recips[i]);
-          $(input)
-            .on('blur', function(e){
-              manageRecipientsList(this);
-            })
-            .on('change', function(e){
-              manageRecipientsList(this);
-            }) 
-          $('#recipAnchor').append(input);
-          recipList.push(recips[i]);
-          recipientNum++;
-        }
-      }
-      var input = document.createElement('input');
-      $(input).attr('id', ('recip' + recipientNum));
-      $(input).addClass('bottom wide').css('margin-top', '0');
-      $(input)
-        .keydown(function(e){
-          if(e.which == 9)
-          {
-            manageRecipientsList(this);
-          }
-        })
-        .on('change', function(e){
-          manageRecipientsList(this);
-        });
-      $('#recipAnchor').append(input);
-      $('#recipAgg').val(recipList.toString());
-      setTimeout(function(){
-        $(input).focus();
-      }, 0);
-    }
-  }
-  
   function changeSMTPAuth()
   {
     if($('#SMTP_USEAUTH').is(':checked'))
@@ -522,6 +425,56 @@ script
   
   function init()
   {
+    var vm = function() {
+        this.recipList = ko.observableArray();
+        
+        var oldRecips = "!{RECIPIENTS}";
+        oldRecips = oldRecips.split(",");
+        if (oldRecips.length == 0) {
+            this.recipList.push({address: ko.observable("first@example.com")});
+        } else {
+            for (var i = 0; i < oldRecips.length; i++) {
+                this.recipList.push({address: ko.observable(oldRecips[i])});
+            }
+        }
+        this.recipList.push({address: ko.observable("")});
+    };
+
+    // Triggered everytime an email address input box is changed
+    var recipValueChanged = function(newValue) {
+        // Delete any empty boxes
+        for (var i = 0; i < myvm.recipList().length - 1; i++) {
+            if (myvm.recipList()[i].address() == "") {
+                // Delete empty input boxes that aren't the last value
+                myvm.recipList.splice(i, 1);
+            }
+        }
+
+        // Add an empty input box if the last one isn't empty already
+        if (myvm.recipList()[myvm.recipList().length - 1].address() != "") {
+            var newInput = {address: ko.observable("")};
+            newInput.address.subscribe(recipValueChanged);
+            myvm.recipList.push(newInput);
+            $("#recipTable td input:last").focus();
+        }
+
+        // Populate the hidden field with our current state
+        var emailRecips = myvm.recipList()[0].address();
+        for (var i = 1; i < myvm.recipList().length - 1; i++) {
+            emailRecips += "," + myvm.recipList()[i].address();
+        }
+        $("#recipAgg").val(emailRecips);
+    }
+
+    myvm = new vm();
+    for (var i = 0; i < myvm.recipList().length; i++) {
+        myvm.recipList()[i].address.subscribe(recipValueChanged);
+    };
+
+    ko.applyBindings(myvm);
+
+    
+
     now.ready(function()
     {
       if(loaded)
@@ -549,9 +502,6 @@ script
         $('#RSYSLOG_CONNTYPE').val('TCP');
       }
 
-      var recips = '#{RECIPIENTS}'.split(',');
-      setUpRecipients(recips);
-      
       handleRsyslogPane();
       handleSMTPPaneSlide();
       handleDoppelPaneSlide();
@@ -600,6 +550,12 @@ div#smtpPane
   
   label Email Recipients
   div(id='recipAnchor', style='margin: 0;')
+  br
+  table#recipTable
+    tbody(data-bind="foreach: recipList")
+      tr
+        td
+          input(data-bind="value: address")
   br
   
   input(type='hidden', name='RECIPIENTS', id='recipAgg', value=RECIPIENTS)
