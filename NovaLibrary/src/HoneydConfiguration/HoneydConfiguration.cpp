@@ -729,7 +729,7 @@ bool HoneydConfiguration::AddNode(string profileName, string ipAddress, string m
 		uint retVal = inet_addr(ipAddress.c_str());
 		if(retVal == INADDR_NONE)
 		{
-			LOG(ERROR, "Invalid node IP address '" + ipAddress + "' given!", "");
+			LOG(WARNING, "Invalid node IP address '" + ipAddress + "' given!", "");
 			return false;
 		}
 
