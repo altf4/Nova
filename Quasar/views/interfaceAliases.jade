@@ -38,8 +38,12 @@ block headerAdditions
         now.AddInterfaceAlias(iface, "", refresh);
     }
 
-    var refresh = function()
+    var refresh = function(err)
     {
+        if (err) {
+            alert(err);
+            return;
+        }
         window.location = window.location;
     }
     

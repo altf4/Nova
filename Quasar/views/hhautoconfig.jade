@@ -393,7 +393,7 @@ block content
           td
             label(style='font-weight: bold') Interface for new nodes
           td
-            select#nodeInterface(data-bind="options: interfaceChoices, optionsText: 'text', optionsValue: 'value'")
+            select#nodeInterface(data-bind="options: interfaceChoices, optionsHtml: 'text', optionsValue: 'value'")
     br
     br
     label(style='font-weight: bold;') Subnets to Scan
@@ -401,7 +401,7 @@ block content
     table
       tbody(data-bind='foreach: interfaceSubnets')
         tr
-          td(data-bind='text: text', style='width: 200px')
+          td(data-bind='html: text', style='width: 200px')
           td
             button(data-bind='click: $root.addSubnet')
               img.buttonIcon(src='images/add.png')

@@ -2361,6 +2361,10 @@ everyone.now.AddInterfaceAlias = function(iface, alias, callback)
 {
     if(alias != "") 
     {
+        if(!(new RegExp('^[a-zA-Z0-9 \\-_]+$')).test(alias)) {
+            callback("Error: invalid interface alias. Must contain only letters, numbers, spaces, and hyphens.");
+            return;
+        }
         interfaceAliases[iface] = sanitizeCheck(alias).entityEncode();
     } 
     else 
