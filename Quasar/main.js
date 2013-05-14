@@ -2026,6 +2026,16 @@ app.post('/configureNovaSave', function (req, res)
           case "SERVICE_PREFERENCES":
             validator.check(req.body[configItems[item]], "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;$');
             break;
+
+          case "RECIPIENTS":
+            var emails = req.body[configItems[item]];
+            emails = emails.split(",");
+
+            for (var i = 0; i < emails.length; i++) {
+                validator.check(emails[i], "Invalid email address: " + emails[i]).isEmail();
+            }
+            
+            break;
   
           default:
             break;
