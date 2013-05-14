@@ -435,9 +435,13 @@ script
       var input = document.createElement('input');
       $(input).attr('id', ('recip' + recipientNum));
       $(input).val(recips[i]);
-      $(input).on('change', function(e){
-        manageRecipientsList(this);
-      });
+      $(input)
+        .on('blur', function(e){
+          manageRecipientsList(this);
+        })
+        .on('change', function(e){
+          manageRecipientsList(this);
+        }) 
     }
     else
     {
@@ -457,12 +461,13 @@ script
           }
           $(input).attr('id', ('recip' + recipientNum));
           $(input).val(recips[i]);
-          $(input).keypress(function(e){
-            if(e.which == 13)
-            {
+          $(input)
+            .on('blur', function(e){
               manageRecipientsList(this);
-            }
-          });
+            })
+            .on('change', function(e){
+              manageRecipientsList(this);
+            }) 
           $('#recipAnchor').append(input);
           recipList.push(recips[i]);
           recipientNum++;
@@ -471,15 +476,21 @@ script
       var input = document.createElement('input');
       $(input).attr('id', ('recip' + recipientNum));
       $(input).addClass('bottom wide').css('margin-top', '0');
-      $(input).keypress(function(e){
-        if(e.which == 13)
-        {
+      $(input)
+        .keydown(function(e){
+          if(e.which == 9)
+          {
+            manageRecipientsList(this);
+          }
+        })
+        .on('change', function(e){
           manageRecipientsList(this);
-        }
-      });
+        });
       $('#recipAnchor').append(input);
-      
       $('#recipAgg').val(recipList.toString());
+      setTimeout(function(){
+        $(input).focus();
+      }, 0);
     }
   }
   

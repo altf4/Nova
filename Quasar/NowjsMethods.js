@@ -560,8 +560,8 @@ everyone.now.SaveProfile = function (profile, newProfile, cb)
     // Check input
     var profileNameRegexp = new RegExp("[a-zA-Z]+[a-zA-Z0-9 ]*");
     var match = profileNameRegexp.exec(profile.name);
-    
-    if(match == null) 
+   
+    if(match != profile.name) 
     {
         var err = "ERROR: Attempt to save a profile with an invalid name. Must be alphanumeric and not begin with a number.";
         cb(err);
@@ -1100,6 +1100,10 @@ everyone.now.saveClassifier = function(classifier, index, cb)
     else if(classifier.type == "THRESHOLD_TRIGGER")
     {
         classifier.strings["THRESHOLD_HOSTILE_TRIGGERS"] = thresholdString;
+    }
+    else if (classifier.type == "SCRIPT_ALERT")
+    {
+        classifier.strings = {};
     }
 
     NovaCommon.classifiers.saveClassifier(classifier, index);

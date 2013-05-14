@@ -12,6 +12,7 @@ CPP_SRCS += \
 ../src/Main.cpp \
 ../src/Novad.cpp \
 ../src/ProtocolHandler.cpp \
+../src/ScriptAlertClassification.cpp \
 ../src/Threads.cpp \
 ../src/ThresholdTriggerClassification.cpp 
 
@@ -24,6 +25,7 @@ OBJS += \
 ./src/Main.o \
 ./src/Novad.o \
 ./src/ProtocolHandler.o \
+./src/ScriptAlertClassification.o \
 ./src/Threads.o \
 ./src/ThresholdTriggerClassification.o 
 
@@ -36,6 +38,7 @@ CPP_DEPS += \
 ./src/Main.d \
 ./src/Novad.d \
 ./src/ProtocolHandler.d \
+./src/ScriptAlertClassification.d \
 ./src/Threads.d \
 ./src/ThresholdTriggerClassification.d 
 

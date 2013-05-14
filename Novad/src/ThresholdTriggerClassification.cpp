@@ -20,6 +20,7 @@
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 #include <sstream>
+#include <string>
 
 #include "Logger.h"
 #include "Config.h"
@@ -153,6 +154,8 @@ double ThresholdTriggerClassification::Classify(Suspect *suspect)
 {
 	double classification = 0;
 
+	suspect->m_classificationNotes += "=== Notes from threshold based classification engine ===\n";
+
 	//vector<HostileThreshold> thresholds = Config::Inst()->GetHostileThresholds();
 	for(uint i = 0; i < DIM; i++)
 	{
@@ -161,6 +164,7 @@ double ThresholdTriggerClassification::Classify(Suspect *suspect)
 		{
 			if (suspect->m_features.m_features[i] >= threshold.m_maxValueTrigger)
 			{
+				suspect->m_classificationNotes += "Feature '" + EvidenceAccumulator::m_featureNames[i] + "' has surpassed threshold of " + to_string(threshold.m_maxValueTrigger) + "\n";
 				classification = 1;
 			}
 		}
@@ -169,9 +173,15 @@ double ThresholdTriggerClassification::Classify(Suspect *suspect)
 		{
 			if (suspect->m_features.m_features[i] <= threshold.m_minValueTrigger)
 			{
+				suspect->m_classificationNotes += "Feature '" + EvidenceAccumulator::m_featureNames[i] + "' is below threshold of " + to_string(threshold.m_minValueTrigger) + "\n";
 				classification = 1;
 			}
 		}
+	}
+
+	if (!classification)
+	{
+		suspect->m_classificationNotes += "No threshold alerts triggered\n";
 	}
 
 	if (classification > Config::Inst()->GetClassificationThreshold())

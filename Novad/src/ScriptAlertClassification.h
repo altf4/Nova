@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : ClassificationEngineFactory.cpp
+// Name        : ThresholdTriggerClassification.h
 // Copyright   : DataSoft Corporation 2011-2013
 //	Nova is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
@@ -13,32 +13,32 @@
 //
 //   You should have received a copy of the GNU General Public License
 //   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
-// Description :
+// Description : Child class of ClassificationEngine, specifies a threshold for
+// classifying a device as an intruder
 //============================================================================
 
-#include "ClassificationEngineFactory.h"
-#include "ThresholdTriggerClassification.h"
-#include "KnnClassification.h"
-#include "ScriptAlertClassification.h"
+#ifndef SCRIPTALERTCLASSIFICATION_H_
+#define SCRIPTALERTCLASSIFICATION_H_
 
-using namespace std;
-using namespace Nova;
+#include "ClassificationEngine.h"
+#include <sqlite3.h>
 
-// Factory method for classification engine creation
-ClassificationEngine * MakeEngine(std::string engine)
+namespace Nova
 {
-	if (engine == "KNN")
-	{
-		return new KnnClassification();
-	}
-	else if (engine == "THRESHOLD_TRIGGER")
-	{
-		return new ThresholdTriggerClassification();
-	}
-	else if (engine == "SCRIPT_ALERT")
-	{
-		return new ScriptAlertClassification();
-	}
 
-	return NULL;
-}
+class ScriptAlertClassification: public Nova::ClassificationEngine
+{
+public:
+	ScriptAlertClassification();
+	void LoadConfiguration(std::string filePath);
+
+	double Classify(Suspect *suspect);
+
+private:
+	sqlite3 *db;
+	sqlite3_stmt *getScriptAlerts;
+};
+
+} /* namespace Nova */
+
+#endif

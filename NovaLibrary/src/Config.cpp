@@ -203,6 +203,7 @@ vector<string> Config::GetSupportedEngines()
 	vector<string> supportedEngines;
 	supportedEngines.push_back("KNN");
 	supportedEngines.push_back("THRESHOLD_TRIGGER");
+	supportedEngines.push_back("SCRIPT_ALERT");
 
 	return supportedEngines;
 }
@@ -1392,6 +1393,13 @@ bool Config::InitUserConfigs()
 
 		if(stat(m_pathHome.c_str(), &fileAttr) == 0)
 		{
+
+			// Ugh terrible terrible hack to let honeyd scripts access this file as the nobody user
+			// TODO: Why do we not have global configuration/state files in /var,/etc, and /tmp like every other daemon application?
+			if (system("chmod o+rwx ~/.config/nova")) {}
+			if (system("chmod o+rwx ~/.config/nova/data")) {}
+			if (system("chmod o+rw ~/.config/nova/data/scriptAlerts.db")) {}
+
 			return returnValue;
 		}
 		else
