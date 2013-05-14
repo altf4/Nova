@@ -1375,9 +1375,12 @@ app.get('/configWhitelist', function (req, res)
 
 app.get('/suspects', function (req, res)
 {
+    var interfaces = NovaCommon.config.ListInterfaces().sort();
     res.render('main.jade', {
         user: req.user,
         featureNames: NovaCommon.nova.GetFeatureNames(),
+        interfaces: interfaces,
+        interfaceAliases: ConvertInterfacesToAliases(interfaces)
     });
 });
 
