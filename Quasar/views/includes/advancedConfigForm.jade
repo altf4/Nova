@@ -99,7 +99,7 @@ form(method="post", action="/configureNovaSave")
     br
 
     input(type='hidden', name='MANAGE_IFACE_ENABLE', value='0')
-    if(MASTER_UI_ENABLED == "1")
+    if(MANAGE_IFACE_ENABLE == "1")
       input#slideManiface(type='checkbox', name='MANAGE_IFACE_ENABLE', value="1", checked=true, onclick='handleManifaceSlide()')
     else
       input#slideManiface(type='checkbox', name='MANAGE_IFACE_ENABLE', value="1", onclick='handleManifaceSlide()')
