@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/python
 
 import os, sys, signal, argparse, time
 import pyinotify, smtplib
@@ -81,12 +81,16 @@ def sendEmailAlert():
   MSG['From'] = FROM
   MSG['To'] = TO
   MSG.preamble = 'Nova Email Alert'
-  MSG.attach(MIMEText(genMessageContents()))
-
-  print TO
+  MSG.attach(MIMEText(genMessageContents()))  
 
   part = MIMEBase('application', 'octet-stream')
-  part.set_payload(open(os.environ['HOME'] + '/.config/nova/config/attachment.txt', 'rb').read())
+  dontsend = False
+  try:
+    part.set_payload(open(os.environ['HOME'] + '/.config/nova/config/attachment.txt', 'rb').read())
+  except Exception as e:
+    dontsend = True
+  if dontsend:
+    sys.exit(0)
   Encoders.encode_base64(part)
   part.add_header('Content-Disposition', 'attachment; filename="%s"' % os.path.basename('attachment.txt'))
   MSG.attach(part)

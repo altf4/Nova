@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/python
 
 import os, sys, signal
 import pyinotify
@@ -17,12 +17,20 @@ class EventHandler(pyinotify.ProcessEvent):
     # Here is where we get the first line of the log and append it to the 
     # file that will be the email attachment
     first_line = ''
-    with open('/var/log/nova/Nova.log', 'r') as f:
-      first_line = f.readline()
-      f.close()
-    with open(os.environ['HOME'] + '/.config/nova/config/attachment.txt', 'a+') as f:
-      f.write(first_line)
-      f.close()
+    try:
+      with open('/var/log/nova/Nova.log', 'r') as f:
+        first_line = f.readline()
+        f.close()
+    except Exception as e:
+      print e
+      sys.exit(10)
+    try:
+      with open(os.environ['HOME'] + '/.config/nova/config/attachment.txt', 'a+') as f:
+        f.write(first_line)
+        f.close()
+    except Exception as e:
+      print e
+      sys.exit(11)
     print event.pathname + " has been modified, first line is " + first_line
 
 notifier = pyinotify.ThreadedNotifier(wm, EventHandler())

@@ -520,6 +520,16 @@ script
     }
   }
   
+  function setIntervalStart()
+  {
+    $('#SMTP_INTERVAL').val('#{SMTP_INTERVAL}');
+  }
+  
+  function setHiddenInterval()
+  {
+    $('#hiddenInterval').val($('#SMTP_INTERVAL').val());
+  }
+  
   function init()
   {
     now.ready(function()
@@ -551,6 +561,7 @@ script
 
       var recips = '#{RECIPIENTS}'.split(',');
       setUpRecipients(recips);
+      setIntervalStart();
       
       handleRsyslogPane();
       handleSMTPPaneSlide();
@@ -587,7 +598,10 @@ div#smtpPane
   label SMTP Domain
   br
   div(style='margin-left: 0px;')
-    label(id='protoheader') smtps://
+    if(SMTP_USEAUTH == 'true')
+      label(id='protoheader') smtps://
+    else
+      label(id='protoheader') smtp://
     input(name='SMTP_DOMAIN', id='SMTP_DOMAIN', value=SMTP_DOMAIN)
   
   label SMTP Username
@@ -597,6 +611,17 @@ div#smtpPane
   label SMTP Password
   input.wide(type='password', name='SMTP_PASS', id='SMTP_PASS', value=SMTP_PASS)
   br
+  
+  label Send Email Alerts
+  br
+  select(id='SMTP_INTERVAL', onchange='setHiddenInterval()')
+    option hourly
+    option daily
+    option weekly
+    option monthly
+  br
+  
+  input(type='hidden', id='hiddenInterval', name='SMTP_INTERVAL', value=SMTP_INTERVAL)
   
   label Email Recipients
   div(id='recipAnchor', style='margin: 0;')

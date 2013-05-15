@@ -48,6 +48,8 @@ memwatch.on('stats', function(stats)
 var NovaCommon = require('./NovaCommon.js');
 NovaCommon.nova.CheckConnection();
 
+var maildaemon = ''
+
 // Modules from NodejsModule/Javascript
 var LOG = NovaCommon.LOG;
 
@@ -1045,10 +1047,6 @@ function renderBasicOptions(jadefile, res, req)
         }
     }
 
-    var domain = NovaCommon.config.ReadSetting('SMTP_DOMAIN');
-    domain = domain.split('//');
-    domain = domain[1];
-
     var ifaceForConversion = new Array();
     for (var i = 0; i < pass.length; i++)
     {
@@ -1065,10 +1063,11 @@ function renderBasicOptions(jadefile, res, req)
             DM_ENABLED: NovaCommon.config.ReadSetting("DM_ENABLED"),
             SMTP_ADDR: NovaCommon.config.ReadSetting("SMTP_ADDR"),
             SMTP_PORT: NovaCommon.config.ReadSetting("SMTP_PORT"),
-            SMTP_DOMAIN: domain,
+            SMTP_DOMAIN: NovaCommon.config.ReadSetting('SMTP_DOMAIN'),
             SMTP_USER: NovaCommon.config.GetSMTPUser(),
             SMTP_PASS: NovaCommon.config.GetSMTPPass(),
             SMTP_USEAUTH: NovaCommon.config.GetSMTPUseAuth().toString(),
+            SMTP_INTERVAL: 'hourly',
             RSYSLOG_USE: NovaCommon.config.ReadSetting("RSYSLOG_USE"),
             RSYSLOG_IP: NovaCommon.config.ReadSetting("RSYSLOG_IP"),
             RSYSLOG_PORT: NovaCommon.config.ReadSetting("RSYSLOG_PORT"),
@@ -1853,6 +1852,8 @@ app.post('/configureNovaSave', function (req, res)
         return this._errors;
     }
 
+    console.log('SMTP_INTERVAL == "' + req.body['SMTP_INTERVAL'] + '"');
+
     var validator = new Validator();
 
     NovaCommon.config.ClearInterfaces();
@@ -1861,24 +1862,11 @@ app.post('/configureNovaSave', function (req, res)
     {
       req.body["SMTP_USEAUTH"] = "0";
       NovaCommon.config.SetSMTPUseAuth("false");
-      req.body["SMTP_DOMAIN"] = 'smtp://' + req.body['SMTP_DOMAIN'];
     }
     else
     {
       req.body["SMTP_USEAUTH"] = "1";
       NovaCommon.config.SetSMTPUseAuth("true");
-      req.body["SMTP_DOMAIN"] = 'smtps://' + req.body['SMTP_DOMAIN'];
-    }
-    
-    if(req.body["EMAIL_ALERTS_ENABLED"] == undefined)
-    {
-      req.body["EMAIL_ALERTS_ENABLED"] = "0";
-      NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
-    }
-    else
-    {
-      req.body["EMAIL_ALERTS_ENABLED"] = "1";
-      NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
     }
     
     if(req.body["DM_ENABLED"] == undefined)
@@ -2055,6 +2043,7 @@ app.post('/configureNovaSave', function (req, res)
         if(code.toString() != '0')
         {
           console.log('nova_rsyslog_helper could not complete update of rsyslog configuration, exited with code ' + code);
+          RenderError(res, 'Could not update rsyslog configuration, update script returned ' + code, '/suspects');
         }
         else
         {
@@ -2157,6 +2146,69 @@ app.post('/configureNovaSave', function (req, res)
 
       NovaCommon.config.ReloadConfiguration();
 
+      if(req.body["EMAIL_ALERTS_ENABLED"] == undefined)
+      {
+        var spawn = require('sudo');
+        var options = {
+          cachePassword: true
+          , prompt: 'You need permission to remove the Nova mail script from the cron directories.'
+        };
+        
+        var execution = ['cleannovasendmail.sh'];
+        var rm = spawn(execution, options); 
+        rm.on('exit', function(code){
+          console.log('code == ' + code);
+        });
+        if(maildaemon != '')
+        {
+          maildaemon.kill('SIGINT');
+        }
+        req.body["EMAIL_ALERTS_ENABLED"] = "0";
+        NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
+      }
+      else
+      {
+        var interval = req.body['SMTP_INTERVAL'];
+
+        if(interval != 'hourly' && interval != 'daily' && interval != 'weekly' && interval != 'monthly')
+        {
+          RenderError(res, 'SMTP_INTERVAL value was incorrect!', "/suspects");
+        }
+        else
+        {
+          if(maildaemon == '')
+          {
+            var go = require('sudo');
+            var options = {
+              cachePassword: true
+              , prompt: 'You need permission to remove the Nova mail script from the cron directories.'
+            };
+            var cpexec = ['placenovasendmail', interval];
+            cpspawn = go(cpexec, options);
+            cpspawn.on('exit', function(code){
+              if(code === 0)
+              {
+                var spawn = require('child_process').spawn;
+                var execstring = 'novamaildaemon.py';
+                maildaemon = spawn(execstring.toString());
+                maildaemon.on('close', function(code){
+                  if(code !== 0)
+                  {
+                    console.log('nova mail daemon died an unnatural death with code ' + code);
+                  }
+                }); 
+              }
+              else
+              {
+                RenderError(res, 'Could not start mail daemon, check /etc/cron.' + interval + ' for orphaned script novasendmail.py', '/suspects');
+              }
+            });
+          }
+          req.body["EMAIL_ALERTS_ENABLED"] = "1";
+          NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
+        }
+      }
+
       var route = "/suspects";
       if(req.body['route'] != undefined)
       {
@@ -2236,7 +2288,22 @@ process.on('SIGINT', function ()
 
 process.on('exit', function ()
 {
-    LOG("ALERT", "Quasar is exiting cleanly.");
+    if(maildaemon != '')
+    {
+      maildaemon.kill('SIGINT');
+    }
+    var spawn = require('sudo');
+    var options = {
+      cachePassword: true
+      , prompt: 'You need permission to remove the Nova mail script from the cron directories.'
+    };
+    
+    var execution = ['cleannovasendmail.sh'];
+    var rm = spawn(execution, options); 
+    rm.on('exit', function(code){
+      console.log('code == ' + code);
+      LOG("ALERT", "Quasar is exiting cleanly.");
+    });
 });
 
 function objCopy(src, dst) 
