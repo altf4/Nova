@@ -159,18 +159,15 @@ public:
 
 	MAKE_GETTER_SETTER(double, m_classificationThreshold, GetClassificationThreshold, SetClassificationThreshold);
 	MAKE_GETTER_SETTER(int, m_classificationTimeout, GetClassificationTimeout, SetClassificationTimeout);
-	MAKE_GETTER_SETTER(int, m_dataTTL, GetDataTTL, SetDataTTL);
 	MAKE_GETTER_SETTER(std::string, m_loopbackIF, GetDoppelInterface, SetDoppelInterface);
 	MAKE_GETTER_SETTER(double, m_eps, GetEps, SetEps);
 	MAKE_GETTER_SETTER(bool, m_isDmEnabled, GetIsDmEnabled, SetIsDmEnabled);
-	MAKE_GETTER_SETTER(std::string, m_pathCESaveFile, GetPathCESaveFile, SetPathCESaveFile);
 	MAKE_GETTER_SETTER(std::string, m_pathConfigHoneydUser, GetPathConfigHoneydUser , SetPathConfigHoneydUser);
 	MAKE_GETTER_SETTER(std::string, m_pathConfigHoneydHS, GetPathConfigHoneydHS, SetPathConfigHoneydHS);
 	MAKE_GETTER_SETTER(std::string, m_pathPcapFile, GetPathPcapFile, SetPathPcapFile);
 	MAKE_GETTER_SETTER(std::string, m_pathWhitelistFile, GetPathWhitelistFile, SetPathWhitelistFile);
 	MAKE_GETTER_SETTER(bool, m_readPcap, GetReadPcap, SetReadPcap);
 	MAKE_GETTER_SETTER(bool, m_readCustomPcap, GetCustomReadPcap, SetReadCustomPcap);
-	MAKE_GETTER_SETTER(int, m_saveFreq, GetSaveFreq, SetSaveFreq);
 	MAKE_GETTER_SETTER(double, m_thinningDistance, GetThinningDistance, SetThinningDistance);
 	MAKE_GETTER_SETTER(std::string, m_group, GetGroup, SetGroup);
 	MAKE_GETTER_SETTER(std::string, m_currentConfig, GetCurrentConfig, SetCurrentConfig);
