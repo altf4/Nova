@@ -420,7 +420,12 @@ block headerAdditions
 
           for (var ethinterface in nodesPerInterface)
           {
-            var p = {name: ethinterface, value: nodesPerInterface[ethinterface]};
+            var aliasedName = ethinterface;
+            var interfaceIndex = interfaces.indexOf(ethinterface);
+            if (interfaceIndex != -1) {
+                aliasedName = interfaceAliases[interfaceIndex];
+            }
+            var p = {name: aliasedName, value: nodesPerInterface[ethinterface]};
             piChartRender2.push(p);
           }
           

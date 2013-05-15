@@ -14,10 +14,14 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+style
+  span.labelSpan {
+    font-weight: bold;
+  }
+
 script
   var ifaces = !{JSON.stringify(INTERFACES)};
   var used = '#{WEB_UI_IFACE}';
-  var manageEnabled = '#{MANAGE_IFACE_ENABLE}';
   
   function handlePulsarPaneSlide()
   {
@@ -76,11 +80,6 @@ script
       }
       $('#WEB_UI_IFACE').append(option);
     }
-    console.log('manageEnabled == ' + manageEnabled);
-    if(manageEnabled != '0')
-    {
-      $('#slideManiface').prop('checked', true);
-    }
     handleManifaceSlide();
   }
   
@@ -99,8 +98,12 @@ form(method="post", action="/configureNovaSave")
     input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
     br
 
-    label Enable Management Interface?
-    input#slideManiface(type='checkbox', name='MANAGE_IFACE_ENABLE', onclick='handleManifaceSlide()')
+    input(type='hidden', name='MANAGE_IFACE_ENABLE', value='0')
+    if(MANAGE_IFACE_ENABLE == "1")
+      input#slideManiface(type='checkbox', name='MANAGE_IFACE_ENABLE', value="1", checked=true, onclick='handleManifaceSlide()')
+    else
+      input#slideManiface(type='checkbox', name='MANAGE_IFACE_ENABLE', value="1", onclick='handleManifaceSlide()')
+    span.labelSpan Enable Management Interface?
     br
     div#manifacePane
       label Management Interface
@@ -116,12 +119,12 @@ form(method="post", action="/configureNovaSave")
     br
     br
     
-    label(style='font-size: 16px;') Use Pulsar?
-    if(MASTER_UI_ENABLED != "0")
-      input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", checked=true, onclick='handlePulsarPaneSlide()')
+    input(type='hidden', name='MASTER_UI_ENABLED', value='0')
+    if(MASTER_UI_ENABLED == "1")
+      input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", value="1", checked=true, onclick='handlePulsarPaneSlide()')
     else
-      input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", onclick='handlePulsarPaneSlide()')
-      br
+      input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", value="1", onclick='handlePulsarPaneSlide()')
+    span.labelSpan Use Pulsar?
       
     div#pulsarPane
       label Pulsar Server IP
@@ -140,9 +143,6 @@ form(method="post", action="/configureNovaSave")
     div(style='height: 20px;')
       label(style='font-size: 16px; margin-top: 10px;') File Paths
       p#nWarn(style='margin-right: 10px; float: right; text-align: center; font-style: italic; color: #B00000; display: none;') Novad must be restarted for any changes to take effect
-    br
-    label Path to state save file
-    input.wide(type="text", name="CE_SAVE_FILE",  value=CE_SAVE_FILE)
     br
     
     label Classification Training Data
@@ -245,14 +245,6 @@ form(method="post", action="/configureNovaSave")
     input.wide(type="number", name="MIN_PACKET_THRESHOLD", value=MIN_PACKET_THRESHOLD);
     br
     
-    label State data save frequency
-    input.wide(type="number", min="0", name="SAVE_FREQUENCY",  value=SAVE_FREQUENCY)
-    br
-  
-    label State data chunk TTL
-    input.wide(type="number", min="0", name="DATA_TTL",  value=DATA_TTL)
-    br
-  
     label Clear data after suspect logged as hostile?
     br
     if(CLEAR_AFTER_HOSTILE_EVENT != "0")

@@ -55,11 +55,12 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
   script
-
     function cancelEvents(e) {
       e.stopPropagation()
     }
  
+    var interfaceAliases = !{JSON.stringify(interfaceAliases)};
+    var interfaces = !{JSON.stringify(interfaces)};
     var suspectGrid;
     var liveUpdate = true;
 
@@ -199,7 +200,15 @@ block headerAdditions
       }
 
       row.push("<img src='" + imgSrc + "' class='buttonIcon'/>");
-      row.push(String(suspect.interface));
+
+      // Convert the interface to an interface alias if we have one
+      var iface = suspect.interface;
+      var interfaceIndex = interfaces.indexOf(suspect.interface);
+      if (interfaceIndex != -1) {
+        iface = interfaceAliases[interfaceIndex];
+      }
+      row.push(String(iface));
+
       row.push(String(suspectLink));
       row.push(suspect.classification);
       row.push(String(dString));

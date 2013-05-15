@@ -206,41 +206,6 @@ PCAP_FILE ../masterPcap
 #GO_TO_LIVE 1
 GO_TO_LIVE 1
 
-############################################
-# SAVE_FREQUENCY #
-############################################
-# 
-# How often, in seconds, to save CE state data to file
-#
-# A value of 0 will disable saving.
-# 
-# Example: 
-#SAVE_FREQUENCY 3600
-SAVE_FREQUENCY 3600
-
-############################################
-# DATA_TTL #
-############################################
-# 
-# Time in seconds for data to remain valid and 
-# be used for suspect classification.
-#
-# A value of 0 will disable expiring old data.
-#
-# Example:
-#DATA_TTL 1440
-DATA_TTL 0
-
-############################################
-# CE_SAVE_FILE #
-############################################
-# 
-# Where the ClassificationEngine can save it's state
-#
-# Example:
-#CE_SAVE_FILE CESaveFile
-CE_SAVE_FILE CESaveFile
-
 # Logging Stuff #
 
 ############################################

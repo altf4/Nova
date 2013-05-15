@@ -66,9 +66,6 @@ string Config::m_prefixes[] =
 	"DOPPELGANGER_INTERFACE",
 	"DM_ENABLED",
 	"THINNING_DISTANCE",
-	"SAVE_FREQUENCY",
-	"DATA_TTL",
-	"CE_SAVE_FILE",
 	"RSYSLOG_USE",
 	"RSYSLOG_IP",
 	"RSYSLOG_PORT",
@@ -452,48 +449,6 @@ void Config::LoadConfig_Internal()
 				if(atof(line.c_str()) > 0)
 				{
 					m_thinningDistance = atof(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// SAVE_FREQUENCY
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					m_saveFreq = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// DATA_TTL
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) >= 0)
-				{
-					m_dataTTL = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// CE_SAVE_FILE
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_pathCESaveFile = line;
 					isValid[prefixIndex] = true;
 				}
 				continue;

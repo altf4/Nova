@@ -949,7 +949,6 @@ app.get('/advancedOptions', function (req, res)
             , SMTP_DOMAIN: domain
             , SMTP_USER: NovaCommon.config.GetSMTPUser()
             , SMTP_PASS: NovaCommon.config.GetSMTPPass()
-            , RECIPIENTS: NovaCommon.config.ReadSetting("RECIPIENTS")
             , SERVICE_PREFERENCES: NovaCommon.config.ReadSetting("SERVICE_PREFERENCES")
             , CAPTURE_BUFFER_SIZE: NovaCommon.config.ReadSetting("CAPTURE_BUFFER_SIZE")
             , MIN_PACKET_THRESHOLD: NovaCommon.config.ReadSetting("MIN_PACKET_THRESHOLD")
@@ -1375,9 +1374,12 @@ app.get('/configWhitelist', function (req, res)
 
 app.get('/suspects', function (req, res)
 {
+    var interfaces = NovaCommon.config.ListInterfaces().sort();
     res.render('main.jade', {
         user: req.user,
         featureNames: NovaCommon.nova.GetFeatureNames(),
+        interfaces: interfaces,
+        interfaceAliases: ConvertInterfacesToAliases(interfaces)
     });
 });
 
@@ -1775,7 +1777,7 @@ app.post('/honeydConfigManage', function (req, res){
     cloneBool = true;
   }
   
-  if((new RegExp('^[a-zA-Z0-9 -_]+$')).test(newName))
+  if((new RegExp('^[a-zA-Z0-9 \\-_]+$')).test(newName))
   {
     NovaCommon.honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
     NovaCommon.honeydConfig.SwitchConfiguration(newName);
@@ -1832,15 +1834,277 @@ app.post('/customizeTrainingSave', function (req, res)
 
 app.post('/configureNovaSave', function (req, res)
 {
-    var configItems = ["ADVANCED", "DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
-    "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
-    "K", "EPS", "CLASSIFICATION_THRESHOLD", "DOPPELGANGER_IP", 
-    "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", 
-    "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", 
-    "SERVICE_PREFERENCES", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", 
-    "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", 
-    "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", 
-    "THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC", "EMAIL_ALERTS_ENABLED", "TRAINING_DATA_PATH", "MESSAGE_WORKER_THREADS"];
+
+	// If we get two of the same form element, just use the last one
+	for (var key in req.body) {
+		if (typeof(req.body[key]) == "object") {
+			req.body[key] = req.body[key][req.body[key].length - 1];
+		}
+	}
+
+	// These are accepted configuration inputs and validation functions for them
+    var configItems = [
+    {
+        key:  "ADVANCED"
+        ,validator: function(val) {
+            //TODO what is this? Rename it, I have no idea what "ADVANCED" is.
+        }
+    },
+    {
+        key:  "DEFAULT"
+        ,validator: function(val) {
+            //TODO what is this?
+        }
+    },
+    {
+        key:  "INTERFACE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "SMTP_USER"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "SMTP_PASS"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "RSYSLOG_IP"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a valid IP address').isIP();
+        }
+    },
+    {
+        key:  "HS_HONEYD_CONFIG"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "READ_PCAP"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "PCAP_FILE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "GO_TO_LIVE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "CLASSIFICATION_TIMEOUT"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+        }
+    },
+    {
+        key:  "K"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+        }
+    },
+    {
+        key:  "EPS"
+        ,validator: function(val) {
+            validator.check(val, 'EPS must be a positive floating point number').isFloat();
+        }
+    },
+    {
+        key:  "CLASSIFICATION_THRESHOLD"
+        ,validator: function(val) {
+            validator.check(val, 'Classification threshold must be a floating point value').isFloat();
+            validator.check(val, 'Classification threshold must be a value between 0 and 1').max(1);
+            validator.check(val, 'Classification threshold must be a value between 0 and 1').min(0);
+        }
+    },
+    {
+        key:  "DOPPELGANGER_IP"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a valid IP address').isIP();
+        }
+    },
+    {
+        key:  "DOPPELGANGER_INTERFACE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "DM_ENABLED"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "ENABLED_FEATURES"
+        ,validator: function(val) {
+            validator.check(val, 'Enabled Features mask must be ' + NovaCommon.nova.GetDIM() + 'characters long').len(NovaCommon.nova.GetDIM(), NovaCommon.nova.GetDIM());
+            validator.check(val, 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{9}');
+        }
+    },
+    {
+        key:  "THINNING_DISTANCE"
+        ,validator: function(val) {
+            validator.check(val, 'Thinning Distance must be a positive number').isFloat();
+        }
+    },
+    {
+        key:  "SMTP_ADDR"
+        ,validator: function(val) {
+			console.log("Got an smtp address of " + val);
+            validator.check(val, this.key + ' is the wrong format').regex('^(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)$');
+        }
+    },
+    {
+        key:  "SMTP_PORT"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer between 1 and 65535').isInt();
+            validator.check(val, this.key + ' must be an integer between 1 and 65535').min(1);
+            validator.check(val, this.key + ' must be an integer between 1 and 65535').max(65535);
+        }
+    },
+    {
+        key:  "SMTP_DOMAIN"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "SMTP_USEAUTH"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "RECIPIENTS"
+        ,validator: function(val) {
+			console.log("Got RECIPIENTS " + val);
+            validator.check(val, "Must have at least one email address").notEmpty();
+            if (val.length != 0) {
+                var emails = val;
+                emails = emails.split(",");
+
+                for (var i = 0; i < emails.length; i++) {
+                    validator.check(emails[i], "Invalid email address: " + emails[i]).isEmail();
+                }
+                
+            }
+        }
+    },
+    {
+        key:  "SERVICE_PREFERENCES"
+        ,validator: function(val) {
+            validator.check(val, "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;$');
+        }
+    },
+    {
+        key:  "MIN_PACKET_THRESHOLD"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+        }
+    },
+    {
+        key:  "CUSTOM_PCAP_FILTER"
+        ,validator: function(val) {
+        }
+    },
+    {
+        key:  "CUSTOM_PCAP_MODE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+        }
+    },
+    {
+        key:  "WEB_UI_PORT"
+        ,validator: function(val) {
+            validator.check(val, 'Must be a nonnegative integer between 1 and 65535').isInt();
+            validator.check(val, 'Must be a nonnegative integer between 1 and 65535').max(65535);
+            validator.check(val, 'Must be a nonnegative integer between 1 and 65535').min(0);
+        }
+    },
+    {
+        key:  "CLEAR_AFTER_HOSTILE_EVENT"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "MASTER_UI_IP"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a valid IP address').isIP();
+        }
+    },
+    {
+        key:  "MASTER_UI_RECONNECT_TIME"
+        ,validator: function(val) {
+            validator.check(val, 'Pulsar server reconnect time must be a positive integer').isInt();
+            validator.check(val, 'Pulsar server reconnect time must be a positive integer').min(0);
+        }
+    },
+    {
+        key:  "MASTER_UI_CLIENT_ID"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+            validator.check(val, this.key + ' must be an alphanumeric string').isAlphanumeric();
+        }
+    },
+    {
+        key:  "MASTER_UI_ENABLED"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "MANAGE_IFACE_ENABLE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "CAPTURE_BUFFER_SIZE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+            validator.check(val, this.key + ' must be a positive integer greater than 88').min(88);
+        }
+    },
+    {
+        key:  "ONLY_CLASSIFY_HONEYPOT_TRAFFIC"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "EMAIL_ALERTS_ENABLED"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "TRAINING_DATA_PATH"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "MESSAGE_WORKER_THREADS"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+            validator.check(val, this.key + ' must be a positive integer greater than 1').min(1);
+        }
+    }];
 
     Validator.prototype.error = function (msg)
     {
@@ -1849,38 +2113,26 @@ app.post('/configureNovaSave', function (req, res)
 
     Validator.prototype.getErrors = function ()
     {
-        return this._errors;
+        return this._errors.join("<br>");
     }
-
-    console.log('SMTP_INTERVAL == "' + req.body['SMTP_INTERVAL'] + '"');
 
     var validator = new Validator();
 
     NovaCommon.config.ClearInterfaces();
 
-    if(req.body["SMTP_USEAUTH"] == undefined)
+    if(req.body["SMTP_USEAUTH"] == '0')
     {
-      req.body["SMTP_USEAUTH"] = "0";
       NovaCommon.config.SetSMTPUseAuth("false");
+      req.body["SMTP_DOMAIN"] = 'smtp://' + req.body['SMTP_DOMAIN'];
     }
-    else
+    else if(req.body["SMTP_USEAUTH"] == '1')
     {
       req.body["SMTP_USEAUTH"] = "1";
       NovaCommon.config.SetSMTPUseAuth("true");
+      req.body["SMTP_DOMAIN"] = 'smtps://' + req.body['SMTP_DOMAIN'];
     }
     
-    if(req.body["DM_ENABLED"] == undefined)
-    {
-      req.body["DM_ENABLED"] = "0";
-      NovaCommon.config.WriteSetting("DM_ENABLED", "0");
-    }
-    else
-    {
-      req.body["DM_ENABLED"] = "1";
-      NovaCommon.config.WriteSetting("DM_ENABLED", "1");
-    }
-  
-    if(req.body["MASTER_UI_ENABLED"] != undefined)
+    if(req.body["MASTER_UI_ENABLED"] != undefined && req.body["MASTER_UI_ENABLED"] == "1")
     {
       if(clientId != undefined && req.body["MASTER_UI_CLIENT_ID"] != clientId)
       {
@@ -1894,11 +2146,6 @@ app.post('/configureNovaSave', function (req, res)
           clientId = req.body["MASTER_UI_CLIENT_ID"];
         }
       }
-      req.body['MASTER_UI_ENABLED'] = '1';
-    }
-    else
-    {
-      req.body['MASTER_UI_ENABLED'] = '0';
     }
 
     var interfaces = "";
@@ -1937,93 +2184,17 @@ app.post('/configureNovaSave', function (req, res)
   
     for(var item = 0; item < configItems.length; item++) 
     {
-        if(req.body[configItems[item]] == undefined) 
+        if(req.body[configItems[item].key] == undefined) 
         {
           continue;
         }
-        switch(configItems[item])
-        {
-          case "WEB_UI_PORT":
-            validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
-            break;
-  
-          case "ENABLED_FEATURES":
-            validator.check(req.body[configItems[item]], 'Enabled Features mask must be ' + NovaCommon.nova.GetDIM() + 'characters long').len(NovaCommon.nova.GetDIM(), NovaCommon.nova.GetDIM());
-            validator.check(req.body[configItems[item]], 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{9}');
-            break;
-  
-          case "CLASSIFICATION_THRESHOLD":
-            validator.check(req.body[configItems[item]], 'Classification threshold must be a floating point value').isFloat();
-            validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').max(1);
-            validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').min(0);
-            break;
-  
-          case "EPS":
-            validator.check(req.body[configItems[item]], 'EPS must be a positive number').isFloat();
-            break;
-  
-          case "THINNING_DISTANCE":
-            validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
-            break;
-  
-          case "DOPPELGANGER_IP":
-            validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
-            var split = req.body[configItems[item]].split('.');
 
-            if(split.length == 4) 
-            {
-                if(split[3] === "0") 
-                {
-                    validator.check(split[3], 'Can not have last IP octet be 0').equals("255");
-                }
-                if(split[3] === "255") 
-                {
-                    validator.check(split[3], 'Can not have last IP octet be 255').equals("0");
-                }
-            }
-
-            //check for 0.0.0.0 and 255.255.255.255
-            var checkIPZero = 0;
-            var checkIPBroad = 0;
-
-            for (var val = 0; val < split.length; val++) 
-            {
-                if(split[val] == "0") 
-                {
-                    checkIPZero++;
-                }
-                if(split[val] == "255") 
-                {
-                    checkIPBroad++;
-                }
-            }
-
-            if(checkIPZero == 4)
-            {
-                validator.check(checkIPZero, '0.0.0.0 is not a valid IP address').is("200");
-            }
-            if(checkIPBroad == 4)
-            {
-                validator.check(checkIPZero, '255.255.255.255 is not a valid IP address').is("200");
-            }
-            break;
-  
-          case "SMTP_ADDR":
-            validator.check(req.body[configItems[item]], 'SMTP Address is the wrong format').regex('^(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)$');
-            break;
-              
-          case "SERVICE_PREFERENCES":
-            validator.check(req.body[configItems[item]], "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;$');
-            break;
-  
-          default:
-            break;
-        }
+        configItems[item].validator(req.body[configItems[item].key]);
     }
 
     var useRsyslog = req.body["RSYSLOG_USE"];
   
-    if(useRsyslog != undefined)
+    if(useRsyslog != undefined && useRsyslog == "1")
     {
       var spawn = require('sudo');
       var options = {
@@ -2085,7 +2256,12 @@ app.post('/configureNovaSave', function (req, res)
 
     if(errors.length > 0)
     {
-      RenderError(res, errors, "/suspects");
+      var errorRedirect = "/suspects";
+      if (req.body["ERROR_REDIRECT"] != undefined) {
+        errorRedirect = req.body["ERROR_REDIRECT"];
+      }
+    
+      RenderError(res, errors, errorRedirect);
     } 
     else 
     {
@@ -2107,25 +2283,6 @@ app.post('/configureNovaSave', function (req, res)
         NovaCommon.config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
       }
 
-      if(req.body['MANAGE_IFACE_ENABLE'] == 'on')
-      {
-        req.body['MANAGE_IFACE_ENABLE'] = '1';
-      }
-      else
-      {
-        req.body['MANAGE_IFACE_ENABLE'] = '0';
-      }
-
-      if(req.body['MANAGE_IFACE_ENABLE'] != NovaCommon.config.ReadSetting("MANAGE_IFACE_ENABLE"))
-      {
-        NovaCommon.config.WriteSetting('MANAGE_IFACE_ENABLE', req.body['MANAGE_IFACE_ENABLE']);
-      }
-      
-      if(req.body['WEB_UI_IFACE'] != WEB_UI_IFACE)
-      {
-        NovaCommon.config.WriteSetting('WEB_UI_IFACE', req.body['WEB_UI_IFACE']);
-      }
-
       if(req.body["SMTP_USER"] !== undefined)
       {
         NovaCommon.config.SetSMTPUser(req.body["SMTP_USER"]);
@@ -2136,11 +2293,11 @@ app.post('/configureNovaSave', function (req, res)
       }
 
       //if no errors, send the validated form data to the WriteSetting method
-      for(var item = 6; item < configItems.length; item++)
+      for(var item = 5; item < configItems.length; item++)
       {
-        if(req.body[configItems[item]] != undefined)
+        if(req.body[configItems[item].key] != undefined)
         {
-          NovaCommon.config.WriteSetting(configItems[item], req.body[configItems[item]]);
+          NovaCommon.config.WriteSetting(configItems[item].key, req.body[configItems[item].key]);
         }
       }
 
@@ -2411,6 +2568,10 @@ everyone.now.AddInterfaceAlias = function(iface, alias, callback)
 {
     if(alias != "") 
     {
+        if(!(new RegExp('^[a-zA-Z0-9 \\-_]+$')).test(alias)) {
+            callback("Error: invalid interface alias. Must contain only letters, numbers, spaces, and hyphens.");
+            return;
+        }
         interfaceAliases[iface] = sanitizeCheck(alias).entityEncode();
     } 
     else 

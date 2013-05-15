@@ -24,6 +24,11 @@ block headerAdditions
    
     var interfaceList = Interfaces.split(',');
     var interfaceAliasList = InterfaceAliases.split(',');
+
+    var interfaceChoices = [];
+    for (var i = 0; i < interfaceList.length; i++) {
+        interfaceChoices.push({text: interfaceAliasList[i], value: interfaceList[i]});
+    }
     
     function viewModelApp() {
         var self = this;
@@ -46,7 +51,7 @@ block headerAdditions
         self.subnetsToScan = ko.observableArray();
         self.interfaceSubnets = ko.observableArray();
 
-        self.interfaceList = interfaceList;
+        self.interfaceChoices = interfaceChoices;
 
         self.removeSubnet = function(subnet){
             self.subnetsToScan.remove(subnet);
@@ -388,7 +393,7 @@ block content
           td
             label(style='font-weight: bold') Interface for new nodes
           td
-            select#nodeInterface(data-bind='options: interfaceList')
+            select#nodeInterface(data-bind="options: interfaceChoices, optionsHtml: 'text', optionsValue: 'value'")
     br
     br
     label(style='font-weight: bold;') Subnets to Scan
@@ -396,7 +401,7 @@ block content
     table
       tbody(data-bind='foreach: interfaceSubnets')
         tr
-          td(data-bind='text: text', style='width: 200px')
+          td(data-bind='html: text', style='width: 200px')
           td
             button(data-bind='click: $root.addSubnet')
               img.buttonIcon(src='images/add.png')
