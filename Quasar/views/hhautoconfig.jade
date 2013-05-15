@@ -286,8 +286,13 @@ block headerAdditions
       }
     }
 
-    function autoscancb(text)
+    function autoscancb(err, text)
     {
+        if (err) {
+            alert("Error: " + err);
+            window.location = window.location;
+            return;
+        }
         var p = document.createElement('p');
         var appText = $('#appendText');
         p.value = text;

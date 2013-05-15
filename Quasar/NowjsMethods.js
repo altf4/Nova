@@ -670,6 +670,12 @@ everyone.now.RenamePortset = function(profile, oldName, newName, cb)
 
 everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, subnets, groupName, append, cb, route)
 {
+    if(!(new RegExp('^[a-zA-Z0-9 \\-_]+$')).test(groupName))
+	{
+        cb && cb("Haystack name must not be blank and must contain only letters, numbers, and hyphens. Invalid haystack name given.");
+        return;
+    }
+
     var executionString = 'haystackautoconfig';
 
     var hhconfigArgs = new Array();
@@ -733,7 +739,7 @@ everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, s
     {
       if(typeof cb == 'function')
       {
-        cb('' + data);
+        cb(null, '' + data);
       }
     });
 
@@ -1384,38 +1390,38 @@ everyone.now.GetHostnames = function(cb) {
 };
 
 everyone.now.InsertHostname = function(hostname, cb) {
-	// Convert hostname to lower case and check if it is valid
-	if (typeof(hostname) != "string") {
+    // Convert hostname to lower case and check if it is valid
+    if (typeof(hostname) != "string") {
         cb("Hostname must be a string! Invalid type.");
-        return;	
-	}
+        return; 
+    }
 
-	hostname = hostname.toLowerCase();
+    hostname = hostname.toLowerCase();
 
-	if (!(new RegExp("^[a-zA-Z0-9\-]+$")).test(hostname)) {
-		cb("Hostname must not be blank and must contain only letters, numbers, and hyphens. Invalid hostname given.");
-		return;
-	}
+    if (!(new RegExp("^[a-zA-Z0-9\-]+$")).test(hostname)) {
+        cb("Hostname must not be blank and must contain only letters, numbers, and hyphens. Invalid hostname given.");
+        return;
+    }
 
     if (!NovaCommon.dbqGetHostnames) {
         cb("Unable to access hostnames database");
         return;
     }
-	
-	// Check if it exists already
-	
+    
+    // Check if it exists already
+    
     NovaCommon.dbqGetHostnames.all(function(err, results) {
         if (databaseError(err, cb)) {return;}
 
-		if (results.length != 0) {
-			cb && cb("Hostname already exists! Can not insert it.");
-			return;
-		} else {
-    		NovaCommon.dbqInsertHostname.run(hostname, function(err) {
-        		if (databaseError(err, cb)) {return;}
-        		cb && cb(null);
-    		});
-		}
+        if (results.length != 0) {
+            cb && cb("Hostname already exists! Can not insert it.");
+            return;
+        } else {
+            NovaCommon.dbqInsertHostname.run(hostname, function(err) {
+                if (databaseError(err, cb)) {return;}
+                cb && cb(null);
+            });
+        }
     }); 
 
 };
