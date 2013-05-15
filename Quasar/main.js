@@ -1836,6 +1836,13 @@ app.post('/customizeTrainingSave', function (req, res)
 app.post('/configureNovaSave', function (req, res)
 {
 
+	// If we get two of the same form element, just use the last one
+	for (var key in req.body) {
+		if (typeof(req.body[key]) == "object") {
+			req.body[key] = req.body[key][req.body[key].length - 1];
+		}
+	}
+
 	// These are accepted configuration inputs and validation functions for them
     var configItems = [
     {
@@ -2062,6 +2069,12 @@ app.post('/configureNovaSave', function (req, res)
         }
     },
     {
+        key:  "MANAGE_IFACE_ENABLE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
         key:  "CAPTURE_BUFFER_SIZE"
         ,validator: function(val) {
             validator.check(val, this.key + ' must be an integer').isInt();
@@ -2108,42 +2121,18 @@ app.post('/configureNovaSave', function (req, res)
 
     NovaCommon.config.ClearInterfaces();
 
-    if(req.body["SMTP_USEAUTH"] == undefined)
+    if(req.body["SMTP_USEAUTH"] == '0')
     {
-      req.body["SMTP_USEAUTH"] = "0";
       NovaCommon.config.SetSMTPUseAuth("false");
       req.body["SMTP_DOMAIN"] = 'smtp://' + req.body['SMTP_DOMAIN'];
     }
-    else
+    else if(req.body["SMTP_USEAUTH"] == '1')
     {
-      req.body["SMTP_USEAUTH"] = "1";
       NovaCommon.config.SetSMTPUseAuth("true");
       req.body["SMTP_DOMAIN"] = 'smtps://' + req.body['SMTP_DOMAIN'];
     }
     
-    if(req.body["EMAIL_ALERTS_ENABLED"] == undefined)
-    {
-      req.body["EMAIL_ALERTS_ENABLED"] = "0";
-      NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
-    }
-    else
-    {
-      req.body["EMAIL_ALERTS_ENABLED"] = "1";
-      NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
-    }
-    
-    if(req.body["DM_ENABLED"] == undefined)
-    {
-      req.body["DM_ENABLED"] = "0";
-      NovaCommon.config.WriteSetting("DM_ENABLED", "0");
-    }
-    else
-    {
-      req.body["DM_ENABLED"] = "1";
-      NovaCommon.config.WriteSetting("DM_ENABLED", "1");
-    }
-  
-    if(req.body["MASTER_UI_ENABLED"] != undefined)
+    if(req.body["MASTER_UI_ENABLED"] != undefined && req.body["MASTER_UI_ENABLED"] == "1")
     {
       if(clientId != undefined && req.body["MASTER_UI_CLIENT_ID"] != clientId)
       {
@@ -2157,11 +2146,6 @@ app.post('/configureNovaSave', function (req, res)
           clientId = req.body["MASTER_UI_CLIENT_ID"];
         }
       }
-      req.body['MASTER_UI_ENABLED'] = '1';
-    }
-    else
-    {
-      req.body['MASTER_UI_ENABLED'] = '0';
     }
 
     var interfaces = "";
@@ -2210,7 +2194,7 @@ app.post('/configureNovaSave', function (req, res)
 
     var useRsyslog = req.body["RSYSLOG_USE"];
   
-    if(useRsyslog != undefined)
+    if(useRsyslog != undefined && useRsyslog == "1")
     {
       var spawn = require('sudo');
       var options = {
@@ -2296,25 +2280,6 @@ app.post('/configureNovaSave', function (req, res)
       {
         NovaCommon.config.UseAllInterfaces(req.body["DEFAULT"]);
         NovaCommon.config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
-      }
-
-      if(req.body['MANAGE_IFACE_ENABLE'] == 'on')
-      {
-        req.body['MANAGE_IFACE_ENABLE'] = '1';
-      }
-      else
-      {
-        req.body['MANAGE_IFACE_ENABLE'] = '0';
-      }
-
-      if(req.body['MANAGE_IFACE_ENABLE'] != NovaCommon.config.ReadSetting("MANAGE_IFACE_ENABLE"))
-      {
-        NovaCommon.config.WriteSetting('MANAGE_IFACE_ENABLE', req.body['MANAGE_IFACE_ENABLE']);
-      }
-      
-      if(req.body['WEB_UI_IFACE'] != WEB_UI_IFACE)
-      {
-        NovaCommon.config.WriteSetting('WEB_UI_IFACE', req.body['WEB_UI_IFACE']);
       }
 
       if(req.body["SMTP_USER"] !== undefined)

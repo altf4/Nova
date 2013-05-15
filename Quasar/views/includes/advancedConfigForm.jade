@@ -22,7 +22,6 @@ style
 script
   var ifaces = !{JSON.stringify(INTERFACES)};
   var used = '#{WEB_UI_IFACE}';
-  var manageEnabled = '#{MANAGE_IFACE_ENABLE}';
   
   function handlePulsarPaneSlide()
   {
@@ -81,11 +80,6 @@ script
       }
       $('#WEB_UI_IFACE').append(option);
     }
-    console.log('manageEnabled == ' + manageEnabled);
-    if(manageEnabled != '0')
-    {
-      $('#slideManiface').prop('checked', true);
-    }
     handleManifaceSlide();
   }
   
@@ -104,7 +98,11 @@ form(method="post", action="/configureNovaSave")
     input(type="number", name="WEB_UI_PORT", value=WEB_UI_PORT)
     br
 
-    input#slideManiface(type='checkbox', name='MANAGE_IFACE_ENABLE', onclick='handleManifaceSlide()')
+    input(type='hidden', name='MANAGE_IFACE_ENABLE', value='0')
+    if(MASTER_UI_ENABLED == "1")
+      input#slideManiface(type='checkbox', name='MANAGE_IFACE_ENABLE', value="1", checked=true, onclick='handleManifaceSlide()')
+    else
+      input#slideManiface(type='checkbox', name='MANAGE_IFACE_ENABLE', value="1", onclick='handleManifaceSlide()')
     span.labelSpan Enable Management Interface?
     br
     div#manifacePane
@@ -121,10 +119,11 @@ form(method="post", action="/configureNovaSave")
     br
     br
     
-    if(MASTER_UI_ENABLED != "0")
-      input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", checked=true, onclick='handlePulsarPaneSlide()')
+    input(type='hidden', name='MASTER_UI_ENABLED', value='0')
+    if(MASTER_UI_ENABLED == "1")
+      input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", value="1", checked=true, onclick='handlePulsarPaneSlide()')
     else
-      input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", onclick='handlePulsarPaneSlide()')
+      input#PULSAR_ENABLE(type="checkbox", name="MASTER_UI_ENABLED", value="1", onclick='handlePulsarPaneSlide()')
     span.labelSpan Use Pulsar?
       
     div#pulsarPane

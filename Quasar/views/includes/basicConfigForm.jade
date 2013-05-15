@@ -515,13 +515,15 @@ script
 input(type='hidden', name='ADVANCED', value='0')
 
 h2 Email Notifications
+input(type='hidden', name='EMAIL_ALERTS_ENABLED', value="0")
 if(EMAIL_ALERTS_ENABLED == 1)
-  input(type='checkbox', id='EMAIL_ALERTS_ENABLED', name='EMAIL_ALERTS_ENABLED', value=EMAIL_ALERTS_ENABLED, checked=true, onclick='handleSMTPPaneSlide()')
+  input(type='checkbox', id='EMAIL_ALERTS_ENABLED', name='EMAIL_ALERTS_ENABLED', value="1", checked=true, onclick='handleSMTPPaneSlide()')
 else
-  input(type='checkbox', id='EMAIL_ALERTS_ENABLED', name='EMAIL_ALERTS_ENABLED', value=EMAIL_ALERTS_ENABLED, onclick='handleSMTPPaneSlide()')
+  input(type='checkbox', id='EMAIL_ALERTS_ENABLED', name='EMAIL_ALERTS_ENABLED', value="1", onclick='handleSMTPPaneSlide()')
 span.labelSpan Enable email alerts?
 br
 div#smtpPane
+  input(type='hidden', name='SMTP_USEAUTH', value='0')
   if(SMTP_USEAUTH == 'true')
     input(type='checkbox', id='SMTP_USEAUTH', name='SMTP_USEAUTH', value=SMTP_USEAUTH, onclick='changeSMTPAuth()', checked=true)
   else
@@ -570,10 +572,11 @@ div(id='servicePrefs')
 br
 
 h2 Rsyslog
+input(type='hidden', name='RSYSLOG_USE', value="0")
 if(RSYSLOG_USE == 'true')
-  input#RSYSLOG_USE(type='checkbox', name='RSYSLOG_USE', checked=true, onclick='handleRsyslogPane()')
+  input#RSYSLOG_USE(type='checkbox', name='RSYSLOG_USE', value="1", checked=true, onclick='handleRsyslogPane()')
 else
-  input#RSYSLOG_USE(type='checkbox', name='RSYSLOG_USE', onclick='handleRsyslogPane()')
+  input#RSYSLOG_USE(type='checkbox', name='RSYSLOG_USE', value="1", onclick='handleRsyslogPane()')
 span.labelSpan Use RSyslog?
 
 div#rsyslogPane
@@ -622,10 +625,11 @@ h2 Ethernet Interfaces
  input(type='hidden', name='DEFAULT', id='DEFAULT', value=DEFAULT)
 
 br
+input(type='hidden', name='DM_ENABLED', value='0')
 if(DM_ENABLED == 1)
-  input(type='checkbox', id='DM_ENABLED', name='DM_ENABLED', value=DM_ENABLED, checked, onclick='handleDoppelPaneSlide()')
+  input(type='checkbox', id='DM_ENABLED', name='DM_ENABLED', value="1", checked, onclick='handleDoppelPaneSlide()')
 else
-  input(type='checkbox', id='DM_ENABLED', name='DM_ENABLED', value=DM_ENABLED, onclick='handleDoppelPaneSlide()')
+  input(type='checkbox', id='DM_ENABLED', name='DM_ENABLED', value="1", onclick='handleDoppelPaneSlide()')
 span.labelSpan Enable Doppelganger?
 br
 
