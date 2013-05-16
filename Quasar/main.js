@@ -2123,13 +2123,11 @@ app.post('/configureNovaSave', function (req, res)
     if(req.body["SMTP_USEAUTH"] == '0')
     {
       NovaCommon.config.SetSMTPUseAuth("false");
-      req.body["SMTP_DOMAIN"] = 'smtp://' + req.body['SMTP_DOMAIN'];
     }
     else if(req.body["SMTP_USEAUTH"] == '1')
     {
       req.body["SMTP_USEAUTH"] = "1";
       NovaCommon.config.SetSMTPUseAuth("true");
-      req.body["SMTP_DOMAIN"] = 'smtps://' + req.body['SMTP_DOMAIN'];
     }
     
     if(req.body["MASTER_UI_ENABLED"] != undefined && req.body["MASTER_UI_ENABLED"] == "1")

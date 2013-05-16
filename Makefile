@@ -251,7 +251,7 @@ install-data:
 	install Installer/nova_init "$(DESTDIR)/usr/bin"
 	install Installer/nova_rsyslog_helper "$(DESTDIR)/usr/bin"
 	install Installer/miscFiles/createNovaScriptAlert.py "$(DESTDIR)/usr/bin"
-	install Installer/miscFiles/novamaildaemon.py "$(DESTDIR)/usr/bin"
+	install Installer/miscFiles/novamaildaemon.pl "$(DESTDIR)/usr/bin"
 	install Installer/miscFiles/cleannovasendmail.sh "$(DESTDIR)/usr/bin"
 	install Installer/miscFiles/placenovasendmail "$(DESTDIR)/usr/bin"
 	#Install permissions

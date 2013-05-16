@@ -96,7 +96,7 @@ def sendEmailAlert():
   MSG.attach(part)
 
   server = smtplib.SMTP(SERVER + ':' + PORT)
-  server.set_debuglevel(1)
+  server.set_debuglevel(0)
   server.ehlo()
 
   if len(PASS) != 0:

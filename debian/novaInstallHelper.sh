@@ -115,6 +115,9 @@ chown -R -f $NEW_PERM .node-gyp/
 cd /usr/share/honeyd/scripts/
 chown -R -f $NEW_PERM misc/
 
+sudo cpan Linux::Inotify2
+sudo cpan File::ReadBackwards
+
 echo "##############################################################################"
 echo "#                                    DONE                                    #"
 echo "##############################################################################"
