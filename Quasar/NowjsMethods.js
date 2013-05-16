@@ -1014,7 +1014,7 @@ everyone.now.GetHaystackDHCPStatus = function(cb)
         }
         else
         {
-            data = data.toString().split("\n");
+            data = data.toString().replace(/ /g, '').split("\n");
             var tmp = [];
             for (var i = 0; i < data.length; i++) {
                 if (data[i] == "") {
