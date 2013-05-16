@@ -5,6 +5,14 @@ div.novaGrid {
 	display: inline-block;
 }
 
+.novaGridPagesDiv {
+	text-align: left;
+	background-color: #ABD6FF;
+	background-image: url('images/gradientr.png');
+	background-repeat: repeat-x;
+	border: 1px solid black;
+}
+
 .novaGrid {
 	table-layout:fixed;
 	border-collapse:collapse;
@@ -48,7 +56,7 @@ tr.novaGrid:hover {
 }
 
 .pageNumberLink {
-	font-size: 18px;
+	font-size: 16px;
 	margin-right: 2px;
 	margin-left: 2px;
 	padding-right: 2px;
