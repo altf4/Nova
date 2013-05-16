@@ -1269,7 +1269,9 @@ block content
         br
         input#newName(name='newName', onkeypress='if(event.keyCode == 13){document.getElementById("addConfig").submit()}')
         br
-        button#submitAdd Submit
+        button#submitAdd
+          img.buttonIcon(src='images/add.png')
+          span.buttonSpan Create new haystack
     div#cloneConfigForm
       form(method='post', id='cloneConfig', onsubmit='return checkParametersClone();')
         label Select Haystack to Clone:
@@ -1280,7 +1282,9 @@ block content
         br
         input#newNameClone(name='newNameClone', onkeypress='if(event.keyCode == 13){document.getElementById("cloneConfig").submit()}')
         br
-        button#submitClone Submit
+        button#submitClone
+          img.buttonIcon(src='images/add.png')
+          span.buttonSpan Create new haystack
     div#profileInfo
       h1#profileName(style='font-weight: bold;')
       h2 Misc. Information
