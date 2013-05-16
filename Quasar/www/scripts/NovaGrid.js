@@ -275,7 +275,12 @@ NovaGrid.prototype = {
                    }
                    if(this.m_selection)
                    {
-                       innerTableString += '<TR class="novaGrid">';
+                       if (this.m_selected.indexOf(this.m_arrayRep[i][this.m_keyIndex]) != -1)
+                       {
+                         innerTableString += '<TR class="novaGrid" style="background: #d0e9fc">';
+                       } else {
+                         innerTableString += '<TR class="novaGrid">';
+                       }
                    }
                    else
                    {
