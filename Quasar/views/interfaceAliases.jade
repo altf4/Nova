@@ -51,7 +51,7 @@ block headerAdditions
         var columns = new Array();
         columns.push({name: "Interface"});
         columns.push({name: "Alias"});
-        columns.push({name: "Delete"});
+        columns.push({name: "Delete", noEscape: true});
 
         grid = new NovaGrid(columns, 0, "aliasTable", 'grid', false);
 

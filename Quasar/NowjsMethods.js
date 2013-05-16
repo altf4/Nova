@@ -1410,7 +1410,7 @@ everyone.now.InsertHostname = function(hostname, cb) {
     
     // Check if it exists already
     
-    NovaCommon.dbqGetHostnames.all(function(err, results) {
+    NovaCommon.dbqGetHostname.all(hostname, function(err, results) {
         if (databaseError(err, cb)) {return;}
 
         if (results.length != 0) {

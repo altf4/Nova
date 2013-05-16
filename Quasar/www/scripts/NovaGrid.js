@@ -32,6 +32,9 @@ var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection, ri
     this.m_elements = new Object();
     this.m_pageElements = [];
     this.m_pagesElement = null;
+
+    // Current page
+    this.m_arrayRep = [];
     
     // Called whenever the grid is redrawn
     this.m_renderCallback = function() {};
@@ -114,7 +117,6 @@ NovaGrid.prototype = {
                    this.m_elements[entry[this.m_keyIndex]] = entry;
                    // Disabling row blinking for now
                    //this.m_elements[entry[this.m_keyIndex]]._newRow = true;
-                   
                }
            }
 
@@ -185,19 +187,23 @@ NovaGrid.prototype = {
 		       if (this.m_rightClick) {
                	var innerTableString = this.headerHTML + '<TBODY' + ' oncontextmenu="' + this.m_rightClick + '" onclick="' + this.m_rightClick + '">';
 			   } else {
-               	var innerTableString = this.headerHTML + '<TBODY>';
+                if (this.m_selection) {
+               	  var innerTableString = this.headerHTML + '<TBODY onclick="' + this.m_name + '.AddToSelected(event)">';
+                } else {
+               	  var innerTableString = this.headerHTML + '<TBODY>';
+                }
 			   }
                var keys = Object.keys(this.m_elements);
-               var arrayRep = new Array();
+               this.m_arrayRep = new Array();
                for (var i = 0; i < keys.length; i++) 
                {
-                 arrayRep.push(this.m_elements[keys[i]]);
+                 this.m_arrayRep.push(this.m_elements[keys[i]]);
                }
                
                // work around for scoping issues
                var so = this;
 
-               arrayRep.sort(function(a, b) {
+               this.m_arrayRep.sort(function(a, b) {
                  if(a[so.m_sortByKey] > b[so.m_sortByKey]) 
                  {
                    return so.m_sortDescending == true ? -1 : 1;
@@ -214,7 +220,7 @@ NovaGrid.prototype = {
 
 
                if (!this.m_remotePaging) {
-                    if (arrayRep.length < this.m_currentPage * this.m_rowsPerPage) {
+                    if (this.m_arrayRep.length < this.m_currentPage * this.m_rowsPerPage) {
                         return innerTableString; 
                     }
                }
@@ -227,7 +233,7 @@ NovaGrid.prototype = {
                  maxi = this.m_rowsPerPage;
                }
 
-               for (; (i < arrayRep.length) && i < maxi; i++) {
+               for (; (i < this.m_arrayRep.length) && i < maxi; i++) {
                    var sub = '';
                    var idx = keys[i].indexOf('>');
                    // All this magic because the grid is keyed to an html
@@ -248,28 +254,28 @@ NovaGrid.prototype = {
                    }
                    else
                    {
-                       this.m_pageElements.push(arrayRep[i][this.m_keyIndex]);
-                       sub = arrayRep[i][this.m_keyIndex];
+                       this.m_pageElements.push(this.m_arrayRep[i][this.m_keyIndex]);
+                       sub = this.m_arrayRep[i][this.m_keyIndex];
                    }
                    if(this.m_selection)
                    {
-                       innerTableString += '<TR class="novaGrid" id=\'' + sub + '\', onclick="' + this.m_name + '.AddToSelected(\'' + sub + '\', event);" >';
+                       innerTableString += '<TR class="novaGrid">';
                    }
                    else
                    {
                      var classes = "novaGrid";
-                     if (arrayRep[i]._newRow)
+                     if (this.m_arrayRep[i]._newRow)
                      {
-                        arrayRep[i]._newRow = false;
+                        this.m_arrayRep[i]._newRow = false;
                         classes += " newRow";
                      }
 
                      innerTableString += '<TR class="' + classes + '" ';
                      if(this.m_rightClick != undefined)
                      {
-                       if(arrayRep[i].style != undefined)
+                       if(this.m_arrayRep[i].style != undefined)
                        {
-                         innerTableString += 'style="' + arrayRep[i].style + '">';
+                         innerTableString += 'style="' + this.m_arrayRep[i].style + '">';
                        } 
                        else
                        {
@@ -278,9 +284,9 @@ NovaGrid.prototype = {
                      }
                      else
                      {
-                       if(arrayRep[i].style != undefined)
+                       if(this.m_arrayRep[i].style != undefined)
                        {
-                         innerTableString += 'style="' + arrayRep[i].style + '">';
+                         innerTableString += 'style="' + this.m_arrayRep[i].style + '">';
                        } 
                        else
                        {
@@ -291,9 +297,13 @@ NovaGrid.prototype = {
                      for (var c = 0; c < this.m_columns.length; c++) {
                         if (this.m_columns[c].isDisabled == true) {continue;}
                         if (this.m_columns[c].formatter !== undefined) {
-                          innerTableString += '<TD class="novaGrid">' + this.m_columns[c].formatter(arrayRep[i][c]) + '</TD>';
+                          innerTableString += '<TD class="novaGrid">' + this.m_columns[c].formatter(this.m_arrayRep[i][c]) + '</TD>';
                         } else {
-                          innerTableString += '<TD class="novaGrid">' + arrayRep[i][c] + '</TD>';
+                          if (this.m_columns[c].noEscape) {
+                            innerTableString += '<TD class="novaGrid">' + this.m_arrayRep[i][c] + '</TD>';
+                          } else {
+                            innerTableString += '<TD class="novaGrid">' + String(this.m_arrayRep[i][c]).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + '</TD>';
+                          }
                         }
                     }
                     innerTableString += '</TR>';
@@ -353,7 +363,18 @@ NovaGrid.prototype = {
     return ret;
   }
   
-  , AddToSelected: function(key, oEvent) {
+  , AddToSelected: function(oEvent) {
+    var tableRow = oEvent.srcElement;
+    while (tableRow != null && tableRow.nodeName != "TR") {
+        tableRow = tableRow.parentNode;
+    }
+
+    if (tableRow == null) {
+        console.log("ERROR: Unable to get <TR> element from click");
+        return;
+    }
+
+    var key = this.m_arrayRep[tableRow.rowIndex - 1][this.m_keyIndex];
     if(oEvent.ctrlKey)
     {
       var add = true;
@@ -547,13 +568,27 @@ NovaGrid.prototype = {
   }
   
   , ChangeRowColor: function(elementId, makeBlue) {
+    var keyIndex = -1;
+    for (var i = 0; i < this.m_arrayRep.length; i++) {
+        if (this.m_arrayRep[i][this.m_keyIndex] == elementId) {
+            keyIndex = i;
+            break;
+        }
+    }
+
+    if (keyIndex == -1) {
+        return;
+    }
+
+    var rowElemen = this.m_tableElement.firstChild.childNodes[1].getElementsByTagName("TR")[keyIndex];
+
     if(makeBlue == false)
     {
-      document.getElementById(elementId).style.background = 'white';
+     rowElemen.style.background = 'white';
     }
     else
     {
-      document.getElementById(elementId).style.background = '#d0e9fc';
+      rowElemen.style.background = '#d0e9fc';
     }
   }
   

@@ -2493,7 +2493,7 @@ everyone.now.AddInterfaceAlias = function(iface, alias, callback)
             callback("Error: invalid interface alias. Must contain only letters, numbers, spaces, and hyphens.");
             return;
         }
-        interfaceAliases[iface] = sanitizeCheck(alias).entityEncode();
+        interfaceAliases[iface] = alias;
     } 
     else 
     {

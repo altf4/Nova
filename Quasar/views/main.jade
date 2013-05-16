@@ -290,9 +290,9 @@ block headerAdditions
         document.getElementById("keepContext").onclick = cancelEvents;
        
         var gridStructure = [];
-        gridStructure.push({name: "Hostility", isDisabled: false});
+        gridStructure.push({name: "Hostility", isDisabled: false, noEscape: true});
         gridStructure.push({name: "Interface", isDisabled: false});
-        gridStructure.push({name: "Address", isDisabled: false});
+        gridStructure.push({name: "Address", isDisabled: false, noEscape: true});
         gridStructure.push({name: "Classification", isDisabled: false, formatter: classificationFormatter});
         gridStructure.push({name: "Last Seen", isDisabled: false});
    

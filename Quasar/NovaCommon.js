@@ -139,6 +139,7 @@ var NovaCommon = new function() {
         }
         
         self.dbqGetHostnames = hostNameDb.prepare('SELECT * from allocs');
+        self.dbqGetHostname = hostNameDb.prepare('SELECT * from allocs WHERE name = ?');
         self.dbqInsertHostname = hostNameDb.prepare('INSERT into allocs(name) VALUES (?)');
         self.dbqClearHostnameAllocations = hostNameDb.prepare('UPDATE allocs SET IP = NULL');
         self.dbqDeleteHostname = hostNameDb.prepare('DELETE from allocs WHERE name = ?');
