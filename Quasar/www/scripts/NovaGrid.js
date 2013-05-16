@@ -385,7 +385,7 @@ NovaGrid.prototype = {
   }
   
   , AddToSelected: function(oEvent) {
-    var tableRow = oEvent.srcElement;
+    var tableRow = oEvent.srcElement || oEvent.target;
     while (tableRow != null && tableRow.nodeName != "TR") {
         tableRow = tableRow.parentNode;
     }
