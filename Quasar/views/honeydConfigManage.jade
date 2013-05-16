@@ -862,6 +862,11 @@ block headerAdditions
     function deleteSelectedItems()
     {
       var items = grid.GetSelected();
+
+      if (items.length == 0) {
+        alert("No nodes were selected to delete!");
+        return;
+      }
      
       for(var i in items)
       {
@@ -1025,6 +1030,10 @@ block headerAdditions
     function deleteSelectedProfileItems()
     {
       var names = GetSelectedProfiles();
+      if (names.length == 0) {
+        alert("No profiles selected to delete!");
+        return;
+      }
      
       try 
       {
