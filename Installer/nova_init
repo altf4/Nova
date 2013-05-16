@@ -35,3 +35,6 @@ else
 
     rm -f /tmp/sudoers.nova
 fi
+
+sudo cpan Linux::Inotify2
+sudo cpan File::ReadBackwards
