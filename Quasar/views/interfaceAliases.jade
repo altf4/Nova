@@ -53,7 +53,7 @@ block headerAdditions
         columns.push({name: "Alias"});
         columns.push({name: "Delete", noEscape: true});
 
-        grid = new NovaGrid(columns, 0, "aliasTable", 'grid', false);
+        grid = new NovaGrid(columns, 0, document.getElementById("aliasTable"), 'grid');
 
         var interfaceAliases = !{JSON.stringify(interfaceAliases)};
         for(i in interfaceAliases)
@@ -95,6 +95,5 @@ block content
   br
   br
   h1 Current Aliases
-  div.novaGrid
-    div#aliasTable
+  span#aliasTable(style="display: inline-block;")
 

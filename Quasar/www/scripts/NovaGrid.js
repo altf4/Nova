@@ -70,6 +70,8 @@ var NovaGrid = function(columns, keyIndex, tableElement, gridName, selection, ri
       this.m_rightClick = rightclick;
     }
 
+
+    this.GenerateDivs();
     this.GenerateTableHeader();
 }
 
@@ -118,6 +120,20 @@ NovaGrid.prototype = {
                    // Disabling row blinking for now
                    //this.m_elements[entry[this.m_keyIndex]]._newRow = true;
                }
+           }
+
+           , GenerateDivs: function() {
+                this.m_tableElement.innerHTML = "";
+                this.m_pagesElement = document.createElement("div");
+                this.m_pagesElement.setAttribute("class", "novaGridPagesDiv");
+
+                var tableDiv = document.createElement("div");
+                tableDiv.setAttribute("class", "novaGrid");
+
+                this.m_tableElement.appendChild(this.m_pagesElement);
+                this.m_tableElement.appendChild(tableDiv);
+
+                this.m_tableElement = tableDiv;
            }
 
            // Used internally to generate the TH tags
@@ -184,15 +200,15 @@ NovaGrid.prototype = {
 
            // Returns the HTML for the table
            , GetTable: function() {
-		       if (this.m_rightClick) {
-               	var innerTableString = this.headerHTML + '<TBODY' + ' oncontextmenu="' + this.m_rightClick + '" onclick="' + this.m_rightClick + '">';
-			   } else {
+               if (this.m_rightClick) {
+                var innerTableString = this.headerHTML + '<TBODY' + ' oncontextmenu="' + this.m_rightClick + '" onclick="' + this.m_rightClick + '">';
+               } else {
                 if (this.m_selection) {
-               	  var innerTableString = this.headerHTML + '<TBODY onclick="' + this.m_name + '.AddToSelected(event)">';
+                  var innerTableString = this.headerHTML + '<TBODY onclick="' + this.m_name + '.AddToSelected(event)">';
                 } else {
-               	  var innerTableString = this.headerHTML + '<TBODY>';
+                  var innerTableString = this.headerHTML + '<TBODY>';
                 }
-			   }
+               }
                var keys = Object.keys(this.m_elements);
                this.m_arrayRep = new Array();
                for (var i = 0; i < keys.length; i++) 
@@ -259,7 +275,12 @@ NovaGrid.prototype = {
                    }
                    if(this.m_selection)
                    {
-                       innerTableString += '<TR class="novaGrid">';
+                       if (this.m_selected.indexOf(this.m_arrayRep[i][this.m_keyIndex]) != -1)
+                       {
+                         innerTableString += '<TR class="novaGrid" style="background: #d0e9fc">';
+                       } else {
+                         innerTableString += '<TR class="novaGrid">';
+                       }
                    }
                    else
                    {
@@ -364,7 +385,7 @@ NovaGrid.prototype = {
   }
   
   , AddToSelected: function(oEvent) {
-    var tableRow = oEvent.srcElement;
+    var tableRow = oEvent.srcElement || oEvent.target;
     while (tableRow != null && tableRow.nodeName != "TR") {
         tableRow = tableRow.parentNode;
     }
@@ -456,14 +477,9 @@ NovaGrid.prototype = {
     }
   }
 
-  , SetPageNumberDiv: function(tablePages) {
-    this.m_pagesElement = tablePages;
-  }
   // Pass this a div DOM element and it will throw the page numbers in it
-  ,populateTablePages: function(tablePages) {
-        if (!tablePages) {
-            tablePages = this.m_pagesElement;
-        }
+  ,populateTablePages: function() {
+       tablePages = this.m_pagesElement;
 
        if (!tablePages) {return;}
        tablePages.innerHTML = "";
