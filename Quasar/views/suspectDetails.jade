@@ -17,37 +17,82 @@
 extends layout
 
 block content
-  h1 Details for suspect
-
-  div#genericInfo
+  div(style="display: inline-block;")
+    div(style="display: inline-block;")
+      div(style="text-align: center; margin: 0")
+        div.prettyContainer(style="width: 500px; margin: 0; text-align: center;")
+          h1 Suspect
+          table#generalInfo(style="display: inline-block; text-align: left;")
+          p Reverse DNS: 
+            span#domain
+      br
+      div.prettyContainer
+        h1 Packet Count Summaries
+        table.novaGrid#packetCountTotals
+      
+      div.prettyContainer
+        div#ProtocolPiChart
+      
+      div.prettyContainer
+        h1 Computed KNN Classification Features
+        table.novaGrid#knnFeatures
+     
+    br
+    div.prettyContainer
+      h2 Percent of TCP packets with flags set
+      table#tcpFlagCharts
+    
+    div.prettyContainer
+      h1 Output of KNN classification engine
+      div#classificationOutput
   
-  div(style="width: 1024px;")
+  div.prettyContainer(style="width: 1024px;")
     div#tcpPortChart(style='display: inline-block; width: 30%; margin: 10px')
     div#tcpIpChart(style='display: inline-block; width: 30%; margin: 10px')
     div#tcpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
 
   br
-  div(style="width: 1024px;")
+  div.prettyContainer(style="width: 1024px;")
     div#udpPortChart(style='display: inline-block; width: 30%; margin: 10px')
     div#udpIpChart(style='display: inline-block; width: 30%; margin: 10px')
     div#udpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
   
   br
-  div(style="width: 1024px;")
+  div.prettyContainer(style="width: 1024px;")
     div#icmpPortChart(style='display: inline-block; width: 30%; margin: 10px')
     div#icmpIpChart(style='display: inline-block; width: 30%; margin: 10px')
     div#icmpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
   
   
   br
-  h1 Detailed counts of connections from !{suspect}
   div(style="width: 1024px")
-    div(style="float: left; margin-right: 100px")
+    div.prettyContainer(margin-right: 100px")
+      h1 Connections from suspect
       span#packetCountTable(style="display: inline-block;")
-    div
+    div.prettyContainer
+      h1 Packets by Size
       span#packetSizeTable(style="display: inline-block;")
   
   br
+  div.prettyContainer
+    h1 Live Graphs of Feature Changes
+    input#enableGridLines(type='checkbox', onclick='toggleGridLines()')
+    span Enable Graph Point Lines
+    br
+    input#enableAutoScale(type='checkbox', onclick='toggleAutoscale()')
+    span Enable Auto Scaling
+    br
+    
+    div(style='display: inline-block; margin: 8px; float: left')
+      h3 Classification
+      canvas(id = 'classificationChart', width='200px', height='200px', style='border: 1px solid black')
+      p(id = 'classificationChartP')     
+    - for (var i = 0; i < 14; i++) {
+      div(style='display: inline-block; margin: 8px')
+        h3 #{String(featureNames).split(',')[i]}
+        canvas(id = 'chart#{i}', width='200px', height='200px', style='border: 1px solid black')
+        p(id = 'p#{i}')     
+    -}
 
 
 
@@ -58,6 +103,19 @@ block headerAdditions
 
 
   style
+    .prettyContainer {
+        display: inline-block;
+        vertical-align: top;
+        border: 5px solid black;
+        border-radius: 15px;
+        margin-right: 20px;
+        margin-left: 20px;
+        margin-top: 5px;
+        margin-bottom: 10px;
+        padding: 20px;
+    }
+
+
     .innerVertBar {
         height: 60%;
         position: absolute;
@@ -149,6 +207,8 @@ block headerAdditions
         icmpPortChart = new NovaPiChart('icmpPortChart', 'ICMP Packets by type', 200);
         icmpIpPortChart = new NovaPiChart('icmpIpPortChart', 'ICMP Packets by IP and type', 200);
         
+        protocolChart = new NovaPiChart('ProtocolPiChart', 'Packets By Protocol', 200);
+
         tcpIpChart.m_disableLegend = true;
         tcpPortChart.m_disableLegend = true;
         tcpIpPortChart.m_disableLegend = true;
@@ -184,9 +244,20 @@ block headerAdditions
 
         now.ready(function()
         {
-            now.GetSuspect('!{suspect}', '!{interface}', OnNewSuspect);
+            function OnNewSuspectDistribute(err, suspect) {
+                OnNewSuspect(err, suspect);
+                OnNewSuspectGraphs(err, suspect);
+            }
+            now.GetSuspect('!{suspect}', '!{interface}', OnNewSuspectDistribute);
             now.GetIpPortsContacted('!{suspect}', '!{interface}', OnIpPorts);
             now.GetPacketSizes('!{suspect}', '!{interface}', OnPacketSizes);
+            
+            now.reverseDNS('#{suspectIp}', reverseDNScb);
+            now.GetSuspect('#{suspectIp}', '#{suspectInterface}', OnNewSuspect)
+            
+            setInterval(function() {
+                now.GetSuspect('#{suspectIp}', '#{suspectInterface}', OnNewSuspectDistribute)
+            }, 3000);
         });
     }
 
@@ -196,56 +267,39 @@ block headerAdditions
             console.log(err);
             return;
         }
-
     
-        var info = "<table>";
-        info += "<TR><TD> IP Address </TD> <TD>" + suspect.ip + "</TD></TR>";
+        var info = "";
+        info += "<TR><TD style='padding-right: 30px;'> IP Address </TD> <TD>" + suspect.ip + "</TD></TR>";
         info += "<TR><TD> Interface </TD> <TD>" + suspect.interface + "</TD></TR>";
-        info += "</TABLE>";
+        $("#generalInfo").html(info); 
+        info = "";
        
-       
-        info += "<div style='display: inline-block; float: left; margin-right: 20px'><H1>Packet Count Totals</H1>";
-        info += "<TABLE>";
         info += "<TR><TD> # Bytes </TD> <TD>" + numberWithCommas(suspect.count_bytes) + "</TD></TR>";
         info += "<TR><TD> # TCP Packets </TD> <TD>" + numberWithCommas(suspect.count_tcp)  + "</TD></TR>";
         info += "<TR><TD> # UDP Packets </TD> <TD>" + numberWithCommas(suspect.count_udp)  + "</TD></TR>";
         info += "<TR><TD> # ICMP Packets </TD> <TD>" + numberWithCommas(suspect.count_icmp) + "</TD></TR>";
-        info += "<TR><TD> # Other Packets </TD> <TD>" + numberWithCommas(suspect.count_other) + "</TD></TR>";
-      
-      
-        info += "<TR><TD></TD></TR>";
-        info += "<TR><TD></TD></TR>";
+        info += "<TR style='padding-bottom: 20px'><TD> # Other Packets </TD> <TD>" + numberWithCommas(suspect.count_other) + "</TD></TR>";
         info += "<TR><TD> # TCP SYN Packets </TD> <TD>" + numberWithCommas(suspect.count_tcpSyn) + "</TD></TR>";
         info += "<TR><TD> # TCP ACK Packets </TD> <TD>" + numberWithCommas(suspect.count_tcpAck) + "</TD></TR>";
         info += "<TR><TD> # TCP SYN/ACK Packets </TD> <TD>" + numberWithCommas(suspect.count_tcpSynAck) + "</TD></TR>";
         info += "<TR><TD> # TCP FIN Packets </TD> <TD>" + numberWithCommas(suspect.count_tcpFin) + "</TD></TR>";
         info += "<TR><TD> # TCP RST Packets </TD> <TD>" + numberWithCommas(suspect.count_tcpRst) + "</TD></TR>";
-        info += "</TABLE>";
+        $("#packetCountTotals").html(info); 
+        info = "";
         
         
-        info += "</div><div style='display: inline-block;'><H1>Packet Count Summaries</H1>";
-        info += '<div id="ProtocolPiChart"></div></div>';
-        
-        info += "<H2>Percent of TCP packets with flags set</H2>";
-        info += "<TABLE>";
-        var num = 100*(suspect.count_tcpSyn || 0) / (1.0 * suspect.count_tcp);
+        var num = 100*(suspect.count_tcpSyn + suspect.count_tcpSynAck) / (1.0 * suspect.count_tcp);
         info += '<TR><TD> Percent with SYN </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
-        var num = 100*(suspect.count_tcpAck || 0) / (1.0 * suspect.count_tcp);
+        var num = 100*(suspect.count_tcpAck + suspect.count_tcpSynAck) / (1.0 * suspect.count_tcp);
         info += '<TR><TD> Percent with ACK </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
-        var num = 100*(suspect.count_tcpFin || 0) / (1.0 * suspect.count_tcp);
+        var num = 100*(suspect.count_tcpFin) / (1.0 * suspect.count_tcp);
         info += '<TR><TD> Percent with FIN </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
-        var num = 100*(suspect.count_tcpRst || 0) / (1.0 * suspect.count_tcp);
+        var num = 100*(suspect.count_tcpRst) / (1.0 * suspect.count_tcp);
         info += '<TR><TD> Percent with RST </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
         info += "</TABLE>";
+        $("#tcpFlagCharts").html(info); 
+        info = "";
         
-        
-        
-     
-        info += "<H1>Computed KNN Classification Features </H1>";
-        info += "<TABLE>";
-        
-        info += "<TR><TD></TD></TR>";
-        info += "<TR><TD></TD></TR>";
         info += "<TR><TD> IP Traffic Distribution </TD> <TD>" + suspect.ip_traffic_distribution + "</TD></TR>";
         info += "<TR><TD> Port Traffic Distribution </TD> <TD>" + suspect.port_traffic_distribution + "</TD></TR>";
         info += "<TR><TD> Packet Size Mean </TD> <TD>" + suspect.packet_size_mean + "</TD></TR>";
@@ -260,17 +314,15 @@ block headerAdditions
         info += "<TR><TD> Percent TCP FIN Packets </TD> <TD>" + suspect.tcp_percent_fin * 100 + "%</TD></TR>";
         info += "<TR><TD> Percent TCP RST Packets </TD> <TD>" + suspect.tcp_percent_rst * 100 + "%</TD></TR>";
         info += "<TR><TD> Percent Haystack Contacted </TD> <TD>" + suspect.haystack_percent_contacted * 100 + "%</TD></TR>";
-        info += "</TABLE>";
+        $("#knnFeatures").html(info); 
+        info = "";
         
      
-        info += "<H1>Output of KNN classification engine </H1>";
-        info += "<TABLE>";
-        info += "<TR><TD> Classification </TD> <TD>" + suspect.classification + "</TD></TR>";
-        info += "<TR><TD> Hostile KNN neighbors </TD> <TD>" + suspect.hostileNeighbors + "</TD></TR>";
-        info += "<TR><TD> Classification Notes </TD> <TD>" + String(suspect.classificationNotes).replace(/\\n/g, "<BR />") + "</TD></TR>";
-        
-        info += "</TABLE><BR><BR>";
-        $('#genericInfo').html(info);
+        info += "<B>Overall Classification: </B>" + suspect.classification;
+        info += "<BR><BR><B>Hostile KNN neighbors: </B>" + suspect.hostileNeighbors;
+        info += "<BR><BR><B>Classification Notes</B><br>" + String(suspect.classificationNotes).replace(/\\n/g, "<BR />");
+        $("#classificationOutput").html(info); 
+        info = "";
         
         
         arr = new Array();
@@ -279,7 +331,6 @@ block headerAdditions
         arr.push({name: 'ICMP Packets', value: suspect.count_icmp});
         arr.push({name: 'Other', value: suspect.count_other});
         arr = arr.sort(function(a,b) {return b.value - a.value});
-        protocolChart = new NovaPiChart('ProtocolPiChart', '', 200);
         protocolChart.Render(arr);
     }
 
@@ -413,3 +464,321 @@ block headerAdditions
         
         grid.Render();
     };
+
+
+    // Everything below this point is for rendering the live graphs
+    var lastSuspectObject = null;
+    var initialized = true;
+    var data = new Array();
+    var classificationData = new Array();
+
+    var gridLinesEnabled = false;
+    var autoscale = false;
+
+    function redrawGraphs()
+    {
+        for(var i = 0; i < 14; i++)
+        {
+            drawGraph('chart' + i, 'p' + i, data, i);
+        }
+    
+        drawGraph('classificationChart', 'classificationChartP', classificationData, 0); 
+    }
+
+    function toggleGridLines()
+    {
+        gridLinesEnabled = $('#enableGridLines').is(':checked');
+        redrawGraphs();
+    }
+
+    function toggleAutoscale()
+    {
+        autoscale = $('#enableAutoScale').is(':checked');
+        redrawGraphs();
+    }
+
+    function markClassificationAs(hostility)
+    {
+        'use strict';
+        var hostilityString;
+        if(hostility == '1')
+        {
+            hostilityString = 'hostile';
+        }
+        else
+        {    
+            hostilityString = 'benign';
+        }
+
+        if(!confirm("This will train the classifiaction engine to match all suspects looking like this one's current state as " + hostilityString + ". Are you sure you want to do this?"))
+        {
+            return;
+        }
+        if(lastSuspectObject == null)
+        {
+            alert('No data recieved for suspect yet');
+            return;
+        }
+
+        var features = lastSuspectObject.features.join(' ');
+ 
+        try
+        {
+           now.addTrainingPoint(lastSuspectObject.ip, lastSuspectObject.interface, features, hostility, addedCb);
+        }
+        catch(err)
+        {
+            console.log('Error was: ' + err);
+            alert('Unable to contact server. Try refreshing the page');
+        }
+    }
+
+    function addedCb(err)
+    {
+        if(err)
+        {
+            alert('There was and error adding the new training point: ' + err);
+        }
+        else
+        {
+            alert('Added suspect point to training data');
+        }
+    }
+    
+    function reverseDNScb(err, domains)
+    {
+        var prefix = '';
+        var suffix = '';
+        if(err != null)
+        {
+            var errorString;
+            if(err.code == 'ENOTFOUND')
+            {
+                errorString = 'No domain name found';
+            }
+            else
+            {
+                errorString = 'Unable to get domain name because of error: ' + err.code;
+            }
+            $('#domain').html(prefix + errorString + suffix);
+        }
+        else
+        {
+            $('#domain').html(prefix + domains + suffix);
+        }
+    }
+
+    function OnNewSuspectGraphs(err, suspect)
+    {
+        if (err) {
+            console.log(err);
+            return;
+        }
+
+        // We throw the first suspect in the graphs twice so it'll have a line instead of nothing
+        if(initialized)
+        {
+            initialized = false;
+            OnNewSuspectGraphs(err, suspect);
+        }
+
+        
+        if(suspect.ip == '#{suspectIp}' && suspect.interface == '#{suspectInterface}')
+        {
+            var row = new Array();
+            row.push(suspect.ip_traffic_distribution);
+            row.push(suspect.port_traffic_distribution);
+            row.push(suspect.packet_size_mean);
+            row.push(suspect.packet_size_deviation);
+            row.push(suspect.distinct_ips);
+            row.push(suspect.distinct_tcp_ports);
+            row.push(suspect.distinct_udp_ports);
+            row.push(suspect.avg_tcp_ports_per_host);
+            row.push(suspect.avg_udp_ports_per_host);
+            row.push(suspect.tcp_percent_syn);
+            row.push(suspect.tcp_percent_fin);
+            row.push(suspect.tcp_percent_rst);
+            row.push(suspect.tcp_percent_synack);
+            row.push(suspect.haystack_percent_contacted);
+            suspect.features = row;
+            
+            lastSuspectObject = suspect;
+            data.push(row);
+
+
+            var classificationArrayWrapper = new Array();
+            classificationArrayWrapper.push(suspect.classification);
+            classificationData.push(classificationArrayWrapper);
+
+            var maxNumberOfPoints = 100;
+            if(data.length > maxNumberOfPoints)
+            {
+                data.shift();
+            }
+
+            if(classificationData.length > maxNumberOfPoints)
+            {
+                classificationData.shift();
+            }
+
+            redrawGraphs();
+
+        }
+
+    };
+
+    function drawGraph(canvas, pID, data, index)
+    {
+        var m_width = 200;
+        var m_height = 200;
+        var border = 15;
+
+        var width = m_width;
+        var height = m_height - border*2;
+        
+        var c = $('#' + canvas)[0];
+        var p = $('#' + pID)[0];
+        var ctx = c.getContext('2d');
+        ctx.clearRect (0, 0,m_width ,m_height);
+       
+        ctx.fillSTyle='#0000FF';
+
+        var minY;
+        var maxY;
+        if(autoscale)
+        {
+            minY = data[0][index];
+            maxY = data[0][index];
+        } else {
+            // Hard coded fixed scale charts between 0 and 1
+            if(canvas == 'classificationChart'
+            || canvas == 'chart0'
+            || canvas == 'chart1'
+            || canvas == 'chart0'
+            || canvas == 'chart9'
+            || canvas == 'chart10'
+            || canvas == 'chart11'
+            || canvas == 'chart12'
+            || canvas == 'chart13')
+            {
+                minY = 0;
+                maxY = 1;
+            } else {
+                minY = data[0][index];
+                maxY = data[0][index];
+            }
+                
+        }
+        
+        if(data.length == 1)
+        {
+            p.innerHTML = '<br> Current: ' + data[0][index].toFixed(12);
+            return;
+        }
+
+
+        var points = new Array();
+        for (var i = 0; i < data.length; i++)
+        {
+            if(data[i][index] > maxY)
+            {
+                maxY = data[i][index];
+            }
+
+            if(data[i][index] < minY)
+            {
+                minY = data[i][index];
+            }
+        }
+
+         
+        for (var i = 0; i < data.length; i++)
+        {
+            var point = new Object();
+            point.x = (width/(data.length - 1))*i;
+
+            if(maxY == minY)
+            {
+                point.y = height/2;
+            } else {
+                point.y = border + height - ((1.0*data[i][index] - minY)/(maxY-minY) * height);
+            }
+            points.push(point);
+        }
+       
+        // Draw grid lines
+        if(gridLinesEnabled)
+        {
+            ctx.strokeStyle='#A1A1A1';
+            ctx.beginPath();
+            ctx.moveTo(0, border);
+            ctx.lineTo(width, border);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, height+border);
+            ctx.lineTo(width, height+border);
+            ctx.stroke();
+            for (var i = 0; i < points.length; i++)
+            {
+                ctx.beginPath();
+                ctx.moveTo(points[i].x,border);
+                ctx.lineTo(points[i].x,height+border);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, points[i].y);
+                ctx.lineTo(width, points[i].y);
+                ctx.stroke();
+            }
+        }
+        
+        ctx.fillStyle = 'blue';
+        ctx.font = '10px Arial';
+        ctx.fillText(minY, 0, m_height); 
+        ctx.fillText(maxY, 0, 10);
+        
+
+        
+        ctx.strokeStyle='#FF0000';
+        for (var i = 1; i < points.length; i++)
+        {
+            ctx.beginPath();
+            ctx.moveTo(points[i-1].x, points[i-1].y);
+            ctx.lineTo(points[i].x, points[i].y);
+            ctx.stroke();
+        }
+
+        ctx.fillStyle='#0000FF';
+        for (var i = 0; i < points.length; i++)
+        {
+            ctx.beginPath();
+            ctx.arc(points[i].x,points[i].y,2,0,2*Math.PI);
+            ctx.fill();
+        }
+        
+        
+        var trendString = '';
+        var trendStringCutoff = 25;
+        for (var i = points.length - 2; i >= 0; i--)
+        {
+            if(trendString.length > trendStringCutoff)
+            {
+                break;
+            }
+
+            if(points[i].y > points[i+1].y)
+            {
+                trendString = '+' + trendString;
+            } else if(points[i].y < points[i+1].y)
+            {
+                trendString = '-' + trendString;
+            } else {
+                trendString = '=' + trendString;
+            }
+        }
+
+        p.innerHTML = trendString;
+        p.innerHTML += '<br> Current: ' + data[data.length-1][index].toFixed(12);
+        p.innerHTML += '<br> Delta: ' + (data[data.length-1][index]- data[data.length-2][index]).toFixed(12);
+    }
+

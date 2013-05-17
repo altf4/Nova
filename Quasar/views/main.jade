@@ -84,7 +84,6 @@ block headerAdditions
     var LiveUpdateChanged = function()
     {
       liveUpdate = $("#liveGridUpdate").is(':checked');
-      console.log("Toggled live update to " + liveUpdate);
     }
 
     var toggleFilterBlock = function()
@@ -154,17 +153,10 @@ block headerAdditions
         alert("Unable to clear suspects when not connected to novad");
         return;
       }
-      console.log('in ClearSuspect with ' + ip + ' ' + interface);
       now.ClearSuspect(ip, interface);
       suspectGrid.DeleteRow(buildLink(ip, interface));
     }
 
-    function MonitorSuspect(ip, interface, idString)
-    {
-        var path = "/monitor?ip=" + ip + "&interface=" + interface;
-        window.open(path);
-    }
-    
     function SuspectDetails(ip, interface, idString)
     {
         var path = "/getSuspectDetails?ip=" + ip + "&interface=" + interface;
@@ -285,7 +277,8 @@ block headerAdditions
 
     function Init()
     {
-        //document.getElementById("keepContext").onclick = cancelEvents;
+        // This stops the event in the grid so that the layout.jade onclick handler doesn't remove the contextmenu
+        document.getElementById("suspectTable").onclick = cancelEvents;
        
         var gridStructure = [];
         gridStructure.push({name: "Hostility", isDisabled: false, noEscape: true});
@@ -487,16 +480,10 @@ block headerAdditions
         clickY = evt.pageY;
       }
 
+
       var contextMenuDiv = document.createElement('div');
       contextMenuDiv.setAttribute('style', 'border-radius: 5px; box-shadow: 0 0 5px #AAA; width: 250px; z-index: 1002; position: absolute; top: ' + clickY + 'px; left:' + clickX + 'px; opacity: 1;');
       contextMenuDiv.id = 'contextMenu';
-      
-      var monitor = document.createElement('div');
-      monitor.setAttribute('class', 'topcontainer');
-      monitor.innerHTML = '<img class="buttonIcon" src="images/details.png"/> Live Monitor ' + ip;
-      monitor.setAttribute('onclick', 'MonitorSuspect("' + ip + '", "' + iface + '")');
-      monitor.setAttribute('oncontextmenu', 'MonitorSuspect("' + ip + '", "' + iface + '"); removeContextMenu(); return false;');
-      contextMenuDiv.appendChild(monitor);
       
       var details = document.createElement('div');
       details.setAttribute('class', 'topcontainer');
