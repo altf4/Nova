@@ -20,7 +20,6 @@
 #define NOVACLI_H_
 
 #include "protobuf/marshalled_classes.pb.h"
-#include "messaging/Message.h"
 
 // Name of the CLI executable
 #define EXECUTABLE_NAME "novacli"

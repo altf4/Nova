@@ -16,7 +16,7 @@
 // Description : Manages connections out to Novad, initializes and closes them
 //============================================================================
 
-#include "messaging/MessageManager.h"
+#include "MessageManager.h"
 #include "Commands.h"
 #include "NovaUtil.h"
 #include "Logger.h"

@@ -19,27 +19,26 @@
 #ifndef PROTOCOLHANDLER_H_
 #define PROTOCOLHANDLER_H_
 
-#include "messaging/Message.h"
 #include "Suspect.h"
 
 namespace Nova
 {
 
-void HandleExitRequest(Message *incoming);
+void HandleExitRequest(Message_pb *incoming);
 
-void HandleClearAllRequest(Message *incoming);
+void HandleClearAllRequest(Message_pb *incoming);
 
-void HandleClearSuspectRequest(Message *incoming);
+void HandleClearSuspectRequest(Message_pb *incoming);
 
-void HandleReclassifyAllRequest(Message *incoming);
+void HandleReclassifyAllRequest(Message_pb *incoming);
 
-void HandleStartCaptureRequest(Message *incoming);
+void HandleStartCaptureRequest(Message_pb *incoming);
 
-void HandleStopCaptureRequest(Message *incoming);
+void HandleStopCaptureRequest(Message_pb *incoming);
 
-void HandleRequestUptime(Message *incoming);
+void HandleRequestUptime(Message_pb *incoming);
 
-void HandlePing(Message *incoming);
+void HandlePing(Message_pb *incoming);
 
 }
 #endif /* PROTOCOLHANDLER_H_ */

@@ -17,7 +17,7 @@
 //============================================================================
 
 #include "Commands.h"
-#include "messaging/MessageManager.h"
+#include "MessageManager.h"
 #include "Logger.h"
 #include "Lock.h"
 
@@ -38,22 +38,22 @@ bool IsNovadConnected()
 
 void Ping(int32_t messageID)
 {
-	Message ping;
-	ping.m_contents.set_m_type(REQUEST_PING);
+	Message_pb ping;
+	ping.set_m_type(REQUEST_PING);
 	if(messageID != -1)
 	{
-		ping.m_contents.set_m_messageid(messageID);
+		ping.set_m_messageid(messageID);
 	}
 	MessageManager::Instance().WriteMessage(&ping, 0);
 }
 
 void RequestStartTime(int32_t messageID)
 {
-	Message getUptime;
-	getUptime.m_contents.set_m_type(REQUEST_UPTIME);
+	Message_pb getUptime;
+	getUptime.set_m_type(REQUEST_UPTIME);
 	if(messageID != -1)
 	{
-		getUptime.m_contents.set_m_messageid(messageID);
+		getUptime.set_m_messageid(messageID);
 	}
 	MessageManager::Instance().WriteMessage(&getUptime, 0);
 }
