@@ -1,8 +1,6 @@
 div.novaGrid {
 	border: 1px solid black;
 	min-height:  200px;
-	width: auto;
-	display: inline-block;
 }
 
 .novaGridPagesDiv {
@@ -14,12 +12,12 @@ div.novaGrid {
 }
 
 .novaGrid {
-	table-layout:fixed;
 	border-collapse:collapse;
 }
 
 table.novaGrid {
 	border: 1px solid black;
+	width: 100%;
 }
 
 td.novaGrid
