@@ -105,6 +105,7 @@ def sendEmailAlert():
   try:
     server.sendmail(FROM, TO.split(', '), MSG.as_string());
     server.quit();
+    
   except Exception as e:
     print e
 
