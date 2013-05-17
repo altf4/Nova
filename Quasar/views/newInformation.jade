@@ -54,7 +54,6 @@ block headerAdditions
         {
             now.MarkNovaLogEntrySeen(linenum);
             newNovaLogGrid.DeleteRow(linenum);
-            newNovaLogGrid.Render();
         }
 
         this.markAllSeen = function()
@@ -164,7 +163,6 @@ block headerAdditions
         {
             now.MarkHoneydLogEntrySeen(linenum);
             newHoneydLogGrid.DeleteRow(linenum);
-            newHoneydLogGrid.Render();
         }
 
         this.markAllSeen = function()

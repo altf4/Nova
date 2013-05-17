@@ -360,8 +360,16 @@ NovaGrid.prototype = {
         this.Render();
     }
 
-    , DeleteRow: function(key) {
+    , DeleteRow: function(key, noRender) {
         delete this.m_elements[key];
+
+        if (this.Size() % this.m_rowsPerPage == 0 && this.m_currentPage != 0) {
+            this.PreviousPage();
+        }
+
+        if (!noRender) {
+            this.Render();
+        }
     }
 
     // Returns the number of rows in the table
