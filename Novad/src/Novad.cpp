@@ -115,6 +115,8 @@ void StartServer()
 	struct event *listener_event;
 	struct sockaddr_un msgLocal;
 
+	startTime = time(NULL);
+
 	evthread_use_pthreads();
 	base = event_base_new();
 	if (!base)

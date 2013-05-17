@@ -738,7 +738,10 @@ void MonitorCallback(int32_t messageID)
     			}
     			case REQUEST_UPTIME_REPLY:
     			{
-    				cout << "Uptime is: " << message->m_starttime() << endl;
+    				time_t startTime = message->m_starttime();
+    				char buff[30];
+    				strftime(buff, sizeof(buff), "%Y-%m-%d %H:%M:%S", localtime(&startTime));
+    				cout << "Novad has been running since: " << buff << endl;
     				break;
     			}
     			default:
