@@ -157,12 +157,6 @@ block headerAdditions
       suspectGrid.DeleteRow(buildLink(ip, interface));
     }
 
-    function MonitorSuspect(ip, interface, idString)
-    {
-        var path = "/monitor?ip=" + ip + "&interface=" + interface;
-        window.open(path);
-    }
-    
     function SuspectDetails(ip, interface, idString)
     {
         var path = "/getSuspectDetails?ip=" + ip + "&interface=" + interface;
@@ -490,13 +484,6 @@ block headerAdditions
       var contextMenuDiv = document.createElement('div');
       contextMenuDiv.setAttribute('style', 'border-radius: 5px; box-shadow: 0 0 5px #AAA; width: 250px; z-index: 1002; position: absolute; top: ' + clickY + 'px; left:' + clickX + 'px; opacity: 1;');
       contextMenuDiv.id = 'contextMenu';
-      
-      var monitor = document.createElement('div');
-      monitor.setAttribute('class', 'topcontainer');
-      monitor.innerHTML = '<img class="buttonIcon" src="images/details.png"/> Live Monitor ' + ip;
-      monitor.setAttribute('onclick', 'MonitorSuspect("' + ip + '", "' + iface + '")');
-      monitor.setAttribute('oncontextmenu', 'MonitorSuspect("' + ip + '", "' + iface + '"); removeContextMenu(); return false;');
-      contextMenuDiv.appendChild(monitor);
       
       var details = document.createElement('div');
       details.setAttribute('class', 'topcontainer');
