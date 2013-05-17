@@ -41,7 +41,9 @@ div.sideBarHeader {
 	margin-bottom: 10px;
 }
 
+
 input[type=button], input[type=submit], button, .button, .sideBarButton {
+  box-shadow: inset 10px 10px 0 rgba(255, 255, 255, 0.4), 3px 3px 4px rgba(0, 0, 0, 0.2);
   font-size:13px;
   background-color: #E4F2FF;
   border: 1px solid #769DC0;
