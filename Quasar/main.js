@@ -2418,6 +2418,7 @@ app.post('/configureNovaSave', function (req, res)
         }
       })
     }
+  }
 });
 
 app.get('/scripts', function(req, res){
