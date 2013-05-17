@@ -40,6 +40,13 @@ block headerAdditions
   script
     var newSuspectGrid;
     var newSuspectDataGrid;
+        
+    function formatLogEntry(entry) {
+        entry.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        entry = "<span style='font-weight: bold;'>" + entry + "</span>";
+        entry = entry.replace(/#012/g, "<BR>");
+        return entry;
+    }
 
     function newNovaLogWidget() {
         var self = this;
@@ -108,26 +115,26 @@ block headerAdditions
                 self.renderTimeout = setTimeout(function() {newNovaLogGrid.Render(); self.renderTimeout = null;}, 1000);
             }
         }
+        
 
         this.init = function()
         {
             var gridStructure = new Array();
-            gridStructure.push({name: "Mark as seen", isDisabled: false});
+            gridStructure.push({name: "Mark as seen", isDisabled: false, noEscape: true});
             gridStructure.push({name: "Message #", isDisabled: false});
             gridStructure.push({name: "Timestamp", isDisabled: false});
             gridStructure.push({name: "Machine Info", isDisabled: true});
             gridStructure.push({name: "Level", isDisabled: false});
             gridStructure.push({name: "File", isDisabled: true});
             gridStructure.push({name: "Line", isDisabled: true});
-            gridStructure.push({name: "Message", isDisabled: false});
+            gridStructure.push({name: "Message", isDisabled: false, formatter: formatLogEntry});
 
 
-            newNovaLogGrid = new NovaGrid(gridStructure, 1, "newNovaLogGrid", 'newNovaLogGrid', false);
+            newNovaLogGrid = new NovaGrid(gridStructure, 1, document.getElementById("newNovaLogGrid"), 'newNovaLogGrid', false);
             newNovaLogGrid.SetSortByKey(1);
             newNovaLogGrid.SetSortByKey(1);
             newNovaLogGrid.GenerateTableHeader();
             newNovaLogGrid.SetRowsPerPage(10);
-            newNovaLogGrid.SetPageNumberDiv($("#newNovaLogPages").get(0));    
             
             now.newLogLine = self.addRowAndRender;
 
@@ -206,18 +213,17 @@ block headerAdditions
         {
             var columns = new Array();
 
-            columns.push({name: "Mark as seen"});
+            columns.push({name: "Mark as seen", noEscape: true});
             columns.push({name: "Message #", isDisabled: false});
             columns.push({name: "Timestamp", isDisabled: false});
             columns.push({name: "Machine Info", isDisabled: true});
-            columns.push({name: "Message", isDisabled: false});
+            columns.push({name: "Message", isDisabled: false, formatter: formatLogEntry});
 
-            newHoneydLogGrid = new NovaGrid(columns, 1, "newHoneydLogGrid", 'newHoneydLogGrid', false);
+            newHoneydLogGrid = new NovaGrid(columns, 1, document.getElementById("newHoneydLogGrid"), 'newHoneydLogGrid', false);
             newHoneydLogGrid.SetSortByKey(1);
             newHoneydLogGrid.SetSortByKey(1);
             newHoneydLogGrid.GenerateTableHeader();
             newHoneydLogGrid.SetRowsPerPage(10);
-            newHoneydLogGrid.SetPageNumberDiv($("#newHoneydLogPages").get(0));    
             
             now.newHoneydLogLine = self.addRowAndRender;
 
@@ -269,9 +275,7 @@ block content
   div#newNovaLogs(style="display: inline-block; width: 400px; vertical-align: top; margin: 5px")
     h1 New Nova Log Entries
 
-    div#newNovaLogPages
-    div.novaGrid
-      div#newNovaLogGrid
+    span#newNovaLogGrid(style="display: inline-block;")
     br
     
     button.button(onclick = 'widget3.markAllSeen()')
@@ -282,9 +286,7 @@ block content
   div#newHoneydLogs(style="display: inline-block; width: 400px; vertical-align: top; margin: 5px")
     h1 New Honeyd Log Entries
 
-    div#newHoneydLogPages
-    div.novaGrid
-      div#newHoneydLogGrid
+    span#newHoneydLogGrid(style="display: inline-block;")
     br
     
     button.button(onclick = 'widget4.markAllSeen()')

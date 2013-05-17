@@ -25,9 +25,7 @@ block content
   input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
   label Show Debugging Information
   br
-  div#tablePages
-  div.novaGrid
-    div#logTable
+  span#logTable(style="display: inline-block;")
   p#rawLog(style="display: none")= log
   br
   button#filterOptions(onclick="showFilterOptions()")
@@ -139,8 +137,6 @@ block headerAdditions
         
         if(isIn(match[3], allowedLevels))
         {
-          match[6] = "<span style='font-weight: bold;'>" + match[6] + "</span>";
-          match[6] = match[6].replace(/#012/g, "<BR>");
           
           switch (match[3])
           {
@@ -221,6 +217,13 @@ block headerAdditions
       logGrid.Render();
     }
 
+    function formatLogEntry(entry) {
+        entry.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        entry = "<span style='font-weight: bold;'>" + entry + "</span>";
+        entry = entry.replace(/#012/g, "<BR>");
+        return entry;
+    }
+
     function init()
     {
         var log = $('#rawLog').html();
@@ -232,10 +235,9 @@ block headerAdditions
         gridStructure.push({name: "Level", isDisabled: false});
         gridStructure.push({name: "File", isDisabled: true});
         gridStructure.push({name: "Line", isDisabled: true});
-        gridStructure.push({name: "Message", isDisabled: false});
+        gridStructure.push({name: "Message", isDisabled: false, formatter: formatLogEntry});
         logGrid = new NovaGrid(gridStructure, 0, $('#logTable')[0], 'logGrid');
         logGrid.SetRowsPerPage(25);
-        logGrid.SetPageNumberDiv($("#tablePages")[0]);
         
         var log = log.toString().split(/\\r\\n|\\n\\r|\\n|\\r/);
 

@@ -29,9 +29,9 @@ block headerAdditions
         var columns = new Array();
         columns.push({name: "Hostname"});
         columns.push({name: "IP binding"});
-        columns.push({name: "Delete"});
+        columns.push({name: "Delete", noEscape: true});
 
-        grid = new NovaGrid(columns, 0, "hostnameTable", 'grid', false);
+        grid = new NovaGrid(columns, 0, document.getElementById("hostnameTable"), 'grid');
 
         now.ready(function() {
             now.GetHostnames(function(err, results) {
@@ -96,8 +96,7 @@ block content
   
 
   br
-  div.novaGrid
-    div#hostnameTable
+  span#hostnameTable(style="display: inline-block;")
 
   br
   button.button(onclick="clearAllocations()")

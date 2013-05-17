@@ -43,13 +43,9 @@ block content
   h1 Detailed counts of connections from !{suspect}
   div(style="width: 1024px")
     div(style="float: left; margin-right: 100px")
-      div.novaGrid
-        div#packetCountTable
-      div#tablePages
+      span#packetCountTable(style="display: inline-block;")
     div
-      div.novaGrid
-        div#packetSizeTable
-      div#packetSizeTablePages
+      span#packetSizeTable(style="display: inline-block;")
   
   br
 
@@ -170,10 +166,9 @@ block headerAdditions
         columns.push({name: "Protocol"});
         columns.push({name: "Packets"});
 
-        grid = new NovaGrid(columns, 0, "packetCountTable", "grid");
+        grid = new NovaGrid(columns, 0, document.getElementById("packetCountTable"), "grid");
         grid.SetSortByKey(4);
         grid.SetRowsPerPage(20);
-        grid.SetPageNumberDiv($('#tablePages').get(0));
         grid.Render();
 
         
@@ -181,10 +176,9 @@ block headerAdditions
         columns.push({name: "Packet Size (in bytes)"});
         columns.push({name: "Packets seen"});
        
-        sizeGrid = new NovaGrid(columns, 0, "packetSizeTable", "sizeGrid");
+        sizeGrid = new NovaGrid(columns, 0, document.getElementById("packetSizeTable"), "sizeGrid");
         sizeGrid.SetSortByKey(1);
         sizeGrid.SetRowsPerPage(20);
-        sizeGrid.SetPageNumberDiv($('#packetSizeTablePages').get(0));
         sizeGrid.Render();
 
 

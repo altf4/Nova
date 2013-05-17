@@ -33,9 +33,7 @@ block content
       label Show Unclassified Suspects
       br
       br
-      div.novaGrid(id="keepContext")
-        div#suspectTable
-      div#tablePages(style="width: 100%;")
+      span#suspectTable(style="display: inline-block;")
 
       p#numberOfSuspects Recieved data for 0 suspects
     div#nova_suspects_header
@@ -287,12 +285,12 @@ block headerAdditions
 
     function Init()
     {
-        document.getElementById("keepContext").onclick = cancelEvents;
+        //document.getElementById("keepContext").onclick = cancelEvents;
        
         var gridStructure = [];
-        gridStructure.push({name: "Hostility", isDisabled: false});
+        gridStructure.push({name: "Hostility", isDisabled: false, noEscape: true});
         gridStructure.push({name: "Interface", isDisabled: false});
-        gridStructure.push({name: "Address", isDisabled: false});
+        gridStructure.push({name: "Address", isDisabled: false, noEscape: true});
         gridStructure.push({name: "Classification", isDisabled: false, formatter: classificationFormatter});
         gridStructure.push({name: "Last Seen", isDisabled: false});
    
@@ -310,7 +308,6 @@ block headerAdditions
         // Sort by classification by default
         suspectGrid.SetSortByKey(3);
         suspectGrid.SetRowsPerPage(20);
-        suspectGrid.SetPageNumberDiv($('#tablePages').get(0));
 
 
         suspectGrid.m_autoRenderCallback = function() {

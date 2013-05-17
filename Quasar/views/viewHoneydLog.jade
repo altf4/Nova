@@ -25,9 +25,7 @@ block content
   input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
   label Show Debugging Information
   br
-  div#tablePages
-  div.novaGrid
-    div#logTable
+  span#logTable(style="display: inline-block;")
   p#rawLog(style="display: none")= log
 
 block headerAdditions
@@ -42,6 +40,13 @@ block headerAdditions
   script
     var line;
     var logGrid;
+        
+    function formatLogEntry(entry) {
+        entry.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        entry = "<span style='font-weight: bold;'>" + entry + "</span>";
+        entry = entry.replace(/#012/g, "<BR>");
+        return entry;
+    }
     
     function showAdvancedChanged()
     {
@@ -89,10 +94,9 @@ block headerAdditions
         gridStructure.push({name: "Message #", isDisabled: false});
         gridStructure.push({name: "Timestamp", isDisabled: false});
         gridStructure.push({name: "Machine Info", isDisabled: true});
-        gridStructure.push({name: "Message", isDisabled: false});
+        gridStructure.push({name: "Message", isDisabled: false, formatter: formatLogEntry});
         logGrid = new NovaGrid(gridStructure, 0, $('#logTable')[0], 'logGrid');
         logGrid.SetRowsPerPage(25);
-        logGrid.SetPageNumberDiv($('#tablePages')[0]);
         
         var log = log.toString().split(/\\r\\n|\\n\\r|\\n|\\r/);
 

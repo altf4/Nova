@@ -2122,6 +2122,7 @@ app.post('/configureNovaSave', function (req, res)
 
     if(req.body["SMTP_USEAUTH"] == '0')
     {
+      req.body["SMTP_USEAUTH"] = "0";
       NovaCommon.config.SetSMTPUseAuth("false");
     }
     else if(req.body["SMTP_USEAUTH"] == '1')
@@ -2144,6 +2145,11 @@ app.post('/configureNovaSave', function (req, res)
           clientId = req.body["MASTER_UI_CLIENT_ID"];
         }
       }
+      req.body['MASTER_UI_ENABLED'] = '1';
+    }
+    else
+    {
+      req.body['MASTER_UI_ENABLED'] = '0';
     }
 
     var interfaces = "";
@@ -2186,6 +2192,34 @@ app.post('/configureNovaSave', function (req, res)
         {
           continue;
         }
+        switch(configItems[item])
+        {
+          case "WEB_UI_PORT":
+            validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
+            break;
+  
+          case "ENABLED_FEATURES":
+            validator.check(req.body[configItems[item]], 'Enabled Features mask must be ' + NovaCommon.nova.GetDIM() + 'characters long').len(NovaCommon.nova.GetDIM(), NovaCommon.nova.GetDIM());
+            validator.check(req.body[configItems[item]], 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{9}');
+            break;
+  
+          case "CLASSIFICATION_THRESHOLD":
+            validator.check(req.body[configItems[item]], 'Classification threshold must be a floating point value').isFloat();
+            validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').max(1);
+            validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').min(0);
+            break;
+  
+          case "EPS":
+            validator.check(req.body[configItems[item]], 'EPS must be a positive number').isFloat();
+            break;
+  
+          case "THINNING_DISTANCE":
+            validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
+            break;
+  
+          case "DOPPELGANGER_IP":
+            validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
+            var split = req.body[configItems[item]].split('.');
 
         configItems[item].validator(req.body[configItems[item].key]);
     }
