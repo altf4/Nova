@@ -18,20 +18,20 @@ extends layout
 
 block headerAdditions
   link(rel='stylesheet', type='text/css', href='configstyle.css', media='screen')
-  link(rel='stylesheet', type='text/css', href='/dojo/dojox/grid/resources/Grid.css')
-  link(rel='stylesheet', type='text/css', href='/dojo/dojox/grid/resources/claroGrid.css')
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
+
+  script(type="text/javascript", src="scripts/NovaGrid.js")
 
   script
     var grid;
     
     function deleteSelectedItems()
     {
-      var items = grid.selection.getSelected();
-      var names = [];
-      dojo.forEach(items, function(selectedItem)
-      {
-        names.push(grid.store.getValues(selectedItem, 'whitelistedIp')); 
-      });
+      var names = grid.GetSelected();
+
+      if (names.length == 0) {
+        alert("Must select at least one entry to delete");
+      }
       
       try {
         now.deleteWhitelistEntry(names, errorMessageCallback);
@@ -88,36 +88,33 @@ block headerAdditions
 
     function init()
     {
-        require(['dojox/grid/DataGrid','dojo/data/ObjectStore', 'dojox/data/HtmlStore', 'dijit/Dialog'],
-        function(DataGrid,ObjectStore){
-          var gridStore = new dojox.data.HtmlStore({dataId:'profileTable'});
-          grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutProfiles',query:{},rowsPerPage:40, autoWidth:true});
-          $('#gridDiv').append(grid.domNode);
-        });
+
+        var ips = !{JSON.stringify(whitelistedIps)};
+        var subnets = !{JSON.stringify(whitelistedRanges)};
+        var whitelistEntries = ips.concat(subnets);
+        
+        var columns = [
+            {name: "id", isDisabled: true},
+            {name: "Interfaces"},
+            {name: "IP Addresses"},
+        ];
+        grid = new NovaGrid(columns, 0, document.getElementById("gridDiv"), "grid", true);
+        
+        for (var i = 0; i < whitelistEntries.length; i++) {
+            var row = [];
+            row.push(whitelistEntries[i]);
+            row = row.concat(whitelistEntries[i].split(","));
+            
+            grid.PushEntry(row);
+        }
+
+        grid.Render();
     }
   
-  script(type='text/javascript')
-          /*set up data store*/
-          var layoutProfiles = [[
-            { field: 'whitelistedIp', name: 'Whitelist Entry', width: '500px' },
-          ]];
-
 block content
   h1 Current Whitelisted IPs
-  table#profileTable(style='display: none')
-    thead
-      tr
-        th whitelistedIp
-    tbody
-      each ip, i in whitelistedIps
-        tr
-          td #{ip}
-      each ip, i in whitelistedRanges
-        tr
-          td #{ip}
  
-  div(style='height: 250px;')
-    div#gridDiv(style='height: 250px')
+  span#gridDiv(style='display: inline-block;')
   br
   button.button(onClick='deleteSelectedItems()')
     img.buttonIcon(src='images/delete.png')
