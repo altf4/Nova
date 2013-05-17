@@ -29,6 +29,8 @@ using namespace std;
 namespace Nova
 {
 
+const string Profile::EMPTY_PROFILE_NAME = "All Ports Closed";
+
 Profile::Profile(Profile *parent, string key)
 {
 	m_children.clear();
@@ -116,7 +118,7 @@ string Profile::ToString(int portSetIndex, const std::string &nodeName)
 	//Use the recursive personality, here
 	string personality = this->GetPersonality();
 
-	if((personality != "") && (personality != "NULL"))
+	if((personality != "") && (personality != Profile::EMPTY_PROFILE_NAME))
 	{
 		out << "set " << nodeName << " personality \"" << personality << '"' << '\n';
 	}
