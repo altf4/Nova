@@ -111,37 +111,17 @@ block headerAdditions
         }
         
         
-        var td5 = theDoc.createElement('td');
-        var removeButton = theDoc.createElement('button');
-        removeButton.innerHTML = '<span style="width: 70px; display: block" class="buttonSpan"><img class="buttonIcon" src="images/delete.png"/>Remove</span>';
-        removeButton.setAttribute('onclick', 'RemoveScriptFromMap("' + scriptList[i].script + '")');
-        removeButton.setAttribute('class', 'button');
-        
         td0.appendChild(label0);
         td1.appendChild(label1);
         td2.appendChild(label2);
-        td5.appendChild(removeButton);
         tr.appendChild(td0);
         tr.appendChild(td1);
         tr.appendChild(td2);
         tr.appendChild(td4);
-        tr.appendChild(td5);
         append.appendChild(tr);
       }
     }
     
-    function RemoveScriptFromMap(scriptName)
-    {
-      ClearScriptFromProfiles(scriptName, '', false);
-      
-      if(typeof now.RemoveScript == 'function')
-      {
-        now.RemoveScript(scriptName, function(){
-          location.reload(true);
-        });
-      }
-    }
-
     function addScriptOptionValue()
     {
         var key = $('#optionKeys').val();
@@ -332,13 +312,7 @@ block headerAdditions
       $('#setup').css('opacity', '0.5');
       $('#lightbox').css('display', 'block');
       
-      if(divIndex == '0')
-      {
-        $('#addScriptForm').css('display', 'block');
-        $('#selectClearProfiles').css('display', 'none');
-        $('#editScriptForm').css('display', 'none');
-      }
-      else if(divIndex == '1')
+      if(divIndex == '1')
       {
         $('#addScriptForm').css('display', 'none');
         $('#selectClearProfiles').css('display', 'block');
@@ -352,40 +326,6 @@ block headerAdditions
       }
     }
     
-    function checkParams(callback)
-    {
-      var sName = $('#scriptFile').val();
-      // I'm wondering if we shouldn't enforce some sort of regulation regarding
-      // what file extensions people can submit with the file dialog; I can't seem
-      // to find any documentation regarding limiting what types of files an input
-      // can take to a smaller subset outside of back-end magickry.
-      var sFile = $('#scriptName').val();
-      var sShell = $('#scriptShell').val();
-      var sArgs = $('#scriptArgs').val();
-      
-      if(sName == '' || sFile == '' || sName == undefined || sFile == undefined)
-      {
-        alert('Must select both a file and supply a name for the new script');
-      }
-      // For now this is not necessarily required. When we have an actual mechanism
-      // for standardizing the submittal and format of scripts (i.e. what arguments
-      // to take from Honeyd, entries in the example.conf file/any other file within the
-      // /usr/share/honeyd/scripts/strings/ folder) this will be come important. As I 
-      // understand it, the strings folder holds version strings, etc. and we still have
-      // more desired work to do on it.
-      /*if(sArgs == '' || sArgs == undefined)
-      {
-        alert('Arguments for the script must be included (read Script guidelines for more details)');
-      }*/
-      else
-      {
-        if(typeof callback == 'function')
-        {
-          callback();
-        }
-      }
-    }
-   
     function disableBackground()
     {
       $('#addAnchor').find('button').attr('disabled', true);
@@ -407,10 +347,6 @@ block content
   div#setup(onclick='handleOnclick(event)')
     h1 Honeyd Scripts
   
-    button(onclick='showLightBox("0")')
-      img.buttonIcon(src="images/add.png")
-      span.buttonSpan Add New Honeyd Script
-    br
     br
   
     table(border='1', style='border: solid black 2px;')
@@ -420,7 +356,6 @@ block content
           th(style='background-color: #d0e9fc;') Profiles
           th(style='background-color: #d0e9fc;') Path And Parameters
           th(style='background-color: #d0e9fc;') Edit
-          th(style='background-color: #d0e9fc;') Remove
       tbody#addAnchor
     br
   
@@ -431,31 +366,6 @@ block content
       table#optionValues(style='border: 1px solid black')
       input#newOptionName(type='text')
       button(onclick='addScriptOptionValue()') Add
-    div(id='addScriptForm', style='display: none')
-      form(id='submitMe', method='post', enctype='multipart/form-data')
-        table
-          tbody
-            tr
-              td 
-                label Script to Upload
-              td 
-                input(type='file', name='script', id='scriptFile')
-            tr
-              td
-                label Shell Type
-              td
-                input(name='shell', id='scriptShell')
-            tr 
-              td
-                label Args
-              td
-                input(name='args', id='scriptArgs')
-            tr
-              td
-                label Name of Script
-              td
-                input(name='name', id='scriptName')
-      button(onclick='checkParams(function(){document.getElementById("submitMe").submit();})') Add Script
     div(id='selectClearProfiles', style='display: none')
       table
         thead

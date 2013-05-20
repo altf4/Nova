@@ -1699,67 +1699,6 @@ app.post("/editTLSCerts", function (req, res)
     });
 });
 
-app.post('/scripts', function(req, res){
-  if(req.files['script'] == undefined || req.body['name'] == undefined)
-  {
-    RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.");
-    return;
-  }
-  if(req.files['script'] == '' || req.body['name'] == '')
-  {
-    RenderError(res, "Must select both a file and a name for the script to add");
-    return;
-  }
-  
-  function clean(string)
-  {
-    var temp = '';
-    for(var i in string)
-    {
-      if(/[a-zA-Z0-9\.]/.test(string[i]) == true)
-      {
-        temp += string[i].toLowerCase();
-      }
-    }
-    
-    return temp;
-  }
-    
-  var filename = req.files['script'].name;
-  
-  filename = 'userscript_' + clean(filename);
-  
-  // should create a 'user' folder within the honeyd script
-  // path for user uploaded scripts, maybe add a way for the
-  // the user to choose where the script goes within the current
-  // file structure later.
-  var pathToSave = '/usr/share/honeyd/scripts/misc/' + filename;
-  
-  fs.readFile(req.files['script'].path, function(readErr, data){
-    if(readErr != null)
-    {
-      RenderError(res, 'Failed to read designated script file');
-      return;
-    }
-    
-    fs.writeFileSync(pathToSave, data);
-    
-    fs.chmodSync(pathToSave, '775');
-    
-    pathToSave = req.body['shell'] + ' ' + pathToSave + ' ' + req.body['args'];
-  
-    NovaCommon.honeydConfig.AddScript(req.body['name'], pathToSave);
-  
-    NovaCommon.honeydConfig.SaveAllTemplates();
-  });
-  
-  res.render('saveRedirect.jade', {
-    locals: {
-      redirectLink: '/scripts'
-    }
-  });
-});
-
 app.post('/honeydConfigManage', function (req, res){
   var newName = (req.body['newName'] != undefined ? req.body['newName'] : req.body['newNameClone']);
   var configToClone = (req.body['cloneSelect'] != undefined ? req.body['cloneSelect'] : '');
