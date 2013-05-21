@@ -1871,6 +1871,11 @@ app.post('/configureNovaSave', function (req, res)
         key:  "DOPPELGANGER_INTERFACE"
         ,validator: function(val) {
             validator.check(val, this.key + ' must not be empty').notEmpty();
+
+    		var interfaces = NovaCommon.config.ListLoopbacks();
+			if (interfaces.indexOf(val) == -1) {
+				validator.error(val + " is not a valid ethernet interface!");
+			}
         }
     },
     {
