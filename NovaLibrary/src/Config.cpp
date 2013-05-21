@@ -73,6 +73,8 @@ string Config::m_prefixes[] =
 	"SMTP_ADDR",
 	"SMTP_PORT",
 	"SMTP_DOMAIN",
+	"SMTP_INTERVAL",
+	"SMTP_PASS",
 	"SMTP_USEAUTH",
 	"RECIPIENTS",
 	"SERVICE_PREFERENCES",
@@ -179,7 +181,6 @@ void Config::LoadCustomSettings(int argc,  char** argv)
 
 void Config::LoadConfig()
 {
-	SaveSMTPSettings();
 	LoadConfig_Internal();
 	LoadVersionFile();
 	LoadInterfaces();
@@ -559,6 +560,38 @@ void Config::LoadConfig_Internal()
 				if(line.size() > 0)
 				{
 					m_SMTPDomain = line;
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+			//SMTP_INTERVAL
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					m_SMTPInterval = line;
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+			//SMTP_PASS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					m_SMTPPass = line;
 					isValid[prefixIndex] = true;
 				}
 
@@ -1075,8 +1108,6 @@ void Config::LoadConfig_Internal()
 
 	config.close();
 
-	GetSMTPSettings_FromFile();
-
 	bool failAndExit = false;
 	for(uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
 	{
@@ -1557,44 +1588,6 @@ uint Config::GetInterfaceCount()
 {
 	Lock lock(&m_lock, READ_LOCK);
 	return m_interfaces.size();
-}
-
-bool Config::GetSMTPSettings_FromFile()
-{
-	string debugPath = m_pathHome + "/config/smtp.txt";
-
-	ifstream ifs(m_pathHome + "/config/smtp.txt");
-
-	if (!ifs.is_open())
-	{
-		// Note: This needs to be cout since the logger isn't initialized yet
-		cout << "Unable to open SMTP settings file at " << debugPath << endl;
-		return false;
-	}
-
-	getline(ifs, m_SMTPUser);
-	getline(ifs, m_SMTPPass);
-
-	ifs.close();
-	return true;
-}
-
-bool Config::SaveSMTPSettings()
-{
-	string debugPath = m_pathHome + "/config/smtp.txt";
-	ofstream out(debugPath.c_str());
-
-	if (!out.is_open())
-	{
-		cout << "ERROR: Unable to open SMTP settings file at " << debugPath << endl;
-		return false;
-	}
-
-	out << m_SMTPUser << endl;
-	out << m_SMTPPass << endl;
-
-	out.close();
-	return true;
 }
 
 void Config::SetUseAllInterfaces(bool which)

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ $# -eq 1 ]
+then
+	sudo cp ~/.config/nova/config/novasendmail.py /etc/cron.$1
+else
+	exit 1
+fi
