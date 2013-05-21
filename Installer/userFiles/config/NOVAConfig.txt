@@ -274,6 +274,21 @@ SMTP_PORT 465
 SMTP_DOMAIN smtp.example.com
 
 ############################################
+# SMTP_INTERVAL
+############################################
+# 
+# Cron interval value for Nova SMTP alerts
+#
+SMTP_INTERVAL hourly
+
+############################################
+# SMTP_PASS
+############################################
+#
+# SMTP SSL password
+SMTP_PASS examplePass
+
+############################################
 # SMTP_USEAUTH
 ############################################
 #

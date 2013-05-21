@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 cd /etc/cron.hourly
 sudo rm -f novasendmail.py

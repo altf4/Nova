@@ -33,7 +33,7 @@
 #include <algorithm>
 #include <syslog.h>
 #include <string.h>
-#include <curl/curl.h>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 
@@ -52,7 +52,6 @@ Logger *Logger::Inst()
 // Loads the configuration file into the class's state data
 uint16_t Logger::LoadConfiguration()
 {
-	m_messageInfo.smtp_user = Config::Inst()->GetSMTPUser();
 	m_messageInfo.smtp_pass = Config::Inst()->GetSMTPPass();
 	m_messageInfo.smtp_addr = Config::Inst()->GetSMTPAddr();
 	m_messageInfo.smtp_port = Config::Inst()->GetSMTPPort();
@@ -390,6 +389,18 @@ Logger::Logger()
 	}
 
 	LoadConfiguration();
+
+	if(Config::Inst()->GetAreEmailAlertsEnabled())
+	{
+		// If alerts are enabled, copy novamaildaemon.py to the right place and
+		// start the maildaemon. Need to check for lock file here, if it exists do nothing.
+		string cleanstring = "sudo cleannovamail.sh";
+		system(cleanstring.c_str());
+		string cpComm = "sudo placenovasendmail ";
+		cpComm += Config::Inst()->GetSMTPInterval();
+		system(cpComm.c_str());
+		system("novamaildaemon.pl&");
+	}
 }
 
 Logger::~Logger()

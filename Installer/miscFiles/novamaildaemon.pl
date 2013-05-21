@@ -8,8 +8,11 @@ use File::ReadBackwards;
 
 $|++;
 
+$SIG{'INT'} = \&sigIntHandler;
+
 my $file = "/var/log/nova/Nova.log";
 my $writefile = "$ENV{'HOME'}/.config/nova/config/attachment.txt";
+my $lockfile = "$ENV{'HOME'}/.config/nova/config/maildaemon.lock";
 my $notify = new Linux::Inotify2 or die "Unable to create new Inotify2 object: $!";
 my $checkline = "";
 my $bw = "";
@@ -17,6 +20,11 @@ my $add = "";
 my $addline = "";
 my $templine = "";
 my $writelock = 0;
+
+exit 0 if(-e $lockfile);
+
+open my $lockhandle, ">", $lockfile or die "Couldn't create lock file: $!";
+close $lockhandle or die "Could not close $lockfile: $!";
 
 $notify->watch($file, IN_MODIFY,
   sub {
@@ -46,7 +54,7 @@ $notify->watch($file, IN_MODIFY,
     # Write $addline to $writefile here
     $bw->close;
     $add = "";
-    open my $fileh, ">>", $writefile or die "Could not open $writefile: $!";
+    open my $fileh, ">>", ($writefile) or die "Could not open $writefile: $!";
     print {$fileh} $addline or die "WTF: $!";
     close $fileh or die "Could not close $writefile: $!";
     $addline = "";
@@ -55,3 +63,8 @@ $notify->watch($file, IN_MODIFY,
 ) or die "Watch creation failed: $!";
 
 1 while $notify->poll;
+
+sub sigIntHandler {
+  unlink $lockfile;
+  exit 0;
+}
