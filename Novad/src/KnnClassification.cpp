@@ -399,8 +399,9 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 
 	else
 	{
-		LOG(ERROR,"Classification Engine has encountered a problem",
+		LOG(CRITICAL,"Classification Engine has encountered a problem",
 			"Unable to open the training data file at "+ m_pathTrainingFile+".");
+		exit(EXIT_FAILURE);
 	}
 
 	myfile.close();
