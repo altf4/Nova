@@ -33,7 +33,7 @@
 #include <algorithm>
 #include <syslog.h>
 #include <string.h>
-#include <curl/curl.h>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 
@@ -52,7 +52,6 @@ Logger *Logger::Inst()
 // Loads the configuration file into the class's state data
 uint16_t Logger::LoadConfiguration()
 {
-	m_messageInfo.smtp_user = Config::Inst()->GetSMTPUser();
 	m_messageInfo.smtp_pass = Config::Inst()->GetSMTPPass();
 	m_messageInfo.smtp_addr = Config::Inst()->GetSMTPAddr();
 	m_messageInfo.smtp_port = Config::Inst()->GetSMTPPort();
@@ -86,11 +85,6 @@ void Logger::Log(Nova::Levels messageLevel, const char *messageBasic,  const cha
 	{
 		LogToFile(messageLevel, ss.str());
 	}
-
-	if(mask.at(EMAIL) == '1')
-	{
-		Mail(messageLevel, ss.str());
-	}
 }
 
 void Logger::LogToFile(uint16_t level, string message)
@@ -101,252 +95,6 @@ void Logger::LogToFile(uint16_t level, string message)
 	closelog();
 }
 
-void Logger::Mail(uint16_t level, string message)
-{
-	if(!Config::Inst()->GetAreEmailAlertsEnabled())
-	{
-		return;
-	}
-
-	CURL *curl;
-	CURLM *mcurl;
-	int still_running = 1;
-	struct timeval mp_start;
-	struct Writer counter;
-	struct curl_slist *rcpt_list = NULL;
-
-	Logger::Inst()->SetLevel(level);
-
-	int MULTI_PERFORM_HANG_TIMEOUT = 60*1000;
-
-	SetMailMessage(message);
-
-	counter.count = 0;
-
-	curl_global_init(CURL_GLOBAL_DEFAULT);
-
-	curl = curl_easy_init();
-	if(!curl)
-	{
-		LOG(ERROR, "Curl could not initialize for Email alert", "");
-		return;
-	}
-
-	mcurl = curl_multi_init();
-	if(!mcurl)
-	{
-		LOG(ERROR, "Multi Curl could not initialize for Email alert", "");
-		return;
-	}
-
-	if(m_messageInfo.m_email_recipients.size() > 0)
-	{
-		for(uint16_t i = 0; i < m_messageInfo.m_email_recipients.size(); i++)
-		{
-			rcpt_list = curl_slist_append(rcpt_list, ("<" + m_messageInfo.m_email_recipients[i] + ">").c_str());
-		}
-	}
-	else
-	{
-		LOG(ERROR, "An email alert was attempted with no set recipients.", "");
-		return;
-	}
-
-	std::stringstream ss;
-
-	ss << m_messageInfo.smtp_port;
-
-	std::string domain = Config::Inst()->GetSMTPDomain() + ":" + ss.str();
-
-	ss.str("");
-
-	curl_easy_setopt(curl, CURLOPT_URL, domain.c_str());
-	curl_easy_setopt(curl, CURLOPT_READFUNCTION, ReadCallback);
-	curl_easy_setopt(curl, CURLOPT_MAIL_FROM, ("<" + Config::Inst()->GetSMTPAddr() + ">").c_str());
-	curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, rcpt_list);
-
-	// If GetSMTPUseAuth is true, curl will first attempt to establish an SSL/TLS connection.
-	// If this fails, it rollsback to the simpler AUTH mechanisms.
-	// If this in turn fails, mail alert will not be sent
-	if(Config::Inst()->GetSMTPUseAuth())
-	{
-		curl_easy_setopt(curl, CURLOPT_USERNAME, Config::Inst()->GetSMTPUser().c_str());
-		curl_easy_setopt(curl, CURLOPT_PASSWORD, Config::Inst()->GetSMTPPass().c_str());
-		curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_TRY);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);
-		curl_easy_setopt(curl, CURLOPT_SSLVERSION, 0L);
-		curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L);
-	}
-
-	curl_easy_setopt(curl, CURLOPT_READDATA, &counter);
-
-	// Use this for verbose output from curl
-	//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
-
-	curl_multi_add_handle(mcurl, curl);
-
-	mp_start = tvnow();
-
-	curl_multi_perform(mcurl, &still_running);
-
-	while(still_running)
-	{
-		struct timeval timeout;
-		int rc;
-
-		fd_set fdread;
-		fd_set fdwrite;
-		fd_set fdexcep;
-		int maxfd = -1;
-
-		long curl_timeo = -1;
-
-		FD_ZERO(&fdread);
-		FD_ZERO(&fdwrite);
-		FD_ZERO(&fdexcep);
-
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
-
-		curl_multi_timeout(mcurl, &curl_timeo);
-
-		if(curl_timeo >= 0)
-		{
-			timeout.tv_sec = curl_timeo / 1000;
-
-			if(timeout.tv_sec > 1)
-			{
-				timeout.tv_sec = 1;
-			}
-			else
-			{
-				timeout.tv_usec = (curl_timeo % 1000)*1000;
-			}
-		}
-
-		curl_multi_fdset(mcurl, &fdread, &fdwrite, &fdexcep, &maxfd);
-
-		rc = select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
-
-		if(tvdiff(tvnow(), mp_start) > MULTI_PERFORM_HANG_TIMEOUT)
-		{
-			LOG(ERROR, "Email alert is hanging, are you sure your credentials for the SMTP server are correct?", "");
-			return;
-		}
-
-		switch(rc)
-		{
-			case -1:
-				std::cout << "rc == -1" << std::endl;
-				break;
-			case 0:
-			default:
-				curl_multi_perform(mcurl, &still_running);
-				break;
-		}
-	}
-
-  curl_slist_free_all(rcpt_list);
-  curl_multi_remove_handle(mcurl, curl);
-  curl_multi_cleanup(mcurl);
-  curl_easy_cleanup(curl);
-  curl_global_cleanup();
-}
-
-std::string Logger::GenerateDateString()
-{
-	time_t rawtime;
-	time(&rawtime);
-	string time = string(ctime(&rawtime));
-	vector<string> reformat;
-	string ret = "Date: ";
-
-	istringstream iss(time);
-	copy(istream_iterator<string>(iss),
-		 istream_iterator<string>(),
-		 back_inserter<vector<string> >(reformat));
-
-	string temp = reformat[1];
-	reformat[1] = reformat[2];
-	reformat[2] = temp;
-
-	temp = reformat[3];
-	reformat[3] = reformat[4];
-	reformat[4] = temp;
-
-	vector<string>::iterator it;
-	it = reformat.begin() + 1;
-
-	reformat.insert(it, string(","));
-
-	ret += reformat[0];
-
-	for(uint i = 1; i < reformat.size() - 1; i++)
-	{
-		ret += reformat[i] + " ";
-	}
-
-	ret += reformat[reformat.size() - 1];
-
-	if(ret[ret.length() - 1] != '\n')
-	{
-		ret += "\n";
-	}
-
-	return ret;
-}
-
-std::string Logger::GetRecipient()
-{
-	return "To: <" + m_messageInfo.m_email_recipients[0] + ">\n";
-}
-
-std::string Logger::GetMailMessage()
-{
-	return m_mailMessage;
-}
-
-void Logger::SetMailMessage(std::string message)
-{
-	m_mailMessage = message + "\n";
-}
-
-std::string Logger::GetSenderString()
-{
-	std::string ret = "From: <" + Config::Inst()->GetSMTPAddr() + ">\n";
-	return ret;
-}
-
-std::string Logger::GetCcString()
-{
-	if(m_messageInfo.m_email_recipients.size() <= 1)
-	{
-		return "\n";
-	}
-
-	std::string ret = "Cc: ";
-
-	for(uint16_t i = 1; i < m_messageInfo.m_email_recipients.size(); i++)
-	{
-		ret += "<" + m_messageInfo.m_email_recipients[i] + ">";
-
-		if((uint16_t)(i + 1) < m_messageInfo.m_email_recipients.size())
-		{
-			ret += ", ";
-		}
-	}
-
-	ret += "\n";
-	return ret;
-}
-
-uint16_t Logger::GetRecipientsLength()
-{
-	return m_messageInfo.m_email_recipients.size();
-}
-
 uint16_t Logger::GetLevel()
 {
 	return m_level;
@@ -355,66 +103,6 @@ uint16_t Logger::GetLevel()
 void Logger::SetLevel(uint16_t setLevel)
 {
 	m_level = setLevel;
-}
-
-size_t Logger::ReadCallback(void *ptr, size_t size, size_t nmemb, void * userp)
-{
-	string dateString = Logger::Inst()->GenerateDateString();
-	struct Writer *counter = (struct Writer *)userp;
-	const char *data;
-
-	std::string debug3 = Logger::Inst()->GetMailMessage();
-
-	std::string subject = "Subject: Nova Mail Alert: ";
-
-	switch(Logger::Inst()->GetLevel())
-	{
-		case(0): subject += "DEBUG ";
-				 break;
-		case(1): subject += "INFO ";
-				 break;
-		case(2): subject += "NOTICE ";
-				 break;
-		case(3): subject += "WARNING ";
-				 break;
-		case(4): subject += "ERROR ";
-				 break;
-		case(5): subject += "CRITICAL ";
-				 break;
-		case(6): subject += "ALERT ";
-				 break;
-		case(7): subject += "EMERGENCY ";
-				 break;
-	}
-
-	subject += "(" + dateString.substr(0, dateString.size() - 1) + ")";
-
-	subject += "\n";
-
-	const char *text[] = {
-			dateString.c_str(),
-			Logger::Inst()->GetRecipient().c_str(),
-			Logger::Inst()->GetSenderString().c_str(),
-			subject.c_str(),
-			Logger::Inst()->GetCcString().c_str(),
-			"\n",
-			Logger::Inst()->GetMailMessage().c_str(),
-			"\n",
-			NULL};
-
-	if(size *nmemb < 1)
-	{
-		return 0;
-	}
-	data = text[counter->count];
-	if(data)
-	{
-		size_t len = strlen(data);
-		memcpy(ptr, data, len);
-		counter->count++;
-		return len;
-	}
-	return 0;
 }
 
 void Logger::SetUserLogPreferences(string logPrefString)
@@ -701,6 +389,18 @@ Logger::Logger()
 	}
 
 	LoadConfiguration();
+
+	if(Config::Inst()->GetAreEmailAlertsEnabled())
+	{
+		// If alerts are enabled, copy novamaildaemon.py to the right place and
+		// start the maildaemon. Need to check for lock file here, if it exists do nothing.
+		string cleanstring = "cleannovasendmail.sh";
+		system(cleanstring.c_str());
+		string cpComm = "sudo placenovasendmail ";
+		cpComm += Config::Inst()->GetSMTPInterval();
+		system(cpComm.c_str());
+		system("novamaildaemon.pl&");
+	}
 }
 
 Logger::~Logger()
