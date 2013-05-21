@@ -29,6 +29,7 @@
 #include <netdb.h>
 #include <net/if.h>
 #include <ifaddrs.h>
+#include <algorithm>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -654,10 +655,19 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 
 	out << m_profiles.m_root->ToString() << "\n";
 
-	uint j = 0;
+
+	// Shuffle the nodes to avoid having DHCP requests that end up contiguously grouped by profile
+	vector<string> shuffledKeys;
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if(!it->second.m_enabled)
+		shuffledKeys.push_back(it->first);
+	}
+	std::random_shuffle(shuffledKeys.begin(), shuffledKeys.end());
+
+
+	for (uint j = 0; j < shuffledKeys.size(); j++)
+	{
+		if(!m_nodes[shuffledKeys[j]].m_enabled)
 		{
 			continue;
 		}
@@ -666,36 +676,34 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		ss << "CustomNodeProfile-" << j;
 		string nodeName = ss.str();
 
-		Profile *item = m_profiles.GetProfile(it->second.m_pfile);
+		Profile *item = m_profiles.GetProfile(m_nodes[shuffledKeys[j]].m_pfile);
 		if(item != NULL)
 		{
 			//Print the profile
-			out << item->ToString(it->second.m_portSetIndex, nodeName);
+			out << item->ToString(m_nodes[shuffledKeys[j]].m_portSetIndex, nodeName);
 			//Then we need to add node-specific information to the profile's output
-			if(!it->second.m_IP.compare("DHCP"))
+			if(!m_nodes[shuffledKeys[j]].m_IP.compare("DHCP"))
 			{
-				out << "dhcp " << nodeName << " on " << it->second.m_interface;
+				out << "dhcp " << nodeName << " on " << m_nodes[shuffledKeys[j]].m_interface;
 				//If the node has a MAC address (not random generated)
-				if(it->second.m_MAC.compare("RANDOM"))
+				if(m_nodes[shuffledKeys[j]].m_MAC.compare("RANDOM"))
 				{
-					out << " ethernet \"" << it->second.m_MAC << "\"";
+					out << " ethernet \"" << m_nodes[shuffledKeys[j]].m_MAC << "\"";
 				}
 				out << "\n\n";
 			}
 			else
 			{
 				//If the node has a MAC address (not random generated)
-				if(it->second.m_MAC.compare("RANDOM"))
+				if(m_nodes[shuffledKeys[j]].m_MAC.compare("RANDOM"))
 				{
 					//Set the MAC for the custom node profile
-					out << "set " << nodeName << " ethernet \"" << it->second.m_MAC << "\"" << '\n';
+					out << "set " << nodeName << " ethernet \"" << m_nodes[shuffledKeys[j]].m_MAC << "\"" << '\n';
 				}
 				//bind the node to the IP address
-				out << "bind " << it->second.m_IP << " " << nodeName << "\n\n";
+				out << "bind " << m_nodes[shuffledKeys[j]].m_IP << " " << nodeName << "\n\n";
 			}
 		}
-
-		j++;
 	}
 
 	ofstream outFile(path);
