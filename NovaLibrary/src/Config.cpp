@@ -844,6 +844,12 @@ void Config::LoadConfig_Internal()
 				{
 					m_classifierEngines.clear();
 					boost::split(m_classifierEngines, line, boost::is_any_of(";"));
+
+					// Trim out any whitespace
+					for (uint i = 0; i < m_classifierEngines.size(); i++)
+					{
+						boost::trim(m_classifierEngines[i]);
+					}
 				}
 				continue;
 			}
