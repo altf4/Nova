@@ -16,11 +16,11 @@
 // Description : Novad thread loops
 //============================================================================
 
-#include "messaging/MessageManager.h"
 #include "WhitelistConfiguration.h"
 #include "ClassificationEngine.h"
 #include "EvidenceAccumulator.h"
 #include "ProtocolHandler.h"
+#include "MessageManager.h"
 #include "DatabaseQueue.h"
 #include "EvidenceTable.h"
 #include "PacketCapture.h"
@@ -252,8 +252,8 @@ void *MessageWorker(void *ptr)
 {
 	while(true)
 	{
-		Message *message = MessageManager::Instance().DequeueMessage();
-		switch(message->m_contents.m_type())
+		Message_pb *message = MessageManager::Instance().DequeueMessage();
+		switch(message->m_type())
 		{
 			case CONTROL_EXIT_REQUEST:
 			{
@@ -297,7 +297,6 @@ void *MessageWorker(void *ptr)
 			}
 			default:
 			{
-				message->DeleteContents();
 				delete message;
 				break;
 			}

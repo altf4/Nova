@@ -20,7 +20,7 @@
 #include "Suspect.h"
 #include "Config.h"
 #include "HashMapStructs.h"
-#include "messaging/MessageManager.h"
+#include "MessageManager.h"
 
 #include <map>
 
@@ -59,9 +59,9 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 
 	while(true)
 	{
-		Nova::Message *message = DequeueUIMessage();
+		Nova::Message_pb *message = DequeueUIMessage();
 
-		switch(message->m_contents.m_type())
+		switch(message->m_type())
 		{
 			case REQUEST_SUSPECT_REPLY:
 			{
@@ -75,8 +75,8 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 			case UPDATE_SUSPECT_CLEARED:
 			{
 				Suspect *suspect = new Suspect();
-				suspect->SetIdentifier(message->m_contents.m_suspectid());
-				LOG(DEBUG, "Got a clear suspect response for a suspect on interface " + message->m_contents.m_suspectid().m_ifname(), "");
+				suspect->SetIdentifier(message->m_suspectid());
+				LOG(DEBUG, "Got a clear suspect response for a suspect on interface " + message->m_suspectid().m_ifname(), "");
 				HandleSuspectCleared(suspect);
 				break;
 			}

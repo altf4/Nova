@@ -18,8 +18,9 @@ extends layout
 
 block headerAdditions
   link(rel='stylesheet', type='text/css', href='configstyle.css', media='screen')
-  link(rel='stylesheet', type='text/css', href='/dojo/dojox/grid/resources/Grid.css')
-  link(rel='stylesheet', type='text/css', href='/dojo/dojox/grid/resources/claroGrid.css')
+  link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
+
+  script(type="text/javascript", src="scripts/NovaGrid.js")
 
   script
     var grid;
@@ -27,23 +28,17 @@ block headerAdditions
     function deleteSelectedItems()
     {
       var numberOfNames = #{usernames.length}
-      var items = grid.selection.getSelected();
+      var items = grid.GetSelected();
         
       if(items.length >= numberOfNames)
       {
-          var dialog = new dijit.Dialog({title: 'Error', content: 'You can not delete all user accounts! It will be impossible to log in.'});
-          dialog.show();  
+          alert('You can not delete all user accounts! It will be impossible to log in.');
           return;
       }
-      var names = [];
-      dojo.forEach(items, function(selectedItem)
-      {
-        names.push(grid.store.getValues(selectedItem, 'users')); 
-      });
       
       try
       {
-        now.deleteUserEntry(names, errorMessageCallback);
+        now.deleteUserEntry(items, errorMessageCallback);
       }
       catch(err)
       {
@@ -54,16 +49,15 @@ block headerAdditions
 
     function updateUserPass()
     {
-        var items = grid.selection.getSelected();
+        var items = grid.GetSelected();
 
         if(items.length != 1)
         {
-          var dialog = new dijit.Dialog({title: 'Error', content: 'Please select 1 user account to edit the password of'});
-          dialog.show();  
+          alert('Please select 1 user account to edit the password of');
           return;
         }
         
-        var user = String(grid.store.getValues(items[0], 'users')); 
+        var user = items[0]; 
         var password = $('#newPassword').val();
         try
         {
@@ -81,8 +75,7 @@ block headerAdditions
     {
       if(success != true)
       {
-        var dialog = new dijit.Dialog({title: 'Error', content: 'Unable to complete operation due to error: ' + message});
-        dialog.show();
+        alert('Unable to complete operation due to error: ' + message)
         return;
       }
       location.reload(true);
@@ -90,33 +83,21 @@ block headerAdditions
 
     function init()
     {
-        require(['dojox/grid/DataGrid','dojo/data/ObjectStore','dojox/data/HtmlStore', 'dijit/Dialog'],
-            function(DataGrid,ObjectStore){
-              var gridStore = new dojox.data.HtmlStore({dataId:'profileTable'});
-              grid = new dojox.grid.DataGrid({store:gridStore,structure:'layoutProfiles',query:{},rowsPerPage:40, autoWidth:true});
-              $('#gridDiv').append(grid.domNode);
-        });
+        var usernames = !{JSON.stringify(usernames)};
+        var columns = [{name: "Usernames"}];
+        grid = new NovaGrid(columns, 0, document.getElementById("gridDiv"), "grid", true);
+        
+        for (var i = 0; i < usernames.length; i++) {
+            grid.PushEntry(new Array(usernames[i]));
+        }
+
+        grid.Render();
+
     }
   
-  script(type='text/javascript')
-          /*set up data store*/
-          var layoutProfiles = [[
-            { field: 'users', name: 'User', width: '500px' },
-          ]];
-
 block content
   h1 Existing User Accounts
-  table#profileTable(style='display: none')
-    thead
-      tr
-        th users
-    tbody
-      each name, i in usernames
-        tr
-          td #{name}
- 
-  div(style='height: 250px;')
-    div#gridDiv(style='height: 250px')
+  span#gridDiv(style="display: inline-block; width: 500px;")
 
   br
   button(onClick='deleteSelectedItems()')

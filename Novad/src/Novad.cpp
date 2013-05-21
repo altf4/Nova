@@ -18,13 +18,13 @@
 
 #include "HoneydConfiguration/HoneydConfiguration.h"
 #include "ClassificationAggregator.h"
-#include "messaging/MessageManager.h"
 #include "InterfacePacketCapture.h"
 #include "WhitelistConfiguration.h"
 #include "EvidenceAccumulator.h"
 #include "FilePacketCapture.h"
 #include "HaystackControl.h"
 #include "ProtocolHandler.h"
+#include "MessageManager.h"
 #include "PacketCapture.h"
 #include "EvidenceTable.h"
 #include "Doppelganger.h"
@@ -114,6 +114,8 @@ void StartServer()
 	struct event_base *base;
 	struct event *listener_event;
 	struct sockaddr_un msgLocal;
+
+	startTime = time(NULL);
 
 	evthread_use_pthreads();
 	base = event_base_new();

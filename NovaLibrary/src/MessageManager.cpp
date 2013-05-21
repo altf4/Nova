@@ -17,8 +17,8 @@
 //============================================================================
 
 #include "MessageManager.h"
-#include "../Lock.h"
-#include "../Logger.h"
+#include "Lock.h"
+#include "Logger.h"
 
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -53,7 +53,7 @@ MessageManager &MessageManager::Instance()
 	return *MessageManager::m_instance;
 }
 
-Message *MessageManager::DequeueMessage()
+Message_pb *MessageManager::DequeueMessage()
 {
 	Lock lock(&m_queueMutex);
 
@@ -62,19 +62,19 @@ Message *MessageManager::DequeueMessage()
 		pthread_cond_wait(&m_popWakeupCondition, &m_queueMutex);
 	}
 
-	Message *ret = m_queue.front();
+	Message_pb *ret = m_queue.front();
 	m_queue.pop();
 	return ret;
 }
 
-void MessageManager::EnqueueMessage(Message *message)
+void MessageManager::EnqueueMessage(Message_pb *message)
 {
 	Lock lock(&m_queueMutex);
 	m_queue.push(message);
 	pthread_cond_signal(&m_popWakeupCondition);
 }
 
-bool MessageManager::WriteMessage(Message *message, uint32_t sessionIndex)
+bool MessageManager::WriteMessage(Message_pb *message, uint32_t sessionIndex)
 {
 	if(message == NULL)
 	{
@@ -90,12 +90,12 @@ bool MessageManager::WriteMessage(Message *message, uint32_t sessionIndex)
 		}
 		struct bufferevent *bev = m_bevMap[sessionIndex];
 
-		uint32_t length = message->GetLength();
+		uint32_t length = message->ByteSize();
 		char *buffer = new char[length + sizeof(uint32_t)];
 
 		memcpy(buffer, &length, sizeof(length));
 
-		if(!message->Serialize(buffer + sizeof(uint32_t), length))
+		if(!message->SerializeToArray(buffer + sizeof(uint32_t), length))
 		{
 			delete[] buffer;
 			return false;
@@ -129,12 +129,12 @@ bool MessageManager::WriteMessage(Message *message, uint32_t sessionIndex)
 				continue;
 			}
 
-			uint32_t length = message->GetLength();
+			uint32_t length = message->ByteSize();
 			char *buffer = new char[length + sizeof(uint32_t)];
 
 			memcpy(buffer, &length, sizeof(length));
 
-			if(!message->Serialize(buffer + sizeof(uint32_t), length))
+			if(!message->SerializeToArray(buffer + sizeof(uint32_t), length))
 			{
 				delete[] buffer;
 				continue;
@@ -154,7 +154,7 @@ bool MessageManager::WriteMessage(Message *message, uint32_t sessionIndex)
 	}
 }
 
-bool MessageManager::WriteMessageExcept(Message *message, uint32_t sessionIndex)
+bool MessageManager::WriteMessageExcept(Message_pb *message, uint32_t sessionIndex)
 {
 	if(message == NULL)
 	{
@@ -181,12 +181,12 @@ bool MessageManager::WriteMessageExcept(Message *message, uint32_t sessionIndex)
 			continue;
 		}
 
-		uint32_t length = message->GetLength();
+		uint32_t length = message->ByteSize();
 		char *buffer = new char[length + sizeof(uint32_t)];
 
 		memcpy(buffer, &length, sizeof(length));
 
-		if(!message->Serialize(buffer + sizeof(uint32_t), length))
+		if(!message->SerializeToArray(buffer + sizeof(uint32_t), length))
 		{
 			delete[] buffer;
 			continue;
@@ -216,8 +216,8 @@ void MessageManager::WriteDispatcher(struct bufferevent *bev, void *ctx)
 
 	if(evbufferLength == 0)
 	{
-		Message *shutdown = new Message();
-		shutdown->m_contents.set_m_type(CONNECTION_SHUTDOWN);
+		Message_pb *shutdown = new Message_pb();
+		shutdown->set_m_type(CONNECTION_SHUTDOWN);
 		MessageManager::Instance().EnqueueMessage(shutdown);
 	}
 }
@@ -276,11 +276,11 @@ void MessageManager::MessageDispatcher(struct bufferevent *bev, void *ctx)
 			continue;
 		}
 
-		Message *message = new Message();
-		if(message->Deserialize(buffer, length) == true)
+		Message_pb *message = new Message_pb();
+		if(message->ParseFromArray(buffer, length) == true)
 		{
 			uint32_t *index = (uint32_t*)ctx;
-			message->m_contents.set_m_sessionindex(*index);
+			message->set_m_sessionindex(*index);
 			MessageManager::Instance().EnqueueMessage(message);
 		}
 		else
@@ -313,8 +313,8 @@ void MessageManager::ErrorDispatcher(struct bufferevent *bev, short error, void 
 		uint32_t *index = (uint32_t*)ctx;
 		MessageManager::Instance().RemoveSessionIndex(*index);
 
-		Message *shutdown = new Message();
-		shutdown->m_contents.set_m_type(CONNECTION_SHUTDOWN);
+		Message_pb *shutdown = new Message_pb();
+		shutdown->set_m_type(CONNECTION_SHUTDOWN);
 		MessageManager::Instance().EnqueueMessage(shutdown);
 		delete index;
 	}

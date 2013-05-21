@@ -18,11 +18,11 @@
 
 #include "Database.h"
 #include "ProtocolHandler.h"
+#include "MessageManager.h"
 #include "Config.h"
 #include "Logger.h"
 #include "Control.h"
 #include "Novad.h"
-#include "messaging/MessageManager.h"
 #include "Lock.h"
 
 #include <sstream>
@@ -51,14 +51,14 @@ int UIsocketSize;
 namespace Nova
 {
 
-void HandleExitRequest(Message *incoming)
+void HandleExitRequest(Message_pb *incoming)
 {
 	LOG(NOTICE, "Quitting: Got an exit request from the UI. Goodbye!",
 			"Got a CONTROL_EXIT_REQUEST, quitting.");
 	SaveAndExit(0);
 }
 
-void HandleClearAllRequest(Message *incoming)
+void HandleClearAllRequest(Message_pb *incoming)
 {
 	Database::Inst()->StartTransaction();
 	Database::Inst()->ClearAllSuspects();
@@ -68,48 +68,49 @@ void HandleClearAllRequest(Message *incoming)
 			"Got a CONTROL_CLEAR_ALL_REQUEST, cleared all suspects.");
 
 	//First, send the reply (wth message ID) to just the original sender
-	Message updateMessage(UPDATE_ALL_SUSPECTS_CLEARED);
-	if(incoming->m_contents.has_m_messageid())
+	Message_pb updateMessage;
+	updateMessage.set_m_type(UPDATE_ALL_SUSPECTS_CLEARED);
+	if(incoming->has_m_messageid())
 	{
-		updateMessage.m_contents.set_m_messageid(incoming->m_contents.m_messageid());
+		updateMessage.set_m_messageid(incoming->m_messageid());
 	}
-	MessageManager::Instance().WriteMessage(&updateMessage, incoming->m_contents.m_sessionindex());
+	MessageManager::Instance().WriteMessage(&updateMessage, incoming->m_sessionindex());
 
 	//Now send a generic message to the rest of the clients
-	updateMessage.m_contents.clear_m_messageid();
-	MessageManager::Instance().WriteMessageExcept(&updateMessage, incoming->m_contents.m_sessionindex());
+	updateMessage.clear_m_messageid();
+	MessageManager::Instance().WriteMessageExcept(&updateMessage, incoming->m_sessionindex());
 }
 
-void HandleClearSuspectRequest(Message *incoming)
+void HandleClearSuspectRequest(Message_pb *incoming)
 {
 	struct in_addr suspectAddress;
-	suspectAddress.s_addr = ntohl(incoming->m_contents.m_suspectid().m_ip());
+	suspectAddress.s_addr = ntohl(incoming->m_suspectid().m_ip());
 
 	Database::Inst()->StartTransaction();
-	Database::Inst()->ClearSuspect(string(inet_ntoa(suspectAddress)), incoming->m_contents.m_suspectid().m_ifname());
+	Database::Inst()->ClearSuspect(string(inet_ntoa(suspectAddress)), incoming->m_suspectid().m_ifname());
 	Database::Inst()->StopTransaction();
 
 	LOG(DEBUG, "Cleared a suspect due to UI request",
 			"Got a CONTROL_CLEAR_SUSPECT_REQUEST, cleared suspect: "
-			+ string(inet_ntoa(suspectAddress)) + " on interface " + incoming->m_contents.m_suspectid().m_ifname() + ".");
+			+ string(inet_ntoa(suspectAddress)) + " on interface " + incoming->m_suspectid().m_ifname() + ".");
 
 	//First, send the reply (wth message ID) to just the original sender
-	Message updateMessage;
-	updateMessage.m_contents.set_m_type(UPDATE_SUSPECT_CLEARED);
-	updateMessage.m_contents.set_m_success(true);
-	if(incoming->m_contents.has_m_messageid())
+	Message_pb updateMessage;
+	updateMessage.set_m_type(UPDATE_SUSPECT_CLEARED);
+	updateMessage.set_m_success(true);
+	if(incoming->has_m_messageid())
 	{
-		updateMessage.m_contents.set_m_messageid(incoming->m_contents.m_messageid());
+		updateMessage.set_m_messageid(incoming->m_messageid());
 	}
-	updateMessage.m_contents.mutable_m_suspectid()->CopyFrom(incoming->m_contents.m_suspectid());
+	updateMessage.mutable_m_suspectid()->CopyFrom(incoming->m_suspectid());
 	MessageManager::Instance().WriteMessage(&updateMessage, 0);
 
 	//Now send a generic message to the rest of the clients
-	updateMessage.m_contents.clear_m_messageid();
-	MessageManager::Instance().WriteMessageExcept(&updateMessage, incoming->m_contents.m_sessionindex());
+	updateMessage.clear_m_messageid();
+	MessageManager::Instance().WriteMessageExcept(&updateMessage, incoming->m_sessionindex());
 }
 
-void HandleReclassifyAllRequest(Message *incoming)
+void HandleReclassifyAllRequest(Message_pb *incoming)
 {
 	Reload();
 
@@ -117,37 +118,37 @@ void HandleReclassifyAllRequest(Message *incoming)
 		"Got a CONTROL_RECLASSIFY_ALL_REQUEST, reclassified all suspects.");
 }
 
-void HandleStartCaptureRequest(Message *incoming)
+void HandleStartCaptureRequest(Message_pb *incoming)
 {
 	StartCapture();
 }
 
-void HandleStopCaptureRequest(Message *incoming)
+void HandleStopCaptureRequest(Message_pb *incoming)
 {
 	StopCapture();
 }
 
-void HandleRequestUptime(Message *incoming)
+void HandleRequestUptime(Message_pb *incoming)
 {
-	Message reply;
-	reply.m_contents.set_m_type(REQUEST_UPTIME_REPLY);
-	if(incoming->m_contents.has_m_messageid())
+	Message_pb reply;
+	reply.set_m_type(REQUEST_UPTIME_REPLY);
+	if(incoming->has_m_messageid())
 	{
-		reply.m_contents.set_m_messageid(incoming->m_contents.m_messageid());
+		reply.set_m_messageid(incoming->m_messageid());
 	}
-	reply.m_contents.set_m_starttime(startTime);
-	MessageManager::Instance().WriteMessage(&reply, incoming->m_contents.m_sessionindex());
+	reply.set_m_starttime(startTime);
+	MessageManager::Instance().WriteMessage(&reply, incoming->m_sessionindex());
 }
 
-void HandlePing(Message *incoming)
+void HandlePing(Message_pb *incoming)
 {
-	Message pong;
-	if(incoming->m_contents.has_m_messageid())
+	Message_pb pong;
+	if(incoming->has_m_messageid())
 	{
-		pong.m_contents.set_m_messageid(incoming->m_contents.m_messageid());
+		pong.set_m_messageid(incoming->m_messageid());
 	}
-	pong.m_contents.set_m_type(REQUEST_PONG);
-	MessageManager::Instance().WriteMessage(&pong, incoming->m_contents.m_sessionindex());
+	pong.set_m_type(REQUEST_PONG);
+	MessageManager::Instance().WriteMessage(&pong, incoming->m_sessionindex());
 }
 
 }

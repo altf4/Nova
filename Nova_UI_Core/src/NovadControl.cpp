@@ -16,7 +16,7 @@
 // Description : Controls the Novad process itself, in terms of stopping and starting
 //============================================================================
 
-#include "messaging/MessageManager.h"
+#include "MessageManager.h"
 #include "Commands.h"
 #include "Logger.h"
 #include "Lock.h"
@@ -31,7 +31,7 @@ using namespace std;
 
 
 pthread_mutex_t messageQueueMutex;
-queue<Message*> messageQueue;
+queue<Message_pb*> messageQueue;
 pthread_cond_t popWakeupCondition;
 
 extern bool isConnected;
@@ -92,11 +92,11 @@ void StopNovad(int32_t messageID)
 		bufferevent_setcb(bufferevent, NULL, MessageManager::WriteDispatcher, NULL, NULL);
 	}
 
-	Message killRequest;
-	killRequest.m_contents.set_m_type(CONTROL_EXIT_REQUEST);
+	Message_pb killRequest;
+	killRequest.set_m_type(CONTROL_EXIT_REQUEST);
 	if(messageID != -1)
 	{
-		killRequest.m_contents.set_m_messageid(messageID);
+		killRequest.set_m_messageid(messageID);
 	}
 	MessageManager::Instance().WriteMessage(&killRequest, 0);
 }
@@ -115,68 +115,68 @@ bool HardStopNovad()
 
 void SaveAllSuspects(std::string file, int32_t messageID)
 {
-	Message saveRequest;
-	saveRequest.m_contents.set_m_type(CONTROL_SAVE_SUSPECTS_REQUEST);
-	saveRequest.m_contents.set_m_filepath(file.c_str());
+	Message_pb saveRequest;
+	saveRequest.set_m_type(CONTROL_SAVE_SUSPECTS_REQUEST);
+	saveRequest.set_m_filepath(file.c_str());
 	if(messageID != -1)
 	{
-		saveRequest.m_contents.set_m_messageid(messageID);
+		saveRequest.set_m_messageid(messageID);
 	}
 	MessageManager::Instance().WriteMessage(&saveRequest, 0);
 }
 
 void ClearAllSuspects(int32_t messageID)
 {
-	Message clearRequest;
-	clearRequest.m_contents.set_m_type(CONTROL_CLEAR_ALL_REQUEST);
+	Message_pb clearRequest;
+	clearRequest.set_m_type(CONTROL_CLEAR_ALL_REQUEST);
 	if(messageID != -1)
 	{
-		clearRequest.m_contents.set_m_messageid(messageID);
+		clearRequest.set_m_messageid(messageID);
 	}
 	MessageManager::Instance().WriteMessage(&clearRequest, 0);
 }
 
 void ClearSuspect(SuspectID_pb suspectId, int32_t messageID)
 {
-	Message clearRequest;
-	clearRequest.m_contents.set_m_type(CONTROL_CLEAR_SUSPECT_REQUEST);
-	*clearRequest.m_contents.mutable_m_suspectid() = suspectId;
+	Message_pb clearRequest;
+	clearRequest.set_m_type(CONTROL_CLEAR_SUSPECT_REQUEST);
+	*clearRequest.mutable_m_suspectid() = suspectId;
 	if(messageID != -1)
 	{
-		clearRequest.m_contents.set_m_messageid(messageID);
+		clearRequest.set_m_messageid(messageID);
 	}
 	MessageManager::Instance().WriteMessage(&clearRequest, 0);
 }
 
 void ReclassifyAllSuspects(int32_t messageID)
 {
-	Message request;
-	request.m_contents.set_m_type(CONTROL_RECLASSIFY_ALL_REQUEST);
+	Message_pb request;
+	request.set_m_type(CONTROL_RECLASSIFY_ALL_REQUEST);
 	if(messageID != -1)
 	{
-		request.m_contents.set_m_messageid(messageID);
+		request.set_m_messageid(messageID);
 	}
 	MessageManager::Instance().WriteMessage(&request, 0);
 }
 
 void StartPacketCapture(int32_t messageID)
 {
-	Message request;
-	request.m_contents.set_m_type(CONTROL_START_CAPTURE);
+	Message_pb request;
+	request.set_m_type(CONTROL_START_CAPTURE);
 	if(messageID != -1)
 	{
-		request.m_contents.set_m_messageid(messageID);
+		request.set_m_messageid(messageID);
 	}
 	MessageManager::Instance().WriteMessage(&request, 0);
 }
 
 void StopPacketCapture(int32_t messageID)
 {
-	Message request;
-	request.m_contents.set_m_type(CONTROL_STOP_CAPTURE);
+	Message_pb request;
+	request.set_m_type(CONTROL_STOP_CAPTURE);
 	if(messageID != -1)
 	{
-		request.m_contents.set_m_messageid(messageID);
+		request.set_m_messageid(messageID);
 	}
 	MessageManager::Instance().WriteMessage(&request, 0);
 }
@@ -185,14 +185,14 @@ void *ClientMessageWorker(void *arg)
 {
 	while(true)
 	{
-		Message *message = MessageManager::Instance().DequeueMessage();
+		Message_pb *message = MessageManager::Instance().DequeueMessage();
 
 		//If we got a message, then we know we're connected
 		//Unless the message is a shutdown message, which we handle below
 		isConnected = true;
 
 		//Handle the message in the context of the UI_Core
-		switch(message->m_contents.m_type())
+		switch(message->m_type())
 		{
 			case UPDATE_SUSPECT:
 			{
@@ -234,7 +234,7 @@ void *ClientMessageWorker(void *arg)
 	return NULL;
 }
 
-Message *DequeueUIMessage()
+Message_pb *DequeueUIMessage()
 {
 	Lock lock(&messageQueueMutex);
 
@@ -243,7 +243,7 @@ Message *DequeueUIMessage()
 		pthread_cond_wait(&popWakeupCondition, &messageQueueMutex);
 	}
 
-	Message *ret = messageQueue.front();
+	Message_pb *ret = messageQueue.front();
 	messageQueue.pop();
 	return ret;
 }

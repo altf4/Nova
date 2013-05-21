@@ -23,8 +23,7 @@
 #include <map>
 #include "pthread.h"
 #include "event.h"
-
-#include "Message.h"
+#include "protobuf/marshalled_classes.pb.h"
 
 namespace Nova
 {
@@ -42,25 +41,25 @@ public:
 	//Grabs a message off of the message queue
 	// Returns - A pointer to a valid Message object. Never NULL. Caller is responsible for life cycle of this message
 	// NOTE: Blocking call. To be called from worker threads
-	Nova::Message *DequeueMessage();
+	Message_pb *DequeueMessage();
 
 	//Writes a given Message to the provided sessionIndex (0 for all sessions)
 	//	message - A pointer to the message object to send
 	//	sessionIndex - The index of the session to send the message to. (0 for all sessions)
 	// Returns - true on successfully sending the object, false on error
-	bool WriteMessage(Message *message, uint32_t sessionIndex);
+	bool WriteMessage(Message_pb *message, uint32_t sessionIndex);
 
 	//Writes a given Message to the all sessions except the given one
 	//	message - A pointer to the message object to send
 	//	sessionIndex - The index of the session to exclude
 	// Returns - true on successfully sending the object, false on error
-	bool WriteMessageExcept(Message *message, uint32_t sessionIndex);
+	bool WriteMessageExcept(Message_pb *message, uint32_t sessionIndex);
 
 	//The following functions are only used internally (used from static functions, thus needing to be public)
 	//Users of the messaging subsystem will not need to call these:
 
 	//Puts a message onto the message queue
-	void EnqueueMessage(Message *message);
+	void EnqueueMessage(Message_pb *message);
 
 	//Function that gets called for every received packet
 	//	Deserializes the bytes into a message, pushes that message into the right MessageQueue,
@@ -95,7 +94,7 @@ private:
 	//Constructor for MessageManager
 	MessageManager();
 
-	std::queue<Message*> m_queue;
+	std::queue<Message_pb*> m_queue;
 	pthread_mutex_t m_queueMutex;
 
 	uint32_t m_sessionIndex;

@@ -124,14 +124,20 @@ NovaGrid.prototype = {
 
            , GenerateDivs: function() {
                 this.m_tableElement.innerHTML = "";
+             
                 this.m_pagesElement = document.createElement("div");
                 this.m_pagesElement.setAttribute("class", "novaGridPagesDiv");
 
                 var tableDiv = document.createElement("div");
                 tableDiv.setAttribute("class", "novaGrid");
 
-                this.m_tableElement.appendChild(this.m_pagesElement);
-                this.m_tableElement.appendChild(tableDiv);
+                if (this.m_pagesBelowChart) {
+                    this.m_tableElement.appendChild(this.m_pagesElement);
+                    this.m_tableElement.appendChild(tableDiv);
+                } else {
+                    this.m_tableElement.appendChild(tableDiv);
+                    this.m_tableElement.appendChild(this.m_pagesElement);
+                }
 
                 this.m_tableElement = tableDiv;
            }
@@ -360,8 +366,16 @@ NovaGrid.prototype = {
         this.Render();
     }
 
-    , DeleteRow: function(key) {
+    , DeleteRow: function(key, noRender) {
         delete this.m_elements[key];
+
+        if (this.Size() % this.m_rowsPerPage == 0 && this.m_currentPage != 0) {
+            this.PreviousPage();
+        }
+
+        if (!noRender) {
+            this.Render();
+        }
     }
 
     // Returns the number of rows in the table
@@ -494,7 +508,7 @@ NovaGrid.prototype = {
        startpageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(0);');
        startpageLink.className += "pageNumberLink";
        startpageLink.title = "First page";
-       var startpageLinkText = document.createTextNode("<<");
+       var startpageLinkText = document.createTextNode("First");
        startpageLink.appendChild(startpageLinkText);
        tablePages.appendChild(startpageLink);
 
@@ -503,7 +517,7 @@ NovaGrid.prototype = {
        pageLink.setAttribute('onclick', this.m_name + '.PreviousPage();');
        pageLink.className += "pageNumberLink";
        pageLink.title = "Previous page";
-       var pageLinkText = document.createTextNode(" < ");
+       var pageLinkText = document.createTextNode(" Back ");
        pageLink.appendChild(pageLinkText);
        tablePages.appendChild(pageLink);
        
@@ -533,18 +547,15 @@ NovaGrid.prototype = {
            var pageLink = document.createElement('a');
            pageLink.setAttribute('href', '#');
            pageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(' + i + ');');
-           pageLink.className += "pageNumberLink";
 
            var pageLinkText = document.createTextNode(i + 1);
            pageLink.appendChild(pageLinkText);
 
            if (i == currentPage) {
-               var boldTag = document.createElement('b');
-               boldTag.appendChild(pageLink);
-               tablePages.appendChild(boldTag);
-           } else {
-               tablePages.appendChild(pageLink);
-           }    
+               pageLink.className += " selectedpageNumberLink";
+           }
+           pageLink.className += " pageNumberLink";
+           tablePages.appendChild(pageLink);
        }
        
        var pageLink = document.createElement('a');
@@ -552,7 +563,7 @@ NovaGrid.prototype = {
        pageLink.setAttribute('onclick', this.m_name + '.NextPage();');
        pageLink.className += "pageNumberLink";
        pageLink.title = "Next page";
-       var pageLinkText = document.createTextNode(" > ");
+       var pageLinkText = document.createTextNode(" Next ");
        pageLink.appendChild(pageLinkText);
        tablePages.appendChild(pageLink);
            
@@ -561,7 +572,7 @@ NovaGrid.prototype = {
        lastpageLink.setAttribute('onclick', this.m_name + '.SetCurrentPage(' + (this.GetNumberOfPages() - 1) + ');');
        lastpageLink.className += "pageNumberLink";
        lastpageLink.title = "Last page";
-       var lastpageLinkText = document.createTextNode(">>");
+       var lastpageLinkText = document.createTextNode("Last");
        lastpageLink.appendChild(lastpageLinkText);
        tablePages.appendChild(lastpageLink);
   }

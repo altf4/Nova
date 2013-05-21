@@ -29,6 +29,8 @@ class Profile
 {
 
 public:
+	static const std::string EMPTY_PROFILE_NAME;
+
 
 	Profile(Profile *parent, std::string key = "");
 	Profile(std::string parentName, std::string key = "");

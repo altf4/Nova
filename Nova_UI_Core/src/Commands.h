@@ -24,7 +24,6 @@
 
 #include "HaystackControl.h"
 #include "Suspect.h"
-#include "messaging/Message.h"
 
 namespace Nova
 {
@@ -109,7 +108,7 @@ void StopPacketCapture(int32_t messageID = -1);
 //Grabs a message off of the message queue
 // Returns - A pointer to a valid Message object. Never NULL. Caller is responsible for life cycle of this message
 // NOTE: Blocking call. To be called from worker threads
-Message *DequeueUIMessage();
+Message_pb *DequeueUIMessage();
 
 void *ClientMessageWorker(void *arg);
 

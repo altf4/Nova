@@ -1,5 +1,6 @@
 div.novaGrid {
 	border: 1px solid black;
+    border-bottom: 0px;
 	min-height:  200px;
 }
 
@@ -9,6 +10,11 @@ div.novaGrid {
 	background-image: url('images/gradientr.png');
 	background-repeat: repeat-x;
 	border: 1px solid black;
+    border-top: 1px solid #ABD6FF;
+    font-weight: bold;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    vertical-align: center;
 }
 
 .novaGrid {
@@ -54,7 +60,8 @@ tr.novaGrid:hover {
 }
 
 .pageNumberLink {
-	font-size: 16px;
+	font-size: 12px;
+    font-weight: bold;
 	margin-right: 2px;
 	margin-left: 2px;
 	padding-right: 2px;
@@ -63,7 +70,11 @@ tr.novaGrid:hover {
 	color: black;
 }
 
-.pageNumberLink:hover {
+.selectedpageNumberLink {
+    background-color: #AFD9FF;
+}
+
+.pageNumberLink:hover , .selectedpageNumberLink:hover{
 	background-color: #AFD9FF !important;
 }
 

@@ -680,8 +680,8 @@ void Nova::ParseHost(boost::property_tree::ptree propTree)
 	// If personalityClass vector is empty, assign this profile to the NULL fake profile
 	if(newHost->m_personalityClass.empty())
 	{
-		newHost->m_personalityClass.push_back("NULL");
-		newHost->m_osclass = "NULL";
+		newHost->m_personalityClass.push_back(Profile::EMPTY_PROFILE_NAME);
+		newHost->m_osclass = Profile::EMPTY_PROFILE_NAME;
 	}
 	else
 	{

@@ -22,7 +22,7 @@
 #include "NovaCLI.h"
 #include "Logger.h"
 #include "protobuf/marshalled_classes.pb.h"
-#include "messaging/MessageManager.h"
+#include "MessageManager.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -699,10 +699,10 @@ void MonitorCallback(int32_t messageID)
 
 	while(true)
 	{
-    	Message *message = DequeueUIMessage();
+		Message_pb *message = DequeueUIMessage();
 
     	//If the connection shut down, then just quit no matter what
-    	if(message->m_contents.m_type() == CONNECTION_SHUTDOWN)
+    	if(message->m_type() == CONNECTION_SHUTDOWN)
     	{
     		cout << "Connection Terminated" << endl;
     		delete message;
@@ -710,9 +710,9 @@ void MonitorCallback(int32_t messageID)
     	}
 
     	//Only process a message if it was the one we're looking for OR if we're watching them all
-    	if((messageID == -1) || (message->m_contents.has_m_messageid() && (message->m_contents.m_messageid() == messageID)))
+    	if((messageID == -1) || (message->has_m_messageid() && (message->m_messageid() == messageID)))
     	{
-    		switch(message->m_contents.m_type())
+    		switch(message->m_type())
     		{
     			case UPDATE_ALL_SUSPECTS_CLEARED:
     			{
@@ -721,13 +721,13 @@ void MonitorCallback(int32_t messageID)
     			}
     			case UPDATE_SUSPECT_CLEARED:
     			{
-    				if(message->m_contents.m_success())
+    				if(message->m_success())
     				{
-    					cout << "Suspect " << Suspect::GetIpString(message->m_contents.m_suspectid()) << " was cleared" << endl;
+    					cout << "Suspect " << Suspect::GetIpString(message->m_suspectid()) << " was cleared" << endl;
     				}
     				else
     				{
-    					cout << "Failed to clear Suspect " << Suspect::GetIpString(message->m_contents.m_suspectid()) << endl;
+    					cout << "Failed to clear Suspect " << Suspect::GetIpString(message->m_suspectid()) << endl;
     				}
     				break;
     			}
@@ -738,7 +738,10 @@ void MonitorCallback(int32_t messageID)
     			}
     			case REQUEST_UPTIME_REPLY:
     			{
-    				cout << "Uptime is: " << message->m_contents.m_starttime() << endl;
+    				time_t startTime = message->m_starttime();
+    				char buff[30];
+    				strftime(buff, sizeof(buff), "%Y-%m-%d %H:%M:%S", localtime(&startTime));
+    				cout << "Novad has been running since: " << buff << endl;
     				break;
     			}
     			default:
@@ -748,10 +751,9 @@ void MonitorCallback(int32_t messageID)
     		}
     	}
 	    //If we're waiting only for a specific message, and it has arrived, then quit
-    	if((messageID != -1) && message->m_contents.has_m_messageid() && (message->m_contents.m_messageid() == messageID))
+    	if((messageID != -1) && message->has_m_messageid() && (message->m_messageid() == messageID))
 		{
     		cout << "Connection Terminated" << endl;
-			message->DeleteContents();
 			delete message;
 			return;
 		}
