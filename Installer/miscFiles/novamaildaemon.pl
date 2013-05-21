@@ -8,6 +8,8 @@ use File::ReadBackwards;
 
 $|++;
 
+use sigtrap 'handler' => \&sigIntHandler, 'ABRT', 'QUIT', 'TERM';
+
 $SIG{'INT'} = \&sigIntHandler;
 
 my $file = "/var/log/nova/Nova.log";
