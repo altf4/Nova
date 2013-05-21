@@ -92,6 +92,13 @@ void ClassificationAggregator::LoadConfiguration(std::string filePath)
 	{
 		//cout << "Loading engine " << i << " " << engines[i] << endl;
 		ClassificationEngine *engine = MakeEngine(engines[i]);
+
+		if (engine == NULL)
+		{
+			LOG(CRITICAL, "Unable to create classification engine of type " + engines[i], "");
+			exit(EXIT_FAILURE);
+		}
+
 		engine->LoadConfiguration(Config::Inst()->GetPathHome() + "/" + configs[i]);
 
 		m_engines.push_back(engine);

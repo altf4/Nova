@@ -20,6 +20,7 @@
 #include "ThresholdTriggerClassification.h"
 #include "KnnClassification.h"
 #include "ScriptAlertClassification.h"
+#include "Logger.h"
 
 using namespace std;
 using namespace Nova;
@@ -38,6 +39,10 @@ ClassificationEngine * MakeEngine(std::string engine)
 	else if (engine == "SCRIPT_ALERT")
 	{
 		return new ScriptAlertClassification();
+	}
+	else
+	{
+		LOG(ERROR, "Unknown classification engine type: " + engine + ". Known types are KNN, THRESHOLD_TRIGGER, and SCRIPT_ALERT", "");
 	}
 
 	return NULL;
