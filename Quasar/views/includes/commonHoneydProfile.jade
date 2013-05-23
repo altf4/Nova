@@ -411,7 +411,7 @@ script
 
     var newPortSet = $('#portSetSelection').val();
 
-    $('#portTable').empty();
+    $('#portTableBody').empty();
     scriptConfigurations = {};
 
     portIndexes = [];
@@ -537,7 +537,7 @@ script
           port.scriptConfiguration = {};
         }
 
-        var portDiv = $('#portTable')[0];
+        var portDiv = $('#portTableBody')[0];
         var portUID;
 
         if(portIndexes.length > 0) 
@@ -554,40 +554,6 @@ script
 
         var row = document.createElement('tr');
         row.id = 'portRow' + portUID;
-
-        var numContainer = document.createElement('td');
-        var numInput = document.createElement('input');
-        if(navigator.userAgent.indexOf('MSIE') == '-1')
-        {
-          numInput.type = 'number';
-        }
-        numInput.id = 'portNum' + portUID;
-        numInput.min = 1;
-        numInput.max = 65535;
-        numInput.value = port.portNum;
-        numInput.setAttribute('onblur', 'enforceMinAndMax("portNum' + portUID + '")');
-        numContainer.appendChild(numInput);
-        row.appendChild(numContainer);
-                
-        var typeContainer = document.createElement('td');
-        var typeSelect = document.createElement('select');
-        typeSelect.id = 'portType' + portUID;
-
-        options = ['udp', 'tcp'];
-        for(j = 0; j < options.length; j++)
-        {
-          var option = document.createElement('option');
-          option.value = options[j];
-          option.innerHTML = options[j];
-          if(port.protocol == options[j])
-          {
-            option.selected = true;
-          }
-          typeSelect.appendChild(option);
-        }
-
-        typeContainer.appendChild(typeSelect);
-        row.appendChild(typeContainer);
 
         var behaviorContainer = document.createElement('td');
         var behaviorSelect = document.createElement('select');
@@ -666,6 +632,41 @@ script
         
         scriptContainer.appendChild(scriptSelect);
         row.appendChild(scriptContainer);
+        
+        
+        var numContainer = document.createElement('td');
+        var numInput = document.createElement('input');
+        if(navigator.userAgent.indexOf('MSIE') == '-1')
+        {
+          numInput.type = 'number';
+        }
+        numInput.id = 'portNum' + portUID;
+        numInput.min = 1;
+        numInput.max = 65535;
+        numInput.value = port.portNum;
+        numInput.setAttribute('onblur', 'enforceMinAndMax("portNum' + portUID + '")');
+        numContainer.appendChild(numInput);
+        row.appendChild(numContainer);
+                
+        var typeContainer = document.createElement('td');
+        var typeSelect = document.createElement('select');
+        typeSelect.id = 'portType' + portUID;
+
+        options = ['udp', 'tcp'];
+        for(j = 0; j < options.length; j++)
+        {
+          var option = document.createElement('option');
+          option.value = options[j];
+          option.innerHTML = options[j];
+          if(port.protocol == options[j])
+          {
+            option.selected = true;
+          }
+          typeSelect.appendChild(option);
+        }
+
+        typeContainer.appendChild(typeSelect);
+        row.appendChild(typeContainer);
 
         var configureContainer = document.createElement('td');
         var configureButton = document.createElement('button');
@@ -864,6 +865,8 @@ script
             optionCount++;
             scriptConfigurations[portIndex][option] = script.GetOptions[option][0];
           }
+
+          $("#portNum" + portIndex).val(script.GetDefaultPort);
           
           if(optionCount === 0)
           {

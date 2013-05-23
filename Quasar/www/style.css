@@ -270,3 +270,53 @@ button::-moz-focus-inner {
 }
 
 
+.prettyContainer {
+    display: inline-block;
+    vertical-align: top;
+    border: 5px solid black;
+    border-radius: 15px;
+    margin-right: 20px;
+    margin-left: 20px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    padding: 20px;
+}
+
+
+.cardOuter {
+	position: relative;
+	bottom: 0;
+	top: 0;
+	left: 0;
+	right: 0;
+	display: block;
+	vertical-align: top;
+	margin-bottom: 10px;
+	
+	border: 1px solid black;
+	border-radius: 15px;
+	border-top-right-radius: 0;
+	border-top-left-radius: 0; 
+}
+
+.cardInner {
+	margin: 10px;
+}
+
+.cardHeader {
+	text-align: center;
+	left: 0;
+	right: 0;
+	position: relative;
+	margin: 0;
+	padding-bottom: 5px;
+	padding-top: 5px;
+	background-repeat: repeat-x;
+	background-color: #ABD6FF;
+	background-image: url('images/gradient.jpg');
+	
+	border: 1px solid black;
+	border-bottom: 0px;
+	border-top-right-radius: 15px;
+	border-top-left-radius: 15px;
+}

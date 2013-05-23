@@ -373,6 +373,8 @@ bool HoneydConfiguration::ReadScriptsXML()//write complex test that moves the xm
 				script.m_service = value.second.get<string>("service");
 				script.m_osclass = value.second.get<string>("osclass");
 				script.m_path = value.second.get<string>("path");
+				script.m_defaultPort = value.second.get<string>("defaultport");
+				script.m_defaultProtocol = value.second.get<string>("defaultprotocol");
 				script.m_isConfigurable = value.second.get<bool>("configurable");
 
 				//cout << "Configurable is " << script.m_isConfigurable << endl;
@@ -442,6 +444,8 @@ bool HoneydConfiguration::WriteScriptsToXML()
 		propTree.put<string>("service", m_scripts[i].m_service);
 		propTree.put<string>("osclass", m_scripts[i].m_osclass);
 		propTree.put<string>("path", m_scripts[i].m_path);
+		propTree.put<string>("defaultport", m_scripts[i].m_defaultPort);
+		propTree.put<string>("defaultprotocol", m_scripts[i].m_defaultProtocol);
 		propTree.put<bool>("configurable", m_scripts[i].m_isConfigurable);
 
 		for (std::map<std::string, std::vector<std::string>>::iterator it = m_scripts[i].options.begin(); it != m_scripts[i].options.end(); it++)
