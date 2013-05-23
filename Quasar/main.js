@@ -1204,7 +1204,7 @@ app.get('/addHoneydProfile', function (req, res)
     }
     parentName = req.query["parent"];
 
-    res.render('addHoneydProfile.jade', {
+    res.render('editHoneydProfile.jade', {
         locals: {
             oldName: parentName,
             parentName: parentName,
