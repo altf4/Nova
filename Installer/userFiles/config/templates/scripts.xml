@@ -261,4 +261,11 @@
 			<value>names</value>
 		</option>
 	</script>
+	<script>
+		<name>MySQL (send host not privileged error)</name>
+		<service>mysql</service>
+		<osclass> Linux | Linux </osclass>
+		<path>python /usr/share/honeyd/scripts/linux/mysql.py</path>
+		<configurable>false</configurable>
+	</script>
 </scripts>
