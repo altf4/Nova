@@ -16,8 +16,6 @@
 
 extends layout
 block headerAdditions
-  //link(rel='stylesheet', type='text/css', href='configstyle.css', media='screen')
-  
   include includes/commonHoneydProfile
 
 block content
@@ -28,6 +26,14 @@ block content
     button#closeLB(onclick='closeLightbox()') Close
   
   div#setup(onclick='handleOnclick(event);', style="display: inline-block;")
+    div(style="display: none")
+      select#personalitySelect(name='personality')
+        each os in personalities
+          option(value='#{os}') #{os}
+      select#ethernetSelect(data-dojo-type='dijit.form.FilteringSelect', name='ethernet', autocomplete='true', pageSize=10)
+        each vendor in vendors
+          option(value='#{vendor}') #{vendor}
+                  
    
     h3.cardHeader Profile Options
     div.cardOuter
@@ -64,9 +70,9 @@ block content
             td(style='text-align:right')
               label Operating System Personality
             td
-              select#personality(data-dojo-type='dijit.form.FilteringSelect', name='personality', autocomplete='true', pageSize=10)
-                each os in personalities
-                  option(value='#{os}') #{os}
+              div
+                input#personality(style="display: inline-block")
+                span#showAllPersonalities(class="ui-button-icon-primary ui-icon ui-icon-triangle-1-s", style="display: inline-block")
           
           tr(id='row4')
             td
@@ -111,10 +117,8 @@ block content
             img.buttonIcon(src='images/add.png')
             span.buttonSpan Add New Vendor
 
-          select#ethernet(data-dojo-type='dijit.form.FilteringSelect', name='ethernet', autocomplete='true', pageSize=10)
-            each vendor in vendors
-              option(value='#{vendor}') #{vendor}
-                  
+          input#ethernet(style="display: inline-block")
+          span#showAllVendors(class="ui-button-icon-primary ui-icon ui-icon-triangle-1-s", style="display: inline-block")
           
         label(id='errorEthernet', style='color:red;', value='')
         input(type='hidden', id='profDist', value='')

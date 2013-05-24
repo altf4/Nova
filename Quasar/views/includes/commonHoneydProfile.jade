@@ -14,7 +14,15 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
-script(type="text/javascript", src="scripts/jquery.js")
+style
+  .ui-autocomplete {
+    max-height: 300px;
+    max-width: 1024px;
+    overflow-y: auto;
+    overflow-x: hidden;
+   }
+
+
 script
   var ports = {};
   var lastPortSet = '';
@@ -440,8 +448,47 @@ script
 
   function init()
   {
-    require(['dijit/registry', 'dijit/form/FilteringSelect'], function(){
-      function obj() {};
+      personalities = [];
+      $("#personalitySelect option").each(function() {
+        personalities.push($(this).val());
+      });
+
+      $("#personality").autocomplete({
+        source: personalities
+        , delay: 0
+        , minLength: 0
+      });
+
+      $("#showAllPersonalities")[0].onclick = function() {
+        $("#personality").autocomplete( "search", "" );
+      };
+      
+      
+      ethernetVendors = [];
+      $("#ethernetSelect option").each(function() {
+        ethernetVendors.push($(this).val());
+      });
+
+      $("#ethernet").autocomplete({
+        source: ethernetVendors
+        , delay: 0
+        , minLength: 0
+        , source: function( request, response ) {
+            var matches = $.map( ethernetVendors, function(tag) {
+              if ( tag.toUpperCase().indexOf(request.term.toUpperCase()) === 0 ) {
+                return tag;
+              }
+            }); 
+            response(matches);
+          }
+      });
+
+      $("#showAllVendors")[0].onclick = function() {
+        $("#ethernet").autocomplete( "search", "" );
+      };
+
+    
+
       saveChanges = function(){
         var ethVendorList = [];
 
@@ -956,5 +1003,4 @@ script
           console.log('err was: ' + err);
         }  
       });
-    });
   }

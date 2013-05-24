@@ -90,12 +90,10 @@ NovaLibrary/libNovaLibrary.a
 /NovaTest/NovadSource/*
 /NovaTest/Coverage/NovaTest
 /Quasar/build/*
-/Quasar/www/dojo
 /Quasar/.lock-wscript
 
 # Quasar
 /Quasar/node-v0.8.5/
-/Quasar/www/dojo
 /Quasar/build/*
 /NodejsModule/build/*
 /NodejsModule/.lock-wscript
@@ -105,30 +103,21 @@ NovaLibrary/libNovaLibrary.a
 /Quasar/libv8-convert-20120219.tar.gz.1
 /Quasar/libv8-convert-20120219.tar.gz.2
 /Quasar/build/*
-/Quasar/www/dojo
 /Quasar/.lock-wscript
 /Quasar/joyent-node-346a3a8/
 /Quasar/v0.6.*
 
 #MISC
 /RemoteSystemsTempFiles/.project
-/Installer/nova/Config/doppelganger.config
-/Installer/nova/Data/data.txt
-/Installer/nova/Data/training.db
 /Quasar/libv8-convert-20120219/*
 /Quasar/libv8-convert-20120219.tar.gz.1
 /Quasar/libv8-convert-20120219.tar.gz.2
 /Quasar/.project
 /Pulsar/.project
-/Installer/.nova/Config/doppelganger.config
-/Installer/.nova/Data/data.txt
-/Installer/.nova/Data/training.db
-/Installer/Write/nova/.nova/Config/data.csv
 /Novad/core
 /NovaTrainer/Debug/novatrainer
 /NovaTrainer/novatrainer
 /NovaTrainer/Release/novatrainer
-/1
 
 #Haystack Auto Config
 /HaystackAutoConfig/haystackautoconfig

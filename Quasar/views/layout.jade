@@ -19,16 +19,19 @@ html(lang="en", onclick='removeContextMenu();')
   head
     title Quasar - Nova Web UI
     meta(charset="utf-8")
-    link(rel="stylesheet", type="text/css", href="style.css", media="screen")
+    link(rel="stylesheet", type="text/css", href="style.css")
+    link(rel="stylesheet", type="text/css", href="cupertino/jquery-ui-1.10.3.custom.min.css")
+
     link(rel="shortcut icon", href="/favicon.ico")
 
     script(type="text/javascript", src="/nowjs/now.js")
     script(type="text/javascript", src="/scripts/knockout.js")
     script(src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js")
+    script(src="scripts/jquery-ui-1.10.3.custom.min.js")
     script
       // CDN fallback for jQuery
       window.jQuery || document.write('<script src="scripts/jquery.js"><\\/script>');
-      
+     
       // This function should be replaced in other jade files, and will be called when the DOM is ready
       function init() {};
 
