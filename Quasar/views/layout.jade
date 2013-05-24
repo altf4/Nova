@@ -199,20 +199,20 @@ html(lang="en", onclick='removeContextMenu();')
             console.log("Enabled button " + sideBarButtons[i]);
           }
         }
+      
+        fixConsole(false);
+
+        now.ready(function()
+        {
+          now.updateHaystackStatus = updateHaystackStatus;
+          now.updateNovadStatus = updateNovadStatus;
+          now.IsHaystackUp(updateHaystackStatus);
+          now.IsNovadConnected(updateNovadStatus);
+        
+          init();
+        });
       });
       
-      fixConsole(false);
-
-      now.ready(function()
-      {
-        now.updateHaystackStatus = updateHaystackStatus;
-        now.updateNovadStatus = updateNovadStatus;
-        now.IsHaystackUp(updateHaystackStatus);
-        now.IsNovadConnected(updateNovadStatus);
-      
-        init();
-      });
-
 
   body(style="background-color: #D0E9FC;")
     // Header panel
@@ -244,20 +244,20 @@ html(lang="en", onclick='removeContextMenu();')
           tr
             td
               button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StartNovad()')
-                img.buttonIcon(src="images/start.png")
+                img.buttonIcon(src="images/start.png", width="15px")
                 span.buttonSpan Start Packet Classifier
             td
               button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StopNovad()')
-                img.buttonIcon(src="images/stop.png")
+                img.buttonIcon(src="images/stop.png", width="15px")
                 span.buttonSpan Stop Packet Classifier
           tr
             td
               button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StartHaystack()')
-                img.buttonIcon(src="images/start.png")
+                img.buttonIcon(src="images/start.png", width="15px")
                 span.buttonSpan Start Haystack
             td
               button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StopHaystack()')
-                img.buttonIcon(src="images/stop.png")
+                img.buttonIcon(src="images/stop.png", width="15px")
                 span.buttonSpan Stop Haystack
         br(style="clear: both; line-height: 0")
     br
