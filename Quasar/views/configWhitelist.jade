@@ -113,19 +113,7 @@ block headerAdditions
   
 block content
   div.contentBox(style="display: inline-block")
-    h1 Current Whitelisted IPs
- 
-    span#gridDiv(style='display: inline-block;')
-    br
-    button.button(onClick='deleteSelectedItems()')
-      img.buttonIcon(src='images/delete.png')
-      span.buttonSpan Delete Selected Entry
-    
-    br
-    br
-    label(id='errorLabel', style='color:red')
-    br
-
+    h1 Whitelist New Entry
     label Interface
     select(id='interfaceDropdown', name='interfaceDropdown')
       option(value='All Interfaces') All Interfaces
@@ -140,4 +128,18 @@ block content
       img.buttonIcon(src='images/add.png')
       span.buttonSpan Add to Whitelist
  
-
+  br 
+  div.contentBox(style="display: inline-block")
+    h1 Current Whitelisted IPs
+ 
+    span#gridDiv(style='display: inline-block;')
+    br
+    button.button(onClick='deleteSelectedItems()')
+      img.buttonIcon(src='images/delete.png')
+      span.buttonSpan Delete Selected Entry
+    
+    br
+    br
+    label(id='errorLabel', style='color:red')
+    br
+  
