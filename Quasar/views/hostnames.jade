@@ -82,24 +82,25 @@ block headerAdditions
     };
   
 block content
-  h1 Honeypot hostnames
-
-  br
-  table
-    tr
-      td
-        input#newHostName(type="text", placeholder="Enter new hostname", onkeypress='if(event.keyCode == 13){AddNewHostname()}')
-      td
-        button.button(onclick="AddNewHostname()")
-          img.buttonIcon(src="images/add.png")
-          span.buttonSpan Add Hostname
+  div.contentBox(style="display: inline-block;")
+    h1 Honeypot hostnames
   
-
-  br
-  span#hostnameTable(style="display: inline-block;")
-
-  br
-  button.button(onclick="clearAllocations()")
-    img.buttonIcon(src="images/delete.png")
-    span.buttonSpan Clear all IP bindings
-
+    br
+    table
+      tr
+        td
+          input#newHostName(type="text", placeholder="Enter new hostname", onkeypress='if(event.keyCode == 13){AddNewHostname()}')
+        td
+          button.button(onclick="AddNewHostname()")
+            img.buttonIcon(src="images/add.png")
+            span.buttonSpan Add Hostname
+    
+  
+    br
+    span#hostnameTable(style="display: inline-block;")
+  
+    br
+    button.button(onclick="clearAllocations()")
+      img.buttonIcon(src="images/delete.png")
+      span.buttonSpan Clear all IP bindings
+  

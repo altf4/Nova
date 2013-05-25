@@ -17,7 +17,7 @@
 extends layout
 
 block content
-  div(style='text-align:center')
+  div.contentBox(style='text-align:center')
     h2 Create New User Account
     p Note that this new account will replace the default username and password.
     form#createUser(method='post', action='/createInitialUser', autocomplete='off')

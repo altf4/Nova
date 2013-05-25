@@ -96,19 +96,20 @@ block headerAdditions
     }
   
 block content
-  h1 Existing User Accounts
-  span#gridDiv(style="display: inline-block; width: 500px;")
-
-  br
-  button(onClick='deleteSelectedItems()')
-    img.buttonIcon(src='images/delete.png')
-    span.buttonSpan Delete Selected Users
+  div.contentBox(style="display: inline-block")
+    h1 Existing User Accounts
+    span#gridDiv(style="display: inline-block; width: 500px;")
   
-  br
-  br
-  input#newPassword(type='password')
-  button(onClick='updateUserPass()') 
-    img.buttonIcon(src='images/edit.png')
-    span.buttonSpan Update User Password
- 
-
+    br
+    button(onClick='deleteSelectedItems()')
+      img.buttonIcon(src='images/delete.png')
+      span.buttonSpan Delete Selected Users
+    
+    br
+    br
+    input#newPassword(type='password')
+    button(onClick='updateUserPass()') 
+      img.buttonIcon(src='images/edit.png')
+      span.buttonSpan Update User Password
+   
+  

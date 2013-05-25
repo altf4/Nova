@@ -28,6 +28,7 @@ html(lang="en", onclick='removeContextMenu();')
     script(type="text/javascript", src="/scripts/knockout.js")
     script(src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js")
     script(src="scripts/jquery-ui-1.10.3.custom.min.js")
+
     script
       // CDN fallback for jQuery
       window.jQuery || document.write('<script src="scripts/jquery.js"><\\/script>');
@@ -214,13 +215,13 @@ html(lang="en", onclick='removeContextMenu();')
       });
       
 
-  body(style="background-color: #D0E9FC;")
+  body#hook(style="background-color: #D0E9FC;")
     // Header panel
     div(style="height: 130px; position: absolute; top: 0; left: 0; right: 0; background-color: #D0E9FC; padding-left: 10px; padding-right: 10px; padding-top: 10px; #00008B")
       div(style="background-color: white; padding: 4px; border-radius: 10px; border: 2px solid #769DC0; box-shadow: 0 0 2px 2px #888;")
-        a(href="/", style='text-decoration: none; width: 100%')
+        a(href="/", style='text-decoration: none;')
           img#eyeIcon(src="images/novaIcon.png",class="align-left", width="100px", height="100px")
-          h1(style="margin-top: 6px; margin-bottom: 6px; width: 530px") DataSoft Nova Anti-reconnaissance System
+          h1.title DataSoft Nova Anti-reconnaissance System
         
         // This is so the browser will cache all 3 pics when it first loads
         table(style="float: left; font-size: 16px;")
@@ -262,9 +263,8 @@ html(lang="en", onclick='removeContextMenu();')
         br(style="clear: both; line-height: 0")
     br
 
-    div.centerPanel(style="position: absolute; top: 150px; left: 200px; border-radius: 10px; background-color: white; right: 20px; overflow: auto; border: 2px solid #769DC0; box-shadow: 0 0 2px 2px #888;")
-     div(style="padding: 10px; ")
-       block content
+    div(style="position: absolute; top: 150px; left: 200px; right: 20px;")
+      block content
     
     // Left panel
     div(style="width: 170px; top: 142px; left: 0px; position: absolute; background-color: #D0E9FC; padding: 10px;")

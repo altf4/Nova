@@ -17,22 +17,23 @@
 extends layout
 
 block content
-  h1(align='center') Create New User
-  form(method='post', action='/createNewUser', autocomplete='off')
-    table(align='center', border='0', style='background-color: #D0E9FC; padding:15px; border-collapse:collapse; border: 2px solid black;')
-      tr
-        td
-          label Username
-        td
-          input(type='text', name='username', size='20')
-      tr
-        td
-          label Password
-        td
-          input(type='password', name='password', size='20') 
-      tr
-        td
-        td
-          button(type='Submit', value='Create New User')
-            img.buttonIcon(src='/images/add.png')
-            span.buttonSpan Create New User
+  div.contentBox
+    h1(align='center') Create New User
+    form(method='post', action='/createNewUser', autocomplete='off')
+      table(align='center', border='0', style='background-color: #D0E9FC; padding:15px; border-collapse:collapse; border: 2px solid black;')
+        tr
+          td
+            label Username
+          td
+            input(type='text', name='username', size='20')
+        tr
+          td
+            label Password
+          td
+            input(type='password', name='password', size='20') 
+        tr
+          td
+          td
+            button(type='Submit', value='Create New User')
+              img.buttonIcon(src='/images/add.png')
+              span.buttonSpan Create New User

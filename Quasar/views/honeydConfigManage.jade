@@ -1158,7 +1158,7 @@ block content
     button.unselectedTab#bsettingsScripts(onclick='showTab("settingsScripts")') Scripts
 
     
-    div.tabDiv#settingsGroups
+    div.contentBox#settingsGroups
       h1 Edit Haystacks
       button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch')
         img.buttonIcon(src='images/add.png') 
@@ -1186,7 +1186,7 @@ block content
       br
 
 
-    div.tabDiv#settingsProfiles(style='display: none;')
+    div.contentBox#settingsProfiles(style='display: none;')
       h1 Profiles
 
       div#treeDiv
@@ -1206,7 +1206,7 @@ block content
         img.buttonIcon(src='images/add.png')
         span.buttonSpan Add Child Profile
     
-    div.tabDiv#settingsNodes(style='display: none;')
+    div.contentBox#settingsNodes(style='display: none;')
       h1 Current Node Configuration
       div#node_header
         br
@@ -1252,7 +1252,7 @@ block content
 
       br
 
-    div.tabDiv#settingsScripts(style='display: none;')
+    div.contentBox#settingsScripts(style='display: none;')
       h1 Current Script Usage
       button(onclick='window.location="/scripts"')
         img.buttonIcon(src='images/edit.png') 

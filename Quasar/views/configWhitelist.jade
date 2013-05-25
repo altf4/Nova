@@ -112,31 +112,32 @@ block headerAdditions
     }
   
 block content
-  h1 Current Whitelisted IPs
+  div.contentBox(style="display: inline-block")
+    h1 Current Whitelisted IPs
  
-  span#gridDiv(style='display: inline-block;')
-  br
-  button.button(onClick='deleteSelectedItems()')
-    img.buttonIcon(src='images/delete.png')
-    span.buttonSpan Delete Selected Entry
-  
-  br
-  br
-  label(id='errorLabel', style='color:red')
-  br
+    span#gridDiv(style='display: inline-block;')
+    br
+    button.button(onClick='deleteSelectedItems()')
+      img.buttonIcon(src='images/delete.png')
+      span.buttonSpan Delete Selected Entry
+    
+    br
+    br
+    label(id='errorLabel', style='color:red')
+    br
 
-  label Interface
-  select(id='interfaceDropdown', name='interfaceDropdown')
-    option(value='All Interfaces') All Interfaces
-    each interface, i in INTERFACES
-      option(value='#{INTERFACES[i]}') #{interfaceAliases[i]}
-  br
-  label IP Address or IP/netmask combination
-  input#newEntry(type='text', placeholder='x.x.x.x/xx', onkeypress='if(event.keyCode == 13){addNewItem()}')
-  br
+    label Interface
+    select(id='interfaceDropdown', name='interfaceDropdown')
+      option(value='All Interfaces') All Interfaces
+      each interface, i in INTERFACES
+        option(value='#{INTERFACES[i]}') #{interfaceAliases[i]}
+    br
+    label IP Address or IP/netmask combination
+    input#newEntry(type='text', placeholder='x.x.x.x/xx', onkeypress='if(event.keyCode == 13){addNewItem()}')
+    br
 
-  button.button(onClick='addNewItem()')
-    img.buttonIcon(src='images/add.png')
-    span.buttonSpan Add to Whitelist
+    button.button(onClick='addNewItem()')
+      img.buttonIcon(src='images/add.png')
+      span.buttonSpan Add to Whitelist
  
 

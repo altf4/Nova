@@ -91,22 +91,23 @@ block headerAdditions
 
   
 block content
-  h1 Current Classifieres
-  div.novaGrid
-    div#classifierTable
+  div.contentBox
+    h1 Current Classifieres
+    div.novaGrid
+      div#classifierTable
  
-  br
-  
-  br
-  button.button(onclick='window.location ="/editClassifier"')
-    img.buttonIcon(src='images/add.png');
-    span.buttonSpan Add Classifier
-  
-  button.button(onclick='editClassifier()')
-    img.buttonIcon(src='images/edit.png');
-    span.buttonSpan Edit Classifiers
+    br
+    
+    br
+    button.button(onclick='window.location ="/editClassifier"')
+      img.buttonIcon(src='images/add.png');
+      span.buttonSpan Add Classifier
+    
+    button.button(onclick='editClassifier()')
+      img.buttonIcon(src='images/edit.png');
+      span.buttonSpan Edit Classifiers
 
-  button.button(onclick='deleteClassifier()')
-    img.buttonIcon(src='images/delete.png');
-    span.buttonSpan Delete Classifiers
+    button.button(onclick='deleteClassifier()')
+      img.buttonIcon(src='images/delete.png');
+      span.buttonSpan Delete Classifiers
 

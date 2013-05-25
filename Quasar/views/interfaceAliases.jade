@@ -70,30 +70,30 @@ block headerAdditions
     };
   
 block content
-  h1 Interface Aliases
+  div.contentBox(style="display: inline-block")
+    h1 Add New Interface Alias
 
-  br
-  table
-    tr
-      td
-        span Interface
-      td
-        select#interfaceSelection(style="width: 98%; display: block")
-          - each interface, i in INTERFACES
-            option(value=interface) #{interface}
-    tr
-      td
-        span Alias
-      td
-        input#aliasSelection(type="text", placeholder="Enter name of alias", onkeypress='if(event.keyCode == 13){AddNewAlias()}')
+    br
+    table
+      tr
+        td
+          span Interface
+        td
+          select#interfaceSelection(style="width: 98%; display: block")
+            - each interface, i in INTERFACES
+              option(value=interface) #{interface}
+      tr
+        td
+          span Alias
+        td
+          input#aliasSelection(type="text", placeholder="Enter name of alias", onkeypress='if(event.keyCode == 13){AddNewAlias()}')
 
-  br
-  button.button#addNewAliasButton(onclick="AddNewAlias()")
-    img.buttonIcon(src="images/add.png")
-    span.buttonSpan Add/Update Alias
-  
-  br
-  br
-  h1 Current Aliases
-  span#aliasTable(style="display: inline-block;")
+    br
+    button.button#addNewAliasButton(onclick="AddNewAlias()")
+      img.buttonIcon(src="images/add.png")
+      span.buttonSpan Add/Update Alias
+  br 
+  div.contentBox(style="display: inline-block")
+    h1 Current Aliases
+    span#aliasTable(style="display: inline-block;")
 

@@ -3,6 +3,12 @@
   outline: none !important;
 }
 
+.title {
+  font-size:1.5em;
+  color: #E8A02F;
+  text-shadow: black 1px 1px 1px;
+}
+
 body {
   margin: 0;
   padding: 2em;
@@ -11,6 +17,17 @@ body {
   color: #333;
 }
 p {
+}
+.contentBox {
+    background-color: white;
+    overflow: auto;
+	margin-bottom: 10px;
+
+    border: 2px solid #769DC0;
+    box-shadow: 0 0 2px 2px #888;
+    border-radius: 10px;
+
+    padding: 10px;
 }
 
 hr {
@@ -269,10 +286,14 @@ button::-moz-focus-inner {
 
 
 .prettyContainer {
+	background-color: white;
     display: inline-block;
     vertical-align: top;
-    border: 5px solid black;
-    border-radius: 15px;
+    
+	border: 2px solid #769DC0;
+    box-shadow: 0 0 2px 2px #888;
+    border-radius: 10px;
+
     margin-right: 20px;
     margin-left: 20px;
     margin-top: 5px;
@@ -282,6 +303,7 @@ button::-moz-focus-inner {
 
 
 .cardOuter {
+	background-color: white;
 	position: relative;
 	bottom: 0;
 	top: 0;
@@ -290,8 +312,8 @@ button::-moz-focus-inner {
 	display: block;
 	vertical-align: top;
 	margin-bottom: 10px;
-	
-	border: 1px solid black;
+    
+	border: 2px solid #769DC0;
 	border-radius: 15px;
 	border-top-right-radius: 0;
 	border-top-left-radius: 0; 
@@ -313,7 +335,7 @@ button::-moz-focus-inner {
 	background-color: #ABD6FF;
 	background-image: url('images/gradient.jpg');
 	
-	border: 1px solid black;
+	border: 2px solid #769DC0;
 	border-bottom: 0px;
 	border-top-right-radius: 15px;
 	border-top-left-radius: 15px;

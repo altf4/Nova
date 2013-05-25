@@ -17,7 +17,7 @@
 extends layout
 
 block content
-  div#nova_suspects_header
+  div.contentBox
     h1 Hostile Events
     br
     button.button(onClick="now.ClearHostileEvents(finishedClearing)")
@@ -29,7 +29,7 @@ block content
     label Show Advanced Suspect Statistics
     br
     
-  span#suspectTable(style="display: inline-block;")
+    span#suspectTable(style="display: inline-block;")
    
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")

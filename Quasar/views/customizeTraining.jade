@@ -24,7 +24,7 @@ block headerAdditions
     
   
 block content
-  div
+  div.contentBox(style="display: inline-block")
     h1 Choose Training Data to use when classifying suspects
     form#trainingForm(method='post', action='/customizeTrainingSave')
       table(border = '1')

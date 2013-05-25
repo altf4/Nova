@@ -270,7 +270,7 @@ block headerAdditions
     };
   
 block content
-  div#newNovaLogs(style="display: inline-block; width: 400px; vertical-align: top; margin: 5px")
+  div.contentBox#newNovaLogs
     h1 New Nova Log Entries
 
     span#newNovaLogGrid(style="display: inline-block;")
@@ -279,9 +279,8 @@ block content
     button.button(onclick = 'widget3.markAllSeen()')
       img.buttonIcon(src='images/delete.png');
       span.buttonSpan Mark all as seen
-
   br
-  div#newHoneydLogs(style="display: inline-block; width: 400px; vertical-align: top; margin: 5px")
+  div.contentBox#newHoneydLogs
     h1 New Honeyd Log Entries
 
     span#newHoneydLogGrid(style="display: inline-block;")

@@ -49,55 +49,56 @@ block headerAdditions
     }
 
 block content
-  h1 Classifier Editing
+  div.contentBox
+    h1 Classifier Editing
 
-  table
-    tr
-      td
-        span Classifier Type
-      td
-        select(data-bind='value: type')
-          option KNN
-          option THRESHOLD_TRIGGER
-          option SCRIPT_ALERT
-    tr
-      td
-        span Mode
-      td
-        select(data-bind='value: mode')
-          option WEIGHTED
-          option HOSTILE_OVERRIDE
-          option BENIGN_OVERRIDE
-    tr
-      td
-        span Weight
-      td
-        input(type='number', data-bind='value: weight')
-
-  br
-
-  table(data-bind='visible: classifier.type() != "SCRIPT_ALERT"')
-    theader
-      td Feature Name
-      td Enabled
-      td(data-bind='visible: classifier.type() == "KNN"') Weight
-      td(data-bind='visible: classifier.type() == "THRESHOLD_TRIGGER"') Hostile Threshold
-      td(data-bind='visible: classifier.type() == "SCRIPT_ALERT"') Script Triggered Alerts
-    tbody(data-bind='foreach: classifier.features')
+    table
       tr
-        td(data-bind='text: name')
         td
-          input(type='checkbox', data-bind='checked: enabled')
-        td(data-bind='visible: classifier.type() == "KNN"')
-          input(type='text', data-bind='value: weight, visible: classifier.type() == "KNN", enable: (classifier.type() == "KNN" && classifier.features[$index()].enabled())')
-        td(data-bind='visible: classifier.type() == "THRESHOLD_TRIGGER"')
-          input(type='text', data-bind='value: threshold, visible: classifier.type() == "THRESHOLD_TRIGGER", enable: (classifier.type() == "THRESHOLD_TRIGGER" && classifier.features[$index()].enabled())')
+          span Classifier Type
+        td
+          select(data-bind='value: type')
+            option KNN
+            option THRESHOLD_TRIGGER
+            option SCRIPT_ALERT
+      tr
+        td
+          span Mode
+        td
+          select(data-bind='value: mode')
+            option WEIGHTED
+            option HOSTILE_OVERRIDE
+            option BENIGN_OVERRIDE
+      tr
+        td
+          span Weight
+        td
+          input(type='number', data-bind='value: weight')
 
-  br
-  button.button(onclick='submit()')
-    img.buttonIcon(src='/images/ok.png')
-    span.buttonSpan Save Changes
-  
-  button.button(onclick='cancel()')
-    img.buttonIcon(src='/images/cancel.png')
-    span.buttonSpan Cancel
+    br
+
+    table(data-bind='visible: classifier.type() != "SCRIPT_ALERT"')
+      theader
+        td Feature Name
+        td Enabled
+        td(data-bind='visible: classifier.type() == "KNN"') Weight
+        td(data-bind='visible: classifier.type() == "THRESHOLD_TRIGGER"') Hostile Threshold
+        td(data-bind='visible: classifier.type() == "SCRIPT_ALERT"') Script Triggered Alerts
+      tbody(data-bind='foreach: classifier.features')
+        tr
+          td(data-bind='text: name')
+          td
+            input(type='checkbox', data-bind='checked: enabled')
+          td(data-bind='visible: classifier.type() == "KNN"')
+            input(type='text', data-bind='value: weight, visible: classifier.type() == "KNN", enable: (classifier.type() == "KNN" && classifier.features[$index()].enabled())')
+          td(data-bind='visible: classifier.type() == "THRESHOLD_TRIGGER"')
+            input(type='text', data-bind='value: threshold, visible: classifier.type() == "THRESHOLD_TRIGGER", enable: (classifier.type() == "THRESHOLD_TRIGGER" && classifier.features[$index()].enabled())')
+
+    br
+    button.button(onclick='submit()')
+      img.buttonIcon(src='/images/ok.png')
+      span.buttonSpan Save Changes
+    
+    button.button(onclick='cancel()')
+      img.buttonIcon(src='/images/cancel.png')
+      span.buttonSpan Cancel
