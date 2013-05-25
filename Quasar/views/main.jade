@@ -19,35 +19,35 @@ extends layout
 block content
   div.contentBox(id="nova_suspects_error_view", style="display: none;")
     h3(style="color: red") Warning: The Packet Classifier is either not running or not connected. The data below may be old. Try starting the Packet Classifier.
-  div.contentBox#setup(onclick='handleOnclick(event)')
-    div#nova_suspects      
-      input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
-      label Live Grid Update
-      br
+  div.contentBox#setup(onclick='handleOnclick(event)', style="")
+    span#suspectTable(style="display: inline-block;")
+    p#numberOfSuspects Recieved data for 0 suspects
+    
+  br 
+  div.contentBox
+    h1 Grid Settings
+    input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
+    label Live Grid Update
+    br
+    
+    input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
+    label Show Advanced Suspect Statistics
+    br
+    
+    input#showUnclassified(type="checkbox")
+    label Show Unclassified Suspects
+    br
+    br
       
-      input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
-      label Show Advanced Suspect Statistics
-      br
-      
-      input#showUnclassified(type="checkbox")
-      label Show Unclassified Suspects
-      br
-      br
-      span#suspectTable(style="display: inline-block;")
+    button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}')
+      img.buttonIcon(src="images/erase.png")
+      span.buttonSpan Clear All Suspects
 
-      p#numberOfSuspects Recieved data for 0 suspects
-    div#nova_suspects_header
-      br
-      
-      button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}')
-        img.buttonIcon(src="images/erase.png")
-        span.buttonSpan Clear All Suspects
-
-      button(onclick="window.location='/novaState.csv'")
-       img.buttonIcon(src="images/save.png")
-       span.buttonSpan Save as CSV file
+    button(onclick="window.location='/novaState.csv'")
+     img.buttonIcon(src="images/save.png")
+     span.buttonSpan Save as CSV file
   
-      br
+    br
       
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
