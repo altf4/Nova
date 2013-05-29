@@ -25,7 +25,15 @@ block content
     form#basicConfigForm(method='post', action='/configureNovaSave')
       input(type="hidden", value="/basicOptions", name="ERROR_REDIRECT")
       include includes/basicConfigForm
+
+    br
     button(onClick='document.getElementById("basicConfigForm").submit()')
       img.buttonIcon(src='images/ok.png')
       span.buttonSpan Save Changes
   
+    br
+    br
+    a(href="/advancedOptions")
+      button
+        img.buttonIcon(src='images/edit.png')
+        span.buttonSpan Configure Advanced Settings 
