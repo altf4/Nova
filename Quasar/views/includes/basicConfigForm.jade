@@ -439,6 +439,7 @@ script
   
   function init()
   {
+
     var vm = function() {
         this.recipList = ko.observableArray();
         
@@ -624,11 +625,11 @@ h2 Ethernet Interfaces
     - if(INTERFACES[i].checked == 1)
       div
         input(type='checkbox', value=INTERFACES[i].iface, id='if#{i}', name='INTERFACE', width=10, disabled=true, onclick='checkAtLeastOne()', checked)
-        #{INTERFACE_ALIASES[i]}
+        span #{INTERFACE_ALIASES[i]}
     - else
       div
         input(type='checkbox', value=INTERFACES[i].iface, id='if#{i}', name='INTERFACE', width=10, onclick='checkAtLeastOne()', disabled=true)
-        #{INTERFACE_ALIASES[i]}
+        span #{INTERFACE_ALIASES[i]}
 - else
   div
     input(type='checkbox', value='default', id='default', onclick='changeDisabled()', width=10)
@@ -637,11 +638,11 @@ h2 Ethernet Interfaces
     - if(INTERFACES[i].checked == 1)
       div
         input(type='checkbox', value=INTERFACES[i].iface, id='if#{i}', name='INTERFACE', width=10, onclick='checkAtLeastOne()', checked)
-        #{INTERFACE_ALIASES[i]}
+        span #{INTERFACE_ALIASES[i]}
     - else
       div
         input(type='checkbox', value=INTERFACES[i].iface, id='if#{i}', name='INTERFACE', width=10, onclick='checkAtLeastOne()')
-        #{INTERFACE_ALIASES[i]}
+        span #{INTERFACE_ALIASES[i]}
         
  hidden(id='length', value=INTERFACES.length) 
  input(type='hidden', name='DEFAULT', id='DEFAULT', value=DEFAULT)
@@ -662,11 +663,11 @@ div#doppelPane
     - if(DOPPELGANGER_INTERFACE[i].checked == 1)
       div    
         input(type='checkbox', value=DOPPELGANGER_INTERFACE[i].iface, id='dif#{i}', name='DOPPELGANGER_INTERFACE', width=10, onclick='checkOnlyOne("dif#{i}")', checked) 
-        #{DOPPELGANGER_INTERFACE[i].iface}
+        span #{DOPPELGANGER_INTERFACE[i].iface}
     - else
       div 
         input(type='checkbox', value=DOPPELGANGER_INTERFACE[i].iface, id='dif#{i}', name='DOPPELGANGER_INTERFACE', width=10, onclick='checkOnlyOne("dif#{i}")') 
-        #{DOPPELGANGER_INTERFACE[i].iface}
+        span #{DOPPELGANGER_INTERFACE[i].iface}
             
   hidden(id='doppel_length', value=DOPPELGANGER_INTERFACE.length)
 br

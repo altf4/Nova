@@ -400,8 +400,9 @@ block content
         - for (var i = 0; i < INTERFACES.length; i++)
             tr 
               td
-                input(type='radio', value=INTERFACES[i], id='if#{i}', name='interface', width=10, onclick='checkOnlyOne("if#{i}")')
-                #{interfaceAliases[i]}
+                div
+                  input(type='radio', value=INTERFACES[i], id='if#{i}', name='interface', width=10, onclick='checkOnlyOne("if#{i}")')
+                  span #{interfaceAliases[i]}
     hidden(id='length', value=INTERFACES.length)
     br
     label.nodeAdd IP Address Allocation Type

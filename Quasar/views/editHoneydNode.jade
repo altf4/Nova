@@ -266,18 +266,19 @@ block content
           - if(INTERFACES.length == 1)
             tr 
               td
-                input(type='radio', value=INTERFACES[0], id='if0', name='interface', width=10, checked, onchange='checkOnlyOne(if0)')
-                #{interfaceAliases[0]}
+                div
+                  input(type='radio', value=INTERFACES[0], id='if0', name='interface', width=10, checked, onchange='checkOnlyOne(if0)')
+                  span #{interfaceAliases[0]}
           - else
             - for (var i = 0; i < INTERFACES.length; i++)
                 tr 
                   td
                     - if (String(interface) == String(INTERFACES[i]))
                       input(type='radio', value=INTERFACES[i], id='if#{i}', name='interface', checked, width=10, onchange='checkOnlyOne(if#{i})')
-                      #{interfaceAliases[i]}
+                      span #{interfaceAliases[i]}
                     - else
                       input(type='radio', value=INTERFACES[i], id='if#{i}', name='interface', width=10, onchange='checkOnlyOne(if#{i})')
-                      #{interfaceAliases[i]}
+                      span #{interfaceAliases[i]}
 
         hidden(id='length', value=INTERFACES.length)
  
