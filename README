@@ -40,6 +40,12 @@ The Installation Guide
 - This script has only been tested on the most recent stable version of Ubuntu.
   Any other distributions should manually compile using the instructions below.
 
+- NOTE: The above will install the newest stable version of Nova. If you want
+  the current unstable version, instead run,
+        
+		wget https://raw.github.com/DataSoft/Nova/master/debian/novaInstallHelper.sh
+        sudo bash novaInstallHelper.sh integration
+
 =============================== 
 Getting the newest code
 ===============================
