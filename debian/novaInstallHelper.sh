@@ -26,7 +26,7 @@ echo "##########################################################################
 echo "#                          NOVA DEPENDENCY CHECK                             #"
 echo "##############################################################################"
 apt-get -y install git build-essential libann-dev libpcap0.8-dev libboost-program-options-dev libboost-serialization-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libevent-dev libprotoc-dev protobuf-compiler libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake libcap2-bin libboost-system-dev libboost-filesystem-dev python perl tcl
-check_err
+check_err liblinux-inotify2-perl libfile-readbackwards-perl
 
 echo "##############################################################################"
 echo "#                         DOWNLOADING NOVA FROM GIT                          #"
@@ -114,9 +114,6 @@ chown -R -f $NEW_PERM .node-gyp/
 
 cd /usr/share/honeyd/scripts/
 chown -R -f $NEW_PERM misc/
-
-sudo cpan Linux::Inotify2
-sudo cpan File::ReadBackwards
 
 echo "##############################################################################"
 echo "#                                    DONE                                    #"
