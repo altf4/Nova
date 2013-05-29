@@ -91,10 +91,8 @@ var RenderError = function (res, err, link)
 
     console.log("Reported Client Error: " + err);
     res.render('error.jade', {
-        locals: {
             redirectLink: link
             , errorDetails: err
-        }
     });
 }
 
@@ -787,14 +785,12 @@ app.get('/honeydConfigManage', function(req, res){
   var interfaces = NovaCommon.config.ListInterfaces().sort();
 
   res.render('honeydConfigManage.jade', {
-    locals: {
       configurations: NovaCommon.honeydConfig.GetConfigurationsList(),
       current: NovaCommon.config.GetCurrentConfig(),
       nodes: nodeList,
       INTERFACES: interfaces,
       interfaceAliases: ConvertInterfacesToAliases(interfaces),
       tab: tab
-    }
   });
 });
 
@@ -860,9 +856,7 @@ app.get('/viewNovadLog', function (req, res)
             return;
         } else {
             res.render('viewNovadLog.jade', {
-                locals: {
-                    log: data
-                }
+                log: data
             });
         }
     });
@@ -878,9 +872,7 @@ app.get('/viewHoneydLog', function (req, res)
             return;
         } else {
             res.render('viewHoneydLog.jade', {
-                locals: {
-                    log: data
-                }
+                log: data
             });
         }
     });
@@ -1092,12 +1084,10 @@ app.get('/configHoneydNodes', function (req, res)
   var interfaces = NovaCommon.config.ListInterfaces().sort();
     
   res.render('configHoneydNodes.jade', {
-    locals: {
       INTERFACES: interfaces,
       interfaceAliases: ConvertInterfacesToAliases(interfaces),
       profiles: profiles,
       currentGroup: NovaCommon.config.GetGroup()
-    }
   });
 });
 
@@ -1119,10 +1109,8 @@ app.get('/getSuspectDetails', function (req, res)
   var suspectInterface = req.query['interface'];
   
     res.render('suspectDetails.jade', {
-        locals: {
           suspect: suspectIp
           , interface: suspectInterface
-        }
     });
 });
 
@@ -1154,17 +1142,15 @@ app.get('/editHoneydNode', function (req, res)
   }
 
   res.render('editHoneydNode.jade', {
-    locals: {
-      oldName: nodeName,
-      INTERFACES: interfaces,
-      interfaceAliases: ConvertInterfacesToAliases(interfaces),
-      profiles: NovaCommon.honeydConfig.GetProfileNames(),
-      profile: node.GetProfile(),
-      interface: node.GetInterface(),
-      ip: node.GetIP(),
-      mac: node.GetMAC(),
-      portSet: node.GetPortSet()
-    }
+    oldName: nodeName,
+    INTERFACES: interfaces,
+    interfaceAliases: ConvertInterfacesToAliases(interfaces),
+    profiles: NovaCommon.honeydConfig.GetProfileNames(),
+    profile: node.GetProfile(),
+    interface: node.GetInterface(),
+    ip: node.GetIP(),
+    mac: node.GetMAC(),
+    portSet: node.GetPortSet()
   })
 });
 
@@ -1178,14 +1164,12 @@ app.get('/editHoneydProfile', function (req, res)
     var profileName = req.query["profile"];
 
     res.render('editHoneydProfile.jade', {
-        locals: {
-            oldName: profileName,
-            parentName: "",
-            newProfile: false,
-            vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
-            scripts: NovaCommon.honeydConfig.GetScriptNames(),
-            personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
-        }
+      oldName: profileName,
+      parentName: "",
+      newProfile: false,
+      vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
+      scripts: NovaCommon.honeydConfig.GetScriptNames(),
+      personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
     })
 });
 
@@ -1199,14 +1183,12 @@ app.get('/addHoneydProfile', function (req, res)
     parentName = req.query["parent"];
 
     res.render('addHoneydProfile.jade', {
-        locals: {
-            oldName: parentName,
-            parentName: parentName,
-            newProfile: true,
-            vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
-            scripts: NovaCommon.honeydConfig.GetScriptNames(),
-            personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
-        }
+      oldName: parentName,
+      parentName: parentName,
+      newProfile: true,
+      vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
+      scripts: NovaCommon.honeydConfig.GetScriptNames(),
+      personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
     })
 });
 
@@ -1223,12 +1205,10 @@ app.get('/customizeTraining', function (req, res)
         }
 
         res.render('customizeTraining.jade', {
-            locals: {
-                includedLastTime: includedLastTime,
-                desc: NovaCommon.trainingDb.GetDescriptions(),
-                uids: NovaCommon.trainingDb.GetUIDs(),
-                hostiles: NovaCommon.trainingDb.GetHostile()
-            }
+          includedLastTime: includedLastTime,
+          desc: NovaCommon.trainingDb.GetDescriptions(),
+          uids: NovaCommon.trainingDb.GetUIDs(),
+          hostiles: NovaCommon.trainingDb.GetHostile()
         });
     });
 });
@@ -1251,10 +1231,8 @@ app.get('/importCapture', function (req, res)
         return;
     } else {
         res.render('importCapture.jade', {
-            locals: {
-                ips: NovaCommon.trainingDb.GetCaptureIPs(trainingSession),
-                trainingSession: req.query["trainingSession"]
-            }
+          ips: NovaCommon.trainingDb.GetCaptureIPs(trainingSession),
+          trainingSession: req.query["trainingSession"]
         })
     }
 });
@@ -1307,9 +1285,7 @@ app.post('/importCaptureSave', function (req, res)
     }
 
     res.render('saveRedirect.jade', {
-        locals: {
-            redirectLink: "/customizeTraining"
-        }
+      redirectLink: "/customizeTraining"
     })
 
 });
@@ -1318,12 +1294,10 @@ app.get('/configWhitelist', function (req, res)
 {
     var interfaces = NovaCommon.config.ListInterfaces().sort();
     res.render('configWhitelist.jade', {
-        locals: {
-            whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
-            whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
-            INTERFACES: interfaces,
-            interfaceAliases: ConvertInterfacesToAliases(interfaces)
-        }
+      whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
+      whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
+      INTERFACES: interfaces,
+      interfaceAliases: ConvertInterfacesToAliases(interfaces)
     })
 });
 
@@ -1346,9 +1320,7 @@ app.get('/editUsers', function (req, res)
             usernames.push(results[i].user);
         }
         res.render('editUsers.jade', {
-            locals: {
-                usernames: usernames
-            }
+          usernames: usernames
         });
     });
 });
@@ -1356,10 +1328,8 @@ app.get('/editUsers', function (req, res)
 app.get('/configWhitelist', function (req, res)
 {
     res.render('configWhitelist.jade', {
-        locals: {
-            whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
-            whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges()
-        }
+        whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
+        whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges()
     })
 });
 
@@ -1451,7 +1421,7 @@ app.get('/shutdown', function (req, res)
 
 app.get('/about', function (req, res)
 {
-    res.render('about.jade', {locals: {version: NovaCommon.config.GetVersionString()}});
+    res.render('about.jade', {version: NovaCommon.config.GetVersionString()});
 });
 
 app.get('/newInformation', function (req, res)
@@ -1490,9 +1460,7 @@ app.post('/createNewUser', function (req, res)
             NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt, function ()
             {
                 res.render('saveRedirect.jade', {
-                    locals: {
                         redirectLink: "/"
-                    }
                 });
             });
             return;
@@ -1534,9 +1502,7 @@ app.post('/createInitialUser', function (req, res)
             NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt);
             NovaCommon.dbqCredentialsDeleteUser.run('nova');
             res.render('saveRedirect.jade', {
-                locals: {
                     redirectLink: "/setup2"
-                }
             });
             return;
         } else {
@@ -1633,10 +1599,8 @@ app.get("/editClassifier", function (req, res)
 
 
     res.render('editClassifier.jade', {
-        locals: {
             classifier: classifier
             , featureNames: NovaCommon.nova.GetFeatureNames()
-        }
     }); 
 });
 
@@ -1645,19 +1609,15 @@ app.get("/hostnames", function (req, res) {
         RenderError(res, "Unable to access honeyd hostnames database. Something probably went wrong during the honeyd install.");
         return;
     }
-    res.render('hostnames.jade', {
-        locals: {}
-    });
+    res.render('hostnames.jade', {});
 });
 
 app.get("/interfaceAliases", function (req, res)
 {
     ReloadInterfaceAliasFile();
     res.render('interfaceAliases.jade', {
-        locals: {
-            interfaceAliases: interfaceAliases
-            , INTERFACES: NovaCommon.config.ListInterfaces().sort(),
-        }
+      interfaceAliases: interfaceAliases
+      , INTERFACES: NovaCommon.config.ListInterfaces().sort(),
     });
 });
 
@@ -1690,7 +1650,7 @@ app.post("/editTLSCerts", function (req, res)
                     if(writeErrCert != null) {RenderError(res, "Error when writing cert file"); return;}
                     
                     res.render('saveRedirect.jade', {
-                        locals: {redirectLink: "/"}
+                        redirectLink: "/"
                     })
                 });
             });
@@ -1715,9 +1675,7 @@ app.post('/honeydConfigManage', function (req, res){
     NovaCommon.honeydConfig.LoadAllTemplates();
   
     res.render('saveRedirect.jade', {
-     locals: {
        redirectLink: '/honeydConfigManage'
-     }
     });
   } 
   else
@@ -1754,9 +1712,7 @@ app.post('/customizeTrainingSave', function (req, res)
     NovaCommon.trainingDb.Save();
 
     res.render('saveRedirect.jade', {
-        locals: {
             redirectLink: "/customizeTraining"
-        }
     })
 });
 
@@ -1788,12 +1744,6 @@ app.post('/configureNovaSave', function (req, res)
     },
     {
         key:  "INTERFACE"
-        ,validator: function(val) {
-            validator.check(val, this.key + ' must not be empty').notEmpty();
-        }
-    },
-    {
-        key:  "SMTP_PASS"
         ,validator: function(val) {
             validator.check(val, this.key + ' must not be empty').notEmpty();
         }
@@ -1907,7 +1857,7 @@ app.post('/configureNovaSave', function (req, res)
         }
     },
     {
-    key : "SMTP_PASS",
+        key : "SMTP_PASS",
         validator : function(val) {
             validator.check(val, this.key + ' must not be empty').notEmpty();
         }
@@ -2290,28 +2240,25 @@ app.post('/configureNovaSave', function (req, res)
       }
     }
 
-      NovaCommon.config.ReloadConfiguration();
+    NovaCommon.config.ReloadConfiguration();
 
-      var route = "/suspects";
-      if(req.body['route'] != undefined)
+    var route = "/suspects";
+    if(req.body['route'] != undefined)
+    {
+      route = req.body['route'];
+      if(route == 'manconfig')
       {
-        route = req.body['route'];
-        if(route == 'manconfig')
-        {
-          route = 'honeydConfigManage';
-        }
-        else
-        {
-          route = 'autoConfig';
-        }
+        route = 'honeydConfigManage';
       }
-
-      res.render('saveRedirect.jade', {
-        locals: {
-          redirectLink: route
-        }
-      })
+      else
+      {
+        route = 'autoConfig';
+      }
     }
+
+    res.render('saveRedirect.jade', {
+        redirectLink: route
+    });
 });
 
 app.get('/scripts', function(req, res){
@@ -2334,10 +2281,8 @@ app.get('/scripts', function(req, res){
   var scriptBindings = NovaCommon.GetPorts(); 
   
   res.render('scripts.jade', {
-    locals: {
       scripts: namesAndPaths,
       bindings: scriptBindings
-    }
   });
 });
 
