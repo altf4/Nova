@@ -71,6 +71,11 @@ input[type=button], input[type=submit], button, .button, .sideBarButton {
 	color: black;
 	margin-left: 2px;
 	margin-right: 2px;
+	
+	-ms-transition:.2s;
+	-moz-transition:.2s;
+	-webkit-transition:.2s;
+	transition:.2s;
 }
 
 .sideBarButton {
@@ -86,8 +91,13 @@ input[type=button], input[type=submit], button, .button, .sideBarButton {
 .sideBarButton, .button:visited {color:black;}
 
 input[type=button]:hover, input[type=submit]:hover, .sideBarButton:hover, button:hover, .button:hover {
-  background-color: #AFD9FF;
-  color: #000000;
+	-o-transition:.2s;
+	-ms-transition:.2s;
+	-moz-transition:.2s;
+	-webkit-transition:.2s;
+	transition:.2s;
+	background-color: #AFD9FF;
+	color: #000000;
 }
 
 input {
