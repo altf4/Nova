@@ -66,7 +66,7 @@ block content
   
   br
   div(style="width: 1024px")
-    div.prettyContainer(margin-right: 100px")
+    div.prettyContainer(style="margin-right: 100px")
       h1 Connections from suspect
       span#packetCountTable(style="display: inline-block;")
     div.prettyContainer
@@ -307,7 +307,7 @@ block headerAdditions
      
         info += "<B>Overall Classification: </B>" + suspect.classification;
         info += "<BR><BR><B>Hostile KNN neighbors: </B>" + suspect.hostileNeighbors;
-        info += "<BR><BR><B>Classification Notes</B><br>" + String(suspect.classificationNotes).replace(/\\n/g, "<BR />");
+        info += "<BR><BR><B>Classification Notes</B><br>" + String(suspect.classificationNotes).replace(/\n/g, "<BR />");
         $("#classificationOutput").html(info); 
         info = "";
         

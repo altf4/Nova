@@ -3,15 +3,15 @@
 	, "version" : "0.1.0"
 	, "author"	: "Datasoft"
 	, "dependencies" : {
-		"express" 		: 	"2.5.x"
+		"express" 		: 	"3.2.x"
 		, "now"			:	"0.8.x"
-		, "jade"		:	"0.25.x"
-		, "socket.io"	:	"0.9.10"
+		, "jade"		:	"0.30.x"
+		, "socket.io"	:	"0.9.x"
 		, "passport"	:	"0.1.x"
-		, "passport-http"	:	""
-		, "sqlite3" : ""
-		, "validator" : "0.4.6-2"
-		, "websocket" : "1.x.x"
-		, "sudo" : ""
+		, "passport-http"	:	"0.2.x"
+		, "sqlite3" : "2.1.x"
+		, "validator" : "1.1.x"
+		, "websocket" : "1.0.x"
+		, "sudo" : "1.0.x"
 	}
 }

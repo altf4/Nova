@@ -82,7 +82,7 @@ block headerAdditions
           else if(self.nodeCreationType() == 'range')
           {
             num = self.nodeCountRange();
-            var regex = new RegExp('^([0-255]\\.){3}([0-255])\\-([0-255]\\.){3}([0-255])$');
+            var regex = new RegExp('^([0-255]\.){3}([0-255])\-([0-255]\.){3}([0-255])$');
             if(regex.test(num) == 'false')
             {
               num = -1;

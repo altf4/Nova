@@ -129,7 +129,7 @@ block headerAdditions
     function AddLogEntry(line)
     {
       line = line.replace(/ +(?= )/g, '');
-      var match = line.match(/(\\S+ \\S+ \\S+) ([^:]+): (\\S+) File (.+) at line (\\d+): (.*)/);
+      var match = line.match(/(\S+ \S+ \S+) ([^:]+): (\S+) File (.+) at line (\d+): (.*)/);
 
       if(match != null)
       {
@@ -207,7 +207,7 @@ block headerAdditions
       }
       
       var log = $('#rawLog').html();
-      var parseLog = log.toString().split(/\\r\\n|\\n\\r|\\n|\\r/);
+      var parseLog = log.toString().split(/\r\n|\n\r|\n|\r/);
       
       for(var i in parseLog)
       {
@@ -240,7 +240,7 @@ block headerAdditions
         logGrid = new NovaGrid(gridStructure, 0, $('#logTable')[0], 'logGrid');
         logGrid.SetRowsPerPage(25);
         
-        var log = log.toString().split(/\\r\\n|\\n\\r|\\n|\\r/);
+        var log = log.toString().split(/\r\n|\n\r|\n|\r/);
 
         for(var i in log)
         {
