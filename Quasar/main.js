@@ -1109,8 +1109,11 @@ app.get('/getSuspectDetails', function (req, res)
   var suspectInterface = req.query['interface'];
   
     res.render('suspectDetails.jade', {
-          suspect: suspectIp
-          , interface: suspectInterface
+        suspectIp: suspectIp
+        , interface: suspectInterface
+        , suspectInterface: suspectInterface
+        , featureNames: NovaCommon.nova.GetFeatureNames()
+        ,  suspect: suspectIp
     });
 });
 
@@ -1341,18 +1344,6 @@ app.get('/suspects', function (req, res)
         featureNames: NovaCommon.nova.GetFeatureNames(),
         interfaces: interfaces,
         interfaceAliases: ConvertInterfacesToAliases(interfaces)
-    });
-});
-
-app.get('/monitor', function (req, res)
-{
-    var suspectIp = req.query["ip"];
-    var suspectInterface = req.query["interface"];
-    
-    res.render('monitor.jade', {
-        featureNames: NovaCommon.nova.GetFeatureNames()
-        , suspectIp: suspectIp
-        , suspectInterface: suspectInterface
     });
 });
 
@@ -1721,14 +1712,14 @@ app.post('/customizeTrainingSave', function (req, res)
 app.post('/configureNovaSave', function (req, res)
 {
 
-	// If we get two of the same form element, just use the last one
-	for (var key in req.body) {
-		if (typeof(req.body[key]) == "object") {
-			req.body[key] = req.body[key][req.body[key].length - 1];
-		}
-	}
+    // If we get two of the same form element, just use the last one
+    for (var key in req.body) {
+        if (typeof(req.body[key]) == "object") {
+            req.body[key] = req.body[key][req.body[key].length - 1];
+        }
+    }
 
-	// These are accepted configuration inputs and validation functions for them
+    // These are accepted configuration inputs and validation functions for them
     var configItems = [
     {
         key:  "ADVANCED"
@@ -1838,7 +1829,7 @@ app.post('/configureNovaSave', function (req, res)
     {
         key:  "SMTP_ADDR"
         ,validator: function(val) {
-			console.log("Got an smtp address of " + val);
+            console.log("Got an smtp address of " + val);
             validator.check(val, this.key + ' is the wrong format').regex('^(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)$');
         }
     },
@@ -1871,7 +1862,7 @@ app.post('/configureNovaSave', function (req, res)
     {
         key:  "RECIPIENTS"
         ,validator: function(val) {
-			console.log("Got RECIPIENTS " + val);
+            console.log("Got RECIPIENTS " + val);
             validator.check(val, "Must have at least one email address").notEmpty();
             if (val.length != 0) {
                 var emails = val;
