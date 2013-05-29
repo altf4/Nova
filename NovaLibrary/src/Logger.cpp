@@ -394,7 +394,7 @@ Logger::Logger()
 	{
 		// If alerts are enabled, copy novamaildaemon.py to the right place and
 		// start the maildaemon. Need to check for lock file here, if it exists do nothing.
-		string cleanstring = "cleannovasendmail.sh";
+		string cleanstring = "sudo cleannovasendmail.sh";
 		system(cleanstring.c_str());
 		string cpComm = "sudo placenovasendmail ";
 		cpComm += Config::Inst()->GetSMTPInterval();
