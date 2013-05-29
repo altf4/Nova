@@ -91,8 +91,10 @@ var RenderError = function (res, err, link)
 
     console.log("Reported Client Error: " + err);
     res.render('error.jade', {
-        redirectLink: link
-        , errorDetails: err
+        locals: {
+            redirectLink: link
+            , errorDetails: err
+        }
     });
 }
 
@@ -785,12 +787,14 @@ app.get('/honeydConfigManage', function(req, res){
   var interfaces = NovaCommon.config.ListInterfaces().sort();
 
   res.render('honeydConfigManage.jade', {
+    locals: {
       configurations: NovaCommon.honeydConfig.GetConfigurationsList(),
       current: NovaCommon.config.GetCurrentConfig(),
       nodes: nodeList,
       INTERFACES: interfaces,
       interfaceAliases: ConvertInterfacesToAliases(interfaces),
       tab: tab
+    }
   });
 });
 
@@ -856,7 +860,9 @@ app.get('/viewNovadLog', function (req, res)
             return;
         } else {
             res.render('viewNovadLog.jade', {
-                log: data
+                locals: {
+                    log: data
+                }
             });
         }
     });
@@ -872,7 +878,9 @@ app.get('/viewHoneydLog', function (req, res)
             return;
         } else {
             res.render('viewHoneydLog.jade', {
-                log: data
+                locals: {
+                    log: data
+                }
             });
         }
     });
@@ -1084,10 +1092,12 @@ app.get('/configHoneydNodes', function (req, res)
   var interfaces = NovaCommon.config.ListInterfaces().sort();
     
   res.render('configHoneydNodes.jade', {
+    locals: {
       INTERFACES: interfaces,
       interfaceAliases: ConvertInterfacesToAliases(interfaces),
       profiles: profiles,
       currentGroup: NovaCommon.config.GetGroup()
+    }
   });
 });
 
@@ -1109,11 +1119,10 @@ app.get('/getSuspectDetails', function (req, res)
   var suspectInterface = req.query['interface'];
   
     res.render('suspectDetails.jade', {
-      suspect: suspectIp
-      , suspectIp: suspectIp
-      , interface: suspectInterface
-      , suspectInterface: suspectInterface
-      , featureNames: NovaCommon.nova.GetFeatureNames()
+        locals: {
+          suspect: suspectIp
+          , interface: suspectInterface
+        }
     });
 });
 
@@ -1145,6 +1154,7 @@ app.get('/editHoneydNode', function (req, res)
   }
 
   res.render('editHoneydNode.jade', {
+    locals: {
       oldName: nodeName,
       INTERFACES: interfaces,
       interfaceAliases: ConvertInterfacesToAliases(interfaces),
@@ -1154,6 +1164,7 @@ app.get('/editHoneydNode', function (req, res)
       ip: node.GetIP(),
       mac: node.GetMAC(),
       portSet: node.GetPortSet()
+    }
   })
 });
 
@@ -1167,12 +1178,14 @@ app.get('/editHoneydProfile', function (req, res)
     var profileName = req.query["profile"];
 
     res.render('editHoneydProfile.jade', {
-        oldName: profileName,
-        parentName: "",
-        newProfile: false,
-        vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
-        scripts: NovaCommon.honeydConfig.GetScriptNames(),
-        personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
+        locals: {
+            oldName: profileName,
+            parentName: "",
+            newProfile: false,
+            vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
+            scripts: NovaCommon.honeydConfig.GetScriptNames(),
+            personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
+        }
     })
 });
 
@@ -1185,13 +1198,15 @@ app.get('/addHoneydProfile', function (req, res)
     }
     parentName = req.query["parent"];
 
-    res.render('editHoneydProfile.jade', {
-        oldName: parentName,
-        parentName: parentName,
-        newProfile: true,
-        vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
-        scripts: NovaCommon.honeydConfig.GetScriptNames(),
-        personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
+    res.render('addHoneydProfile.jade', {
+        locals: {
+            oldName: parentName,
+            parentName: parentName,
+            newProfile: true,
+            vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
+            scripts: NovaCommon.honeydConfig.GetScriptNames(),
+            personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
+        }
     })
 });
 
@@ -1208,10 +1223,12 @@ app.get('/customizeTraining', function (req, res)
         }
 
         res.render('customizeTraining.jade', {
-            includedLastTime: includedLastTime,
-            desc: NovaCommon.trainingDb.GetDescriptions(),
-            uids: NovaCommon.trainingDb.GetUIDs(),
-            hostiles: NovaCommon.trainingDb.GetHostile()
+            locals: {
+                includedLastTime: includedLastTime,
+                desc: NovaCommon.trainingDb.GetDescriptions(),
+                uids: NovaCommon.trainingDb.GetUIDs(),
+                hostiles: NovaCommon.trainingDb.GetHostile()
+            }
         });
     });
 });
@@ -1234,8 +1251,10 @@ app.get('/importCapture', function (req, res)
         return;
     } else {
         res.render('importCapture.jade', {
-            ips: NovaCommon.trainingDb.GetCaptureIPs(trainingSession),
-            trainingSession: req.query["trainingSession"]
+            locals: {
+                ips: NovaCommon.trainingDb.GetCaptureIPs(trainingSession),
+                trainingSession: req.query["trainingSession"]
+            }
         })
     }
 });
@@ -1288,7 +1307,9 @@ app.post('/importCaptureSave', function (req, res)
     }
 
     res.render('saveRedirect.jade', {
-        redirectLink: "/customizeTraining"
+        locals: {
+            redirectLink: "/customizeTraining"
+        }
     })
 
 });
@@ -1297,10 +1318,12 @@ app.get('/configWhitelist', function (req, res)
 {
     var interfaces = NovaCommon.config.ListInterfaces().sort();
     res.render('configWhitelist.jade', {
-        whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
-        whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
-        INTERFACES: interfaces,
-        interfaceAliases: ConvertInterfacesToAliases(interfaces)
+        locals: {
+            whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
+            whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
+            INTERFACES: interfaces,
+            interfaceAliases: ConvertInterfacesToAliases(interfaces)
+        }
     })
 });
 
@@ -1323,7 +1346,9 @@ app.get('/editUsers', function (req, res)
             usernames.push(results[i].user);
         }
         res.render('editUsers.jade', {
-            usernames: usernames
+            locals: {
+                usernames: usernames
+            }
         });
     });
 });
@@ -1331,8 +1356,10 @@ app.get('/editUsers', function (req, res)
 app.get('/configWhitelist', function (req, res)
 {
     res.render('configWhitelist.jade', {
-        whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
-        whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges()
+        locals: {
+            whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
+            whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges()
+        }
     })
 });
 
@@ -1344,6 +1371,18 @@ app.get('/suspects', function (req, res)
         featureNames: NovaCommon.nova.GetFeatureNames(),
         interfaces: interfaces,
         interfaceAliases: ConvertInterfacesToAliases(interfaces)
+    });
+});
+
+app.get('/monitor', function (req, res)
+{
+    var suspectIp = req.query["ip"];
+    var suspectInterface = req.query["interface"];
+    
+    res.render('monitor.jade', {
+        featureNames: NovaCommon.nova.GetFeatureNames()
+        , suspectIp: suspectIp
+        , suspectInterface: suspectInterface
     });
 });
 
@@ -1412,7 +1451,7 @@ app.get('/shutdown', function (req, res)
 
 app.get('/about', function (req, res)
 {
-    res.render('about.jade', {version: NovaCommon.config.GetVersionString()});
+    res.render('about.jade', {locals: {version: NovaCommon.config.GetVersionString()}});
 });
 
 app.get('/newInformation', function (req, res)
@@ -1451,7 +1490,9 @@ app.post('/createNewUser', function (req, res)
             NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt, function ()
             {
                 res.render('saveRedirect.jade', {
-                    redirectLink: "/"
+                    locals: {
+                        redirectLink: "/"
+                    }
                 });
             });
             return;
@@ -1493,7 +1534,9 @@ app.post('/createInitialUser', function (req, res)
             NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt);
             NovaCommon.dbqCredentialsDeleteUser.run('nova');
             res.render('saveRedirect.jade', {
-                redirectLink: "/setup2"
+                locals: {
+                    redirectLink: "/setup2"
+                }
             });
             return;
         } else {
@@ -1590,8 +1633,10 @@ app.get("/editClassifier", function (req, res)
 
 
     res.render('editClassifier.jade', {
-        classifier: classifier
-        , featureNames: NovaCommon.nova.GetFeatureNames()
+        locals: {
+            classifier: classifier
+            , featureNames: NovaCommon.nova.GetFeatureNames()
+        }
     }); 
 });
 
@@ -1600,15 +1645,19 @@ app.get("/hostnames", function (req, res) {
         RenderError(res, "Unable to access honeyd hostnames database. Something probably went wrong during the honeyd install.");
         return;
     }
-    res.render('hostnames.jade', {});
+    res.render('hostnames.jade', {
+        locals: {}
+    });
 });
 
 app.get("/interfaceAliases", function (req, res)
 {
     ReloadInterfaceAliasFile();
     res.render('interfaceAliases.jade', {
-        interfaceAliases: interfaceAliases
-        , INTERFACES: NovaCommon.config.ListInterfaces().sort(),
+        locals: {
+            interfaceAliases: interfaceAliases
+            , INTERFACES: NovaCommon.config.ListInterfaces().sort(),
+        }
     });
 });
 
@@ -1641,7 +1690,7 @@ app.post("/editTLSCerts", function (req, res)
                     if(writeErrCert != null) {RenderError(res, "Error when writing cert file"); return;}
                     
                     res.render('saveRedirect.jade', {
-                        redirectLink: "/"
+                        locals: {redirectLink: "/"}
                     })
                 });
             });
@@ -1666,7 +1715,9 @@ app.post('/honeydConfigManage', function (req, res){
     NovaCommon.honeydConfig.LoadAllTemplates();
   
     res.render('saveRedirect.jade', {
+     locals: {
        redirectLink: '/honeydConfigManage'
+     }
     });
   } 
   else
@@ -1703,7 +1754,9 @@ app.post('/customizeTrainingSave', function (req, res)
     NovaCommon.trainingDb.Save();
 
     res.render('saveRedirect.jade', {
+        locals: {
             redirectLink: "/customizeTraining"
+        }
     })
 });
 
@@ -1712,14 +1765,14 @@ app.post('/customizeTrainingSave', function (req, res)
 app.post('/configureNovaSave', function (req, res)
 {
 
-    // If we get two of the same form element, just use the last one
-    for (var key in req.body) {
-        if (typeof(req.body[key]) == "object") {
-            req.body[key] = req.body[key][req.body[key].length - 1];
-        }
-    }
+	// If we get two of the same form element, just use the last one
+	for (var key in req.body) {
+		if (typeof(req.body[key]) == "object") {
+			req.body[key] = req.body[key][req.body[key].length - 1];
+		}
+	}
 
-    // These are accepted configuration inputs and validation functions for them
+	// These are accepted configuration inputs and validation functions for them
     var configItems = [
     {
         key:  "ADVANCED"
@@ -1811,11 +1864,6 @@ app.post('/configureNovaSave', function (req, res)
         key:  "DOPPELGANGER_INTERFACE"
         ,validator: function(val) {
             validator.check(val, this.key + ' must not be empty').notEmpty();
-
-            var interfaces = NovaCommon.config.ListLoopbacks();
-            if (interfaces.indexOf(val) == -1) {
-                validator.error(val + " is not a valid ethernet interface!");
-            }
         }
     },
     {
@@ -1840,7 +1888,7 @@ app.post('/configureNovaSave', function (req, res)
     {
         key:  "SMTP_ADDR"
         ,validator: function(val) {
-            console.log("Got an smtp address of " + val);
+			console.log("Got an smtp address of " + val);
             validator.check(val, this.key + ' is the wrong format').regex('^(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)$');
         }
     },
@@ -1873,7 +1921,7 @@ app.post('/configureNovaSave', function (req, res)
     {
         key:  "RECIPIENTS"
         ,validator: function(val) {
-            console.log("Got RECIPIENTS " + val);
+			console.log("Got RECIPIENTS " + val);
             validator.check(val, "Must have at least one email address").notEmpty();
             if (val.length != 0) {
                 var emails = val;
@@ -2093,6 +2141,7 @@ app.post('/configureNovaSave', function (req, res)
         if(code.toString() != '0')
         {
           console.log('nova_rsyslog_helper could not complete update of rsyslog configuration, exited with code ' + code);
+          RenderError(res, 'Could not update rsyslog configuration, update script returned ' + code, '/suspects');
         }
         else
         {
@@ -2175,69 +2224,71 @@ app.post('/configureNovaSave', function (req, res)
         }
       }
 
-    if (req.body["EMAIL_ALERTS_ENABLED"] == undefined) {
-      var spawn = require('sudo');
-      var options = {
-        cachePassword : true,
-        prompt : 'You need permission to remove the Nova mail script from the cron directories.'
-      };
+      NovaCommon.config.ReloadConfiguration();
 
-      var execution = ['cleannovasendmail.sh'];
-      var rm = spawn(execution, options);
-      rm.on('exit', function(code) {
-        console.log('code == ' + code);
-      });
-      if (maildaemon != '') {
-        maildaemon.kill('SIGINT');
-      }
-      req.body["EMAIL_ALERTS_ENABLED"] = "0";
-      NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
-    } else {
-      var interval = req.body['SMTP_INTERVAL'];
-
-      if (interval != 'hourly' && interval != 'daily' && interval != 'weekly' && interval != 'monthly') {
-        RenderError(res, 'SMTP_INTERVAL value was incorrect!', "/suspects");
-      } else {
-        if (maildaemon == '') {
-          var go = require('sudo');
-          var options = {
-            cachePassword : true,
-            prompt : 'You need permission to remove the Nova mail script from the cron directories.'
-          };
-          var sud = require('sudo');
-          var options = {
-            cachePassword : true,
-            prompt : 'You need permission to remove the Nova mail script from the cron directories.'
-          };
-    
-          var execution = ['cleannovasendmail.sh'];
-          var rm = sud(execution, options);
-          rm.on('exit', function(code) {
-            console.log('code == ' + code);
-          });
-          
-          var cpexec = ['placenovasendmail', interval];
-          cpspawn = go(cpexec, options);
-          cpspawn.on('exit', function(code) {
-            if (code === 0) {
-              var spawn = require('child_process').spawn;
-              var execstring = 'novamaildaemon.pl';
-              maildaemon = spawn(execstring.toString());
-              maildaemon.on('close', function(code) {
-                if (code !== 0) {
-                  console.log('nova mail daemon died an unnatural death with code ' + code);
-                }
-              });
-            } else {
-              RenderError(res, 'Could not start mail daemon, check /etc/cron.' + interval + ' for orphaned script novasendmail.py', '/suspects');
-            }
-          });
+      if(req.body["EMAIL_ALERTS_ENABLED"] == undefined)
+      {
+        var spawn = require('sudo');
+        var options = {
+          cachePassword: true
+          , prompt: 'You need permission to remove the Nova mail script from the cron directories.'
+        };
+        
+        var execution = ['cleannovasendmail.sh'];
+        var rm = spawn(execution, options); 
+        rm.on('exit', function(code){
+          console.log('code == ' + code);
+        });
+        if(maildaemon != '')
+        {
+          maildaemon.kill('SIGINT');
         }
-        req.body["EMAIL_ALERTS_ENABLED"] = "1";
-        NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
+        req.body["EMAIL_ALERTS_ENABLED"] = "0";
+        NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
+      }
+      else
+      {
+        var interval = req.body['SMTP_INTERVAL'];
+
+        if(interval != 'hourly' && interval != 'daily' && interval != 'weekly' && interval != 'monthly')
+        {
+          RenderError(res, 'SMTP_INTERVAL value was incorrect!', "/suspects");
+        }
+        else
+        {
+          if(maildaemon == '')
+          {
+            var go = require('sudo');
+            var options = {
+              cachePassword: true
+              , prompt: 'You need permission to remove the Nova mail script from the cron directories.'
+            };
+            var cpexec = ['placenovasendmail', interval];
+            cpspawn = go(cpexec, options);
+            cpspawn.on('exit', function(code){
+              if(code === 0)
+              {
+                var spawn = require('child_process').spawn;
+                var execstring = 'novamaildaemon.py';
+                maildaemon = spawn(execstring.toString());
+                maildaemon.on('close', function(code){
+                  if(code !== 0)
+                  {
+                    console.log('nova mail daemon died an unnatural death with code ' + code);
+                  }
+                }); 
+              }
+              else
+              {
+                RenderError(res, 'Could not start mail daemon, check /etc/cron.' + interval + ' for orphaned script novasendmail.py', '/suspects');
+              }
+            });
+          }
+          req.body["EMAIL_ALERTS_ENABLED"] = "1";
+          NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
+        }
       }
     }
-
 
       NovaCommon.config.ReloadConfiguration();
 
@@ -2256,7 +2307,9 @@ app.post('/configureNovaSave', function (req, res)
       }
 
       res.render('saveRedirect.jade', {
+        locals: {
           redirectLink: route
+        }
       })
     }
 });
@@ -2281,8 +2334,10 @@ app.get('/scripts', function(req, res){
   var scriptBindings = NovaCommon.GetPorts(); 
   
   res.render('scripts.jade', {
+    locals: {
       scripts: namesAndPaths,
       bindings: scriptBindings
+    }
   });
 });
 
@@ -2316,7 +2371,22 @@ process.on('SIGINT', function ()
 
 process.on('exit', function ()
 {
-    LOG("ALERT", "Quasar is exiting cleanly.");
+    if(maildaemon != '')
+    {
+      maildaemon.kill('SIGINT');
+    }
+    var spawn = require('sudo');
+    var options = {
+      cachePassword: true
+      , prompt: 'You need permission to remove the Nova mail script from the cron directories.'
+    };
+    
+    var execution = ['cleannovasendmail.sh'];
+    var rm = spawn(execution, options); 
+    rm.on('exit', function(code){
+      console.log('code == ' + code);
+      LOG("ALERT", "Quasar is exiting cleanly.");
+    });
 });
 
 function objCopy(src, dst) 
@@ -2428,7 +2498,7 @@ everyone.now.AddInterfaceAlias = function(iface, alias, callback)
             callback("Error: invalid interface alias. Must contain only letters, numbers, spaces, and hyphens.");
             return;
         }
-        interfaceAliases[iface] = alias;
+        interfaceAliases[iface] = sanitizeCheck(alias).entityEncode();
     } 
     else 
     {

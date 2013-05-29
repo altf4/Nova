@@ -905,6 +905,18 @@ everyone.now.RemoveConfiguration = function(configName, cb)
   }
 };
 
+everyone.now.RemoveScript = function(scriptName, cb)
+{
+  NovaCommon.honeydConfig.RemoveScript(scriptName);
+  
+  NovaCommon.honeydConfig.SaveAllTemplates();
+  
+  if(typeof cb == 'function')
+  {
+    cb();
+  }
+};
+
 everyone.now.GetLocalIP = function (iface, cb)
 {
     cb(NovaCommon.nova.GetLocalIP(iface));
