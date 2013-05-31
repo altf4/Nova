@@ -98,8 +98,8 @@ NovaPiChart.prototype = {
         canvas.onmousemove = function(e) {
             if (!e) var e = window.event;
            
-            var x = e.clientX - $(this).offset().left;
-            var y = self.m_size - (e.clientY - $(this).offset().top);
+            var x = e.pageX - $(this).offset().left;
+            var y = self.m_size - (e.pageY - $(this).offset().top);
 
             // Don't display the popup if we're not inside the circle
             var sqrDistance = Math.pow((self.m_halfSize - x), 2) + Math.pow((self.m_halfSize - y), 2);
@@ -138,8 +138,8 @@ NovaPiChart.prototype = {
             }
 
             $(self.popupdiv).html(self.m_items[current].name + " (" + Number(100*self.m_items[current].value/self.m_numberOfItems).toFixed(2) + "%)"); 
-            $(self.popupdiv).css('left',e.clientX - 200); 
-            $(self.popupdiv).css('top',e.clientY - 200);
+            $(self.popupdiv).css('left',e.pageX - 200); 
+            $(self.popupdiv).css('top',e.pageY - 200);
             $(self.popupdiv).css('display', 'block'); 
         };
 
