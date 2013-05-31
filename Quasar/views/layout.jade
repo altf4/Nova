@@ -276,26 +276,57 @@ html(lang="en", onclick='removeContextMenu();')
        block buttonPannelAdditions
     
        div.sideBarHeader Status
-         a.sideBarButton(href='/suspects', title='View current packet classification and analysis data') Packet Classifier
-         a.sideBarButton(href='/newInformation', title="information that's changed since the last visit") New Information
+         a.sideBarButton(href='/suspects', title='View current packet classification and analysis data')
+           img.buttonIconLeft(src="images/details2.png", width="15px")
+           span.buttonSpan Packet Classifier
+         a.sideBarButton(href='/newInformation', title="information that's changed since the last visit")
+           img.buttonIconLeft(src="images/new.png", width="15px")
+           span.buttonSpan New Information
        
        div.sideBarHeader Logs
-         a.sideBarButton(href='/events', title='View suspects that were logged as hostile at some point') Hostile Events
-         a.sideBarButton(href="/viewNovadLog", title='View the main log file for the Nova tools') Nova Log
-         a.sideBarButton(href="/viewHoneydLog", title='View the log file for honeypots') Haystack Log
+         a.sideBarButton(href='/events', title='View suspects that were logged as hostile at some point')
+           img.buttonIconLeft(src="images/skull.png", width="15px")
+           span.buttonSpan Hostile Events
+         a.sideBarButton(href="/viewNovadLog", title='View the main log file for the Nova tools')
+           img.buttonIconLeft(src="images/log.png", width="15px")
+           span.buttonSpan Nova Log
+         a.sideBarButton(href="/viewHoneydLog", title='View the log file for honeypots')
+           img.buttonIconLeft(src="images/log.png", width="15px")
+           span.buttonSpan Haystack Log
         
        div.sideBarHeader Configuration
-         a.sideBarButton(href="/honeydConfigManage", title='Configure honeypots') Haystacks
-         a.sideBarButton(href="/basicOptions", title='Configure basic Nova options') Settings
-         a.sideBarButton(href="/hostnames", title='Configure hostnames') Hostnames
-         a.sideBarButton(href="/customizeTraining", title='Choose training data to use for suspect classification') Classification Training
-         a.sideBarButton(href="/interfaceAliases", title='Give ethernet interfaces nicknames') Interface Aliases
-         a.sideBarButton(href="/configWhitelist", title='Add IP addresses to the whitelist to be ignored during classification and packet analysis') Whitelist
+         a.sideBarButton(href="/honeydConfigManage", title='Configure honeypots')
+           img.buttonIconLeft(src="images/honeycomb.png", width="15px")
+           span.buttonSpan Haystacks
+
+         a.sideBarButton(href="/basicOptions", title='Configure basic Nova options')
+           img.buttonIconLeft(src="images/gear.png", width="15px")
+           span.buttonSpan Settings
+         a.sideBarButton(href="/hostnames", title='Configure hostnames')
+           img.buttonIconLeft(src="images/hostnames.png", width="15px")
+           span.buttonSpan Hostnames
+
+         a.sideBarButton(href="/customizeTraining", title='Choose training data to use for suspect classification')
+           img.buttonIconLeft(src="images/training.png", width="15px")
+           span.buttonSpan Training
+
+         a.sideBarButton(href="/interfaceAliases", title='Give ethernet interfaces nicknames')
+           img.buttonIconLeft(src="images/alias.png", width="15px")
+           span.buttonSpan Interface Aliases
+         a.sideBarButton(href="/configWhitelist", title='Add IP addresses to the whitelist to be ignored during classification and packet analysis')
+           img.buttonIconLeft(src="images/whitelist.png", width="15px")
+           span.buttonSpan Whitelist
     
        div.sideBarHeader Users
-         a.sideBarButton(href="/createNewUser", title='Create a new user for the Quasar login') New User
-         a.sideBarButton(href="/editUsers", title='Edit users for the Quasar login') Edit User
+         a.sideBarButton(href="/createNewUser", title='Create a new user for the Quasar login')
+           img.buttonIconLeft(src="images/users.png", width="15px")
+           span.buttonSpan New User
+         a.sideBarButton(href="/editUsers", title='Edit users for the Quasar login')
+           img.buttonIconLeft(src="images/users.png", width="15px")
+           span.buttonSpan Edit User
        
        div.sideBarHeader Documentation
-         a.sideBarButton(href='/about', title='About Nova') About
+         a.sideBarButton(href='/about', title='About Nova')
+           img.buttonIconLeft(src="images/about.png", width="15px")
+           span.buttonSpan About
        

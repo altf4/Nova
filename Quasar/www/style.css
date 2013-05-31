@@ -225,6 +225,13 @@ html, body {
 	vertical-align:middle;
 }
 
+.buttonIconLeft {
+	margin-right: 2px;
+	height: 15px;
+	vertical-align:middle;
+	float: left;
+}
+
 .buttonSpan {
 	vertical-align:middle;
 }
