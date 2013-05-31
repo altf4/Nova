@@ -19,12 +19,12 @@ extends layout
 block content
   div.contentBox(id="nova_suspects_error_view", style="display: none;")
     h3(style="color: red") Warning: The Packet Classifier is either not running or not connected. The data below may be old. Try starting the Packet Classifier.
-  div.contentBox#setup(onclick='handleOnclick(event)', style="")
+  div.contentBox#setup(onclick='handleOnclick(event)', style="display: inline-block")
     span#suspectTable(style="display: inline-block;")
     p#numberOfSuspects Recieved data for 0 suspects
     
   br 
-  div.contentBox
+  div.contentBox(style="display: inline-block")
     h1 Grid Settings
     input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
     label Live Grid Update
