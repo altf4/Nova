@@ -66,6 +66,19 @@ block content
       button(onclick='applyLevelFilter()')
         img.buttonIcon(src="images/benign.png")
         span.buttonSpan Apply Advanced Filters
+
+  br
+  div.contentBox(style="display: inline-block")
+    h1 Watching Honeyd Log
+    p
+      a.button(href="/downloadHoneydLog.log")
+        img.buttonIcon(src="images/save.png")
+        span.buttonSpan Download Entire Log
+    input#showAdvancedHoneyd(type="checkbox", onchange="showAdvancedHoneydChanged()")
+    label Show Debugging Information
+    br
+    span#honeydLogTable(style="display: inline-block;")
+    p#rawHoneydLog(style="display: none")= honeydLog
     
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
@@ -77,8 +90,8 @@ block headerAdditions
     }
   
   script
-    var line;
     var logGrid;
+    var honeydLogGrid;
     
     var allowedLevels = ['DEBUG','INFO','NOTICE','WARNING','ERROR','CRITICAL','ALERT','EMERGENCY'];
     
@@ -224,11 +237,54 @@ block headerAdditions
         entry = entry.replace(/#012/g, "<BR>");
         return entry;
     }
+    
+    function formatHoneydLogEntry(entry) {
+        entry.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        entry = "<span style='font-weight: bold;'>" + entry + "</span>";
+        entry = entry.replace(/#012/g, "<BR>");
+        return entry;
+    }
+    
+    function showAdvancedHoneydChanged()
+    {
+        if($('#showAdvancedHoneyd').is(':checked'))
+        {
+            honeydLogGrid.m_columns[2].isDisabled = false;
+        }
+        else
+        {
+            honeydLogGrid.m_columns[2].isDisabled = true;
+        }
+
+        honeydLogGrid.GenerateTableHeader();
+        honeydLogGrid.Render();
+    }
+    
+    var honeydIndex = 0;
+    function AddHoneydLogEntry(line)
+    {
+        line = line.replace(/ +(?= )/g, '');
+        var match = line.match(/(\S+ \S+ \S+) ([^:]+): (.*)/);
+
+        if(match != null)
+        {
+            match.splice(0,1,Number(honeydIndex));
+            honeydIndex++;
+            
+            match[3] = "<span style='font-weight: bold;'>" + match[3] + "</span>";
+            match.style = "background-color: #E4F2FF";
+            
+            honeydLogGrid.PushEntry(match);
+        }
+        else
+        {
+            console.log("No match for entry '" + line + "'");
+        }
+    }
 
     function init()
     {
         var log = $('#rawLog').html();
-        var gridStructure = new Array();
         var gridStructure = new Array();
         gridStructure.push({name: "Message #", isDisabled: false});
         gridStructure.push({name: "Timestamp", isDisabled: false});
@@ -249,6 +305,28 @@ block headerAdditions
         }
 
         logGrid.Render();  
+
+
+        var log = $('#rawHoneydLog').html();
+        var gridStructure = new Array();
+        gridStructure.push({name: "Message #", isDisabled: false});
+        gridStructure.push({name: "Timestamp", isDisabled: false});
+        gridStructure.push({name: "Machine Info", isDisabled: true});
+        gridStructure.push({name: "Message", isDisabled: false, formatter: formatHoneydLogEntry});
+        honeydLogGrid = new NovaGrid(gridStructure, 0, $('#honeydLogTable')[0], 'honeydLogGrid');
+        honeydLogGrid.SetRowsPerPage(25);
+        
+        var log = log.toString().split(/\r\n|\n\r|\n|\r/);
+
+        for(var i in log)
+        {
+            line = String(log[i]);
+
+            AddHoneydLogEntry(line);
+        }
+
+        honeydLogGrid.Render();
+
     
         now.ready(function()
         {
@@ -256,6 +334,12 @@ block headerAdditions
             {
                AddLogEntry(line);
                logGrid.Render();
+            }
+            
+            now.newHoneydLogLine = function (lineNum, line)
+            {
+               AddHoneydLogEntry(line);
+               honeydLogGrid.Render();
             }
         });
     }

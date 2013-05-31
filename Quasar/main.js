@@ -855,24 +855,18 @@ app.get('/viewNovadLog', function (req, res)
             RenderError(res, "Unable to open NOVA log file for reading due to error: " + err);
             return;
         } else {
-            res.render('viewNovadLog.jade', {
-                log: data
-            });
-        }
-    });
-});
-
-app.get('/viewHoneydLog', function (req, res)
-{
-    fs.readFile(honeydLogPath, 'utf8', function (err, data)
-    {
-        if (err)
-        {
-            RenderError(res, "Unable to open honeyd log file for reading due to error: " + err);
-            return;
-        } else {
-            res.render('viewHoneydLog.jade', {
-                log: data
+            fs.readFile(honeydLogPath, 'utf8', function (err, honeydData)
+            {
+                if (err)
+                {
+                    RenderError(res, "Unable to open HONEYD log file for reading due to error: " + err);
+                    return;
+                } else {
+                    res.render('viewNovadLog.jade', {
+                        log: data
+                        , honeydLog: honeydData
+                    });
+                }
             });
         }
     });
