@@ -112,8 +112,12 @@ test-prepare:
 	# Delete the link to Main so we don't have multiple def of main()
 	rm -f NovaTest/NovadSource/Main.cpp
 
-clean: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-quasar clean-novatrainer clean-staging clean-cli
+clean: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-quasar clean-novatrainer clean-staging clean-cli clean-node
 
+clean-dev: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-quasar clean-novatrainer clean-staging clean-cli
+
+clean-node:
+	rm -fr Quasar/node_modules
 
 #remove binaries from staging area
 clean-staging:
@@ -342,7 +346,7 @@ reset: uninstall-files
 	$(MAKE) install
 
 reset-debug: 
-	$(MAKE) clean
+	$(MAKE) clean-dev
 	$(MAKE) debug
 	$(MAKE) test
 	rm -rf ~/.config/nova
