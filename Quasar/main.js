@@ -45,6 +45,8 @@ memwatch.on('stats', function(stats)
 
 // Modules that provide bindings to C++ code in NovaLibrary and Nova_UI_Core
 
+require('tls').SLAB_BUFFER_SIZE = 100 * 1024;
+
 var NovaCommon = require('./NovaCommon.js');
 NovaCommon.nova.CheckConnection();
 

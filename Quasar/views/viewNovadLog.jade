@@ -86,17 +86,32 @@ block headerAdditions
 
   style(type="text/css")
     td.novaGrid {
-        text-align: left;
+      text-align: left;
+    }
+  
+    .exCollItem {
+      float: right; 
+      width: 20px;
+      height: 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      text-align: center;
+      text-shadow: 1px 0px #BBBBBB;
+      font-size: 16px;
     }
   
   script
     var logGrid;
     var honeydLogGrid;
-    
+    var exCollIdx = 0;
+    var exCollVals = [];
+    var novaGridHeightCalculated = 0;
     var allowedLevels = ['DEBUG','INFO','NOTICE','WARNING','ERROR','CRITICAL','ALERT','EMERGENCY'];
     
     function showAdvancedChanged()
     {
+        var temp = novaGridHeightCalculated;
+        novaGridHeightCalculated = (26 + (25 * 18));
         if($('#showAdvanced').is(':checked'))
         {
             logGrid.m_columns[2].isDisabled = false;
@@ -112,6 +127,11 @@ block headerAdditions
 
         logGrid.GenerateTableHeader();
         logGrid.Render();
+        if(novaGridHeightCalculated < temp)
+        {
+          novaGridHeightCalculated = temp;
+        }
+        $('#logTable :first-child').first().css({'min-height':novaGridHeightCalculated});
     }
     
     function showFilterOptions()
@@ -173,7 +193,7 @@ block headerAdditions
           }
           logGrid.PushEntry(match);
         }
-      } 
+      }
       else 
       {
           console.log("No match for entry '" + line + "'");
@@ -184,6 +204,8 @@ block headerAdditions
     {
       index = 0;
       logGrid.Clear();
+      var temp = novaGridHeightCalculated;
+      novaGridHeightCalculated = (26 + (25 * 18));
       allowedLevels = [];
       
       if($('#debug').is(':checked'))
@@ -229,12 +251,33 @@ block headerAdditions
       }
       
       logGrid.Render();
+      if(novaGridHeightCalculated < temp)
+      {
+        novaGridHeightCalculated = temp;
+      }
+      $('#logTable :first-child').first().css({'min-height':novaGridHeightCalculated});
+    }
+
+    function expandCollapse(e, idx) {
+      var evt = (e ? e : window.event);
+      var source = evt.target || evt.srcElement;
+      source = source.parentNode;
+      temp = $(source).html();
+      $(source).html(exCollVals[idx]);
+      exCollVals[idx] = temp;
     }
 
     function formatLogEntry(entry) {
         entry.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        entry = "<span style='font-weight: bold;'>" + entry + "</span>";
-        entry = entry.replace(/#012/g, "<BR>");
+        if(entry.search(/#012/) != -1)
+        {
+          entry = entry.replace(/#012/g, "<BR>");
+          var modEntry = entry.replace(/<BR>/, '<span class="exCollItem" onclick="expandCollapse(event, ' + exCollIdx + ')">-</span><BR>');
+          exCollVals[exCollIdx] = modEntry;
+          entry = entry.substring(0, entry.indexOf('<BR>')) + '...<span class="exCollItem" onclick="expandCollapse(event, ' + exCollIdx + ')">+</span>';
+          exCollIdx++; 
+        }
+        entry = "<span style='font-weight: bold; user-select: none;'>" + entry + "</span>";
         return entry;
     }
     
@@ -258,6 +301,7 @@ block headerAdditions
 
         honeydLogGrid.GenerateTableHeader();
         honeydLogGrid.Render();
+        $('#honeydLogTable :first-child').first().css({'min-height':novaGridHeightCalculated});
     }
     
     var honeydIndex = 0;
@@ -286,6 +330,7 @@ block headerAdditions
     {
         var log = $('#rawLog').html();
         var gridStructure = new Array();
+        novaGridHeightCalculated = (26 + (25 * 18));
         gridStructure.push({name: "Message #", isDisabled: false});
         gridStructure.push({name: "Timestamp", isDisabled: false});
         gridStructure.push({name: "Machine Info", isDisabled: true});
@@ -305,7 +350,7 @@ block headerAdditions
         }
 
         logGrid.Render();  
-
+        $('#logTable :first-child').first().css({'min-height':novaGridHeightCalculated});
 
         var log = $('#rawHoneydLog').html();
         var gridStructure = new Array();
@@ -326,7 +371,7 @@ block headerAdditions
         }
 
         honeydLogGrid.Render();
-
+        $('#honeydLogTable :first-child').first().css({'min-height':novaGridHeightCalculated});
     
         now.ready(function()
         {

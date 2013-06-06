@@ -546,10 +546,12 @@ div#smtpPane
   br
   
   label SMTP Address
+  br
   input.wide(name='SMTP_ADDR', value=SMTP_ADDR)
   br
   
   label SMTP Port
+  br
   input.wide(type='number', min='0', max='65536', name='SMTP_PORT', id='SMTP_PORT', value=SMTP_PORT)
   br
   
@@ -563,6 +565,7 @@ div#smtpPane
     input(name='SMTP_DOMAIN', id='SMTP_DOMAIN', value=SMTP_DOMAIN)
   
   label SMTP Password
+  br
   input.wide(type='password', name='SMTP_PASS', id='SMTP_PASS', value=SMTP_PASS)
   br
   
@@ -604,12 +607,15 @@ span.labelSpan Use RSyslog?
 
 div#rsyslogPane
   label Remote Log Server IP Address
+  br
   input#RSYSLOG_IP(name='RSYSLOG_IP', value=RSYSLOG_IP)
   br
   label Remote Log Server Port
+  br
   input#RSYSLOG_PORT(name='RSYSLOG_PORT', type='number', min='1', max='65536', step='1', value=RSYSLOG_PORT, onchange='handleRsysPortChange()')
   br
   label UDP or TCP?
+  br
   select#RSYSLOG_CONNTYPE(name='RSYSLOG_CONNTYPE', onchange='handleConnTypeChange()')
     option UDP
     option TCP

@@ -16,8 +16,10 @@ body {
   background: white;
   color: #333;
 }
+
 p {
 }
+
 .contentBox {
     background-color: white;
     overflow: auto;
@@ -261,7 +263,6 @@ html, body {
   display: none;
   background-color: #F1CC91;
   box-shadow: 0 0 5px 2px #E8A02F inset;
-  width: 700px;
 }
 
 #rsyslogPane *, #smtpPane *, #pulsarPane *, #doppelPane *, #manifacePane * {
