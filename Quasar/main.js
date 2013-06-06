@@ -1397,6 +1397,7 @@ app.get('/setup3', function (req, res)
     res.render('hhautoconfig.jade', {
         user: req.user,
         INTERFACES: NovaCommon.config.ListInterfaces().sort(),
+        interfaceAliases: ConvertInterfacesToAliases(interfaces),
         SCANERROR: ""
     });
 });
