@@ -396,6 +396,8 @@ block headerAdditions
                 icmpTypeCodeCounts[icmp] += results[r].count;
                 icmpIpCounts[results[r].dstip] += results[r].count;
                 icmparr.push({name: results[r].dstip + " " + icmp, value: results[r].count});
+            } else {
+                row.push("NA");
             }
             
             
