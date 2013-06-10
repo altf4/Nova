@@ -224,49 +224,51 @@ html(lang="en", onclick='removeContextMenu();')
     // Header panel
     div(style="height: 130px; position: absolute; top: 0; left: 0; right: 0; background-color: #D0E9FC; padding-left: 10px; padding-right: 10px; padding-top: 10px; #00008B")
       div(style="background-color: white; padding: 4px; border-radius: 10px; border: 2px solid #769DC0; box-shadow: 0 0 2px 2px #888;")
+        
         a(href="/", style='text-decoration: none;')
           img#eyeIcon(src="images/novaIcon.png",class="align-left", width="100px", height="100px")
         a(href="/", style='text-decoration: none;')
           h1.title(style="display: inline-block") DataSoft Nova Anti-reconnaissance System
+       
         br
-        
-        // This is so the browser will cache all 3 pics when it first loads
-        table(style="float: left; font-size: 16px;")
-          tr
-            td(style="text-align: right; font-weight: bold;") Packet Classifier:&nbsp;
-            td(style="padding: 0;")
-              img#nova_status_icon_orange(src="/images/orangedot.png", width="20px", height="20px", style="display: none;")
-              img#nova_status_icon_red(src="/images/reddot.png", width="20px", height="20px", style="display: none;")
-              img#nova_status_icon_green(src="/images/greendot.png", width="20px", height="20px", style="display: none;")
-            td
-              div#nova_status(style='font-weight: bold;')
-          tr
-            td(style="text-align: right; font-weight: bold;") Haystack&nbsp; Status:&nbsp;
-            td(style="padding: 0;")
-              img#haystack_status_icon_orange(src="/images/orangedot.png", width="20px", height="20px", style="display: none;")
-              img#haystack_status_icon_red(src="/images/reddot.png", width="20px", height="20px", style="display: none;")
-              img#haystack_status_icon_green(src="/images/greendot.png", width="20px", height="20px", style="display: none;")
-            td
-              div#haystack_status(style='font-weight: bold;')
-        table(style="float: right;")
-          tr
-            td
-              button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StartNovad()')
-                img.buttonIcon(src="images/start.png", width="15px")
-                span.buttonSpan Start Packet Classifier
-            td
-              button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StopNovad()')
-                img.buttonIcon(src="images/stop.png", width="15px")
-                span.buttonSpan Stop Packet Classifier
-          tr
-            td
-              button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StartHaystack()')
-                img.buttonIcon(src="images/start.png", width="15px")
-                span.buttonSpan Start Haystack
-            td
-              button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StopHaystack()')
-                img.buttonIcon(src="images/stop.png", width="15px")
-                span.buttonSpan Stop Haystack
+        div
+          // This is so the browser will cache all 3 pics when it first loads
+          table(style="font-size: 16px; float: left;")
+            tr
+              td(style="text-align: right; font-weight: bold;") Packet Classifier:&nbsp;
+              td(style="padding: 0;")
+                img#nova_status_icon_orange(src="/images/orangedot.png", width="20px", height="20px", style="display: none;")
+                img#nova_status_icon_red(src="/images/reddot.png", width="20px", height="20px", style="display: none;")
+                img#nova_status_icon_green(src="/images/greendot.png", width="20px", height="20px", style="display: none;")
+              td
+                div#nova_status(style='font-weight: bold;')
+            tr
+              td(style="text-align: right; font-weight: bold;") Haystack&nbsp; Status:&nbsp;
+              td(style="padding: 0;")
+                img#haystack_status_icon_orange(src="/images/orangedot.png", width="20px", height="20px", style="display: none;")
+                img#haystack_status_icon_red(src="/images/reddot.png", width="20px", height="20px", style="display: none;")
+                img#haystack_status_icon_green(src="/images/greendot.png", width="20px", height="20px", style="display: none;")
+              td
+                div#haystack_status(style='font-weight: bold;')
+          table(style="float: right;")
+            tr
+              td
+                button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StartNovad()')
+                  img.buttonIcon(src="images/start.png", width="15px")
+                  span.buttonSpan Start Packet Classifier
+              td
+                button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StopNovad()')
+                  img.buttonIcon(src="images/stop.png", width="15px")
+                  span.buttonSpan Stop Packet Classifier
+            tr
+              td
+                button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StartHaystack()')
+                  img.buttonIcon(src="images/start.png", width="15px")
+                  span.buttonSpan Start Haystack
+              td
+                button(type="button", style="width:170px; float: right; margin-right: 4px", onclick='StopHaystack()')
+                  img.buttonIcon(src="images/stop.png", width="15px")
+                  span.buttonSpan Stop Haystack
         br(style="clear: both; line-height: 0")
     br
 
