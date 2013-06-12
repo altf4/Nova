@@ -200,19 +200,7 @@ everyone.now.SaveHoneydNode = function(node, cb)
 everyone.now.ClearAllSuspects = function (cb)
 {
     NovaCommon.nova.CheckConnection();
-    if (!NovaCommon.nova.ClearAllSuspects())
-    {
-        console.log("Manually deleting CE state file:" + NovaHomePath + "/" + NovaCommon.config.ReadSetting("CE_SAVE_FILE"));
-        // If we weren't able to tell novad to clear the suspects, at least delete the CEStateFile
-        try
-        {
-            fs.unlinkSync(NovaHomePath + "/" + NovaCommon.config.ReadSetting("CE_SAVE_FILE"));
-        }
-        catch(err)
-        {
-            // this is probably because the file doesn't exist. Just ignore.
-        }
-    }
+    NovaCommon.nova.ClearAllSuspects();
 };
 
 everyone.now.ClearSuspect = function (suspectIp, ethinterface, cb)
