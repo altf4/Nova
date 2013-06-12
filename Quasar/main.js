@@ -1181,7 +1181,7 @@ app.get('/addHoneydProfile', function (req, res)
     }
     parentName = req.query["parent"];
 
-    res.render('addHoneydProfile.jade', {
+    res.render('editHoneydProfile.jade', {
       oldName: parentName,
       parentName: parentName,
       newProfile: true,
