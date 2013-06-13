@@ -310,4 +310,13 @@
 		<defaultport>3306</defaultport>
 		<configurable>false</configurable>
 	</script>
+	<script>
+		<name>MS SQL </name>
+		<service>mssql</service>
+		<osclass> Microsoft | Windows </osclass>
+		<path>python /usr/share/honeyd/scripts/win32/mssql.py</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>1433</defaultport>
+		<configurable>false</configurable>
+	</script>
 </scripts>
