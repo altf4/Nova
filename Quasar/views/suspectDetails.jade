@@ -381,7 +381,7 @@ block headerAdditions
                 udparr.push({name: results[r].dstip + " " + results[r].port, value: results[r].count});
             } else if (results[r].type == "icmp") {
                 var icmpType = results[r].port & 0xF;
-                var icmpCode = (results[r].port & 0x0F) >> 8;
+                var icmpCode = (results[r].port >> 8);
 
                 // Replace with string version if we have it
                 if (icmpTypes[icmpType]) {
