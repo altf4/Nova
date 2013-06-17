@@ -370,7 +370,7 @@ block headerAdditions
                 tcpPortCounts[results[r].port] += results[r].count;
                 tcpIpCounts[results[r].dstip] += results[r].count;
 
-                tcparr.push({name: results[r].dstip + " " + results[r].port, value: results[r].count});
+                tcparr.push({name: results[r].dstip + ":" + results[r].port, value: results[r].count});
             } else if (results[r].type == "udp") { 
                 row.push("Dst port: " + results[r].port);
                 if (!udpPortCounts[results[r].port]) {udpPortCounts[results[r].port] = 0;}
@@ -378,7 +378,7 @@ block headerAdditions
                 
                 udpPortCounts[results[r].port] += results[r].count;
                 udpIpCounts[results[r].dstip] += results[r].count;
-                udparr.push({name: results[r].dstip + " " + results[r].port, value: results[r].count});
+                udparr.push({name: results[r].dstip + ":" + results[r].port, value: results[r].count});
             } else if (results[r].type == "icmp") {
                 var icmpType = results[r].port & 0xF;
                 var icmpCode = (results[r].port >> 8);
