@@ -1481,7 +1481,32 @@ everyone.now.GetPacketSizes = function(ip, iface, cb) {
     });
 };
 
+
+everyone.now.GetBroadcasts = function(profile, cb) {
+	var bcasts = NovaCommon.honeydConfig.GetBroadcasts(profile);
+	
+	for (var i = 0; i < bcasts.length; i++) {
+		bcasts[i].srcPort = bcasts[i].GetSrcPort();
+		bcasts[i].dstPort = bcasts[i].GetDstPort();
+		bcasts[i].script = bcasts[i].GetScript();
+	}
+	console.log(bcasts);
+	cb && cb(bcasts);
+};
+
+everyone.now.ClearBroadcasts = function(profile, cb) {
+	NovaCommon.honeydConfig.ClearBroadcasts(profile);
+	cb && cb();
+};
+
+everyone.now.AddBroadcast = function(profile, script, srcport, dstport, cb) {
+	NovaCommon.honeydConfig.AddBroadcast(profile, script, srcport, dstport);
+	cb && cb();
+};
+
+
 }
+
 
 
 module.exports = NowjsMethods;

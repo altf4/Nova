@@ -10,6 +10,35 @@ using namespace v8;
 using namespace Nova;
 using namespace std;
 
+
+Handle<Object> HoneydNodeJs::WrapBroadcast(Broadcast* bcast)
+{
+	HandleScope scope;
+
+	if (broadcastTemplate.IsEmpty() )
+	{
+		Handle<FunctionTemplate> protoTemplate = FunctionTemplate::New();
+		protoTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+		broadcastTemplate = Persistent<FunctionTemplate>::New(protoTemplate);
+		
+		Local<Template> proto = broadcastTemplate->PrototypeTemplate();
+		proto->Set("GetScript",  FunctionTemplate::New(InvokeMethod<string, Broadcast, &Nova::Broadcast::GetScript>) );
+		proto->Set("GetSrcPort",  FunctionTemplate::New(InvokeMethod<int, Broadcast, &Nova::Broadcast::GetSrcPort>) );
+		proto->Set("GetDstPort",  FunctionTemplate::New(InvokeMethod<int, Broadcast, &Nova::Broadcast::GetDstPort>) );
+	}
+	
+	
+	// Get the constructor from the template
+	Handle<Function> ctor = broadcastTemplate->GetFunction();
+	// Instantiate the object with the constructor
+	Handle<Object> result = ctor->NewInstance();
+	// Wrap the native object in an handle and set it in the internal field to get at later.
+	Handle<External> broadcastPtr = External::New(bcast);
+	result->SetInternalField(0,broadcastPtr);
+
+	return scope.Close(result);
+}
+
 Handle<Object> HoneydNodeJs::WrapNode(Node* node)
 {
 	HandleScope scope;
@@ -204,6 +233,7 @@ Handle<Object> HoneydNodeJs::WrapProfile(Profile *pfile)
 }
 
 Persistent<FunctionTemplate> HoneydNodeJs::nodeTemplate;
+Persistent<FunctionTemplate> HoneydNodeJs::broadcastTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::portTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::scriptTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::portSetTemplate;

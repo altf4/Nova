@@ -16,6 +16,8 @@
 				<count>1</count>
 			</vendor>
 		</ethernet_vendors>
+		<broadcasts>
+		</broadcasts>
 		<portsets>
 			<portset>
 				<defaultTCPBehavior>filtered</defaultTCPBehavior>
@@ -41,6 +43,13 @@
 						<count>1</count>
 					</vendor>
 				</ethernet_vendors>
+				<broadcasts>
+					<broadcast>
+						<script>bash /usr/share/honeyd/scripts/bcaster.sh</script>
+						<srcport>42</srcport>
+						<dstport>21</dstport>
+					</broadcast>
+				</broadcasts>
 				<portsets>
 					<portset>
 						<defaultTCPBehavior>closed</defaultTCPBehavior>
@@ -127,6 +136,8 @@
 						<count>1</count>
 					</vendor>
 				</ethernet_vendors>
+				<broadcasts>
+				</broadcasts>
 				<portsets>
 					<portset>
 						<defaultTCPBehavior>closed</defaultTCPBehavior>
@@ -194,6 +205,8 @@
 						<count>1</count>
 					</vendor>
 				</ethernet_vendors>
+				<broadcasts>
+				</broadcasts>
 				<portsets>
 					<portset>
 						<defaultTCPBehavior>closed</defaultTCPBehavior>

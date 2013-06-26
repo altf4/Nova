@@ -4,6 +4,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/HoneydConfiguration/Broadcast.cpp \
 ../src/HoneydConfiguration/HoneydConfiguration.cpp \
 ../src/HoneydConfiguration/OsPersonalityDb.cpp \
 ../src/HoneydConfiguration/Port.cpp \
@@ -15,6 +16,7 @@ CPP_SRCS += \
 ../src/HoneydConfiguration/VendorMacDb.cpp 
 
 OBJS += \
+./src/HoneydConfiguration/Broadcast.o \
 ./src/HoneydConfiguration/HoneydConfiguration.o \
 ./src/HoneydConfiguration/OsPersonalityDb.o \
 ./src/HoneydConfiguration/Port.o \
@@ -26,6 +28,7 @@ OBJS += \
 ./src/HoneydConfiguration/VendorMacDb.o 
 
 CPP_DEPS += \
+./src/HoneydConfiguration/Broadcast.d \
 ./src/HoneydConfiguration/HoneydConfiguration.d \
 ./src/HoneydConfiguration/OsPersonalityDb.d \
 ./src/HoneydConfiguration/Port.d \

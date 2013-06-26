@@ -34,6 +34,10 @@ private:
 	static v8::Handle<v8::Value> GetNode(const v8::Arguments& args);
 	static v8::Handle<v8::Value> GetProfile(const v8::Arguments& args);
 	static v8::Handle<v8::Value> GetScript(const v8::Arguments& args);
+	
+	static v8::Handle<v8::Value> GetBroadcasts(const v8::Arguments& args);
+	static v8::Handle<v8::Value> AddBroadcast(const v8::Arguments& args);
+	static v8::Handle<v8::Value> ClearBroadcasts(const v8::Arguments& args);
 
 	static v8::Handle<v8::Value> GetPortSet(const v8::Arguments& args);
 	static v8::Handle<v8::Value> GetPortSetNames(const v8::Arguments& args);

@@ -21,6 +21,7 @@
 #define PROFILE_H_
 
 #include "PortSet.h"
+#include "Broadcast.h"
 
 namespace Nova
 {
@@ -131,6 +132,8 @@ public:
 
 	//A collection of PortSets, representing each group of ports found
 	std::vector<PortSet *> m_portSets;
+
+	std::vector<Broadcast *> m_broadcasts;
 
 private:
 

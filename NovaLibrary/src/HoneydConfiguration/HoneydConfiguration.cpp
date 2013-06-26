@@ -151,6 +151,29 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 			LOG(DEBUG, "Unable to parse Ethernet settings for profile", "");
 		};
 
+		// Broadcast scripts
+		try
+		{
+			BOOST_FOREACH(ptree::value_type &broadcasts, ptree.get_child("broadcasts"))
+			{
+				if(!string(broadcasts.first.data()).compare("broadcast"))
+				{
+					Broadcast *bcast = new Broadcast();
+					bcast->m_dstPort = broadcasts.second.get<int>("dstport");
+					bcast->m_srcPort = broadcasts.second.get<int>("srcport");
+					bcast->m_script = broadcasts.second.get<string>("script");
+
+					profile->m_broadcasts.push_back(bcast);
+				}
+			}
+		}
+		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+		{
+			LOG(DEBUG, "Unable to parse Broacdast settings for profile:" + string(e.what()), "");
+		};
+
+
+
 		//Port Sets
 		try
 		{
@@ -559,6 +582,20 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 		vendors.add_child("vendor", vendor);
 	}
 	propTree.add_child("ethernet_vendors", vendors);
+
+
+	ptree broadcasts;
+	for (uint i = 0; i < root->m_broadcasts.size(); i++)
+	{
+		ptree broadcast;
+		broadcast.put<int>("srcport", root->m_broadcasts[i]->m_srcPort);
+		broadcast.put<int>("dstport", root->m_broadcasts[i]->m_dstPort);
+		broadcast.put<std::string>("script", root->m_broadcasts[i]->m_script);
+
+		broadcasts.add_child("broadcast", broadcast);
+	}
+
+	propTree.add_child("broadcasts",broadcasts);
 
 	//Describe what port sets are available for this profile
 	{
