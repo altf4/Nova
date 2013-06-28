@@ -126,7 +126,7 @@ block content
     h3.cardHeader Profile Broadcast Configuration
     div.cardOuter
       div.cardInner
-        table.novaGrid
+        table.novaGrid(data-bind="visible: broadcasts().length > 0")
           thead
             tr.novaGrid
               td.novaGrid Script
