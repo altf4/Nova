@@ -48,6 +48,7 @@
 						<script>bash /usr/share/honeyd/scripts/bcaster.sh</script>
 						<srcport>42</srcport>
 						<dstport>21</dstport>
+						<time>10</time>
 					</broadcast>
 				</broadcasts>
 				<portsets>

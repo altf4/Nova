@@ -525,6 +525,12 @@ function jsProfileToHoneydProfile(profile)
         }
     }
 
+    honeydProfile.ClearBroadcasts();
+    for (var i = 0; i < profile.broadcasts.length; i++)
+    {
+        honeydProfile.AddBroadcast(profile.broadcasts[i].script, Number(profile.broadcasts[i].srcPort), Number(profile.broadcasts[i].dstPort), Number(profile.broadcasts[i].time));
+    }
+        
     return honeydProfile;
 }
 
@@ -632,9 +638,9 @@ everyone.now.SaveProfile = function (profile, newProfile, cb)
         }
     }
 
-
     var honeydProfile = jsProfileToHoneydProfile(profile);
     honeydProfile.Save();
+
 
     // Save the profile
     if(!NovaCommon.honeydConfig.SaveAll())
@@ -1425,7 +1431,6 @@ everyone.now.ClearHostnameAllocations = function(cb) {
         cb && cb(null);
     });
 };
-
 everyone.now.DeleteHostname = function(hostname, cb) {
     if (!NovaCommon.dbqGetHostnames) {
         cb("Unable to access hostnames database");
@@ -1488,9 +1493,9 @@ everyone.now.GetBroadcasts = function(profile, cb) {
 	for (var i = 0; i < bcasts.length; i++) {
 		bcasts[i].srcPort = bcasts[i].GetSrcPort();
 		bcasts[i].dstPort = bcasts[i].GetDstPort();
+		bcasts[i].time = bcasts[i].GetTime();
 		bcasts[i].script = bcasts[i].GetScript();
 	}
-	console.log(bcasts);
 	cb && cb(bcasts);
 };
 
@@ -1499,8 +1504,8 @@ everyone.now.ClearBroadcasts = function(profile, cb) {
 	cb && cb();
 };
 
-everyone.now.AddBroadcast = function(profile, script, srcport, dstport, cb) {
-	NovaCommon.honeydConfig.AddBroadcast(profile, script, srcport, dstport);
+everyone.now.AddBroadcast = function(profile, script, srcport, dstport, time, cb) {
+	NovaCommon.honeydConfig.AddBroadcast(script, srcport, dstport, time);
 	cb && cb();
 };
 

@@ -25,6 +25,40 @@ bool HoneydProfileBinding::SetPersonality(std::string personality)
 	return true;
 }
 
+Handle<Value> HoneydProfileBinding::AddBroadcast(const Arguments& args)
+{
+	HandleScope scope;
+	
+        HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
+
+	if (args.Length() != 4) {
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 4 parameters")));
+	}
+	
+	std::string scriptName = cvv8::CastFromJS<string>(args[0]);
+	int srcPort  = cvv8::CastFromJS<int>(args[1]);
+	int dstPort = cvv8::CastFromJS<int>(args[2]);
+	int time = cvv8::CastFromJS<int>(args[3]);
+
+	Profile *profile = obj->m_profile;
+
+	Broadcast *bcast = new Broadcast();
+	bcast->m_srcPort = srcPort;
+	bcast->m_dstPort = dstPort;
+	bcast->m_script = scriptName;
+	bcast->m_time = time;
+
+	profile->m_broadcasts.push_back(bcast);
+
+	return scope.Close( Null() );
+}
+
+bool HoneydProfileBinding::ClearBroadcasts()
+{
+        m_profile->m_broadcasts.clear();	
+        return true;
+}
+
 
 bool HoneydProfileBinding::SetCount(int count)
 {
@@ -228,11 +262,14 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 	proto->Set("SetIsDropRateInherited",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsDropRateInherited>));
 	proto->Set("SetIsUptimeInherited",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsUptimeInherited>));
 	proto->Set("Save",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding, &HoneydProfileBinding::Save>));
+	
+        proto->Set("ClearBroadcasts",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  &HoneydProfileBinding::ClearBroadcasts>));
 
 	proto->Set("SetUptimeMin",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, uint, &Profile::SetUptimeMin>));
 	proto->Set("SetUptimeMax",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile,  uint, 		&Profile::SetUptimeMax>));
 	proto->Set("SetDropRate",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile,  std::string, &Profile::SetDropRate>));
 
+	proto->Set("AddBroadcast",		FunctionTemplate::New(AddBroadcast)->GetFunction());
 
 	//Odd ball out, because it needs 5 parameters. More than InvoleWrappedMethod can handle
 	proto->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());

@@ -248,6 +248,12 @@ bool Profile::Copy(Profile *source)
 		m_portSets.push_back(new PortSet(*source->m_portSets[i]));
 	}
 
+	m_broadcasts.clear();
+	for (uint i = 0; i < source->m_broadcasts.size(); i++)
+	{
+		m_broadcasts.push_back(new Broadcast(*source->m_broadcasts[i]));
+	}
+
 	return true;
 }
 

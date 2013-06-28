@@ -66,6 +66,16 @@ script
 
   var rmLb = false;
 
+  var bcastModel = function() {
+    var self = this;
+    self.broadcasts = ko.observableArray();
+    self.removeBroadcast =  function(bcast) {
+      console.log(self);
+      self.broadcasts.remove(bcast);    
+    }
+  };
+
+
   function enforceMinAndMax(source)
   {
     var sourceNode = $('#' + source);
@@ -446,8 +456,32 @@ script
     }
   }
 
+  function addBroadcast() {
+        var bcast = {};
+        bcast.script = $("#bcastscript").val();
+        bcast.srcPort = $("#bcastsrcport").val();
+        bcast.dstPort = $("#bcastdstport").val();
+        bcast.time = $("#bcasttime").val();
+
+        console.log(bcast);
+
+        viewModel.broadcasts.push(bcast);
+  };
+  var viewModel;
   function init()
   {
+      viewModel = new bcastModel();
+      ko.applyBindings(viewModel);
+
+      now.GetBroadcasts('#{oldName}', function(bcasts) {
+        console.log(bcasts);
+        for (var i = 0; i < bcasts.length; i++) {
+            viewModel.broadcasts.push(bcasts[i]);
+        }
+
+        
+      });
+
       personalities = [];
       $("#personalitySelect option").each(function() {
         personalities.push($(this).val());
@@ -533,6 +567,10 @@ script
         profile.isDropRateInherited = $('#inheritDropRate').checked;
         profile.isUptimeInherited = $('#inheritUptime').checked;
         if(!updatePortsModel()) {return};
+
+        profile.broadcasts = viewModel.broadcasts();
+
+        console.log(profile);
 
         //need conditional here for add vs. edit, false == edit, true == add
         try 

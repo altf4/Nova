@@ -122,7 +122,57 @@ block content
           
         label(id='errorEthernet', style='color:red;', value='')
         input(type='hidden', id='profDist', value='')
-    
+   
+    h3.cardHeader Profile Broadcast Configuration
+    div.cardOuter
+      div.cardInner
+        table.novaGrid
+          thead
+            tr.novaGrid
+              td.novaGrid Script
+              td.novaGrid Source Port
+              td.novaGrid Destination Port
+              td.novaGrid Time
+          tbody(data-bind="foreach: broadcasts")
+            tr.novaGrid
+              td.novaGrid
+                input(type="text", data-bind="value: script")
+              td.novaGrid
+                input(type="number", data-bind="value: srcPort")
+              td.novaGrid
+                input(type="number", data-bind="value: dstPort")
+              td.novaGrid
+                input(type="number", data-bind="value: time")
+              td.novaGrid
+                a.button(href="#", data-bind="click: $root.removeBroadcast") Delete
+
+        table
+          tr
+            td
+              span Script
+            td
+              input#bcastscript(type="text", placeholder="Path to script...")
+          tr
+            td
+                span Source Port
+            td
+              input#bcastsrcport(type="number")
+          tr
+            td
+              span Destination Port
+            td
+              input#bcastdstport(type="number")
+          tr
+            td
+              span Time
+            td
+              input#bcasttime(type="number")
+        button(onclick="addBroadcast()") Add Broadcast Script
+
+
+        
+
+
     h3.cardHeader Profile Port Configuration
     div.cardOuter
       div.cardInner

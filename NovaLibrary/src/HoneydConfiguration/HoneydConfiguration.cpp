@@ -159,9 +159,10 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 				if(!string(broadcasts.first.data()).compare("broadcast"))
 				{
 					Broadcast *bcast = new Broadcast();
+					bcast->m_script = broadcasts.second.get<string>("script");
 					bcast->m_dstPort = broadcasts.second.get<int>("dstport");
 					bcast->m_srcPort = broadcasts.second.get<int>("srcport");
-					bcast->m_script = broadcasts.second.get<string>("script");
+					bcast->m_time = broadcasts.second.get<int>("time");
 
 					profile->m_broadcasts.push_back(bcast);
 				}
@@ -588,9 +589,10 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 	for (uint i = 0; i < root->m_broadcasts.size(); i++)
 	{
 		ptree broadcast;
+		broadcast.put<std::string>("script", root->m_broadcasts[i]->m_script);
 		broadcast.put<int>("srcport", root->m_broadcasts[i]->m_srcPort);
 		broadcast.put<int>("dstport", root->m_broadcasts[i]->m_dstPort);
-		broadcast.put<std::string>("script", root->m_broadcasts[i]->m_script);
+		broadcast.put<int>("time", root->m_broadcasts[i]->m_time);
 
 		broadcasts.add_child("broadcast", broadcast);
 	}
@@ -1006,7 +1008,7 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 	{
 		//Copy over the contents of this profile, and quit
 		duplicate->Copy(profile);
-
+	
 		//We don't need this new profile anymore, so get rid of it
 		if(profile != NULL)
 		{

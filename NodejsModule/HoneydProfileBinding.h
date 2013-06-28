@@ -18,6 +18,7 @@ public:
 	bool SetCount(int count);
 	int AddPortSet();
 	bool ClearPorts();
+        bool ClearBroadcasts();
 
 	bool SetIsPersonalityInherited(bool);
 	bool SetIsDropRateInherited(bool);
@@ -34,6 +35,7 @@ private:
 	static v8::Handle<v8::Value> AddPort(const v8::Arguments& args);
 	static v8::Handle<v8::Value> SetVendors(const v8::Arguments& args);
 	static v8::Handle<v8::Value> SetPortSetBehavior(const v8::Arguments& args);
+	static v8::Handle<v8::Value> AddBroadcast(const v8::Arguments& args);
 
 	static v8::Handle<v8::Value> New(const v8::Arguments& args);
 

@@ -25,6 +25,7 @@ Handle<Object> HoneydNodeJs::WrapBroadcast(Broadcast* bcast)
 		proto->Set("GetScript",  FunctionTemplate::New(InvokeMethod<string, Broadcast, &Nova::Broadcast::GetScript>) );
 		proto->Set("GetSrcPort",  FunctionTemplate::New(InvokeMethod<int, Broadcast, &Nova::Broadcast::GetSrcPort>) );
 		proto->Set("GetDstPort",  FunctionTemplate::New(InvokeMethod<int, Broadcast, &Nova::Broadcast::GetDstPort>) );
+		proto->Set("GetTime",  FunctionTemplate::New(InvokeMethod<int, Broadcast, &Nova::Broadcast::GetTime>) );
 	}
 	
 	
