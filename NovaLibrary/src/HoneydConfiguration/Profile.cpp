@@ -128,6 +128,11 @@ string Profile::ToString(int portSetIndex, const std::string &nodeName)
 		out << "set " << nodeName << " droprate in " << m_dropRate << '\n';
 	}
 
+	for (uint i = 0; i < m_broadcasts.size(); i++)
+	{
+		out << "broadcast " << nodeName << " srcport " << m_broadcasts[i]->m_srcPort << " dstport " << m_broadcasts[i]->m_dstPort << " time " << m_broadcasts[i]->m_time << " \"" << m_broadcasts[i]->m_script << "\"\n";
+	}
+
 	return out.str();
 }
 

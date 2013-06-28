@@ -55,6 +55,11 @@ Handle<Value> HoneydProfileBinding::AddBroadcast(const Arguments& args)
 
 bool HoneydProfileBinding::ClearBroadcasts()
 {
+	for (uint i = 0; i < m_profile->m_broadcasts.size(); i++)
+	{
+		delete m_profile->m_broadcasts[i];
+	}
+
         m_profile->m_broadcasts.clear();	
         return true;
 }
