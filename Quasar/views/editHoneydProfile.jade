@@ -151,7 +151,10 @@ block content
             td
               span Script
             td
-              input#bcastscript(type="text", placeholder="Path to script...")
+              select#bcastscript
+                each script, i in bcastScripts
+                  option(value="#{script}") #{script}
+
           tr
             td
                 span Source Port

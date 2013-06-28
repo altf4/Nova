@@ -50,6 +50,8 @@ public:
 	std::map<std::string, std::vector<std::string>> options;
 	std::map<std::string, std::string> optionDescriptions;
 
+	bool m_isBroadcastScript;
+	
 	// Getters for the binding code
 	std::string GetName() {return m_name;}
 	std::string GetService() {return m_service;}

@@ -130,7 +130,7 @@ string Profile::ToString(int portSetIndex, const std::string &nodeName)
 
 	for (uint i = 0; i < m_broadcasts.size(); i++)
 	{
-		out << "broadcast " << nodeName << " srcport " << m_broadcasts[i]->m_srcPort << " dstport " << m_broadcasts[i]->m_dstPort << " time " << m_broadcasts[i]->m_time << " \"" << m_broadcasts[i]->m_script << "\"\n";
+		out << "broadcast " << nodeName << " srcport " << m_broadcasts[i]->m_srcPort << " dstport " << m_broadcasts[i]->m_dstPort << " time " << m_broadcasts[i]->m_time << " \"" << HoneydConfiguration::Inst()->GetScript(m_broadcasts[i]->m_script).m_path << "\"\n";
 	}
 
 	return out.str();

@@ -399,6 +399,7 @@ bool HoneydConfiguration::ReadScriptsXML()//write complex test that moves the xm
 				script.m_path = value.second.get<string>("path");
 				script.m_defaultPort = value.second.get<string>("defaultport");
 				script.m_defaultProtocol = value.second.get<string>("defaultprotocol");
+				script.m_isBroadcastScript = value.second.get<bool>("broadcast");
 				script.m_isConfigurable = value.second.get<bool>("configurable");
 
 				//cout << "Configurable is " << script.m_isConfigurable << endl;
@@ -470,6 +471,7 @@ bool HoneydConfiguration::WriteScriptsToXML()
 		propTree.put<string>("path", m_scripts[i].m_path);
 		propTree.put<string>("defaultport", m_scripts[i].m_defaultPort);
 		propTree.put<string>("defaultprotocol", m_scripts[i].m_defaultProtocol);
+		propTree.put<bool>("broadcast", m_scripts[i].m_isBroadcastScript);
 		propTree.put<bool>("configurable", m_scripts[i].m_isConfigurable);
 
 		for (std::map<std::string, std::vector<std::string>>::iterator it = m_scripts[i].options.begin(); it != m_scripts[i].options.end(); it++)
@@ -919,7 +921,23 @@ vector<string> HoneydConfiguration::GetScriptNames()
 	vector<string> scriptNames;
 	for(uint i = 0; i < m_scripts.size(); i++)
 	{
-		scriptNames.push_back(m_scripts[i].m_name);
+		if (!m_scripts[i].m_isBroadcastScript)
+		{
+			scriptNames.push_back(m_scripts[i].m_name);
+		}
+	}
+	return scriptNames;
+}
+
+vector<string> HoneydConfiguration::GetBroadcastScriptNames()
+{
+	vector<string> scriptNames;
+	for(uint i = 0; i < m_scripts.size(); i++)
+	{
+		if (m_scripts[i].m_isBroadcastScript)
+		{
+			scriptNames.push_back(m_scripts[i].m_name);
+		}
 	}
 	return scriptNames;
 }

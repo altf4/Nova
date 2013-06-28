@@ -132,9 +132,11 @@ public:
 	Script GetScript(std::string name);
 	std::vector<Script> GetScripts(std::string service, std::string osclass = "");
 
-	//This function allows easy access to all scripts
-	// Returns a vector of strings containing the names of all scripts
+	// Returns a vector of strings containing the names of all non-broadcast scripts
 	std::vector<std::string> GetScriptNames();
+	
+	// Returns a vector of strings containing the names of all broadcast scripts
+	std::vector<std::string> GetBroadcastScriptNames();
 
 	//Removes a profile and all associated nodes from the Honeyd configuration
 	//	profileName: name of the profile you wish to delete
