@@ -351,4 +351,42 @@
 		<broadcast>true</broadcast>
 		<configurable>false</configurable>
 	</script>
+	<script>
+		<name>SMB Autofail</name>
+		<service>smb</service>
+		<osclass>Microsoft | Windows</osclass>
+		<path>python /usr/share/honeyd/scripts/misc/smb-autofail.py $ipdst</path>
+        <defaultprotocol>tcp</defaultprotocol>
+        <defaultport>445</defaultport>
+        <broadcast>false</broadcast>
+		<configurable>true</configurable>
+		<option>
+			<key>TIME_ZONE</key>
+			<description>Minutes from UTC that the server is</description>
+            <value>480</value>
+			<value>420</value>
+            <value>360</value>
+            <value>300</value>
+            <value>240</value>
+		</option>
+		<option>
+			<key>PRIMARY_DOMAIN</key>
+			<description>The domain name that the server resides in</description>
+			<value>WORKGROUP</value>
+            <value>CORPORATE</value>
+		</option>
+		<option>
+			<key>NATIVE_OS</key>
+			<description>The OS that the server running uses</description>
+			<value>Windows Server 2003 R2 3790 Service Pack 2</value>
+            <value>Unix</value>
+		</option>
+		<option>
+			<key>LAN_MANAGER</key>
+			<description>The server application that hosts the SMB share</description>
+			<value>Windows Server 2003 R2 5.2</value>
+			<value>Samba 4.0.2</value>
+            <value>Samba 3.6.3</value>
+		</option>
+	</script>
 </scripts>
