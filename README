@@ -2,31 +2,75 @@
 What is Nova?
 ===============================
 
-- Nova is a software application for preventing and detecting hostile Network
-  Reconnaissance.  It does this by first creating the Haystack: a large array of
-  thin virtual machines on the target network. These VMs are created using an
-  updated Honeyd to be extremely lightweight. They're not your typical VMs that
-  you might see from VirtualBox or VMWare. They just appear to be real from the
-  perspective of the network, and run network "services", which are just shell
-  scripts.
+- Nova is an easy to use honeypot configuration, deployment, and monitoring
+  network security tool for preventing and detecting potentially hostile network
+  reconnaissance (including port scanning, machine fingerprinting, and service
+  probing). As this is often the first things hackers will do once they've
+  gained a foothold into a network, Nova can act as an Intrusion Detection
+  System (IDS) by alerting when a machine has been compromised and is attempting
+  to scan the network. Even if a machine hasn't been compromised, Nova can help
+  protect against Inside Threats from unauthorized employees attempting to probe
+  the network infrastructure. 
 
-- Second, Nova uses machine learning algorithms to automatically detect and
-  classify attempts at hostile reconnaissance, so there's no need to go
-  searching manually through your honeypot's log files.
+
+===============================
+How does Nova work?
+===============================
+
+- The Quasar web interface of Nova provides easy access to configuration and
+  monitoring of the system from your standard web browser. From there, you can
+  configure the Haystack: a large set of lightweight honeypots (powered by
+  Honeyd). These honeypots can be configured to match the operating systems and
+  services that are already on your network, making it difficult for attackers
+  to distinguish them from real machines; these honeypots will appear just like
+  real machines when scanned with standard network reconnaissance tools such as
+  Nmap or Nessus. Nova also includes the ability to create a haystack
+  configuration automatically by scanning your network and configuring the
+  honeypot operating systems and services to match as close as possible.
+
+- Once the honeypots are running, Nova alerts the users about potentially
+  hostile activity by email, rsyslog, or the web interface. The detection of
+  this activity is accomplished via one of several methods.
+
+  - First, Nova uses machine learning algorithms to attempt to match patterns of
+    hostile network traffic based on statistics gathered about packet sizes,
+    distributions, and TCP flag ratios.
+
+  - Second, Nova will trigger an alert if one of the statistical features
+    gathered surpasses a certain threshold. The most common setting for this is
+    to trigger and alert if an IP address contacts more than a certain number of
+    honeypots or ports on a single honeypot.
+
+  - Thirdly, the services running on the honeypots have the ability to monitor
+    for login attempts and trigger alerts. For instance, if someone attempts to
+    log into a honeypot's telnet or FTP service, this can be assumed to be
+    hostile, because the honeypot serves no actual users and any attempts to
+    utilize or probe its services are likely for the sake of reconnaissance or
+    attack.
+
+- Nova provides information gathered on the honeypots in a number of charts,
+  graphs, and tables, which give security analysts and systems administrators
+  the needed data to dive into alerts and determine if there is a threat on the
+  network.
+
 
 =============================== 
 Enterprise Hardware and Support
 =============================== 
 
-- DataSoft can provide preconfigured and ready to use out of the box appliance 
-  servers as well as Enterprise level support. Please visit our store page for 
-  more information,
+- In order to save time setting up Nova, DataSoft can provide preconfigured and
+  ready to use out of the box appliance servers. DataSoft also provides
+  Enterprise level support contracts to ensure help with installation and usage
+  as well as continuous updates and R&D hours dedicated to your organization's
+  needs. Please visit our store page for more information,
 
   http://projectnova.org/store
 
+- You can also contact us via email at nova@datasoft.com
+
 
 =============================== 
-The Installation Guide
+Automatic Installation Script
 ===============================
 
 - The first thing to note is that Nova is currently only compatible with Linux.
@@ -41,13 +85,13 @@ The Installation Guide
   Any other distributions should manually compile using the instructions below.
 
 - NOTE: The above will install the newest stable version of Nova. If you want
-  the current unstable version, instead run,
+  the newest but possibly unstable version, instead run,
         
-		wget https://raw.github.com/DataSoft/Nova/master/debian/novaInstallHelper.sh
+        wget https://raw.github.com/DataSoft/Nova/master/debian/novaInstallHelper.sh
         sudo bash novaInstallHelper.sh integration
 
 =============================== 
-Getting the newest code
+Getting the newest code manually
 ===============================
 
 - Nova and Honeyd are stored as seperate Git repositories on github. Go to the
@@ -350,7 +394,7 @@ Tips for debugging problems
          
           To enable verbose debug log messages, run the command,
 
-                novacli writesetting SERVICE_PREFERENCES 0:0+\;1:5+\;2:6+\;
+                novacli writesetting SERVICE_PREFERENCES 0:0+;1:6+;
 
           If the above fails for some reason, you can also change the logging
           settings manually in the ~/.config/nova/config/NOVAConfig.txt file
@@ -427,7 +471,9 @@ Tips for debugging problems
 
                 cd $NOVA_SOURCE make clean make debug make reinstall
 
-                gdb novad run backtrace
+                gdb novad
+                run
+                backtrace
 
 =============================== 
 RSyslog Support 
@@ -467,6 +513,7 @@ Testing that these changes worked is a good idea as well. Simply start and stop
 novad on the client with the novacli command line interface and check that the
 log messages sent at startup arrived at the right place
 
+
 ===============================
 Pulsar
 ===============================
@@ -482,6 +529,7 @@ have configured Nova such that it has the MASTER_UI_ENABLED
 configuration variable set to 1, as well as properly configuring the
 MASTER_UI_IP and MASTER_UI_CLIENT_ID variables to match the location and
 naming requirements for the user's network. 
+
 
 =============================== 
 Contact us 
