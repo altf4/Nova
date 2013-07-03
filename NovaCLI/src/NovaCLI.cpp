@@ -520,8 +520,16 @@ void StartHaystackWrapper(bool debug)
 void StopNovaWrapper()
 {
 	Connect();
-	StopNovad();
-	MonitorCallback();
+	Ping(1);
+	MonitorCallback(1);
+	if(IsNovadConnected())
+	{
+		StopNovad();
+	}
+	else
+	{
+		cout << "Unable to connect to novad" << endl;
+	}
 }
 
 void StopHaystackWrapper()
