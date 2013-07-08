@@ -282,7 +282,7 @@ block headerAdditions
             line = line.replace(/ +(?= )/g, '');
             var match = line.match(/(\S+ \S+ \S+) ([^:]+): (.*)/);
 
-            if(match != null && isIn(match, allowedLevels))
+            if(match != null)
             {
                 match.splice(0,1,Number(linenum));
                 
