@@ -246,16 +246,27 @@ script
 
   var addEthernetVendor = function(vendorName, vendorCount){
     // Check for duplicates
-    for(var i in profile.ethernet)
-    {
-      if(profile.ethernet[i].vendor == vendorName)
+    now.checkVendor(vendorName, function(retVal){
+      if(retVal)
       {
-        alert('Vendor already exists. Can not have duplicates.');
-        return;
+        for(var i in profile.ethernet)
+        {
+          if(profile.ethernet[i].vendor == vendorName)
+          {
+            alert('Vendor already exists. Can not have duplicates.');
+            return;
+          }
+        }
+        profile.ethernet.push({vendor: vendorName, count: vendorCount});
+        $('#ethernet').val('');
+        refreshVendorsView();
       }
-    }
-    profile.ethernet.push({vendor: vendorName, count: vendorCount});
-    refreshVendorsView();
+      else
+      {
+        $('#ethernet').val('');
+        alert('Must select a vendor from the vendor list!');
+      }
+    });
   };
 
   var deleteEthernetVendor = function(vendorIndex){
@@ -463,8 +474,6 @@ script
         bcast.dstPort = $("#bcastdstport").val();
         bcast.time = $("#bcasttime").val();
 
-        console.log(bcast);
-
         viewModel.broadcasts.push(bcast);
   };
   var viewModel;
@@ -474,12 +483,9 @@ script
       ko.applyBindings(viewModel);
 
       now.GetBroadcasts('#{oldName}', function(bcasts) {
-        console.log(bcasts);
         for (var i = 0; i < bcasts.length; i++) {
             viewModel.broadcasts.push(bcasts[i]);
         }
-
-        
       });
 
       personalities = [];

@@ -112,7 +112,7 @@ block content
       div.cardInner
         table#ethernetVendors
          
-        div(id='ethSelectDiv')
+        div#ethSelectDiv
           button.button(type='button', id='ethSelectButton', onclick='addEthernetVendor($("#ethernet").val(), 1)')
             img.buttonIcon(src='images/add.png')
             span.buttonSpan Add New Vendor
@@ -120,8 +120,8 @@ block content
           input#ethernet(style="display: inline-block")
           span#showAllVendors(class="ui-button-icon-primary ui-icon ui-icon-triangle-1-s", style="display: inline-block")
           
-        label(id='errorEthernet', style='color:red;', value='')
-        input(type='hidden', id='profDist', value='')
+        label#errorEthernet(style='color:red;', value='')
+        input#profDist(type='hidden', value='')
    
     h3.cardHeader Profile Broadcast Configuration
     div.cardOuter
@@ -171,10 +171,6 @@ block content
             td
               input#bcasttime(type="number")
         button(onclick="addBroadcast()") Add Broadcast Script
-
-
-        
-
 
     h3.cardHeader Profile Port Configuration
     div.cardOuter

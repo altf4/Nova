@@ -115,6 +115,24 @@ everyone.now.createHoneydNodes = function(ipType, ip1, ip2, ip3, ip4, profile, p
     cb && cb(result);
 };
 
+everyone.now.checkVendor = function(vendorName, cb) {
+  var vendors = NovaCommon.vendorToMacDb.GetVendorNames();
+  if(vendorName == '')
+  {
+    cb && cb(false);
+    return;
+  }
+  var ok = false;
+  for(var i in vendors)
+  {
+    if(vendors[i] == vendorName)
+    {
+      ok = true;
+    }
+  }
+  cb && cb(ok);
+}
+
 everyone.now.SaveDoppelganger = function(node, cb)
 {
     var ipAddress = node.ip;
