@@ -1188,6 +1188,7 @@ app.get('/addHoneydProfile', function (req, res)
       newProfile: true,
       vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
       scripts: NovaCommon.honeydConfig.GetScriptNames(),
+      bcastScripts: NovaCommon.honeydConfig.GetBroadcastScriptNames(),
       personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
     })
 });
