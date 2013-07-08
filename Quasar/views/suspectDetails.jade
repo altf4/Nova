@@ -276,12 +276,16 @@ block headerAdditions
         
         
         var num = 100*(suspect.count_tcpSyn + suspect.count_tcpSynAck) / (1.0 * suspect.count_tcp);
+        num = isNaN(num) ? 0 : num;
         info += '<TR><TD> Percent with SYN </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
-        var num = 100*(suspect.count_tcpAck + suspect.count_tcpSynAck) / (1.0 * suspect.count_tcp);
+        num = 100*(suspect.count_tcpAck + suspect.count_tcpSynAck) / (1.0 * suspect.count_tcp);
+        num = isNaN(num) ? 0 : num;
         info += '<TR><TD> Percent with ACK </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
-        var num = 100*(suspect.count_tcpFin) / (1.0 * suspect.count_tcp);
+        num = 100*(suspect.count_tcpFin) / (1.0 * suspect.count_tcp);
+        num = isNaN(num) ? 0 : num;
         info += '<TR><TD> Percent with FIN </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
-        var num = 100*(suspect.count_tcpRst) / (1.0 * suspect.count_tcp);
+        num = 100*(suspect.count_tcpRst) / (1.0 * suspect.count_tcp);
+        num = isNaN(num) ? 0 : num;
         info += '<TR><TD> Percent with RST </TD> <TD> <div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div> </TD></TR>';
         info += "</TABLE>";
         $("#tcpFlagCharts").html(info); 
