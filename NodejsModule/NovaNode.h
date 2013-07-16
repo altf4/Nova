@@ -46,8 +46,8 @@ private:
 	static void InitNovaCallbackProcessing();
 	static bool CheckInitNova();
 
-	static void NovaCallbackHandling(eio_req __attribute__((__unused__)) *req);
-	static int AfterNovaCallbackHandling(eio_req __attribute__((__unused__)) *req);
+	static void NovaCallbackHandling(uv_work_t*);
+	static void AfterNovaCallbackHandling(uv_work_t*);
 	static void HandleAllSuspectsCleared();
 	static void HandleSuspectCleared(Suspect *);
 	static void HandleCallbackError();

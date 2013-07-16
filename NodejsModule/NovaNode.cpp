@@ -34,7 +34,9 @@ int32_t messageID = 0;
 
 void NovaNode::InitNovaCallbackProcessing()
 {
-	eio_custom(NovaCallbackHandling, EIO_PRI_DEFAULT, AfterNovaCallbackHandling, NULL);
+	uv_work_t *req = new uv_work_t;
+	req->data = NULL;
+	uv_queue_work(uv_default_loop(), req, NovaCallbackHandling, (uv_after_work_cb)AfterNovaCallbackHandling);
 }
 
 bool NovaNode::CheckInitNova()
@@ -53,7 +55,7 @@ bool NovaNode::CheckInitNova()
 	return false;
 }
 
-void NovaNode::NovaCallbackHandling(eio_req*)
+void NovaNode::NovaCallbackHandling(uv_work_t*)
 {
 	LOG(DEBUG, "Initializing Novad callback processing","");
 
@@ -99,9 +101,9 @@ void NovaNode::NovaCallbackHandling(eio_req*)
 }
 
 
-int NovaNode::AfterNovaCallbackHandling(eio_req*)
+void NovaNode::AfterNovaCallbackHandling(uv_work_t *req)
 {
-	return 0;
+	delete req;
 }
 
 void NovaNode::HandleSuspectCleared(Suspect *suspect)
