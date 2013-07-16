@@ -353,6 +353,36 @@ Debian Packages
 Common Problems and solutions
 ===============================
         ==================
+        Honeypots aren't responding to packets when run inside a VM
+        ==================
+          The most common reason for this is that the Virtual Machine is unable
+          to open the ethernet interface in promiscuous monitoring mode.
+          The standard Linux process is that only root can put the NIC into
+          promiscuous mode, so you may need to run VMware as root or change
+          permissions of the /dev/vmnet device if using VMware Player or
+          Workstation. See link at,
+
+            https://www.vmware.com/support/ws55/doc/ws_net_advanced_linux_vadapter_promiscuous.html
+          
+          In addition, VMWare ESX switches have a configuration setting to block
+          promiscuous mode that must be disabled for Honeyd to work.
+
+          Virtualbox will need to be set to bridged networking mode and "Allow
+          All" under the promiscuous mode setting of the ethernet adapter.
+
+          Finally, some virtual machines will have settings to block MAC or IP
+          spoofing from within the VM. This security feature will need to be
+          disabled for Honeyd to function.
+
+        ==================
+        Honeypots aren't responding to packets sent from the same machine 
+        that Honeyd is running on.
+        ==================
+          This is normal. Honeyd ignores packets from the machine that it's
+          running on. You'll need to ping/contact the honeypots from another
+          machine on your network for them to respond.
+
+        ==================
         Help! I forgot my Quasar password!
         ==================
           The default password is username 'nova' and password 'toor'. To reset
