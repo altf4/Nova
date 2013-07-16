@@ -18,7 +18,6 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
-#include "SerializationHelper.h"
 #include "DatabaseQueue.h"
 #include "HashMap.h"
 #include "Config.h"

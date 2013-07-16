@@ -20,7 +20,6 @@
 #ifndef SUSPECT_H_
 #define SUSPECT_H_
 
-#include "SerializationHelper.h"
 #include "Point.h"
 #include "Evidence.h"
 #include "EvidenceAccumulator.h"
