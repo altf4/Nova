@@ -190,7 +190,9 @@ clean-test:
 	$(MAKE) -C NovaTest/Debug clean
 
 clean-nodejsmodule:
-	-cd NodejsModule; node-waf clean
+	-cd NodejsModule
+	-node-waf clean
+	-node-gyp clean
 
 clean-quasar: clean-nodejsmodule
 	-rm -rf NodejsModule/build
