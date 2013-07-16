@@ -2,10 +2,6 @@
     'targets': [
       {
         'target_name': 'novaconfig',
-        'defines': [
-          'DEFINE_FOO',
-          'DEFINE_A_VALUE=value',
-        ],
         'include_dirs': [
   	      ".",
           '..',
@@ -31,9 +27,9 @@
 		  'libraries': [
 			"-L../../NovaLibrary",
 			"-L../../Nova_UI_Core",
-		    "-lNovaLibrary",
 		    "-lNova_UI_Core",
 		    "-lann",
+		    "-lNovaLibrary",
             "-lcurl",
             "-lboost_filesystem",
             "-lboost_program_options",
