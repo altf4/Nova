@@ -49,7 +49,6 @@ private:
 
 	static v8::Handle<v8::Value> SetDoppelganger(const v8::Arguments& args);
 
-	static v8::Handle<v8::Value> RenamePortset(const v8::Arguments& args);
 };
 
 #endif

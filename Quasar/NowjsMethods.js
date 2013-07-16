@@ -669,17 +669,6 @@ everyone.now.SaveProfile = function (profile, newProfile, cb)
     cb();
 };
 
-everyone.now.RenamePortset = function(profile, oldName, newName, cb)
-{
-  var encodedName = sanitizeCheck(newName).entityEncode();
-  var result = NovaCommon.honeydConfig.RenamePortset(oldName, encodedName, profile);
-  NovaCommon.honeydConfig.SaveAll();
-  if(typeof cb == 'function')
-  {
-    cb();
-  }
-};
-
 everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, subnets, groupName, append, cb, route)
 {
     if(!(new RegExp('^[a-zA-Z0-9 \\-_]+$')).test(groupName))

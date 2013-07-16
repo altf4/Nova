@@ -156,8 +156,6 @@ public:
 
 	bool RenameProfile(std::string oldName, std::string newName);
 
-	bool RenamePortset(std::string profile, std::string oldName, std::string newName);
-
 	Profile* GetRoot();
 
 	//Finds out if the given MAC address is in use
