@@ -508,19 +508,13 @@ script
       $("#ethernetSelect option").each(function() {
         ethernetVendors.push($(this).val());
       });
+      ethernetVendors.sort();
 
       $("#ethernet").autocomplete({
         source: ethernetVendors
-        , delay: 0
+        , delay: 300
         , minLength: 0
-        , source: function( request, response ) {
-            var matches = $.map( ethernetVendors, function(tag) {
-              if ( tag.toUpperCase().indexOf(request.term.toUpperCase()) === 0 ) {
-                return tag;
-              }
-            }); 
-            response(matches);
-          }
+        , autoFocus: true
       });
 
       $("#showAllVendors")[0].onclick = function() {
