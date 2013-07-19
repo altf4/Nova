@@ -650,8 +650,8 @@ h2 Ethernet Interfaces
         input(type='checkbox', value=INTERFACES[i].iface, id='if#{i}', name='INTERFACE', width=10, onclick='checkAtLeastOne()')
         span #{INTERFACE_ALIASES[i]}
         
- hidden(id='length', value=INTERFACES.length) 
- input(type='hidden', name='DEFAULT', id='DEFAULT', value=DEFAULT)
+input(type='hidden', id='length', value=INTERFACES.length) 
+input(type='hidden', name='DEFAULT', id='DEFAULT', value=DEFAULT)
 
 br
 input(type='hidden', name='DM_ENABLED', value='0')
