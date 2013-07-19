@@ -132,6 +132,10 @@ string Profile::ToString(int portSetIndex, const std::string &nodeName)
 	{
 		out << "broadcast " << nodeName << " srcport " << m_broadcasts[i]->m_srcPort << " dstport " << m_broadcasts[i]->m_dstPort << " time " << m_broadcasts[i]->m_time << " \"" << HoneydConfiguration::Inst()->GetScript(m_broadcasts[i]->m_script).m_path << "\"\n";
 	}
+	for (uint i = 0; i < m_proxies.size(); i++)
+	{
+		out << "add " << nodeName << " " << m_proxies[i]->m_protocol << " port " << m_proxies[i]->m_honeypotPort << " proxy " << m_proxies[i]->m_proxyIP << ":" << m_proxies[i]->m_proxyPort << "\n";
+	}
 
 	return out.str();
 }
@@ -257,6 +261,12 @@ bool Profile::Copy(Profile *source)
 	for (uint i = 0; i < source->m_broadcasts.size(); i++)
 	{
 		m_broadcasts.push_back(new Broadcast(*source->m_broadcasts[i]));
+	}
+
+	m_proxies.clear();
+	for (uint i = 0; i < source->m_proxies.size(); i++)
+	{
+		m_proxies.push_back(new Proxy(*source->m_proxies[i]));
 	}
 
 	return true;

@@ -70,8 +70,12 @@ script
     var self = this;
     self.broadcasts = ko.observableArray();
     self.removeBroadcast =  function(bcast) {
-      console.log(self);
       self.broadcasts.remove(bcast);    
+    }
+
+    self.proxies = ko.observableArray();
+    self.removeProxy = function(proxy) {
+      self.proxies.remove(proxy);
     }
   };
 
@@ -466,16 +470,30 @@ script
       }
     }
   }
+  
+
+  function addProxy() {
+    var proxy = {
+      honeypotPort: $("#honeypotPort").val()
+      , proxyIP: $("#proxyIP").val()
+      , protocol: $("#proxyProtocol").val()
+      , proxyPort: $("#proxyPort").val()
+    };
+    console.log(proxy);
+    viewModel.proxies.push(proxy);
+  }
 
   function addBroadcast() {
-        var bcast = {};
-        bcast.script = $("#bcastscript").val();
-        bcast.srcPort = $("#bcastsrcport").val();
-        bcast.dstPort = $("#bcastdstport").val();
-        bcast.time = $("#bcasttime").val();
+    var bcast = {
+      script: $("#bcastscript").val()
+      , srcPort: $("#bcastsrcport").val()
+      , dstPort: $("#bcastdstport").val()
+      , time: $("#bcasttime").val()
+    };
 
-        viewModel.broadcasts.push(bcast);
+    viewModel.broadcasts.push(bcast);
   };
+
   var viewModel;
   function init()
   {
@@ -485,6 +503,13 @@ script
       now.GetBroadcasts('#{oldName}', function(bcasts) {
         for (var i = 0; i < bcasts.length; i++) {
             viewModel.broadcasts.push(bcasts[i]);
+        }
+      });
+
+      now.GetProxies('#{oldName}', function(proxies) {
+        console.log(proxies);
+        for (var i = 0; i < proxies.length; i++) {
+            viewModel.proxies.push(proxies[i]);
         }
       });
 
@@ -569,6 +594,7 @@ script
         if(!updatePortsModel()) {return};
 
         profile.broadcasts = viewModel.broadcasts();
+        profile.proxies = viewModel.proxies();
 
         console.log(profile);
 

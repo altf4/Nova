@@ -27,11 +27,35 @@ bool HoneydProfileBinding::SetPersonality(std::string personality)
 	return true;
 }
 
+Handle<Value> HoneydProfileBinding::AddProxy(const Arguments& args)
+{
+	HandleScope scope;
+	
+	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
+
+	if (args.Length() != 4) {
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 4 parameters")));
+	}
+	
+	Profile *profile = obj->m_profile;
+
+
+	Proxy *proxy = new Proxy();
+	proxy->m_protocol = cvv8::CastFromJS<string>(args[0]);
+	proxy->m_honeypotPort = cvv8::CastFromJS<int>(args[1]);
+	proxy->m_proxyIP = cvv8::CastFromJS<string>(args[2]);
+	proxy->m_proxyPort = cvv8::CastFromJS<int>(args[3]);
+
+	profile->m_proxies.push_back(proxy);
+
+	return scope.Close( Null() );
+}
+
 Handle<Value> HoneydProfileBinding::AddBroadcast(const Arguments& args)
 {
 	HandleScope scope;
 	
-        HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
+	HoneydProfileBinding* obj = ObjectWrap::Unwrap<HoneydProfileBinding>(args.This());
 
 	if (args.Length() != 4) {
 		return ThrowException(Exception::TypeError(String::New("Must be invoked with 4 parameters")));
@@ -62,10 +86,20 @@ bool HoneydProfileBinding::ClearBroadcasts()
 		delete m_profile->m_broadcasts[i];
 	}
 
-        m_profile->m_broadcasts.clear();	
-        return true;
+	m_profile->m_broadcasts.clear();	
+	return true;
 }
 
+bool HoneydProfileBinding::ClearProxies()
+{
+	for (uint i = 0; i < m_profile->m_proxies.size(); i++)
+	{
+		delete m_profile->m_proxies[i];
+	}
+
+	m_profile->m_proxies.clear();	
+	return true;
+}
 
 bool HoneydProfileBinding::SetCount(int count)
 {
@@ -262,7 +296,7 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 	Local<Template> proto = tpl->PrototypeTemplate();
 
 	proto->Set("SetPersonality",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  std::string, &HoneydProfileBinding::SetPersonality>));
-	proto->Set("SetCount",			FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  int, 		&HoneydProfileBinding::SetCount>));
+	proto->Set("SetCount",			FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  int,		&HoneydProfileBinding::SetCount>));
 	proto->Set("AddPortSet",		FunctionTemplate::New(InvokeMethod<int, HoneydProfileBinding,  &HoneydProfileBinding::AddPortSet>));
 	proto->Set("ClearPorts",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  &HoneydProfileBinding::ClearPorts>));
 	proto->Set("SetIsPersonalityInherited",	FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsPersonalityInherited>));
@@ -270,13 +304,15 @@ void HoneydProfileBinding::Init(v8::Handle<Object> target)
 	proto->Set("SetIsUptimeInherited",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  bool, &HoneydProfileBinding::SetIsUptimeInherited>));
 	proto->Set("Save",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding, &HoneydProfileBinding::Save>));
 	
-        proto->Set("ClearBroadcasts",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  &HoneydProfileBinding::ClearBroadcasts>));
+	proto->Set("ClearBroadcasts",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  &HoneydProfileBinding::ClearBroadcasts>));
+	proto->Set("ClearProxies",		FunctionTemplate::New(InvokeMethod<bool, HoneydProfileBinding,  &HoneydProfileBinding::ClearProxies>));
 
 	proto->Set("SetUptimeMin",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile, uint, &Profile::SetUptimeMin>));
-	proto->Set("SetUptimeMax",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile,  uint, 		&Profile::SetUptimeMax>));
+	proto->Set("SetUptimeMax",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile,  uint,		&Profile::SetUptimeMax>));
 	proto->Set("SetDropRate",		FunctionTemplate::New(InvokeWrappedMethod<bool, HoneydProfileBinding, Profile,  std::string, &Profile::SetDropRate>));
 
 	proto->Set("AddBroadcast",		FunctionTemplate::New(AddBroadcast)->GetFunction());
+	proto->Set("AddProxy",		FunctionTemplate::New(AddProxy)->GetFunction());
 
 	//Odd ball out, because it needs 5 parameters. More than InvoleWrappedMethod can handle
 	proto->Set(String::NewSymbol("AddPort"),FunctionTemplate::New(AddPort)->GetFunction());

@@ -19,6 +19,7 @@ CPP_SRCS += \
 ../src/NovaUtil.cpp \
 ../src/PacketCapture.cpp \
 ../src/Point.cpp \
+../src/Proxy.cpp \
 ../src/Suspect.cpp \
 ../src/WhitelistConfiguration.cpp 
 
@@ -38,6 +39,7 @@ OBJS += \
 ./src/NovaUtil.o \
 ./src/PacketCapture.o \
 ./src/Point.o \
+./src/Proxy.o \
 ./src/Suspect.o \
 ./src/WhitelistConfiguration.o 
 
@@ -57,6 +59,7 @@ CPP_DEPS += \
 ./src/NovaUtil.d \
 ./src/PacketCapture.d \
 ./src/Point.d \
+./src/Proxy.d \
 ./src/Suspect.d \
 ./src/WhitelistConfiguration.d 
 

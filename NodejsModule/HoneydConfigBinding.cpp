@@ -68,6 +68,7 @@ void HoneydConfigBinding::Init(Handle<Object> target)
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetPortSetNames"),FunctionTemplate::New(GetPortSetNames)->GetFunction());
 	
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetBroadcasts"),FunctionTemplate::New(GetBroadcasts)->GetFunction());
+	tpl->PrototypeTemplate()->Set(String::NewSymbol("GetProxies"),FunctionTemplate::New(GetProxies)->GetFunction());
 
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("AddConfiguration"),FunctionTemplate::New(AddConfiguration)->GetFunction());
 	tpl->PrototypeTemplate()->Set(String::NewSymbol("RemoveConfiguration"),FunctionTemplate::New(RemoveConfiguration)->GetFunction());
@@ -195,7 +196,33 @@ Handle<Value> HoneydConfigBinding::GetBroadcasts(const Arguments& args)
 	}
 
 	return scope.Close( bcastArray );
+}
 
+Handle<Value> HoneydConfigBinding::GetProxies(const Arguments& args)
+{
+	HandleScope scope;
+	HoneydConfigBinding* obj = ObjectWrap::Unwrap<HoneydConfigBinding>(args.This());
+
+	if (args.Length() != 1) {
+		return ThrowException(Exception::TypeError(String::New("Must be invoked with 1 parameter")));
+	}
+	
+	std::string profileName = cvv8::CastFromJS<string>(args[0]);
+	
+	Profile *profile = obj->m_conf->GetProfile(profileName);
+	if(profile == NULL)
+	{
+		//ERROR
+		return scope.Close( Null() );
+	}
+
+	v8::Local<v8::Array> proxieArray = v8::Array::New();
+	for(uint i = 0; i < profile->m_proxies.size(); i++)
+	{
+		proxieArray->Set(v8::Number::New(i),HoneydNodeJs::WrapProxy(profile->m_proxies[i]));
+	}
+
+	return scope.Close( proxieArray );
 }
 
 Handle<Value> HoneydConfigBinding::DeletePortSet(const Arguments& args)

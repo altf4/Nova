@@ -60,7 +60,7 @@ void VendorMacDb::LoadPrefixFile()
 			}
 
 			// Skip lines that don't have a space (format is "prefix vendor")
-			if (line.find(' ') == -1) {
+			if (line.find(' ') == string::npos) {
 				continue;
 			}
 

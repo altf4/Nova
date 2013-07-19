@@ -40,6 +40,36 @@ Handle<Object> HoneydNodeJs::WrapBroadcast(Broadcast* bcast)
 	return scope.Close(result);
 }
 
+
+Handle<Object> HoneydNodeJs::WrapProxy(Proxy* proxy)
+{
+	HandleScope scope;
+
+	if (proxyTemplate.IsEmpty() )
+	{
+		Handle<FunctionTemplate> protoTemplate = FunctionTemplate::New();
+		protoTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+		proxyTemplate = Persistent<FunctionTemplate>::New(protoTemplate);
+		
+		Local<Template> proto = proxyTemplate->PrototypeTemplate();
+		proto->Set("GetHoneypotPort",  FunctionTemplate::New(InvokeMethod<int, Proxy, &Nova::Proxy::GetHoneypotPort>) );
+		proto->Set("GetProxyIP",  FunctionTemplate::New(InvokeMethod<string, Proxy, &Nova::Proxy::GetProxyIP>) );
+		proto->Set("GetProxyPort",  FunctionTemplate::New(InvokeMethod<int, Proxy, &Nova::Proxy::GetProxyPort>) );
+		proto->Set("GetProtocol",  FunctionTemplate::New(InvokeMethod<string, Proxy, &Nova::Proxy::GetProtocol>) );
+	}
+	
+	
+	// Get the constructor from the template
+	Handle<Function> ctor = proxyTemplate->GetFunction();
+	// Instantiate the object with the constructor
+	Handle<Object> result = ctor->NewInstance();
+	// Wrap the native object in an handle and set it in the internal field to get at later.
+	Handle<External> proxyPtr = External::New(proxy);
+	result->SetInternalField(0,proxyPtr);
+
+	return scope.Close(result);
+}
+
 Handle<Object> HoneydNodeJs::WrapNode(Node* node)
 {
 	HandleScope scope;
@@ -235,6 +265,7 @@ Handle<Object> HoneydNodeJs::WrapProfile(Profile *pfile)
 
 Persistent<FunctionTemplate> HoneydNodeJs::nodeTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::broadcastTemplate;
+Persistent<FunctionTemplate> HoneydNodeJs::proxyTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::portTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::scriptTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::portSetTemplate;

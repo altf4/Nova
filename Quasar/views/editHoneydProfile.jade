@@ -172,6 +172,59 @@ block content
               input#bcasttime(type="number")
         button(onclick="addBroadcast()") Add Broadcast Script
 
+    h3.cardHeader Profile Proxy Services
+    div.cardOuter
+      div.cardInner
+        table.novaGrid(data-bind="visible: proxies().length > 0")
+          thead
+            tr.novaGrid
+              td.novaGrid Protocol
+              td.novaGrid Honeypot Port
+              td.novaGrid Proxy IP
+              td.novaGrid Proxy Port
+          tbody(data-bind="foreach: proxies")
+            tr.novaGrid
+              td.novaGrid
+                select(data-bind="value: protocol")
+                  option tcp
+                  option udp
+              td.novaGrid
+                input(type="text", data-bind="value: protocol")
+              td.novaGrid
+                input(type="number", data-bind="value: honeypotPort")
+              td.novaGrid
+                input(type="text", data-bind="value: proxyIP")
+              td.novaGrid
+                input(type="number", data-bind="value: proxyPort")
+              td.novaGrid
+                a.button(href="#", data-bind="click: $root.removeProxy") Delete
+        table
+          tr
+            td
+              span Protocol
+            td
+              select#proxyProtocol
+                option tcp
+                option udp
+          tr
+            td
+              span Honeypot Port
+            td
+              input#honeypotPort(type="number")
+          tr
+            td
+              span Proxy IP
+            td
+              input#proxyIP(type="text")
+          tr
+            td
+              span Proxy Port
+            td
+              input#proxyPort(type="number")
+        button(onclick="addProxy()") Add Proxy Service
+              
+                
+
     h3.cardHeader Profile Port Configuration
     div.cardOuter
       div.cardInner

@@ -20,6 +20,7 @@
 #ifndef PROFILE_H_
 #define PROFILE_H_
 
+#include "Proxy.h"
 #include "PortSet.h"
 #include "Broadcast.h"
 
@@ -134,6 +135,7 @@ public:
 	std::vector<PortSet *> m_portSets;
 
 	std::vector<Broadcast *> m_broadcasts;
+	std::vector<Proxy *> m_proxies;
 
 private:
 

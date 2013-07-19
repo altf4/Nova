@@ -548,6 +548,11 @@ function jsProfileToHoneydProfile(profile)
     {
         honeydProfile.AddBroadcast(profile.broadcasts[i].script, Number(profile.broadcasts[i].srcPort), Number(profile.broadcasts[i].dstPort), Number(profile.broadcasts[i].time));
     }
+
+    honeydProfile.ClearProxies();
+    for (var i = 0; i < profile.proxies.length; i++) {
+        honeydProfile.AddProxy(profile.proxies[i].protocol, Number(profile.proxies[i].honeypotPort), profile.proxies[i].proxyIP, Number(profile.proxies[i].proxyPort));
+    }
         
     return honeydProfile;
 }
@@ -672,7 +677,7 @@ everyone.now.SaveProfile = function (profile, newProfile, cb)
 everyone.now.ShowAutoConfig = function (nodeInterface, numNodesType, numNodes, subnets, groupName, append, cb, route)
 {
     if(!(new RegExp('^[a-zA-Z0-9 \\-_]+$')).test(groupName))
-	{
+    {
         cb && cb("Haystack name must not be blank and must contain only letters, numbers, and hyphens. Invalid haystack name given.");
         return;
     }
@@ -1495,27 +1500,29 @@ everyone.now.GetPacketSizes = function(ip, iface, cb) {
 
 
 everyone.now.GetBroadcasts = function(profile, cb) {
-	var bcasts = NovaCommon.honeydConfig.GetBroadcasts(profile);
-	
-	for (var i = 0; i < bcasts.length; i++) {
-		bcasts[i].srcPort = bcasts[i].GetSrcPort();
-		bcasts[i].dstPort = bcasts[i].GetDstPort();
-		bcasts[i].time = bcasts[i].GetTime();
-		bcasts[i].script = bcasts[i].GetScript();
-	}
-	cb && cb(bcasts);
+    var bcasts = NovaCommon.honeydConfig.GetBroadcasts(profile);
+    
+    for (var i = 0; i < bcasts.length; i++) {
+        bcasts[i].srcPort = bcasts[i].GetSrcPort();
+        bcasts[i].dstPort = bcasts[i].GetDstPort();
+        bcasts[i].time = bcasts[i].GetTime();
+        bcasts[i].script = bcasts[i].GetScript();
+    }
+    cb && cb(bcasts);
 };
 
-everyone.now.ClearBroadcasts = function(profile, cb) {
-	NovaCommon.honeydConfig.ClearBroadcasts(profile);
-	cb && cb();
-};
+everyone.now.GetProxies = function(profile, cb) {
+    var proxies = NovaCommon.honeydConfig.GetProxies(profile);
 
-everyone.now.AddBroadcast = function(profile, script, srcport, dstport, time, cb) {
-	NovaCommon.honeydConfig.AddBroadcast(script, srcport, dstport, time);
-	cb && cb();
-};
+    for (var i = 0; i < proxies.length; i++) {
+        proxies[i].protocol = proxies[i].GetProtocol();
+        proxies[i].honeypotPort = proxies[i].GetHoneypotPort();
+        proxies[i].proxyIP = proxies[i].GetProxyIP();
+        proxies[i].proxyPort = proxies[i].GetProxyPort();
+    }
 
+    cb && cb(proxies);  
+};
 
 }
 

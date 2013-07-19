@@ -173,6 +173,28 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 			LOG(DEBUG, "Unable to parse Broacdast settings for profile:" + string(e.what()), "");
 		};
 
+		// Proxy services
+		try
+		{
+			BOOST_FOREACH(ptree::value_type &proxies, ptree.get_child("proxies"))
+			{
+				if(!string(proxies.first.data()).compare("proxy"))
+				{
+					Proxy *proxy = new Proxy();
+					proxy->m_honeypotPort = proxies.second.get<int>("honeypotport");
+					proxy->m_proxyIP = proxies.second.get<string>("proxyip");
+					proxy->m_protocol = proxies.second.get<string>("protocol");
+					proxy->m_proxyPort = proxies.second.get<int>("proxyport");
+
+					profile->m_proxies.push_back(proxy);
+				}
+			}
+		}
+		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+		{
+			LOG(DEBUG, "Unable to parse proxy service settings for profile:" + string(e.what()), "");
+		};
+
 
 
 		//Port Sets
@@ -600,6 +622,20 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 	}
 
 	propTree.add_child("broadcasts",broadcasts);
+
+	ptree proxies;
+	for (uint i = 0; i < root->m_proxies.size(); i++)
+	{
+		ptree proxy;
+		proxy.put<int>("honeypotport", root->m_proxies[i]->m_honeypotPort);
+		proxy.put<string>("protocol", root->m_proxies[i]->m_protocol);
+		proxy.put<string>("proxyip", root->m_proxies[i]->m_proxyIP);
+		proxy.put<int>("proxyport", root->m_proxies[i]->m_proxyPort);
+
+		proxies.add_child("proxy", proxy);
+	}
+
+	propTree.add_child("proxies",proxies);
 
 	//Describe what port sets are available for this profile
 	{
