@@ -2166,7 +2166,7 @@ app.post('/configureNovaSave', function (req, res)
 
       NovaCommon.config.ReloadConfiguration();
 
-      if(req.body["EMAIL_ALERTS_ENABLED"] == undefined)
+      if(req.body["EMAIL_ALERTS_ENABLED"] == "0")
       {
         var spawn = require('sudo');
         var options = {
