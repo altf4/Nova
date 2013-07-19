@@ -1861,7 +1861,6 @@ app.post('/configureNovaSave', function (req, res)
     {
         key:  "RECIPIENTS"
         ,validator: function(val) {
-            console.log("Got RECIPIENTS " + val);
             validator.check(val, "Must have at least one email address").notEmpty();
             if (val.length != 0) {
                 var emails = val;
@@ -2177,13 +2176,12 @@ app.post('/configureNovaSave', function (req, res)
         var execution = ['cleannovasendmail.sh'];
         var rm = spawn(execution, options); 
         rm.on('exit', function(code){
-          console.log('code == ' + code);
+          //console.log('code == ' + code);
         });
         if(maildaemon != '')
         {
           maildaemon.kill('SIGINT');
         }
-        req.body["EMAIL_ALERTS_ENABLED"] = "0";
         NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
       }
       else
@@ -2224,7 +2222,6 @@ app.post('/configureNovaSave', function (req, res)
               }
             });
           }
-          req.body["EMAIL_ALERTS_ENABLED"] = "1";
           NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
         }
       }
@@ -2319,7 +2316,7 @@ process.on('exit', function ()
     var execution = ['cleannovasendmail.sh'];
     var rm = spawn(execution, options); 
     rm.on('exit', function(code){
-      console.log('code == ' + code);
+      //console.log('code == ' + code);
       LOG("ALERT", "Quasar is exiting cleanly.");
     });
 });
