@@ -479,7 +479,31 @@ script
       , protocol: $("#proxyProtocol").val()
       , proxyPort: $("#proxyPort").val()
     };
-    console.log(proxy);
+
+    // Check for duplicates
+    for (var i = 0; i < viewModel.proxies().length; i++) {
+        if (viewModel.proxies()[i].honeypotPort == proxy.honeypotPort && viewModel.proxies()[i].protocol == proxy.protocol) {
+            alert(proxy.protocol + " port " + proxy.honeypotPort + " is already in use by a proxy service");
+            return;
+        }
+    }
+
+    // Check for invalid ports
+    if (isNaN(Number(proxy.honeypotPort)) || Number(proxy.honeypotPort) < 1 || Number(proxy.honeypotPort) > 65535) {
+        alert("Honeypot Port must be a valid number between 1 and 65535");
+        return;
+    }
+    
+    if (isNaN(Number(proxy.proxyPort)) || Number(proxy.proxyPort) < 1 || Number(proxy.proxyPort) > 65535) {
+        alert("Proxy Port must be a valid number between 1 and 65535");
+        return;
+    }
+    
+    $("#honeypotPort").val("");
+    $("#proxyIP").val("");
+    $("#proxyProtocol").val("tcp");
+    $("#proxyPort").val("");
+
     viewModel.proxies.push(proxy);
   }
 
@@ -490,6 +514,10 @@ script
       , dstPort: $("#bcastdstport").val()
       , time: $("#bcasttime").val()
     };
+
+    $("#bcastsrcport").val("");
+    $("#bcastdstport").val("");
+    $("#bcasttime").val("");
 
     viewModel.broadcasts.push(bcast);
   };
