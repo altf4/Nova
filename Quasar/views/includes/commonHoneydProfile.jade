@@ -616,6 +616,7 @@ script
           profile.uptimeMax = $('#uptimeMax').val();
         }
 
+
         profile.isPersonalityInherited = $('#inheritPersonality')[0].checked;
         profile.isDropRateInherited = $('#inheritDropRate')[0].checked;
         profile.isUptimeInherited = $('#inheritUptime')[0].checked;
@@ -623,8 +624,20 @@ script
 
         profile.broadcasts = viewModel.broadcasts();
         profile.proxies = viewModel.proxies();
+        
+        // Check for proxy services and regular services being on the same port
+        for (var portSet = 0; portSet < profile.portSets.length; portSet++) {
+            for (var port = 0; port < profile.portSets[portSet].PortExceptions.length; port++) {
+                for (var proxy = 0; proxy < profile.proxies.length; proxy++) {
+                    if (profile.portSets[portSet].PortExceptions[port].portNum == profile.proxies[proxy].honeypotPort) {
+                        alert("Proxy service and regular service are both using port " + profile.proxies[proxy].honeypotPort);
+                        return;
+                    }
 
-        console.log(profile);
+                }
+            }
+        }
+
 
         //need conditional here for add vs. edit, false == edit, true == add
         try 
