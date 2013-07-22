@@ -32,7 +32,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#define BOOST_NO_CXX11_SCOPED_ENUMS
+#define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem.hpp>
 
 #include "sys/types.h"

@@ -57,7 +57,7 @@
 #include "event2/thread.h"
 #include <netinet/if_ether.h>
 
-#define BOOST_NO_CXX11_SCOPED_ENUMS
+#define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem.hpp>
 
 using namespace std;
