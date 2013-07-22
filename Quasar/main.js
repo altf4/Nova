@@ -2207,18 +2207,18 @@ app.post('/configureNovaSave', function (req, res)
               if(code === 0)
               {
                 var spawn = require('child_process').spawn;
-                var execstring = 'novamaildaemon.py';
+                var execstring = 'novamaildaemon.pl';
                 maildaemon = spawn(execstring.toString());
                 maildaemon.on('close', function(code){
                   if(code !== 0)
                   {
-                    console.log('nova mail daemon died an unnatural death with code ' + code);
+                    console.log('novamaildaemon.pl died an unnatural death with code ' + code);
                   }
                 }); 
               }
               else
               {
-                RenderError(res, 'Could not start mail daemon, check /etc/cron.' + interval + ' for orphaned script novasendmail.py', '/suspects');
+                RenderError(res, 'Could not start mail daemon, check /etc/cron.' + interval + ' for orphaned script novasendmail.pl', '/suspects');
               }
             });
           }
