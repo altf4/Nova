@@ -16,7 +16,7 @@
 // Description : Class to load and parse the NOVA configuration file
 //============================================================================
 
-#define BOOST_FILESYSTEM_VERSION 2
+#define BOOST_NO_CXX11_SCOPED_ENUMS
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>

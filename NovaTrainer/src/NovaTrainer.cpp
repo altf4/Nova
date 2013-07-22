@@ -37,7 +37,7 @@
 #include <iostream>
 #include <signal.h>
 
-#define BOOST_FILESYSTEM_VERSION 2
+#define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
 
 using namespace std;
