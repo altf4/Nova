@@ -28,6 +28,9 @@ TO = getConfigValue('RECIPIENTS').strip()
 TO = ', '.join(TO.split(','))
 PASS = getConfigValue('SMTP_PASS').strip()
 
+if getConfigValue('SMTP_USEAUTH').strip() == '0':
+  PASS = ''
+
 DEBUG = 0
 INFO = 0
 NOTICE = 0
@@ -126,6 +129,7 @@ def sendEmailAlert():
   calcLevelInstances()
   sumcheck = DEBUG + INFO + NOTICE + WARNING + ERROR + CRITICAL + ALERT + EMERGENCY
   if sumcheck == 0:
+    print 'Nothing in attachment.txt, exiting'
     sys.exit(0)
   
   sub = MIMEMultipart('alternative')
