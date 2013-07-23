@@ -1063,6 +1063,43 @@ block headerAdditions
       window.location.href = 'editHoneydNode?node=' + nodeName;
     }
 
+    function chartInterfaceChanged()
+    {
+        var currentInterface = $("#currentChartInterface").val();
+          
+        var piChartRender = [];
+        var nodesPerProfile = {};
+
+        for(var i in nodeList)
+        { 
+          if (currentInterface != "All Interfaces" && currentInterface != nodeList[i].interface) {
+            continue;
+          }
+
+          if(nodesPerProfile[nodeList[i].pfile] === undefined)
+          {
+            nodesPerProfile[nodeList[i].pfile] = 1;
+          }
+          else
+          {
+            nodesPerProfile[nodeList[i].pfile]++;
+          }
+        }
+        
+        for(var pfile in nodesPerProfile)
+        {
+          var p = {};
+          p.name = pfile;
+          p.value = nodesPerProfile[pfile];
+          piChartRender.push(p);
+        }
+
+        $('#piChart').empty();
+        var pi = new NovaPiChart('piChart', 'Nodes by Profile', 200, 'deleteByProfile');
+        pi.Render(piChartRender);
+
+    }
+
     function LoadNodeGrid()
     {
         var gridStructure = [];
@@ -1179,7 +1216,14 @@ block content
       br
       br
       br
-      div#piChart(style='display: inline-block; margin: 10px')
+      div(style="display: inline-block;")
+        span Only show interface 
+        select#currentChartInterface(onchange='chartInterfaceChanged();')'
+          option All Interfaces
+          each interface, i in INTERFACES
+            option #{interface}
+        br
+        div#piChart(style='display: inline-block; margin: 10px')
       div#piChart2(style='display: inline-block; margin: 10px; float: left')
       br
 
