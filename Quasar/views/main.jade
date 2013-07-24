@@ -14,18 +14,22 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block content
   div.contentBox(id="nova_suspects_error_view", style="display: none;")
     h3(style="color: red") Warning: The Packet Classifier is either not running or not connected. The data below may be old. Try starting the Packet Classifier.
-  div.contentBox#setup(onclick='handleOnclick(event)', style="display: inline-block")
-    span#suspectTable(style="display: inline-block;")
-    p#numberOfSuspects Recieved data for 0 suspects
+  
+  
+  +headerWithHelp('Overview of captured network traffic', 'suspectGrid')
+    div#setup(onclick='handleOnclick(event)')
+      span#suspectTable(style="display: inline-block;")
+      p#numberOfSuspects Recieved data for 0 suspects
     
   br 
-  div.contentBox(style="display: inline-block")
-    h1 Grid Settings
+  +headerWithHelp('Grid Settings', 'suspectGridSettings')
     input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
     label Live Grid Update
     br
@@ -52,7 +56,7 @@ block content
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
-  script
+  script.
     function cancelEvents(e) {
       e.stopPropagation()
     }

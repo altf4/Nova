@@ -14,51 +14,48 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block content
   div(style="display: inline-block;")
     div(style="display: inline-block;")
       div(style="text-align: center; margin: 0")
-        div.prettyContainer(style="width: 500px; margin: 0; text-align: center;")
-          h1 Suspect
+        +header("Suspect Identification Information")(style="width: 500px; margin: 0; text-align: center;")
           table#generalInfo(style="display: inline-block; text-align: left;")
           p Reverse DNS: 
             span#domain
       br
-      div.prettyContainer
-        h1 Packet Count Summaries
+      +header("Packet Count Summaries")(style="margin: 20px")
         table.novaGrid#packetCountTotals
       
-      div.prettyContainer
+      +header("Protocol Breakdown")(style="margin: 20px")
         div#ProtocolPiChart
       
-      div.prettyContainer
-        h1 Computed KNN Classification Features
+      +header("Computed KNN Classification Features")(style="margin: 20px")
         table.novaGrid#knnFeatures
      
     br
-    div.prettyContainer
-      h2 Percent of TCP packets with flags set
+    +header("Percent of TCP packets with flags set")(style="margin: 20px")
       table#tcpFlagCharts
     
-    div.prettyContainer
-      h1 Output of KNN classification engine
+    +header("Output of KNN classification engine")(style="margin: 20px") 
       div#classificationOutput
   
-  div.prettyContainer(style="width: 1024px;")
+  +header("TCP Packet Breakdown")(style="margin: 10px; width: 1024px") 
     div#tcpPortChart(style='display: inline-block; width: 30%; margin: 10px')
     div#tcpIpChart(style='display: inline-block; width: 30%; margin: 10px')
     div#tcpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
 
   br
-  div.prettyContainer(style="width: 1024px;")
+  +header("UDP Packet Breakdown")(style="margin: 10px; width: 1024px") 
     div#udpPortChart(style='display: inline-block; width: 30%; margin: 10px')
     div#udpIpChart(style='display: inline-block; width: 30%; margin: 10px')
     div#udpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
   
   br
-  div.prettyContainer(style="width: 1024px;")
+  +header("ICMP Packet Breakdown")(style="margin: 10px; width: 1024px") 
     div#icmpPortChart(style='display: inline-block; width: 30%; margin: 10px')
     div#icmpIpChart(style='display: inline-block; width: 30%; margin: 10px')
     div#icmpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
@@ -66,16 +63,13 @@ block content
   
   br
   div(style="width: 1024px")
-    div.prettyContainer(style="margin-right: 100px")
-      h1 Connections from suspect
+    +header("Connections from suspect")(style="margin: 20px; margin-right: 100px") 
       span#packetCountTable(style="display: inline-block;")
-    div.prettyContainer
-      h1 Packets by Size
+    +header("Packets by size")(style="margin: 20px;") 
       span#packetSizeTable(style="display: inline-block;")
   
   br
-  div.prettyContainer
-    h1 Live Graphs of Feature Changes
+  +header("Live Graphs of Feature Changes")(style="margin: 10px;") 
     input#enableGridLines(type='checkbox', onclick='toggleGridLines()')
     span Enable Graph Point Lines
     br

@@ -14,12 +14,12 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block content
-  div.contentBox(style="display: inline-block")
-    h1 Hostile Events
-    br
+  +headerWithHelp("Hostile Events", "hostileEvents")
     button.button(onClick="now.ClearHostileEvents(finishedClearing)")
       img.buttonIcon(src="images/erase.png")
       span.buttonSpan Clear All Events

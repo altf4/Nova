@@ -14,6 +14,8 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers
+
 extends layout
 
 block headerAdditions
@@ -22,7 +24,7 @@ block headerAdditions
   link(rel='stylesheet', type='text/css', href='novagrid.css', media='screen')
   script(type='text/javascript', src='scripts/NovaGrid.js')
   
-  script
+  script.
     var grid;
 
     function init(){
@@ -91,8 +93,7 @@ block headerAdditions
 
   
 block content
-  div.contentBox
-    h1 Current Classifieres
+  +header("Current Classifieres")
     div.novaGrid
       div#classifierTable
  

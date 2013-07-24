@@ -14,6 +14,8 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
@@ -360,8 +362,7 @@ block headerAdditions
     }
 
 block content
-  div.contentBox
-    h1 Create Honeyd Nodes
+  +header("Create Honeyd Nodes")
     label.nodeAdd Show Only Leaf Profiles?
     input(type='checkbox', checked=true, onclick='repopulateSelect(this)')
     br

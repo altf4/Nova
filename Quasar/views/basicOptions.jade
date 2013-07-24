@@ -14,6 +14,8 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
@@ -21,7 +23,7 @@ block headerAdditions
 
 
 block content
-  div.contentBox(style="display: inline-block")
+  +header("Basic Configuration Options") 
     form#basicConfigForm(method='post', action='/configureNovaSave')
       input(type="hidden", value="/basicOptions", name="ERROR_REDIRECT")
       include includes/basicConfigForm
@@ -31,7 +33,6 @@ block content
       img.buttonIcon(src='images/ok.png')
       span.buttonSpan Save Changes
   
-    br
     br
     a(href="/advancedOptions")
       button

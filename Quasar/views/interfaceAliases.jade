@@ -14,6 +14,8 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
@@ -70,10 +72,7 @@ block headerAdditions
     };
   
 block content
-  div.contentBox(style="display: inline-block")
-    h1 Add New Interface Alias
-
-    br
+  +header("Add New Interface Alias")
     table
       tr
         td
@@ -93,7 +92,6 @@ block content
       img.buttonIcon(src="images/add.png")
       span.buttonSpan Add/Update Alias
   br 
-  div.contentBox(style="display: inline-block")
-    h1 Current Aliases
+  +header("Current Aliases")
     span#aliasTable(style="display: inline-block;")
 

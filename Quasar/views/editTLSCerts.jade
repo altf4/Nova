@@ -14,12 +14,14 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
 
 block content
-  div.contentBox
+  +header("Upload New TLS Certs")
     form(method='post', enctype='multipart/form-data')
       p TLS Certificate
         input(type='file', name='cert')

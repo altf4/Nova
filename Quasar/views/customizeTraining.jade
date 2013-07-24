@@ -13,6 +13,9 @@
 //-   You should have received a copy of the GNU General Public License
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
+
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
@@ -24,8 +27,7 @@ block headerAdditions
     
   
 block content
-  div.contentBox(style="display: inline-block")
-    h1 Choose Training Data to use when classifying suspects
+  +header("Choose Training Data to use when classifying suspects")
     form#trainingForm(method='post', action='/customizeTrainingSave')
       table(border = '1')
         thead

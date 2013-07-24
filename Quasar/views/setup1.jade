@@ -14,11 +14,12 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block content
-  div.contentBox(style='text-align:center')
-    h2 Create New User Account
+  +header("Create New User Account")(style='text-align:center; display: block;')
     p Note that this new account will replace the default username and password.
     form#createUser(method='post', action='/createInitialUser', autocomplete='off')
       table(align='center', border='0', style='background-color: #D0E9FC; padding:15px; border-collapse:collapse; border: 2px solid black;')

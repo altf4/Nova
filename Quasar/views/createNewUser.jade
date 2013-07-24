@@ -14,11 +14,12 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block content
-  div.contentBox
-    h1(align='center') Create New User
+  +header("Create New User Account")
     form(method='post', action='/createNewUser', autocomplete='off')
       table(align='center', border='0', style='background-color: #D0E9FC; padding:15px; border-collapse:collapse; border: 2px solid black;')
         tr

@@ -13,6 +13,9 @@
 //-   You should have received a copy of the GNU General Public License
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
+
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
@@ -27,7 +30,7 @@ block headerAdditions
     }
 
 block content
-  div.contentBox
+  +header("Basic Settings")
     form#basicConfigForm(method='post', action='/configureNovaSave')
       include includes/basicConfigForm
       input(id='route', name='route', type='hidden', value='route')

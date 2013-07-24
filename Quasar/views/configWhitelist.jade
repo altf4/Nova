@@ -14,6 +14,8 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
@@ -112,8 +114,7 @@ block headerAdditions
     }
   
 block content
-  div.contentBox(style="display: inline-block")
-    h1 Whitelist New Entry
+  +header("Whitelist New Entry")
     label Interface
     select(id='interfaceDropdown', name='interfaceDropdown')
       option(value='All Interfaces') All Interfaces
@@ -129,9 +130,7 @@ block content
       span.buttonSpan Add to Whitelist
  
   br 
-  div.contentBox(style="display: inline-block")
-    h1 Current Whitelisted IPs
- 
+  +header("Current Whitelisted IPs")
     span#gridDiv(style='display: inline-block;')
     br
     button.button(onClick='deleteSelectedItems()')

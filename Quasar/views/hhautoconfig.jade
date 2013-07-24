@@ -14,6 +14,8 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
@@ -353,96 +355,95 @@ block headerAdditions
 block content
   if(SCANERROR !== undefined)
     label(id='scanError', style='color: red;') #{SCANERROR}
-    
-  div.contentBox#setup
-    h1 Haystack Autoconfig
-    
-    table
-      tr
-        td
-          label(style='font-weight: bold;') New Haystack?
-        td
-          input(data-bind='checked: isNewHaystackSelection', value='1', type='radio')
-          label Create new haystack
-          br
-          input(data-bind='checked: isNewHaystackSelection', value='0', type='radio')
-          label Append to haystack
-
-      tr
-        td
-          label(id='nameLabel', style='font-weight: bold') Haystack Name
-        td
-          input(data-bind='visible: isNewHaystack, value: newHaystackName, valueUpdate: "afterkeydown"', type='text')
-          select(data-bind='visible: !isNewHaystack(), value: oldHaystackName')
-            - for(var i = 0; i < GROUPS.length; i++)
-              - if(GROUPS[i] != '' && GROUPS[i] != undefined)
-                option #{GROUPS[i]}
-      tr
-        td
-          label#numNodesLabel(style='font-weight: bold') How to create nodes&nbsp&nbsp
-        td
-          select(data-bind='value: nodeCreationType')
-            option(value='fixed', selected='selected') DHCP: Fixed number of nodes
-            option(value='ratio') DHCP: Ratio to number found in scan
-            option(value='range') STATIC: Place nodes in range of IPs
-
-       tr
-         td
-           label(style='font-weight: bold') Nodes to create
-         td
-           input(data-bind='visible: nodeCreationType() == "fixed", value: nodeCountFixed, valueUpdate: "afterkeydown"', type='number', min='1')
-           input(data-bind='visible: nodeCreationType() == "ratio", value: nodeCountRatio, valueUpdate: "afterkeydown"', type='number', min='0')
-           input(data-bind='visible: nodeCreationType() == "range", value: nodeCountRange, valueUpdate: "afterkeydown"', type='text', placeholder='###.###.###.###-###.###.###.###', style='width: 210px')
+  
+  +header("Haystack Autoconfiguration Tool")
+    div#setup
+      table
+        tr
+          td
+            label(style='font-weight: bold;') New Haystack?
+          td
+            input(data-bind='checked: isNewHaystackSelection', value='1', type='radio')
+            label Create new haystack
+            br
+            input(data-bind='checked: isNewHaystackSelection', value='0', type='radio')
+            label Append to haystack
 
         tr
           td
-            label(style='font-weight: bold') Interface for new nodes
+            label(id='nameLabel', style='font-weight: bold') Haystack Name
           td
-            select#nodeInterface(data-bind="options: interfaceChoices, optionsHtml: 'text', optionsValue: 'value'")
-    br
-    br
-    label(style='font-weight: bold;') Subnets to Scan
-    br
-    table
-      tbody(data-bind='foreach: interfaceSubnets')
+            input(data-bind='visible: isNewHaystack, value: newHaystackName, valueUpdate: "afterkeydown"', type='text')
+            select(data-bind='visible: !isNewHaystack(), value: oldHaystackName')
+              - for(var i = 0; i < GROUPS.length; i++)
+                - if(GROUPS[i] != '' && GROUPS[i] != undefined)
+                  option #{GROUPS[i]}
         tr
-          td(data-bind='html: text', style='width: 200px')
           td
-            button(data-bind='click: $root.addSubnet')
-              img.buttonIcon(src='images/add.png')
-              span.buttonSpan Add Subnet
-    
-    br
-    label(style='font-weight: bold;') Additional Subnets to Scan
-    br
-    label(id='errorLabel', style='color:red;')  
-    br
-    input(type='text', style='width:200px', id='subnetToAdd', width='20', onkeydown='if(event.keyCode == 13){document.getElementById("addSubnet").click(); document.getElementById("subnetToAdd").value=""; event.returnValue=false; event.cancel=true; }', placeholder='xxx.xxx.xxx.xxx/##') 
-    button(type='button', id='addSubnet', onclick='validateAndAdd("subnetToAdd");')
-     img.buttonIcon(src='images/add.png')
-     span.buttonSpan Add Subnet
-    br
-    br
-    table(id='showTable')
-      thead
-        tr
-          th
-            label Subnets that will be scanned
-      tbody(data-bind='foreach: subnetsToScan')
-        tr
-          td(data-bind='text: subnet', style='width: 200px')
+            label#numNodesLabel(style='font-weight: bold') How to create nodes&nbsp&nbsp
           td
-            button(data-bind='click: $root.removeSubnet')
-              img.buttonIcon(src='images/delete.png')
-              span.buttonSpan Delete
-            
+            select(data-bind='value: nodeCreationType')
+              option(value='fixed', selected='selected') DHCP: Fixed number of nodes
+              option(value='ratio') DHCP: Ratio to number found in scan
+              option(value='range') STATIC: Place nodes in range of IPs
+
+         tr
+           td
+             label(style='font-weight: bold') Nodes to create
+           td
+             input(data-bind='visible: nodeCreationType() == "fixed", value: nodeCountFixed, valueUpdate: "afterkeydown"', type='number', min='1')
+             input(data-bind='visible: nodeCreationType() == "ratio", value: nodeCountRatio, valueUpdate: "afterkeydown"', type='number', min='0')
+             input(data-bind='visible: nodeCreationType() == "range", value: nodeCountRange, valueUpdate: "afterkeydown"', type='text', placeholder='###.###.###.###-###.###.###.###', style='width: 210px')
+
+          tr
+            td
+              label(style='font-weight: bold') Interface for new nodes
+            td
+              select#nodeInterface(data-bind="options: interfaceChoices, optionsHtml: 'text', optionsValue: 'value'")
+      br
+      br
+      label(style='font-weight: bold;') Subnets to Scan
+      br
+      table
+        tbody(data-bind='foreach: interfaceSubnets')
+          tr
+            td(data-bind='html: text', style='width: 200px')
+            td
+              button(data-bind='click: $root.addSubnet')
+                img.buttonIcon(src='images/add.png')
+                span.buttonSpan Add Subnet
       
-    br
-    br
-    button(id='startScan', onclick='RunScan()')
-      img.buttonIcon(src='images/ok.png')
-      span.buttonSpan Start Scan
-    
+      br
+      label(style='font-weight: bold;') Additional Subnets to Scan
+      br
+      label(id='errorLabel', style='color:red;')  
+      br
+      input(type='text', style='width:200px', id='subnetToAdd', width='20', onkeydown='if(event.keyCode == 13){document.getElementById("addSubnet").click(); document.getElementById("subnetToAdd").value=""; event.returnValue=false; event.cancel=true; }', placeholder='xxx.xxx.xxx.xxx/##') 
+      button(type='button', id='addSubnet', onclick='validateAndAdd("subnetToAdd");')
+       img.buttonIcon(src='images/add.png')
+       span.buttonSpan Add Subnet
+      br
+      br
+      table(id='showTable')
+        thead
+          tr
+            th
+              label Subnets that will be scanned
+        tbody(data-bind='foreach: subnetsToScan')
+          tr
+            td(data-bind='text: subnet', style='width: 200px')
+            td
+              button(data-bind='click: $root.removeSubnet')
+                img.buttonIcon(src='images/delete.png')
+                span.buttonSpan Delete
+              
+        
+      br
+      br
+      button(id='startScan', onclick='RunScan()')
+        img.buttonIcon(src='images/ok.png')
+        span.buttonSpan Start Scan
+      
   div(id='lightbox', class='white_content')
     label(style='font-size: 1.2em;') Scan Commencing...
     div(id='spinnerDiv', style='height: 30px; padding-botton: 30px;')

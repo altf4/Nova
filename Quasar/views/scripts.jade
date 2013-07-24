@@ -14,6 +14,8 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
@@ -344,20 +346,17 @@ block headerAdditions
     }
 
 block content
-  div.contentBox#setup(onclick='handleOnclick(event)')
-    h1 Honeyd Scripts
-  
-    br
-  
-    table(border='1', style='border: solid black 2px;')
-      thead
-        tr
-          th(style='background-color: #d0e9fc;') Name
-          th(style='background-color: #d0e9fc;') Profiles
-          th(style='background-color: #d0e9fc;') Path And Parameters
-          th(style='background-color: #d0e9fc;') Edit
-      tbody#addAnchor
-    br
+  +header("Honeyd Scripts")
+    div#setup(onclick='handleOnclick(event)')
+      table(border='1', style='border: solid black 2px;')
+        thead
+          tr
+            th(style='background-color: #d0e9fc;') Name
+            th(style='background-color: #d0e9fc;') Profiles
+            th(style='background-color: #d0e9fc;') Path And Parameters
+            th(style='background-color: #d0e9fc;') Edit
+        tbody#addAnchor
+      br
   
   div(id='lightbox', class='white_content')
     div(id='editScriptForm', style='display: none')

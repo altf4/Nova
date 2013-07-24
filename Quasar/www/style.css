@@ -319,6 +319,10 @@ button::-moz-focus-inner {
     padding: 20px;
 }
 
+.cardContainer {
+	vertical-align: top;
+    display: inline-block;
+}
 
 .cardOuter {
 	background-color: white;
@@ -335,10 +339,7 @@ button::-moz-focus-inner {
 	border-radius: 15px;
 	border-top-right-radius: 0;
 	border-top-left-radius: 0; 
-}
-
-.cardInner {
-	margin: 10px;
+	padding: 10px;
 }
 
 .cardHeader {
@@ -358,3 +359,9 @@ button::-moz-focus-inner {
 	border-top-right-radius: 15px;
 	border-top-left-radius: 15px;
 }
+    
+.helpIcon {
+    border: 1px solid black;
+    margin-right: 10px;
+}
+
