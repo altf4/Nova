@@ -1087,6 +1087,11 @@ app.get('/configHoneydNodes', function (req, res)
   });
 });
 
+app.get('/help', function (req, res)
+{
+    res.render('help.jade');   
+});
+
 app.get('/getSuspectDetails', function (req, res)
 {
   if(req.query['ip'] === undefined)

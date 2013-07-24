@@ -1,0 +1,60 @@
+extends layout
+
+block headerAdditions
+  style
+    :target { color: red ;} 
+
+block content
+  h3.cardHeader
+    a(name="profile") Profile
+  div.cardOuter
+    div.cardInner
+      p A Profile is a "type" of honeypot that can be created. A node as in actual instance of a honeypot that is based off a Profile. Profiles contain all of the major settings for how the honeypot should behave, including port and service configuration, operating system emulation, and ethernet address vendors.
+
+  h3.cardHeader
+    a(name="profileOptions") Profile Options
+  div.cardOuter
+    div.cardInner
+      b Profile Name
+      p This field is the human readable identifier for the Profile. Profile names must be unique.
+      
+      b Parent Profile
+      p The name of the parent of the current Profile. This field is read-only when editing a Profile. Profiles can inherit common settings from parents rather than having to set them on every single Profile. 
+      
+      b Operating System Personality
+      p This option chooses which operating system the honeypot should emulate. The honeypot will fool common signature based OS scanners such as nmap by changing the TCP/ICMP headers so that they appear to come from the chosen operating system.
+
+      b Packet Drop Percentage
+      p You can make it appear that the honeypot is behind a bad network connection by dropping some percentage of the packets it sees.
+      
+      b Uptime
+      p Most systems will report their uptime as a TCP option field. This option is to specify how long to claim to have been running, in seconds. This can be fixed or chosen randomly from a given range. *Note: This value will increment over time while the honeypot is active.
+
+  h3.cardHeader
+    a(name="EthernetVendor") Profile Ethernet Vendor Configuration
+  div.cardOuter
+    div.cardInner
+      p The first three bytes of a MAC address specify the organization that issued that MAC (usually to a hardware device). When generating nodes from a Profile, the MAC addresses will be chosen so that the prefix bytes make it appear that the device is from a certain vendor, such as Dell or Intel. Choose a list of all vendors that you may want to use when generating nodes from this Profile.
+  
+  h3.cardHeader
+    a(name="broadcasts") Profile Broadcast Configuration
+  div.cardOuter
+    div.cardInner
+      p Most of the honeypot scripts are passive, meaning that an attacker will only become aware of them if they are scanning the network. "broadcast scripts" are active scripts that will trigger some sort of broadcast packet at set intervals. For instance, the NBNS WBAP Query script will send an NBNS query for the WPAD proxy auto configuration name every n seconds, where n is specified in the "time" field. This is useful to draw more attention to the honeypots by making them actively send traffic to the network, but this could also make it easier to identify which IP addresses are honeypots based on their similarities between their broadcast packets. This should only be enabled on a small number of your honeypots.
+  
+  h3.cardHeader
+    a(name="proxies") Profile Proxy Services
+  div.cardOuter
+    div.cardInner
+      p A proxy service is a service on a honeypot that is actually running on a different machine, and proxied through the honeypot. For instance, configuring honeypot port 22 to be a proxy service for proxy IP 192.168.0.42 with proxy port 22 will make it so that all connections to port 22 on the honeypot will be redirected to 192.168.0.42. 192.168.0.42 will reply to the honeypot system, and the honeypot will then forward that reply back to the original host that tried to connect to the honeypot. From the host connecting to the honeypot, it will appear that they're just talking to a service running on the honeypot and will be entirely unaware that the service is really running on 192.168.0.42.
+
+      p This can also allow for multi-plexing of complicated services that can't easily be emulated via the normal honeypot scripts. For example, you could have several honeypots that have proxied services on port 53 that proxy traffic to your local network's nameserver. Attackers will think each honeypot is running it's own nameserver, but really all the requests are just getting sent to your real nameserver.
+  
+  h3.cardHeader 
+    a(name="portConfiguration") Profile Port Configuration
+  div.cardOuter
+    div.cardInner
+      p This is the main configuration section for setting up how the honeypots will respond to packets and act. You can configure the default action to take when getting TCP, UDP, and ICMP packets, as well as specific actions and services to emulate for specific ports. A portset gives you the ability to configure multiple port configurations, and then select the one you want when you create nodes based off this profile.
+
+      p If you select "script" as the service for a port, you can choose a honeypot script to be used to emulate a service on that port, such as Telnet, FTP, etc. Under the advanced column, you may be able to choose specific banners, versions, and settings for some of the scripts in order to customize their behavior even further.
+
