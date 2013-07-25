@@ -13,7 +13,8 @@ CPP_SRCS += \
 ../NovadSource/ProtocolHandler.cpp \
 ../NovadSource/ScriptAlertClassification.cpp \
 ../NovadSource/Threads.cpp \
-../NovadSource/ThresholdTriggerClassification.cpp 
+../NovadSource/ThresholdTriggerClassification.cpp \
+../NovadSource/UnauthorizedSuspectsClassification.cpp 
 
 OBJS += \
 ./NovadSource/ClassificationAggregator.o \
@@ -25,7 +26,8 @@ OBJS += \
 ./NovadSource/ProtocolHandler.o \
 ./NovadSource/ScriptAlertClassification.o \
 ./NovadSource/Threads.o \
-./NovadSource/ThresholdTriggerClassification.o 
+./NovadSource/ThresholdTriggerClassification.o \
+./NovadSource/UnauthorizedSuspectsClassification.o 
 
 CPP_DEPS += \
 ./NovadSource/ClassificationAggregator.d \
@@ -37,7 +39,8 @@ CPP_DEPS += \
 ./NovadSource/ProtocolHandler.d \
 ./NovadSource/ScriptAlertClassification.d \
 ./NovadSource/Threads.d \
-./NovadSource/ThresholdTriggerClassification.d 
+./NovadSource/ThresholdTriggerClassification.d \
+./NovadSource/UnauthorizedSuspectsClassification.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

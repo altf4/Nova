@@ -1117,6 +1117,11 @@ everyone.now.saveClassifier = function(classifier, index, cb)
     {
         classifier.strings = {};
     }
+    else if (classifier.type == "UNAUTHORIZED_SUSPECTS")
+    {
+        classifier.strings = {};
+    }
+
 
     NovaCommon.classifiers.saveClassifier(classifier, index);
     if(cb) cb();

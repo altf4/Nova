@@ -16,10 +16,11 @@
 // Description :
 //============================================================================
 
-#include "ClassificationEngineFactory.h"
+#include "UnauthorizedSuspectsClassification.h"
 #include "ThresholdTriggerClassification.h"
-#include "KnnClassification.h"
+#include "ClassificationEngineFactory.h"
 #include "ScriptAlertClassification.h"
+#include "KnnClassification.h"
 #include "Logger.h"
 
 using namespace std;
@@ -39,6 +40,10 @@ ClassificationEngine * MakeEngine(std::string engine)
 	else if (engine == "SCRIPT_ALERT")
 	{
 		return new ScriptAlertClassification();
+	}
+	else if (engine == "UNAUTHORIZED_SUSPECTS")
+	{
+		return new UnauthorizedSuspectsClassification();
 	}
 	else
 	{
