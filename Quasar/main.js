@@ -1418,6 +1418,29 @@ app.get('/about', function (req, res)
     res.render('about.jade', {version: NovaCommon.config.GetVersionString()});
 });
 
+app.get('/editAuthorizedIPs', function(req, res) {
+
+    fs.readFile(NovaHomePath + "/config/authorizedIPs.config", function(err, data) {
+        if (err) {
+            RenderError(res, "Unable to open authorizedIPs.config", "/advancedOptions");
+            return;
+        }
+
+        var array = data.toString().split("\n");
+        var IPs = [];
+
+        for (var i in array) {
+            if (array[i].length < 7) {continue;}
+            if (array[i][0] == '#') {continue;}
+            IPs.push(array[i]);
+        }
+
+        res.render('authorizedIPs.jade', {authorizedIPs: JSON.stringify(IPs)});
+
+    });
+
+});
+
 app.get('/newInformation', function (req, res)
 {
     res.render('newInformation.jade');
@@ -1612,6 +1635,22 @@ app.get("/interfaceAliases", function (req, res)
     res.render('interfaceAliases.jade', {
       interfaceAliases: interfaceAliases
       , INTERFACES: NovaCommon.config.ListInterfaces().sort(),
+    });
+});
+
+app.post("/editAuthorizedIPs", function (req, res) {
+    if (req.files["IPs"] == undefined || req.files["IPs"].size == 0) {
+        RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.", "/editAuthorizedIPs");
+        return;
+    }
+    
+    fs.rename(req.files["IPs"].path, NovaHomePath + "/config/authorizedIPs.config", function (err) {
+        if (err) {
+            RenderError(res, "Something went wrong when reading the uploaded file: " + err.toString(), "/editAuthorizedIPs");
+            return;
+        }
+
+        res.redirect('/editAuthorizedIPs');
     });
 });
 

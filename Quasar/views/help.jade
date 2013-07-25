@@ -16,6 +16,14 @@ block content
   +headerWithAnchor("Hostile Events", "hostileEvents")
     p A hostile event is a recorded when a suspect goes from the classification of benign to the classification of hostile. This can be useful to see the exact time that a suspect was doing hostile activity. If the "Clear data after suspect logged as hostile?" setting is enabled under Advanced Settings, then the suspect will never actually show as hostile on the main monitoring page, but the hostile events will show all of the times that the suspect reached the hostile threshold and was reset.
 
+  +headerWithAnchor("Unauthorized Suspect Classification Engine", "authorizedIPs")
+    p 
+      |This is part of the configuration for the Unauthorized IPs classification engine. This engine is disabled by default, but if enabled it will mark any suspects not on a list of authorized IP addresses as hostile. In order to enable this engine, you must add an UNAUTHORIZED_SUSPECTS classifier with mode of HOSTILE_OVERRIDE and weight of 1 in the classifier settings in the 
+      a(href="/editClassifiers") Edit Classifiers
+      |  section, as well as provide a list of newline seperated authorized IP addresses via a file in the 
+      a(href="/editAuthorizedIPs") Edit Authorized IP addresses
+      |  configuration section.
+
   +headerWithAnchor("Profile", "profile")
     p A Profile is a "type" of honeypot that can be created. A node as in actual instance of a honeypot that is based off a Profile. Profiles contain all of the major settings for how the honeypot should behave, including port and service configuration, operating system emulation, and ethernet address vendors.
 
