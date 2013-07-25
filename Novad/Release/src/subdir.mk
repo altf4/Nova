@@ -14,7 +14,8 @@ CPP_SRCS += \
 ../src/ProtocolHandler.cpp \
 ../src/ScriptAlertClassification.cpp \
 ../src/Threads.cpp \
-../src/ThresholdTriggerClassification.cpp 
+../src/ThresholdTriggerClassification.cpp \
+../src/UnauthorizedSuspectsClassification.cpp 
 
 OBJS += \
 ./src/ClassificationAggregator.o \
@@ -27,7 +28,8 @@ OBJS += \
 ./src/ProtocolHandler.o \
 ./src/ScriptAlertClassification.o \
 ./src/Threads.o \
-./src/ThresholdTriggerClassification.o 
+./src/ThresholdTriggerClassification.o \
+./src/UnauthorizedSuspectsClassification.o 
 
 CPP_DEPS += \
 ./src/ClassificationAggregator.d \
@@ -40,7 +42,8 @@ CPP_DEPS += \
 ./src/ProtocolHandler.d \
 ./src/ScriptAlertClassification.d \
 ./src/Threads.d \
-./src/ThresholdTriggerClassification.d 
+./src/ThresholdTriggerClassification.d \
+./src/UnauthorizedSuspectsClassification.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
