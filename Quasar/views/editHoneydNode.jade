@@ -168,11 +168,15 @@ block headerAdditions
         var restartHaystack = confirm('You must restart the haystack for this to take effect. Restart it now?');
         if (restartHaystack)
         {
-          now.RestartHaystack();
+          now.RestartHaystack(function() {
+            window.location = '/honeydConfigManage?tab=settingsNodes';
+          });
+        } else {
+          window.location = '/honeydConfigManage?tab=settingsNodes';
         }
+      } else {
+        window.location = '/honeydConfigManage?tab=settingsNodes';
       }
-
-      window.location = '/honeydConfigManage?tab=settingsNodes';
     }
 
     function ipTypeChanged()

@@ -820,10 +820,15 @@ block headerAdditions
         var restartHaystack = confirm('You must restart the haystack for this to take effect. Restart it now?');
         if (restartHaystack)
         {
-          now.RestartHaystack();
+          now.RestartHaystack(function() {
+            location.reload(true);
+          });
+        } else {
+          location.reload(true);
         }
+      } else {
+        location.reload(true);
       }
-      location.reload(true);
     }
     
     function errorMessageCallback(success, message)
