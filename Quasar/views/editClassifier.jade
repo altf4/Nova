@@ -30,6 +30,7 @@ block headerAdditions
       for (var i = 0; i < classifier.features.length; i++) {
         // Make the enabled state observable so we can update things when enabled checkboxes change
         classifier.features[i].enabled = ko.observable(classifier.features[i].enabled);
+      }
       
 
       console.log(classifier);
