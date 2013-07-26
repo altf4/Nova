@@ -42,7 +42,7 @@ var NovaPiChart = function(divId, title, size, deleteButtonFunction) {
 
     var div = document.getElementById(divId);
     div.appendChild(mainDiv);
-    div.appendChild(this.popupdiv);
+    $('body')[0].appendChild(this.popupdiv);
     this.m_id = mainDiv;
 }
 
@@ -138,8 +138,8 @@ NovaPiChart.prototype = {
             }
 
             $(self.popupdiv).html(self.m_items[current].name + " (" + Number(100*self.m_items[current].value/self.m_numberOfItems).toFixed(2) + "%)"); 
-            $(self.popupdiv).css('left',e.pageX - 200); 
-            $(self.popupdiv).css('top',e.pageY - 200);
+            $(self.popupdiv).css('left',e.pageX); 
+            $(self.popupdiv).css('top',e.pageY - 22);
             $(self.popupdiv).css('display', 'block'); 
         };
 
