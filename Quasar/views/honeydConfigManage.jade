@@ -19,7 +19,7 @@ extends layout
 block headerAdditions
   link(rel='stylesheet', type='text/css', href='novagrid.css', media='screen')
   link(rel='stylesheet', type='text/css', href='configstyle.css', media='screen')
-  style(type='text/css')
+  style(type='text/css').
     a.selectedProfile, a.unselectedProfile {
         display: block;
         font-size: 12px;
@@ -126,7 +126,7 @@ block headerAdditions
     
   script(type='text/javascript', src='scripts/NovaGrid.js')
   script(type='text/javascript', src='scripts/NovaPiChart.js')
-  script
+  script.
     var grid;
     var interfaces = !{JSON.stringify(INTERFACES)};
     var interfaceAliases = !{JSON.stringify(interfaceAliases)}
