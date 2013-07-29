@@ -243,15 +243,16 @@ block headerAdditions
     }
 
     function macToString(mac) {
-        var hexValue = mac.toString(16);
-        var macaddress = [];
 
-        for (var i = 0; i < hexValue.length; i=i+2) {
-            macaddress.push(hexValue.substr(i, 2).toUpperCase());
-        }
-
-        macaddress.reverse();
-        return macaddress.join(':');
+        return new Array( 6 ).join( '00' )    // '000000000000'
+            .match( /../g )            // [ '00', '00', '00', '00', '00', '00' ]
+            .concat( 
+                mac.toString( 16 ).toUpperCase()     // "4a8926c44578"
+                   .match( /.{1,2}/g ) // ["4a", "89", "26", "c4", "45", "78"]
+            )                          // ["00", "00", "00", "00", "00", "00", "4a", "89", "26", "c4", "45", "78"]
+            .reverse()                 // ["78", "45", "c4", "26", "89", "4a", "00", "00", "00", "00", "00", "00", ]
+            .slice( 0, 6 )             // ["78", "45", "c4", "26", "89", "4a" ]
+            .join( ':' )               // "78:45:c4:26:89:4a"
     }
 
     function OnNewSuspect(err, suspect) {
