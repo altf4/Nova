@@ -13,6 +13,7 @@ from email import Encoders
 try:
   with open(os.environ['HOME'] + '/.config/nova/config/maildaemon.lock'): pass
 except IOError:
+  print "Maildaemon.lock was not found"
   sys.exit(0)
 
 def getConfigValue(configName):
@@ -160,6 +161,7 @@ def sendEmailAlert():
     print e
 
 if SERVER == '' or PORT == '' or FROM == '' or TO == '':
+  print 'One or more of the required SMTP variables (SERVER, PORT, FROM, TO) was not successfully retrieved.'
   sys.exit(2)
 
 sendEmailAlert()
