@@ -17,11 +17,12 @@
 //					for inclusion in a Suspect's Feature Set
 //============================================================================/*
 
+#include <dumbnet.h>
+#include <string.h>
+#include <iostream>
 #include "Evidence.h"
 #include "netinet/tcp.h"
-#include <dumbnet.h>
 #include <netinet/if_ether.h>
-#include <iostream>
 
 using namespace std;
 
@@ -32,6 +33,7 @@ namespace Nova
 Evidence::Evidence()
 {
 	m_next = NULL;
+	m_evidencePacket.srcmac = 0;
 	m_evidencePacket.dst_port = 0;
 	m_evidencePacket.ip_dst = 0;
 	m_evidencePacket.ip_len = 0;
@@ -42,7 +44,9 @@ Evidence::Evidence()
 
 Evidence::Evidence(const u_char *packet, const pcap_pkthdr *pkthdr)
 {
-	m_evidencePacket.srcmac = ((uint64_t)(packet + 7 + ETH_ADDR_LEN) & (uint64_t)0xFFFFFFFFFFFF0000);
+	struct eth_hdr *eth = (eth_hdr *)packet;
+	memcpy(((char*)&m_evidencePacket.srcmac), eth->eth_src.data, 6);
+
 	const u_char *packet_at_ip_header = packet + ETH_HDR_LEN;
 	struct ip_hdr *ip;
 	ip = (ip_hdr *) packet_at_ip_header;

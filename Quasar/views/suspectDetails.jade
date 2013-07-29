@@ -242,6 +242,18 @@ block headerAdditions
         });
     }
 
+    function macToString(mac) {
+        var hexValue = mac.toString(16);
+        var macaddress = [];
+
+        for (var i = 0; i < hexValue.length; i=i+2) {
+            macaddress.push(hexValue.substr(i, 2).toUpperCase());
+        }
+
+        macaddress.reverse();
+        return macaddress.join(':');
+    }
+
     function OnNewSuspect(err, suspect) {
         if (err) {
             alert("Unable to fetch suspect details. See Javascript console for detailed errors.");
@@ -251,6 +263,7 @@ block headerAdditions
     
         var info = "";
         info += "<TR><TD style='padding-right: 30px;'> IP Address </TD> <TD>" + suspect.ip + "</TD></TR>";
+        info += "<TR><TD style='padding-right: 30px;'> Last Source MAC Address </TD> <TD>" + macToString(suspect.mac) + "</TD></TR>";
         info += "<TR><TD> Interface </TD> <TD>" + suspect.interface + "</TD></TR>";
         $("#generalInfo").html(info); 
         info = "";
