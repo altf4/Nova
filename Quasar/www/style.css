@@ -359,6 +359,12 @@ button::-moz-focus-inner {
 	border-top-right-radius: 15px;
 	border-top-left-radius: 15px;
 }
+
+.cardSeperator {
+	border: 2px solid #769DC0;
+	border-radius: 15px;
+    background-color: #769DC0;
+}
     
 .helpIcon {
     border: 1px solid black;

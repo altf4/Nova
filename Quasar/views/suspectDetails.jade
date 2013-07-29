@@ -27,35 +27,35 @@ block content
           p Reverse DNS: 
             span#domain
       br
-      +header("Packet Count Summaries")(style="margin: 20px")
+      +headerWithHelp("Packet Count Summaries", "packetCounts")(style="margin: 20px")
         table.novaGrid#packetCountTotals
       
       +header("Protocol Breakdown")(style="margin: 20px")
         div#ProtocolPiChart
       
-      +header("Computed KNN Classification Features")(style="margin: 20px")
+      +headerWithHelp("Computed KNN Classification Features", "knnFeatures")(style="margin: 20px")
         table.novaGrid#knnFeatures
      
     br
-    +header("Percent of TCP packets with flags set")(style="margin: 20px")
+    +headerWithHelp("Percent of TCP packets with flags set", "tcpFlags")(style="margin: 20px")
       table#tcpFlagCharts
     
-    +header("Output of KNN classification engine")(style="margin: 20px") 
+    +headerWithHelp("Classification Engine Notes", "classificationNotes")(style="margin: 20px") 
       div#classificationOutput
   
-  +header("TCP Packet Breakdown")(style="margin: 10px; width: 1024px") 
+  +headerWithHelp("TCP Packet Breakdown", "packetIPPortBreakdowns")(style="margin: 10px; width: 1024px") 
     div#tcpPortChart(style='display: inline-block; width: 30%; margin: 10px')
     div#tcpIpChart(style='display: inline-block; width: 30%; margin: 10px')
     div#tcpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
 
   br
-  +header("UDP Packet Breakdown")(style="margin: 10px; width: 1024px") 
+  +headerWithHelp("UDP Packet Breakdown", "packetIPPortBreakdowns")(style="margin: 10px; width: 1024px") 
     div#udpPortChart(style='display: inline-block; width: 30%; margin: 10px')
     div#udpIpChart(style='display: inline-block; width: 30%; margin: 10px')
     div#udpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
   
   br
-  +header("ICMP Packet Breakdown")(style="margin: 10px; width: 1024px") 
+  +headerWithHelp("ICMP Packet Breakdown", "packetIPPortBreakdowns")(style="margin: 10px; width: 1024px") 
     div#icmpPortChart(style='display: inline-block; width: 30%; margin: 10px')
     div#icmpIpChart(style='display: inline-block; width: 30%; margin: 10px')
     div#icmpIpPortChart(style='display: inline-block; width: 30%; margin: 10px')
@@ -69,7 +69,7 @@ block content
       span#packetSizeTable(style="display: inline-block;")
   
   br
-  +header("Live Graphs of Feature Changes")(style="margin: 10px;") 
+  +headerWithHelp("Live Graphs of Feature Changes", "liveFeatureGraphs")(style="margin: 10px;") 
     input#enableGridLines(type='checkbox', onclick='toggleGridLines()')
     span Enable Graph Point Lines
     br
@@ -96,7 +96,7 @@ block headerAdditions
   script(type='text/javascript', src='scripts/NovaPiChart.js')
 
 
-  style
+  style.
     .innerVertBar {
         height: 60%;
         position: absolute;
@@ -124,7 +124,7 @@ block headerAdditions
         margin-right: 10px;
     }
 
-  script
+  script.
     var grid;
     var protocolChart, tcpPortChart, udpPortChart, tcpIpChart, udpIpChart, tcpIpPortChart, udpIpPortChart, icmpIpChart, icmpIpPortChart, icmpPortChart;
 

@@ -14,7 +14,7 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
-style
+style.
   .ui-autocomplete {
     max-height: 300px;
     max-width: 1024px;
@@ -23,7 +23,7 @@ style
    }
 
 
-script
+script.
   var ports = {};
   var lastPortSet = '';
   var loadedName;
@@ -671,11 +671,15 @@ script
           var restartHaystack = confirm('You must restart the haystack for this to take effect. Restart it now?');
           if(restartHaystack)
           {
-            now.RestartHaystack();
+            now.RestartHaystack(function() {
+              window.location='/honeydConfigManage?tab=settingsProfiles';
+            });
+          } else {
+            window.location='/honeydConfigManage?tab=settingsProfiles';
           }
+        } else {
+          window.location='/honeydConfigManage?tab=settingsProfiles';
         }
-
-        window.location='/honeydConfigManage?tab=settingsProfiles';
       };
 
       addPort = function(port){
