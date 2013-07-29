@@ -66,9 +66,6 @@ string Config::m_prefixes[] =
 	"DOPPELGANGER_INTERFACE",
 	"DM_ENABLED",
 	"THINNING_DISTANCE",
-	"SAVE_FREQUENCY",
-	"DATA_TTL",
-	"CE_SAVE_FILE",
 	"RSYSLOG_USE",
 	"RSYSLOG_IP",
 	"RSYSLOG_PORT",
@@ -76,6 +73,8 @@ string Config::m_prefixes[] =
 	"SMTP_ADDR",
 	"SMTP_PORT",
 	"SMTP_DOMAIN",
+	"SMTP_INTERVAL",
+	"SMTP_PASS",
 	"SMTP_USEAUTH",
 	"RECIPIENTS",
 	"SERVICE_PREFERENCES",
@@ -203,6 +202,7 @@ vector<string> Config::GetSupportedEngines()
 	vector<string> supportedEngines;
 	supportedEngines.push_back("KNN");
 	supportedEngines.push_back("THRESHOLD_TRIGGER");
+	supportedEngines.push_back("SCRIPT_ALERT");
 
 	return supportedEngines;
 }
@@ -455,48 +455,6 @@ void Config::LoadConfig_Internal()
 				continue;
 			}
 
-			// SAVE_FREQUENCY
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) > 0)
-				{
-					m_saveFreq = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// DATA_TTL
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) >= 0)
-				{
-					m_dataTTL = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
-			// CE_SAVE_FILE
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(line.size() > 0)
-				{
-					m_pathCESaveFile = line;
-					isValid[prefixIndex] = true;
-				}
-				continue;
-			}
-
 			// RSYSLOG_USE
 			prefixIndex++;
 			prefix = m_prefixes[prefixIndex];
@@ -602,6 +560,38 @@ void Config::LoadConfig_Internal()
 				if(line.size() > 0)
 				{
 					m_SMTPDomain = line;
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+			//SMTP_INTERVAL
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					m_SMTPInterval = line;
+					isValid[prefixIndex] = true;
+				}
+
+				continue;
+			}
+
+			//SMTP_PASS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				if(line.size() > 0)
+				{
+					m_SMTPPass = line;
 					isValid[prefixIndex] = true;
 				}
 
@@ -887,6 +877,12 @@ void Config::LoadConfig_Internal()
 				{
 					m_classifierEngines.clear();
 					boost::split(m_classifierEngines, line, boost::is_any_of(";"));
+
+					// Trim out any whitespace
+					for (uint i = 0; i < m_classifierEngines.size(); i++)
+					{
+						boost::trim(m_classifierEngines[i]);
+					}
 				}
 				continue;
 			}
@@ -1117,8 +1113,6 @@ void Config::LoadConfig_Internal()
 	}
 
 	config.close();
-
-	GetSMTPSettings_FromFile();
 
 	bool failAndExit = false;
 	for(uint i = 0; i < sizeof(m_prefixes)/sizeof(m_prefixes[0]); i++)
@@ -1392,6 +1386,13 @@ bool Config::InitUserConfigs()
 
 		if(stat(m_pathHome.c_str(), &fileAttr) == 0)
 		{
+
+			// Ugh terrible terrible hack to let honeyd scripts access this file as the nobody user
+			// TODO: Why do we not have global configuration/state files in /var,/etc, and /tmp like every other daemon application?
+			if (system("chmod o+rwx ~/.config/nova")) {}
+			if (system("chmod o+rwx ~/.config/nova/data")) {}
+			if (system("chmod o+rw ~/.config/nova/data/scriptAlerts.db")) {}
+
 			return returnValue;
 		}
 		else
@@ -1595,44 +1596,6 @@ uint Config::GetInterfaceCount()
 	return m_interfaces.size();
 }
 
-bool Config::GetSMTPSettings_FromFile()
-{
-	string debugPath = m_pathHome + "/config/smtp.txt";
-
-	ifstream ifs(m_pathHome + "/config/smtp.txt");
-
-	if (!ifs.is_open())
-	{
-		// Note: This needs to be cout since the logger isn't initialized yet
-		cout << "Unable to open SMTP settings file at " << debugPath << endl;
-		return false;
-	}
-
-	getline(ifs, m_SMTPUser);
-	getline(ifs, m_SMTPPass);
-
-	ifs.close();
-	return true;
-}
-
-bool Config::SaveSMTPSettings()
-{
-	string debugPath = m_pathHome + "/config/smtp.txt";
-	ofstream out(debugPath.c_str());
-
-	if (!out.is_open())
-	{
-		cout << "ERROR: Unable to open SMTP settings file at " << debugPath << endl;
-		return false;
-	}
-
-	out << m_SMTPUser << endl;
-	out << m_SMTPPass << endl;
-
-	out.close();
-	return true;
-}
-
 void Config::SetUseAllInterfaces(bool which)
 {
 	Lock lock(&m_lock, WRITE_LOCK);
@@ -1769,24 +1732,13 @@ void Config::SetSMTPEmailRecipients_noLocking(string SMTPEmailRecipients)
 {
 	vector<string> addresses;
 	istringstream iss(SMTPEmailRecipients);
-
-	copy(istream_iterator<string>(iss),
-			istream_iterator<string>(),
-			back_inserter<vector <string> >(addresses));
-
-	vector<string> out = addresses;
-
-	for(uint16_t i = 0; i < addresses.size(); i++)
+	string token;
+	while(getline(iss, token, ','))
 	{
-		uint16_t endSubStr = addresses[i].find(",", 0);
-
-		if(endSubStr != addresses[i].npos)
-		{
-			out[i] = addresses[i].substr(0, endSubStr);
-		}
+		addresses.push_back(token);
 	}
 
-	m_SMTPEmailRecipients = out;
+	m_SMTPEmailRecipients = addresses;
 }
 
 string Config::GetPathReadFolder()

@@ -14,6 +14,8 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
@@ -22,7 +24,7 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
   
-  script
+  script.
     var grid;
 
     var AddNewAlias = function()
@@ -38,8 +40,12 @@ block headerAdditions
         now.AddInterfaceAlias(iface, "", refresh);
     }
 
-    var refresh = function()
+    var refresh = function(err)
     {
+        if (err) {
+            alert(err);
+            return;
+        }
         window.location = window.location;
     }
     
@@ -47,9 +53,9 @@ block headerAdditions
         var columns = new Array();
         columns.push({name: "Interface"});
         columns.push({name: "Alias"});
-        columns.push({name: "Delete"});
+        columns.push({name: "Delete", noEscape: true});
 
-        grid = new NovaGrid(columns, 0, "aliasTable", 'grid', false);
+        grid = new NovaGrid(columns, 0, document.getElementById("aliasTable"), 'grid');
 
         var interfaceAliases = !{JSON.stringify(interfaceAliases)};
         for(i in interfaceAliases)
@@ -58,7 +64,7 @@ block headerAdditions
             row.push(i);
             row.push(interfaceAliases[i]);
         
-            row.push("<button class='button' onclick='DeleteAlias(\\"" + i + "\\")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Delete</span></button>");
+            row.push("<button class='button' onclick='DeleteAlias(\"" + i + "\")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Delete</span></button>");
             grid.PushEntry(row);
         }
     
@@ -66,31 +72,26 @@ block headerAdditions
     };
   
 block content
-  h1 Interface Aliases
+  +header("Add New Interface Alias")
+    table
+      tr
+        td
+          span Interface
+        td
+          select#interfaceSelection(style="width: 98%; display: block")
+            - each interface, i in INTERFACES
+              option(value=interface) #{interface}
+      tr
+        td
+          span Alias
+        td
+          input#aliasSelection(type="text", placeholder="Enter name of alias", onkeypress='if(event.keyCode == 13){AddNewAlias()}')
 
-  br
-  table
-    tr
-      td
-        span Interface
-      td
-        select#interfaceSelection(style="width: 98%; display: block")
-          - each interface, i in INTERFACES
-            option(value=interface) #{interface}
-    tr
-      td
-        span Alias
-      td
-        input#aliasSelection(type="text", placeholder="Enter name of alias", onkeypress='if(event.keyCode == 13){AddNewAlias()}')
-
-  br
-  button.button#addNewAliasButton(onclick="AddNewAlias()")
-    img.buttonIcon(src="images/add.png")
-    span.buttonSpan Add/Update Alias
-  
-  br
-  br
-  h1 Current Aliases
-  div.novaGrid
-    div#aliasTable
+    br
+    button.button#addNewAliasButton(onclick="AddNewAlias()")
+      img.buttonIcon(src="images/add.png")
+      span.buttonSpan Add/Update Alias
+  br 
+  +header("Current Aliases")
+    span#aliasTable(style="display: inline-block;")
 

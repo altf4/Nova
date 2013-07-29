@@ -14,55 +14,61 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block content
-  div(id="nova_suspects_error_view")
+  div.contentBox(id="nova_suspects_error_view", style="display: none;")
     h3(style="color: red") Warning: The Packet Classifier is either not running or not connected. The data below may be old. Try starting the Packet Classifier.
-  div#setup(onclick='handleOnclick(event)')
-    div#nova_suspects_header
-      br
-      
-      button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}')
-        img.buttonIcon(src="images/erase.png")
-        span.buttonSpan Clear All Suspects
-
-      button(onclick="window.location='/novaState.csv'")
-       img.buttonIcon(src="images/save.png")
-       span.buttonSpan Save as CSV file
   
-      br
-    div#nova_suspects      
-      input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
-      label Live Grid Update
-      br
-      
-      input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
-      label Show Advanced Suspect Statistics
-      br
-      
-      input#showUnclassified(type="checkbox")
-      label Show Unclassified Suspects
-      br
-      br
-      div#tablePages(style="width: 100%;")
-      p Right click suspects for more options
-      div.novaGrid
-        div#suspectTable
-
+  
+  +headerWithHelp('Overview of captured network traffic', 'suspectGrid')
+    div#setup(onclick='handleOnclick(event)')
+      span#suspectTable(style="display: inline-block;")
       p#numberOfSuspects Recieved data for 0 suspects
+    
+  br 
+  +headerWithHelp('Grid Settings', 'suspectGridSettings')
+    input#liveGridUpdate(type="checkbox", checked, onchange="LiveUpdateChanged()")
+    label Live Grid Update
+    br
+    
+    input#showAdvanced(type="checkbox", onchange="showAdvancedChanged()")
+    label Show Advanced Suspect Statistics
+    br
+    
+    input#showUnclassified(type="checkbox")
+    label Show Unclassified Suspects
+    br
+    br
+      
+    button(type="button", title="Clear all data the packet classifier has gathered", onclick='if(confirm("Are you sure you want to clear all gathered suspect data? This is irreversible.")){ClearAllSuspects(); suspectGrid.Clear()}else{return;}')
+      img.buttonIcon(src="images/erase.png")
+      span.buttonSpan Clear All Suspects
+
+    button(onclick="window.location='/novaState.csv'")
+     img.buttonIcon(src="images/save.png")
+     span.buttonSpan Save as CSV file
+  
+    br
       
 block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
-  script
+  script.
+    function cancelEvents(e) {
+      e.stopPropagation()
+    }
+ 
+    var interfaceAliases = !{JSON.stringify(interfaceAliases)};
+    var interfaces = !{JSON.stringify(interfaces)};
     var suspectGrid;
     var liveUpdate = true;
 
-    require(["dijit/form/TextBox"]);
-
     function handleOnclick(e)
     {
+      return;
       var evt = (e ? e : window.event);
       var source = evt.target || evt.srcElement;
       var loc = document.location.href;
@@ -80,7 +86,6 @@ block headerAdditions
     var LiveUpdateChanged = function()
     {
       liveUpdate = $("#liveGridUpdate").is(':checked');
-      console.log("Toggled live update to " + liveUpdate);
     }
 
     var toggleFilterBlock = function()
@@ -150,17 +155,10 @@ block headerAdditions
         alert("Unable to clear suspects when not connected to novad");
         return;
       }
-      console.log('in ClearSuspect with ' + ip + ' ' + interface);
       now.ClearSuspect(ip, interface);
       suspectGrid.DeleteRow(buildLink(ip, interface));
     }
 
-    function MonitorSuspect(ip, interface, idString)
-    {
-        var path = "/monitor?ip=" + ip + "&interface=" + interface;
-        window.open(path);
-    }
-    
     function SuspectDetails(ip, interface, idString)
     {
         var path = "/getSuspectDetails?ip=" + ip + "&interface=" + interface;
@@ -169,7 +167,7 @@ block headerAdditions
 
     function buildLink(ip, interface)
     {
-      var res = "<div style='display: none;'>" + interface + "</div><div oncontextmenu='replacementContextMenu(event)'>" + ip + "</div>";
+      var res = "<div style='display: none;'>" + interface + "</div><div'>" + ip + "</div>";
       return res;
     }
 
@@ -194,7 +192,15 @@ block headerAdditions
       }
 
       row.push("<img src='" + imgSrc + "' class='buttonIcon'/>");
-      row.push(String(suspect.interface));
+
+      // Convert the interface to an interface alias if we have one
+      var iface = suspect.interface;
+      var interfaceIndex = interfaces.indexOf(suspect.interface);
+      if (interfaceIndex != -1) {
+        iface = interfaceAliases[interfaceIndex];
+      }
+      row.push(String(iface));
+
       row.push(String(suspectLink));
       row.push(suspect.classification);
       row.push(String(dString));
@@ -263,7 +269,7 @@ block headerAdditions
         else if(d >= 0 && d <= 1)
         {
             var num = 100 * d;
-            return '<div class="classification_entry" oncontextmenu="replacementContextMenu(event);"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div>';
+            return '<div class="classification_entry"><div style="width: ' + num.toFixed(0) + '%" class="progressBar">&nbsp;</div><div class="progressText">' + num.toFixed(2) + '</div></div>';
         }
         else
         {
@@ -273,10 +279,13 @@ block headerAdditions
 
     function Init()
     {
+        // This stops the event in the grid so that the layout.jade onclick handler doesn't remove the contextmenu
+        document.getElementById("suspectTable").onclick = cancelEvents;
+       
         var gridStructure = [];
-        gridStructure.push({name: "Hostility", isDisabled: false});
+        gridStructure.push({name: "Hostility", isDisabled: false, noEscape: true});
         gridStructure.push({name: "Interface", isDisabled: false});
-        gridStructure.push({name: "Address", isDisabled: false});
+        gridStructure.push({name: "Address", isDisabled: false, noEscape: true});
         gridStructure.push({name: "Classification", isDisabled: false, formatter: classificationFormatter});
         gridStructure.push({name: "Last Seen", isDisabled: false});
    
@@ -294,7 +303,6 @@ block headerAdditions
         // Sort by classification by default
         suspectGrid.SetSortByKey(3);
         suspectGrid.SetRowsPerPage(20);
-        suspectGrid.SetPageNumberDiv($('#tablePages').get(0));
 
 
         suspectGrid.m_autoRenderCallback = function() {
@@ -314,6 +322,7 @@ block headerAdditions
         setInterval(querySuspects, 3000);
     
     function querySuspects() {
+        if(!liveUpdate) {return;}
         var rows = suspectGrid.m_rowsPerPage;
         var offset = suspectGrid.m_currentPage * suspectGrid.m_rowsPerPage;
         var sortOrder = suspectGrid.m_sortDescending ? "DESC" : "ASC";
@@ -472,17 +481,11 @@ block headerAdditions
         clickX = evt.pageX;
         clickY = evt.pageY;
       }
-      
+
+
       var contextMenuDiv = document.createElement('div');
       contextMenuDiv.setAttribute('style', 'border-radius: 5px; box-shadow: 0 0 5px #AAA; width: 250px; z-index: 1002; position: absolute; top: ' + clickY + 'px; left:' + clickX + 'px; opacity: 1;');
       contextMenuDiv.id = 'contextMenu';
-      
-      var monitor = document.createElement('div');
-      monitor.setAttribute('class', 'topcontainer');
-      monitor.innerHTML = '<img class="buttonIcon" src="images/details.png"/> Live Monitor ' + ip;
-      monitor.setAttribute('onclick', 'MonitorSuspect("' + ip + '", "' + iface + '")');
-      monitor.setAttribute('oncontextmenu', 'MonitorSuspect("' + ip + '", "' + iface + '"); removeContextMenu(); return false;');
-      contextMenuDiv.appendChild(monitor);
       
       var details = document.createElement('div');
       details.setAttribute('class', 'topcontainer');

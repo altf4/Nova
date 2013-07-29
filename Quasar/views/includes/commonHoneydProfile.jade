@@ -14,8 +14,16 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
-script(type="text/javascript", src="scripts/jquery.js")
-script
+style.
+  .ui-autocomplete {
+    max-height: 300px;
+    max-width: 1024px;
+    overflow-y: auto;
+    overflow-x: hidden;
+   }
+
+
+script.
   var ports = {};
   var lastPortSet = '';
   var loadedName;
@@ -57,6 +65,20 @@ script
   var checkIfRestartNeeded = function(){};
 
   var rmLb = false;
+
+  var bcastModel = function() {
+    var self = this;
+    self.broadcasts = ko.observableArray();
+    self.removeBroadcast =  function(bcast) {
+      self.broadcasts.remove(bcast);    
+    }
+
+    self.proxies = ko.observableArray();
+    self.removeProxy = function(proxy) {
+      self.proxies.remove(proxy);
+    }
+  };
+
 
   function enforceMinAndMax(source)
   {
@@ -228,16 +250,27 @@ script
 
   var addEthernetVendor = function(vendorName, vendorCount){
     // Check for duplicates
-    for(var i in profile.ethernet)
-    {
-      if(profile.ethernet[i].vendor == vendorName)
+    now.checkVendor(vendorName, function(retVal){
+      if(retVal)
       {
-        alert('Vendor already exists. Can not have duplicates.');
-        return;
+        for(var i in profile.ethernet)
+        {
+          if(profile.ethernet[i].vendor == vendorName)
+          {
+            alert('Vendor already exists. Can not have duplicates.');
+            return;
+          }
+        }
+        profile.ethernet.push({vendor: vendorName, count: vendorCount});
+        $('#ethernet').val('');
+        refreshVendorsView();
       }
-    }
-    profile.ethernet.push({vendor: vendorName, count: vendorCount});
-    refreshVendorsView();
+      else
+      {
+        $('#ethernet').val('');
+        alert('Must select a vendor from the vendor list!');
+      }
+    });
   };
 
   var deleteEthernetVendor = function(vendorIndex){
@@ -411,7 +444,7 @@ script
 
     var newPortSet = $('#portSetSelection').val();
 
-    $('#portTable').empty();
+    $('#portTableBody').empty();
     scriptConfigurations = {};
 
     portIndexes = [];
@@ -437,11 +470,112 @@ script
       }
     }
   }
+  
 
+  function addProxy() {
+    var proxy = {
+      honeypotPort: $("#honeypotPort").val()
+      , proxyIP: $("#proxyIP").val()
+      , protocol: $("#proxyProtocol").val()
+      , proxyPort: $("#proxyPort").val()
+    };
+
+    // Check for duplicates
+    for (var i = 0; i < viewModel.proxies().length; i++) {
+        if (viewModel.proxies()[i].honeypotPort == proxy.honeypotPort && viewModel.proxies()[i].protocol == proxy.protocol) {
+            alert(proxy.protocol + " port " + proxy.honeypotPort + " is already in use by a proxy service");
+            return;
+        }
+    }
+
+    // Check for invalid ports
+    if (isNaN(Number(proxy.honeypotPort)) || Number(proxy.honeypotPort) < 1 || Number(proxy.honeypotPort) > 65535) {
+        alert("Honeypot Port must be a valid number between 1 and 65535");
+        return;
+    }
+    
+    if (isNaN(Number(proxy.proxyPort)) || Number(proxy.proxyPort) < 1 || Number(proxy.proxyPort) > 65535) {
+        alert("Proxy Port must be a valid number between 1 and 65535");
+        return;
+    }
+    
+    $("#honeypotPort").val("");
+    $("#proxyIP").val("");
+    $("#proxyProtocol").val("tcp");
+    $("#proxyPort").val("");
+
+    viewModel.proxies.push(proxy);
+  }
+
+  function addBroadcast() {
+    var bcast = {
+      script: $("#bcastscript").val()
+      , srcPort: $("#bcastsrcport").val()
+      , dstPort: $("#bcastdstport").val()
+      , time: $("#bcasttime").val()
+    };
+
+    $("#bcastsrcport").val("");
+    $("#bcastdstport").val("");
+    $("#bcasttime").val("");
+
+    viewModel.broadcasts.push(bcast);
+  };
+
+  var viewModel;
   function init()
   {
-    require(['dijit/registry', 'dijit/form/FilteringSelect'], function(){
-      function obj() {};
+      viewModel = new bcastModel();
+      ko.applyBindings(viewModel);
+
+      now.GetBroadcasts('#{oldName}', function(bcasts) {
+        for (var i = 0; i < bcasts.length; i++) {
+            viewModel.broadcasts.push(bcasts[i]);
+        }
+      });
+
+      now.GetProxies('#{oldName}', function(proxies) {
+        console.log(proxies);
+        for (var i = 0; i < proxies.length; i++) {
+            viewModel.proxies.push(proxies[i]);
+        }
+      });
+
+      personalities = [];
+      $("#personalitySelect option").each(function() {
+        personalities.push($(this).val());
+      });
+
+      $("#personality").autocomplete({
+        source: personalities
+        , delay: 0
+        , minLength: 0
+      });
+
+      $("#showAllPersonalities")[0].onclick = function() {
+        $("#personality").autocomplete( "search", "" );
+      };
+      
+      
+      ethernetVendors = [];
+      $("#ethernetSelect option").each(function() {
+        ethernetVendors.push($(this).val());
+      });
+      ethernetVendors.sort();
+
+      $("#ethernet").autocomplete({
+        source: ethernetVendors
+        , delay: 300
+        , minLength: 0
+        , autoFocus: true
+      });
+
+      $("#showAllVendors")[0].onclick = function() {
+        $("#ethernet").autocomplete( "search", "" );
+      };
+
+    
+
       saveChanges = function(){
         var ethVendorList = [];
 
@@ -482,10 +616,28 @@ script
           profile.uptimeMax = $('#uptimeMax').val();
         }
 
-        profile.isPersonalityInherited = $('#inheritPersonality').checked;
-        profile.isDropRateInherited = $('#inheritDropRate').checked;
-        profile.isUptimeInherited = $('#inheritUptime').checked;
+
+        profile.isPersonalityInherited = $('#inheritPersonality')[0].checked;
+        profile.isDropRateInherited = $('#inheritDropRate')[0].checked;
+        profile.isUptimeInherited = $('#inheritUptime')[0].checked;
         if(!updatePortsModel()) {return};
+
+        profile.broadcasts = viewModel.broadcasts();
+        profile.proxies = viewModel.proxies();
+        
+        // Check for proxy services and regular services being on the same port
+        for (var portSet = 0; portSet < profile.portSets.length; portSet++) {
+            for (var port = 0; port < profile.portSets[portSet].PortExceptions.length; port++) {
+                for (var proxy = 0; proxy < profile.proxies.length; proxy++) {
+                    if (profile.portSets[portSet].PortExceptions[port].portNum == profile.proxies[proxy].honeypotPort) {
+                        alert("Proxy service and regular service are both using port " + profile.proxies[proxy].honeypotPort);
+                        return;
+                    }
+
+                }
+            }
+        }
+
 
         //need conditional here for add vs. edit, false == edit, true == add
         try 
@@ -519,11 +671,15 @@ script
           var restartHaystack = confirm('You must restart the haystack for this to take effect. Restart it now?');
           if(restartHaystack)
           {
-            now.RestartHaystack();
+            now.RestartHaystack(function() {
+              window.location='/honeydConfigManage?tab=settingsProfiles';
+            });
+          } else {
+            window.location='/honeydConfigManage?tab=settingsProfiles';
           }
+        } else {
+          window.location='/honeydConfigManage?tab=settingsProfiles';
         }
-
-        window.location='/honeydConfigManage?tab=settingsProfiles';
       };
 
       addPort = function(port){
@@ -537,7 +693,7 @@ script
           port.scriptConfiguration = {};
         }
 
-        var portDiv = $('#portTable')[0];
+        var portDiv = $('#portTableBody')[0];
         var portUID;
 
         if(portIndexes.length > 0) 
@@ -554,40 +710,6 @@ script
 
         var row = document.createElement('tr');
         row.id = 'portRow' + portUID;
-
-        var numContainer = document.createElement('td');
-        var numInput = document.createElement('input');
-        if(navigator.userAgent.indexOf('MSIE') == '-1')
-        {
-          numInput.type = 'number';
-        }
-        numInput.id = 'portNum' + portUID;
-        numInput.min = 1;
-        numInput.max = 65535;
-        numInput.value = port.portNum;
-        numInput.setAttribute('onblur', 'enforceMinAndMax("portNum' + portUID + '")');
-        numContainer.appendChild(numInput);
-        row.appendChild(numContainer);
-                
-        var typeContainer = document.createElement('td');
-        var typeSelect = document.createElement('select');
-        typeSelect.id = 'portType' + portUID;
-
-        options = ['udp', 'tcp'];
-        for(j = 0; j < options.length; j++)
-        {
-          var option = document.createElement('option');
-          option.value = options[j];
-          option.innerHTML = options[j];
-          if(port.protocol == options[j])
-          {
-            option.selected = true;
-          }
-          typeSelect.appendChild(option);
-        }
-
-        typeContainer.appendChild(typeSelect);
-        row.appendChild(typeContainer);
 
         var behaviorContainer = document.createElement('td');
         var behaviorSelect = document.createElement('select');
@@ -666,6 +788,41 @@ script
         
         scriptContainer.appendChild(scriptSelect);
         row.appendChild(scriptContainer);
+        
+        
+        var numContainer = document.createElement('td');
+        var numInput = document.createElement('input');
+        if(navigator.userAgent.indexOf('MSIE') == '-1')
+        {
+          numInput.type = 'number';
+        }
+        numInput.id = 'portNum' + portUID;
+        numInput.min = 1;
+        numInput.max = 65535;
+        numInput.value = port.portNum;
+        numInput.setAttribute('onblur', 'enforceMinAndMax("portNum' + portUID + '")');
+        numContainer.appendChild(numInput);
+        row.appendChild(numContainer);
+                
+        var typeContainer = document.createElement('td');
+        var typeSelect = document.createElement('select');
+        typeSelect.id = 'portType' + portUID;
+
+        options = ['udp', 'tcp'];
+        for(j = 0; j < options.length; j++)
+        {
+          var option = document.createElement('option');
+          option.value = options[j];
+          option.innerHTML = options[j];
+          if(port.protocol == options[j])
+          {
+            option.selected = true;
+          }
+          typeSelect.appendChild(option);
+        }
+
+        typeContainer.appendChild(typeSelect);
+        row.appendChild(typeContainer);
 
         var configureContainer = document.createElement('td');
         var configureButton = document.createElement('button');
@@ -864,6 +1021,8 @@ script
             optionCount++;
             scriptConfigurations[portIndex][option] = script.GetOptions[option][0];
           }
+
+          $("#portNum" + portIndex).val(script.GetDefaultPort);
           
           if(optionCount === 0)
           {
@@ -953,5 +1112,4 @@ script
           console.log('err was: ' + err);
         }  
       });
-    });
   }

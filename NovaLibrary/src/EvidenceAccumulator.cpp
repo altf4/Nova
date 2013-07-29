@@ -17,7 +17,6 @@
 //					for use in classification of the Suspect.
 //============================================================================
 
-#include "SerializationHelper.h"
 #include "EvidenceAccumulator.h"
 #include "Logger.h"
 #include "Config.h"

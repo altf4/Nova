@@ -42,16 +42,23 @@ public:
 	std::string m_osclass;
 	std::string m_path;
 
+	std::string m_defaultPort;
+	std::string m_defaultProtocol;
+
 	// Configuration options for the script
 	bool m_isConfigurable;
 	std::map<std::string, std::vector<std::string>> options;
 	std::map<std::string, std::string> optionDescriptions;
 
+	bool m_isBroadcastScript;
+	
 	// Getters for the binding code
 	std::string GetName() {return m_name;}
 	std::string GetService() {return m_service;}
 	std::string GetOsClass() {return m_osclass;}
 	std::string GetPath() {return m_path;}
+	std::string GetDefaultProtocol() {return m_defaultProtocol;}
+	std::string GetDefaultPort() {return m_defaultPort;}
 	bool GetIsConfigurable() {return m_isConfigurable;}
 	std::map<std::string, std::vector<std::string>> GetOptions() {return options;}
 	std::map<std::string, std::string> GetOptionDescriptions() {return optionDescriptions;}

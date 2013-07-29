@@ -16,6 +16,7 @@
 // Description : Simple pi chart
 //============================================================================
 
+var lastRed = 0, lastGreen = 0, lastBlue = 0; //Integer representations of color
 
 // divId: id of div to put the pi chart
 // size: Size of pi chart in pixels (will be size X size)
@@ -41,7 +42,7 @@ var NovaPiChart = function(divId, title, size, deleteButtonFunction) {
 
     var div = document.getElementById(divId);
     div.appendChild(mainDiv);
-    div.appendChild(this.popupdiv);
+    $('body')[0].appendChild(this.popupdiv);
     this.m_id = mainDiv;
 }
 
@@ -81,7 +82,6 @@ NovaPiChart.prototype = {
         // Draw the pi chart on the canvas
         var ctx = canvas.getContext("2d");
         var lastend = 0;
-        var randomColor;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         var self = this;
@@ -98,8 +98,8 @@ NovaPiChart.prototype = {
         canvas.onmousemove = function(e) {
             if (!e) var e = window.event;
            
-            var x = e.clientX - $(this).offset().left;
-            var y = self.m_size - (e.clientY - $(this).offset().top);
+            var x = e.pageX - $(this).offset().left;
+            var y = self.m_size - (e.pageY - $(this).offset().top);
 
             // Don't display the popup if we're not inside the circle
             var sqrDistance = Math.pow((self.m_halfSize - x), 2) + Math.pow((self.m_halfSize - y), 2);
@@ -138,8 +138,8 @@ NovaPiChart.prototype = {
             }
 
             $(self.popupdiv).html(self.m_items[current].name + " (" + Number(100*self.m_items[current].value/self.m_numberOfItems).toFixed(2) + "%)"); 
-            $(self.popupdiv).css('left',e.clientX - 200); 
-            $(self.popupdiv).css('top',e.clientY - 200);
+            $(self.popupdiv).css('left',e.pageX); 
+            $(self.popupdiv).css('top',e.pageY - 22);
             $(self.popupdiv).css('display', 'block'); 
         };
 
@@ -164,9 +164,22 @@ NovaPiChart.prototype = {
             }
             return;
         }
+        var randomColor = "";
+
         for (var pfile = 0; pfile < this.m_items.length; pfile++) {
             if (this.m_usedColors[this.m_items[pfile].name] === undefined) {
-                randomColor = ((1<<24)*Math.random()|0).toString(16);
+                delta = ((1<<7)*Math.random()|0) + (1<<6);
+                randomColor = ((lastRed + delta) % (1<<8)).toString(16);
+                lastRed = (lastRed + delta) % (1<<8);
+
+                delta = ((1<<7)*Math.random()|0) + (1<<6);
+                randomColor += ((lastGreen + delta) % (1<<8)).toString(16);
+                lastGreen = (lastGreen + delta) % (1<<8);
+
+                delta = ((1<<7)*Math.random()|0) + (1<<6);
+                randomColor += ((lastBlue + delta) % (1<<8)).toString(16);
+                lastBlue = (lastBlue + delta) % (1<<8);
+
                 // Pad color with 0's on the left
                 if (randomColor.length != 6) {
                     for (var i = randomColor.length; i < 6; i++) {

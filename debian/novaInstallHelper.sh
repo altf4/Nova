@@ -7,7 +7,13 @@ SAVE=$PWD'/'
 NEW_PERM=$SUDO_USER:$SUDO_USER
 
 if [ -z $BUILDDIR ]; then
-	BUILDDIR=$PWD/nova-build
+	BUILDDIR=~/nova-build
+fi
+
+if [ -z $1 ]; then
+	BRANCH="master"
+else
+	BRANCH="$1"
 fi
 
 echo "Build Dir is $BUILDDIR"
@@ -25,7 +31,7 @@ mkdir -p ${BUILDDIR}
 echo "##############################################################################"
 echo "#                          NOVA DEPENDENCY CHECK                             #"
 echo "##############################################################################"
-apt-get -y install git build-essential libann-dev libpcap0.8-dev libboost-program-options-dev libboost-serialization-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libevent-dev libprotoc-dev protobuf-compiler libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake libcap2-bin libboost-system-dev libboost-filesystem-dev python perl tcl
+apt-get -y install git build-essential libann-dev libpcap0.8-dev libboost-program-options-dev libboost-serialization-dev sqlite3 libsqlite3-dev libcurl3 libcurl4-gnutls-dev iptables libevent-dev libprotoc-dev protobuf-compiler libdumbnet-dev libpcap-dev libpcre3-dev libedit-dev bison flex libtool automake libcap2-bin libboost-system-dev libboost-filesystem-dev python perl tcl liblinux-inotify2-perl libfile-readbackwards-perl
 check_err
 
 echo "##############################################################################"
@@ -33,9 +39,9 @@ echo "#                         DOWNLOADING NOVA FROM GIT                       
 echo "##############################################################################"
 cd ${BUILDDIR}
 rm -fr Honeyd
+rm -fr Nova
 git clone git://github.com/DataSoft/Honeyd.git
 check_err
-rm -fr Nova
 git clone git://github.com/DataSoft/Nova.git
 check_err
 
@@ -43,7 +49,7 @@ echo "##########################################################################
 echo "#                              BUILDING HONEYD                               #"
 echo "##############################################################################"
 cd ${BUILDDIR}/Honeyd
-git checkout -f integration
+git checkout -f $BRANCH
 ./autogen.sh
 check_err
 automake
@@ -56,7 +62,7 @@ make install
 check_err
 
 cd ${BUILDDIR}/Nova
-git checkout -f integration
+git checkout -f $BRANCH
 git submodule init
 git submodule update
 check_err

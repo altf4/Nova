@@ -13,13 +13,14 @@
 //-   You should have received a copy of the GNU General Public License
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
+
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
   link(rel='stylesheet', name='text/css', href='configstyle.css', media='screen')
-  script
-    alert('Warning! These are advanced configuration options for experienced users.');
-    
+  script.
     function restoreDefaults()
     {
         try {
@@ -38,15 +39,17 @@ block headerAdditions
 
 
 block content
-  form#advancedConfigForm(method='post', action='/configureNovaSave')
-    include includes/advancedConfigForm
-  button(onClick='document.getElementById("advancedConfigForm").submit()')
-    img.buttonIcon(src='images/ok.png')
-    span.buttonSpan Save Changes
-  br
-  button(onClick='restoreDefaults()') 
-    img.buttonIcon(src='/images/erase.png')
-    span.buttonSpan Restore Default Configuration (will erase all changes!)
-//  include includes/advancedConfigForm
+  +header("Advanced Configuration Options")
+    form#advancedConfigForm(method='post', action='/configureNovaSave')
+      input(type="hidden", value="/advancedOptions", name="ERROR_REDIRECT")
+      include includes/advancedConfigForm
+    button(onClick='document.getElementById("advancedConfigForm").submit()')
+      img.buttonIcon(src='images/ok.png')
+      span.buttonSpan Save Changes
+    br
+    button(onClick='restoreDefaults()') 
+      img.buttonIcon(src='/images/erase.png')
+      span.buttonSpan Restore Default Configuration (will erase all changes!)
+//    include includes/advancedConfigForm
 
   

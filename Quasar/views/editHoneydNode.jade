@@ -14,13 +14,15 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout 
 
 block headerAdditions
   link(rel='stylesheet', type='text/css', href='configstyle.css', media='screen')
   script(type='text/javascript', src='scripts/portset.js')
 
-  script
+  script.
     var currentInterface;
     var pfile;
 
@@ -166,11 +168,15 @@ block headerAdditions
         var restartHaystack = confirm('You must restart the haystack for this to take effect. Restart it now?');
         if (restartHaystack)
         {
-          now.RestartHaystack();
+          now.RestartHaystack(function() {
+            window.location = '/honeydConfigManage?tab=settingsNodes';
+          });
+        } else {
+          window.location = '/honeydConfigManage?tab=settingsNodes';
         }
+      } else {
+        window.location = '/honeydConfigManage?tab=settingsNodes';
       }
-
-      window.location = '/honeydConfigManage?tab=settingsNodes';
     }
 
     function ipTypeChanged()
@@ -228,108 +234,107 @@ block headerAdditions
     }
     
 block content
-  br
-  h2 Editing Honeyd Node '#{oldName}'
+  +header("Editing Honeyd Node")
+    input(type='hidden', name='oldName', value='#{oldName}')
 
-  input(type='hidden', name='oldName', value='#{oldName}')
+    label Profile
+    select#profile(name='profile', onchange='profileChanged()')
+      each p, i in profiles
+        if p == profile
+          option(SELECTED) #{p}
+        else
+          option #{p}
+    br
+    br
+    
+    label Portset
+    select#portSetList(name='profile', onchange='portsetSelectionChanged()')
+    br
+    br
+    div(style='height: 200px; overflow-y: scroll; border: 1px solid black; display: inline-block;')
+      table(border='1')
+        thead
+          th(style='background-color: #d0e9fc;') Port Number
+          th(style='background-color: #d0e9fc;') Protocol
+          th(style='background-color: #d0e9fc;') Behavior
+        tbody#portsetHook
+    br
+    br
 
-  label Profile
-  select#profile(name='profile', onchange='profileChanged()')
-    each p, i in profiles
-      if p == profile
-        option(SELECTED) #{p}
-      else
-        option #{p}
-  br
-  br
-  
-  label Portset
-  select#portSetList(name='profile', onchange='portsetSelectionChanged()')
-  br
-  br
-  div(style='height: 200px; overflow-y: scroll; border: 1px solid black; display: inline-block;')
-    table(border='1')
+    label Network Interface
+    table
       thead
-        th(style='background-color: #d0e9fc;') Port Number
-        th(style='background-color: #d0e9fc;') Protocol
-        th(style='background-color: #d0e9fc;') Behavior
-      tbody#portsetHook
-  br
-  br
+        tr 
+      tbody
+      - if(INTERFACES.length == 1)
+        tr 
+          td
+            div
+              input(type='radio', value=INTERFACES[0], id='if0', name='interface', width=10, checked, onchange='checkOnlyOne(if0)')
+              span #{interfaceAliases[0]}
+      - else
+        - for (var i = 0; i < INTERFACES.length; i++)
+            tr 
+              td
+                - if (String(interface) == String(INTERFACES[i]))
+                  input(type='radio', value=INTERFACES[i], id='if#{i}', name='interface', checked, width=10, onchange='checkOnlyOne(if#{i})')
+                  span #{interfaceAliases[i]}
+                - else
+                  input(type='radio', value=INTERFACES[i], id='if#{i}', name='interface', width=10, onchange='checkOnlyOne(if#{i})')
+                  span #{interfaceAliases[i]}
 
-  label Network Interface
-  table
-    thead
-      tr 
-    tbody
-    - if(INTERFACES.length == 1)
-      tr 
-        td
-          input(type='radio', value=INTERFACES[0], id='if0', name='interface', width=10, checked, onchange='checkOnlyOne(if0)')
-          #{interfaceAliases[0]}
-    - else
-      - for (var i = 0; i < INTERFACES.length; i++)
-          tr 
-            td
-              - if (String(interface) == String(INTERFACES[i]))
-                input(type='radio', value=INTERFACES[i], id='if#{i}', name='interface', checked, width=10, onchange='checkOnlyOne(if#{i})')
-                #{interfaceAliases[i]}
-              - else
-                input(type='radio', value=INTERFACES[i], id='if#{i}', name='interface', width=10, onchange='checkOnlyOne(if#{i})')
-                #{interfaceAliases[i]}
-
-  hidden(id='length', value=INTERFACES.length)
+    hidden(id='length', value=INTERFACES.length)
  
-  br
-  br
-  label IP Address Allocation Type
-  select#ipType(name='ipType', onChange='ipTypeChanged()')
-    if ip == 'DHCP'
-      option(SELECTED) DHCP
-    else
-      option DHCP
+    br
+    br
+    label IP Address Allocation Type
+    select#ipType(name='ipType', onChange='ipTypeChanged()')
+      if ip == 'DHCP'
+        option(SELECTED) DHCP
+      else
+        option DHCP
 
-    if ip == 'DHCP'
-      option Static Address
-    else
-      option(SELECTED) Static Address
+      if ip == 'DHCP'
+        option Static Address
+      else
+        option(SELECTED) Static Address
 
-  br
-  label IP address
-  - for (var i = 0; i < 4; i++)
-    - if (ip == 'DHCP')
-      input.ip(id = 'ip' + i,type='number', name='#{"ip" + i}', min='0', max='255', required='true', value='1', disabled='disabled')
-    - else
-      input.ip(id = 'ip' + i,type='number', name='#{"ip" + i}', min='0', max='255', required='true', value='#{ip.split(".")[i]}')
-  
-
-
-  br
-  br
-  label &nbsp
-  button(onclick='GenerateMac()') 
-    img(class='buttonIcon', src='images/dice.png')
-    span(class='buttonSpan') Generate new MAC
-  br
-  br
-  label Ethernet Vendor
-  select#vendorList(name'vendorList')
-
-  br
-  label MAC Address
-  - for (var i = 0; i < 6; i++)
-    - if (mac == 'RANDOM')
-      input(id = 'mac' + i, type='text', name='#{"mac" + i}', pattern='[0-9a-f]{2}', required='true', value='00', disabled='disabled', style='width: 25px')
-    - else
-      input(id = 'mac' + i, type='text', name='#{"mac" + i}', pattern='[0-9a-f]{2}', required='true', value='#{mac.split(":")[i]}', style='width: 25px')
+    br
+    label IP address
+    - for (var i = 0; i < 4; i++)
+      - if (ip == 'DHCP')
+        input.ip(id = 'ip' + i,type='number', name='#{"ip" + i}', min='0', max='255', required='true', value='1', disabled='disabled')
+      - else
+        input.ip(id = 'ip' + i,type='number', name='#{"ip" + i}', min='0', max='255', required='true', value='#{ip.split(".")[i]}')
+    
 
 
-  br
-  br
-  button(onclick='SaveNode();')
-    img.buttonIcon(src='images/ok.png')
-    span.buttonSpan Save Changes
-  
-  button(onclick='window.location="/honeydConfigManage?tab=settingsNodes"')
-    img.buttonIcon(src='images/cancel.png')
-    span.buttonSpan Cancel
+    br
+    br
+    label &nbsp
+    button(onclick='GenerateMac()') 
+      img(class='buttonIcon', src='images/dice.png')
+      span(class='buttonSpan') Generate new MAC
+    br
+    br
+    label Ethernet Vendor
+    select#vendorList(name'vendorList')
+
+    br
+    label MAC Address
+    - for (var i = 0; i < 6; i++)
+      - if (mac == 'RANDOM')
+        input(id = 'mac' + i, type='text', name='#{"mac" + i}', pattern='[0-9a-f]{2}', required='true', value='00', disabled='disabled', style='width: 25px')
+      - else
+        input(id = 'mac' + i, type='text', name='#{"mac" + i}', pattern='[0-9a-f]{2}', required='true', value='#{mac.split(":")[i]}', style='width: 25px')
+
+
+    br
+    br
+    button(onclick='SaveNode();')
+      img.buttonIcon(src='images/ok.png')
+      span.buttonSpan Save Changes
+    
+    button(onclick='window.location="/honeydConfigManage?tab=settingsNodes"')
+      img.buttonIcon(src='images/cancel.png')
+      span.buttonSpan Cancel

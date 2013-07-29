@@ -2,7 +2,7 @@ Source: nova
 Section: net
 Priority: optional
 Maintainer: Dan Petro <dan.petro@datasoft.com>
-Build-Depends: debhelper (>= 8.0.0), build-essential, libann-dev, libpcap0.8-dev, libboost-program-options-dev, libboost-serialization-dev, libsqlite3-dev, libcurl3, libcurl4-gnutls-dev, libboost-system-dev, libboost-filesystem-dev, libevent-dev, cvv8, libprotoc-dev, protobuf-compiler
+Build-Depends: debhelper (>= 8.0.0), build-essential, libann-dev, libpcap0.8-dev, libboost-program-options-dev, libboost-serialization-dev, libsqlite3-dev, libcurl3, libcurl4-gnutls-dev, libboost-system-dev, libboost-filesystem-dev, libevent-dev, libprotoc-dev, protobuf-compiler
 Standards-Version: 3.9.2
 Homepage: https://github.com/DataSoft/Nova
 

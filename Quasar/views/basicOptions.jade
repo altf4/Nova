@@ -14,6 +14,8 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
@@ -21,9 +23,18 @@ block headerAdditions
 
 
 block content
-  form#basicConfigForm(method='post', action='/configureNovaSave')
-    include includes/basicConfigForm
-  button(onClick='document.getElementById("basicConfigForm").submit()')
-    img.buttonIcon(src='images/ok.png')
-    span.buttonSpan Save Changes
+  +header("Basic Configuration Options") 
+    form#basicConfigForm(method='post', action='/configureNovaSave')
+      input(type="hidden", value="/basicOptions", name="ERROR_REDIRECT")
+      include includes/basicConfigForm
+
+    br
+    button(onClick='document.getElementById("basicConfigForm").submit()')
+      img.buttonIcon(src='images/ok.png')
+      span.buttonSpan Save Changes
   
+    br
+    a(href="/advancedOptions")
+      button
+        img.buttonIcon(src='images/edit.png')
+        span.buttonSpan Configure Advanced Settings 

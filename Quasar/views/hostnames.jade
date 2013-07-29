@@ -14,6 +14,8 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
@@ -22,21 +24,21 @@ block headerAdditions
   link(rel="stylesheet", type="text/css", href="novagrid.css", media="screen")
   script(type="text/javascript", src="scripts/NovaGrid.js")
   
-  script
+  script.
     var grid;
 
     function init(){
         var columns = new Array();
         columns.push({name: "Hostname"});
         columns.push({name: "IP binding"});
-        columns.push({name: "Delete"});
+        columns.push({name: "Delete", noEscape: true});
 
-        grid = new NovaGrid(columns, 0, "hostnameTable", 'grid', false);
+        grid = new NovaGrid(columns, 0, document.getElementById("hostnameTable"), 'grid');
 
         now.ready(function() {
             now.GetHostnames(function(err, results) {
                 if (err) {
-                    console.log("Error when getting hostnames: " + err);
+                    alert("Error when getting hostnames: " + err);
                     return;
                 }
 
@@ -44,7 +46,7 @@ block headerAdditions
                     var row = new Array();
                     row.push(results[i].name);
                     row.push(results[i].IP);
-                    row.push("<button class='button' onclick='DeleteHostname(\\"" + results[i].name + "\\")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Delete</span></button>");
+                    row.push("<button class='button' onclick='DeleteHostname(\"" + results[i].name + "\")'><img src='images/delete.png' class='buttonIcon'/> <span class='buttonSpan'>Delete</span></button>");
 
                     grid.PushEntry(row);
                 }
@@ -82,25 +84,22 @@ block headerAdditions
     };
   
 block content
-  h1 Honeypot hostnames
-
-  br
-  table
-    tr
-      td
-        input#newHostName(type="text", placeholder="Enter new hostname", onkeypress='if(event.keyCode == 13){AddNewHostname()}')
-      td
-        button.button(onclick="AddNewHostname()")
-          img.buttonIcon(src="images/add.png")
-          span.buttonSpan Add Hostname
+  +header("Honeypot hostnames")
+    table
+      tr
+        td
+          input#newHostName(type="text", placeholder="Enter new hostname", onkeypress='if(event.keyCode == 13){AddNewHostname()}')
+        td
+          button.button(onclick="AddNewHostname()")
+            img.buttonIcon(src="images/add.png")
+            span.buttonSpan Add Hostname
+    
   
-
-  br
-  div.novaGrid
-    div#hostnameTable
-
-  br
-  button.button(onclick="clearAllocations()")
-    img.buttonIcon(src="images/delete.png")
-    span.buttonSpan Clear all IP bindings
-
+    br
+    span#hostnameTable(style="display: inline-block;")
+  
+    br
+    button.button(onclick="clearAllocations()")
+      img.buttonIcon(src="images/delete.png")
+      span.buttonSpan Clear all IP bindings
+  

@@ -20,7 +20,9 @@
 #ifndef PROFILE_H_
 #define PROFILE_H_
 
+#include "Proxy.h"
 #include "PortSet.h"
+#include "Broadcast.h"
 
 namespace Nova
 {
@@ -29,6 +31,8 @@ class Profile
 {
 
 public:
+	static const std::string EMPTY_PROFILE_NAME;
+
 
 	Profile(Profile *parent, std::string key = "");
 	Profile(std::string parentName, std::string key = "");
@@ -129,6 +133,9 @@ public:
 
 	//A collection of PortSets, representing each group of ports found
 	std::vector<PortSet *> m_portSets;
+
+	std::vector<Broadcast *> m_broadcasts;
+	std::vector<Proxy *> m_proxies;
 
 private:
 

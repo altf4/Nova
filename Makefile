@@ -112,8 +112,12 @@ test-prepare:
 	# Delete the link to Main so we don't have multiple def of main()
 	rm -f NovaTest/NovadSource/Main.cpp
 
-clean: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-quasar clean-novatrainer clean-staging clean-cli
+clean: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-quasar clean-novatrainer clean-staging clean-cli clean-node
 
+clean-dev: clean-lib clean-ui-core clean-novad clean-test clean-hhconfig clean-quasar clean-novatrainer clean-staging clean-cli
+
+clean-node:
+	rm -fr Quasar/node_modules
 
 #remove binaries from staging area
 clean-staging:
@@ -187,6 +191,7 @@ clean-test:
 
 clean-nodejsmodule:
 	-cd NodejsModule; node-waf clean
+	-cd NodejsModule; node-gyp clean
 
 clean-quasar: clean-nodejsmodule
 	-rm -rf NodejsModule/build
@@ -250,6 +255,10 @@ install-data:
 	#Copy the scripts and logs
 	install Installer/nova_init "$(DESTDIR)/usr/bin"
 	install Installer/nova_rsyslog_helper "$(DESTDIR)/usr/bin"
+	install Installer/miscFiles/createNovaScriptAlert.py "$(DESTDIR)/usr/bin"
+	install Installer/miscFiles/novamaildaemon.pl "$(DESTDIR)/usr/bin"
+	install Installer/miscFiles/cleannovasendmail.sh "$(DESTDIR)/usr/bin"
+	install Installer/miscFiles/placenovasendmail "$(DESTDIR)/usr/bin"
 	#Install permissions
 	install Installer/miscFiles/sudoers_nova "$(DESTDIR)/etc/sudoers.d/" --mode=0440
 	install Installer/miscFiles/40-nova.conf "$(DESTDIR)/etc/rsyslog.d/" --mode=664
@@ -269,12 +278,10 @@ install-docs:
 
 install-quasar:
 	cp -frup Quasar "$(DESTDIR)/usr/share/nova/sharedFiles"
-	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Quasar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
 	-install Quasar/quasar "$(DESTDIR)/usr/bin/quasar"
 
 install-pulsar:
 	cp -frup Pulsar "$(DESTDIR)/usr/share/nova/sharedFiles"
-	tar -C "$(DESTDIR)/usr/share/nova/sharedFiles/Pulsar/www" -xf Quasar/dojo-release-1.7.0.tar.gz
 	-install Pulsar/pulsar "$(DESTDIR)/usr/bin/pulsar"	
 
 install-hhconfig:
@@ -340,7 +347,7 @@ reset: uninstall-files
 	$(MAKE) install
 
 reset-debug: 
-	$(MAKE) clean
+	$(MAKE) clean-dev
 	$(MAKE) debug
 	$(MAKE) test
 	rm -rf ~/.config/nova

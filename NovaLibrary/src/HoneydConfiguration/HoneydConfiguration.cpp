@@ -29,6 +29,7 @@
 #include <netdb.h>
 #include <net/if.h>
 #include <ifaddrs.h>
+#include <algorithm>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -149,6 +150,52 @@ Profile *HoneydConfiguration::ReadProfilesXML_helper(ptree &ptree, Profile *pare
 		{
 			LOG(DEBUG, "Unable to parse Ethernet settings for profile", "");
 		};
+
+		// Broadcast scripts
+		try
+		{
+			BOOST_FOREACH(ptree::value_type &broadcasts, ptree.get_child("broadcasts"))
+			{
+				if(!string(broadcasts.first.data()).compare("broadcast"))
+				{
+					Broadcast *bcast = new Broadcast();
+					bcast->m_script = broadcasts.second.get<string>("script");
+					bcast->m_dstPort = broadcasts.second.get<int>("dstport");
+					bcast->m_srcPort = broadcasts.second.get<int>("srcport");
+					bcast->m_time = broadcasts.second.get<int>("time");
+
+					profile->m_broadcasts.push_back(bcast);
+				}
+			}
+		}
+		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+		{
+			LOG(DEBUG, "Unable to parse Broacdast settings for profile:" + string(e.what()), "");
+		};
+
+		// Proxy services
+		try
+		{
+			BOOST_FOREACH(ptree::value_type &proxies, ptree.get_child("proxies"))
+			{
+				if(!string(proxies.first.data()).compare("proxy"))
+				{
+					Proxy *proxy = new Proxy();
+					proxy->m_honeypotPort = proxies.second.get<int>("honeypotport");
+					proxy->m_proxyIP = proxies.second.get<string>("proxyip");
+					proxy->m_protocol = proxies.second.get<string>("protocol");
+					proxy->m_proxyPort = proxies.second.get<int>("proxyport");
+
+					profile->m_proxies.push_back(proxy);
+				}
+			}
+		}
+		catch(boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::property_tree::ptree_bad_path> > &e)
+		{
+			LOG(DEBUG, "Unable to parse proxy service settings for profile:" + string(e.what()), "");
+		};
+
+
 
 		//Port Sets
 		try
@@ -372,6 +419,9 @@ bool HoneydConfiguration::ReadScriptsXML()//write complex test that moves the xm
 				script.m_service = value.second.get<string>("service");
 				script.m_osclass = value.second.get<string>("osclass");
 				script.m_path = value.second.get<string>("path");
+				script.m_defaultPort = value.second.get<string>("defaultport");
+				script.m_defaultProtocol = value.second.get<string>("defaultprotocol");
+				script.m_isBroadcastScript = value.second.get<bool>("broadcast");
 				script.m_isConfigurable = value.second.get<bool>("configurable");
 
 				//cout << "Configurable is " << script.m_isConfigurable << endl;
@@ -441,6 +491,9 @@ bool HoneydConfiguration::WriteScriptsToXML()
 		propTree.put<string>("service", m_scripts[i].m_service);
 		propTree.put<string>("osclass", m_scripts[i].m_osclass);
 		propTree.put<string>("path", m_scripts[i].m_path);
+		propTree.put<string>("defaultport", m_scripts[i].m_defaultPort);
+		propTree.put<string>("defaultprotocol", m_scripts[i].m_defaultProtocol);
+		propTree.put<bool>("broadcast", m_scripts[i].m_isBroadcastScript);
 		propTree.put<bool>("configurable", m_scripts[i].m_isConfigurable);
 
 		for (std::map<std::string, std::vector<std::string>>::iterator it = m_scripts[i].options.begin(); it != m_scripts[i].options.end(); it++)
@@ -555,6 +608,35 @@ bool HoneydConfiguration::WriteProfilesToXML_helper(Profile *root, ptree &propTr
 	}
 	propTree.add_child("ethernet_vendors", vendors);
 
+
+	ptree broadcasts;
+	for (uint i = 0; i < root->m_broadcasts.size(); i++)
+	{
+		ptree broadcast;
+		broadcast.put<std::string>("script", root->m_broadcasts[i]->m_script);
+		broadcast.put<int>("srcport", root->m_broadcasts[i]->m_srcPort);
+		broadcast.put<int>("dstport", root->m_broadcasts[i]->m_dstPort);
+		broadcast.put<int>("time", root->m_broadcasts[i]->m_time);
+
+		broadcasts.add_child("broadcast", broadcast);
+	}
+
+	propTree.add_child("broadcasts",broadcasts);
+
+	ptree proxies;
+	for (uint i = 0; i < root->m_proxies.size(); i++)
+	{
+		ptree proxy;
+		proxy.put<int>("honeypotport", root->m_proxies[i]->m_honeypotPort);
+		proxy.put<string>("protocol", root->m_proxies[i]->m_protocol);
+		proxy.put<string>("proxyip", root->m_proxies[i]->m_proxyIP);
+		proxy.put<int>("proxyport", root->m_proxies[i]->m_proxyPort);
+
+		proxies.add_child("proxy", proxy);
+	}
+
+	propTree.add_child("proxies",proxies);
+
 	//Describe what port sets are available for this profile
 	{
 		ptree portSets;
@@ -652,13 +734,21 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 
 	stringstream out;
 
-	//Print the "default" profile
 	out << m_profiles.m_root->ToString() << "\n";
 
-	uint j = 0;
+
+	// Shuffle the nodes to avoid having DHCP requests that end up contiguously grouped by profile
+	vector<string> shuffledKeys;
 	for(NodeTable::iterator it = m_nodes.begin(); it != m_nodes.end(); it++)
 	{
-		if(!it->second.m_enabled)
+		shuffledKeys.push_back(it->first);
+	}
+	std::random_shuffle(shuffledKeys.begin(), shuffledKeys.end());
+
+
+	for (uint j = 0; j < shuffledKeys.size(); j++)
+	{
+		if(!m_nodes[shuffledKeys[j]].m_enabled)
 		{
 			continue;
 		}
@@ -667,36 +757,34 @@ bool HoneydConfiguration::WriteHoneydConfiguration(string path)
 		ss << "CustomNodeProfile-" << j;
 		string nodeName = ss.str();
 
-		Profile *item = m_profiles.GetProfile(it->second.m_pfile);
+		Profile *item = m_profiles.GetProfile(m_nodes[shuffledKeys[j]].m_pfile);
 		if(item != NULL)
 		{
 			//Print the profile
-			out << item->ToString(it->second.m_portSetIndex, nodeName);
+			out << item->ToString(m_nodes[shuffledKeys[j]].m_portSetIndex, nodeName);
 			//Then we need to add node-specific information to the profile's output
-			if(!it->second.m_IP.compare("DHCP"))
+			if(!m_nodes[shuffledKeys[j]].m_IP.compare("DHCP"))
 			{
-				out << "dhcp " << nodeName << " on " << it->second.m_interface;
+				out << "dhcp " << nodeName << " on " << m_nodes[shuffledKeys[j]].m_interface;
 				//If the node has a MAC address (not random generated)
-				if(it->second.m_MAC.compare("RANDOM"))
+				if(m_nodes[shuffledKeys[j]].m_MAC.compare("RANDOM"))
 				{
-					out << " ethernet \"" << it->second.m_MAC << "\"";
+					out << " ethernet \"" << m_nodes[shuffledKeys[j]].m_MAC << "\"";
 				}
 				out << "\n\n";
 			}
 			else
 			{
 				//If the node has a MAC address (not random generated)
-				if(it->second.m_MAC.compare("RANDOM"))
+				if(m_nodes[shuffledKeys[j]].m_MAC.compare("RANDOM"))
 				{
 					//Set the MAC for the custom node profile
-					out << "set " << nodeName << " ethernet \"" << it->second.m_MAC << "\"" << '\n';
+					out << "set " << nodeName << " ethernet \"" << m_nodes[shuffledKeys[j]].m_MAC << "\"" << '\n';
 				}
 				//bind the node to the IP address
-				out << "bind " << it->second.m_IP << " " << nodeName << "\n\n";
+				out << "bind " << m_nodes[shuffledKeys[j]].m_IP << " " << nodeName << "\n\n";
 			}
 		}
-
-		j++;
 	}
 
 	ofstream outFile(path);
@@ -730,7 +818,7 @@ bool HoneydConfiguration::AddNode(string profileName, string ipAddress, string m
 		uint retVal = inet_addr(ipAddress.c_str());
 		if(retVal == INADDR_NONE)
 		{
-			LOG(ERROR, "Invalid node IP address '" + ipAddress + "' given!", "");
+			LOG(WARNING, "Invalid node IP address '" + ipAddress + "' given!", "");
 			return false;
 		}
 
@@ -869,7 +957,23 @@ vector<string> HoneydConfiguration::GetScriptNames()
 	vector<string> scriptNames;
 	for(uint i = 0; i < m_scripts.size(); i++)
 	{
-		scriptNames.push_back(m_scripts[i].m_name);
+		if (!m_scripts[i].m_isBroadcastScript)
+		{
+			scriptNames.push_back(m_scripts[i].m_name);
+		}
+	}
+	return scriptNames;
+}
+
+vector<string> HoneydConfiguration::GetBroadcastScriptNames()
+{
+	vector<string> scriptNames;
+	for(uint i = 0; i < m_scripts.size(); i++)
+	{
+		if (m_scripts[i].m_isBroadcastScript)
+		{
+			scriptNames.push_back(m_scripts[i].m_name);
+		}
 	}
 	return scriptNames;
 }
@@ -958,7 +1062,7 @@ bool HoneydConfiguration::AddProfile(Profile *profile)
 	{
 		//Copy over the contents of this profile, and quit
 		duplicate->Copy(profile);
-
+	
 		//We don't need this new profile anymore, so get rid of it
 		if(profile != NULL)
 		{
@@ -1391,10 +1495,7 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 		addfile << configName << '\n';
 		addfile.close();
 		WriteAllTemplatesToXML();
-		boost::filesystem::path fromString = Config::Inst()->GetPathHome() + "/config/templates/default/routes.xml";
-		boost::filesystem::path toString = Config::Inst()->GetPathHome() + "/config/templates/" + configName + "/routes.xml";
 
-		boost::filesystem::copy_file(fromString, toString);
 		Config::Inst()->SetCurrentConfig(oldName);
 		return true;
 	}
@@ -1420,9 +1521,9 @@ bool HoneydConfiguration::AddNewConfiguration(const string& configName, bool clo
 
 bool HoneydConfiguration::RemoveConfiguration(const std::string& configName)
 {
-	if(!configName.compare("default"))
+	if(m_configs.size() == 1)
 	{
-		cout << "Cannot delete default configuration" << endl;
+		LOG(ERROR, "You cannot delete all haystack configurations", "");
 		return false;
 	}
 

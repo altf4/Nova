@@ -45,8 +45,12 @@ memwatch.on('stats', function(stats)
 
 // Modules that provide bindings to C++ code in NovaLibrary and Nova_UI_Core
 
+require('tls').SLAB_BUFFER_SIZE = 100 * 1024;
+
 var NovaCommon = require('./NovaCommon.js');
 NovaCommon.nova.CheckConnection();
+
+var maildaemon = ''
 
 // Modules from NodejsModule/Javascript
 var LOG = NovaCommon.LOG;
@@ -60,6 +64,7 @@ var os = require('os');
 var fs = require('fs');
 var jade = require('jade');
 var express = require('express');
+var https = require('https');
 var passport = require('passport');
 var BasicStrategy = require('passport-http').BasicStrategy;
 var exec = require('child_process').exec;
@@ -88,10 +93,8 @@ var RenderError = function (res, err, link)
 
     console.log("Reported Client Error: " + err);
     res.render('error.jade', {
-        locals: {
             redirectLink: link
             , errorDetails: err
-        }
     });
 }
 
@@ -178,7 +181,7 @@ function (username, password, done)
 }));
 
 // Setup TLS
-var app;
+var app = express();
 if(NovaCommon.config.ReadSetting("QUASAR_WEBUI_TLS_ENABLED") == "1")
 {
     var keyPath = NovaCommon.config.ReadSetting("QUASAR_WEBUI_TLS_KEY");
@@ -190,11 +193,11 @@ if(NovaCommon.config.ReadSetting("QUASAR_WEBUI_TLS_ENABLED") == "1")
         passphrase: passPhrase
     };
  
-    app = express.createServer(express_options);
+    var httpsServer = https.createServer(express_options, app);
 }
 else
 {
-    app = express.createServer();
+    var httpsServer = https.createServer(app);
 }
 
 app.configure(function()
@@ -247,27 +250,27 @@ if(NovaCommon.config.ReadSetting("MANAGE_IFACE_ENABLE") == '1')
   {
     console.log('Could not procure a value for WEB_UI_ADDRESS, using none.');
     console.info("Listening on port " + WEB_UI_PORT);
-    app.listen(WEB_UI_PORT); 
+    httpsServer.listen(WEB_UI_PORT); 
   }
   else if(length == 2)
   {
     console.log('Only one interface available, defaulting');
     console.info("Listening on port " + WEB_UI_PORT);
-    app.listen(WEB_UI_PORT); 
+    httpsServer.listen(WEB_UI_PORT); 
   }
   else
   {
     console.info("Listening on address " + WEB_UI_ADDRESS + ":" + WEB_UI_PORT + " (" + WEB_UI_IFACE + ")");
-    app.listen(WEB_UI_PORT, WEB_UI_ADDRESS);
+    httpsServer.listen(WEB_UI_PORT, WEB_UI_ADDRESS);
   }
 }
 else
 {
-  app.listen(WEB_UI_PORT);
+  httpsServer.listen(WEB_UI_PORT);
   console.info("Listening on port " + WEB_UI_PORT);
 }
 
-var everyone = nowjs.initialize(app);
+var everyone = nowjs.initialize(httpsServer);
 var NowjsMethods = require('./NowjsMethods.js');
 var initEveryone = new NowjsMethods(everyone);
 
@@ -784,14 +787,12 @@ app.get('/honeydConfigManage', function(req, res){
   var interfaces = NovaCommon.config.ListInterfaces().sort();
 
   res.render('honeydConfigManage.jade', {
-    locals: {
       configurations: NovaCommon.honeydConfig.GetConfigurationsList(),
       current: NovaCommon.config.GetCurrentConfig(),
       nodes: nodeList,
       INTERFACES: interfaces,
       interfaceAliases: ConvertInterfacesToAliases(interfaces),
       tab: tab
-    }
   });
 });
 
@@ -856,27 +857,17 @@ app.get('/viewNovadLog', function (req, res)
             RenderError(res, "Unable to open NOVA log file for reading due to error: " + err);
             return;
         } else {
-            res.render('viewNovadLog.jade', {
-                locals: {
-                    log: data
-                }
-            });
-        }
-    });
-});
-
-app.get('/viewHoneydLog', function (req, res)
-{
-    fs.readFile(honeydLogPath, 'utf8', function (err, data)
-    {
-        if (err)
-        {
-            RenderError(res, "Unable to open honeyd log file for reading due to error: " + err);
-            return;
-        } else {
-            res.render('viewHoneydLog.jade', {
-                locals: {
-                    log: data
+            fs.readFile(honeydLogPath, 'utf8', function (err, honeydData)
+            {
+                if (err)
+                {
+                    RenderError(res, "Unable to open HONEYD log file for reading due to error: " + err);
+                    return;
+                } else {
+                    res.render('viewNovadLog.jade', {
+                        log: data
+                        , honeydLog: honeydData
+                    });
                 }
             });
         }
@@ -918,53 +909,48 @@ app.get('/advancedOptions', function (req, res)
     }
 
     res.render('advancedOptions.jade', {
-        locals: {
-            INTERFACES: NovaCommon.config.ListInterfaces().sort()
-            , DEFAULT: NovaCommon.config.GetUseAllInterfacesBinding()
-            , HS_HONEYD_CONFIG: NovaCommon.config.ReadSetting("HS_HONEYD_CONFIG")
-            , READ_PCAP: NovaCommon.config.ReadSetting("READ_PCAP")
-            , PCAP_FILE: NovaCommon.config.ReadSetting("PCAP_FILE")
-            , GO_TO_LIVE: NovaCommon.config.ReadSetting("GO_TO_LIVE")
-            , CLASSIFICATION_TIMEOUT: NovaCommon.config.ReadSetting("CLASSIFICATION_TIMEOUT")
-            , K: NovaCommon.config.ReadSetting("K")
-            , EPS: NovaCommon.config.ReadSetting("EPS")
-            , CLASSIFICATION_THRESHOLD: NovaCommon.config.ReadSetting("CLASSIFICATION_THRESHOLD")
-            , DOPPELGANGER_IP: NovaCommon.config.ReadSetting("DOPPELGANGER_IP")
-            , DOPPELGANGER_INTERFACE: NovaCommon.config.ReadSetting("DOPPELGANGER_INTERFACE")
-            , DM_ENABLED: NovaCommon.config.ReadSetting("DM_ENABLED")
-            , ENABLED_FEATURES: NovaCommon.config.ReadSetting("ENABLED_FEATURES")
-            , FEATURE_NAMES: NovaCommon.nova.GetFeatureNames()
-            , THINNING_DISTANCE: NovaCommon.config.ReadSetting("THINNING_DISTANCE")
-            , SAVE_FREQUENCY: NovaCommon.config.ReadSetting("SAVE_FREQUENCY")
-            , DATA_TTL: NovaCommon.config.ReadSetting("DATA_TTL")
-            , CE_SAVE_FILE: NovaCommon.config.ReadSetting("CE_SAVE_FILE")
-            , SMTP_ADDR: NovaCommon.config.ReadSetting("SMTP_ADDR")
-            , SMTP_PORT: NovaCommon.config.ReadSetting("SMTP_PORT")
-            , SMTP_DOMAIN: NovaCommon.config.ReadSetting("SMTP_DOMAIN")
-            , SMTP_USER: NovaCommon.config.GetSMTPUser()
-            , SMTP_PASS: NovaCommon.config.GetSMTPPass()
-            , RECIPIENTS: NovaCommon.config.ReadSetting("RECIPIENTS")
-            , SERVICE_PREFERENCES: NovaCommon.config.ReadSetting("SERVICE_PREFERENCES")
-            , CAPTURE_BUFFER_SIZE: NovaCommon.config.ReadSetting("CAPTURE_BUFFER_SIZE")
-            , MIN_PACKET_THRESHOLD: NovaCommon.config.ReadSetting("MIN_PACKET_THRESHOLD")
-            , CUSTOM_PCAP_FILTER: NovaCommon.config.ReadSetting("CUSTOM_PCAP_FILTER")
-            , CUSTOM_PCAP_MODE: NovaCommon.config.ReadSetting("CUSTOM_PCAP_MODE")
-            , MANAGE_IFACE_ENABLE: NovaCommon.config.ReadSetting("MANAGE_IFACE_ENABLE")
-            , WEB_UI_PORT: NovaCommon.config.ReadSetting("WEB_UI_PORT")
-            , WEB_UI_IFACE: NovaCommon.config.ReadSetting("WEB_UI_IFACE")
-            , CLEAR_AFTER_HOSTILE_EVENT: NovaCommon.config.ReadSetting("CLEAR_AFTER_HOSTILE_EVENT")
-            , MASTER_UI_IP: NovaCommon.config.ReadSetting("MASTER_UI_IP")
-            , MASTER_UI_RECONNECT_TIME: NovaCommon.config.ReadSetting("MASTER_UI_RECONNECT_TIME")
-            , MASTER_UI_CLIENT_ID: NovaCommon.config.ReadSetting("MASTER_UI_CLIENT_ID")
-            , MASTER_UI_ENABLED: NovaCommon.config.ReadSetting("MASTER_UI_ENABLED") 
-            , FEATURE_WEIGHTS: NovaCommon.config.ReadSetting("FEATURE_WEIGHTS")
-            , CLASSIFICATION_ENGINE: NovaCommon.config.ReadSetting("CLASSIFICATION_ENGINE")
-            , THRESHOLD_HOSTILE_TRIGGERS: NovaCommon.config.ReadSetting("THRESHOLD_HOSTILE_TRIGGERS")
-            , ONLY_CLASSIFY_HONEYPOT_TRAFFIC: NovaCommon.config.ReadSetting("ONLY_CLASSIFY_HONEYPOT_TRAFFIC")
-            , TRAINING_DATA_PATH: NovaCommon.config.ReadSetting("TRAINING_DATA_PATH")
-            , supportedEngines: NovaCommon.nova.GetSupportedEngines()
-            , MESSAGE_WORKER_THREADS: NovaCommon.config.ReadSetting("MESSAGE_WORKER_THREADS")
-        }
+        INTERFACES: NovaCommon.config.ListInterfaces().sort()
+        , DEFAULT: NovaCommon.config.GetUseAllInterfacesBinding()
+        , HS_HONEYD_CONFIG: NovaCommon.config.ReadSetting("HS_HONEYD_CONFIG")
+        , READ_PCAP: NovaCommon.config.ReadSetting("READ_PCAP")
+        , PCAP_FILE: NovaCommon.config.ReadSetting("PCAP_FILE")
+        , GO_TO_LIVE: NovaCommon.config.ReadSetting("GO_TO_LIVE")
+        , CLASSIFICATION_TIMEOUT: NovaCommon.config.ReadSetting("CLASSIFICATION_TIMEOUT")
+        , K: NovaCommon.config.ReadSetting("K")
+        , EPS: NovaCommon.config.ReadSetting("EPS")
+        , CLASSIFICATION_THRESHOLD: NovaCommon.config.ReadSetting("CLASSIFICATION_THRESHOLD")
+        , DOPPELGANGER_IP: NovaCommon.config.ReadSetting("DOPPELGANGER_IP")
+        , DOPPELGANGER_INTERFACE: NovaCommon.config.ReadSetting("DOPPELGANGER_INTERFACE")
+        , DM_ENABLED: NovaCommon.config.ReadSetting("DM_ENABLED")
+        , ENABLED_FEATURES: NovaCommon.config.ReadSetting("ENABLED_FEATURES")
+        , FEATURE_NAMES: NovaCommon.nova.GetFeatureNames()
+        , THINNING_DISTANCE: NovaCommon.config.ReadSetting("THINNING_DISTANCE")
+        , SAVE_FREQUENCY: NovaCommon.config.ReadSetting("SAVE_FREQUENCY")
+        , DATA_TTL: NovaCommon.config.ReadSetting("DATA_TTL")
+        , CE_SAVE_FILE: NovaCommon.config.ReadSetting("CE_SAVE_FILE")
+        , SMTP_ADDR: NovaCommon.config.ReadSetting("SMTP_ADDR")
+        , SMTP_PORT: NovaCommon.config.ReadSetting("SMTP_PORT")
+        , SMTP_DOMAIN: NovaCommon.config.ReadSetting("SMTP_DOMAIN")
+        , SMTP_PASS: NovaCommon.config.ReadSetting("SMTP_PASS")
+        , SERVICE_PREFERENCES: NovaCommon.config.ReadSetting("SERVICE_PREFERENCES")
+        , CAPTURE_BUFFER_SIZE: NovaCommon.config.ReadSetting("CAPTURE_BUFFER_SIZE")
+        , MIN_PACKET_THRESHOLD: NovaCommon.config.ReadSetting("MIN_PACKET_THRESHOLD")
+        , CUSTOM_PCAP_FILTER: NovaCommon.config.ReadSetting("CUSTOM_PCAP_FILTER")
+        , CUSTOM_PCAP_MODE: NovaCommon.config.ReadSetting("CUSTOM_PCAP_MODE")
+        , MANAGE_IFACE_ENABLE: NovaCommon.config.ReadSetting("MANAGE_IFACE_ENABLE")
+        , WEB_UI_PORT: NovaCommon.config.ReadSetting("WEB_UI_PORT")
+        , WEB_UI_IFACE: NovaCommon.config.ReadSetting("WEB_UI_IFACE")
+        , CLEAR_AFTER_HOSTILE_EVENT: NovaCommon.config.ReadSetting("CLEAR_AFTER_HOSTILE_EVENT")
+        , MASTER_UI_IP: NovaCommon.config.ReadSetting("MASTER_UI_IP")
+        , MASTER_UI_RECONNECT_TIME: NovaCommon.config.ReadSetting("MASTER_UI_RECONNECT_TIME")
+        , MASTER_UI_CLIENT_ID: NovaCommon.config.ReadSetting("MASTER_UI_CLIENT_ID")
+        , MASTER_UI_ENABLED: NovaCommon.config.ReadSetting("MASTER_UI_ENABLED") 
+        , FEATURE_WEIGHTS: NovaCommon.config.ReadSetting("FEATURE_WEIGHTS")
+        , CLASSIFICATION_ENGINE: NovaCommon.config.ReadSetting("CLASSIFICATION_ENGINE")
+        , THRESHOLD_HOSTILE_TRIGGERS: NovaCommon.config.ReadSetting("THRESHOLD_HOSTILE_TRIGGERS")
+        , ONLY_CLASSIFY_HONEYPOT_TRAFFIC: NovaCommon.config.ReadSetting("ONLY_CLASSIFY_HONEYPOT_TRAFFIC")
+        , TRAINING_DATA_PATH: NovaCommon.config.ReadSetting("TRAINING_DATA_PATH")
+        , MESSAGE_WORKER_THREADS: NovaCommon.config.ReadSetting("MESSAGE_WORKER_THREADS")
     });
 });
 
@@ -1046,28 +1032,27 @@ function renderBasicOptions(jadefile, res, req)
     {
         ifaceForConversion.push(pass[i].iface);
     }
+    
     res.render(jadefile, {
-        locals: {
-            INTERFACES: pass,
-            INTERFACE_ALIASES: ConvertInterfacesToAliases(ifaceForConversion),
-            DEFAULT: NovaCommon.config.GetUseAllInterfacesBinding(),
-            DOPPELGANGER_IP: NovaCommon.config.ReadSetting("DOPPELGANGER_IP"),
-            DOPPELGANGER_INTERFACE: doppelPass,
-            DM_ENABLED: NovaCommon.config.ReadSetting("DM_ENABLED"),
-            SMTP_ADDR: NovaCommon.config.ReadSetting("SMTP_ADDR"),
-            SMTP_PORT: NovaCommon.config.ReadSetting("SMTP_PORT"),
-            SMTP_DOMAIN: NovaCommon.config.ReadSetting("SMTP_DOMAIN"),
-            SMTP_USER: NovaCommon.config.GetSMTPUser(),
-            SMTP_PASS: NovaCommon.config.GetSMTPPass(),
-            SMTP_USEAUTH: NovaCommon.config.GetSMTPUseAuth().toString(),
-            RSYSLOG_USE: NovaCommon.config.ReadSetting("RSYSLOG_USE"),
-            RSYSLOG_IP: NovaCommon.config.ReadSetting("RSYSLOG_IP"),
-            RSYSLOG_PORT: NovaCommon.config.ReadSetting("RSYSLOG_PORT"),
-            RSYSLOG_CONNTYPE: NovaCommon.config.ReadSetting("RSYSLOG_CONNTYPE"),
-            EMAIL_ALERTS_ENABLED: NovaCommon.config.ReadSetting("EMAIL_ALERTS_ENABLED"),
-            SERVICE_PREFERENCES: NovaCommon.config.ReadSetting("SERVICE_PREFERENCES"),
-            RECIPIENTS: NovaCommon.config.ReadSetting("RECIPIENTS")
-        }
+        INTERFACES: pass,
+        INTERFACE_ALIASES: ConvertInterfacesToAliases(ifaceForConversion),
+        DEFAULT: NovaCommon.config.GetUseAllInterfacesBinding(),
+        DOPPELGANGER_IP: NovaCommon.config.ReadSetting("DOPPELGANGER_IP"),
+        DOPPELGANGER_INTERFACE: doppelPass,
+        DM_ENABLED: NovaCommon.config.ReadSetting("DM_ENABLED"),
+        SMTP_ADDR: NovaCommon.config.ReadSetting("SMTP_ADDR"),
+        SMTP_PORT: NovaCommon.config.ReadSetting("SMTP_PORT"),
+        SMTP_DOMAIN: NovaCommon.config.ReadSetting("SMTP_DOMAIN"),
+        SMTP_PASS: NovaCommon.config.ReadSetting("SMTP_PASS"),
+        SMTP_INTERVAL: NovaCommon.config.ReadSetting("SMTP_INTERVAL"),
+        SMTP_USEAUTH: NovaCommon.config.GetSMTPUseAuth().toString(),
+        RSYSLOG_USE: NovaCommon.config.ReadSetting("RSYSLOG_USE"),
+        RSYSLOG_IP: NovaCommon.config.ReadSetting("RSYSLOG_IP"),
+        RSYSLOG_PORT: NovaCommon.config.ReadSetting("RSYSLOG_PORT"),
+        RSYSLOG_CONNTYPE: NovaCommon.config.ReadSetting("RSYSLOG_CONNTYPE"),
+        EMAIL_ALERTS_ENABLED: NovaCommon.config.ReadSetting("EMAIL_ALERTS_ENABLED"),
+        SERVICE_PREFERENCES: NovaCommon.config.ReadSetting("SERVICE_PREFERENCES"),
+        RECIPIENTS: NovaCommon.config.ReadSetting("RECIPIENTS")
     });
 }
 
@@ -1094,13 +1079,16 @@ app.get('/configHoneydNodes', function (req, res)
   var interfaces = NovaCommon.config.ListInterfaces().sort();
     
   res.render('configHoneydNodes.jade', {
-    locals: {
       INTERFACES: interfaces,
       interfaceAliases: ConvertInterfacesToAliases(interfaces),
       profiles: profiles,
       currentGroup: NovaCommon.config.GetGroup()
-    }
   });
+});
+
+app.get('/help', function (req, res)
+{
+    res.render('help.jade');   
 });
 
 app.get('/getSuspectDetails', function (req, res)
@@ -1121,10 +1109,11 @@ app.get('/getSuspectDetails', function (req, res)
   var suspectInterface = req.query['interface'];
   
     res.render('suspectDetails.jade', {
-        locals: {
-          suspect: suspectIp
-          , interface: suspectInterface
-        }
+        suspectIp: suspectIp
+        , interface: suspectInterface
+        , suspectInterface: suspectInterface
+        , featureNames: NovaCommon.nova.GetFeatureNames()
+        ,  suspect: suspectIp
     });
 });
 
@@ -1156,17 +1145,15 @@ app.get('/editHoneydNode', function (req, res)
   }
 
   res.render('editHoneydNode.jade', {
-    locals: {
-      oldName: nodeName,
-      INTERFACES: interfaces,
-      interfaceAliases: ConvertInterfacesToAliases(interfaces),
-      profiles: NovaCommon.honeydConfig.GetProfileNames(),
-      profile: node.GetProfile(),
-      interface: node.GetInterface(),
-      ip: node.GetIP(),
-      mac: node.GetMAC(),
-      portSet: node.GetPortSet()
-    }
+    oldName: nodeName,
+    INTERFACES: interfaces,
+    interfaceAliases: ConvertInterfacesToAliases(interfaces),
+    profiles: NovaCommon.honeydConfig.GetProfileNames(),
+    profile: node.GetProfile(),
+    interface: node.GetInterface(),
+    ip: node.GetIP(),
+    mac: node.GetMAC(),
+    portSet: node.GetPortSet()
   })
 });
 
@@ -1180,14 +1167,13 @@ app.get('/editHoneydProfile', function (req, res)
     var profileName = req.query["profile"];
 
     res.render('editHoneydProfile.jade', {
-        locals: {
-            oldName: profileName,
-            parentName: "",
-            newProfile: false,
-            vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
-            scripts: NovaCommon.honeydConfig.GetScriptNames(),
-            personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
-        }
+      oldName: profileName,
+      parentName: "",
+      newProfile: false,
+      vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
+      scripts: NovaCommon.honeydConfig.GetScriptNames(),
+      bcastScripts: NovaCommon.honeydConfig.GetBroadcastScriptNames(),
+      personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
     })
 });
 
@@ -1200,15 +1186,14 @@ app.get('/addHoneydProfile', function (req, res)
     }
     parentName = req.query["parent"];
 
-    res.render('addHoneydProfile.jade', {
-        locals: {
-            oldName: parentName,
-            parentName: parentName,
-            newProfile: true,
-            vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
-            scripts: NovaCommon.honeydConfig.GetScriptNames(),
-            personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
-        }
+    res.render('editHoneydProfile.jade', {
+      oldName: parentName,
+      parentName: parentName,
+      newProfile: true,
+      vendors: NovaCommon.vendorToMacDb.GetVendorNames(),
+      scripts: NovaCommon.honeydConfig.GetScriptNames(),
+      bcastScripts: NovaCommon.honeydConfig.GetBroadcastScriptNames(),
+      personalities: NovaCommon.osPersonalityDb.GetPersonalityOptions()
     })
 });
 
@@ -1225,12 +1210,10 @@ app.get('/customizeTraining', function (req, res)
         }
 
         res.render('customizeTraining.jade', {
-            locals: {
-                includedLastTime: includedLastTime,
-                desc: NovaCommon.trainingDb.GetDescriptions(),
-                uids: NovaCommon.trainingDb.GetUIDs(),
-                hostiles: NovaCommon.trainingDb.GetHostile()
-            }
+          includedLastTime: includedLastTime,
+          desc: NovaCommon.trainingDb.GetDescriptions(),
+          uids: NovaCommon.trainingDb.GetUIDs(),
+          hostiles: NovaCommon.trainingDb.GetHostile()
         });
     });
 });
@@ -1253,10 +1236,8 @@ app.get('/importCapture', function (req, res)
         return;
     } else {
         res.render('importCapture.jade', {
-            locals: {
-                ips: NovaCommon.trainingDb.GetCaptureIPs(trainingSession),
-                trainingSession: req.query["trainingSession"]
-            }
+          ips: NovaCommon.trainingDb.GetCaptureIPs(trainingSession),
+          trainingSession: req.query["trainingSession"]
         })
     }
 });
@@ -1309,9 +1290,7 @@ app.post('/importCaptureSave', function (req, res)
     }
 
     res.render('saveRedirect.jade', {
-        locals: {
-            redirectLink: "/customizeTraining"
-        }
+      redirectLink: "/customizeTraining"
     })
 
 });
@@ -1320,12 +1299,10 @@ app.get('/configWhitelist', function (req, res)
 {
     var interfaces = NovaCommon.config.ListInterfaces().sort();
     res.render('configWhitelist.jade', {
-        locals: {
-            whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
-            whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
-            INTERFACES: interfaces,
-            interfaceAliases: ConvertInterfacesToAliases(interfaces)
-        }
+      whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
+      whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges(),
+      INTERFACES: interfaces,
+      interfaceAliases: ConvertInterfacesToAliases(interfaces)
     })
 });
 
@@ -1348,9 +1325,7 @@ app.get('/editUsers', function (req, res)
             usernames.push(results[i].user);
         }
         res.render('editUsers.jade', {
-            locals: {
-                usernames: usernames
-            }
+          usernames: usernames
         });
     });
 });
@@ -1358,30 +1333,19 @@ app.get('/editUsers', function (req, res)
 app.get('/configWhitelist', function (req, res)
 {
     res.render('configWhitelist.jade', {
-        locals: {
-            whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
-            whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges()
-        }
+        whitelistedIps: NovaCommon.whitelistConfig.GetIps(),
+        whitelistedRanges: NovaCommon.whitelistConfig.GetIpRanges()
     })
 });
 
 app.get('/suspects', function (req, res)
 {
+    var interfaces = NovaCommon.config.ListInterfaces().sort();
     res.render('main.jade', {
         user: req.user,
         featureNames: NovaCommon.nova.GetFeatureNames(),
-    });
-});
-
-app.get('/monitor', function (req, res)
-{
-    var suspectIp = req.query["ip"];
-    var suspectInterface = req.query["interface"];
-    
-    res.render('monitor.jade', {
-        featureNames: NovaCommon.nova.GetFeatureNames()
-        , suspectIp: suspectIp
-        , suspectInterface: suspectInterface
+        interfaces: interfaces,
+        interfaceAliases: ConvertInterfacesToAliases(interfaces)
     });
 });
 
@@ -1439,6 +1403,7 @@ app.get('/setup3', function (req, res)
     res.render('hhautoconfig.jade', {
         user: req.user,
         INTERFACES: NovaCommon.config.ListInterfaces().sort(),
+        interfaceAliases: ConvertInterfacesToAliases(interfaces),
         SCANERROR: ""
     });
 });
@@ -1450,7 +1415,30 @@ app.get('/shutdown', function (req, res)
 
 app.get('/about', function (req, res)
 {
-    res.render('about.jade');
+    res.render('about.jade', {version: NovaCommon.config.GetVersionString()});
+});
+
+app.get('/editAuthorizedIPs', function(req, res) {
+
+    fs.readFile(NovaHomePath + "/config/authorizedIPs.config", function(err, data) {
+        if (err) {
+            RenderError(res, "Unable to open authorizedIPs.config", "/advancedOptions");
+            return;
+        }
+
+        var array = data.toString().split("\n");
+        var IPs = [];
+
+        for (var i in array) {
+            if (array[i].length < 7) {continue;}
+            if (array[i][0] == '#') {continue;}
+            IPs.push(array[i]);
+        }
+
+        res.render('authorizedIPs.jade', {authorizedIPs: JSON.stringify(IPs)});
+
+    });
+
 });
 
 app.get('/newInformation', function (req, res)
@@ -1489,9 +1477,7 @@ app.post('/createNewUser', function (req, res)
             NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt, function ()
             {
                 res.render('saveRedirect.jade', {
-                    locals: {
                         redirectLink: "/"
-                    }
                 });
             });
             return;
@@ -1533,9 +1519,7 @@ app.post('/createInitialUser', function (req, res)
             NovaCommon.dbqCredentialsInsertUser.run(userName, NovaCommon.HashPassword(password, salt), salt);
             NovaCommon.dbqCredentialsDeleteUser.run('nova');
             res.render('saveRedirect.jade', {
-                locals: {
                     redirectLink: "/setup2"
-                }
             });
             return;
         } else {
@@ -1565,9 +1549,7 @@ app.get("/editTLSCerts", function (req, res)
 app.get("/editClassifiers", function (req, res)
 {
     res.render('editClassifiers.jade', {
-        locals: {
             classifiers: NovaCommon.classifiers.getClassifiers()
-        }
     }); 
 });
 
@@ -1634,27 +1616,41 @@ app.get("/editClassifier", function (req, res)
 
 
     res.render('editClassifier.jade', {
-        locals: {
             classifier: classifier
             , featureNames: NovaCommon.nova.GetFeatureNames()
-        }
     }); 
 });
 
 app.get("/hostnames", function (req, res) {
-    res.render('hostnames.jade', {
-        locals: {}
-    });
+    if (!NovaCommon.dbqGetHostnames) {
+        RenderError(res, "Unable to access honeyd hostnames database. Something probably went wrong during the honeyd install.");
+        return;
+    }
+    res.render('hostnames.jade', {});
 });
 
 app.get("/interfaceAliases", function (req, res)
 {
     ReloadInterfaceAliasFile();
     res.render('interfaceAliases.jade', {
-        locals: {
-            interfaceAliases: interfaceAliases
-            , INTERFACES: NovaCommon.config.ListInterfaces().sort(),
+      interfaceAliases: interfaceAliases
+      , INTERFACES: NovaCommon.config.ListInterfaces().sort(),
+    });
+});
+
+app.post("/editAuthorizedIPs", function (req, res) {
+    if (req.files["IPs"] == undefined || req.files["IPs"].size == 0) {
+        RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.", "/editAuthorizedIPs");
+        return;
+    }
+    
+    fs.rename(req.files["IPs"].path, NovaHomePath + "/config/authorizedIPs.config", function (err) {
+        if (err) {
+            RenderError(res, "Something went wrong when reading the uploaded file: " + err.toString(), "/editAuthorizedIPs");
+            return;
         }
+
+        res.redirect('/editAuthorizedIPs');
     });
 });
 
@@ -1687,73 +1683,12 @@ app.post("/editTLSCerts", function (req, res)
                     if(writeErrCert != null) {RenderError(res, "Error when writing cert file"); return;}
                     
                     res.render('saveRedirect.jade', {
-                        locals: {redirectLink: "/"}
+                        redirectLink: "/"
                     })
                 });
             });
         });
     });
-});
-
-app.post('/scripts', function(req, res){
-  if(req.files['script'] == undefined || req.body['name'] == undefined)
-  {
-    RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.");
-    return;
-  }
-  if(req.files['script'] == '' || req.body['name'] == '')
-  {
-    RenderError(res, "Must select both a file and a name for the script to add");
-    return;
-  }
-  
-  function clean(string)
-  {
-    var temp = '';
-    for(var i in string)
-    {
-      if(/[a-zA-Z0-9\.]/.test(string[i]) == true)
-      {
-        temp += string[i].toLowerCase();
-      }
-    }
-    
-    return temp;
-  }
-    
-  var filename = req.files['script'].name;
-  
-  filename = 'userscript_' + clean(filename);
-  
-  // should create a 'user' folder within the honeyd script
-  // path for user uploaded scripts, maybe add a way for the
-  // the user to choose where the script goes within the current
-  // file structure later.
-  var pathToSave = '/usr/share/honeyd/scripts/misc/' + filename;
-  
-  fs.readFile(req.files['script'].path, function(readErr, data){
-    if(readErr != null)
-    {
-      RenderError(res, 'Failed to read designated script file');
-      return;
-    }
-    
-    fs.writeFileSync(pathToSave, data);
-    
-    fs.chmodSync(pathToSave, '775');
-    
-    pathToSave = req.body['shell'] + ' ' + pathToSave + ' ' + req.body['args'];
-  
-    NovaCommon.honeydConfig.AddScript(req.body['name'], pathToSave);
-  
-    NovaCommon.honeydConfig.SaveAllTemplates();
-  });
-  
-  res.render('saveRedirect.jade', {
-    locals: {
-      redirectLink: '/scripts'
-    }
-  });
 });
 
 app.post('/honeydConfigManage', function (req, res){
@@ -1765,7 +1700,7 @@ app.post('/honeydConfigManage', function (req, res){
     cloneBool = true;
   }
   
-  if((new RegExp('^[a-zA-Z0-9 -_]+$')).test(newName))
+  if((new RegExp('^[a-zA-Z0-9 \\-_]+$')).test(newName))
   {
     NovaCommon.honeydConfig.AddConfiguration(newName, cloneBool, configToClone);
     NovaCommon.honeydConfig.SwitchConfiguration(newName);
@@ -1773,9 +1708,7 @@ app.post('/honeydConfigManage', function (req, res){
     NovaCommon.honeydConfig.LoadAllTemplates();
   
     res.render('saveRedirect.jade', {
-     locals: {
        redirectLink: '/honeydConfigManage'
-     }
     });
   } 
   else
@@ -1812,9 +1745,7 @@ app.post('/customizeTrainingSave', function (req, res)
     NovaCommon.trainingDb.Save();
 
     res.render('saveRedirect.jade', {
-        locals: {
             redirectLink: "/customizeTraining"
-        }
     })
 });
 
@@ -1822,15 +1753,270 @@ app.post('/customizeTrainingSave', function (req, res)
 
 app.post('/configureNovaSave', function (req, res)
 {
-    var configItems = ["ADVANCED", "DEFAULT", "INTERFACE", "SMTP_USER", "SMTP_PASS", "RSYSLOG_IP", "HS_HONEYD_CONFIG", 
-    "READ_PCAP", "PCAP_FILE", "GO_TO_LIVE", "CLASSIFICATION_TIMEOUT", 
-    "K", "EPS", "CLASSIFICATION_THRESHOLD", "DOPPELGANGER_IP", 
-    "DOPPELGANGER_INTERFACE", "DM_ENABLED", "ENABLED_FEATURES", "THINNING_DISTANCE", "SAVE_FREQUENCY", 
-    "DATA_TTL", "CE_SAVE_FILE", "SMTP_ADDR", "SMTP_PORT", "SMTP_DOMAIN", "SMTP_USEAUTH", "RECIPIENTS", 
-    "SERVICE_PREFERENCES", "CAPTURE_BUFFER_SIZE", "MIN_PACKET_THRESHOLD", "CUSTOM_PCAP_FILTER", 
-    "CUSTOM_PCAP_MODE", "WEB_UI_PORT", "CLEAR_AFTER_HOSTILE_EVENT", "MASTER_UI_IP", "MASTER_UI_RECONNECT_TIME", 
-    "MASTER_UI_CLIENT_ID", "MASTER_UI_ENABLED", "CAPTURE_BUFFER_SIZE", "FEATURE_WEIGHTS", "CLASSIFICATION_ENGINE", 
-    "THRESHOLD_HOSTILE_TRIGGERS", "ONLY_CLASSIFY_HONEYPOT_TRAFFIC", "EMAIL_ALERTS_ENABLED", "TRAINING_DATA_PATH", "MESSAGE_WORKER_THREADS"];
+
+    // If we get two of the same form element, just use the last one
+    for (var key in req.body) {
+        if (typeof(req.body[key]) == "object") {
+            req.body[key] = req.body[key][req.body[key].length - 1];
+        }
+    }
+
+    // These are accepted configuration inputs and validation functions for them
+    var configItems = [
+    {
+        key:  "ADVANCED"
+        ,validator: function(val) {
+            //TODO what is this? Rename it, I have no idea what "ADVANCED" is.
+        }
+    },
+    {
+        key:  "DEFAULT"
+        ,validator: function(val) {
+            //TODO what is this?
+        }
+    },
+    {
+        key:  "INTERFACE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "RSYSLOG_IP"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a valid IP address').isIP();
+        }
+    },
+    {
+        key:  "HS_HONEYD_CONFIG"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "READ_PCAP"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "PCAP_FILE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "GO_TO_LIVE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "CLASSIFICATION_TIMEOUT"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+        }
+    },
+    {
+        key:  "K"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+        }
+    },
+    {
+        key:  "EPS"
+        ,validator: function(val) {
+            validator.check(val, 'EPS must be a positive floating point number').isFloat();
+        }
+    },
+    {
+        key:  "CLASSIFICATION_THRESHOLD"
+        ,validator: function(val) {
+            validator.check(val, 'Classification threshold must be a floating point value').isFloat();
+            validator.check(val, 'Classification threshold must be a value between 0 and 1').max(1);
+            validator.check(val, 'Classification threshold must be a value between 0 and 1').min(0);
+        }
+    },
+    {
+        key:  "DOPPELGANGER_IP"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a valid IP address').isIP();
+        }
+    },
+    {
+        key:  "DOPPELGANGER_INTERFACE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "DM_ENABLED"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "ENABLED_FEATURES"
+        ,validator: function(val) {
+            validator.check(val, 'Enabled Features mask must be ' + NovaCommon.nova.GetDIM() + 'characters long').len(NovaCommon.nova.GetDIM(), NovaCommon.nova.GetDIM());
+            validator.check(val, 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{9}');
+        }
+    },
+    {
+        key:  "THINNING_DISTANCE"
+        ,validator: function(val) {
+            validator.check(val, 'Thinning Distance must be a positive number').isFloat();
+        }
+    },
+    {
+        key:  "SMTP_ADDR"
+        ,validator: function(val) {
+            console.log("Got an smtp address of " + val);
+            validator.check(val, this.key + ' is the wrong format').regex('^(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)$');
+        }
+    },
+    {
+        key:  "SMTP_PORT"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer between 1 and 65535').isInt();
+            validator.check(val, this.key + ' must be an integer between 1 and 65535').min(1);
+            validator.check(val, this.key + ' must be an integer between 1 and 65535').max(65535);
+        }
+    },
+    {
+        key:  "SMTP_DOMAIN"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key : "SMTP_PASS",
+        validator : function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "SMTP_USEAUTH"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "RECIPIENTS"
+        ,validator: function(val) {
+            validator.check(val, "Must have at least one email address").notEmpty();
+            if (val.length != 0) {
+                var emails = val;
+                emails = emails.split(",");
+
+                for (var i = 0; i < emails.length; i++) {
+                    validator.check(emails[i], "Invalid email address: " + emails[i]).isEmail();
+                }
+                
+            }
+        }
+    },
+    {
+        key:  "SERVICE_PREFERENCES"
+        ,validator: function(val) {
+            validator.check(val, "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;$');
+        }
+    },
+    {
+        key:  "MIN_PACKET_THRESHOLD"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+        }
+    },
+    {
+        key:  "CUSTOM_PCAP_FILTER"
+        ,validator: function(val) {
+        }
+    },
+    {
+        key:  "CUSTOM_PCAP_MODE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+        }
+    },
+    {
+        key:  "WEB_UI_PORT"
+        ,validator: function(val) {
+            validator.check(val, 'Must be a nonnegative integer between 1 and 65535').isInt();
+            validator.check(val, 'Must be a nonnegative integer between 1 and 65535').max(65535);
+            validator.check(val, 'Must be a nonnegative integer between 1 and 65535').min(0);
+        }
+    },
+    {
+        key:  "CLEAR_AFTER_HOSTILE_EVENT"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "MASTER_UI_IP"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a valid IP address').isIP();
+        }
+    },
+    {
+        key:  "MASTER_UI_RECONNECT_TIME"
+        ,validator: function(val) {
+            validator.check(val, 'Pulsar server reconnect time must be a positive integer').isInt();
+            validator.check(val, 'Pulsar server reconnect time must be a positive integer').min(0);
+        }
+    },
+    {
+        key:  "MASTER_UI_CLIENT_ID"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+            validator.check(val, this.key + ' must be an alphanumeric string').isAlphanumeric();
+        }
+    },
+    {
+        key:  "MASTER_UI_ENABLED"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "MANAGE_IFACE_ENABLE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "CAPTURE_BUFFER_SIZE"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+            validator.check(val, this.key + ' must be a positive integer greater than 88').min(88);
+        }
+    },
+    {
+        key:  "ONLY_CLASSIFY_HONEYPOT_TRAFFIC"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "EMAIL_ALERTS_ENABLED"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be a boolean').isInt();
+        }
+    },
+    {
+        key:  "TRAINING_DATA_PATH"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must not be empty').notEmpty();
+        }
+    },
+    {
+        key:  "MESSAGE_WORKER_THREADS"
+        ,validator: function(val) {
+            validator.check(val, this.key + ' must be an integer').isInt();
+            validator.check(val, this.key + ' must be a positive integer greater than 1').min(1);
+        }
+    }];
 
     Validator.prototype.error = function (msg)
     {
@@ -1839,47 +2025,23 @@ app.post('/configureNovaSave', function (req, res)
 
     Validator.prototype.getErrors = function ()
     {
-        return this._errors;
+        return this._errors.join("<br>");
     }
 
     var validator = new Validator();
 
     NovaCommon.config.ClearInterfaces();
 
-    if(req.body["SMTP_USEAUTH"] == undefined)
+    if(req.body["SMTP_USEAUTH"] == '0')
     {
-      req.body["SMTP_USEAUTH"] = "0";
       NovaCommon.config.SetSMTPUseAuth("false");
     }
-    else
+    else if(req.body["SMTP_USEAUTH"] == '1')
     {
-      req.body["SMTP_USEAUTH"] = "1";
       NovaCommon.config.SetSMTPUseAuth("true");
     }
     
-    if(req.body["EMAIL_ALERTS_ENABLED"] == undefined)
-    {
-      req.body["EMAIL_ALERTS_ENABLED"] = "0";
-      NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
-    }
-    else
-    {
-      req.body["EMAIL_ALERTS_ENABLED"] = "1";
-      NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
-    }
-    
-    if(req.body["DM_ENABLED"] == undefined)
-    {
-      req.body["DM_ENABLED"] = "0";
-      NovaCommon.config.WriteSetting("DM_ENABLED", "0");
-    }
-    else
-    {
-      req.body["DM_ENABLED"] = "1";
-      NovaCommon.config.WriteSetting("DM_ENABLED", "1");
-    }
-  
-    if(req.body["MASTER_UI_ENABLED"] != undefined)
+    if(req.body["MASTER_UI_ENABLED"] != undefined && req.body["MASTER_UI_ENABLED"] == "1")
     {
       if(clientId != undefined && req.body["MASTER_UI_CLIENT_ID"] != clientId)
       {
@@ -1893,11 +2055,6 @@ app.post('/configureNovaSave', function (req, res)
           clientId = req.body["MASTER_UI_CLIENT_ID"];
         }
       }
-      req.body['MASTER_UI_ENABLED'] = '1';
-    }
-    else
-    {
-      req.body['MASTER_UI_ENABLED'] = '0';
     }
 
     var interfaces = "";
@@ -1936,93 +2093,17 @@ app.post('/configureNovaSave', function (req, res)
   
     for(var item = 0; item < configItems.length; item++) 
     {
-        if(req.body[configItems[item]] == undefined) 
+        if(req.body[configItems[item].key] == undefined) 
         {
           continue;
         }
-        switch(configItems[item])
-        {
-          case "WEB_UI_PORT":
-            validator.check(req.body[configItems[item]], 'Must be a nonnegative integer').isInt();
-            break;
-  
-          case "ENABLED_FEATURES":
-            validator.check(req.body[configItems[item]], 'Enabled Features mask must be ' + NovaCommon.nova.GetDIM() + 'characters long').len(NovaCommon.nova.GetDIM(), NovaCommon.nova.GetDIM());
-            validator.check(req.body[configItems[item]], 'Enabled Features mask must contain only 1s and 0s').regex('[0-1]{9}');
-            break;
-  
-          case "CLASSIFICATION_THRESHOLD":
-            validator.check(req.body[configItems[item]], 'Classification threshold must be a floating point value').isFloat();
-            validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').max(1);
-            validator.check(req.body[configItems[item]], 'Classification threshold must be a value between 0 and 1').min(0);
-            break;
-  
-          case "EPS":
-            validator.check(req.body[configItems[item]], 'EPS must be a positive number').isFloat();
-            break;
-  
-          case "THINNING_DISTANCE":
-            validator.check(req.body[configItems[item]], 'Thinning Distance must be a positive number').isFloat();
-            break;
-  
-          case "DOPPELGANGER_IP":
-            validator.check(req.body[configItems[item]], 'Doppelganger IP must be in the correct IP format').regex('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$');
-            var split = req.body[configItems[item]].split('.');
 
-            if(split.length == 4) 
-            {
-                if(split[3] === "0") 
-                {
-                    validator.check(split[3], 'Can not have last IP octet be 0').equals("255");
-                }
-                if(split[3] === "255") 
-                {
-                    validator.check(split[3], 'Can not have last IP octet be 255').equals("0");
-                }
-            }
-
-            //check for 0.0.0.0 and 255.255.255.255
-            var checkIPZero = 0;
-            var checkIPBroad = 0;
-
-            for (var val = 0; val < split.length; val++) 
-            {
-                if(split[val] == "0") 
-                {
-                    checkIPZero++;
-                }
-                if(split[val] == "255") 
-                {
-                    checkIPBroad++;
-                }
-            }
-
-            if(checkIPZero == 4)
-            {
-                validator.check(checkIPZero, '0.0.0.0 is not a valid IP address').is("200");
-            }
-            if(checkIPBroad == 4)
-            {
-                validator.check(checkIPZero, '255.255.255.255 is not a valid IP address').is("200");
-            }
-            break;
-  
-          case "SMTP_ADDR":
-            validator.check(req.body[configItems[item]], 'SMTP Address is the wrong format').regex('^(([A-z]|[0-9])*\\.)*(([A-z]|[0-9])*)\\@((([A-z]|[0-9])*)\\.)*(([A-z]|[0-9])*)\\.(([A-z]|[0-9])*)$');
-            break;
-              
-          case "SERVICE_PREFERENCES":
-            validator.check(req.body[configItems[item]], "Service Preferences string is formatted incorrectly").is('^0:[0-7](\\+|\\-)?;1:[0-7](\\+|\\-)?;$');
-            break;
-  
-          default:
-            break;
-        }
+        configItems[item].validator(req.body[configItems[item].key]);
     }
 
     var useRsyslog = req.body["RSYSLOG_USE"];
   
-    if(useRsyslog != undefined)
+    if(useRsyslog != undefined && useRsyslog == "1")
     {
       var spawn = require('sudo');
       var options = {
@@ -2042,6 +2123,7 @@ app.post('/configureNovaSave', function (req, res)
         if(code.toString() != '0')
         {
           console.log('nova_rsyslog_helper could not complete update of rsyslog configuration, exited with code ' + code);
+          RenderError(res, 'Could not update rsyslog configuration, update script returned ' + code, '/suspects');
         }
         else
         {
@@ -2083,7 +2165,12 @@ app.post('/configureNovaSave', function (req, res)
 
     if(errors.length > 0)
     {
-      RenderError(res, errors, "/suspects");
+      var errorRedirect = "/suspects";
+      if (req.body["ERROR_REDIRECT"] != undefined) {
+        errorRedirect = req.body["ERROR_REDIRECT"];
+      }
+    
+      RenderError(res, errors, errorRedirect);
     } 
     else 
     {
@@ -2105,65 +2192,103 @@ app.post('/configureNovaSave', function (req, res)
         NovaCommon.config.WriteSetting("INTERFACE", req.body["INTERFACE"]);
       }
 
-      if(req.body['MANAGE_IFACE_ENABLE'] == 'on')
-      {
-        req.body['MANAGE_IFACE_ENABLE'] = '1';
-      }
-      else
-      {
-        req.body['MANAGE_IFACE_ENABLE'] = '0';
-      }
-
-      if(req.body['MANAGE_IFACE_ENABLE'] != NovaCommon.config.ReadSetting("MANAGE_IFACE_ENABLE"))
-      {
-        NovaCommon.config.WriteSetting('MANAGE_IFACE_ENABLE', req.body['MANAGE_IFACE_ENABLE']);
-      }
-      
-      if(req.body['WEB_UI_IFACE'] != WEB_UI_IFACE)
-      {
-        NovaCommon.config.WriteSetting('WEB_UI_IFACE', req.body['WEB_UI_IFACE']);
-      }
-
-      if(req.body["SMTP_USER"] !== undefined)
-      {
-        NovaCommon.config.SetSMTPUser(req.body["SMTP_USER"]);
-      }
       if(req.body["SMTP_PASS"] !== undefined)
       {
-        NovaCommon.config.SetSMTPPass(req.body["SMTP_PASS"]);
+        NovaCommon.config.WriteSetting("SMTP_PASS", req.body["SMTP_PASS"]);
       }
 
       //if no errors, send the validated form data to the WriteSetting method
-      for(var item = 6; item < configItems.length; item++)
+      for(var item = 5; item < configItems.length; item++)
       {
-        if(req.body[configItems[item]] != undefined)
+        if(req.body[configItems[item].key] != undefined)
         {
-          NovaCommon.config.WriteSetting(configItems[item], req.body[configItems[item]]);
+          NovaCommon.config.WriteSetting(configItems[item].key, req.body[configItems[item].key]);
         }
       }
 
       NovaCommon.config.ReloadConfiguration();
 
-      var route = "/suspects";
-      if(req.body['route'] != undefined)
+      if(req.body["EMAIL_ALERTS_ENABLED"] == "0")
       {
-        route = req.body['route'];
-        if(route == 'manconfig')
+        var spawn = require('sudo');
+        var options = {
+          cachePassword: true
+          , prompt: 'You need permission to remove the Nova mail script from the cron directories.'
+        };
+        
+        var execution = ['cleannovasendmail.sh'];
+        var rm = spawn(execution, options); 
+        rm.on('exit', function(code){
+          //console.log('code == ' + code);
+        });
+        if(maildaemon != '')
         {
-          route = 'honeydConfigManage';
+          maildaemon.kill('SIGINT');
+        }
+        NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "0");
+      }
+      else
+      {
+        var interval = req.body['SMTP_INTERVAL'];
+
+        if(interval != 'hourly' && interval != 'daily' && interval != 'weekly' && interval != 'monthly')
+        {
+          RenderError(res, 'SMTP_INTERVAL value was incorrect!', "/suspects");
         }
         else
         {
-          route = 'autoConfig';
+          if(maildaemon == '')
+          {
+            var go = require('sudo');
+            var options = {
+              cachePassword: true
+              , prompt: 'You need permission to remove the Nova mail script from the cron directories.'
+            };
+            var cpexec = ['placenovasendmail', interval];
+            cpspawn = go(cpexec, options);
+            cpspawn.on('exit', function(code){
+              if(code === 0)
+              {
+                var spawn = require('child_process').spawn;
+                var execstring = 'novamaildaemon.pl';
+                maildaemon = spawn(execstring.toString());
+                maildaemon.on('close', function(code){
+                  if(code !== 0)
+                  {
+                    console.log('novamaildaemon.pl died an unnatural death with code ' + code);
+                  }
+                }); 
+              }
+              else
+              {
+                RenderError(res, 'Could not start mail daemon, check /etc/cron.' + interval + ' for orphaned script novasendmail.pl', '/suspects');
+              }
+            });
+          }
+          NovaCommon.config.WriteSetting("EMAIL_ALERTS_ENABLED", "1");
         }
       }
-
-      res.render('saveRedirect.jade', {
-        locals: {
-          redirectLink: route
-        }
-      })
     }
+
+    NovaCommon.config.ReloadConfiguration();
+
+    var route = "/suspects";
+    if(req.body['route'] != undefined)
+    {
+      route = req.body['route'];
+      if(route == 'manconfig')
+      {
+        route = 'honeydConfigManage';
+      }
+      else
+      {
+        route = 'autoConfig';
+      }
+    }
+
+    res.render('saveRedirect.jade', {
+        redirectLink: route
+    });
 });
 
 app.get('/scripts', function(req, res){
@@ -2186,10 +2311,8 @@ app.get('/scripts', function(req, res){
   var scriptBindings = NovaCommon.GetPorts(); 
   
   res.render('scripts.jade', {
-    locals: {
       scripts: namesAndPaths,
       bindings: scriptBindings
-    }
   });
 });
 
@@ -2223,7 +2346,22 @@ process.on('SIGINT', function ()
 
 process.on('exit', function ()
 {
-    LOG("ALERT", "Quasar is exiting cleanly.");
+    if(maildaemon != '')
+    {
+      maildaemon.kill('SIGINT');
+    }
+    var spawn = require('sudo');
+    var options = {
+      cachePassword: true
+      , prompt: 'You need permission to remove the Nova mail script from the cron directories.'
+    };
+    
+    var execution = ['cleannovasendmail.sh'];
+    var rm = spawn(execution, options); 
+    rm.on('exit', function(code){
+      //console.log('code == ' + code);
+      LOG("ALERT", "Quasar is exiting cleanly.");
+    });
 });
 
 function objCopy(src, dst) 
@@ -2331,6 +2469,10 @@ everyone.now.AddInterfaceAlias = function(iface, alias, callback)
 {
     if(alias != "") 
     {
+        if(!(new RegExp('^[a-zA-Z0-9 \\-_]+$')).test(alias)) {
+            callback("Error: invalid interface alias. Must contain only letters, numbers, spaces, and hyphens.");
+            return;
+        }
         interfaceAliases[iface] = sanitizeCheck(alias).entityEncode();
     } 
     else 

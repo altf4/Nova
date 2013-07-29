@@ -16,12 +16,17 @@
 // Description : Controls the Honeyd Haystack and Doppelganger processes
 //============================================================================
 
+#include <sstream>
+#include <boost/algorithm/string.hpp>
+
 #include "HaystackControl.h"
+#include "NovaUtil.h"
 #include "Config.h"
 #include "Logger.h"
-#include <sstream>
+
 
 using namespace std;
+
 namespace Nova
 {
 bool StartHaystack(bool blocking)
@@ -73,7 +78,9 @@ bool StopHaystack()
 
 		if(line != NULL)
 		{
-			string cmd = "sudo kill " + string(line);
+			string l(line);
+			boost::trim(l);
+			string cmd = "i=5; while [ $i -ne 0 ]; sudo kill " + l + "; if [ $? -ne 0 ]; then break; fi; i=$(expr $i - 1); do sleep 1; done";
 			if(cmd.size() > 5)
 			{
 				if(system(cmd.c_str()) == EXIT_SUCCESS)

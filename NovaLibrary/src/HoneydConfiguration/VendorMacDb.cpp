@@ -21,6 +21,7 @@
 #include "../Config.h"
 #include "../Logger.h"
 
+#include <boost/algorithm/string.hpp>
 #include <errno.h>
 #include <fstream>
 #include <math.h>
@@ -50,16 +51,27 @@ void VendorMacDb::LoadPrefixFile()
 	{
 		while(MACPrefixes.good())
 		{
-			getline(MACPrefixes, prefixStr, ' ');
-			// From 'man strtoul'  Since strtoul() can legitimately return 0 or  LONG_MAX  (LLONG_MAX  for
-		    // strtoull()) on both success and failure, the calling program should set
-		    // errno to 0 before the call, and then determine if an error occurred  by
-		    // checking whether errno has a nonzero value after the call.
+			getline(MACPrefixes, line);
+
+			// Skip blank and comment lines
+			if (line.length() <= 3 || line.at(0) == '#')
+			{
+				continue;
+			}
+
+			// Skip lines that don't have a space (format is "prefix vendor")
+			if (line.find(' ') == string::npos) {
+				continue;
+			}
+
+			prefixStr = line.substr(0, line.find(' '));
+			vendor = line.substr(line.find(' ') + 1, string::npos);
+
 			errno = 0;
 			prefix = strtoul(prefixStr.c_str(), &notUsed, 16);
 			if(errno)
 				continue;
-			getline(MACPrefixes, vendor);
+
 			m_MACVendorTable[prefix] = vendor;
 			if(m_vendorMACTable.keyExists(vendor))
 			{

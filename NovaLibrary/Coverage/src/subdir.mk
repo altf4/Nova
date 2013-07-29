@@ -15,9 +15,11 @@ CPP_SRCS += \
 ../src/HaystackControl.cpp \
 ../src/InterfacePacketCapture.cpp \
 ../src/Logger.cpp \
+../src/MessageManager.cpp \
 ../src/NovaUtil.cpp \
 ../src/PacketCapture.cpp \
 ../src/Point.cpp \
+../src/Proxy.cpp \
 ../src/Suspect.cpp \
 ../src/WhitelistConfiguration.cpp 
 
@@ -33,9 +35,11 @@ OBJS += \
 ./src/HaystackControl.o \
 ./src/InterfacePacketCapture.o \
 ./src/Logger.o \
+./src/MessageManager.o \
 ./src/NovaUtil.o \
 ./src/PacketCapture.o \
 ./src/Point.o \
+./src/Proxy.o \
 ./src/Suspect.o \
 ./src/WhitelistConfiguration.o 
 
@@ -51,9 +55,11 @@ CPP_DEPS += \
 ./src/HaystackControl.d \
 ./src/InterfacePacketCapture.d \
 ./src/Logger.d \
+./src/MessageManager.d \
 ./src/NovaUtil.d \
 ./src/PacketCapture.d \
 ./src/Point.d \
+./src/Proxy.d \
 ./src/Suspect.d \
 ./src/WhitelistConfiguration.d 
 

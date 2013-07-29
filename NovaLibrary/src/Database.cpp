@@ -26,13 +26,6 @@
 #include <sstream>
 #include <string>
 
-// Quick error checking macro so we don't have to copy/paste this over and over
-#define SQL_RUN(val, stmt) \
-res = stmt; \
-if (res != val ) \
-{\
-	LOG(ERROR, "SQL error: " + string(sqlite3_errmsg(db)), "");\
-}
 
 using namespace std;
 
@@ -577,6 +570,7 @@ void Database::ResetPassword()
 
 void Database::ClearAllSuspects()
 {
+	int rc;
 	 char *szErrMsg = 0;
 
 	  const char *pSQL[6];
@@ -587,7 +581,7 @@ void Database::ClearAllSuspects()
 
 	  for(int i = 0; i < 4; i++)
 	  {
-	    int rc = sqlite3_exec(db, pSQL[i], callback, 0, &szErrMsg);
+	    rc = sqlite3_exec(db, pSQL[i], callback, 0, &szErrMsg);
 	    if(rc != SQLITE_OK)
 	    {
 	      LOG(ERROR, "SQL Error: " + string(szErrMsg), "");
@@ -595,6 +589,21 @@ void Database::ClearAllSuspects()
 	      break;
 	    }
 	  }
+
+
+	  // Delete from the suspect alerts database
+	  sqlite3 *scriptDb;
+	  rc = sqlite3_open(string(Config::Inst()->GetPathHome() + "/data/scriptAlerts.db").c_str(), &scriptDb);
+	  const char *query = "DELETE FROM script_alerts;";
+
+	  rc = sqlite3_exec(scriptDb, query, callback, 0, &szErrMsg);
+
+	  if (rc != SQLITE_OK)
+	  {
+	      LOG(ERROR, "SQL Error: " + string(szErrMsg), "");
+	      sqlite3_free(szErrMsg);
+	  }
+	  sqlite3_close(scriptDb);
 }
 
 void Database::ClearSuspect(const string &ip, const string &interface)
@@ -643,6 +652,24 @@ void Database::ClearSuspect(const string &ip, const string &interface)
 	sqlite3_finalize(deleteFromPacketSizes);
 	sqlite3_finalize(deleteFromPacketCounts);
 	sqlite3_finalize(deleteFromSuspects);
+
+
+
+	// Delete from the suspect alerts database
+	sqlite3 *scriptDb;
+	SQL_RUN(SQLITE_OK,sqlite3_open(string(Config::Inst()->GetPathHome() + "/data/scriptAlerts.db").c_str(), &scriptDb));
+
+	sqlite3_stmt *deleteFromScriptAlerts;
+	SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(scriptDb,"DELETE FROM script_alerts WHERE ip = ? AND interface = ?;",
+		-1, &deleteFromScriptAlerts,  NULL));
+
+	SQL_RUN(SQLITE_OK,sqlite3_bind_text(deleteFromScriptAlerts, 1, ip.c_str(), -1, SQLITE_STATIC));
+	SQL_RUN(SQLITE_OK,sqlite3_bind_text(deleteFromScriptAlerts, 2, interface.c_str(), -1, SQLITE_STATIC));
+	SQL_RUN(SQLITE_DONE,sqlite3_step(deleteFromScriptAlerts));
+	SQL_RUN(SQLITE_OK, sqlite3_reset(deleteFromScriptAlerts));
+	sqlite3_finalize(deleteFromScriptAlerts);
+
+	sqlite3_close(scriptDb);
 }
 
 void Database::InsertSuspect(Suspect *suspect)

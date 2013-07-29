@@ -211,6 +211,11 @@ TEST_F(HoneydConfigurationTest, test_GetScriptNames)
 	script3.m_name = "script3";
 	script4.m_name = "script4";
 	script5.m_name = "script5";
+	script1.m_isBroadcastScript = false;
+	script2.m_isBroadcastScript = false;
+	script3.m_isBroadcastScript = false;
+	script4.m_isBroadcastScript = false;
+	script5.m_isBroadcastScript = false;
 	EXPECT_TRUE(HC->AddScript(script1));
 	EXPECT_TRUE(HC->AddScript(script2));
 	EXPECT_TRUE(HC->AddScript(script3));
@@ -299,7 +304,7 @@ TEST_F(HoneydConfigurationTest, test_SwitchToConfiguration)
 	EXPECT_TRUE(HC->AddNewConfiguration("NewConfig",false,""));
 	EXPECT_TRUE(HC->SwitchToConfiguration("NewConfig"));
 	EXPECT_TRUE(HC->RemoveConfiguration("NewConfig"));
-	EXPECT_TRUE(HC->SwitchToConfiguration("default"));
+	EXPECT_TRUE(HC->SwitchToConfiguration("sample"));
 }
 
 TEST_F(HoneydConfigurationTest, test_RemoveConfiguration)
@@ -337,6 +342,7 @@ TEST_F(HoneydConfigurationTest, test_WriteScriptsToXML)
 	std::vector<std::string> scriptsFinal;
 	script1.m_name = "script1";
 	script1.m_osclass = "Linux";
+	script1.m_isBroadcastScript = false;
 	script1.m_path	=	Config::Inst()->GetPathHome()+ "/config/templates/default";
 	script1.m_service = "N/A";
 	scriptsInitial = HC->GetScriptNames();

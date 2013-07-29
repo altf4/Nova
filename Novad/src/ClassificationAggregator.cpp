@@ -92,6 +92,13 @@ void ClassificationAggregator::LoadConfiguration(std::string filePath)
 	{
 		//cout << "Loading engine " << i << " " << engines[i] << endl;
 		ClassificationEngine *engine = MakeEngine(engines[i]);
+
+		if (engine == NULL)
+		{
+			LOG(CRITICAL, "Unable to create classification engine of type " + engines[i], "");
+			exit(EXIT_FAILURE);
+		}
+
 		engine->LoadConfiguration(Config::Inst()->GetPathHome() + "/" + configs[i]);
 
 		m_engines.push_back(engine);
@@ -101,6 +108,10 @@ void ClassificationAggregator::LoadConfiguration(std::string filePath)
 double ClassificationAggregator::Classify(Suspect *s)
 {
 	Lock(&this->lock);
+
+	// Clear the classification notes. The child engines will append to this.
+	s->m_classificationNotes = "";
+
 	double classification = 0;
 	for (uint i = 0; i < m_engines.size(); i++)
 	{

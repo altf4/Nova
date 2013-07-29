@@ -13,19 +13,21 @@
 //-   You should have received a copy of the GNU General Public License
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
+
+include mixins/headers.jade
+
 extends layout
 
 block headerAdditions
   link(rel='stylesheet', name='text/css', href='configstyle.css', media='screen')
-  style(type='text/css')
+  style(type='text/css').
     th {
      background-color: #d0e9fc; 
     }
     
   
 block content
-  div
-    h1 Choose Training Data to use when classifying suspects
+  +header("Choose Training Data to use when classifying suspects")
     form#trainingForm(method='post', action='/customizeTrainingSave')
       table(border = '1')
         thead
@@ -34,7 +36,6 @@ block content
             th Hostility
             th UID
             th Description
-            th Checked
         tbody
           - for (var i = 0; i < hostiles.length; i++)
             tr
@@ -46,7 +47,6 @@ block content
               td #{hostiles[i]}
               td #{uids[i]}
               td #{desc[i]}
-              td #{includedLastTime[uids[i]]}
       br
       button.button()
         img.buttonIcon(src='images/ok.png')

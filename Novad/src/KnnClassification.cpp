@@ -22,6 +22,7 @@
 #include "Suspect.h"
 
 #include <sstream>
+#include <string>
 
 using namespace std;
 using namespace Nova;
@@ -228,7 +229,7 @@ double KnnClassification::Classify(Suspect *suspect)
 
 		classificationNotes << endl << endl;;
 	}
-	suspect->m_classificationNotes = classificationNotes.str();
+
 
 	for(int i = 0; i < DIM; i++)
 	{
@@ -328,6 +329,10 @@ double KnnClassification::Classify(Suspect *suspect)
     annClose();
     annDeallocPt(aNN);
 
+	suspect->m_classificationNotes += "=== Notes from KNN Classification Engine ===\n";
+	suspect->m_classificationNotes += "Classification vote: " + to_string(suspect->GetClassification()) + "\n";
+	suspect->m_classificationNotes += classificationNotes.str();
+
 	return suspect->GetClassification();
 }
 
@@ -394,8 +399,9 @@ void KnnClassification::LoadDataPointsFromFile(string inFilePath)
 
 	else
 	{
-		LOG(ERROR,"Classification Engine has encountered a problem",
+		LOG(CRITICAL,"Classification Engine has encountered a problem",
 			"Unable to open the training data file at "+ m_pathTrainingFile+".");
+		exit(EXIT_FAILURE);
 	}
 
 	myfile.close();
@@ -624,7 +630,6 @@ void KnnClassification::LoadDataPointsFromVector(vector<double*> points)
 		m_meanFeatureValues[j] /= m_nPts;
 
 
-	//Normalize the data points
 	//Normalize the data points
 	uint ai = 0;
 	for (uint i = 0; i < DIM; i++)

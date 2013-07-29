@@ -18,7 +18,6 @@
 //============================================================================
 
 #include "ClassificationEngine.h"
-#include "SerializationHelper.h"
 #include "DatabaseQueue.h"
 #include "HashMap.h"
 #include "Config.h"
@@ -160,7 +159,13 @@ void DatabaseQueue::WriteToDatabase()
 
 				if (generateHostileAlert)
 				{
+					LOG(ALERT, "Detected potentially hostile traffic from: " + s->ToString(), "");
 					Database::Inst()->InsertSuspectHostileAlert(s->GetIpString(), s->GetInterface());
+
+					if(Config::Inst()->GetClearAfterHostile())
+					{
+						Database::Inst()->ClearSuspect(s->GetIpString(), s->GetInterface());
+					}
 				}
 			}
 

@@ -14,10 +14,12 @@
 //-   along with Nova.  If not, see <http://www.gnu.org/licenses/>.
 //- ============================================================================
 
+include mixins/headers.jade
+
 extends layout
 
 block content
-  script
+  script.
     function init() 
     {
         $('#yes').click(shutdown);
@@ -35,7 +37,7 @@ block content
       }, 4000);
     }
 
-  div#check
+  +header("Are you sure?")#check
     p Are you sure you want to shutdown Quasar? It will only be restarted if you're running it under upstart or forever.
     button.button#yes
       img.buttonIcon(src='images/ok.png')
@@ -45,7 +47,7 @@ block content
       img.buttonIcon(src='images/cancel.png')
       spam.buttonSpan No
   
-  div#shuttingdown(style='display: none')
+  +header("Shutting down...")#shuttingdown(style="display: none")
     p Shutting down Quasar... Please wait.
 
 

@@ -109,15 +109,6 @@ private:
 	//       	std::string message. The message to send to syslog in std::string form.
 	void LogToFile(uint16_t level, std::string message);
 
-	// Mail will, obviously, email people.
-	// args: 	uint16_t level. The level of severity with which to apply
-	// 		 	when sending the email. Used primarily to extract a std::string from the
-	// 		 	levels map.
-	//		 	std::string message. This will be the std::string that is sent as the
-	// 		 	email's content.
-	//       	vector<std::string> recipients. Who the email will be sent to.
-	void Mail(uint16_t level, std::string message);
-
 	// takes in a character, and returns a Services type; for use when
 	// parsing the SERVICE_PREFERENCES std::string from the NOVAConfig.txt file.
 	Nova::Levels parseLevelFromChar(char parse);
@@ -127,28 +118,6 @@ private:
 
 	std::string getBitmask(Nova::Levels level);
 
-	static size_t ReadCallback(void *ptr, size_t size, size_t nmemb, void *userp);
-
-	static long tvdiff(struct timeval newer, struct timeval older)
-	{
-	  return (newer.tv_sec-older.tv_sec)*1000+(newer.tv_usec-older.tv_usec)/1000;
-	};
-
-	static struct timeval tvnow(void)
-	{
-	  struct timeval now;
-	  now.tv_sec = (long)time(NULL);
-	  now.tv_usec = 0;
-	  return now;
-	};
-
-	std::string GenerateDateString();
-	std::string GetRecipient();
-	std::string GetMailMessage();
-	std::string GetSenderString();
-	std::string GetCcString();
-	void SetMailMessage(std::string message);
-	uint16_t GetRecipientsLength();
 	void SetLevel(uint16_t setLevel);
 	uint16_t GetLevel();
 

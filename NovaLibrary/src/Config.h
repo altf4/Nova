@@ -159,18 +159,15 @@ public:
 
 	MAKE_GETTER_SETTER(double, m_classificationThreshold, GetClassificationThreshold, SetClassificationThreshold);
 	MAKE_GETTER_SETTER(int, m_classificationTimeout, GetClassificationTimeout, SetClassificationTimeout);
-	MAKE_GETTER_SETTER(int, m_dataTTL, GetDataTTL, SetDataTTL);
 	MAKE_GETTER_SETTER(std::string, m_loopbackIF, GetDoppelInterface, SetDoppelInterface);
 	MAKE_GETTER_SETTER(double, m_eps, GetEps, SetEps);
 	MAKE_GETTER_SETTER(bool, m_isDmEnabled, GetIsDmEnabled, SetIsDmEnabled);
-	MAKE_GETTER_SETTER(std::string, m_pathCESaveFile, GetPathCESaveFile, SetPathCESaveFile);
 	MAKE_GETTER_SETTER(std::string, m_pathConfigHoneydUser, GetPathConfigHoneydUser , SetPathConfigHoneydUser);
 	MAKE_GETTER_SETTER(std::string, m_pathConfigHoneydHS, GetPathConfigHoneydHS, SetPathConfigHoneydHS);
 	MAKE_GETTER_SETTER(std::string, m_pathPcapFile, GetPathPcapFile, SetPathPcapFile);
 	MAKE_GETTER_SETTER(std::string, m_pathWhitelistFile, GetPathWhitelistFile, SetPathWhitelistFile);
 	MAKE_GETTER_SETTER(bool, m_readPcap, GetReadPcap, SetReadPcap);
 	MAKE_GETTER_SETTER(bool, m_readCustomPcap, GetCustomReadPcap, SetReadCustomPcap);
-	MAKE_GETTER_SETTER(int, m_saveFreq, GetSaveFreq, SetSaveFreq);
 	MAKE_GETTER_SETTER(double, m_thinningDistance, GetThinningDistance, SetThinningDistance);
 	MAKE_GETTER_SETTER(std::string, m_group, GetGroup, SetGroup);
 	MAKE_GETTER_SETTER(std::string, m_currentConfig, GetCurrentConfig, SetCurrentConfig);
@@ -181,17 +178,16 @@ public:
 
 	// the SMTP server domain name for display purposes
 	MAKE_GETTER_SETTER(std::string, m_SMTPDomain, GetSMTPDomain, SetSMTPDomain);
+	// cron interval for SMTP alerts
+	MAKE_GETTER_SETTER(std::string, m_SMTPInterval, GetSMTPInterval, SetSMTPInterval);
 	// the email address that will be set as sender
 	MAKE_GETTER_SETTER(std::string, m_SMTPAddr, GetSMTPAddr, SetSMTPAddr);
 	// the port for SMTP send; normally 25 if I'm not mistaken, 465 for SSL and 5 hundred something for TLS
 	MAKE_GETTER_SETTER(in_port_t, m_SMTPPort, GetSMTPPort, SetSMTPPort);
 	MAKE_GETTER_SETTER(bool, m_SMTPUseAuth, GetSMTPUseAuth, SetSMTPUseAuth);
 
-	// username:password combination for interacting with the SMTP account that acts
+	// password for interacting with the SMTP account that acts
 	// as the relay for Nova mail alerts
-	// need to find some way to store the password in an encrypted fashion yet
-	// still have it as a Config private attribute
-	MAKE_GETTER_SETTER(std::string, m_SMTPUser, GetSMTPUser, SetSMTPUser);
 	MAKE_GETTER_SETTER(std::string, m_SMTPPass, GetSMTPPass, SetSMTPPass);
 	MAKE_GETTER_SETTER(std::vector<std::string>, m_SMTPEmailRecipients, GetSMTPEmailRecipients, SetSMTPEmailRecipients);
 

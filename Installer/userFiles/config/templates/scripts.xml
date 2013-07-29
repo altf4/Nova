@@ -5,6 +5,9 @@
 		<service>syslog</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/syslogd.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>udp</defaultprotocol>
+		<defaultport>514</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>false</configurable>
 	</script>
 	<script>
@@ -12,6 +15,9 @@
 		<service>imap</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/cyrus-imapd.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>143</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>CYRUS_VERSION</key>
@@ -29,6 +35,9 @@
 		<service>telnet</service>
 		<osclass>Microsoft | Windows</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>23</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>TELNET_BANNER</key>
@@ -47,6 +56,9 @@
 		<service>telnet</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/telnetd.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>23</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>TELNET_BANNER</key>
@@ -65,6 +77,9 @@
 		<service>ftp</service>
 		<osclass>Microsoft | Windows</osclass>
 		<path>sh /usr/share/honeyd/scripts/win32/win2k/msftp.sh</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>21</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>false</configurable>
 	</script>
 	<script>
@@ -72,6 +87,9 @@
 		<service>bmap</service>
 		<osclass>Linux | Linux</osclass>
 		<path>perl /usr/share/honeyd/scripts/unix/general/rpc/bportmapd --proto tcp --host scripts/unix/general/rpc/hosts/debian --srcip $ipsrc --dstip $ipdst --srcport $srcport --dstport $dport --logfile /var/log/h oneyd/bportmapd --logall</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>111</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>false</configurable>
 	</script>
 	<script>
@@ -79,6 +97,9 @@
 		<service>ftp</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/ftp.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>21</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>FTPD_VERSION</key>
@@ -95,6 +116,9 @@
 		<service>ssh</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/ssh.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>22</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>SSH_VERSION</key>
@@ -111,6 +135,9 @@
 		<service>pop3</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/qpop.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>110</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>QPOP_VERSION</key>
@@ -127,6 +154,9 @@
 		<service>lpd</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/lpd.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>515</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>false</configurable>
 	</script>
 	<script>
@@ -134,6 +164,9 @@
 		<service>http</service>
 		<osclass>Microsoft | Windows</osclass>
 		<path>bash /usr/share/honeyd/scripts/win32/web.sh</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>80</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>false</configurable>
 	</script>
 	<script>
@@ -141,6 +174,9 @@
 		<service>finger</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/fingerd.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>79</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>FINGERD_VERSION</key>
@@ -155,6 +191,9 @@
 		<service>snmp</service>
 		<osclass>HP | HP-UX</osclass>
 		<path>perl /usr/share/honeyd/scripts/unix/general/snmp/fake-snmp.pl public private --config=scripts/unix/general</path>
+		<defaultprotocol>udp</defaultprotocol>
+		<defaultport>161</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>false</configurable>
 	</script>
 	<script>
@@ -162,6 +201,9 @@
 		<service>http</service>
 		<osclass>Linux | Linux</osclass>
 		<path>tclsh /usr/share/honeyd/scripts/linux/httpd/httpd.tcl $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>80</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>HTTPD_RESPONSE_FOLDER</key>
@@ -199,6 +241,9 @@
 		<service>telnet</service>
 		<osclass/>
 		<path>perl /usr/share/honeyd/scripts/embedded/router-telnet.pl</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>23</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>false</configurable>
 	</script>
 	<script>
@@ -206,6 +251,9 @@
 		<service>smtp</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/sendmail.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>25</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>SENDMAIL_VERSION</key>
@@ -221,6 +269,9 @@
 		<service>squid-snmp</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/squid.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>3128</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>SQUID_VERSION</key>
@@ -235,6 +286,9 @@
 		<service>echo</service>
 		<osclass>Linux | Linux</osclass>
 		<path>bash /usr/share/honeyd/scripts/linux/echo.sh $ipsrc $sport $ipdst $dport</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>7</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>false</configurable>
 	</script>
 	<script>
@@ -242,6 +296,9 @@
 		<service>nbns</service>
 		<osclass>Microsoft | Windows</osclass>
 		<path>python /usr/share/honeyd/scripts/win32/nbns.py $ipdst</path>
+		<defaultprotocol>udp</defaultprotocol>
+		<defaultport>137</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>NAMES_PATH</key>
@@ -254,11 +311,82 @@
 		<service>mdns</service>
 		<osclass>Linux | Linux</osclass>
 		<path>python /usr/share/honeyd/scripts/linux/mdns/mdns.py $ipdst</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>5353</defaultport>
+		<broadcast>false</broadcast>
 		<configurable>true</configurable>
 		<option>
 			<key>NAMES_PATH</key>
 			<description>Path to the names file</description>
 			<value>names</value>
+		</option>
+	</script>
+	<script>
+		<name>MySQL (send host not privileged error)</name>
+		<service>mysql</service>
+		<osclass> Linux | Linux </osclass>
+		<path>python /usr/share/honeyd/scripts/linux/mysql.py</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>3306</defaultport>
+		<broadcast>false</broadcast>
+		<configurable>false</configurable>
+	</script>
+	<script>
+		<name>MS SQL </name>
+		<service>mssql</service>
+		<osclass> Microsoft | Windows </osclass>
+		<path>python /usr/share/honeyd/scripts/win32/mssql.py</path>
+		<defaultprotocol>tcp</defaultprotocol>
+		<defaultport>1433</defaultport>
+		<broadcast>false</broadcast>
+		<configurable>false</configurable>
+	</script>
+	<script>
+		<name>NBNS WPAD Query</name>
+		<service>nbns</service>
+		<osclass> Microsoft | Windows </osclass>
+		<path>python /usr/share/honeyd/scripts/broadcasts/nbns-wpad-query.py</path>
+		<defaultprotocol>udp</defaultprotocol>
+		<defaultport>137</defaultport>
+		<broadcast>true</broadcast>
+		<configurable>false</configurable>
+	</script>
+	<script>
+		<name>SMB Autofail</name>
+		<service>smb</service>
+		<osclass>Microsoft | Windows</osclass>
+		<path>python /usr/share/honeyd/scripts/misc/smb-autofail.py $ipdst</path>
+        <defaultprotocol>tcp</defaultprotocol>
+        <defaultport>445</defaultport>
+        <broadcast>false</broadcast>
+		<configurable>true</configurable>
+		<option>
+			<key>TIME_ZONE</key>
+			<description>Minutes from UTC that the server is</description>
+            <value>480</value>
+			<value>420</value>
+            <value>360</value>
+            <value>300</value>
+            <value>240</value>
+		</option>
+		<option>
+			<key>PRIMARY_DOMAIN</key>
+			<description>The domain name that the server resides in</description>
+			<value>WORKGROUP</value>
+            <value>CORPORATE</value>
+		</option>
+		<option>
+			<key>NATIVE_OS</key>
+			<description>The OS that the server running uses</description>
+			<value>Windows Server 2003 R2 3790 Service Pack 2</value>
+            <value>Unix</value>
+		</option>
+		<option>
+			<key>LAN_MANAGER</key>
+			<description>The server application that hosts the SMB share</description>
+			<value>Windows Server 2003 R2 5.2</value>
+			<value>Samba 4.0.2</value>
+            <value>Samba 3.6.3</value>
 		</option>
 	</script>
 </scripts>

@@ -10,6 +10,66 @@ using namespace v8;
 using namespace Nova;
 using namespace std;
 
+
+Handle<Object> HoneydNodeJs::WrapBroadcast(Broadcast* bcast)
+{
+	HandleScope scope;
+
+	if (broadcastTemplate.IsEmpty() )
+	{
+		Handle<FunctionTemplate> protoTemplate = FunctionTemplate::New();
+		protoTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+		broadcastTemplate = Persistent<FunctionTemplate>::New(protoTemplate);
+		
+		Local<Template> proto = broadcastTemplate->PrototypeTemplate();
+		proto->Set("GetScript",  FunctionTemplate::New(InvokeMethod<string, Broadcast, &Nova::Broadcast::GetScript>) );
+		proto->Set("GetSrcPort",  FunctionTemplate::New(InvokeMethod<int, Broadcast, &Nova::Broadcast::GetSrcPort>) );
+		proto->Set("GetDstPort",  FunctionTemplate::New(InvokeMethod<int, Broadcast, &Nova::Broadcast::GetDstPort>) );
+		proto->Set("GetTime",  FunctionTemplate::New(InvokeMethod<int, Broadcast, &Nova::Broadcast::GetTime>) );
+	}
+	
+	
+	// Get the constructor from the template
+	Handle<Function> ctor = broadcastTemplate->GetFunction();
+	// Instantiate the object with the constructor
+	Handle<Object> result = ctor->NewInstance();
+	// Wrap the native object in an handle and set it in the internal field to get at later.
+	Handle<External> broadcastPtr = External::New(bcast);
+	result->SetInternalField(0,broadcastPtr);
+
+	return scope.Close(result);
+}
+
+
+Handle<Object> HoneydNodeJs::WrapProxy(Proxy* proxy)
+{
+	HandleScope scope;
+
+	if (proxyTemplate.IsEmpty() )
+	{
+		Handle<FunctionTemplate> protoTemplate = FunctionTemplate::New();
+		protoTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+		proxyTemplate = Persistent<FunctionTemplate>::New(protoTemplate);
+		
+		Local<Template> proto = proxyTemplate->PrototypeTemplate();
+		proto->Set("GetHoneypotPort",  FunctionTemplate::New(InvokeMethod<int, Proxy, &Nova::Proxy::GetHoneypotPort>) );
+		proto->Set("GetProxyIP",  FunctionTemplate::New(InvokeMethod<string, Proxy, &Nova::Proxy::GetProxyIP>) );
+		proto->Set("GetProxyPort",  FunctionTemplate::New(InvokeMethod<int, Proxy, &Nova::Proxy::GetProxyPort>) );
+		proto->Set("GetProtocol",  FunctionTemplate::New(InvokeMethod<string, Proxy, &Nova::Proxy::GetProtocol>) );
+	}
+	
+	
+	// Get the constructor from the template
+	Handle<Function> ctor = proxyTemplate->GetFunction();
+	// Instantiate the object with the constructor
+	Handle<Object> result = ctor->NewInstance();
+	// Wrap the native object in an handle and set it in the internal field to get at later.
+	Handle<External> proxyPtr = External::New(proxy);
+	result->SetInternalField(0,proxyPtr);
+
+	return scope.Close(result);
+}
+
 Handle<Object> HoneydNodeJs::WrapNode(Node* node)
 {
 	HandleScope scope;
@@ -87,6 +147,10 @@ Handle<Object> HoneydNodeJs::WrapScript(Nova::Script *script)
         proto->Set("GetService",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Script, &Nova::Script::GetService>) );
         proto->Set("GetOsClass",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Script, &Nova::Script::GetOsClass>) );
         proto->Set("GetPath",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Script, &Nova::Script::GetPath>) );
+        
+		proto->Set("GetDefaultProtocol",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Script, &Nova::Script::GetDefaultProtocol>) );
+        proto->Set("GetDefaultPort",	FunctionTemplate::New(InvokeMethod<std::string, Nova::Script, &Nova::Script::GetDefaultPort>) );
+
         proto->Set("GetIsConfigurable",	FunctionTemplate::New(InvokeMethod<bool, Nova::Script, &Nova::Script::GetIsConfigurable>) );
         proto->Set("GetOptions",	FunctionTemplate::New(InvokeMethod<std::map<std::string, std::vector<std::string>> , Nova::Script, &Nova::Script::GetOptions>) );
         proto->Set("GetOptionDescriptions",	FunctionTemplate::New(InvokeMethod<std::map<std::string, std::string> , Nova::Script, &Nova::Script::GetOptionDescriptions>) );
@@ -200,6 +264,8 @@ Handle<Object> HoneydNodeJs::WrapProfile(Profile *pfile)
 }
 
 Persistent<FunctionTemplate> HoneydNodeJs::nodeTemplate;
+Persistent<FunctionTemplate> HoneydNodeJs::broadcastTemplate;
+Persistent<FunctionTemplate> HoneydNodeJs::proxyTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::portTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::scriptTemplate;
 Persistent<FunctionTemplate> HoneydNodeJs::portSetTemplate;

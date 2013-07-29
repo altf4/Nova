@@ -206,41 +206,6 @@ PCAP_FILE ../masterPcap
 #GO_TO_LIVE 1
 GO_TO_LIVE 1
 
-############################################
-# SAVE_FREQUENCY #
-############################################
-# 
-# How often, in seconds, to save CE state data to file
-#
-# A value of 0 will disable saving.
-# 
-# Example: 
-#SAVE_FREQUENCY 3600
-SAVE_FREQUENCY 3600
-
-############################################
-# DATA_TTL #
-############################################
-# 
-# Time in seconds for data to remain valid and 
-# be used for suspect classification.
-#
-# A value of 0 will disable expiring old data.
-#
-# Example:
-#DATA_TTL 1440
-DATA_TTL 0
-
-############################################
-# CE_SAVE_FILE #
-############################################
-# 
-# Where the ClassificationEngine can save it's state
-#
-# Example:
-#CE_SAVE_FILE CESaveFile
-CE_SAVE_FILE CESaveFile
-
 # Logging Stuff #
 
 ############################################
@@ -306,7 +271,22 @@ SMTP_PORT 465
 # The name of the SMTP server that you will be connecting to.
 # Example: smtp.example.com
 #
-SMTP_DOMAIN smtps://smtp.example.com
+SMTP_DOMAIN smtp.example.com
+
+############################################
+# SMTP_INTERVAL
+############################################
+# 
+# Cron interval value for Nova SMTP alerts
+#
+SMTP_INTERVAL hourly
+
+############################################
+# SMTP_PASS
+############################################
+#
+# SMTP SSL password
+SMTP_PASS examplePass
 
 ############################################
 # SMTP_USEAUTH
@@ -325,10 +305,9 @@ SMTP_USEAUTH 1
 # A comma delimited list of the email addresses to send email
 # alerts to. 
 # Example:
-# RECIPIENTS first@email.send, second@email.send
-# Note: spaces after each comma
+# RECIPIENTS first@email.send,second@email.send
 #
-RECIPIENTS first@example.com, second@example.com
+RECIPIENTS first@example.com,second@example.com
 
 ############################################
 # SERVICE_PREFERENCES #
@@ -495,10 +474,10 @@ MASTER_UI_PORT 8082
 # THRESHOLD_TRIGGER: Simple hostility based on features being < or > a value
 # 	See also THRESHOLD_HOSTILE_TRIGGERS
 
-CLASSIFICATION_ENGINES KNN;THRESHOLD_TRIGGER
-CLASSIFICATION_CONFIGS /config/CE_0.config;/config/CE_1.config
-CLASSIFICATION_MODES WEIGHTED;HOSTILE_OVERRIDE
-CLASSIFICATION_WEIGHTS 1;0
+CLASSIFICATION_ENGINES KNN;THRESHOLD_TRIGGER;SCRIPT_ALERT
+CLASSIFICATION_CONFIGS /config/CE_0.config;/config/CE_1.config;/config/CE_2.config
+CLASSIFICATION_MODES WEIGHTED;HOSTILE_OVERRIDE;HOSTILE_OVERRIDE
+CLASSIFICATION_WEIGHTS 1;0;0
 
 
 ############################################
@@ -509,7 +488,7 @@ ONLY_CLASSIFY_HONEYPOT_TRAFFIC 0
 ############################################
 # CURRENT_CONFIG
 ############################################
-CURRENT_CONFIG default
+CURRENT_CONFIG sample
 
 ############################################
 # IPLIST_PATH

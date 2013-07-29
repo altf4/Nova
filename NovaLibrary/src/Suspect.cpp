@@ -18,7 +18,6 @@
 //					features so that each entity can be monitored and classified.
 //============================================================================
 
-#include "SerializationHelper.h"
 #include "Suspect.h"
 #include "Logger.h"
 #include "Config.h"
