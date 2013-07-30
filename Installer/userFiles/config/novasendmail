@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
 import os, sys, signal, argparse, time
-import pyinotify, smtplib
+import pyinotify, smtplib, csv, subprocess
+import datetime
 
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEBase import MIMEBase
@@ -21,6 +22,18 @@ def getConfigValue(configName):
     if line.startswith(configName):
       return line[len(configName) + 1:]
   return ''
+
+def is_number(s):
+  try:
+    float(s)
+    return True
+  except ValueError:
+    return False
+
+def prettify(s):
+  while len(s) > 7:
+    s = s[0:len(s) - 1]
+  return s
 
 SERVER = getConfigValue('SMTP_DOMAIN').strip()
 PORT = getConfigValue('SMTP_PORT').strip()
@@ -121,6 +134,32 @@ def genMessageContentsHTML():
   return ret
 
 def sendEmailAlert():
+  data = subprocess.check_output(['novacli', 'get', 'all', 'csv'])
+
+  csvfile = open(os.environ['HOME'] + '/.config/nova/config/snapshot.txt', 'w')
+  csvfile.write(data)
+  csvfile.close()
+
+  csvfile = open(os.environ['HOME'] + '/.config/nova/config/snapshot.txt', 'r')
+
+  output = ''
+
+  with csvfile as csvdata:
+    reader = csv.reader(csvdata, delimiter=',')
+    for row in reader:
+      for index in row:
+        temp = index
+        if is_number(index):
+          temp = prettify(temp)
+        output = output + str(temp) + '\t'
+      output = output + '\n'
+
+  csvfile.close()
+
+  csvfile = open(os.environ['HOME'] + '/.config/nova/config/snapshot.txt', 'w')
+  csvfile.write(output)
+  csvfile.close()
+
   MSG = MIMEMultipart('mixed')
   MSG['Subject'] = 'Nova Email Alert'
   MSG['Date'] = formatdate(localtime=True)
@@ -140,6 +179,10 @@ def sendEmailAlert():
 
   part = MIMEText(open(os.environ['HOME'] + '/.config/nova/config/attachment.txt', 'r').read(), 'plain')
   part.add_header('Content-Disposition', 'attachment', filename='attachment.txt')
+  MSG.attach(part)
+
+  part = MIMEText(open(os.environ['HOME'] + '/.config/nova/config/snapshot.txt', 'r').read(), 'plain')
+  part.add_header('Content-Disposition', 'attachment', filename='snapshot' + datetime.datetime.now().strftime("%Y%m%d%H%M") + '.txt')
   MSG.attach(part)
 
   msgImage = MIMEImage(open('/usr/share/nova/sharedFiles/icons/nova-icon.png', 'rb').read())
