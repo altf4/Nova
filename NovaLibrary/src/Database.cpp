@@ -947,15 +947,16 @@ std::vector<Suspect> Database::GetSuspects(enum SuspectListType listType)
 		id.set_m_ifname(string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1))));
 		s.SetIdentifier(id);
 
-		s.m_features.m_startTime = sqlite3_column_int(stmt, 2);
-		s.m_features.m_endTime = sqlite3_column_int(stmt, 3);
-		s.m_features.m_lastTime = sqlite3_column_int(stmt, 4);
-		s.SetClassification(sqlite3_column_double(stmt, 5));
-		s.SetIsHostile(sqlite3_column_double(stmt, 7));
-		s.m_classificationNotes = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8)));
-		for (int i = 9; i < 9 + DIM; i++)
+		s.m_lastMac = sqlite3_column_int64(stmt, 2);
+		s.m_features.m_startTime = sqlite3_column_int(stmt, 3);
+		s.m_features.m_endTime = sqlite3_column_int(stmt, 4);
+		s.m_features.m_lastTime = sqlite3_column_int(stmt, 5);
+		s.SetClassification(sqlite3_column_double(stmt, 6));
+		s.SetIsHostile(sqlite3_column_double(stmt, 8));
+		s.m_classificationNotes = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9)));
+		for (int i = 10; i < 10 + DIM; i++)
 		{
-			s.m_features.m_features[i - 9] = sqlite3_column_double(stmt, i);
+			s.m_features.m_features[i - 10] = sqlite3_column_double(stmt, i);
 		}
 
 		suspects.push_back(s);
@@ -984,15 +985,16 @@ Suspect Database::GetSuspect(SuspectID_pb id)
 	if (res == SQLITE_ROW)
 	{
 		s.SetIdentifier(id);
-		s.m_features.m_startTime = sqlite3_column_int(stmt, 2);
-		s.m_features.m_endTime = sqlite3_column_int(stmt, 3);
-		s.m_features.m_lastTime = sqlite3_column_int(stmt, 4);
-		s.SetClassification(sqlite3_column_double(stmt, 5));
-		s.SetIsHostile(sqlite3_column_double(stmt, 7));
-		s.m_classificationNotes = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8)));
-		for (int i = 9; i < 9 + DIM; i++)
+		s.m_lastMac = sqlite3_column_int64(stmt, 2);
+		s.m_features.m_startTime = sqlite3_column_int(stmt, 3);
+		s.m_features.m_endTime = sqlite3_column_int(stmt, 4);
+		s.m_features.m_lastTime = sqlite3_column_int(stmt, 5);
+		s.SetClassification(sqlite3_column_double(stmt, 6));
+		s.SetIsHostile(sqlite3_column_double(stmt, 8));
+		s.m_classificationNotes = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9)));
+		for (int i = 10; i < 10 + DIM; i++)
 		{
-			s.m_features.m_features[i - 9] = sqlite3_column_double(stmt, i);
+			s.m_features.m_features[i - 10] = sqlite3_column_double(stmt, i);
 		}
 	}
 
