@@ -925,15 +925,15 @@ std::vector<Suspect> Database::GetSuspects(enum SuspectListType listType)
 
 	if (listType == SUSPECTLIST_ALL)
 	{
-	   SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db, "SELECT * FROM suspects", -1, &stmt, NULL));
+	   SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db, "SELECT * FROM suspects ORDER BY classification DESC", -1, &stmt, NULL));
 	}
 	else if (listType == SUSPECTLIST_HOSTILE)
 	{
-	   SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db, "SELECT * FROM suspects WHERE isHostile = 1", -1, &stmt, NULL));
+	   SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db, "SELECT * FROM suspects WHERE isHostile = 1 ORDER BY classification DESC", -1, &stmt, NULL));
 	}
 	else if (listType == SUSPECTLIST_BENIGN)
 	{
-	   SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db, "SELECT * FROM suspects WHERE isHostile = 0", -1, &stmt, NULL));
+	   SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db, "SELECT * FROM suspects WHERE isHostile = 0 ORDER BY classification DESC", -1, &stmt, NULL));
 	}
 
 	res = sqlite3_step(stmt);
