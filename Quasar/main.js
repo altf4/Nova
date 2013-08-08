@@ -2261,7 +2261,7 @@ app.post('/configureNovaSave', function (req, res)
               }
               else
               {
-                RenderError(res, 'Could not start mail daemon, check /etc/cron.' + interval + ' for orphaned script novasendmail.pl', '/suspects');
+                RenderError(res, 'Could not start mail daemon, check /etc/cron.' + interval + ' for orphaned script novasendmail', '/suspects');
               }
             });
           }

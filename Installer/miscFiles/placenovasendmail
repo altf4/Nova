@@ -2,7 +2,7 @@
 
 if [ $# -eq 1 ]
 then
-	sudo cp ~/.config/nova/config/novasendmail.py /etc/cron.$1
+	sudo cp ~/.config/nova/config/novasendmail /etc/cron.$1
 else
 	exit 1
 fi
