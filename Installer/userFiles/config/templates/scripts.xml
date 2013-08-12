@@ -76,7 +76,7 @@
 		<name>Windows FTP</name>
 		<service>ftp</service>
 		<osclass>Microsoft | Windows</osclass>
-		<path>sh /usr/share/honeyd/scripts/win32/win2k/msftp.sh</path>
+		<path>bash /usr/share/honeyd/scripts/win32/win2k/msftp.sh</path>
 		<defaultprotocol>tcp</defaultprotocol>
 		<defaultport>21</defaultport>
 		<broadcast>false</broadcast>
