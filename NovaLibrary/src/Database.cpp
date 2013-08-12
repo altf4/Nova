@@ -943,7 +943,7 @@ std::vector<Suspect> Database::GetSuspects(enum SuspectListType listType)
 		Suspect s;
 
 		SuspectID_pb id;
-		id.set_m_ip(inet_addr(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0))));
+		id.set_m_ip(htonl(inet_addr(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)))));
 		id.set_m_ifname(string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1))));
 		s.SetIdentifier(id);
 
