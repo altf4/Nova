@@ -62,10 +62,11 @@ void InterfacePacketCapture::Init()
 		throw PacketCaptureException(string("Unable to set pcap timeout value due to error: ") + pcap_geterr(m_handle));
 	}
 
+	/*
 	if(pcap_activate(m_handle) != 0)
 	{
 		throw PacketCaptureException(string("Unable to activate packet capture due to error: ") + pcap_geterr(m_handle));
-	}
+	}*/
 }
 
 } /* namespace Nova */

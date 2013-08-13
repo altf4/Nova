@@ -52,6 +52,7 @@ public:
 
 protected:
 	std::string m_identifier;
+	std::string m_filter;
 	u_char m_index;
 	pcap_t *m_handle;
 

@@ -49,25 +49,7 @@ void PacketCapture::SetPacketCb(void (*cb)(unsigned char *index, const struct pc
 
 void PacketCapture::SetFilter(string filter)
 {
-	if(m_handle == NULL)
-	{
-		LOG(ERROR, "m_handle is NULL, returning", "");
-		return;
-	}
-
-	struct bpf_program fp;
-
-	if(pcap_compile(m_handle, &fp, filter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1)
-	{
-		throw PacketCaptureException("Couldn't parse filter: "+filter+ " " + pcap_geterr(m_handle) +".");
-	}
-
-	if(pcap_setfilter(m_handle, &fp) == -1)
-	{
-		throw PacketCaptureException("Couldn't install filter: "+filter+ " " + pcap_geterr(m_handle) +".");
-	}
-
-	pcap_freecode(&fp);
+	m_filter = filter;
 }
 
 pcap_t* PacketCapture::GetPcapHandle()
@@ -146,6 +128,21 @@ void PacketCapture::InternalThreadEntry()
 		}
 
 		int activationReturnValue = pcap_activate(m_handle);
+
+		struct bpf_program fp;
+
+		if(pcap_compile(m_handle, &fp, m_filter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1)
+		{
+			throw PacketCaptureException("Couldn't parse filter: "+m_filter+ " " + pcap_geterr(m_handle) +".");
+		}
+
+		if(pcap_setfilter(m_handle, &fp) == -1)
+		{
+			throw PacketCaptureException("Couldn't install filter: "+m_filter+ " " + pcap_geterr(m_handle) +".");
+		}
+
+		pcap_freecode(&fp);
+
 		if (activationReturnValue == 0 || activationReturnValue == PCAP_ERROR_ACTIVATED)
 		{
 			isCapturing = true;
