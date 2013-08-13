@@ -2231,22 +2231,18 @@ app.post('/configureNovaSave', function (req, res)
       {
         var interval = req.body['SMTP_INTERVAL'];
 
-        if(interval != 'hourly' && interval != 'daily' && interval != 'weekly' && interval != 'monthly')
+        if(interval != 'hourly' && interval != 'daily' && interval != 'weekly' && interval != 'monthly' && interval != undefined)
         {
           RenderError(res, 'SMTP_INTERVAL value was incorrect!', "/suspects");
         }
-        else
+        else if(interval != undefined)
         {
           if(maildaemon == '')
           {
-            var go = require('sudo');
-            var options = {
-              cachePassword: true
-              , prompt: 'You need permission to remove the Nova mail script from the cron directories.'
-            };
-            var cpexec = ['placenovasendmail', interval];
-            cpspawn = go(cpexec, options);
-            cpspawn.on('exit', function(code){
+            var spawn = require('child_process').spawn;
+            var args = ['placenovasendmail', interval];
+            cpspawn = spawn('sudo', args);
+            cpspawn.on('close', function(code){
               if(code === 0)
               {
                 var spawn = require('child_process').spawn;
