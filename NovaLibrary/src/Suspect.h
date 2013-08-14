@@ -66,6 +66,7 @@ public:
 	static std::string GetIpString(const SuspectID_pb &id);
 	static std::string GetIpString(uint32_t ip);
 
+	std::string GetMACString();
 	std::string ToString();
 	std::string GetIdString();
 	std::string GetIpString();

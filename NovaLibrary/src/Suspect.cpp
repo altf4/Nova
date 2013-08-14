@@ -23,6 +23,7 @@
 #include "Config.h"
 #include "Database.h"
 
+#include <iomanip>
 #include <errno.h>
 #include <sstream>
 
@@ -50,6 +51,21 @@ Suspect::Suspect()
 
 Suspect::~Suspect()
 {
+}
+
+string Suspect::GetMACString()
+{
+	stringstream ss;
+
+	ss << std::setw(2) << std::hex << std::setfill('0') << std::uppercase;
+	ss << (m_lastMac & 0xFF) << ":";
+	ss << ((m_lastMac & 0xFF00) >> 8) << ":";
+	ss << ((m_lastMac & 0xFF0000) >> 16) << ":";
+	ss << ((m_lastMac & 0xFF000000) >> 24) << ":";
+	ss << ((m_lastMac & 0xFF00000000) >> 32) << ":";
+	ss << ((m_lastMac & 0xFF0000000000) >> 40);
+
+	return ss.str();
 }
 
 string Suspect::GetIpString()

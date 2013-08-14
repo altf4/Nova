@@ -1441,6 +1441,27 @@ app.get('/editAuthorizedIPs', function(req, res) {
 
 });
 
+app.get('/editAuthorizedMACs', function(req, res) {
+
+    fs.readFile(NovaHomePath + "/config/authorizedMACs.config", function(err, data) {
+        if (err) {
+            RenderError(res, "Unable to open authorizedMACs.config", "/advancedOptions");
+            return;
+        }
+
+        var array = data.toString().split("\n");
+        var MACs = [];
+
+        for (var i in array) {
+            if (array[i].length < 7) {continue;}
+            if (array[i][0] == '#') {continue;}
+            MACs.push(array[i]);
+        }
+
+        res.render('authorizedMACs.jade', {authorizedMACs: JSON.stringify(MACs)});
+    });
+});
+
 app.get('/newInformation', function (req, res)
 {
     res.render('newInformation.jade');
@@ -1651,6 +1672,22 @@ app.post("/editAuthorizedIPs", function (req, res) {
         }
 
         res.redirect('/editAuthorizedIPs');
+    });
+});
+
+app.post("/editAuthorizedMACs", function (req, res) {
+    if (req.files["MACs"] == undefined || req.files["MACs"].size == 0) {
+        RenderError(res, "Invalid form submission. This was likely caused by refreshing a page you shouldn't.", "/editAuthorizedMACs");
+        return;
+    }
+    
+    fs.rename(req.files["MACs"].path, NovaHomePath + "/config/authorizedMACs.config", function (err) {
+        if (err) {
+            RenderError(res, "Something went wrong when reading the uploaded file: " + err.toString(), "/editAuthorizedMACs");
+            return;
+        }
+
+        res.redirect('/editAuthorizedMACs');
     });
 });
 

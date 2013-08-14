@@ -63,6 +63,7 @@ block content
             option THRESHOLD_TRIGGER
             option SCRIPT_ALERT
             option UNAUTHORIZED_SUSPECTS
+            option UNAUTHORIZED_MACS
       tr
         td
           span Mode
@@ -79,14 +80,15 @@ block content
 
     br
 
-    table(data-bind='visible: classifier.type() != "SCRIPT_ALERT" && classifier.type() != "UNAUTHORIZED_SUSPECTS"')
+    table(data-bind='visible: classifier.type() != "SCRIPT_ALERT" && classifier.type() != "UNAUTHORIZED_SUSPECTS" && classifier.type() != "UNAUTHORIZED_MACS"')
       theader
         td Feature Name
         td Enabled
         td(data-bind='visible: classifier.type() == "KNN"') Weight
         td(data-bind='visible: classifier.type() == "THRESHOLD_TRIGGER"') Hostile Threshold
         td(data-bind='visible: classifier.type() == "SCRIPT_ALERT"') Script Triggered Alerts
-        td(data-bind='visible: classifier.type() == "UNAUTHORIZED_SUSPECTS"') Unauthorized Suspect Detector
+        td(data-bind='visible: classifier.type() == "UNAUTHORIZED_SUSPECTS"') Unauthorized IP Detector
+        td(data-bind='visible: classifier.type() == "UNAUTHORIZED_MACS"') Unauthorized MAC Detector
       tbody(data-bind='foreach: classifier.features')
         tr
           td(data-bind='text: name')

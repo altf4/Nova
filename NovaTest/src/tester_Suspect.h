@@ -78,5 +78,11 @@ TEST_F(SuspectTest, EvidenceAddingRemoving)
 	EXPECT_NO_FATAL_FAILURE(suspect->ReadEvidence(t2, true));
 }
 
+TEST_F(SuspectTest, MacToString)
+{
+	suspect->m_lastMac = 81952921372024;
+	EXPECT_EQ("78:45:C4:26:89:4A", suspect->GetMACString());
+}
+
 }
 

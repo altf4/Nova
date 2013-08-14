@@ -14,6 +14,7 @@ CPP_SRCS += \
 ../NovadSource/ScriptAlertClassification.cpp \
 ../NovadSource/Threads.cpp \
 ../NovadSource/ThresholdTriggerClassification.cpp \
+../NovadSource/UnauthorizedMACClassification.cpp \
 ../NovadSource/UnauthorizedSuspectsClassification.cpp 
 
 OBJS += \
@@ -27,6 +28,7 @@ OBJS += \
 ./NovadSource/ScriptAlertClassification.o \
 ./NovadSource/Threads.o \
 ./NovadSource/ThresholdTriggerClassification.o \
+./NovadSource/UnauthorizedMACClassification.o \
 ./NovadSource/UnauthorizedSuspectsClassification.o 
 
 CPP_DEPS += \
@@ -40,6 +42,7 @@ CPP_DEPS += \
 ./NovadSource/ScriptAlertClassification.d \
 ./NovadSource/Threads.d \
 ./NovadSource/ThresholdTriggerClassification.d \
+./NovadSource/UnauthorizedMACClassification.d \
 ./NovadSource/UnauthorizedSuspectsClassification.d 
 
 

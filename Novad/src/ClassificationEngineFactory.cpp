@@ -18,6 +18,7 @@
 
 #include "UnauthorizedSuspectsClassification.h"
 #include "ThresholdTriggerClassification.h"
+#include "UnauthorizedMACClassification.h"
 #include "ClassificationEngineFactory.h"
 #include "ScriptAlertClassification.h"
 #include "KnnClassification.h"
@@ -44,6 +45,10 @@ ClassificationEngine * MakeEngine(std::string engine)
 	else if (engine == "UNAUTHORIZED_SUSPECTS")
 	{
 		return new UnauthorizedSuspectsClassification();
+	}
+	else if (engine == "UNAUTHORIZED_MACS")
+	{
+		return new UnauthorizedMACClassification();
 	}
 	else
 	{

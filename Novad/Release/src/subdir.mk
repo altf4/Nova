@@ -15,6 +15,7 @@ CPP_SRCS += \
 ../src/ScriptAlertClassification.cpp \
 ../src/Threads.cpp \
 ../src/ThresholdTriggerClassification.cpp \
+../src/UnauthorizedMACClassification.cpp \
 ../src/UnauthorizedSuspectsClassification.cpp 
 
 OBJS += \
@@ -29,6 +30,7 @@ OBJS += \
 ./src/ScriptAlertClassification.o \
 ./src/Threads.o \
 ./src/ThresholdTriggerClassification.o \
+./src/UnauthorizedMACClassification.o \
 ./src/UnauthorizedSuspectsClassification.o 
 
 CPP_DEPS += \
@@ -43,6 +45,7 @@ CPP_DEPS += \
 ./src/ScriptAlertClassification.d \
 ./src/Threads.d \
 ./src/ThresholdTriggerClassification.d \
+./src/UnauthorizedMACClassification.d \
 ./src/UnauthorizedSuspectsClassification.d 
 
 

@@ -1117,7 +1117,7 @@ everyone.now.saveClassifier = function(classifier, index, cb)
     {
         classifier.strings = {};
     }
-    else if (classifier.type == "UNAUTHORIZED_SUSPECTS")
+    else if (classifier.type == "UNAUTHORIZED_SUSPECTS" || classifier.type == "UNAUTHORIZED_MACS")
     {
         classifier.strings = {};
     }
