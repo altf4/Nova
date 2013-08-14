@@ -221,6 +221,11 @@ html(lang="en", onclick='removeContextMenu();')
       
 
   body#hook(style="background-color: #D0E9FC;")
+    //[if IE]> 
+      script(type="text/javascript").
+        alert("WARNING: Internet Explorer is not supported! Please use Chrome or Firefox to view this page.")
+      <![endif] 
+
     // Header panel
     div(style="height: 130px; position: absolute; top: 0; left: 0; right: 0; background-color: #D0E9FC; padding-left: 10px; padding-right: 10px; padding-top: 10px; #00008B")
       div(style="background-color: white; padding: 4px; border-radius: 10px; border: 2px solid #769DC0; box-shadow: 0 0 2px 2px #888;")
