@@ -30,7 +30,7 @@ CREATE TABLE packet_counts(
 CREATE TABLE suspects (
 	ip TEXT,
 	interface TEXT,
-	mac INTEGER,
+	mac UNSIGNED INTEGER,
 
 	startTime INTEGER,
 	endTime INTEGER,

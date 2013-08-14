@@ -278,7 +278,7 @@ void Database::WriteTimestamps(Suspect *s)
 	SQL_RUN(SQLITE_OK,sqlite3_bind_int64(updateSuspectTimestamps, 3, static_cast<long int>(s->m_features.m_startTime)));
 	SQL_RUN(SQLITE_OK,sqlite3_bind_int64(updateSuspectTimestamps, 4, static_cast<long int>(s->m_features.m_endTime)));
 	SQL_RUN(SQLITE_OK,sqlite3_bind_int64(updateSuspectTimestamps, 5, static_cast<long int>(s->m_features.m_lastTime)));
-	SQL_RUN(SQLITE_OK,sqlite3_bind_int64(updateSuspectTimestamps, 6, static_cast<long int>(s->m_lastMac)));
+	SQL_RUN(SQLITE_OK,sqlite3_bind_int64(updateSuspectTimestamps, 6, s->m_lastMac));
 
 	m_count++;
 	SQL_RUN(SQLITE_DONE,sqlite3_step(updateSuspectTimestamps));
