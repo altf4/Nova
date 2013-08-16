@@ -19,6 +19,7 @@
 var dns = require('dns');
 var fs = require('fs');
 var exec = require('child_process').exec;
+var child_process = require('child_process');
 var sanitizeCheck = require('validator').sanitize;
 var NovaCommon = require('./NovaCommon.js');
 var LOG = NovaCommon.LOG;
@@ -1527,6 +1528,58 @@ everyone.now.GetProxies = function(profile, cb) {
     }
 
     cb && cb(proxies);  
+};
+
+
+everyone.now.generateNewCerts = function(certInfo, cb) {
+    var res = ""; 
+    var subjString = "/";
+
+    var keyPath = NovaCommon.config.ReadSetting("QUASAR_WEBUI_TLS_KEY");
+    var certPath = NovaCommon.config.ReadSetting("QUASAR_WEBUI_TLS_CERT");
+
+    if(certInfo.country != "") {subjString += "C=" + certInfo.country + "/";}
+    if(certInfo.state != "") {subjString += "ST=" + certInfo.state + "/";}
+    if(certInfo.city != "") {subjString += "L=" + certInfo.city + "/";}
+    if(certInfo.organization != "") {subjString += "O=" + certInfo.organization + "/";}
+    if(certInfo.unit != "") {subjString += "OU=" + certInfo.unit + "/";}
+    if(certInfo.name != "") {subjString += "CN=" + certInfo.name + "/";}
+    if(certInfo.email != "") {subjString += "emailAddress=" + certInfo.email + "/";}
+
+    // TODO this should really be an atomic operation that restores the old files if it fails
+    var args = ['genrsa', '-out', NovaHomePath + keyPath, '1024'];
+    child_process.execFile("openssl", args, {}, function(err, stdout, stderr) {
+        if (err) {
+            res += "ERROR: " + err;
+            cb && cb(res);
+            return;
+        }
+
+        res += stderr + stdout;
+  
+        args = ['req', '-new', '-key', NovaHomePath + keyPath, '-subj', subjString, '-out', NovaHomePath + '/config/keys' + 'ui.csr'];
+        child_process.execFile("openssl", args, {}, function (err, stdout, stderr) {
+            if (err) {
+                res += "ERROR: " + err;
+                cb && cb(res);
+                return;
+            }
+
+            res += stderr + stdout;
+
+            args = ['x509', '-req', '-days', '365', '-in', NovaHomePath + '/config/keys' + 'ui.csr', '-signkey', NovaHomePath + keyPath, '-out', NovaHomePath + certPath];
+            child_process.execFile("openssl", args, {}, function(err, stdout, stderr) {
+                if (err) {
+                    res += "ERROR: " + err;
+                    cb && cb(res);
+                    return;
+                }
+
+                res += stderr + stdout;
+                cb && cb(null, res);
+            });
+        });
+    });
 };
 
 }
