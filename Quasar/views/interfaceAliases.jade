@@ -72,7 +72,7 @@ block headerAdditions
     };
   
 block content
-  +header("Add New Interface Alias")
+  +headerWithHelp("Add New Interface Alias", "aliases")
     table
       tr
         td
@@ -92,6 +92,6 @@ block content
       img.buttonIcon(src="images/add.png")
       span.buttonSpan Add/Update Alias
   br 
-  +header("Current Aliases")
+  +headerWithHelp("Current Aliases", "aliases")
     span#aliasTable(style="display: inline-block;")
 

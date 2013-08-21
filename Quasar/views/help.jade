@@ -42,14 +42,29 @@ block content
       b Threshold based Classification Engine
       p This engine will show what feature, if any, surpassed a set threshold to alert on.
   
-    h1.cardHeader.cardSeperator  Hostile Events Page
+    h1.cardHeader.cardSeperator  Logging, New Information, and Hostile Events
     br
+    +headerWithAnchor("New Information", "newInformation")
+      p The new information page shows all of the Nova and Honeyd logs, but allows you to "mark entries as seen". If you mark log entries as seen, they will no longer show up on this page. This allows you to go to the New Information page and see only log entries that you haven't seen before, unlike the View Logs page where all log entries are always shown and it can be difficult to figure out which ones are new and which you have already seen.
+
     +headerWithAnchor("Hostile Events", "hostileEvents")
       p A hostile event is a recorded when a suspect goes from the classification of benign to the classification of hostile. This can be useful to see the exact time that a suspect was doing hostile activity. If the "Clear data after suspect logged as hostile?" setting is enabled under Advanced Settings, then the suspect will never actually show as hostile on the main monitoring page, but the hostile events will show all of the times that the suspect reached the hostile threshold and was reset.
+ 
+    +headerWithAnchor("View Logs", "viewLogs")
+      p The View Logs page allows you to view and/or download the Nova and Honeyd logs. The logs are ordered so that newest entries will appear on top, and the page will dynamically update if new log entries appear while you are viewing the page.
   
-  
-    h1.cardHeader.cardSeperator  Honeypot Profiles
+    h1.cardHeader.cardSeperator  Honeypot Configuration
     br
+    
+    +headerWithAnchor("Haystack", "haystack")
+      p A Haystack is a collection of honeypot profiles and nodes. You can have multiple haystacks in order to easily switch between groups of honeypots when configuring or testing different setups.
+
+    +headerWithAnchor("Node", "nodes")
+      p A node is an instance of a honeyot with it's own MAC and IP address. A node's operating system and service information is inherited from the profile that the node is created from.
+
+    +headerWithAnchor("Scripts", "scripts")
+      p Scripts are the backend pieces of code that allow Honeyd to emulate various services. Under profile configuration, some scripts are configurable. These scripts allow you to choose different banners and strings used internally. This is an advanced configuration page and caution should be used, but you can edit the list of strings that can be selected from on the script configuration page.
+
     +headerWithAnchor("Profile", "profile")
       p A Profile is a "type" of honeypot that can be created. A node as in actual instance of a honeypot that is based off a Profile. Profiles contain all of the major settings for how the honeypot should behave, including port and service configuration, operating system emulation, and ethernet address vendors.
   
@@ -85,6 +100,9 @@ block content
   
         p If you select "script" as the service for a port, you can choose a honeypot script to be used to emulate a service on that port, such as Telnet, FTP, etc. Under the advanced column, you may be able to choose specific banners, versions, and settings for some of the scripts in order to customize their behavior even further.
   
+    +headerWithAnchor("Hostnames", "hostnames")
+      p The hostnames editing sections allows you to pick a set of hostnames that will be used by the honeypots. The hostnames will be used if mDNS or the Netbios Name Service scripts are used on a honeypot.
+
     h1.cardHeader.cardSeperator  Classification Engines
     br
     +headerWithAnchor("Unauthorized Suspect Classification Engine", "authorizedIPs")
@@ -94,3 +112,18 @@ block content
         |  section, as well as provide a list of newline separated authorized IP addresses via a file in the 
         a(href="/editAuthorizedIPs") Edit Authorized IP addresses
         |  configuration section.
+    
+    
+    +headerWithAnchor("Training Data", "training")
+      p The training data is so that the KNN machine learning classifier can try to match network traffic to either past benign or past hostile traffic. You can disable or enable the inclusion of sets of training data here, and if you manually trained a suspect as hostile or benign on the main suspects monitoring page, it will show up here for inclusion or removal from the training data set that the classifier uses.
+
+
+    h1.cardHeader.cardSeperator Quasar Settings
+    br
+    +headerWithAnchor("Interface Aliases", "aliases")
+      p The interface alias section allows you to view interfaces with a human readable string instead of the Linux ethernet designator. For instance, you could call the eth0 interface "Lab Network" and the eth1 interface "Marketing Department".
+
+    +headerWithAnchor("Whitelist", "whitelist")
+      p IP addresses or address ranges in the whitelist won't show up in Nova. All packets from these addresses will be dropped before reaching the packet classifiers. This option can be dangerous and should rarely be used, because an attacker could spoof a whitelisted IP address and avoid detection. However, this feature is useful for blocking things from the broadcast address or 0.0.0.0, which you may see from things like DHCP handshakes.
+
+

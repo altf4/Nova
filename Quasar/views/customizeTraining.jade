@@ -27,7 +27,7 @@ block headerAdditions
     
   
 block content
-  +header("Choose Training Data to use when classifying suspects")
+  +headerWithHelp("Choose Training Data to use when classifying suspects", "training")
     form#trainingForm(method='post', action='/customizeTrainingSave')
       table(border = '1')
         thead

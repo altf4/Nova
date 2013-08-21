@@ -1199,7 +1199,11 @@ block content
 
     
     div.contentBox#settingsGroups
-      h1 Edit Haystacks
+      h1
+        a(href="help#haystack", target="_blank")
+          img.helpIcon(src="/images/about.png", style="")
+        | Edit Haystacks
+
       button#addConfig(onclick='showLightBox("0")', title='Create a new configuration group from scratch')
         img.buttonIcon(src='images/add.png') 
         span.buttonSpan Add Haystack
@@ -1234,10 +1238,10 @@ block content
 
 
     div.contentBox#settingsProfiles(style='display: none;')
-      h1 Edit Profiles
+      h1 
         a(href="help#profile", target="_blank")
           img.helpIcon(src="/images/about.png", style="")
-
+        | Edit Profiles
       div#treeDiv
       br
       br
@@ -1256,7 +1260,10 @@ block content
         span.buttonSpan Add Child Profile
     
     div.contentBox#settingsNodes(style='display: none;')
-      h1 Edit Nodes
+      h1
+        a(href="help#nodes", target="_blank")
+          img.helpIcon(src="/images/about.png", style="")
+        | Edit Nodes
       div#node_header
       span#nodeTable(style="display: inline-block;")
       br
@@ -1300,7 +1307,10 @@ block content
       br
 
     div.contentBox#settingsScripts(style='display: none;')
-      h1 Current Script Usage
+      h1
+        a(href="help#scripts", target="_blank")
+          img.helpIcon(src="/images/about.png", style="")
+        | Current Script Usage
       button(onclick='window.location="/scripts"')
         img.buttonIcon(src='images/edit.png') 
         span.buttonSpan Edit Scripts

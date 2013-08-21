@@ -19,6 +19,8 @@ extends layout
 block content
   div.contentBox(style="display: inline-block")
     h1 Watching Nova Log
+      a(href="help#viewLogs", target="_blank")
+        img.helpIcon(src="/images/about.png", style="float: right;");
     p
       a.button(href="/downloadNovadLog.log")
         img.buttonIcon(src="images/save.png")
@@ -70,6 +72,8 @@ block content
   br
   div.contentBox(style="display: inline-block")
     h1 Watching Honeyd Log
+      a(href="help#viewLogs", target="_blank")
+        img.helpIcon(src="/images/about.png", style="float: right;");
     p
       a.button(href="/downloadHoneydLog.log")
         img.buttonIcon(src="images/save.png")

@@ -114,7 +114,7 @@ block headerAdditions
     }
   
 block content
-  +header("Whitelist New Entry")
+  +headerWithHelp("Whitelist New Entry", "whitelist")
     label Interface
     select(id='interfaceDropdown', name='interfaceDropdown')
       option(value='All Interfaces') All Interfaces
@@ -130,7 +130,7 @@ block content
       span.buttonSpan Add to Whitelist
  
   br 
-  +header("Current Whitelisted IPs")
+  +headerWithHelp("Current Whitelisted IPs", "whitelist")
     span#gridDiv(style='display: inline-block;')
     br
     button.button(onClick='deleteSelectedItems()')
