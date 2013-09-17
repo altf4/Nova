@@ -141,7 +141,7 @@ block headerAdditions
               {
                   var row = new Array();
                   row.push(results[i].id);
-                  row.push(results[i].lastTime);
+                  row.push((new Date(1000*results[i].lastTime)).toString());
                   row.push(results[i].ip);
                   row.push(results[i].interface);
                   row.push(results[i].classification);
