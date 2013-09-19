@@ -1805,6 +1805,10 @@ vector <HoneypotAddress> Config::GetHoneydIpAddresses(string ipListFile)
 
 					addresses.push_back(t);
 				}
+				else if (strs.size() == 2)
+				{
+					LOG(CRITICAL, "Honeyd IP list file doesn't contain network interfaces! Please update to the newest version of Honeyd.", "");
+				}
 			}
 		}
 		ipListFileStream.close();
