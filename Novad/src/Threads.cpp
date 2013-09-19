@@ -60,7 +60,7 @@ extern DatabaseQueue suspects;
 
 //HS Vars
 extern string dhcpListFile;
-extern vector<string> haystackDhcpAddresses;
+extern vector<HoneypotAddress> haystackDhcpAddresses;
 extern vector<string> whitelistIpAddresses;
 extern vector<string> whitelistIpRanges;
 extern vector<PacketCapture*> packetCaptures;

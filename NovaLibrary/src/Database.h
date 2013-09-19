@@ -59,7 +59,7 @@ public:
 	void StopTransaction();
 
 	void InsertSuspect(Suspect *suspect);
-	void InsertHoneypotIp(std::string ip);
+	void InsertHoneypotIp(std::string ip, std::string interface);
 
 	void InsertSuspectHostileAlert(const std::string &ip, const std::string &interface);
 	void WriteClassification(Suspect *s);

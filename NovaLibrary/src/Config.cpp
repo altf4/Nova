@@ -1779,10 +1779,10 @@ vector <string> Config::GetIpAddresses(string ipListFile)
 	return whitelistedAddresses;
 }
 
-vector <string> Config::GetHoneydIpAddresses(string ipListFile)
+vector <HoneypotAddress> Config::GetHoneydIpAddresses(string ipListFile)
 {
 	ifstream ipListFileStream(ipListFile.c_str());
-	vector<string> whitelistedAddresses;
+	vector<HoneypotAddress> addresses;
 
 	if(ipListFileStream.is_open())
 	{
@@ -1793,10 +1793,17 @@ vector <string> Config::GetHoneydIpAddresses(string ipListFile)
 			if(line != "" && line.at(0) != '#' )
 			{
 				std::vector<std::string> strs;
-				boost::split(strs, line, boost::is_any_of(", "));
-				if (strs.size() > 0)
+				boost::split(strs, line, boost::is_any_of(","));
+				if (strs.size() >= 3)
 				{
-					whitelistedAddresses.push_back(strs.at(0));
+					HoneypotAddress t;
+					t.ip = strs.at(0);
+					t.interface = strs.at(2);
+
+					boost::trim(t.ip);
+					boost::trim(t.interface);
+
+					addresses.push_back(t);
 				}
 			}
 		}
@@ -1807,14 +1814,39 @@ vector <string> Config::GetHoneydIpAddresses(string ipListFile)
 		LOG(ERROR,"Unable to open file: " + ipListFile, "");
 	}
 
-	return whitelistedAddresses;
+	return addresses;
 }
 
-vector <string> Config::GetHaystackAddresses(string honeyDConfigPath)
+
+// Finds the interface who's subnet this IP falls into
+string Config::findAssociatedInterface(string ipString) {
+	// Find out which interface this IP is in
+	struct in_addr ip;
+	inet_aton(ipString.c_str(), &ip);
+
+	struct ifaddrs *devices = NULL;
+	ifaddrs *curIf = NULL;
+	getifaddrs(&devices);
+	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
+	{
+		if(((int)curIf->ifa_addr->sa_family == AF_INET))
+		{
+			uint32_t match1 = ((sockaddr_in*)(curIf->ifa_addr))->sin_addr.s_addr & ((sockaddr_in*)(curIf->ifa_netmask))->sin_addr.s_addr;
+			uint32_t match2 = ip.s_addr & ((sockaddr_in*)(curIf->ifa_netmask))->sin_addr.s_addr;
+
+			if (match1 == match2) {
+				return string(curIf->ifa_name);
+			}
+		}
+	}
+	return "";
+}
+
+vector <HoneypotAddress> Config::GetHaystackAddresses(string honeyDConfigPath)
 {
 	//Path to the main log file
 	ifstream honeydConfFile(honeyDConfigPath.c_str());
-	vector<string> retAddresses;
+	vector<HoneypotAddress> retAddresses;
 
 	if( honeydConfFile == NULL)
 	{
@@ -1852,7 +1884,12 @@ vector <string> Config::GetHaystackAddresses(string honeyDConfigPath)
 
 		if(honeydTemplate != "DoppelgangerReservedTemplate")
 		{
-			retAddresses.push_back(token);
+			HoneypotAddress address;
+			address.ip = token;
+			address.interface = findAssociatedInterface(address.ip);
+
+			// Find the interface for this token
+			retAddresses.push_back(address);
 		}
 	}
 	return retAddresses;

@@ -219,13 +219,13 @@ void Database::Connect()
 		-1, &computeMaxPacketsToPort, NULL));
 
 	SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db,
-		"INSERT OR IGNORE INTO honeypots VALUES(?1)",
+		"INSERT OR IGNORE INTO honeypots VALUES(?1, ?2)",
 		-1, &insertHoneypotIp, NULL));
 
 	SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db,
 		"SELECT 1.0*(SELECT COUNT(DISTINCT honeypots.ip)"
 		" FROM honeypots, ip_port_counts "
-		" WHERE ip_port_counts.ip = ?1 AND interface = ?2 AND honeypots.ip = ip_port_counts.dstip) / (1.0*(SELECT COUNT(ip) FROM honeypots));",
+		" WHERE ip_port_counts.ip = ?1 AND ip_port_counts.interface = ?2 AND honeypots.ip = ip_port_counts.dstip AND ip_port_counts.interface = honeypots.interface) / (1.0*(SELECT COUNT(ip) FROM honeypots WHERE interface = ?2));",
 		-1, &computeHoneypotsContacted, NULL));
 
 	SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db,
@@ -802,11 +802,12 @@ void Database::IncrementPortContactedCount(const string &ip, const string &inter
 	}
 }
 
-void Database::InsertHoneypotIp(std::string ip)
+void Database::InsertHoneypotIp(std::string ip, std::string interface)
 {
 	int res;
 
 	SQL_RUN(SQLITE_OK, sqlite3_bind_text(insertHoneypotIp, 1, ip.c_str(), -1, SQLITE_STATIC));
+	SQL_RUN(SQLITE_OK, sqlite3_bind_text(insertHoneypotIp, 2, interface.c_str(), -1 ,SQLITE_STATIC));
 
 	m_count++;
 	SQL_RUN(SQLITE_DONE, sqlite3_step(insertHoneypotIp));

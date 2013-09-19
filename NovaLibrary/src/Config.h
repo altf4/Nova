@@ -67,6 +67,17 @@ enum NormalizationType {
 	LOGARITHMIC		// Logarithmic normalization, larger outlier value will have less of an effect
 };
 
+struct HoneypotAddress {
+	HoneypotAddress(std::string ip, std::string interface) {
+		this->ip = ip;
+		this->interface = interface;
+	}
+	HoneypotAddress() {}
+
+	std::string ip;
+	std::string interface;
+};
+
 class Config
 {
 
@@ -129,9 +140,12 @@ public:
 	version GetVersion();
 	std::string GetVersionString();
 
-	static std::vector <std::string> GetHaystackAddresses(std::string honeyDConfigPath);
+	static std::string findAssociatedInterface(std::string ip);
+	static std::vector <HoneypotAddress> GetHaystackAddresses(std::string honeyDConfigPath);
+	static std::vector <HoneypotAddress> GetHoneydIpAddresses(std::string ipListFile);
+
+	// TODO is this used anymore?
 	static std::vector <std::string> GetIpAddresses(std::string ipListFile);
-	static std::vector <std::string> GetHoneydIpAddresses(std::string ipListFile);
 
 	std::vector<std::string> GetPrefixes();
 
@@ -224,6 +238,7 @@ private:
 
 	// List of currently used interfaces
 	std::vector<std::string> m_interfaces;
+
 
 	// What the actual config file contains
 	std::string m_interfaceLine;

@@ -124,6 +124,7 @@ CREATE TABLE ip_port_counts (
 /* We keep track of what honeypot IPs are currently up so we can join against the ip_port_counts for haystack_percent_contacted */
 CREATE TABLE honeypots (
 	ip TEXT,
+	interface TEXT,
 	PRIMARY KEY (ip)
 );
 

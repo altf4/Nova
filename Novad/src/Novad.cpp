@@ -81,8 +81,10 @@ time_t startTime;
 
 //HS Vars
 string dhcpListFile;
-vector<string> haystackAddresses;
-vector<string> haystackDhcpAddresses;
+
+vector<HoneypotAddress> haystackAddresses;
+vector<HoneypotAddress> haystackDhcpAddresses;
+
 vector<string> whitelistIpAddresses;
 vector<string> whitelistIpRanges;
 
@@ -469,12 +471,12 @@ string ConstructFilterString(string captureIdentifier)
 	}
 
 	//Insert static haystack IP's
-	vector<string> hsAddresses = haystackAddresses;
+	vector<HoneypotAddress> hsAddresses = haystackAddresses;
 	while(hsAddresses.size())
 	{
 		//Remove and add the haystack host entry
 		filterString += " && not src net ";
-		filterString += hsAddresses.back();
+		filterString += hsAddresses.back().ip;
 		hsAddresses.pop_back();
 	}
 
@@ -484,7 +486,7 @@ string ConstructFilterString(string captureIdentifier)
 	{
 		//Remove and add the haystack host entry
 		filterString += " && not src net ";
-		filterString += hsAddresses.back();
+		filterString += hsAddresses.back().ip;
 		hsAddresses.pop_back();
 	}
 
@@ -493,18 +495,18 @@ string ConstructFilterString(string captureIdentifier)
 	{
 		if (WhitelistConfiguration::GetInterface(whitelistIpAddresses.at(i)) == captureIdentifier)
 		{
-			hsAddresses.push_back(whitelistIpAddresses.at(i));
+			hsAddresses.push_back(HoneypotAddress(whitelistIpAddresses.at(i), ""));
 		}
 		else if (WhitelistConfiguration::GetInterface(whitelistIpAddresses.at(i)) == "All Interfaces")
 		{
-			hsAddresses.push_back(whitelistIpAddresses.at(i));
+			hsAddresses.push_back(HoneypotAddress(whitelistIpAddresses.at(i), ""));
 		}
 	}
 	while(hsAddresses.size())
 	{
 		//Remove and add the haystack host entry
 		filterString += " && not src net ";
-		filterString += WhitelistConfiguration::GetIp(hsAddresses.back());
+		filterString += WhitelistConfiguration::GetIp(hsAddresses.back().ip);
 		hsAddresses.pop_back();
 	}
 
@@ -513,19 +515,19 @@ string ConstructFilterString(string captureIdentifier)
 	{
 		if (WhitelistConfiguration::GetInterface(whitelistIpRanges.at(i)) == captureIdentifier)
 		{
-			hsAddresses.push_back(whitelistIpRanges.at(i));
+			hsAddresses.push_back(HoneypotAddress(whitelistIpRanges.at(i), ""));
 		}
 		else if (WhitelistConfiguration::GetInterface(whitelistIpRanges.at(i)) == "All Interfaces")
 		{
-			hsAddresses.push_back(whitelistIpRanges.at(i));
+			hsAddresses.push_back(HoneypotAddress(whitelistIpRanges.at(i), ""));
 		}
 	}
 	while(hsAddresses.size())
 	{
 		filterString += " && not src net ";
-		filterString += WhitelistConfiguration::GetIp(hsAddresses.back());
+		filterString += WhitelistConfiguration::GetIp(hsAddresses.back().ip);
 		filterString += " mask ";
-		filterString += WhitelistConfiguration::GetSubnet(hsAddresses.back());
+		filterString += WhitelistConfiguration::GetSubnet(hsAddresses.back().ip);
 		hsAddresses.pop_back();
 	}
 
@@ -539,7 +541,7 @@ string ConstructFilterString(string captureIdentifier)
 		while(hsAddresses.size())
 		{
 			filterString += " || dst net ";
-			filterString += hsAddresses.back();
+			filterString += hsAddresses.back().ip;
 			hsAddresses.pop_back();
 		}
 		filterString += ")";
@@ -573,17 +575,14 @@ void UpdateHaystackFeatures()
 {
 	Database::Inst()->StartTransaction();
 
-	vector<uint32_t> haystackNodes;
 	for(uint i = 0; i < haystackAddresses.size(); i++)
 	{
-		Database::Inst()->InsertHoneypotIp(haystackAddresses[i]);
-		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));
+		Database::Inst()->InsertHoneypotIp(haystackAddresses[i].ip, haystackAddresses[i].interface);
 	}
 
 	for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
 	{
-		Database::Inst()->InsertHoneypotIp(haystackDhcpAddresses[i]);
-		haystackNodes.push_back(htonl(inet_addr(haystackDhcpAddresses[i].c_str())));
+		Database::Inst()->InsertHoneypotIp(haystackDhcpAddresses[i].ip, haystackDhcpAddresses[i].interface);
 	}
 
 	Database::Inst()->StopTransaction();
