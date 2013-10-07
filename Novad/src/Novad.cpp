@@ -347,6 +347,15 @@ void StartCapture()
 	{
 		vector<string> ifList = Config::Inst()->GetInterfaces();
 
+		if (ifList.size() == 0)
+		{
+			LOG(CRITICAL, "No network interfaces are configured or available for packet capture! "
+					"This could be caused by Novad being configured to listen on 'All available interfaces', "
+					"but DHCP interfaces haven't yet obtained IP addresses. This could also be caused by a bad configuration. "
+					"Please reconfigure the interfaces Novad should listen on.", "");
+			exit(EXIT_FAILURE);
+		}
+
 		//trainingFileStream = pcap_dump_open(handles[0], trainingCapFile.c_str());
 
 		stringstream temp;
