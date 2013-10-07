@@ -1240,7 +1240,7 @@ void Config::LoadInterfaces()
 		for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 		{
 			//If we find a valid loopback interface exit the loop early (curIf != NULL)
-			if((curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+			if(curIf->ifa_addr != NULL && (curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
 			{
 				m_loopbackIF = string(curIf->ifa_name);
 				break;
@@ -1262,7 +1262,7 @@ void Config::LoadInterfaces()
 		m_ifIsDefault = true;
 		for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 		{
-			if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+			if(curIf->ifa_addr != NULL && !(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
 			{
 				m_interfaces.push_back(string(curIf->ifa_name));
 			}
@@ -1561,7 +1561,7 @@ vector<string> Config::GetIPv4HostInterfaceList()
 	}
 	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 	{
-		if(((int)curIf->ifa_addr->sa_family == AF_INET) && !(curIf->ifa_flags & IFF_LOOPBACK))
+		if(curIf->ifa_addr != NULL && ((int)curIf->ifa_addr->sa_family == AF_INET) && !(curIf->ifa_flags & IFF_LOOPBACK))
 		{
 			ret.push_back(curIf->ifa_name);
 		}
@@ -1582,7 +1582,7 @@ vector<string> Config::GetIPv4LoopbackInterfaceList()
 	}
 	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 	{
-		if(((int)curIf->ifa_addr->sa_family == AF_INET) && (curIf->ifa_flags & IFF_LOOPBACK))
+		if(curIf->ifa_addr != NULL && ((int)curIf->ifa_addr->sa_family == AF_INET) && (curIf->ifa_flags & IFF_LOOPBACK))
 		{
 			ret.push_back(curIf->ifa_name);
 		}
@@ -1679,7 +1679,7 @@ std::vector<std::string> Config::ListInterfaces()
 
 	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 	{
-		if(!(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_PACKET))
+		if(curIf->ifa_addr != NULL && !(curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_PACKET))
 		{
 			interfaces.push_back(string(curIf->ifa_name));
 		}
@@ -1718,7 +1718,7 @@ std::vector<std::string> Config::ListLoopbacks()
 	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 	{
 		//If we find a valid loopback interface exit the loop early (curIf != NULL)
-		if((curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+		if(curIf->ifa_addr != NULL && (curIf->ifa_flags & IFF_LOOPBACK) && ((int)curIf->ifa_addr->sa_family == AF_INET))
 		{
 			ret.push_back(string(curIf->ifa_name));
 		}
@@ -1833,7 +1833,7 @@ string Config::findAssociatedInterface(string ipString) {
 	getifaddrs(&devices);
 	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 	{
-		if(((int)curIf->ifa_addr->sa_family == AF_INET))
+		if(curIf->ifa_addr != NULL && ((int)curIf->ifa_addr->sa_family == AF_INET))
 		{
 			uint32_t match1 = ((sockaddr_in*)(curIf->ifa_addr))->sin_addr.s_addr & ((sockaddr_in*)(curIf->ifa_netmask))->sin_addr.s_addr;
 			uint32_t match2 = ip.s_addr & ((sockaddr_in*)(curIf->ifa_netmask))->sin_addr.s_addr;

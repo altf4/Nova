@@ -234,7 +234,7 @@ string GetSubnetFromInterface(string interface)
 
 	for(curIf = devices; curIf != NULL; curIf = curIf->ifa_next)
 	{
-		if(!string(curIf->ifa_name).compare(interface) && ((int)curIf->ifa_addr->sa_family == AF_INET))
+		if(curIf->ifa_addr != NULL && !string(curIf->ifa_name).compare(interface) && ((int)curIf->ifa_addr->sa_family == AF_INET))
 		{
 			stringstream ss;
 			int socket = getnameinfo(curIf->ifa_addr, sizeof(sockaddr_in), addrBuffer, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
