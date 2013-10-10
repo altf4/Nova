@@ -951,6 +951,7 @@ app.get('/advancedOptions', function (req, res)
         , ONLY_CLASSIFY_HONEYPOT_TRAFFIC: NovaCommon.config.ReadSetting("ONLY_CLASSIFY_HONEYPOT_TRAFFIC")
         , TRAINING_DATA_PATH: NovaCommon.config.ReadSetting("TRAINING_DATA_PATH")
         , MESSAGE_WORKER_THREADS: NovaCommon.config.ReadSetting("MESSAGE_WORKER_THREADS")
+        , ADDITIONAL_HONEYD_ARGS: NovaCommon.config.ReadSetting("ADDITIONAL_HONEYD_ARGS")
     });
 });
 
@@ -2056,6 +2057,11 @@ app.post('/configureNovaSave', function (req, res)
         ,validator: function(val) {
             validator.check(val, this.key + ' must be an integer').isInt();
             validator.check(val, this.key + ' must be a positive integer greater than 1').min(1);
+        }
+    },
+    {
+        key: "ADDITIONAL_HONEYD_ARGS"
+        ,validator: function(val) {
         }
     }];
 

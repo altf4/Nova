@@ -223,6 +223,7 @@ public:
 	MAKE_GETTER_SETTER(std::string,m_pathTrainingData, GetPathTrainingData, SetPathTrainingData);
 
 	MAKE_GETTER_SETTER(int, m_messageWorkerThreads, GetNumMessageWorkerThreads, SetNumMEssageWorkerThreads);
+	MAKE_GETTER_SETTER(std::string, m_additionalHoneydArgs, GetAdditionalHoneydArgs, SetAdditionalHoneydArgs);
 
 protected:
 	Config();

@@ -106,7 +106,8 @@ string Config::m_prefixes[] =
 	"COMMAND_STOP_NOVAD",
 	"COMMAND_START_HAYSTACK",
 	"COMMAND_STOP_HAYSTACK",
-	"MESSAGE_WORKER_THREADS"
+	"MESSAGE_WORKER_THREADS",
+	"ADDITIONAL_HONEYD_ARGS"
 };
 
 Config *Config::m_instance = NULL;
@@ -1100,6 +1101,19 @@ void Config::LoadConfig_Internal()
 					m_messageWorkerThreads = atoi(line.c_str());
 					isValid[prefixIndex] = true;
 				}
+
+				continue;
+			}
+
+			//ADDITIONAL_HONEYD_ARGS
+			prefixIndex++;
+			prefix = m_prefixes[prefixIndex];
+			if(!line.substr(0, prefix.size()).compare(prefix))
+			{
+				line = line.substr(prefix.size() + 1, line.size());
+
+				m_additionalHoneydArgs = line;
+				isValid[prefixIndex] = true;
 
 				continue;
 			}

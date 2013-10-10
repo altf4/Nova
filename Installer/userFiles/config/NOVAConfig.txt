@@ -550,3 +550,5 @@ COMMAND_STOP_HAYSTACK novacli stop haystack
 # Number of message worker threads in novad
 MESSAGE_WORKER_THREADS 6
 
+# Additional arguements that will be passed to honeyd
+ADDITIONAL_HONEYD_ARGS 

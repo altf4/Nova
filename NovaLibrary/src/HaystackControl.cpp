@@ -50,6 +50,13 @@ bool StartHaystack(bool blocking)
 	ss << "/nmap-os-db\" -s /var/log/honeyd/honeydHaystackservice.log -t /var/log/honeyd/ipList";
 	ss << " -m \"" << Config::Inst()->GetPathShared() << "/nmap-mac-prefixes\"";
 
+	// Are there user specified additional arguements to send to honeyd?
+	string additionalArgs = Config::Inst()->GetAdditionalHoneydArgs();
+	boost::trim(additionalArgs);
+	if (additionalArgs.size()) {
+		ss << " " << additionalArgs;
+	}
+
 	if (blocking)
 	{
 		ss << " -d";

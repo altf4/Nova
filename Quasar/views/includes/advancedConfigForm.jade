@@ -161,6 +161,11 @@ form(method="post", action="/configureNovaSave")
     br
   
     h2 Special Run Settings
+
+    label Additional arguements to give to Honeyd?
+    input.wide(type="text", name="ADDITIONAL_HONEYD_ARGS",  value=ADDITIONAL_HONEYD_ARGS)
+
+
     label Read pcap file?
     br
     if(READ_PCAP != "0")
