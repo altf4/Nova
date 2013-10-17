@@ -20,6 +20,7 @@ CPP_SRCS += \
 ../src/PacketCapture.cpp \
 ../src/Point.cpp \
 ../src/Proxy.cpp \
+../src/QuasarDatabase.cpp \
 ../src/Suspect.cpp \
 ../src/WhitelistConfiguration.cpp 
 
@@ -40,6 +41,7 @@ OBJS += \
 ./src/PacketCapture.o \
 ./src/Point.o \
 ./src/Proxy.o \
+./src/QuasarDatabase.o \
 ./src/Suspect.o \
 ./src/WhitelistConfiguration.o 
 
@@ -60,6 +62,7 @@ CPP_DEPS += \
 ./src/PacketCapture.d \
 ./src/Point.d \
 ./src/Proxy.d \
+./src/QuasarDatabase.d \
 ./src/Suspect.d \
 ./src/WhitelistConfiguration.d 
 

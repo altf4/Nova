@@ -79,8 +79,6 @@ public:
 
 	bool IsSuspectHostile(const std::string &ip, const std::string &interface);
 
-	void ResetPassword();
-
 	std::vector<SuspectID_pb> GetHostileSuspects();
 
 

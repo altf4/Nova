@@ -553,21 +553,6 @@ bool Database::Disconnect()
 	return true;
 }
 
-void Database::ResetPassword()
-{
-	stringstream ss;
-	ss << "REPLACE INTO credentials VALUES (\"nova\", \"934c96e6b77e5b52c121c2a9d9fa7de3fbf9678d\", \"root\")";
-
-	char *zErrMsg = 0;
-	int state = sqlite3_exec(db, ss.str().c_str(), callback, 0, &zErrMsg);
-	if (state != SQLITE_OK)
-	{
-		string errorMessage(zErrMsg);
-		sqlite3_free(zErrMsg);
-		throw DatabaseException(string(errorMessage));
-	}
-}
-
 void Database::ClearAllSuspects()
 {
 	int rc;

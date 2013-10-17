@@ -19,6 +19,7 @@
 #include "HoneydConfiguration/HoneydConfiguration.h"
 #include "nova_ui_core.h"
 #include "Database.h"
+#include "QuasarDatabase.h"
 #include "NovaCLI.h"
 #include "Logger.h"
 #include "protobuf/marshalled_classes.pb.h"
@@ -693,8 +694,11 @@ void ReclassifySuspects()
 
 void ResetPassword()
 {
-	Database::Inst(Config::Inst()->GetPathHome() + "/data/quasarDatabase.db");
-	Database::Inst()->ResetPassword();
+	if (QuasarDatabase::Inst()->ResetPassword() != -1) {
+		LOG(ALERT, "Username/password has been reset to nova/toor by the command line Nova interface", "");
+	} else {
+		LOG(ERROR, "Error: something went wrong when trying to reset the password", "");
+	}
 }
 
 void MonitorCallback(int32_t messageID)
