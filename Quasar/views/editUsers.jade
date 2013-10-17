@@ -61,6 +61,20 @@ block headerAdditions
         
         var user = items[0]; 
         var password = $('#newPassword').val();
+        var password2 = $("#newPassword2").val();
+
+        if (password != password2) {
+            alert("Passwords did not match!");
+            $("#newPassword").val("");
+            $("#newPassword2").val("");
+            return;
+        }
+
+        if (password == "") {
+            alert("Password can not be blank!");
+            return;
+        }
+
         try
         {
           now.updateUserPassword(user, password, errorMessageCallback);
@@ -102,15 +116,25 @@ block content
     span#gridDiv(style="display: inline-block; width: 500px;")
   
     br
+    br
     button(onClick='deleteSelectedItems()')
       img.buttonIcon(src='images/delete.png')
       span.buttonSpan Delete Selected Users
     
     br
     br
-    input#newPassword(type='password')
+    table
+      tr
+        td New Password
+        td
+          input#newPassword(type='password')
+      tr
+        td Retype new password:
+        td
+          input#newPassword2(type='password')
+        
     button(onClick='updateUserPass()') 
       img.buttonIcon(src='images/edit.png')
-      span.buttonSpan Update User Password
+      span.buttonSpan Update Password of selected user
    
   
