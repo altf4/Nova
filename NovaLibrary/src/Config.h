@@ -248,7 +248,6 @@ private:
 	int m_tcpCheckFreq;
 	bool m_manIfaceEnable;
 	std::string m_webUIIface;
-	bool m_gotoLive;
 
 	version m_version;
 

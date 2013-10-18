@@ -248,8 +248,11 @@ int RunNovaD()
 	pthread_mutex_init(&shutdownClassificationMutex, NULL);
 	shutdownClassification = false;
 	pthread_cond_init(&shutdownClassificationCond, NULL);
-	pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
-	pthread_detach(classificationLoopThread);
+
+	if (!Config::Inst()->GetReadPcap()) {
+		pthread_create(&classificationLoopThread,NULL,ClassificationLoop, NULL);
+		pthread_detach(classificationLoopThread);
+	}
 
 	// TODO: Figure out if having multiple Consumer Loops has a performance benefit
 	pthread_create(&consumer, NULL, ConsumerLoop, NULL);
@@ -306,12 +309,8 @@ void Reload()
 
 void StartCapture()
 {
-	Lock lock(&packetCapturesLock);
-	StopCapture_noLocking();
-
-	Reload();
-
-	//If we're reading from a packet capture file
+	//If we're reading from a packet capture file instead of live capture
+	// This is mainly just used for testing and dev work
 	if(Config::Inst()->GetReadPcap())
 	{
 		try
@@ -324,15 +323,19 @@ void StartCapture()
 			cap->Init();
 			cap->SetPacketCb(&Packet_Handler);
 			string captureFilterString = ConstructFilterString(cap->GetIdentifier());
+			packetCaptures.clear();
+			packetCaptures.push_back(cap);
+			dropCounts.push_back(0);
 			cap->SetFilter(captureFilterString);
 			cap->SetIdIndex(packetCaptures.size());
-			packetCaptures.push_back(cap);
 
 			cap->StartCaptureBlocking();
 
 			LOG(DEBUG, "Done reading pcap file. Processing...", "");
 			ClassificationLoop(NULL);
 			LOG(DEBUG, "Done processing pcap file.", "");
+
+			exit(EXIT_SUCCESS);
 		}
 		catch (Nova::PacketCaptureException &e)
 		{
@@ -341,10 +344,13 @@ void StartCapture()
 		}
 
 		Config::Inst()->SetReadPcap(false); //If we are going to live capture set the flag.
-	}
+	} else {
+		Lock lock(&packetCapturesLock);
+		StopCapture_noLocking();
 
-	if(!Config::Inst()->GetReadPcap())
-	{
+		Reload();
+
+
 		vector<string> ifList = Config::Inst()->GetInterfaces();
 
 		if (ifList.size() == 0)

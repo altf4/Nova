@@ -57,7 +57,6 @@ string Config::m_prefixes[] =
 	"HS_HONEYD_CONFIG",
 	"READ_PCAP",
 	"PCAP_FILE",
-	"GO_TO_LIVE",
 	"CLASSIFICATION_TIMEOUT",
 	"K",
 	"EPS",
@@ -326,20 +325,6 @@ void Config::LoadConfig_Internal()
 				isValid[prefixIndex] = true;
 				prefixIndex++;
 				isValid[prefixIndex] = true;
-			}
-
-			// GO_TO_LIVE
-			prefixIndex++;
-			prefix = m_prefixes[prefixIndex];
-			if(!line.substr(0, prefix.size()).compare(prefix))
-			{
-				line = line.substr(prefix.size() + 1, line.size());
-				if(atoi(line.c_str()) >= 0)
-				{
-					m_gotoLive = atoi(line.c_str());
-					isValid[prefixIndex] = true;
-				}
-				continue;
 			}
 
 			// CLASSIFICATION_TIMEOUT

@@ -914,7 +914,6 @@ app.get('/advancedOptions', function (req, res)
         , HS_HONEYD_CONFIG: NovaCommon.config.ReadSetting("HS_HONEYD_CONFIG")
         , READ_PCAP: NovaCommon.config.ReadSetting("READ_PCAP")
         , PCAP_FILE: NovaCommon.config.ReadSetting("PCAP_FILE")
-        , GO_TO_LIVE: NovaCommon.config.ReadSetting("GO_TO_LIVE")
         , CLASSIFICATION_TIMEOUT: NovaCommon.config.ReadSetting("CLASSIFICATION_TIMEOUT")
         , K: NovaCommon.config.ReadSetting("K")
         , EPS: NovaCommon.config.ReadSetting("EPS")
@@ -1845,12 +1844,6 @@ app.post('/configureNovaSave', function (req, res)
         key:  "PCAP_FILE"
         ,validator: function(val) {
             validator.check(val, this.key + ' must not be empty').notEmpty();
-        }
-    },
-    {
-        key:  "GO_TO_LIVE"
-        ,validator: function(val) {
-            validator.check(val, this.key + ' must be a boolean').isInt();
         }
     },
     {

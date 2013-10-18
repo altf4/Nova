@@ -184,24 +184,6 @@ form(method="post", action="/configureNovaSave")
       br
     br
   
-    label Go to live capture after pcap?
-    br
-    if(GO_TO_LIVE != "0")
-      input(type="radio", name="GO_TO_LIVE", value="1", checked)
-      |Yes
-      br
-      input(type="radio", name="GO_TO_LIVE", value="0")
-      |No
-      br
-    else
-      input(type="radio", name="GO_TO_LIVE", value="1")
-      |Yes
-      br
-      input(type="radio", name="GO_TO_LIVE", value="0", checked)
-      |No
-      br
-    br
-    
     label Packet Capture Buffer Size (in bytes)
     input.wide(type="number", step="1", min="1024", name="CAPTURE_BUFFER_SIZE",  value=CAPTURE_BUFFER_SIZE)
     br

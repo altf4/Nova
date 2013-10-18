@@ -194,18 +194,6 @@ READ_PCAP 0
 #PCAP_FILE pcapfile
 PCAP_FILE ../masterPcap
 
-############################################
-# GO_TO_LIVE #
-############################################
-#
-# Continue with live packets after PCAP file?
-#	0: Do not go to live capture after reading PCAP file
-#	1: Go to live capture after reading PCAP file
-# 
-# EXAMPLE:
-#GO_TO_LIVE 1
-GO_TO_LIVE 1
-
 # Logging Stuff #
 
 ############################################
