@@ -131,7 +131,7 @@ void PrintUsage()
 	cout << "  novatrainer --convert /home/test/capture1" << endl;
 	cout << "  echo \"192.168.10.188\" > /home/tes/capture1/hostiles.txt" << endl;
 	cout << "  novatrainer --save /home/test/capture1 training.db" << endl;
-	cout << "  Copy desired entries from training.db to the main nova database."
+	cout << "  Copy desired entries from training.db to the main nova database." << endl;
 	cout << endl;
 
 	exit(EXIT_FAILURE);
