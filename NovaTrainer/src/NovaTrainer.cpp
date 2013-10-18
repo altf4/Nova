@@ -16,12 +16,15 @@
 // Description : Command line interface for Nova
 //============================================================================
 
+#include "ClassificationAggregator.h"
 #include "InterfacePacketCapture.h"
 #include "ClassificationEngine.h"
 #include "FilePacketCapture.h"
 #include "HaystackControl.h"
 #include "EvidenceTable.h"
-#include "SuspectTable.h"
+
+#include "DatabaseQueue.h"
+#include "Database.h"
 #include "NovaTrainer.h"
 #include "TrainingDump.h"
 #include "Evidence.h"
@@ -43,15 +46,11 @@
 using namespace std;
 using namespace Nova;
 
-// TODO DTC
-// This is all broken since the suspecttable -> database change
-
-/*
-// Maintains a list of suspects and information on network activity
-SuspectTable suspects;
-
 ClassificationEngine *engine;
 EvidenceTable suspectEvidence;
+
+// Maintains a list of suspects and information on network activity
+DatabaseQueue suspects;
 
 pcap_dumper_t *pcapDumpStream;
 
@@ -60,8 +59,8 @@ ofstream trainingFileStream;
 trainingMode mode;
 string captureFolder;
 
-vector<string> haystackAddresses;
-vector<string> haystackDhcpAddresses;
+vector <HoneypotAddress> haystackAddresses;
+vector <HoneypotAddress> haystackDhcpAddresses;
 
 int main(int argc, const char *argv[])
 {
@@ -113,9 +112,26 @@ namespace Nova
 void PrintUsage()
 {
 	cout << "Usage:" << endl;
-	cout << "  novatrainer --writeToDatabase novaCaptureFolder databaseFile.db" << endl;
-	cout << "  novatrainer --save novaCaptureFolder" << endl;
 	cout << "  novatrainer --capture novaCaptureFolder interface" << endl;
+	cout << "  novatrainer --convert novaCaptureFolder" << endl;
+	cout << "  novatrainer --save novaCaptureFolder databaseFile" << endl;
+
+	cout << endl;
+
+	cout << "Steps to generating a training.db file:" << endl;
+	cout << "  Create a capture with --capture. Ctrl+c to stop capture. This will create a folder containing capture.pcap and possibly haystackIps.txt." << endl;
+	cout << "  Compute all the KNN features from the capture by using --convert. This will generate nova.dump." << endl;
+	cout << "  Manually create a file called hostiles.txt. Fill it with the addresses of suspects you want to train as hostile in the capture. One IP per line." << endl;
+	cout << "  Finally, run with --save in order to extract lists of benign and hostile IPs into the format needed for the .db file." << endl;
+	cout << endl;
+	cout << "Example," << endl;
+	cout << "  novatrainer --capture /home/test/capture1 eth0" << endl;
+	cout << "  Run nmap from some IP 192.168.10.188" << endl;
+	cout << "  Ctrl+c the capture." << endl;
+	cout << "  novatrainer --convert /home/test/capture1" << endl;
+	cout << "  echo \"192.168.10.188\" > /home/tes/capture1/hostiles.txt" << endl;
+	cout << "  novatrainer --save /home/test/capture1 training.db" << endl;
+	cout << "  Copy desired entries from training.db to the main nova database."
 	cout << endl;
 
 	exit(EXIT_FAILURE);
@@ -144,7 +160,7 @@ void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u
 		case ETHERTYPE_IP:
 		{
 			//Prepare Packet structure
-			Evidence evidencePacket(packet + sizeof(struct ether_header), pkthdr);
+			Evidence evidencePacket(packet, pkthdr);
 
 			suspects.ProcessEvidence(&evidencePacket, true);
 			return;
@@ -156,48 +172,21 @@ void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u
 	}
 }
 
-void Update(SuspectID_pb key)
-{
-	SuspectID_pb foo = key;
-	suspects.ClassifySuspect(foo);
-
-	//Check that we updated correctly
-	Suspect suspectCopy = suspects.GetSuspect(foo);
-
-	if(suspects.IsEmptySuspect(&suspectCopy))
-	{
-		cout << "Got an empty suspect when trying to classify" << endl;
-		return;
-	}
-
-	//Store in training file if needed
-	trainingFileStream << suspectCopy.GetIpString() << " ";
-
-	FeatureSet fs = suspectCopy.GetFeatureSet(MAIN_FEATURES);
-	if(fs.m_features[0] != fs.m_features[0] )
-	{
-		cout << "This can't be good..." << endl;
-	}
-	for(int j = 0; j < DIM; j++)
-	{
-		trainingFileStream << fs.m_features[j] << " ";
-	}
-	trainingFileStream << "\n";
-}
-
-
 void UpdateHaystackFeatures(string haystackFilePath)
 {
-	haystackAddresses = Config::GetIpAddresses(haystackFilePath);
+	vector<string> ips = Config::GetIpAddresses(haystackFilePath);
 
-	vector<uint32_t> haystackNodes;
-	for(uint i = 0; i < haystackAddresses.size(); i++)
+	haystackAddresses.empty();
+	Database::Inst()->ClearHoneypots();
+
+	for(uint i = 0; i < ips.size(); i++)
 	{
-		cout << haystackAddresses[i] << " has been set as a haystack address" << endl;
-		haystackNodes.push_back(htonl(inet_addr(haystackAddresses[i].c_str())));
+		cout << ips[i] << " has been set as a haystack address" << endl;
+		Database::Inst()->InsertHoneypotIp(ips[i], "pcap");
+
+		haystackAddresses.push_back(HoneypotAddress(ips[i], "pcap"));
 	}
 
-	suspects.SetHaystackNodes(haystackNodes);
 }
 
 string ConstructFilterString()
@@ -217,12 +206,12 @@ string ConstructFilterString()
 	}
 
 	//Insert static haystack IP's
-	vector<string> hsAddresses = haystackAddresses;
+	vector<HoneypotAddress> hsAddresses = haystackAddresses;
 	while(hsAddresses.size())
 	{
 		//Remove and add the haystack host entry
 		filterString += " && not src host ";
-		filterString += hsAddresses.back();
+		filterString += hsAddresses.back().ip;
 		hsAddresses.pop_back();
 	}
 
@@ -232,7 +221,7 @@ string ConstructFilterString()
 	{
 		//Remove and add the haystack host entry
 		filterString += " && not src host ";
-		filterString += hsAddresses.back();
+		filterString += hsAddresses.back().ip;
 		hsAddresses.pop_back();
 	}
 
@@ -242,20 +231,21 @@ string ConstructFilterString()
 
 void ConvertCaptureToDump(std::string captureFolder)
 {
+	engine = new ClassificationAggregator();
+
+	Database::Inst()->ClearAllSuspects();
+
 	if(chdir(Config::Inst()->GetPathHome().c_str()) == -1)
 	{
 		LOG(CRITICAL, "Unable to change folder to " + Config::Inst()->GetPathHome(), "");
 	}
-
-	//engine = ClassificationEngine::MakeEngine();
-	//engine->LoadConfiguration();
-
 
 	string dumpFile = captureFolder + "/nova.dump";
 	string pcapFile = captureFolder + "/capture.pcap";
 
    	string haystackFile = captureFolder + "/haystackIps.txt";
 	UpdateHaystackFeatures(haystackFile);
+
 
 	trainingFileStream.open(dumpFile);
 	if(!trainingFileStream.is_open())
@@ -271,11 +261,30 @@ void ConvertCaptureToDump(std::string captureFolder)
 
 	LOG(DEBUG, "Done processing PCAP file.", "");
 
-	vector<SuspectID_pb> ids = suspects.GetAllKeys();
-	for (uint i = 0; i < ids.size(); i++)
+	suspects.WriteToDatabase();
+
+	vector<Suspect> suspects = Database::Inst()->GetSuspects(SUSPECTLIST_ALL);
+
+	for (int i = 0; i < suspects.size(); i++)
 	{
-		Update(ids.at(i));
+		Suspect suspectCopy = suspects[i];
+
+		//Store in training file if needed
+		trainingFileStream << suspectCopy.GetIpString() << " ";
+
+		suspectCopy.GetFeatureSet();
+		EvidenceAccumulator fs = suspectCopy.GetFeatureSet(MAIN_FEATURES);
+		if(fs.m_features[0] != fs.m_features[0] )
+		{
+			cout << "This can't be good..." << endl;
+		}
+		for(int j = 0; j < DIM; j++)
+		{
+			trainingFileStream << fs.m_features[j] << " ";
+		}
+		trainingFileStream << "\n";
 	}
+
 
 	trainingFileStream.close();
 }
@@ -301,19 +310,19 @@ void CaptureData(std::string captureFolder, std::string interface)
     	LOG(DEBUG, "Haystack appears up. Recording current state.", "");
     	string haystackFile = captureFolder + "/haystackIps.txt";
         haystackAddresses = Config::GetHaystackAddresses(Config::Inst()->GetPathHome() + "/" + Config::Inst()->GetPathConfigHoneydHS());
-        haystackDhcpAddresses = Config::GetIpAddresses(Config::Inst()->GetIpListPath());
+        haystackDhcpAddresses = Config::GetHoneydIpAddresses(Config::Inst()->GetIpListPath());
 
         LOG(DEBUG, "Writing haystack IPs to file " + haystackFile, "");
         ofstream haystackIpStream(haystackFile);
         for(uint i = 0; i < haystackDhcpAddresses.size(); i++)
         {
-        	LOG(DEBUG, "Found haystack DHCP IP " + haystackDhcpAddresses.at(i), "");
-            haystackIpStream << haystackDhcpAddresses.at(i) << endl;
+        	LOG(DEBUG, "Found haystack DHCP IP " + haystackDhcpAddresses.at(i).ip, "");
+            haystackIpStream << haystackDhcpAddresses.at(i).ip << endl;
         }
         for(uint i = 0; i < haystackAddresses.size(); i++)
         {
-        	LOG(DEBUG, "Found haystack static IP " + haystackAddresses.at(i), "");
-            haystackIpStream << haystackAddresses.at(i) << endl;
+        	LOG(DEBUG, "Found haystack static IP " + haystackAddresses.at(i).ip, "");
+            haystackIpStream << haystackAddresses.at(i).ip << endl;
         }
 
         haystackIpStream.close();
@@ -327,10 +336,11 @@ void CaptureData(std::string captureFolder, std::string interface)
     capture->SetPacketCb(SavePacket);
 
     pcap_t *handle = capture->GetPcapHandle();
+    pcap_activate(handle);
     pcapDumpStream = pcap_dump_open(handle, trainingCapFile.c_str());
 
     capture->StartCaptureBlocking();
-}
+ }
 
 void SavePacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet)
 {
@@ -364,5 +374,3 @@ void SaveToDatabaseFile(string captureFolder, string databaseFile)
 
 }
 
-
-*/

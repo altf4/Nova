@@ -223,6 +223,10 @@ void Database::Connect()
 		-1, &insertHoneypotIp, NULL));
 
 	SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db,
+			"DELETE FROM honeypots",
+			-1, &clearHoneypots, NULL));
+
+	SQL_RUN(SQLITE_OK, sqlite3_prepare_v2(db,
 		"SELECT 1.0*(SELECT COUNT(DISTINCT honeypots.ip)"
 		" FROM honeypots, ip_port_counts "
 		" WHERE ip_port_counts.ip = ?1 AND ip_port_counts.interface = ?2 AND honeypots.ip = ip_port_counts.dstip AND ip_port_counts.interface = honeypots.interface) / (1.0*(SELECT COUNT(ip) FROM honeypots WHERE interface = ?2));",
@@ -538,6 +542,7 @@ bool Database::Disconnect()
 	sqlite3_finalize(computeMaxPacketsToPort);
 	sqlite3_finalize(computeHoneypotsContacted);
 	sqlite3_finalize(insertHoneypotIp);
+	sqlite3_finalize(clearHoneypots);
 	sqlite3_finalize(updateClassification);
 	sqlite3_finalize(updateSuspectTimestamps);
 	sqlite3_finalize(createHostileAlert);
@@ -661,6 +666,7 @@ void Database::InsertSuspect(Suspect *suspect)
 {
 	int res;
 
+	cout << "Saving ip: " << suspect->GetIpString() << endl;
 	SQL_RUN(SQLITE_OK,sqlite3_bind_text(insertSuspect, 1, suspect->GetIpString().c_str(), -1, SQLITE_TRANSIENT));
 	SQL_RUN(SQLITE_OK,sqlite3_bind_text(insertSuspect, 2, suspect->GetInterface().c_str(), -1, SQLITE_TRANSIENT));
 	SQL_RUN(SQLITE_OK,sqlite3_bind_int64(insertSuspect, 3, static_cast<long int>(suspect->m_features.m_startTime)));
@@ -797,7 +803,15 @@ void Database::InsertHoneypotIp(std::string ip, std::string interface)
 	m_count++;
 	SQL_RUN(SQLITE_DONE, sqlite3_step(insertHoneypotIp));
 	SQL_RUN(SQLITE_OK, sqlite3_reset(insertHoneypotIp));
+}
 
+// Deletes entries from the table that keeps track of the current honeypot IPs
+void Database::ClearHoneypots() {
+	int res;
+	m_count++;
+
+	SQL_RUN(SQLITE_DONE, sqlite3_step(clearHoneypots));
+	SQL_RUN(SQLITE_OK, sqlite3_reset(clearHoneypots));
 }
 
 void Database::SetFeatureSetValue(const string &ip, const string &interface, const vector<double> &features)

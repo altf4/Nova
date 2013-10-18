@@ -4,6 +4,9 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/ClassificationAggregator.cpp \
+../src/ClassificationEngine.cpp \
+../src/ClassificationEngineFactory.cpp \
 ../src/Config.cpp \
 ../src/Database.cpp \
 ../src/DatabaseQueue.cpp \
@@ -14,6 +17,7 @@ CPP_SRCS += \
 ../src/FilePacketCapture.cpp \
 ../src/HaystackControl.cpp \
 ../src/InterfacePacketCapture.cpp \
+../src/KnnClassification.cpp \
 ../src/Logger.cpp \
 ../src/MessageManager.cpp \
 ../src/NovaUtil.cpp \
@@ -21,10 +25,17 @@ CPP_SRCS += \
 ../src/Point.cpp \
 ../src/Proxy.cpp \
 ../src/QuasarDatabase.cpp \
+../src/ScriptAlertClassification.cpp \
 ../src/Suspect.cpp \
+../src/ThresholdTriggerClassification.cpp \
+../src/UnauthorizedMACClassification.cpp \
+../src/UnauthorizedSuspectsClassification.cpp \
 ../src/WhitelistConfiguration.cpp 
 
 OBJS += \
+./src/ClassificationAggregator.o \
+./src/ClassificationEngine.o \
+./src/ClassificationEngineFactory.o \
 ./src/Config.o \
 ./src/Database.o \
 ./src/DatabaseQueue.o \
@@ -35,6 +46,7 @@ OBJS += \
 ./src/FilePacketCapture.o \
 ./src/HaystackControl.o \
 ./src/InterfacePacketCapture.o \
+./src/KnnClassification.o \
 ./src/Logger.o \
 ./src/MessageManager.o \
 ./src/NovaUtil.o \
@@ -42,10 +54,17 @@ OBJS += \
 ./src/Point.o \
 ./src/Proxy.o \
 ./src/QuasarDatabase.o \
+./src/ScriptAlertClassification.o \
 ./src/Suspect.o \
+./src/ThresholdTriggerClassification.o \
+./src/UnauthorizedMACClassification.o \
+./src/UnauthorizedSuspectsClassification.o \
 ./src/WhitelistConfiguration.o 
 
 CPP_DEPS += \
+./src/ClassificationAggregator.d \
+./src/ClassificationEngine.d \
+./src/ClassificationEngineFactory.d \
 ./src/Config.d \
 ./src/Database.d \
 ./src/DatabaseQueue.d \
@@ -56,6 +75,7 @@ CPP_DEPS += \
 ./src/FilePacketCapture.d \
 ./src/HaystackControl.d \
 ./src/InterfacePacketCapture.d \
+./src/KnnClassification.d \
 ./src/Logger.d \
 ./src/MessageManager.d \
 ./src/NovaUtil.d \
@@ -63,7 +83,11 @@ CPP_DEPS += \
 ./src/Point.d \
 ./src/Proxy.d \
 ./src/QuasarDatabase.d \
+./src/ScriptAlertClassification.d \
 ./src/Suspect.d \
+./src/ThresholdTriggerClassification.d \
+./src/UnauthorizedMACClassification.d \
+./src/UnauthorizedSuspectsClassification.d \
 ./src/WhitelistConfiguration.d 
 
 

@@ -50,11 +50,11 @@ public:
 	std::string GetIdentifier() {return m_identifier;}
 	void SetIdentifier(std::string identifier) {m_identifier = identifier;}
 
+	pcap_t *m_handle;
 protected:
 	std::string m_identifier;
 	std::string m_filter;
 	u_char m_index;
-	pcap_t *m_handle;
 
 	volatile bool isCapturing;
 	volatile bool stoppingCapture;

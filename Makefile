@@ -22,7 +22,7 @@ debug:
 	$(MAKE) debug-helper
 	$(MAKE) quasar
 
-debug-helper: novad-debug novacli-debug hhconfig-debug
+debug-helper: novad-debug novacli-debug hhconfig-debug novatrainer-debug
 
 #Nova Library
 novalib-release:
@@ -61,13 +61,13 @@ novacli-debug:
 	cp NovaCLI/Debug/novacli NovaCLI/
 
 # Nova trainer
-#novatrainer-debug:
-#	$(MAKE) -C NovaTrainer/Debug
-#	cp NovaTrainer/Debug/novatrainer NovaTrainer/novatrainer
+novatrainer-debug:
+	$(MAKE) -C NovaTrainer/Debug
+	cp NovaTrainer/Debug/novatrainer NovaTrainer/novatrainer
 
-#novatrainer-release:
-#	$(MAKE) -C NovaTrainer/Release
-#	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
+novatrainer-release:
+	$(MAKE) -C NovaTrainer/Release
+	cp NovaTrainer/Release/novatrainer NovaTrainer/novatrainer
 
 #Quasar
 quasar: nodejsmodule
@@ -228,7 +228,7 @@ install: install-data
 	-chmod g+rwx "$(DESTDIR)/var/log/nova"
 	-chmod a+x ~/.config
 
-install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-quasar install-nodejsmodule
+install-helper: install-docs install-cli install-novad install-ui-core install-hhconfig install-quasar install-nodejsmodule install-novatrainer
 	-sh debian/postinst
 	-bash Installer/createDatabase.sh
 
@@ -297,8 +297,8 @@ install-ui-core:
 install-cli:
 	-install NovaCLI/novacli "$(DESTDIR)/usr/bin"
 
-#install-novatrainer:
-#	-install NovaTrainer/novatrainer "$(DESTDIR)/usr/bin"
+install-novatrainer:
+	-install NovaTrainer/novatrainer "$(DESTDIR)/usr/bin"
 
 install-nodejsmodule:
 	mkdir -p "$(DESTDIR)/usr/share/nova/sharedFiles/NodejsModule"

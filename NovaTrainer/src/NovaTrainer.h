@@ -24,7 +24,6 @@
 
 #include "protobuf/marshalled_classes.pb.h"
 
-/*
 // Name of the CLI executable
 #define EXECUTABLE_NAME "novatrainer"
 
@@ -50,11 +49,9 @@ namespace Nova
 	std::string ConstructFilterString();
 
 	void HandleTrainingPacket(u_char *index,const struct pcap_pkthdr *pkthdr,const u_char *packet);
-	void Update(SuspectID_pb key);
 	void UpdateHaystackFeatures();
 }
 
-*/
 
 #endif /* NOVATRAINER_H_ */
 
