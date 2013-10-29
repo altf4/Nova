@@ -24,6 +24,17 @@ block headerAdditions
     td.novaGrid {
         text-align: left;
     }
+    
+    .exCollItem {
+      float: right; 
+      width: 20px;
+      height: 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      text-align: center;
+      text-shadow: 1px 0px #BBBBBB;
+      font-size: 16px;
+    }
 
     .gridButton {
         margin: 0;
@@ -42,14 +53,40 @@ block headerAdditions
   script.
     var newSuspectGrid;
     var newSuspectDataGrid;
+    var exCollIdx = 0;
+    var exCollVals = [];
         
     var index = 0;
     var allowedLevels = ['DEBUG','INFO','NOTICE','WARNING','ERROR','CRITICAL','ALERT','EMERGENCY'];
-        
-    function formatLogEntry(entry) {
+    
+    function expandCollapse(e, idx) {
+      var evt = (e ? e : window.event);
+      var source = evt.target || evt.srcElement;
+      source = source.parentNode;
+      temp = $(source).html();
+      $(source).html(exCollVals[idx]);
+      exCollVals[idx] = temp;
+    }
+    
+    function formatHoneydLogEntry(entry) {
         entry.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         entry = "<span style='font-weight: bold;'>" + entry + "</span>";
         entry = entry.replace(/#012/g, "<BR>");
+        return entry;
+    }
+        
+    function formatLogEntry(entry) {
+        console.log(entry);
+        entry.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        if(entry.search(/#012/) != -1)
+        {
+          entry = entry.replace(/#012/g, "<BR>");
+          var modEntry = entry.replace(/<BR>/, '<span class="exCollItem" onclick="expandCollapse(event, ' + exCollIdx + ')">-</span><BR>');
+          exCollVals[exCollIdx] = modEntry;
+          entry = entry.substring(0, entry.indexOf('<BR>')) + '...<span class="exCollItem" onclick="expandCollapse(event, ' + exCollIdx + ')">+</span>';
+          exCollIdx++; 
+        }
+        entry = "<span style='font-weight: bold; user-select: none;'>" + entry + "</span>";
         return entry;
     }
 
@@ -126,7 +163,7 @@ block headerAdditions
   
           for (var i in entries)
           {
-            widget3.addRow(entries[i].linenum, entries[i].line.replace(/#012/g, "<BR>"));
+            widget3.addRow(entries[i].linenum, entries[i].line);
           }
             
           newNovaLogGrid.Render();
@@ -254,7 +291,7 @@ block headerAdditions
 
                 for (var i in entries)
                 {
-                    self.addRow(entries[i].linenum, entries[i].line.replace(/#012/g, "<BR>"));
+                    self.addRow(entries[i].linenum, entries[i].line);
                 }
                 
                 newNovaLogGrid.Render();
@@ -319,7 +356,7 @@ block headerAdditions
             columns.push({name: "Message #", isDisabled: false});
             columns.push({name: "Timestamp", isDisabled: false});
             columns.push({name: "Machine Info", isDisabled: true});
-            columns.push({name: "Message", isDisabled: false, formatter: formatLogEntry});
+            columns.push({name: "Message", isDisabled: false, formatter: formatHoneydLogEntry});
 
             newHoneydLogGrid = new NovaGrid(columns, 1, document.getElementById("newHoneydLogGrid"), 'newHoneydLogGrid', false);
             newHoneydLogGrid.SetSortByKey(1);
