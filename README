@@ -349,6 +349,8 @@ Debian Packages
 
         ./generateDebs <version number>
 
+- Note: Debian package generation was a prototype that isn't officially supported.
+
 ===============================
 Common Problems and solutions
 ===============================
@@ -547,6 +549,10 @@ log messages sent at startup arrived at the right place
 ===============================
 Pulsar
 ===============================
+
+	Warning: Pulsar was a prototype for controlling multiple instances
+	of Nova across different physical locations. This tool isn't currently
+	supported.
 
     Pulsar does not install with the standard Nova ./configure, make, make
 install process. Instead, the user must change directory into the Nova

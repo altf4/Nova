@@ -113,10 +113,11 @@ double ClassificationAggregator::Classify(Suspect *s)
 	s->m_classificationNotes = "";
 
 	double classification = 0;
+
+	double overrideClassification = -1;
 	for (uint i = 0; i < m_engines.size(); i++)
 	{
 		double engineVote = m_engines.at(i)->Classify(s);
-		//cout << "Suspect: " << s->GetIpAddress() << " Engine: " << i << " Classification: " << engineVote << endl;
 
 		classification += engineVote * m_engineWeights.at(i);
 
@@ -128,23 +129,24 @@ double ClassificationAggregator::Classify(Suspect *s)
 		{
 			if (engineVote > Config::Inst()->GetClassificationThreshold())
 			{
-				classification = engineVote;
-				break;
+				if (overrideClassification == -1)
+					overrideClassification = engineVote;
 			}
 		}
 		else if (m_modes[i] == CLASSIFIER_BENIGN_OVERRIDE)
 		{
 			if (engineVote < Config::Inst()->GetClassificationThreshold())
 			{
-				classification = engineVote;
-				break;
+				if (overrideClassification == -1)
+					overrideClassification = engineVote;
 			}
 		}
-
-
 	}
-    //cout << "Suspect: " << s->GetIpAddress() << " Engine: aggrigated" << " Classification: " << classification << endl;
-    //cout << endl;
+
+	// If there's a hostile or benign override CE triggered, we choose the engine vote of the first one that triggered it
+	if (overrideClassification != -1)
+		classification = overrideClassification;
+
     s->SetClassification(classification);
 
 
