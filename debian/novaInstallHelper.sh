@@ -117,6 +117,7 @@ cd $SAVE
 chown -R -f $NEW_PERM nova-build/
 cd $HOME
 chown -R -f $NEW_PERM .node-gyp/
+chown -R -f $NEW_PERM .config/
 
 cd /usr/share/honeyd/scripts/
 chown -R -f $NEW_PERM misc/
