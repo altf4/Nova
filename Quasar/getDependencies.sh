@@ -10,11 +10,13 @@
 
 
 version=$(node --version)
+perm=$SUDO_USER:$SUDO_USER
 if [[ $version != "v0.8.5" ]];
 then
 
 	wget http://nodejs.org/dist/v0.8.5/node-v0.8.5.tar.gz
 	tar -xf node-v0.8.5.tar.gz
+	chown -R -f $perm node-v0.8.5/
 	cd node-v0.8.5
 
 	./configure
@@ -24,6 +26,8 @@ then
 else
 	echo "Already found correct nodejs version. Skipping."
 fi
+
+npm config set ca=""
 
 # Install the forever daemon
 npm install -g forever
