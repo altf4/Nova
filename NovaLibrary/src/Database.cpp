@@ -865,7 +865,7 @@ bool Database::IsSuspectHostile(const std::string &ip, const std::string &interf
 
 	if (res == SQLITE_ROW)
 	{
-		suspectHostile = sqlite3_column_int(isSuspectHostile, 1);
+		suspectHostile = sqlite3_column_int(isSuspectHostile, 0);
 	}
 	else
 	{
